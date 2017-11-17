@@ -27,9 +27,9 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(0.0, 0.0),
-        Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
     SpeedLimit(2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(1.0, 0.0),
-      Point(3.0, 0.0)), 2.0, 4.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)
+      Point(3.0, 0.0)), 2.0, 4.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets))
@@ -44,7 +44,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(0.0, 0.0),
-        Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)
+        Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets))
@@ -57,7 +57,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       roadLink(2, Seq(Point(1.0, 0.0), Point(2.0, 0.0))))
     val speedLimits = Map(2l -> Seq(
-      SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 2.15, 2.35, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+      SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 2.15, 2.35, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     changeSet.droppedAssetIds should be(Set(1))
   }
@@ -66,7 +66,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
     val speedLimits = Map(1l -> Seq(
-      SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+      SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology.length should be(1)
     filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
@@ -82,10 +82,10 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       1l -> Seq(
         SpeedLimit(
           1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+          Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
         SpeedLimit(
           2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
-          Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+          Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 2
     filledTopology.map(_.geometry) should be(Seq(
@@ -101,8 +101,8 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       roadLink(1, Seq(Point(0.0, 0.0), Point(100.0, 0.0))))
     val speedLimits = Map(1l -> Seq(
-      SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(90.0, 0.0)), 0.0, 90.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(90.0, 0.0), Point(110.0, 0.0)), 90.0, 110.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+      SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(90.0, 0.0)), 0.0, 90.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
+      SpeedLimit(2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(90.0, 0.0), Point(110.0, 0.0)), 90.0, 110.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology.length should be(2)
 
@@ -116,8 +116,8 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       roadLink(1, Seq(Point(0.0, 0.0), Point(100.00, 0.0))))
     val speedLimits = Map(
-      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.04, 0.0)), 0.0, 0.04, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
-        SpeedLimit(2, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(0.04, 0.0), Point(100.0, 0.0)), 0.04, 100.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.04, 0.0)), 0.0, 0.04, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
+        SpeedLimit(2, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(0.04, 0.0), Point(100.0, 0.0)), 0.04, 100.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
     changeSet.droppedAssetIds should be(Set(1))
@@ -127,7 +127,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   val topology = Seq(
     roadLink(1, Seq(Point(0.0, 0.0), Point(0.4, 0.0))))
   val speedLimits = Map(
-    1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+    1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
   val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
   filledTopology should have size 1
   changeSet.droppedAssetIds should be(Set())
@@ -137,7 +137,7 @@ test("should not drop adjusted short speed limit") {
     val topology = Seq(
       roadLink(1, Seq(Point(0.0, 0.0), Point(1.0, 0.0))))
     val speedLimits = Map(
-      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
     filledTopology.map(_.id) should be(Seq(1))
@@ -148,7 +148,7 @@ test("should not drop adjusted short speed limit") {
     val topology = Seq(
       roadLink(1, Seq(Point(0.0, 0.0), Point(1.0, 0.0))))
     val speedLimits = Map(
-      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
@@ -160,8 +160,8 @@ test("should not drop adjusted short speed limit") {
     val topology = Seq(
       oneWayRoadLink(1, Seq(Point(0.0, 0.0), Point(2.0, 0.0)), TrafficDirection.TowardsDigitizing))
     val speedLimits = Map(
-      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
-        SpeedLimit(2, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(50)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, 2.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
+        SpeedLimit(2, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(50)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, 2.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections, SideCode.BothDirections))
@@ -176,15 +176,15 @@ test("should not drop adjusted short speed limit") {
       1l -> Seq(
         SpeedLimit(
           1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, Some("one"), Some(DateTime.now().minus(1000)), 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+          Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, Some("one"), Some(DateTime.now().minus(1000)), 0, None, linkSource = NormalLinkInterface),
         SpeedLimit(
           2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
           Seq(Point(0.2, 0.0), Point(0.55, 0.0)), 0.2, 0.55, Some("one else"), Some(DateTime.now().minus(500)),
-          Some("one"), Some(DateTime.now().minus(1000)), 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+          Some("one"), Some(DateTime.now().minus(1000)), 0, None, linkSource = NormalLinkInterface),
         SpeedLimit(
           3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
           Seq(Point(0.55, 0.0), Point(1.0, 0.0)), 0.55, 1.0, Some("random guy"), Some(DateTime.now().minus(450)),
-          Some("one"), Some(DateTime.now().minus(1100)), 0, None, municipalityCode = None, linkSource = NormalLinkInterface)))
+          Some("one"), Some(DateTime.now().minus(1100)), 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
@@ -215,7 +215,7 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface))
+        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
     val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
       ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
@@ -238,10 +238,10 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface))
+        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
 
     val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -281,10 +281,10 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface))
+        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
 
     val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -315,10 +315,10 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(0.0, 0.0), Point(7.5, 0.0)), 0.0, 7.5, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(7.5, 0.0)), 0.0, 7.5, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(7.5, 0.0), Point(10.0, 0.0)), 7.5, 10.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface))
+        Seq(Point(7.5, 0.0), Point(10.0, 0.0)), 7.5, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
 
     val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -348,16 +348,16 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         2, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         3, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(30)),
-        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         4, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(60)),
-        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface))
+        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
 
     val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -389,10 +389,10 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, oldRoadLink.linkId, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(0.0, 0.0), Point(54.825, 0.0)), 0.0, 54.825, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(54.825, 0.0)), 0.0, 54.825, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(54.825, 0.0), Point(171.027, 0.0)), 54.825, 171.027, None, None, None, None, 0, None, municipalityCode = None, linkSource = NormalLinkInterface))
+        Seq(Point(54.825, 0.0), Point(171.027, 0.0)), 54.825, 171.027, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
 
     val changes = Seq(ChangeInfo(Some(oldRoadLink.linkId), Some(newLink2.linkId), 2l, 5, Some(113.53850795), Some(171.02731386), Some(0.0), Some(57.4888233), Some(1461844024000L)),
       ChangeInfo(Some(oldRoadLink.linkId), Some(newLink1.linkId), 2l, 6, Some(6.56875026), Some(113.53850795), Some(0.0), Some(106.96978931), Some(1461844024000L)),
@@ -418,34 +418,34 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)),
-        Seq(Point(26.67, 0.0), Point(43.33, 0.0)), 26.67, 43.33, None, None, Some("blue bd"), bdblue, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(26.67, 0.0), Point(43.33, 0.0)), 26.67, 43.33, None, None, Some("blue bd"), bdblue, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), bdred, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), bdred, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(50.0, 0.0), Point(60.0, 0.0)), 50.0, 60.0, None, None, Some("green bd"), bdgreen, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(50.0, 0.0), Point(60.0, 0.0)), 50.0, 60.0, None, None, Some("green bd"), bdgreen, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         4, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(60)),
-        Seq(Point(16.67, 0.0), Point(33.33, 0.0)), 16.67, 33.33, None, None, Some("blue td"), sdblue, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(16.67, 0.0), Point(33.33, 0.0)), 16.67, 33.33, None, None, Some("blue td"), sdblue, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         5, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(60)),
-        Seq(Point(23.33, 0.0), Point(36.67, 0.0)), 23.33, 36.67, None, None, Some("blue ad"), sdblue, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(23.33, 0.0), Point(36.67, 0.0)), 23.33, 36.67, None, None, Some("blue ad"), sdblue, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         6, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(0.0, 0.0), Point(16.67, 0.0)), 0.0, 16.67, None, None, Some("red td"), sdred1, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(16.67, 0.0)), 0.0, 16.67, None, None, Some("red td"), sdred1, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         7, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, Some("red ad"), sdred2, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, Some("red ad"), sdred2, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         8, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(10.0, 0.0), Point(23.33, 0.0)), 10.0, 23.33, None, None, Some("red ad"), sdred3, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(10.0, 0.0), Point(23.33, 0.0)), 10.0, 23.33, None, None, Some("red ad"), sdred3, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         9, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(33.33, 0.0), Point(50.0, 0.0)), 33.33, 50.0, None, None, Some("green bd"), sdgreen, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(33.33, 0.0), Point(50.0, 0.0)), 33.33, 50.0, None, None, Some("green bd"), sdgreen, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         10, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-        Seq(Point(36.67, 0.0), Point(50.0, 0.0)), 36.67, 50.0, None, None, Some("green bd"), sdgreen, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)
+        Seq(Point(36.67, 0.0), Point(50.0, 0.0)), 36.67, 50.0, None, None, Some("green bd"), sdgreen, 0, None, linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
@@ -477,10 +477,10 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)),
-        Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), edit2, 0, None, municipalityCode = None, linkSource = NormalLinkInterface))
+        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), edit2, 0, None, linkSource = NormalLinkInterface))
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
 
@@ -511,13 +511,13 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)),
-        Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.7, None, None, Some("red bd"), edit2, 1, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.7, None, None, Some("red bd"), edit2, 1, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(26.8, 0.0), Point(50, 0.0)), 26.74, 50, None, None, Some("red bd"), edit2, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)
+        Seq(Point(26.8, 0.0), Point(50, 0.0)), 26.74, 50, None, None, Some("red bd"), edit2, 0, None, linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
@@ -555,10 +555,10 @@ test("should not drop adjusted short speed limit") {
   test("should return sensible geometry on combinable entries") {
     val rLink = roadLink(2934609, Seq(Point(0.0, 0.0), Point(66.463, 0.0)))
     val speedLimit = Seq(
-      SpeedLimit(1183653,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(100)),Seq(),42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56")), municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(1204429,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(100)),Seq(),42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59")), municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(1232110,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),0,42.545,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 15:02")),0,Option(parse("28.10.2014 15:02")), municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(1868563,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),0,42.545,Option("vvh_generated"),Option(parse("14.6.2016 16:10")),Option("split_speedlimit_1183653"),Option(parse("2.7.2015 10:58")),0,Option(parse("2.7.2015 10:58")), municipalityCode = None, linkSource = NormalLinkInterface)
+      SpeedLimit(1183653,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(100)),Seq(),42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56")), linkSource = NormalLinkInterface),
+      SpeedLimit(1204429,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(100)),Seq(),42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59")), linkSource = NormalLinkInterface),
+      SpeedLimit(1232110,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),0,42.545,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 15:02")),0,Option(parse("28.10.2014 15:02")), linkSource = NormalLinkInterface),
+      SpeedLimit(1868563,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),0,42.545,Option("vvh_generated"),Option(parse("14.6.2016 16:10")),Option("split_speedlimit_1183653"),Option(parse("2.7.2015 10:58")),0,Option(parse("2.7.2015 10:58")), linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
@@ -569,9 +569,9 @@ test("should not drop adjusted short speed limit") {
   test("should not break opposite directions") {
     val rLink = roadLink(6189937, Seq(Point(0.0, 0.0), Point(323.203, 0.0)))
     val speedLimit = Seq(
-      SpeedLimit(1271877,6189937,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(60)),Seq(),0,199.502,None, None, Option("dr1_conversion"),Option(parse("28.10.2014 15:11")),0,Option(parse("28.10.2014 15:11")), municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(2102779,6189937,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(60)),Seq(),0,323.203,None,None,Option("split_speedlimit_1266969"),Option(parse("02.07.2015 12:12")),0,Option(parse("02.07.2015 12:12")), municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(1988786,6189937,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),199.502,323.203,None,None,Option("split_speedlimit_1228070"),Option(parse("02.07.2015 11:44")),0,Option(parse("02.07.2015 11:44")), municipalityCode = None, linkSource = NormalLinkInterface)
+      SpeedLimit(1271877,6189937,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(60)),Seq(),0,199.502,None, None, Option("dr1_conversion"),Option(parse("28.10.2014 15:11")),0,Option(parse("28.10.2014 15:11")), linkSource = NormalLinkInterface),
+      SpeedLimit(2102779,6189937,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(60)),Seq(),0,323.203,None,None,Option("split_speedlimit_1266969"),Option(parse("02.07.2015 12:12")),0,Option(parse("02.07.2015 12:12")), linkSource = NormalLinkInterface),
+      SpeedLimit(1988786,6189937,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),199.502,323.203,None,None,Option("split_speedlimit_1228070"),Option(parse("02.07.2015 11:44")),0,Option(parse("02.07.2015 11:44")), linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
@@ -583,10 +583,10 @@ test("should not drop adjusted short speed limit") {
     val geom1 = GeometryUtils.truncateGeometry3D(rLink.geometry, 42.545,66.463)
     val geom2 = GeometryUtils.truncateGeometry3D(rLink.geometry, 0, 42.545)
     val speedLimit = Seq(
-      SpeedLimit(1183653,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(100)),geom1,42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56")), municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(1204429,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),geom1,42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59")), municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(1232110,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(100)),geom2,0,42.545,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 15:02")),0,Option(parse("28.10.2014 15:02")), municipalityCode = None, linkSource = NormalLinkInterface),
-      SpeedLimit(1868563,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(80)),geom2,0,42.545,Option("vvh_generated"),Option(parse("14.6.2016 16:10")),Option("split_speedlimit_1183653"),Option(parse("2.7.2015 10:58")),0,Option(parse("2.7.2015 10:58")), municipalityCode = None, linkSource = NormalLinkInterface)
+      SpeedLimit(1183653,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(100)),geom1,42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56")), linkSource = NormalLinkInterface),
+      SpeedLimit(1204429,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),geom1,42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59")), linkSource = NormalLinkInterface),
+      SpeedLimit(1232110,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(100)),geom2,0,42.545,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 15:02")),0,Option(parse("28.10.2014 15:02")), linkSource = NormalLinkInterface),
+      SpeedLimit(1868563,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(80)),geom2,0,42.545,Option("vvh_generated"),Option(parse("14.6.2016 16:10")),Option("split_speedlimit_1183653"),Option(parse("2.7.2015 10:58")),0,Option(parse("2.7.2015 10:58")), linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
@@ -603,13 +603,13 @@ test("should not drop adjusted short speed limit") {
     val speedLimit = Seq(
       SpeedLimit(
         1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)),
-        Seq(Point(0.0, 0.0), Point(30.0, 0.0)), 0.0, 30.0, None, None, Some("blue bd"), edit1, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(0.0, 0.0), Point(30.0, 0.0)), 0.0, 30.0, None, None, Some("blue bd"), edit1, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         0, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(30.00, 0.0), Point(50.0, 0.0)), 30.0, 50.0, None, None, Some("red td"), edit2, 0, None, municipalityCode = None, linkSource = NormalLinkInterface),
+        Seq(Point(30.00, 0.0), Point(50.0, 0.0)), 30.0, 50.0, None, None, Some("red td"), edit2, 0, None, linkSource = NormalLinkInterface),
       SpeedLimit(
         0, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(60)),
-        Seq(Point(30.0, 0.0), Point(50.0, 0.0)), 30.0, 50.0, None, None, Some("blue ad"), edit2, 0, None, municipalityCode = None, linkSource = NormalLinkInterface)
+        Seq(Point(30.0, 0.0), Point(50.0, 0.0)), 30.0, 50.0, None, None, Some("blue ad"), edit2, 0, None, linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))

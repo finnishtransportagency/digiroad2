@@ -19,7 +19,6 @@ case class SpeedLimit(id: Long,
                       vvhTimeStamp: Long,
                       geomModifiedDate: Option[DateTime],
                       expired: Boolean = false,
-                      municipalityCode: Option[Int],
                       linkSource: LinkGeomSource,
                       attributes: Map[String, Any] = Map()) extends LinearAsset
 

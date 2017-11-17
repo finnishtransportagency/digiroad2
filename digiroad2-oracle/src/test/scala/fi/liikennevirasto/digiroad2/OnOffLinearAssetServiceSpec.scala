@@ -23,7 +23,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should create two assets"){
     runWithRollback {
-      when(mockLinearAssetDao.fetchLinearAssetsByIds(any[Set[Long]], any[String])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 200, None, None, None, None, false, 100, 1400000000, None, None, LinkGeomSource.NormalLinkInterface)))
+      when(mockLinearAssetDao.fetchLinearAssetsByIds(any[Set[Long]], any[String])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 200, None, None, None, None, false, 100, 1400000000, None, LinkGeomSource.NormalLinkInterface)))
       when(mockLinearAssetDao.updateExpiration(any[Long], any[Boolean],  any[String])).thenReturn(Some(1.toLong))
 
       onOffLinearAsset.updateValueByExpiration(100, NumericValue(0), LinearAssetTypes.numericValuePropertyId, "test", Some(Measures(2, 100)), Some(1400000000), Some(1))
@@ -41,7 +41,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should create one asset"){
     runWithRollback {
-      when(mockLinearAssetDao.fetchLinearAssetsByIds(any[Set[Long]], any[String])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 200, None, None, None, None, false, 100, 1400000000, None, None, LinkGeomSource.NormalLinkInterface)))
+      when(mockLinearAssetDao.fetchLinearAssetsByIds(any[Set[Long]], any[String])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 200, None, None, None, None, false, 100, 1400000000, None, LinkGeomSource.NormalLinkInterface)))
       when(mockLinearAssetDao.updateExpiration(any[Long], any[Boolean],  any[String])).thenReturn(Some(1.toLong))
 
       onOffLinearAsset.updateValueByExpiration(100, NumericValue(0), LinearAssetTypes.numericValuePropertyId, "test", Some(Measures(0, 100)), Some(1400000000), Some(1))
@@ -57,7 +57,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should not create assets"){
     runWithRollback {
-      when(mockLinearAssetDao.fetchLinearAssetsByIds(any[Set[Long]], any[String])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 200, None, None, None, None, false, 100, 1400000000, None, None, LinkGeomSource.NormalLinkInterface)))
+      when(mockLinearAssetDao.fetchLinearAssetsByIds(any[Set[Long]], any[String])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 200, None, None, None, None, false, 100, 1400000000, None, LinkGeomSource.NormalLinkInterface)))
       when(mockLinearAssetDao.updateExpiration(any[Long], any[Boolean],  any[String])).thenReturn(Some(1.toLong))
 
       onOffLinearAsset.updateValueByExpiration(100, NumericValue(0), LinearAssetTypes.numericValuePropertyId, "test", Some(Measures(0, 200)), Some(1400000000), Some(1))

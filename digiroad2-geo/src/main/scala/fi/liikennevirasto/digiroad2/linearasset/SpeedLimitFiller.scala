@@ -115,7 +115,7 @@ object SpeedLimitFiller {
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MinAllowedSpeedLimitLength}
     remainders.map { segment =>
       val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)
-      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None, municipalityCode = None, linkSource = roadLink.linkSource)
+      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None, linkSource = roadLink.linkSource)
     }
   }
 
@@ -521,7 +521,7 @@ object SpeedLimitFiller {
       asset.value, geometry, newStart, newEnd,
       modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, createdBy = asset.createdBy, createdDateTime = asset.createdDateTime,
-      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None,  municipalityCode = None, linkSource = asset.linkSource
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource
     )
   }
 
