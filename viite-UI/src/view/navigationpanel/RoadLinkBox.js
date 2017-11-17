@@ -239,7 +239,7 @@
 
     function toggleProjectLegends() {
       var container = $('#legendDiv');
-      if(applicationModel.getSelectedLayer() != "linkProperty") {
+      if(applicationModel.getSelectedLayer() !== "linkProperty") {
         container.empty();
         container.append(roadProjectOperations());
         container.append(calibrationPointPicture);
