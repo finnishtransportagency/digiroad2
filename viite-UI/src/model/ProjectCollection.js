@@ -299,6 +299,27 @@
       }
     };
 
+    this.preSplitProjectLinks = function(changedLinks, projectId){
+      applicationModel.addSpinner();
+      var form = $('#roadAddressProjectFormCut');
+      var data = {
+      "linkId": Math.abs(changedLinks[0].linkId),
+      "x": Number(form.find('#splitx')[0].value),
+      "y": Number(form.find('#splity')[0].value),
+      "projectId": projectId
+    };
+
+      backend.getPreSplitedData(data, linkId, function(successObject){
+        if (!successObject.success) {
+          //TODO error message handling
+        } else{
+         //TODO success handling
+        }}, function(failureObject){
+        //TODO Exception error handling
+      });
+
+    };
+
     this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
       applicationModel.addSpinner();
       
