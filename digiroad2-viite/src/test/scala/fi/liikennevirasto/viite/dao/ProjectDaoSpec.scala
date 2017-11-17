@@ -331,7 +331,7 @@ class ProjectDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("updateProjectLinkgeom") {
+  test("update ProjectLinkgeom") {
     //Creation of Test road
     val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
