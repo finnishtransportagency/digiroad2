@@ -111,7 +111,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
             extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liitetty_terminaaliin", massTransitStop.propertyData, propertyValuesToString)))
+            extractPropertyValue("liitetty_terminaaliin", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString)
+          ))
       })
   }
 
