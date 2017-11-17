@@ -106,7 +106,7 @@ object ProjectLinkSplitter {
       (templateLink.endAddrMValue - templateLink.startAddrMValue))
     val isReversed = (split.statusB == LinkStatus.New) ^ isDirectionReversed(suravage, templateLink)// isTailConnected(suravage, templateLink)
     val splits =
-      if (isReversed)
+      if (isReversed || !isTailConnected(suravage, templateLink))
         movedFromStart(suravageM, templateM, splitAddressM)
       else
         movedFromEnd(suravageM, templateM, splitAddressM)
