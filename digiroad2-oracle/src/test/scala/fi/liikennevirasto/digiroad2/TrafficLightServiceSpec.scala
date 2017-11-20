@@ -102,12 +102,15 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("Update traffic light") {
+  test("Update traffic light with geometry changes") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
       VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(91)).thenReturn((Seq(
       VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+    when(mockRoadLinkService.getRoadLinkFromVVH(1611387)).thenReturn(Seq(
+      VVHRoadlink(1611387, 235, linkGeometry, Municipality,
+        TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
     runWithRollback {
       val beforeUpdate = service.getByMunicipality(235).find(_.id == 600070).get
@@ -122,19 +125,19 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      service.update(id = 600070, IncomingTrafficLight(100, 0, 123), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+      val newAssetId = service.update(id = 600070, IncomingTrafficLight(100, 0, 123), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
 
-      val afterUpdate = service.getByMunicipality(91).find(_.id == 600070).get
-      afterUpdate.id should equal(600070)
+      val afterUpdate = service.getByMunicipality(91).find(_.id == newAssetId).get
+      afterUpdate.id should equal(newAssetId)
       afterUpdate.lon should equal(100)
       afterUpdate.lat should equal(0)
       afterUpdate.mValue should equal(100)
       afterUpdate.linkId should equal(123)
       afterUpdate.municipalityCode should equal(91)
-      afterUpdate.createdBy should equal(Some("dr2_test_data"))
-      afterUpdate.createdAt should equal(beforeUpdate.createdAt)
-      afterUpdate.modifiedBy should equal(Some("test"))
-      afterUpdate.modifiedAt.isDefined should equal(true)
+      afterUpdate.createdBy should equal(Some("test"))
+      afterUpdate.createdAt should equal(afterUpdate.createdAt)
+      afterUpdate.modifiedBy should equal(None)
+      afterUpdate.modifiedAt.isDefined should equal(false)
     }
   }
 }
