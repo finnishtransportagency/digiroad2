@@ -859,7 +859,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectBoundingBoxResult(
       Future(withDynSession(ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId))),
       Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything,
-        publicRoads, frozenTimeVVHAPIServiceEnabled)),
+        publicRoads, frozenTimeVVHAPIServiceEnabled) ++ roadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(withDynSession(ProjectDAO.getProjectLinks(projectId).map(_.linkId).toSet))),
       Future(
         if (everything) roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
         else Seq()),
