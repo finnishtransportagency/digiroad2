@@ -476,16 +476,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "roadNumber" -> splitLinks.head.roadNumber,
         "roadPartNumber" -> splitLinks.head.roadPartNumber,
         "trackCode" -> splitLinks.head.track,
-        "splitted" -> splitLinks.map(splitToApi),
         "split" -> Map(
-          "angle" -> 90,
           "geometry" -> Seq(
             Point(Math.abs(vectorRotate1.y), Math.abs(vectorRotate1.x)),
             point,
             Point(Math.abs(vectorRotate2.y), Math.abs(vectorRotate2.x))
           )
         )
-      )
+      ) ++ splitLinks.map(splitToApi)
       Map("success" -> splitLinks.nonEmpty, "response" -> split)
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
@@ -731,7 +729,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "endAddressM" -> splittedLinks.endAddrMValue
         ))
       }
-        //TODO split part
     }
   }
 
