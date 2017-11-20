@@ -1,5 +1,6 @@
 package fi.liikennevirasto
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BaseRoadAddress
@@ -72,5 +73,16 @@ package object viite {
 
   def isRamp(r: BaseRoadAddress): Boolean = {
     isRamp(r.roadNumber, r.track.value)
+  }
+
+  def toString(geometry: Seq[Point]) = {
+    def toBD(d: Double): String = {
+      BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
+    }
+    geometry.map(p => Seq(p.x, p.y, p.z).map(toBD).mkString(",", "[","]")).mkString(",")
+  }
+
+  def toGeometry(geometryString: String) = {
+
   }
 }

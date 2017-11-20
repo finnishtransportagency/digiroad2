@@ -152,9 +152,9 @@ object ProjectDAO {
 
 
   private def parseStringGeomToPoints(geomString:Option[String]): Seq[Point] = {
-    val Bracketed = """\[.*?\]""".r
+    val regex = """\[.*?\]""".r
     geomString match{
-      case Some(geomAsString)=>(Bracketed findAllIn geomAsString).toSeq.map(row => stringCoordinatesToPoints(row))
+      case Some(geomAsString)=>(regex findAllIn geomAsString).toSeq.map(row => stringCoordinatesToPoints(row))
       case _=> Seq.empty[Point]
     }
   }
