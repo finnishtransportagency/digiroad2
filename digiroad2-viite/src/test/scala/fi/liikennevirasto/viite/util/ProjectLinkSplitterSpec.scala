@@ -1,19 +1,74 @@
 package fi.liikennevirasto.viite.util
 
+import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, Unknown}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
 import fi.liikennevirasto.viite.dao._
-import org.scalatest.{FunSuite, Matchers}
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
+import org.joda.time.DateTime
+import org.mockito.Matchers.any
+import org.mockito.Mockito.{reset, when}
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
-class ProjectLinkSplitterSpec extends FunSuite with Matchers {
+class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter {
+
+  val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+  val mockProjectService = MockitoSugar.mock[ProjectService]
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
+  val projectServiceWithRoadAddressMock = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
+  after {
+    reset(mockRoadLinkService)
+  }
+
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  def runWithRollback[T](f: => T): T = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val t = f
+      dynamicSession.rollback()
+      t
+    }
+  }
+
   test("Intersection point for simple case") {
     ProjectLinkSplitter.intersectionPoint((Point(0.0, 0.0), Point(10.0, 0.0)), (Point(0.0, 1.0), Point(10.0, -1.0))) should be (Some(Point(5.0, 0.0)))
   }
@@ -295,5 +350,54 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
         Point(445405.631,7004133.071,0.0), Point(445417.266,7004142.049,0.0)),452278,New,UnknownOwnerRoad,
       SuravageLinkInterface,313.38119201522017,0,9L,false,None)
     ProjectLinkSplitter.findMatchingGeometrySegment(suravage, template) should be (None)
+  }
+
+  test("Preview the split") {
+    runWithRollback {
+      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val roadLink = RoadLink(1, Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
+        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+        InUse, NormalLinkInterface)
+      val suravageAddressLink = RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
+        AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.UnknownRoadLinkType, ConstructionType.Planned, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, "testRoad",
+        8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.AgainstDigitizing, None, None, Anomaly.None, 1)
+
+      //val options = SplitOptions(Point(0, 45.3), LinkStatus.UnChanged, LinkStatus.New, 1, 1, Track.Combined, Discontinuity.Continuous, 1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, projectId, ProjectCoordinates(0, 1, 1))
+      when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink))
+      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+
+      sqlu""" insert into LRM_Position(id,start_Measure,end_Measure,Link_id) Values($lrmPositionId,0,87,1) """.execute
+      sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY, ROAD_LENGTH, ADDRESS_LENGTH, DISCONTINUITY, ELY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""',87,900,0,0)""".execute
+      sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, LRM_POSITION_ID, CREATED_BY, CREATED_DATE, STATUS) VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,$lrmPositionId,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0)""".execute
+
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(toRoadLink(suravageAddressLink)))
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
+      val split = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId, 0, 45.3, projectId, "TestUser")
+      split.size should be (3)
+      
+    }
+  }
+
+  private def toRoadLink(ral: RoadAddressLinkLike): RoadLink = {
+    RoadLink(ral.linkId, ral.geometry, ral.length, ral.administrativeClass, 1,
+      extractTrafficDirection(ral.sideCode, Track.apply(ral.trackCode.toInt)), ral.linkType, ral.modifiedAt, ral.modifiedBy, Map(
+        "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
+        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
+      ral.constructionType, ral.roadLinkSource)
+  }
+
+  private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
+    (sideCode, track) match {
+      case (_, Track.Combined) => TrafficDirection.BothDirections
+      case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
+      case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
+      case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
+      case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
+      case (_, _) => TrafficDirection.UnknownDirection
+    }
   }
 }

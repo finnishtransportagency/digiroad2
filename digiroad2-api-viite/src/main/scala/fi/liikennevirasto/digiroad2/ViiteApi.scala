@@ -462,15 +462,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/project/split/:linkID") {
+  get("/project/presplit/:linkID") {
     val user = userProvider.getCurrentUser()
-    params.get("linkID").map(_.toLong) match {
+    val data = JSON.parseFull(params.get("splitData").get).get.asInstanceOf[Map[String, Any]]
+    data("linkId") match {
       case Some(link) =>
         try {
-          val options = parsedBody.extract[SplitOptions]
-          val writableProject = projectWritable(options.projectId)
-          val splitLinks = writableProject.splitSuravageLink(link, user.username, options)
-          Map("success" -> splitLinks.isEmpty, "links" -> splitLinks)
+          val writableProject = projectWritable(data("projectId").asInstanceOf[Long])
+          val splitLinks = writableProject.preSplitSuravageLink(data("linkId").asInstanceOf[Long], data("x").asInstanceOf[Double],
+            data("y").asInstanceOf[Double],data("projectId").asInstanceOf[Long],user.username)
+          Map("success" -> splitLinks.nonEmpty, "links" -> splitLinks)
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")
