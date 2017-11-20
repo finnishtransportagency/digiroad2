@@ -462,6 +462,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/project/presplit/:linkID") {
+    val user = userProvider.getCurrentUser()
+    val data = JSON.parseFull(params.get("splitData").get).get.asInstanceOf[Map[String, Any]]
+    data("linkId") match {
+      case Some(link) =>
+        try {
+          val writableProject = projectWritable(data("projectId").asInstanceOf[Long])
+          val splitLinks = writableProject.preSplitSuravageLink(data("linkId").asInstanceOf[Long], data("x").asInstanceOf[Double],
+            data("y").asInstanceOf[Double],data("projectId").asInstanceOf[Long],user.username)
+          Map("success" -> splitLinks.nonEmpty, "links" -> splitLinks)
+        } catch {
+          case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
+          case _: NumberFormatException => BadRequest("Missing mandatory data")
+        }
+      case _ => BadRequest("Missing Linkid from url")
+    }
+  }
+
   put("/project/split/:linkID") {
     val user = userProvider.getCurrentUser()
     params.get("linkID").map(_.toLong) match {
@@ -470,7 +488,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val options = parsedBody.extract[SplitOptions]
           val writableProject = projectWritable(options.projectId)
           val splitError = writableProject.splitSuravageLink(link, user.username, options)
-          Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
+          Map("success" -> splitError.isEmpty)
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")
