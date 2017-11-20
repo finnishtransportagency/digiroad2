@@ -134,7 +134,7 @@
       }
     };
     var selectionFormCutted = function (selection, selected) {
-      var firstLink = _.first(_.sortBy(selected, 'startAddressM'));
+      var firstLink = _.first(_.sortBy(_.filter(selected, function (s) {return s.endMValue !== 0; }), 'startAddressM'));
       var splitPoint = ((applicationModel.getSelectedTool() != "Cut" ? getSplitPointBySideCode(firstLink) : firstLink.splitPoint));
 
       return '<form id="roadAddressProjectFormCut" class="input-unit-combination split-form-group form-horizontal roadAddressProject">'+
@@ -144,11 +144,17 @@
           '<span class="marker">'+markers[0]+'</span>'+
           dropdownOption(0, selected) +
           '<hr class="horizontal-line"/>' +
-          '<label>Toimenpiteet,' + selection[1]  + '</label>' +
-          '<span class="marker">'+markers[1]+'</span>' +
-          dropdownOption(1, selected)+
-        formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
+          secondPartForm(selection[1], selected) +
+          formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
           '</form>';
+    };
+
+    var secondPartForm = function(selection, selected){
+      if (selected[1].endMValue !== selected[1].startMValue) {
+        return '<label>Toimenpiteet,' + selection  + '</label>' +
+          '<span class="marker">'+markers[1]+'</span>' +
+          dropdownOption(1, selected);
+      } else return '';
     };
 
     var dropdownOption = function (index, selected) {
@@ -205,7 +211,7 @@
         if(selectedProjectLink[0].id !== 0)
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
-      $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
+      $('#discontinuityDropdown').val(selectedProjectLink[0].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
     };
 
@@ -308,41 +314,21 @@
         var statusDropdown_1 = $('#dropdown_1').val();
         switch (statusDropdown_0){
           case LinkStatus.Unchanged.description : {
-            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
-            }
-            else if(_.isUndefined(statusDropdown_1)){
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
-            }
+            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
             break;
           }
           case LinkStatus.New.description : {
-            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Unchanged.description){
+            if(statusDropdown_1 == LinkStatus.Unchanged.description){
               projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
             }
-
-            else if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Transfer.description){
+            else if(_.isUndefined(statusDropdown_1) || statusDropdown_1 == LinkStatus.Transfer.description){
               projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
-            }
-            else if(_.isUndefined(statusDropdown_1)) {
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
             }
             break;
           }
           case LinkStatus.Transfer.description : {
-            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value, LinkStatus.New.value);
-            }
-            else if(_.isUndefined(statusDropdown_1)){
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
-            }
+            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value, LinkStatus.New.value);
             break;
-          }
-          case LinkStatus.Numbering.description : {
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value); break;
-          }
-          case LinkStatus.Terminated.description: {
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value); break;
           }
           case LinkStatus.Revert.description : {
             var separated = _.partition(selectedProjectLink, function (link) {

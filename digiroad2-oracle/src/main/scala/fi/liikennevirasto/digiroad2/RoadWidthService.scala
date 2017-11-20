@@ -50,8 +50,6 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
       changeSet.expiredAssetIds
 
-    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
-
     eventBus.publish("roadWidth:update", changeSet.copy(expiredAssetIds = expiredRoadWidthAssetIds.filterNot(_ == 0L)))
 
     //Remove the asset ids ajusted in the "roadWidth:update" otherwise if the "roadWidth:saveProjectedRoadWidth" is executed after the "roadWidth:update"
@@ -69,8 +67,12 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val lastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
 
-    val sortExpired = expiredAssets.sortWith((a, b) => a.modifiedDateTime.isDefined && b.modifiedDateTime.isDefined && a.modifiedDateTime.get.isAfter(b.modifiedDateTime.get))
-    val lastModified = sortExpired.groupBy(_.linkId).mapValues(_.head).values
+    val lastModified = expiredAssets.groupBy(_.linkId).mapValues(
+      _.maxBy{x => x.modifiedDateTime match {
+        case Some(modifiedDate) => modifiedDate.getMillis
+        case _ => 0
+      }
+    }).values
     val notByMTKClass = lastModified.filterNot(_.modifiedBy == "vvh_mtkclass_default")
 
     //Map all existing assets by roadlink and changeinfo
@@ -81,7 +83,10 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val expiredAssetsIds = changedAssets.flatMap {
       case (Some(roadlink), changeInfo, assets, _) if assets.nonEmpty =>
-        assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
+        assets.filter(asset =>
+          asset.createdBy.contains("dr1_conversion") ||
+          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default"))
+        ).map(_.id)
       case _ =>
         List()
     }.toSet[Long]

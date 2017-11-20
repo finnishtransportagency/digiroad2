@@ -96,6 +96,14 @@
       return currentAction;
     };
 
+    var getUserGeoLocation = function() {
+      return {
+        x: centerLonLat[0],
+        y:centerLonLat[1],
+        zoom:zoom.level
+      };
+    };
+
     var setCurrentAction = function(action) {
       currentAction = action;
     };
@@ -124,6 +132,7 @@
         centerLonLat = center;
         eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
       },
+      getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
       getSelectedTool: function() {
         return selectedTool;

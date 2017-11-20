@@ -310,7 +310,7 @@ trait LinearAssetOperations {
       case ChangeType.DividedModifiedPart  | ChangeType.DividedNewPart | ChangeType.CombinedModifiedPart |
            ChangeType.CombinedRemovedPart => projectAssetsConditionally(change, linearAssets, testNoAssetExistsOnTarget, useOldId=false)
       // cases 3, 7, 13, 14
-      case ChangeType.LenghtenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
+      case ChangeType.LengthenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
            ChangeType.ReplacedNewPart =>
         projectAssetsConditionally(change, linearAssets, testAssetOutdated, useOldId=false)
       case ChangeType.LengthenedNewPart | ChangeType.ReplacedNewPart =>

@@ -75,7 +75,7 @@ object PointAssetFiller {
           case ChangeType.CombinedModifiedPart | ChangeType.CombinedRemovedPart if changeInfo.newId != changeInfo.oldId => //Geometry Combined
             correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
 
-          case ChangeType.LenghtenedCommonPart | ChangeType.LengthenedNewPart => //Geometry Lengthened
+          case ChangeType.LengthenedCommonPart | ChangeType.LengthenedNewPart => //Geometry Lengthened
             correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
 
           case ChangeType.DividedModifiedPart | ChangeType.DividedNewPart if (asset.mValue >= changeInfo.oldStartMeasure.getOrElse(0.0)) && (asset.mValue <= changeInfo.oldEndMeasure.getOrElse(0.0)) => //Geometry Divided
