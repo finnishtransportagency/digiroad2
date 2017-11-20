@@ -469,12 +469,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val writableProject = projectWritable(data("projectId").asInstanceOf[Long])
       val splitLinks = writableProject.preSplitSuravageLink(data("linkId").asInstanceOf[Long], data("x").asInstanceOf[Double],
         data("y").asInstanceOf[Double], data("projectId").asInstanceOf[Long], user.username)
+      val point = Point(data("x").asInstanceOf[Double],data("y").asInstanceOf[Double])
+      val vectorRotate1 = point.+(Vector3d(3,3,0)).toVector.rotateRight()
+      val vectorRotate2 = point.-(Vector3d(3,3,0)).toVector.rotateRight()
       val split = Map(
         "roadNumber" -> splitLinks.head.roadNumber,
         "roadPartNumber" -> splitLinks.head.roadPartNumber,
-        "trackCode" -> splitLinks.head.track
-      ) ++ splitLinks.map(splitToApi)
-      Map("success" -> splitLinks.nonEmpty, "split" -> split)
+        "trackCode" -> splitLinks.head.track,
+        "splitted" -> splitLinks.map(splitToApi),
+        "split" -> Map(
+          "angle" -> 90,
+          "geometry" -> Seq(
+            Point(Math.abs(vectorRotate1.y), Math.abs(vectorRotate1.x)),
+            point,
+            Point(Math.abs(vectorRotate2.y), Math.abs(vectorRotate2.x))
+          )
+        )
+      )
+      Map("success" -> splitLinks.nonEmpty, "response" -> split)
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
       case _: NumberFormatException => BadRequest("Missing mandatory data")
