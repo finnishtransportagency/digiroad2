@@ -83,6 +83,15 @@
       });
     };*/
 
+    var preSplitSuravageLink = function(suravage, mousePoint) {
+      projectLinkCollection.preSplitProjectLinks(suravage.linkId, mousePoint, function(){
+        eventbus.once('projectLink:preSplitSuccess', function(preSplitData){
+          applicationModel.removeSpinner();
+          //TODO add data to form/object
+        });
+      });
+    };
+
     var splitSuravageLinks = function(nearestSuravage, split, mousePoint, callback) {
       var left = _.cloneDeep(nearestSuravage);
       left.points = split.firstSplitVertices;
