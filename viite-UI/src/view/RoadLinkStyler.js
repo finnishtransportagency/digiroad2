@@ -43,7 +43,6 @@
         {stroke: {color: 'rgba(255, 153, 0, 0.15)', width: 8, lineCap: 'round'}}),
       new StyleRule().where('gapTransfering').is(true).use({stroke: {color: 'rgb(0, 255, 0, 0.15)', width: 8, lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(99).use({stroke: {color: 'rgba(164, 164, 162, 0.65)', width: 8, lineCap: 'round'}})
-
     ];
 
     var selectionStyleRules = [
