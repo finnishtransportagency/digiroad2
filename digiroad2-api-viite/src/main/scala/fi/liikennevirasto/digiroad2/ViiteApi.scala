@@ -471,7 +471,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val writableProject = projectWritable(data("projectId").asInstanceOf[Long])
           val splitLinks = writableProject.preSplitSuravageLink(data("linkId").asInstanceOf[Long], data("x").asInstanceOf[Double],
             data("y").asInstanceOf[Double],data("projectId").asInstanceOf[Long],user.username)
-          Map("success" -> splitLinks.nonEmpty, "links" -> splitLinks)
+          val splitToApi = Map(
+            "roadNumber" -> splitLinks.head.roadNumber,
+            "roadPartNumber" -> splitLinks.head.roadPartNumber,
+            "trackCode" -> splitLinks.head.track
+          ) ++ splitLinks.map(splitToApi)
+          Map("success" -> splitLinks.nonEmpty, "split" -> splitToApi)
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")
@@ -684,6 +689,42 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "linkId" -> reservedRoadPart.startingLinkId,
       "isDirty" -> reservedRoadPart.isDirty
     )
+  }
+
+  def splitToApi(splittedLinks: ProjectLink): Map[String, Map[String, Any]] = {
+    splittedLinks.status match {
+      case LinkStatus.New => {
+        Map("b" ->
+          Map(
+          "linkId" -> splittedLinks.linkId,
+          "geometry"-> splittedLinks.geometry,
+          "middlePoint" -> 0, //TODO middle point
+          "startAddressM" -> splittedLinks.startAddrMValue,
+          "endAddressM" -> splittedLinks.endAddrMValue
+        ))
+      }
+      case LinkStatus.Terminated => {
+        Map("c" ->
+          Map(
+          "linkId" -> splittedLinks.linkId,
+          "geometry"-> splittedLinks.geometry,
+          "middlePoint" -> 0, //TODO middle point
+          "startAddressM" -> splittedLinks.startAddrMValue,
+          "endAddressM" -> splittedLinks.endAddrMValue
+        ))
+      }
+      case _ => {
+        Map("a" ->
+          Map(
+          "linkId" -> splittedLinks.linkId,
+          "geometry"-> splittedLinks.geometry,
+          "middlePoint" -> 0, //TODO middle point
+          "startAddressM" -> splittedLinks.startAddrMValue,
+          "endAddressM" -> splittedLinks.endAddrMValue
+        ))
+      }
+        //TODO split part
+    }
   }
 
   // Fold segments on same link together
