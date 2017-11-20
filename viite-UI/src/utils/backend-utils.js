@@ -253,7 +253,7 @@
     };
 
     this.getPreSplitedData = _.throttle(function(splitData, callback) {
-      return $.getJSON('api/viite/project/presplit?splitData=' +JSON.stringify(splitData), function(data) {
+      return $.get('api/viite/project/presplit?splitData=' +JSON.stringify(splitData), function(data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
