@@ -462,7 +462,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/project/presplit/:linkID") {
+  get("/project/presplit") {
     val user = userProvider.getCurrentUser()
     val data = JSON.parseFull(params.get("splitData").get).get.asInstanceOf[Map[String, Any]]
     data("linkId") match {
