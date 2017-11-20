@@ -50,9 +50,9 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         (common, removed) match {
           case (Some(c), Some(r)) =>
             val (expStart, expEnd) = if (c.oldStartMeasure.get > c.oldEndMeasure.get)
-              (max(c.oldStartMeasure.get, r.newStartMeasure.get, r.newEndMeasure.get), min(c.oldEndMeasure.get, c.newStartMeasure.get, r.newEndMeasure.get))
+              (max(c.oldStartMeasure.get, r.oldStartMeasure.get, r.oldEndMeasure.get), min(c.oldEndMeasure.get, c.newStartMeasure.get, r.oldEndMeasure.get))
             else
-              (min(c.oldStartMeasure.get, r.newStartMeasure.get, r.newEndMeasure.get), max(c.oldEndMeasure.get, r.newEndMeasure.get, r.newStartMeasure.get))
+              (min(c.oldStartMeasure.get, r.oldStartMeasure.get, r.oldEndMeasure.get), max(c.oldEndMeasure.get, r.oldEndMeasure.get, r.oldStartMeasure.get))
             Some(c.copy(oldStartMeasure = Some(expStart), oldEndMeasure = Some(expEnd)))
           case _ => None
         }

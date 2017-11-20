@@ -41,49 +41,47 @@
       var suravageA = orderedSplitParts[0];
       var suravageB = orderedSplitParts[1];
       suravageA.marker = "A";
+      if (!suravageB){
+        suravageB = zeroLengthSplit(suravageA);
+        suravageA.points = suravageA.originalGeometry;
+      }
       suravageB.marker = "B";
       eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
     };
 
-    // var splitSuravageLink = function(suravage, split, mousePoint) {
-    //   splitSuravageLinks(suravage, split, mousePoint, function(splitSuravageLinks) {
-    //     var selection = [splitSuravageLinks.created, splitSuravageLinks.existing];
-    //     if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
-    //       // Re-split with a new split point
-    //       ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
-    //       current = projectLinkCollection.getByLinkId(_.flatten(ids));
-    //       var orderedSplitParts = orderSplitParts(get());
-    //       var orderedPreviousSplit = orderSplitParts(selection);
-    //       var suravageA = orderedSplitParts[0];
-    //       var suravageB = orderedSplitParts[1];
-    //       suravageA.marker = "A";
-    //       suravageB.marker = "B";
-    //       suravageA.points = orderedPreviousSplit[0].points;
-    //       suravageB.points = orderedPreviousSplit[1].points;
-    //       suravageA.splitPoint = mousePoint;
-    //       suravageB.splitPoint = mousePoint;
-    //       var measureLeft = calculateMeasure(suravageA);
-    //       var measureRight = calculateMeasure(suravageB);
-    //       suravageA.startMValue = 0;
-    //       suravageA.endMValue = measureLeft;
-    //       suravageB.startMValue = measureLeft;
-    //       suravageB.endMValue = measureLeft + measureRight;
-    //       eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
-    //     } else {
-    //       ids = _.uniq(_.pluck(selection, 'linkId'));
-    //       eventbus.trigger('split:projectLinks', selection);
-    //     }
-    //   });
-    // };
-
-    var preSplitSuravageLink = function(suravage, mousePoint) {
-      projectLinkCollection.preSplitProjectLinks(suravage.linkId, mousePoint, function(){
-        eventbus.once('projectLink:preSplitSuccess', function(preSplitData){
-          applicationModel.removeSpinner();
-          //TODO add data to form/object
-        });
+    /*var splitSuravageLink = function(suravage, split, mousePoint) {
+      splitSuravageLinks(suravage, split, mousePoint, function(splitSuravageLinks) {
+        var selection = [splitSuravageLinks.created, splitSuravageLinks.existing];
+        if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
+          // Re-split with a new split point
+          ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
+          current = projectLinkCollection.getByLinkId(_.flatten(ids));
+          var orderedSplitParts = orderSplitParts(get());
+          var orderedPreviousSplit = orderSplitParts(selection);
+          var suravageA = orderedSplitParts[0];
+          var suravageB = orderedSplitParts[1];
+          if (!suravageB) {
+            suravageB = zeroLengthSplit(suravageA);
+          }
+          suravageA.marker = "A";
+          suravageB.marker = "B";
+          suravageA.points = orderedPreviousSplit[0].points;
+          suravageB.points = orderedPreviousSplit[1].points;
+          suravageA.splitPoint = mousePoint;
+          suravageB.splitPoint = mousePoint;
+          var measureLeft = calculateMeasure(suravageA);
+          var measureRight = calculateMeasure(suravageB);
+          suravageA.startMValue = 0;
+          suravageA.endMValue = measureLeft;
+          suravageB.startMValue = measureLeft;
+          suravageB.endMValue = measureLeft + measureRight;
+          eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
+        } else {
+          ids = _.uniq(_.pluck(selection, 'linkId'));
+          eventbus.trigger('split:projectLinks', selection);
+        }
       });
-    };
+    };*/
 
     var splitSuravageLinks = function(nearestSuravage, split, mousePoint, callback) {
       var left = _.cloneDeep(nearestSuravage);
@@ -107,6 +105,30 @@
       splitSuravage.existing.marker = 'B';
 
       callback(splitSuravage);
+    };
+
+    var zeroLengthSplit = function(adjacentLink) {
+      return {
+        roadNumber: adjacentLink.roadNumber,
+        roadPartNumber: adjacentLink.roadPartNumber,
+        roadLinkSource: adjacentLink.roadLinkSource,
+        connectedLinkId: adjacentLink.connectedLinkId,
+        linkId: adjacentLink.linkId,
+        status: LinkValues.LinkStatus.NotHandled.value,
+        points:  getPoint(adjacentLink),
+        startAddressM: 0,
+        endAddressM: 0,
+        startMValue: 0,
+        endMValue: 0
+      };
+    };
+
+    var getPoint = function(link) {
+      if (link.sideCode == LinkValues.SideCode.AgainstDigitizing.value) {
+        return _.first(link.points);
+      } else {
+        return _.last(link.points);
+      }
     };
 
     var calculateMeasure = function(link) {
