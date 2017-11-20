@@ -100,6 +100,21 @@ object OracleDirectionalTrafficSignDao {
     id
   }
 
+  def updateExpiration(id: Long, expired: Boolean, username: String) = {
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated = if (expired) {
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+    } else {
+      sqlu"update asset set valid_to = null where id = $id".first
+    }
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+
   private def getTextPropertyId: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("opastustaulun_teksti").first
   }
