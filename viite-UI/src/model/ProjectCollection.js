@@ -308,12 +308,12 @@
       "x": mousePoint.x,
       "y": mousePoint.y
       };
-      backend.getPreSplitedData(data, linkId, function(successObject){
+      backend.getPreSplitedData(data, function(successObject){
         if (!successObject.success) {
           //TODO error message handling
         } else {
          //TODO success handling
-          eventbus.trigger('projectLink:preSplitSuccess', successObject);
+          eventbus.trigger('projectLink:preSplitSuccess', successObject.split);
         }}, function(failureObject){
         //TODO Exception error handling
       });

@@ -87,7 +87,38 @@
       projectLinkCollection.preSplitProjectLinks(suravage.linkId, mousePoint, function(){
         eventbus.once('projectLink:preSplitSuccess', function(preSplitData){
           applicationModel.removeSpinner();
+
           //TODO add data to form/object
+
+          // var selection = [preSplitData.a, preSplitData.b];
+          // if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
+          //   // Re-split with a new split point
+          //   ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
+          //   current = projectLinkCollection.getByLinkId(_.flatten(ids));
+          //   var orderedSplitParts = orderSplitParts(get());
+          //   var orderedPreviousSplit = orderSplitParts(selection);
+          //   var suravageA = orderedSplitParts[0];
+          //   var suravageB = orderedSplitParts[1];
+          //   if (!suravageB) {
+          //     suravageB = zeroLengthSplit(suravageA);
+          //   }
+          //   suravageA.marker = "A";
+          //   suravageB.marker = "B";
+          //   suravageA.points = orderedPreviousSplit[0].points;
+          //   suravageB.points = orderedPreviousSplit[1].points;
+          //   suravageA.splitPoint = mousePoint;
+          //   suravageB.splitPoint = mousePoint;
+          //   var measureLeft = calculateMeasure(suravageA);
+          //   var measureRight = calculateMeasure(suravageB);
+          //   suravageA.startMValue = 0;
+          //   suravageA.endMValue = measureLeft;
+          //   suravageB.startMValue = measureLeft;
+          //   suravageB.endMValue = measureLeft + measureRight;
+          //   eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
+          // } else {
+          //   ids = _.uniq(_.pluck(selection, 'linkId'));
+          //   eventbus.trigger('split:projectLinks', selection);
+          // }
         });
       });
     };
