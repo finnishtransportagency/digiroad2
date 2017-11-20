@@ -226,6 +226,10 @@
       return others;
     };
 
+    var getPreSplitData = function(){
+      return preSplitData;
+    };
+
     var setCurrent = function(newSelection) {
       current = newSelection;
     };
@@ -264,6 +268,7 @@
       setDirty: setDirty,
       // splitSuravageLink: splitSuravageLink,
       preSplitSuravageLink: preSplitSuravageLink,
+      getPreSplitData: getPreSplitData,
       revertSuravage: revertSuravage
     };
   };

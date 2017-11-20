@@ -7,7 +7,7 @@
 
     var currentProject = false;
     var selectedProjectLink = false;
-    var markers = ['A', 'B'];
+    var markers = ['A', 'B', 'C'];
     var formCommon = new FormCommon('split-');
 
     var options =['Valitse'];
@@ -24,22 +24,17 @@
     };
 
     var selectedSplitData = function (selected) {
+      var road = selectedProjectLinkProperty.getPreSplitData();
       var span = [];
       _.each(selected, function (sel) {
         if (sel) {
           var link = sel;
-          var startM = (((applicationModel.getSelectedTool() === 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected.length == 2) ? Math.round(link.startMValue) : Math.min.apply(Math, _.map(selected, function (l) {
-            return l.startAddressM;
-          })));
-          var endM = (((applicationModel.getSelectedTool() === 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected.length == 2) ? Math.round(link.endMValue) : Math.max.apply(Math, _.map(selected, function (l) {
-            return l.endAddressM;
-          })));
           var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
             '<div class="project-edit">' +
-            ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
-            ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
-            ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
-            ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
+            ' TIE ' + '<span class="project-edit">' + road.roadNumber + '</span>' +
+            ' OSA ' + '<span class="project-edit">' + road.roadPartNumber + '</span>' +
+            ' AJR ' + '<span class="project-edit">' + road.trackCode + '</span>' +
+            ' M:  ' + '<span class="project-edit">' + link.startAddressM + ' - ' + link.endAddressM + '</span>' +
             '</div>' +
             '</div>';
           span.push(div);
@@ -103,8 +98,7 @@
     };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
-      var selection = (((applicationModel.getSelectedTool() == 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) &&
-      selected[0].roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) ? selectedSplitData(selected) : formCommon.selectedData(selected));
+      var selection = selectedSplitData(selected);
       return _.template('' +
         '<header>' +
         formCommon.titleWithProjectName(project.name, currentProject) +
@@ -145,15 +139,25 @@
           dropdownOption(0, selected) +
           '<hr class="horizontal-line"/>' +
           secondPartForm(selection[1], selected) +
-          formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
+        formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
+        '<hr class="horizontal-line"/>' +
+        thirdPartForm(selection[2], selected) +
           '</form>';
     };
 
     var secondPartForm = function(selection, selected){
-      if (selected[1].endMValue !== selected[1].startMValue) {
+      if (selected[1].endAddressM !== selected[1].startAddressM) {
         return '<label>Toimenpiteet,' + selection  + '</label>' +
           '<span class="marker">'+markers[1]+'</span>' +
           dropdownOption(1, selected);
+      } else return '';
+    };
+
+    var thirdPartForm = function(selection, selected){
+      if (selected[2].endAddressM !== selected[2].startAddressM) {
+        return '<label>Toimenpiteet,' + selection  + '</label>' +
+          '<span class="marker">'+markers[2]+'</span>' +
+          dropdownOption(2, selected);
       } else return '';
     };
 
