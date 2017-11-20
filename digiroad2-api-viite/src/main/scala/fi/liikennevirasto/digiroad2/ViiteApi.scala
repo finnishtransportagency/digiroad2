@@ -471,12 +471,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val writableProject = projectWritable(data("projectId").asInstanceOf[Long])
           val splitLinks = writableProject.preSplitSuravageLink(data("linkId").asInstanceOf[Long], data("x").asInstanceOf[Double],
             data("y").asInstanceOf[Double],data("projectId").asInstanceOf[Long],user.username)
-          val splitToApi = Map(
+          val split = Map(
             "roadNumber" -> splitLinks.head.roadNumber,
             "roadPartNumber" -> splitLinks.head.roadPartNumber,
             "trackCode" -> splitLinks.head.track
           ) ++ splitLinks.map(splitToApi)
-          Map("success" -> splitLinks.nonEmpty, "split" -> splitToApi)
+          Map("success" -> splitLinks.nonEmpty, "split" -> split)
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")
