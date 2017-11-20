@@ -38,11 +38,18 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   }
 
   override def update(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+    val oldAsset = getById(id)
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
+      oldAsset match {
+        case Some(old) if old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
+          updateExpiration(id, expired = true, username)
+          OracleObstacleDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+        case _ =>
+          OracleObstacleDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
+          id
+      }
     }
-    id
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {

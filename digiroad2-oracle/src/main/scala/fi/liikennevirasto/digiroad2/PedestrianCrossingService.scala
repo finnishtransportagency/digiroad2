@@ -31,13 +31,20 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   }
 
   override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+    val oldAsset = getById(id)
     val assetPoint = Point(updatedAsset.lon, updatedAsset.lat, 0)
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, geometry)
     val point = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(assetPoint)
     withDynTransaction {
-      OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+      oldAsset match {
+        case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
+          updateExpiration(id, expired = true, username)
+          OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+        case _ =>
+          OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+          id
+      }
     }
-    id
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {

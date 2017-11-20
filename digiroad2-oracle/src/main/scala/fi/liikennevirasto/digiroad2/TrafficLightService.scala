@@ -17,13 +17,20 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   override def typeId: Int = 280
 
   override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+    val oldAsset = getById(id)
     val assetPoint = Point(updatedAsset.lon, updatedAsset.lat, 0)
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, geometry)
     val point = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(assetPoint)
     withDynTransaction {
-      OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+      oldAsset match {
+        case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
+          updateExpiration(id, expired = true, username)
+          OracleTrafficLightDao.create(TrafficLightToBePersisted(updatedAsset.linkId, updatedAsset.lon, point.y, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+        case _ =>
+          OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+          id
+      }
     }
-    id
   }
 
   override def setFloating(persistedAsset: TrafficLight, floating: Boolean) = {
