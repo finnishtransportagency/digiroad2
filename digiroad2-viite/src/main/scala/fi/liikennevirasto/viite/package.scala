@@ -6,6 +6,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BaseRoadAddress
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 
+import scala.util.matching.Regex.Match
+
 package object viite {
   /* Tolerance in which we can allow MValues to be equal */
   val MaxAllowedMValueError = 0.001
@@ -48,6 +50,7 @@ package object viite {
   val ErrorFollowingPartsHaveDifferingEly = "Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat:"
   val ErrorRoadPartsHaveDifferingEly = "Tieosat ovat eri ELYistä"
   val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt"
+  val ErrorRoadLinkNotFound = "Tielinkkiä ei löytynyt"
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
@@ -75,14 +78,29 @@ package object viite {
     isRamp(r.roadNumber, r.track.value)
   }
 
-  def toString(geometry: Seq[Point]) = {
+  def toGeomString(geometry: Seq[Point]): String = {
     def toBD(d: Double): String = {
-      BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
+      val zeroEndRegex = """(\.0+)$""".r
+      val lastZero = """(\.[0-9])0*$""".r
+      val bd = BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
+      lastZero.replaceAllIn(zeroEndRegex.replaceFirstIn(bd, ""), { m => m.group(0) } )
     }
-    geometry.map(p => Seq(p.x, p.y, p.z).map(toBD).mkString(",", "[","]")).mkString(",")
+    geometry.map(p =>
+      (if (p.z != 0.0)
+        Seq(p.x, p.y, p.z)
+      else
+        Seq(p.x, p.y)).map(toBD).mkString("[", ",","]")).mkString(",")
   }
 
-  def toGeometry(geometryString: String) = {
-
+  def toGeometry(geometryString: String): Seq[Point] = {
+    def toBD(s: String): Double = {
+      BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
+    val pointRegex = raw"\[[^\]]*]".r
+    val regex = raw"\[(\-?\d+\.?\d*),(\-?\d+\.?\d*),?(\-?\d*\.?\d*)?\]".r
+    pointRegex.findAllIn(geometryString).map {
+      case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
+      case regex(x, y, _) => Point(toBD(x), toBD(y))
+    }.toSeq
   }
 }

@@ -15,6 +15,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+import fi.liikennevirasto.viite.util.toProjectLink
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
@@ -28,14 +29,6 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       f
       dynamicSession.rollback()
     }
-  }
-
-  private def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
-    ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
-      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-      roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
-      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely, false)
   }
 
   test("create empty road address project") {
@@ -350,5 +343,20 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       updatedProjectlinks.head.geometry.size should be (3)
       updatedProjectlinks.head.geometry should be (Stream(Point(1.0,1.0,1.0), Point(2.0,2.0,2.0), Point(1.0,2.0,0.0)))
     }
+  }
+
+  test("Write and read geometry from string notation") {
+    val seq = Seq(Point(123,456,789), Point(4848.125000001,4857.1229999999,48775.123), Point(498487,48373), Point(472374,238474,0.1), Point(0.0, 0.0), Point(-10.0, -20.09, -30.0))
+    val converted = fi.liikennevirasto.viite.toGeomString(seq)
+    converted.contains(".000") should be (false)
+    converted.contains("4848.125,") should be (true)
+    converted.contains("4857.123,") should be (true)
+    val back = fi.liikennevirasto.viite.toGeometry(converted)
+    back.zip(seq).foreach{ case (p1,p2) =>
+      p1.x should be (p2.x +- 0.0005)
+      p1.y should be (p2.y +- 0.0005)
+      p1.z should be (p2.z +- 0.0005)
+    }
+
   }
 }
