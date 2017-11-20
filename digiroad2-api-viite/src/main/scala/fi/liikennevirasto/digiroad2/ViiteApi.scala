@@ -483,7 +483,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             Point(Math.abs(vectorRotate2.y), Math.abs(vectorRotate2.x))
           )
         )
-      ) ++ splitLinks.map(splitToApi)
+      ) ++ splitLinks.flatMap(splitToApi)
       Map("success" -> splitLinks.nonEmpty, "response" -> split)
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)

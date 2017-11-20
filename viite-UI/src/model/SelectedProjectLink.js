@@ -6,6 +6,7 @@
     var dirty = false;
     var splitSuravage = {};
     var LinkGeomSource = LinkValues.LinkGeomSource;
+    var preSplitData = null;
 
     var open = function (linkid, multiSelect) {
       if (!multiSelect) {
@@ -84,13 +85,25 @@
     };*/
 
     var preSplitSuravageLink = function(suravage, mousePoint) {
-      projectLinkCollection.preSplitProjectLinks(suravage.linkId, mousePoint, function(){
-        eventbus.once('projectLink:preSplitSuccess', function(preSplitData){
+      projectLinkCollection.preSplitProjectLinks(suravage.linkId, mousePoint);
+        eventbus.once('projectLink:preSplitSuccess', function(data){
+          preSplitData = data;
+          var selection = [data.a, data.b];
+          var splitedA = data.a;
+          var splitedB = data.b;
+          var suravageC = data.c;
+          ids = projectLinkCollection.getMultiSelectIds(splitedA.linkId);
+          current = projectLinkCollection.getByLinkId(_.flatten(ids));
+          splitedA.marker = "A";
+          splitedB.marker = "B";
+          suravageC.marker = "C";
+          splitedA.splitPoint = mousePoint;
+          splitedB.splitPoint = mousePoint;
+          suravageC.splitPoint = mousePoint;
           applicationModel.removeSpinner();
+          eventbus.trigger('split:projectLinks', [splitedA, splitedB, suravageC]);
 
-          //TODO add data to form/object
 
-          // var selection = [preSplitData.a, preSplitData.b];
           // if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
           //   // Re-split with a new split point
           //   ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
@@ -119,8 +132,8 @@
           //   ids = _.uniq(_.pluck(selection, 'linkId'));
           //   eventbus.trigger('split:projectLinks', selection);
           // }
+        // });
         });
-      });
     };
 
     var splitSuravageLinks = function(nearestSuravage, split, mousePoint, callback) {

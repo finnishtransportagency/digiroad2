@@ -228,9 +228,7 @@
 
       var rootElement = $('#feature-attributes');
       eventbus.on('projectLink:split', function(selected) {
-        selectedProjectLink = _.filter(selected, function (sel) {
-          return sel.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value;
-        });
+        selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));

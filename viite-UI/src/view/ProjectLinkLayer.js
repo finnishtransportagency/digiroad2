@@ -260,8 +260,9 @@
       };
 
       var indicatorsForSplit = function() {
-        return mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-          markerContainer(link, middlePoint);
+        // return mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+        return _.map(links, function(link){
+          markerContainer(link, link.middlePoint);
         });
       };
 
@@ -687,7 +688,7 @@
 
     var mapOverLinkMiddlePoints = function(links, transformation) {
       return _.map(links, function(link) {
-        var points = _.map(link.points, function(point) {
+        var points = _.map(link.geometry, function(point) {
           return [point.x, point.y];
         });
         var lineString = new ol.geom.LineString(points);

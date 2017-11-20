@@ -313,7 +313,7 @@
           //TODO error message handling
         } else {
          //TODO success handling
-          eventbus.trigger('projectLink:preSplitSuccess', successObject.split);
+          eventbus.trigger('projectLink:preSplitSuccess', successObject.response);
         }}, function(failureObject){
         //TODO Exception error handling
       });
