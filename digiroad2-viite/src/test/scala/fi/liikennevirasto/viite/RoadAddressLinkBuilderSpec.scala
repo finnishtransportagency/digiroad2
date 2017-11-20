@@ -198,11 +198,15 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
   }
 
   test("Building ProjectAddressLink partitioner") {
-    val unknownProjectLink = ProjectLink(0,0,0,Track.Unknown,Discontinuity.Continuous,0,0,None,None,None,0,0,0.0,0.0,SideCode.Unknown,(None,None),false, List(),0,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false)
+    val unknownProjectLink = ProjectLink(0,0,0,Track.Unknown,Discontinuity.Continuous,0,0,None,None,None,0,0,0.0,0.0,
+      SideCode.Unknown,(None,None),false, List(),0,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false,
+      None, 85088L)
     val projectLinks =
       Map(
-        1717380l -> ProjectLink(1270,0,0,Track.apply(99), Continuous,1021,1028,None,None,None,70001448,1717380,0.0,6.0,AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false),
-        1717374l -> ProjectLink(1259,1130,0,Combined, Continuous,959,1021,None,None,None,70001437,1717374,0.0,61.0,AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false)
+        1717380l -> ProjectLink(1270,0,0,Track.apply(99), Continuous,1021,1028,None,None,None,70001448,1717380,0.0,6.0,
+          AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false, None, 85088L),
+        1717374l -> ProjectLink(1259,1130,0,Combined, Continuous,959,1021,None,None,None,70001437,1717374,0.0,61.0,
+          AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false, None, 85088L)
       )
 
     val roadLinks = Seq(

@@ -39,6 +39,10 @@ object Discontinuity {
     values.find(_.value == intValue).getOrElse(Continuous)
   }
 
+  def apply(longValue: Long): Discontinuity = {
+    apply(longValue.toInt)
+  }
+
   def apply(s: String): Discontinuity = {
     values.find(_.description.equalsIgnoreCase(s)).getOrElse(Continuous)
   }
