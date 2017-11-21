@@ -637,9 +637,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getRoadAddressSingleProject(projectId: Long): Option[RoadAddressProject] = {
+  def getRoadAddressSingleProject(projectId: Long, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus]): Option[RoadAddressProject] = {
     withDynTransaction {
-      ProjectDAO.getRoadAddressProjects(projectId).headOption
+      ProjectDAO.getRoadAddressProjects(projectId, filterNotStatus).headOption
     }
   }
 
@@ -1019,9 +1019,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           }
           case LinkStatus.Numbering => {
             val project = getProjectWithReservationChecks(projectId, roadNumber, roadPartNumber)
-            if (!project.isReserved(roadNumber, roadPartNumber))
-              ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy,ely)
-            ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, roadNumber, roadPartNumber, userName)
+            ProjectDAO.getProjectLinksByLinkId(updatedProjectLinks.head.linkId).headOption match {
+              case Some(roadPartLink) =>
+                if (roadPartLink.roadNumber == roadNumber && roadPartLink.roadPartNumber == roadPartNumber)
+                  throw new ProjectValidationException(s"Numeroinnissa ei voi käyttää alkuperäistä tienumeroa ja -osanumeroa") // you cannot use current roadnumber and roadpart number in numbering operation
+                if (!project.isReserved(roadNumber, roadPartNumber))
+                  ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy, ely)
+                ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, roadNumber, roadPartNumber, userName)
+              case _ => throw new ProjectValidationException(s"Linkkiä ei löytynyt projektista")
+            }
           }
           case LinkStatus.Transfer => {
             if (isRoadPartTransfer(projectLinks, updatedProjectLinks, roadNumber, roadPartNumber)) {
