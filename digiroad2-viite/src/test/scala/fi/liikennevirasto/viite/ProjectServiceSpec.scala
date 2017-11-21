@@ -76,6 +76,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int,
+                         discontinuity: Int, roadType: Int, roadLinkSource: Int,
+                         roadEly: Long, user: String): Map[String, Any] = {
+    projectService.createProjectLinks(linkIds, projectId, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity),
+      RoadType.apply(roadType), LinkGeomSource.apply(roadLinkSource), roadEly, user)
+  }
   private def toProjectLink(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
@@ -499,8 +505,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateProjectLinks(savedProject.id, Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Terminated, "-", 5, 205, None)
       projectService.updateProjectLinks(savedProject.id, linkIds -- Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Transfer, "-", 5, 205, None)
       ProjectDAO.getProjectLinks(savedProject.id).size should be (66)
-      projectService.createProjectLinks(newLinkTemplates.take(1).map(_.linkId), savedProject.id, 5L, 205L, 1, 5, 2, 1, 8, "U").get("success") should be (Some(true))
-      projectService.createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId), savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U").get("success") should be (Some(true))
+      createProjectLinks(newLinkTemplates.take(1).map(_.linkId), savedProject.id, 5L, 205L, 1, 5, 2, 1, 8, "U").get("success") should be (Some(true))
+      createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId), savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U").get("success") should be (Some(true))
       ProjectDAO.getProjectLinks(savedProject.id).size should be (68)
       val changeInfo = projectService.getChangeProject(savedProject.id)
       projectService.projectLinkPublishable(savedProject.id) should be(true)

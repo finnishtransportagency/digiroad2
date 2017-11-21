@@ -72,6 +72,13 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int,
+                                 discontinuity: Int, roadType: Int, roadLinkSource: Int,
+                                 roadEly: Long, user: String): Map[String, Any] = {
+    projectService.createProjectLinks(linkIds, projectId, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity),
+      RoadType.apply(roadType), LinkGeomSource.apply(roadLinkSource), roadEly, user)
+  }
+
   private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
     (sideCode, track) match {
       case (_, Track.Combined) => TrafficDirection.BothDirections
@@ -1355,7 +1362,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(roadLinks))
-      val resp = projectService.createProjectLinks(Seq(123L, 121L, 122L), project.id, 39999, 12, 0, 1, 1, 1, 8, "user")
+      val resp = createProjectLinks(Seq(123L, 121L, 122L), project.id, 39999, 12, 0, 1, 1, 1, 8, "user")
       resp.get("success") should be(Some(true))
       val links = projectService.getLinksByProjectLinkId(Set(123L, 121L, 122L), project.id, false)
       val start = links.find(_.linkId == 123L)
