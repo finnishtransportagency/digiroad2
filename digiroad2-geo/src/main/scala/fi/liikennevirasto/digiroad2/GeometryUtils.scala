@@ -302,10 +302,10 @@ object GeometryUtils {
     (Point(left, top), Point(right, bottom))
   }
 
-  def isLinear(polyLines: Seq[PolyLine]): Boolean =
+  def isLinear(polyLines: Iterable[PolyLine]): Boolean =
     !isNonLinear(polyLines)
 
-  def isNonLinear(polyLines: Seq[PolyLine]): Boolean = {
+  def isNonLinear(polyLines: Iterable[PolyLine]): Boolean = {
     if (polyLines.isEmpty)
       false
     else {
@@ -333,6 +333,12 @@ object GeometryUtils {
       case _ =>
         val (p1, p2) = (geometry.head, geometry.tail.head)
         Vector3d(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
+    }
+  }
+
+  def geometryToSegments(geometry: Seq[Point]): Seq[Seq[Point]] = {
+    geometry.zip(geometry.tail).map {
+      case (p1, p2) => Seq(p1, p2)
     }
   }
 

@@ -56,7 +56,7 @@
     };
   };
 
-  root.RoadCollection = function(backend) {
+  root.RoadCollection = function(backend, LinkVals) {
     var roadLinkGroups = [];
     var roadLinkGroupsSuravage = [];
     var tmpRoadLinkGroups = [];
@@ -64,6 +64,7 @@
     var tmpNewRoadAddresses = [];
     var preMovedRoadAddresses = [];
     var changedIds = [];
+    var LinkStatus = LinkValues.LinkStatus;
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -73,6 +74,10 @@
       return _.filter(roadLinks().concat(suravageRoadLinks()), function(roadLink) {
         return roadLink.isSelected() && roadLink.getData().anomaly === 0;
       });
+    };
+
+    this.getLinkStatus = function () {
+      return LinkStatus;
     };
 
     this.fetch = function(boundingBox, zoom) {
@@ -294,5 +299,26 @@
     var roadIsUnknown = function(road){
       return  0 === road.roadNumber && 1 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
     };
+    
+    this.findReservedProjectLinks = function(boundingBox, zoomLevel, projectId) {
+      backend.getProjectLinks({boundingBox: boundingBox, zoom: zoomLevel, projectId: projectId}, function(fetchedLinks) {
+        var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
+          return link.status ===  LinkStatus.NotHandled.value;
+        }).uniq().value();
+        var notHandledOL3Features = _.map(notHandledLinks, function(road) {
+          var points = _.map(road.points, function (point) {
+            return [point.x, point.y];
+          });
+          var feature = new ol.Feature({
+            geometry: new ol.geom.LineString(points)
+          });
+          feature.projectLinkData = road;
+          feature.projectId = projectId;
+          return feature;
+        });
+        eventbus.trigger('linkProperties:highlightReservedRoads', notHandledOL3Features);
+      });
+    };
+    
   };
 })(this);

@@ -211,23 +211,6 @@ object TRPavedRoadType {
   case object Unknown extends TRPavedRoadType { def value = 99;  def pavedRoadType = "Unknown";}
 }
 
-sealed trait Operation {
-  def value: Int
-}
-object Operation {
-  val values = Set(Create, Update, Expire, Remove, Noop)
-
-  def apply(intValue: Int): Operation = {
-    values.find(_.value == intValue).getOrElse(Noop)
-  }
-
-  case object Create extends Operation { def value = 0 }
-  case object Update extends Operation { def value = 1 }
-  case object Expire extends Operation { def value = 2 }
-  case object Remove extends Operation { def value = 3 }
-  case object Noop extends Operation { def value = 3 }
-}
-
 sealed trait TRLaneArrangementType {
   def value: Int
 }
@@ -291,6 +274,9 @@ case class TierekisteriDamagedByThawData(roadNumber: Long, startRoadPartNumber: 
 
 case class TierekisteriEuropeanRoadData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: String) extends TierekisteriAssetData
+
+case class TierekisteriSpeedLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int, roadSide: RoadSide) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -987,6 +973,34 @@ class TierekisteriEuropeanRoadAssetClient(trEndPoint: String, trEnable: Boolean,
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
     TierekisteriEuropeanRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue)
+  }
+}
+
+class TierekisteriSpeedLimitAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriSpeedLimitData
+
+  override val trAssetType = "tl168"
+  private val trSpeedLimitValue = "NOPRAJ"
+  private val trSide = "PUOLI"
+
+
+  override def mapFields(data: Map[String, Any]): TierekisteriSpeedLimitData = {
+
+    //Mandatory field
+    val assetValue = convertToInt(getMandatoryFieldValue(data, trSpeedLimitValue)).get
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+    val roadSide = convertToInt(getMandatoryFieldValue(data, trSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+
+
+    TierekisteriSpeedLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue, roadSide)
   }
 }
 

@@ -50,7 +50,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
@@ -92,7 +92,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Create new obstacle") {
     runWithRollback {
-      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", roadLink)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
 
@@ -130,10 +131,9 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Asset can be outside link within treshold") {
     runWithRollback {
-      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 235, linkSource = NormalLinkInterface)
-
+      val roadLink = RoadLink(1191950690, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 14.178, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", roadLink)
       val asset = service.getById(id).get
-
       asset.floating should be(false)
     }
   }
@@ -144,25 +144,26 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       username = "Hannu",
       configuration = Configuration(authorizedMunicipalities = Set(235)))
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val roadLink = VVHRoadlink(5797521, 853, Seq(Point(240863.911, 6700590.15),
-      Point(240864.188, 6700595.048),
-      Point(240863.843, 6700601.473),
-      Point(240862.771, 6700609.933),
-      Point(240861.592, 6700619.412),
-      Point(240859.882, 6700632.051),
-      Point(240862.857, 6700644.888),
-      Point(240864.957, 6700651.228),
-      Point(240867.555, 6700657.523),
-      Point(240869.228, 6700664.658),
-      Point(240871.009, 6700670.273),
-      Point(240877.602, 6700681.724),
-      Point(240881.381, 6700685.655),
-      Point(240885.898, 6700689.602)), Municipality,
-      TrafficDirection.BothDirections, FeatureClass.AllOthers)
-    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-      roadLink).map(toRoadLink))
-    when(mockRoadLinkService.getRoadLinkFromVVH(5797521)).thenReturn(Seq(
-      roadLink).map(toRoadLink).headOption)
+
+    val geometry = Seq(Point(240863.911, 6700590.15),
+          Point(240864.188, 6700595.048),
+          Point(240863.843, 6700601.473),
+          Point(240862.771, 6700609.933),
+          Point(240861.592, 6700619.412),
+          Point(240859.882, 6700632.051),
+          Point(240862.857, 6700644.888),
+          Point(240864.957, 6700651.228),
+          Point(240867.555, 6700657.523),
+          Point(240869.228, 6700664.658),
+          Point(240871.009, 6700670.273),
+          Point(240877.602, 6700681.724),
+          Point(240881.381, 6700685.655),
+          Point(240885.898, 6700689.602))
+
+    val roadLink = RoadLink(5797521, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
+
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
+    when(mockRoadLinkService.getRoadLinkFromVVH(5797521)).thenReturn(Seq(roadLink).headOption)
 
     val service = new ObstacleService(mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
@@ -170,7 +171,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     }
 
     runWithRollback {
-      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, 2), "unit_test", roadLink.geometry, 853, linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(5797521, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
+      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, 2), "unit_test", roadLink)
 
       val asset = service.getById(id).get
 

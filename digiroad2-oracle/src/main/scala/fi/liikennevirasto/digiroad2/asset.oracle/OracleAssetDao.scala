@@ -51,7 +51,7 @@ class OracleAssetDao {
           join asset_link al on al.asset_id = a.id
           join lrm_position lrm on lrm.id = al.position_id
           join  #$idTableName i on i.id = lrm.link_id
-          where a.asset_type_id = $typeId AND (a.valid_to IS NULL OR a.valid_to >= CURRENT_TIMESTAMP ) AND a.floating = 0
+          where a.asset_type_id = $typeId AND (a.valid_to IS NULL OR a.valid_to >= SYSDATE ) AND a.floating = 0
          )
       """.execute
     }
