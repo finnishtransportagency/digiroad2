@@ -675,13 +675,6 @@
           return new ol.geom.LineString(coordPoints);
         };
 
-        var calculateSplitProperties = function(nearestSuravage, point) {
-          var lineString = pointsToLineString(nearestSuravage.points);
-          var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
-          var splitVertices = GeometryUtils.splitByPoint(lineString, point);
-          return _.merge({ splitMeasure: splitMeasure, point: splitVertices.secondSplitVertices[0] }, splitVertices);
-        };
-
         var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
 
         if (!nearest || !isWithinCutThreshold(nearest.distance)) {
@@ -694,7 +687,7 @@
         if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
           nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
         }
-        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, mousePoint);
+        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, {x: nearest.point[0], y: nearest.point[1]});
         eventbus.once('split:cutPointFeature', function(cutGeom) {
           addCutLine(cutGeom);
         });
