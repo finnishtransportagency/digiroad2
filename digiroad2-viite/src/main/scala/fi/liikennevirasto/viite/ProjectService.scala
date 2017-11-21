@@ -1291,11 +1291,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case UnChanged =>
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue,
             endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue,
-            linkId = pl.linkId, modifiedBy = Some(project.createdBy)))
+            linkId = pl.linkId, modifiedBy = Some(project.createdBy),
+            geometry = pl.geometry, adjustedTimestamp = pl.linkGeometryTimeStamp))
         case New =>
           Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track,
             pl.discontinuity, pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy),
-            0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode, VVHClient.createVVHTimeStamp(), pl.calibrationPoints,
+            0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.calibrationPoints,
             floating = false, pl.geometry, pl.linkGeomSource, pl.ely, terminated = false))
         case Transfer =>
           val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
@@ -1309,12 +1310,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             roadAddress.copy(id = NewRoadAddress, startDate = Some(project.startDate),
               startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
               startMValue = pl.startMValue, endMValue = pl.endMValue,
-              linkId = pl.linkId, modifiedBy = Some(project.createdBy))
+              linkId = pl.linkId, modifiedBy = Some(project.createdBy), geometry = pl.geometry,
+              adjustedTimestamp = pl.linkGeometryTimeStamp)
           )
         case Terminated =>
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue,
             endAddrMValue = pl.endAddrMValue, endDate = Some(project.startDate), startMValue = pl.startMValue, endMValue = pl.endMValue,
-            linkId = pl.linkId, terminated = true, modifiedBy = Some(project.createdBy)))
+            linkId = pl.linkId, terminated = true, modifiedBy = Some(project.createdBy),
+            geometry = pl.geometry, adjustedTimestamp = pl.linkGeometryTimeStamp))
         case _ =>
           logger.error(s"Invalid status for split project link: ${pl.status} in project ${pl.projectId}")
           throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
@@ -1340,7 +1343,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val linkIds = projectLinks.map(_.linkId).toSet ++ expiringRoadAddresses.values.map(_.linkId).toSet
     val roadLinks = (roadLinkService.fetchVVHRoadlinks(linkIds, frozenTimeVVHAPIServiceEnabled) ++
       roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIds)).map(rl => rl.linkId -> rl).toMap
-
     val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
     val (roadAddressesWithoutGeom, newRoadAddresses) = convertToRoadAddress(splitReplacements, pureReplacements, additions,
       roadLinks, expiringRoadAddresses, project).partition(_.floating)
@@ -1365,8 +1367,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def convertProjectLinkToRoadAddress(pl: ProjectLink, vvhLink: Option[VVHRoadlink], project: RoadAddressProject,
                                               source: Option[RoadAddress]): RoadAddress = {
-    val geom = if (vvhLink.nonEmpty) {
-      val linkGeom = GeometryUtils.geometryEndpoints(GeometryUtils.truncateGeometry2D(vvhLink.get.geometry, pl.startMValue, pl.endMValue))
+    val geom = if (pl.geometry.nonEmpty) {
+      val linkGeom = GeometryUtils.geometryEndpoints(GeometryUtils.truncateGeometry2D(pl.geometry, pl.startMValue, pl.endMValue))
       if (pl.sideCode == SideCode.TowardsDigitizing)
         Seq(linkGeom._1, linkGeom._2)
       else
@@ -1376,7 +1378,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track,
       pl.discontinuity, pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId,
-      pl.startMValue, pl.endMValue, pl.sideCode, vvhLink.map(_.vvhTimeStamp).getOrElse(VVHClient.createVVHTimeStamp()),
+      pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp,
       pl.calibrationPoints, floating = vvhLink.isEmpty, geom, pl.linkGeomSource, pl.ely, terminated = false)
     pl.status match {
       case UnChanged =>
