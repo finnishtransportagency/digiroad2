@@ -339,7 +339,7 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
       ProjectDAO.createRoadAddressProject(rap)
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-      ProjectDAO.reserveRoadPart(id, 5, 203, "TestUser")
+      ProjectDAO.reserveRoadPart(id, 5, 203, "TestUser", 8)
       ProjectDAO.create(addresses)
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
       val projectlinksWithDummyGeom = ProjectDAO.getProjectLinks(id).map(x=>x.copy(geometry = Seq(Point(1,1,1),Point(2,2,2),Point(1,2))))
