@@ -395,17 +395,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         LinkStatus.apply(links.linkStatus), user.username, links.roadNumber,
         links.roadPartNumber, links.userDefinedEndAddressM, links.roadType, links.discontinuity, links.roadEly) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
-        case None => {
-          try {
-            println("success?")
-            writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
-            println("success?")
-          }
-          catch {
-            case t: Throwable => t.printStackTrace
-          }
-          Map("success" -> true, "id" -> links.projectId, "publishable" -> (projectService.projectLinkPublishable(links.projectId)))
-        }
+        case None =>
+          writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
+          Map("success" -> true, "id" -> links.projectId, "publishable" -> projectService.projectLinkPublishable(links.projectId))
       }
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
