@@ -224,8 +224,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int,
-                         discontinuity: Int, roadType: Int, roadLinkSource: Int, roadEly: Long, user: String): Map[String, Any] = {
+  def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
+                         discontinuity: Discontinuity, roadType: RoadType, roadLinkSource: LinkGeomSource,
+                         roadEly: Long, user: String): Map[String, Any] = {
     def sortRamps(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (seq.headOption.exists(isRamp))
         seq.find(l => linkIds.headOption.contains(l.linkId)).toSeq ++ seq.filter(_.linkId != linkIds.headOption.getOrElse(0L))
@@ -233,9 +234,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         seq
     }
 
-    val isSuravage = roadLinkSource == LinkGeomSource.SuravageLinkInterface.value
     val linkId = linkIds.head
-    val roadLinks = (if(isSuravage) {
+    val roadLinks = (if (roadLinkSource != LinkGeomSource.SuravageLinkInterface) {
       roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds.toSet, true, frozenTimeVVHAPIServiceEnabled)
     } else {
       roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIds.toSet)
@@ -243,10 +243,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (roadLinks.keySet != linkIds.toSet)
       return Map("success" -> false,
         "errormessage" -> (linkIds.toSet - roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
-    val project = ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
-    val projectLinks = linkIds.map{ id =>
-      newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuity),
-        RoadType.apply(roadType), roadEly)
+    val project = withDynSession {
+      ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
+    }
+    val projectLinks = linkIds.map { id =>
+      newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity,
+        roadType, roadEly)
     }
     setProjectEly(projectId, roadEly) match {
       case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
@@ -384,19 +386,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * project links that are no longer reserved for the project. Reservability is check before this.
     */
   private def addLinksToProject(project: RoadAddressProject): Option[String] = {
-//    def toProjectLink(roadTypeMap: Map[Long, (Seq[Point], RoadType, Long)])(roadAddress: RoadAddress): ProjectLink = {
-//      val (geometry, roadType, timeStamp) = roadTypeMap.getOrElse(roadAddress.linkId, (roadAddress.geometry, RoadType.Unknown, new Date().getTime))
-//      println(roadAddress.linkId + " -> " + roadTypeMap.get(roadAddress.linkId) + " // " + geometry)
-//      ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
-//        roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-//        roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-//        roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, geometry, project.id,
-//        LinkStatus.NotHandled, roadType,
-//        roadAddress.linkGeomSource, GeometryUtils.geometryLength(geometry), roadAddress.id, roadAddress.ely, reversed = false,
-//        linkGeometryTimeStamp = timeStamp
-//      )
-//    }
-//
     //TODO: Check that there are no floating road addresses present when starting
     logger.info(s"Adding reserved road parts with links to project ${project.id}")
     val projectLinks = ProjectDAO.getProjectLinks(project.id)
@@ -777,13 +766,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val fetchProjectLinksF = fetch.ProjectLinkResultF
     val fetchVVHStartTime = System.currentTimeMillis()
 
-    val (normalLinks, complementaryLinks, suravageLinks) = awaitRoadLinks(fetch.roadLinkF, fetch.complementaryF, fetch.suravageF)
-    val linkIds = normalLinks.map(_.linkId).toSet ++ complementaryLinks.map(_.linkId).toSet ++ suravageLinks.map(_.linkId).toSet
+    val (regularLinks, complementaryLinks, suravageLinks) = awaitRoadLinks(fetch.roadLinkF, fetch.complementaryF, fetch.suravageF)
+    val linkIds = regularLinks.map(_.linkId).toSet ++ complementaryLinks.map(_.linkId).toSet ++ suravageLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
 
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val ((floating, addresses), projectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
+
+    val normalLinks = regularLinks.filterNot(l => projectLinks.keySet.contains(l.linkId))
 
     val missedRL = if(frozenTimeVVHAPIServiceEnabled) {
       Map[Long, Seq[MissingRoadAddress]]()

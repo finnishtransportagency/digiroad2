@@ -9,6 +9,8 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink}
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
+
+  // TODO: remove road link dependency from project link, use only project link data VIITE-877
   def build(roadLink: RoadLinkLike, projectLink: ProjectLink): ProjectAddressLink = {
     val roadLinkType = roadLink.linkSource match {
       case NormalLinkInterface => NormalRoadLinkType

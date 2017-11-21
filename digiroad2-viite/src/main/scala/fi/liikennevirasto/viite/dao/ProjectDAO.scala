@@ -148,7 +148,6 @@ object ProjectDAO {
       val startDate = r.nextDateOption().map(d => new DateTime(d.getTime))
       val endDate = r.nextDateOption().map(d => new DateTime(d.getTime))
       val geometryTimeStamp = r.nextLong()
-      println(s"read project link ${linkId} -> $geom ${parseStringGeometry(geom).mkString(",")}")
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
         None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom), projectId,
@@ -209,8 +208,7 @@ object ProjectDAO {
       addressPS.setLong(16, pl.ely)
       addressPS.setBoolean(17, pl.reversed)
       addressPS.setString(18, toGeomString(pl.geometry))
-      println(s"Saved project link ${pl.linkId} -> ${toGeomString(pl.geometry)}")
-      addressPS.addBatch()
+     addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
     addressPS.executeBatch()
