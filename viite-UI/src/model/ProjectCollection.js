@@ -299,23 +299,23 @@
       }
     };
 
-    this.preSplitProjectLinks = function(linkId, mousePoint){
+    this.preSplitProjectLinks = function(linkId, nearestPoint){
       applicationModel.addSpinner();
       var form = $('#roadAddressProjectFormCut');
       var data = {
       "projectId": projectinfo.id,
       "linkId": linkId,
-      "x": mousePoint.x,
-      "y": mousePoint.y
+      "x": nearestPoint.x,
+      "y": nearestPoint.y
       };
       backend.getPreSplitedData(data, function(successObject){
         if (!successObject.success) {
-          //TODO error message handling
+          new ModalConfirm(successObject.errorMessage);
+          applicationModel.removeSpinner();
         } else {
-         //TODO success handling
           eventbus.trigger('projectLink:preSplitSuccess', successObject.response);
         }}, function(failureObject){
-        //TODO Exception error handling
+        eventbus.trigger('roadAddress:projectLinksUpdateFailed', INTERNAL_SERVER_ERROR_500);
       });
 
     };

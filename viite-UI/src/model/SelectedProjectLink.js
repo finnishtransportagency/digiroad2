@@ -50,8 +50,8 @@
       eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
     };
 
-    var preSplitSuravageLink = function(suravage, mousePoint) {
-      projectLinkCollection.preSplitProjectLinks(suravage.linkId, mousePoint);
+    var preSplitSuravageLink = function(suravage, nearestPoint) {
+      projectLinkCollection.preSplitProjectLinks(suravage.linkId, nearestPoint);
         eventbus.once('projectLink:preSplitSuccess', function(data){
           preSplitData = data;
           var suravageA = data.a;
@@ -65,9 +65,9 @@
           suravageA.text = "SUUNNITELMALINKKI";
           suravageB.text = "SUUNNITELMALINKKI";
           terminatedC.text = "NYKYLINKKI";
-          suravageA.splitPoint = mousePoint;
-          suravageB.splitPoint = mousePoint;
-          terminatedC.splitPoint = mousePoint;
+          suravageA.splitPoint = nearestPoint;
+          suravageB.splitPoint = nearestPoint;
+          terminatedC.splitPoint = nearestPoint;
           applicationModel.removeSpinner();
           eventbus.trigger('split:projectLinks', [suravageA, suravageB, terminatedC]);
           eventbus.trigger('split:cutPointFeature', data.split);
