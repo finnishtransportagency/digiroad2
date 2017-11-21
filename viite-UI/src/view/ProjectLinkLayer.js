@@ -597,6 +597,23 @@
         });
       };
 
+      var addCutLine = function(cutGeom){
+        var points = _.map(cutGeom.geometry, function (point) {
+          return [point.x, point.y];
+        });
+        var cutFeature = new ol.Feature({
+          geometry: new ol.geom.LineString(points),
+          type: 'cut-line'
+        });
+        var style = new ol.style.Style({
+          stroke: new ol.style.Stroke({color: [0, 0 , 255, 1], width: 9}),
+          zIndex: 11
+        });
+        cutFeature.setStyle(style);
+        removeFeaturesByType('cut-line');
+        addFeaturesToSelection([cutFeature]);
+      };
+
       var clickHandler = function(evt) {
         if (applicationModel.getSelectedTool() === 'Cut') {
           $('.wrapper').remove();
@@ -677,25 +694,11 @@
         if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
           nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
         }
-        var cutGeometry = selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, mousePoint);
+        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, mousePoint);
         eventbus.once('split:cutPointFeature', function(cutGeom) {
-          var points = _.map(cutGeom.geometry, function (point) {
-            return [point.x, point.y];
-          });
-          var cutFeature = new ol.Feature({
-            geometry: new ol.geom.LineString([points]),
-            type: 'cut-line'
-          });
-          var style = new ol.style.Style({
-            stroke: new ol.style.Stroke({color: [0, 0 , 255, 0.5], width: 6}),
-            zIndex: 14
-          });
-          cutFeature.setStyle(style);
-          vectorLayer.getSource().addFeatures(cutFeature);
-          suravageRoadProjectLayer.getSource().addFeatures(cutFeature);
+          addCutLine(cutGeom);
         });
-
-        projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
+          projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
       };
     };
 
