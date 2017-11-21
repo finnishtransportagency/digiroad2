@@ -564,7 +564,9 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var editConstrains = function(selectedAsset) {
-    return selectedAsset.administrativeClass === 'State';
+    return false;
+    //TODO revert this when DROTH-909
+    //return selectedAsset.administrativeClass === 'State';
   };
 
   return {
