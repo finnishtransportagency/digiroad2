@@ -21,7 +21,6 @@ case class PedestrianCrossing(id: Long, linkId: Long,
                               modifiedAt: Option[DateTime] = None,
                               linkSource: LinkGeomSource) extends PersistedPointAsset
 
-case class PedestrianCrossingToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OraclePedestrianCrossingDao {
   def update(id: Long, persisted: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {

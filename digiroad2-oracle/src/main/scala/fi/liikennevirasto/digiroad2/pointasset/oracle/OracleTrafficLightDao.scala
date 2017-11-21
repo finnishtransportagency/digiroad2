@@ -21,8 +21,6 @@ case class TrafficLight(id: Long, linkId: Long,
                               modifiedAt: Option[DateTime] = None,
                               linkSource: LinkGeomSource) extends PersistedPointAsset
 
-case class TrafficLightToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
-
 object OracleTrafficLightDao {
   def fetchByFilter(queryFilter: String => String): Seq[TrafficLight] = {
 

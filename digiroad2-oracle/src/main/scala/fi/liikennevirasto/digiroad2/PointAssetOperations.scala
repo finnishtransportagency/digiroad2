@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
@@ -250,23 +249,13 @@ trait PointAssetOperations {
 
   def expire(id: Long, username: String): Long = {
     withDynSession {
-      Queries.updateAssetModified(id, username).first
-      sqlu"update asset set valid_to = sysdate where id = $id".first
+      expireWihoutTransaction(id, username)
     }
   }
 
-  def updateExpiration(id: Long, expired: Boolean, username: String) = {
-    val assetsUpdated = Queries.updateAssetModified(id, username).first
-    val propertiesUpdated = if (expired) {
-      sqlu"update asset set valid_to = sysdate where id = $id".first
-    } else {
-      sqlu"update asset set valid_to = null where id = $id".first
-    }
-    if (assetsUpdated == 1 && propertiesUpdated == 1) {
-      Some(id)
-    } else {
-      None
-    }
+  def expireWihoutTransaction(id: Long, username: String) = {
+    Queries.updateAssetModified(id, username).first
+    sqlu"update asset set valid_to = sysdate where id = $id".first
   }
 
   protected def convertPersistedAsset[T](setFloating: (PersistedAsset, Boolean) => T,

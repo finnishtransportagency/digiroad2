@@ -113,13 +113,13 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.text should equal(Some("HELSINKI:HELSINGFORS;;;;1;1;"))
       beforeUpdate.validityDirection should equal(2)
 
-      val newAssetId = service.update(id = 600053, IncomingDirectionalTrafficSign(100, 0, 123, 3, Some("New text"), Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+      val newAssetId = service.update(id = 600053, IncomingDirectionalTrafficSign(200, 0, 123, 3, Some("New text"), Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
 
       val afterUpdate = service.getByMunicipality(91).find(_.id == newAssetId).get
       afterUpdate.id should equal(newAssetId)
-      afterUpdate.lon should equal(100)
+      afterUpdate.lon should equal(200)
       afterUpdate.lat should equal(0)
-      afterUpdate.mValue should equal(100)
+      afterUpdate.mValue should equal(200)
       afterUpdate.linkId should equal(123)
       afterUpdate.municipalityCode should equal(91)
       afterUpdate.createdBy should equal(Some("test"))

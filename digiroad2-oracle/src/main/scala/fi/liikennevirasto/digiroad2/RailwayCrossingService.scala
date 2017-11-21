@@ -1,13 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleRailwayCrossingDao, RailwayCrossing}
 import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 
 case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String]) extends IncomingPointAsset
 
@@ -77,7 +74,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     oldAsset match {
       case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon=>
-        updateExpiration(id, expired = true, username)
+        expireWihoutTransaction(id, username)
         OracleRailwayCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, VVHClient.createVVHTimeStamp(), linkSource)
       case _ =>
         OracleRailwayCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)

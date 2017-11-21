@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 
@@ -51,7 +51,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     oldAsset match {
       case Some(old) if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
-        updateExpiration(id, expired = true, username)
+        expireWihoutTransaction(id, username)
         OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality ,username)
       case _ =>
         OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username)
