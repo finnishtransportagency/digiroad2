@@ -620,10 +620,16 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
 
-  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.TurningRestrictions)
+  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions)
   private val supportedTrafficSigns = Set[TRTrafficSignType](TRTrafficSignType.SpeedLimit, TRTrafficSignType.EndSpeedLimit, TRTrafficSignType.SpeedLimitZone, TRTrafficSignType.EndSpeedLimitZone,
     TRTrafficSignType.UrbanArea, TRTrafficSignType.EndUrbanArea, TRTrafficSignType.PedestrianCrossing, TRTrafficSignType.MaximumLength, TRTrafficSignType.Warning,
-    TRTrafficSignType.NoLeftTurn, TRTrafficSignType.NoRightTurn, TRTrafficSignType.NoUTurn)
+    TRTrafficSignType.NoLeftTurn, TRTrafficSignType.NoRightTurn, TRTrafficSignType.NoUTurn, TRTrafficSignType.ClosedToAllVehicles, TRTrafficSignType.NoPowerDrivenVehicles,
+    TRTrafficSignType.NoLorriesAndVans, TRTrafficSignType.NoVehicleCombinations, TRTrafficSignType.NoAgriculturalVehicles, TRTrafficSignType.NoMotorCycles, TRTrafficSignType.NoMotorSledges,
+    TRTrafficSignType.NoVehiclesWithDangerGoods, TRTrafficSignType.NoBuses, TRTrafficSignType.NoMopeds, TRTrafficSignType.NoCyclesOrMopeds, TRTrafficSignType.NoPedestrians,
+    TRTrafficSignType.NoPedestriansCyclesMopeds, TRTrafficSignType.NoRidersOnHorseback, TRTrafficSignType.NoEntry, TRTrafficSignType.OvertakingProhibited, TRTrafficSignType.EndProhibitionOfOvertaking,
+    TRTrafficSignType.MaxWidthExceeding, TRTrafficSignType.MaxHeightExceeding, TRTrafficSignType.MaxLadenExceeding, TRTrafficSignType.MaxMassCombineVehiclesExceeding, TRTrafficSignType.MaxTonsOneAxleExceeding,
+    TRTrafficSignType.MaxTonsOnBogieExceeding, TRTrafficSignType.WRightBend, TRTrafficSignType.WLeftBend, TRTrafficSignType.WSeveralBendsRight, TRTrafficSignType.WSeveralBendsLeft,
+    TRTrafficSignType.WDangerousDescent, TRTrafficSignType.WSteepAscent, TRTrafficSignType.WUnevenRoad, TRTrafficSignType.WChildren)
 
   private def generateProperties(trAssetData: TierekisteriAssetData) = {
     val trafficType = trAssetData.assetType.trafficSignType

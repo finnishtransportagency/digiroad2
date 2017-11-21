@@ -1,11 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
+import java.util.Date
+
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.DirectionalTrafficSign
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -33,6 +36,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
+  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
+    TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
+      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
+  )
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
   when(mockVVHRoadLinkClient.fetchByLinkId(1l))
@@ -72,6 +79,12 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Some(toRoadLink(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinkFromVVH(7478l))
     .thenReturn(Some(toRoadLink(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1l))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(2l))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(7478l))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean]))
     .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]]))
@@ -81,6 +94,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockRoadLinkService.getRoadLinkFromVVH(1611071l))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinkFromVVH(1611353))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611353))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -94,10 +109,24 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(1611071l, 1611070l, 1611069l))).thenReturn(Seq(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1611070l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary((1611071l))).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   when(mockRoadLinkService.getRoadAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq())
+
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611071l)).thenReturn(Some(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(2l))
+    .thenReturn(Some(RoadLink(2l, Nil, 0, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1l))
+    .thenReturn(Some(RoadLink(1l, Nil, 0, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
+
+//  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(Set(1611071l, 1611070l, 1611069l))).thenReturn(Seq(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))),
+//    RoadLink(1611070l,  List(Point(117.318, 0.0), Point(127.239, 0.0)), 127.239, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))),
+//    RoadLink(1611069l, List(Point(127.239, 0.0), Point(146.9, 0.0)), 146.9, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611071l)).thenReturn(Some(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
+
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH((1611071l))).thenReturn(Some(RoadLink(1611071l,  List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
 
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)
@@ -110,13 +139,15 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val roadLinkService: RoadLinkService = mockRoadLinkService
-    override val tierekisteriEnabled = false
   }
   val testLinearAssetService = new LinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
   val testMaintenanceRoadServiceService = new MaintenanceService(mockRoadLinkService, new DummyEventBus)
+  val testPavingService = new PavingService(mockRoadLinkService, new DummyEventBus)
+  val testRoadWidthService = new RoadWidthService(mockRoadLinkService, new DummyEventBus)
 
-  addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testMaintenanceRoadServiceService), "/*")
+  addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testMaintenanceRoadServiceService,
+    testPavingService, testRoadWidthService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("provide header to indicate session still active", Tag("db")) {
@@ -219,7 +250,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(39)
+      ps.size should equal(40)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")

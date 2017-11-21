@@ -57,11 +57,11 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
     RoadAddressChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
       (o \\ "source").extract[RoadAddressChangeSection], (o \\ "target").extract[RoadAddressChangeSection],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
-      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue))
+      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), false)
 }, {
   case o: RoadAddressChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val emptySection = RoadAddressChangeSection(None, None, None, None, None, None)
+    val emptySection = RoadAddressChangeSectionTR(None, None, None, None, None, None)
     o.changeType match {
       case New =>
         JObject(
@@ -84,6 +84,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("reversed", JInt(BigInt.apply(if (o.reversed) 1 else 0))),
           JField("source", Extraction.decompose(o.source)),
           JField("target", Extraction.decompose(o.target))
         )
@@ -144,7 +145,7 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressCh
     val (road, track, startPart, stm, endPart, enm) =
       (map.get("tie"), map.get("ajr"), map.get("aosa"), map.get("aet"), map.get("losa"), map.get("let"))
     RoadAddressChangeSection(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
-      stm.map(jIntToLong), enm.map(jIntToLong))
+      stm.map(jIntToLong), enm.map(jIntToLong), None, None, None)
 }, {
   case s: RoadAddressChangeSection =>
     JObject(JField("tie", s.roadNumber.map(l => JInt(BigInt.apply(l))).orNull),
@@ -185,10 +186,11 @@ object ViiteTierekisteriClient {
       proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
     }
   }
+  private val nullRotatingTRProjectId = -1
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
+    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
       DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
@@ -196,21 +198,24 @@ object ViiteTierekisteriClient {
 
   private val client = HttpClientBuilder.create().build
 
-  def createJsonmessage(trProject:ChangeProject): StringEntity = {
+  def createJsonMessage(trProject:ChangeProject): StringEntity = {
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val json = Serialization.write(Extraction.decompose(trProject))
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
   def sendChanges(changes: List[ProjectRoadAddressChange]): ProjectChangeStatus = {
-    sendJsonMessage(convertToChangeProject(changes))
+    val projectChange=convertToChangeProject(changes)
+    if (projectChange.id==nullRotatingTRProjectId)
+      return ProjectChangeStatus(changes.head.projectId,ProjectState.Failed2GenerateTRIdInViite.value,"Could not generate required TR ID")
+    sendJsonMessage(projectChange)
   }
 
   def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={
     implicit val formats = DefaultFormats
     val request = new HttpPost(getRestEndPoint+"addresschange/")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJsonmessage(trProject))
+    request.setEntity(createJsonMessage(trProject))
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode

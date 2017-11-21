@@ -12,6 +12,8 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPo
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService, RoadType}
 import org.joda.time.DateTime
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -21,6 +23,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 class CalibrationPointDAOSpec extends FunSuite with Matchers {
 
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       f
@@ -34,8 +37,8 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
   }
 
   def addProjectRoads(): Unit = {
-    ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser")
-    ProjectDAO.reserveRoadPart(2, 1, 1, "TestUser")
+    ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser",0)
+    ProjectDAO.reserveRoadPart(2, 1, 1, "TestUser",0)
     sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (1,1,1,0,1,1,1,1,20000286,'automatedtest')""".execute
     sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (2,2,1,0,1,1,1,1,20000286,'automatedtest')""".execute
   }
@@ -103,6 +106,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
 
   test("Removal of ALL calibration points from a project") {
     runWithRollback {
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       addTestProjects()
       addProjectRoads()
       val id = CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)

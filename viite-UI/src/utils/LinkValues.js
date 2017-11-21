@@ -1,12 +1,13 @@
 (function (root) {
     root.LinkStatus = {
-        NotHandled:                 {value: 0, description: "NotHandled"},
-        Unchanged:                  {value: 1, description: "Unchanged"},
-        New:                        {value: 2, description: "New"},
-        Transfer:                   {value: 3, description: "Transfer"},
-        Numbering:                  {value: 4, description: "Numbering"},
-        Terminated:                 {value: 5, description: "Terminated"},
-        Revert:                     {value: 6, description: "Revert"}
+        NotHandled:                 {value: 0,  description: "NotHandled", transitionFrom: [0]},
+        Unchanged:                  {value: 1,  description: "Unchanged",  transitionFrom: [0, 1, 3, 5]},
+        New:                        {value: 2,  description: "New",        transitionFrom: [99, 2]},
+        Transfer:                   {value: 3,  description: "Transfer",   transitionFrom: [0, 1, 3, 5]},
+        Numbering:                  {value: 4,  description: "Numbering",  transitionFrom: [0, 1, 3, 4, 5]},
+        Terminated:                 {value: 5,  description: "Terminated", transitionFrom: [0, 1, 3, 5]},
+        Revert:                     {value: 6,  description: "Revert",     transitionFrom: [1, 2, 3, 4, 5, 6]},
+        Undefined:                  {value: 99, description: "?",          transitionFrom: []}
     };
 
     root.Anomaly = {
@@ -73,6 +74,16 @@
         AtEnd:                      {value: 1, description: "AtEnd"},
         AtBeginning:                {value: 2, description: "AtBeginning"},
         AtBoth:                     {value: 3, description: "AtBoth"}
+    };
+
+    root.ProjectStatus = {
+        Closed:                     {value: 0, description: "Suljettu"},
+        Incomplete:                 {value: 1, description: "Keskeneräinen"},
+        Sent2TR:                    {value: 2, description: "Lähetetty tierekisteriin"},
+        ErroredInTR:                {value: 3, description: "Virhe tierekisterissä"},
+        TRProcessing:               {value: 4, description: "Tierekisterissä käsittelyssä"},
+        Saved2TR:                   {value: 5, description: "Viety tierekisteriin"},
+        Unknown:                    {value: 99, description: "Tuntematon"}
     };
 
 })(window.LinkValues = window.LinkValues || {});

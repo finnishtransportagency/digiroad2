@@ -1,23 +1,37 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def runWithRollback[T](f: => T): T = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val t = f
+      dynamicSession.rollback()
+      t
+    }
+  }
+
   private def createRoadAddress(start: Long, distance: Long) = {
     RoadAddress(id = start, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
       discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start+distance, lrmPositionId = start, linkId = start,
       startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L,
-      geometry = Seq(Point(0.0, start), Point(0.0, start+distance)), linkGeomSource = NormalLinkInterface)
+      geometry = Seq(Point(0.0, start), Point(0.0, start+distance)), linkGeomSource = NormalLinkInterface, ely = 8)
   }
   private val project: RoadAddressProject = RoadAddressProject(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
     DateTime.now(), "", Seq(), None, None)
@@ -30,7 +44,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       roadAddress.discontinuity, roadAddress.startAddrMValue + project.id, roadAddress.endAddrMValue + project.id, roadAddress.startDate,
       roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status,
-      roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id)
+      roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely, false)
   }
 
   private def toProjectLink(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
@@ -38,7 +52,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status,
-      roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id)
+      roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely,false)
   }
 
   test("Multiple transfers on single road part") {
@@ -162,19 +176,19 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       Discontinuity.MinorDiscontinuity, 36, 49, None, None,
       modifiedBy=Option(project.createdBy), 0L, 981, 0.0, 12.1,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
-      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L), ProjectLink(982, 5, 205, Track.LeftSide,
+      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L, 8,false), ProjectLink(982, 5, 205, Track.LeftSide,
       Discontinuity.MinorDiscontinuity, 40, 53, None, None,
       modifiedBy=Option(project.createdBy), 0L, 982, 0.0, 12.2,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 36.0), Point(0.0, 48.2)), project.id, LinkStatus.New,
-      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.2, -1L), ProjectLink(983, 5, 205, Track.RightSide,
+      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.2, -1L, 8,false), ProjectLink(983, 5, 205, Track.RightSide,
       Discontinuity.MinorDiscontinuity, 109, 124, None, None,
       modifiedBy=Option(project.createdBy), 0L, 983, 0.0, 15.2,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New,
-      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 15.2, -1L), ProjectLink(984, 5, 205, Track.LeftSide,
+      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 15.2, -1L, 8,false), ProjectLink(984, 5, 205, Track.LeftSide,
       Discontinuity.MinorDiscontinuity, 113, 127, None, None,
       modifiedBy=Option(project.createdBy), 0L, 984, 0.0, 14.2,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New,
-      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 14.2, -1L)
+      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 14.2, -1L, 8,false)
     )
     val projectLinks =
       terminations.map(toProjectLink(project, LinkStatus.Terminated)) ++
@@ -236,7 +250,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       Discontinuity.MinorDiscontinuity, 120, 130, None, None,
       modifiedBy=Option(project.createdBy), 0L, 981, 0.0, 12.1,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
-      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L))
+      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L, 8,false))
 
     val uncParts = ProjectDeltaCalculator.partition(addresses, unchanged)
     uncParts should have size(2)
@@ -258,6 +272,100 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     newParts.foreach(to => {
       to.startMAddr should be (120)
       to.endMAddr should be (130)
+    })
+  }
+
+  test("Calculate delta for split suravage link") {
+    runWithRollback {
+      val reservationId = Sequences.nextViitePrimaryKeySeqValue
+      val lrms = Queries.fetchLrmPositionIds(4)
+      val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
+      val project = RoadAddressProject(Sequences.nextViitePrimaryKeySeqValue, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(), None , None)
+      ProjectDAO.createRoadAddressProject(project)
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by, first_link_id, road_length, address_length, discontinuity, ely)
+            values ($reservationId, 6591, 1, ${project.id}, '-', 6550673, 85, 85, 5, 9)
+          """.execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
+            MODIFIED_DATE,LINK_SOURCE) values (${lrms(0)},null,'3','0',86.818,null,'6550673','1476392565000',
+            sysdate,'1')""".execute
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
+            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO) values
+            (${ids(0)},'6591','1','0','5','0','85',${lrms(0)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
+            MDSYS.SDO_ORDINATE_ARRAY(445889.442,7004298.67,0,0,445956.884,7004244.253,0,85)),null)""".execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
+            values (${lrms(1)},null,'3','0',63.926,null,'499972936','0',sysdate,'3')""".execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
+            values (${lrms(2)},null,'3',63.926,307.99,null,'499972936','0',sysdate,'3')""".execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
+            values (${lrms(3)},null,'3',63.752,86.818,null,'6550673','0',sysdate,'1')""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
+            START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+            values (${ids(1)},${project.id},'0','5','6591','1','0','62',${lrms(1)},'silari',null,
+            to_date('20.10.2017','DD.MM.RRRR'),null,'1','0','1',${ids(0)},'6550673')""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
+            START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+             values (${ids(2)},${project.id},'0','5','6591','1','62','85',${lrms(2)},'silari',null,
+             to_date('20.10.2017','DD.MM.RRRR'),null,'2','0','1',${ids(0)},'6550673')""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
+            START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+            values (${ids(3)},${project.id},'0','5','6591','1','62','85',${lrms(3)},'silari',null,
+            to_date('20.10.2017','DD.MM.RRRR'),null,'5','2','9',${ids(0)},'499972936')""".execute
+      val delta = ProjectDeltaCalculator.delta(project.id)
+      delta.terminations should have size (1)
+      delta.unChanged.mapping should have size (1)
+      delta.newRoads should have size (1)
+      val term = delta.terminations.head
+      term.startAddrMValue should be (62)
+      term.endAddrMValue should be (85)
+      term.id should be (ids(0))
+      val (uncSource, uncTarget) = delta.unChanged.mapping.head
+      uncSource.startAddrMValue should be (0)
+      uncSource.endAddrMValue should be (62)
+      uncSource.id should be (ids(0))
+      val cre = delta.newRoads.head
+      cre.startAddrMValue should be (62)
+      cre.endAddrMValue should be (85)
+      cre.id should be (ids(2))
+    }
+  }
+
+
+  test ("road with ely change") {
+    val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L))
+    val links = addresses.filter(_.endAddrMValue < 61).map(a => toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5)))
+    val partitioned = ProjectDeltaCalculator.partition(addresses, links)
+    partitioned.size should be (1)
+    val (fr, to) = partitioned.head
+    fr.startMAddr should be (to.startMAddr)
+    fr.endMAddr should be (to.endMAddr)
+    fr.ely should be (8)
+    to.ely should be (5)
+  }
+
+  test("road with discontinuity change") {
+    val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L))
+    val links = addresses.map(a => toProjectLink(project, LinkStatus.UnChanged)(
+      if (a.endAddrMValue == 60) {
+        a.copy(discontinuity = Discontinuity.MinorDiscontinuity)
+      } else {
+        a
+      }
+    ))
+    val partitioned = ProjectDeltaCalculator.partition(addresses, links)
+    partitioned.size should be (2)
+    partitioned.foreach(x => {
+      val (fr, to) = x
+      if (fr.startMAddr == 0) {
+        fr.discontinuity should be (Discontinuity.Continuous)
+        to.discontinuity should be (Discontinuity.MinorDiscontinuity)
+      } else {
+        fr.discontinuity should be (Discontinuity.Continuous)
+        to.discontinuity should be (Discontinuity.Continuous)
+      }
     })
   }
 }

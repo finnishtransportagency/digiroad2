@@ -90,7 +90,7 @@ class MassTransitStopExcelDataImporter(dataSource: DataSource) {
         logger.info("UPDATING ASSET: " + assetId + " WITH EXTERNAL ID: " + stopData.externalId)
 
         sqlu"""
-          update asset set modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP where id = ${assetId}
+          update asset set modified_by = ${Updater}, modified_date = SYSDATE where id = ${assetId}
         """.execute
 
         insertTextPropertyValue(assetId, "nimi_suomeksi", stopData.stopNameFi)
@@ -146,7 +146,7 @@ class MassTransitStopExcelDataImporter(dataSource: DataSource) {
       case _ => {
         logger.info("  UPDATING PROPERTY VALUE: '" + propertyPublicId + "' WITH VALUE: '" + value + "'")
         sqlu"""
-          update text_property_value set value_fi = ${value}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
+          update text_property_value set value_fi = ${value}, modified_by = ${Updater}, modified_date = SYSDATE
           where id = ${propertyId}
         """.execute
       }
@@ -168,12 +168,12 @@ class MassTransitStopExcelDataImporter(dataSource: DataSource) {
           case None => {
             sqlu"""
               insert into single_choice_value(property_id, asset_id, enumerated_value_id, created_by, created_date)
-              values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), ${Updater}, CURRENT_TIMESTAMP)
+              values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), ${Updater}, SYSDATE)
             """.execute
           }
           case _ => {
             sqlu"""
-              update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
+              update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = SYSDATE
               where property_id = $propertyId and asset_id = ${assetId}
             """.execute
           }

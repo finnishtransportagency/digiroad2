@@ -6,7 +6,8 @@ window.SpeedLimitLayer = function(params) {
       roadLayer = params.roadLayer,
       style = params.style,
       layerName = 'speedLimit',
-      roadAddressInfoPopup= params.roadAddressInfoPopup;
+      roadAddressInfoPopup= params.roadAddressInfoPopup,
+      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
   var isActive = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -21,6 +22,39 @@ window.SpeedLimitLayer = function(params) {
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
   };
+
+  var uiState = { zoomLevel: 9 };
+
+  var vectorSourceHistory = new ol.source.Vector();
+  var vectorLayerHistory = new ol.layer.Vector({
+    source : vectorSourceHistory,
+    style : function(feature) {
+      return style.historyStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+    }
+  });
+
+  vectorLayerHistory.setOpacity(1);
+  vectorLayerHistory.setVisible(false);
+
+  var vectorSource = new ol.source.Vector();
+  var vectorLayer = new ol.layer.Vector({
+    source : vectorSource,
+    style : function(feature) {
+      return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+    }
+  });
+  vectorLayer.set('name', layerName);
+  vectorLayer.setOpacity(1);
+  vectorLayer.setVisible(false);
+  map.addLayer(vectorLayer);
+
+  var indicatorVector = new ol.source.Vector({});
+  var indicatorLayer = new ol.layer.Vector({
+    source : indicatorVector
+  });
+  map.addLayer(indicatorLayer);
+  indicatorLayer.setVisible(false);
+
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
@@ -31,6 +65,7 @@ window.SpeedLimitLayer = function(params) {
     if (isActive) {
       showSpeedLimitsHistory();
     }
+    trafficSignReadOnlyLayer.refreshView();
 
   this.removeLayerFeatures = function() {
       vectorLayer.getSource().clear();
@@ -159,38 +194,6 @@ window.SpeedLimitLayer = function(params) {
     };
   };
 
-  var uiState = { zoomLevel: 9 };
-
-  var vectorSourceHistory = new ol.source.Vector();
-  var vectorLayerHistory = new ol.layer.Vector({
-    source : vectorSourceHistory,
-    style : function(feature) {
-      return style.historyStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
-    }
-  });
-
-  vectorLayerHistory.setOpacity(1);
-  vectorLayerHistory.setVisible(false);
-
-  var vectorSource = new ol.source.Vector();
-  var vectorLayer = new ol.layer.Vector({
-    source : vectorSource,
-    style : function(feature) {
-      return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
-    }
-  });
-  vectorLayer.set('name', layerName);
-  vectorLayer.setOpacity(1);
-  vectorLayer.setVisible(false);
-  map.addLayer(vectorLayer);
-
-  var indicatorVector = new ol.source.Vector({});
-  var indicatorLayer = new ol.layer.Vector({
-    source : indicatorVector
-  });
-  map.addLayer(indicatorLayer);
-  indicatorLayer.setVisible(false);
-
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
   var OnSelect = function(evt) {
@@ -202,6 +205,7 @@ window.SpeedLimitLayer = function(params) {
       if (selectedSpeedLimit.exists()) {
         selectToolControl.clear();
         selectedSpeedLimit.close();
+        trafficSignReadOnlyLayer.highLightLayer();
       }
     }
   };
@@ -215,6 +219,7 @@ window.SpeedLimitLayer = function(params) {
   var highlightMultipleLinearAssetFeatures = function() {
     var selectedAsset = selectedSpeedLimit.get();
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedAsset));
+    trafficSignReadOnlyLayer.unHighLightLayer();
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
@@ -326,15 +331,16 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var showSpeedLimitsComplementary = function() {
-      collection.activeComplementary(true);
-      me.refreshView();
+    collection.activeComplementary(true);
+    trafficSignReadOnlyLayer.showTrafficSignsComplementary();
+    me.refreshView();
   };
 
   var hideSpeedLimitsComplementary = function() {
     collection.activeComplementary(false);
+    trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
     me.refreshView();
   };
-
 
   var indexOf = function (layers, layer) {
     var length = layers.getLength();
@@ -391,6 +397,7 @@ window.SpeedLimitLayer = function(params) {
     selectToolControl.activate();
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
+    trafficSignReadOnlyLayer.highLightLayer();
   };
 
   var handleSpeedLimitUnselected = function () {
@@ -545,9 +552,17 @@ window.SpeedLimitLayer = function(params) {
     me.show(map);
   };
 
+  var hideReadOnlyLayer = function(){
+    if(!_.isUndefined(trafficSignReadOnlyLayer)){
+      trafficSignReadOnlyLayer.hide();
+      trafficSignReadOnlyLayer.removeLayerFeatures();
+    }
+  };
+
   var hideLayer = function(map) {
     reset();
     selectToolControl.clear();
+    hideReadOnlyLayer();
     selectedSpeedLimit.close();
     vectorLayer.setVisible(false);
     vectorLayerHistory.setVisible(false);
@@ -564,7 +579,9 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var editConstrains = function(selectedAsset) {
-    return selectedAsset.administrativeClass === 'State';
+    return false;
+    //TODO revert this when DROTH-909
+    //return selectedAsset.administrativeClass === 'State';
   };
 
   return {

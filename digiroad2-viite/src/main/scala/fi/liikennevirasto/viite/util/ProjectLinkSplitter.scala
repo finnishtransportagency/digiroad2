@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates, ProjectLink}
 import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType, _}
 
 /**
@@ -98,7 +98,7 @@ object ProjectLinkSplitter {
         splitT)
     }
     def toSeq(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
-      Seq(splits._1, splits._2, splits._3)
+      Seq(splits._1, splits._2, splits._3).filter(pl => Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength)
     }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
@@ -106,7 +106,7 @@ object ProjectLinkSplitter {
       (templateLink.endAddrMValue - templateLink.startAddrMValue))
     val isReversed = (split.statusB == LinkStatus.New) ^ isDirectionReversed(suravage, templateLink)// isTailConnected(suravage, templateLink)
     val splits =
-      if (isReversed)
+      if (isReversed || !isTailConnected(suravage, templateLink))
         movedFromStart(suravageM, templateM, splitAddressM)
       else
         movedFromEnd(suravageM, templateM, splitAddressM)
@@ -131,9 +131,12 @@ object ProjectLinkSplitter {
           exitPoint.map(ep => GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
             GeometryUtils.calculateLinearReferenceFromPoint(ep, templateGeom)))
         } else {
-          val length = GeometryUtils.geometryLength(suravage.geometry)
-          Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
-            Math.max(GeometryUtils.geometryLength(template.geometry), length)))
+          if (suravageGeom.forall(p => GeometryUtils.minimumDistance(p, templateGeom) <= MaxSuravageToleranceToGeometry) ||
+            templateGeom.forall(p => GeometryUtils.minimumDistance(p, suravageGeom) <= MaxSuravageToleranceToGeometry))
+            Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
+              Math.max(GeometryUtils.geometryLength(template.geometry), GeometryUtils.geometryLength(suravage.geometry))))
+          else
+            None
         }
       } else if (GeometryUtils.areAdjacent(suravageGeom.last, templateGeom.head, MaxDistanceForConnectedLinks)) {
         findMatchingSegment(suravageGeom.reverse, templateGeom)
@@ -211,5 +214,5 @@ object ProjectLinkSplitter {
 
 case class SplitOptions(splitPoint: Point, statusA: LinkStatus, statusB: LinkStatus,
                         roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, ely: Long,
-                        roadLinkSource: LinkGeomSource, roadType: RoadType, projectId: Long)
+                        roadLinkSource: LinkGeomSource, roadType: RoadType, projectId: Long, coordinates: ProjectCoordinates)
 

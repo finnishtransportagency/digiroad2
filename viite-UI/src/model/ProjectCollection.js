@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadAddressProjectCollection = function(backend) {
+  root.ProjectCollection = function(backend) {
     var roadAddressProjects = [];
     var currentRoadPartList = [];
     var reservedDirtyRoadPartList = [];
@@ -8,12 +8,13 @@
     var currentProject;
     var fetchedProjectLinks = [];
     var fetchedSuravageProjectLinks = [];
-    var roadAddressProjectLinks = [];
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var self = this;
     var publishableProject = false;
     var LinkStatus = LinkValues.LinkStatus;
+    var ProjectStatus = LinkValues.ProjectStatus;
+    var LinkGeomSource = LinkValues.LinkGeomSource;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -23,16 +24,8 @@
       return _.flatten(fetchedProjectLinks);
     };
 
-    var projectSuravageLinks = function () {
-      return _.flatten(fetchedSuravageProjectLinks);
-    };
-
     this.getProjectLinks = function() {
       return _.flatten(fetchedProjectLinks);
-    };
-
-    this.getSuravageProjectLinks = function(){
-      return _.flatten(fetchedSuravageProjectLinks);
     };
 
     this.getAll = function () {
@@ -49,10 +42,6 @@
       fetchedProjectLinks = [];
     };
 
-    this.resetSuravage = function () {
-      fetchedSuravageProjectLinks = [];
-    };
-
     this.getMultiSelectIds = function (linkId) {
       var chain = _.find(fetchedProjectLinks, function (linkChain) {
         var pureChain = _.map(linkChain, function(l) { return l.getData(); });
@@ -62,10 +51,10 @@
     };
 
     this.getByLinkId = function (ids) {
-      var ProjectLinks = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
+      var links = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
         return _.contains(ids, projectLink.getData().linkId);
       });
-      return ProjectLinks;
+      return links;
     };
 
     this.fetch = function(boundingBox, zoom, projectId, isPublishable) {
@@ -82,7 +71,7 @@
           publishableProject = isPublishable;
 
           var separated = _.partition(self.getAll(), function(projectRoad){
-            return projectRoad.roadLinkSource === 3;
+            return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
           });
           fetchedSuravageProjectLinks = separated[0];
           var nonSuravageProjectRoads = separated[1];
@@ -134,11 +123,12 @@
       currentRoadPartList = [];
       dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
+      reservedDirtyRoadPartList = [];
       projectinfo=undefined;
       backend.abortLoadingProject();
     };
 
-    this.saveProject = function (data) {
+    this.saveProject = function (data,resolution) {
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
@@ -162,7 +152,8 @@
             roadPartNumber: part.roadPartNumber,
             startingLinkId: part.startingLinkId
           };
-        })
+        }),
+        resolution: resolution
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
@@ -189,13 +180,15 @@
     this.revertChangesRoadlink = function (links) {
       if(!_.isEmpty(links)) {
         applicationModel.addSpinner();
+        var coordinates = applicationModel.getUserGeoLocation();
         var data = {
           'projectId': currentProject.project.id,
           'roadNumber': links[0].roadNumber,
           'roadPartNumber': links[0].roadPartNumber,
           'links': _.map(links, function (link) {
             return {'id': link.id, 'linkId': link.linkId, 'status': link.status};
-          })
+          }),
+          'coordinates': coordinates
         };
         backend.revertChangesRoadlink(data, function (response) {
           if (response.success) {
@@ -215,10 +208,35 @@
       }
     };
 
+    this.removeProjectLinkSplit = function (project, selectedProjectLink) {
+      if(!_.isEmpty(project)) {
+        applicationModel.addSpinner();
+        var coordinates = applicationModel.getUserGeoLocation();
+        var data = {
+          projectId: project.id,
+          linkId: Math.abs(selectedProjectLink[0].linkId),
+          coordinates: coordinates
+        };
+        backend.removeProjectLinkSplit(data, function (response) {
+          if (response.success) {
+            dirtyProjectLinkIds = [];
+            eventbus.trigger('projectLink:revertedChanges');
+          }
+          else if (response == INTERNAL_SERVER_ERROR_500 || response == BAD_REQUEST_400) {
+            eventbus.trigger('roadAddress:projectLinksUpdateFailed', error.status);
+            new ModalConfirm(response.message);
+            applicationModel.removeSpinner();
+          }
+          else{
+            new ModalConfirm(response.message);
+            applicationModel.removeSpinner();
+          }
+        });
+      }
+    };
+
     this.saveProjectLinks = function(changedLinks, statusCode) {
-      console.log("Save Project Links called");
       applicationModel.addSpinner();
-      //TODO in the future if we want to choose multiple actions foreach link (linkId, newStatus) combo should be used
       var linkIds = _.unique(_.map(changedLinks,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
@@ -226,7 +244,7 @@
       }));
 
       var projectId = projectinfo.id;
-
+      var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
         linkIds: linkIds,
         linkStatus: statusCode,
@@ -238,9 +256,10 @@
         roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: null
+        userDefinedEndAddressM: null,
+        coordinates:coordinates
       };
-      
+
       var endDistance = parseInt($('#endDistance').val());
       var originalEndDistance = _.chain(changedLinks).uniq().sortBy(function(cl){
         return cl.endAddressM;
@@ -276,55 +295,51 @@
           });
         }
       } else {
-        console.log(!_.isEmpty(linkIds));
-        console.log(typeof projectId);
-        console.log(linkIds);
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
       }
     };
 
     this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
-      console.log("Save Cutted Project Links called");
       applicationModel.addSpinner();
-
-      var splitPoint = changedLinks[0].points[changedLinks[0].points.length-1];
-
-      var linkIds = _.unique(_.map(changedLinks,function (t){
-        if(!_.isUndefined(t.linkId)){
-          return t.linkId;
-        } else return t;
-      }));
+      
+      var linkId = Math.abs(changedLinks[0].linkId);
 
       var projectId = projectinfo.id;
-
+      var form = $('#roadAddressProjectFormCut');
+      var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
-        splitPoint: {x: splitPoint.x, y: splitPoint.y},
+        splitPoint: {
+          x: Number(form.find('#splitx')[0].value),
+          y: Number(form.find('#splity')[0].value)
+        },
         statusA: statusCodeA,
         statusB: statusCodeB,
-        roadNumber: Number($('#roadAddressProjectFormCut').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProjectFormCut').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProjectFormCut').find('#ajr')[0].value),
-        discontinuity: Number($('#roadAddressProjectFormCut').find('#discontinuityDropdown')[0].value),
-        ely: Number($('#roadAddressProjectFormCut').find('#ely')[0].value),
+        roadNumber: Number(form.find('#tie')[0].value),
+        roadPartNumber: Number(form.find('#osa')[0].value),
+        trackCode: Number(form.find('#ajr')[0].value),
+        discontinuity: Number(form.find('#discontinuityDropdown')[0].value),
+        ely: Number(form.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProjectFormCut').find('#roadTypeDropDown')[0].value),
-        projectId: projectId
+        roadType: Number(form.find('#roadTypeDropDown')[0].value),
+        projectId: projectId,
+        coordinates:coordinates
       };
 
-      backend.saveProjectLinkSplit(dataJson, changedLinks[0].linkId, function(successObject){
+      backend.saveProjectLinkSplit(dataJson, linkId, function(successObject){
         if (!successObject.success) {
           new ModalConfirm(successObject.reason);
           applicationModel.removeSpinner();
-        }
-          else{
+        } else{
+          eventbus.trigger('projectLink:projectLinksSplitSuccess');
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-        }
-
-      }, null);
-
+          applicationModel.removeSpinner();
+      }}, function(failureObject){
+          new ModalConfirm(failureObject.reason);
+          applicationModel.removeSpinner();
+      });
     };
 
-    this.createProject = function (data) {
+    this.createProject = function (data, resolution) {
 
       var dataJson = {
         id: 0,
@@ -332,7 +347,8 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadPartList
+        roadPartList: dirtyRoadPartList,
+        resolution: resolution
       };
 
       backend.createRoadAddressProject(dataJson, function (result) {
@@ -358,8 +374,37 @@
 
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
-      var data = [projectId, selectedLinks[0].roadNumber, selectedLinks[0].roadPartNumber] ;
-      backend.directionChangeNewRoadlink(data, function(successObject) {
+      var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});
+      var coordinates = applicationModel.getUserGeoLocation();
+      var dataJson = {
+        projectId: projectId,
+        roadNumber: selectedLinks[0].roadNumber,
+        roadPartNumber: selectedLinks[0].roadPartNumber,
+        links: links,
+        coordinates: coordinates
+      };
+      backend.directionChangeNewRoadlink(dataJson, function(successObject) {
+        if (!successObject.success) {
+          eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('changeProjectDirection:clicked');
+        }
+      });
+    };
+
+    this.changeNewProjectLinkCutDirection = function (projectId, selectedLinks){
+      applicationModel.addSpinner();
+      var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});
+      var coordinates = applicationModel.getUserGeoLocation();
+      var dataJson = {
+        projectId: projectId,
+        roadNumber: selectedLinks[0].roadNumber,
+        roadPartNumber: selectedLinks[0].roadPartNumber,
+        links: links,
+        coordinates: coordinates
+      };
+      backend.directionChangeNewRoadlink(dataJson, function(successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
           applicationModel.removeSpinner();
@@ -371,7 +416,6 @@
 
     this.publishProject = function() {
       backend.sendProjectToTR(projectinfo.id, function(result) {
-        console.log("Success");
         if(result.sendSuccess) {
           eventbus.trigger('roadAddress:projectSentSuccess');
         }
@@ -379,7 +423,6 @@
           eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
         }
       }, function(result) {
-        console.log("Failure");
         eventbus.trigger('roadAddress:projectSentFailed', result.status);
       });
     };
@@ -413,7 +456,8 @@
     };
 
     var deleteButton = function(index, roadNumber, roadPartNumber){
-      return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete">X</button>';
+      var disabledInput = !_.isUndefined(currentProject) && currentProject.project.statusCode === ProjectStatus.ErroredInTR.value;
+      return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
     var addToDirtyRoadPartList = function (queryresult) {
@@ -541,6 +585,20 @@
       return {
         getData: getData
       };
+    };
+
+    this.reOpenProjectById = function(projectId){
+      backend.reOpenProject(projectId, function(successObject) {
+        eventbus.trigger("roadAddressProject:reOpenedProject",successObject);
+      }, function(errorObject){
+        if(!_.isUndefined(errorObject.message)) {
+          new ModalConfirm(errorObject.message.toString());
+        } else{
+          new ModalConfirm(errorObject.statusText.toString());
+        }
+        applicationModel.removeSpinner();
+        console.log("Error at deleting rotatingId: " + errorObject);
+      });
     };
   };
 })(this);

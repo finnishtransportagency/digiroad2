@@ -173,16 +173,11 @@
     }, 1000);
 
       this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
-        var Json = {
-          projectId : data[0],
-          roadNumber : data[1],
-          roadPartNumber : data[2]
-        };
           $.ajax({
               contentType: "application/json",
               type: "PUT",
-              url: "api/viite/roadlinks/roadaddress/project/directionchangenewroadlink",
-              data: JSON.stringify(Json),
+              url: "api/viite/project/reverse",
+              data: JSON.stringify(data),
               dataType: "json",
               success: success,
               error: failure
@@ -205,9 +200,9 @@
       return loadingProject;
     }, 1000);
 
-    this.getChangeTable = function(id,callback) {
+    this.getChangeTable = _.throttle(function(id,callback) {
       $.getJSON('api/viite/project/getchangetable/'+id, callback);
-    };
+    }, 500);
 
 
     this.getUserRoles = function () {
@@ -236,14 +231,27 @@
         .then(function(x) { return JSON.parse(x); });
     };
 
-    this.removeProjectLinkSplit = function(projectId, linkId, success, errorCallback) {
+    this.removeProjectLinkSplit = function(data, success, errorCallback) {
       $.ajax({
+        contentType: "application/json",
         type: "DELETE",
-        url: "api/viite/project/split/" + projectId + "/" + linkId,
+        url: "api/viite/project/split",
+        data: JSON.stringify(data),
+        dataType: "json",
         success: success,
         error: errorCallback
       });
     };
+
+    this.reOpenProject = function(projectId, success, errorCallback) {
+      $.ajax({
+        type: "DELETE",
+        url: "api/viite/project/trid/"+projectId,
+        success: success,
+        error: errorCallback
+      });
+    };
+
 
     this.saveProjectLinkSplit = _.throttle(function(data, linkId, success, errorCallback){
      $.ajax({
@@ -268,7 +276,7 @@
     function latestResponseRequestor(getParameters) {
       var deferred;
       var requests = new Bacon.Bus();
-      var responses = requests.debounce(200).flatMapLatest(function(params) {
+      var responses = requests.debounceImmediate(500).flatMapLatest(function(params) {
         return Bacon.$.ajax(params, true);
       });
 
