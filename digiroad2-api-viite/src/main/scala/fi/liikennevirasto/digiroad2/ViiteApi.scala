@@ -472,7 +472,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val point = Point(data("x").asInstanceOf[Double],data("y").asInstanceOf[Double])
       val vectorRotate1 = point.+(Vector3d(3,3,0)).toVector.rotateRight()
       val vectorRotate2 = point.-(Vector3d(3,3,0)).toVector.rotateRight()
-      val split = Map(
+      val split: Map[String, Any] = Map(
         "roadNumber" -> splitLinks.head.roadNumber,
         "roadPartNumber" -> splitLinks.head.roadPartNumber,
         "trackCode" -> splitLinks.head.track,

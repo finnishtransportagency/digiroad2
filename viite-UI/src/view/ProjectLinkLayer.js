@@ -677,7 +677,20 @@
         if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
           nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
         }
-        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, mousePoint);
+        var cutGeometry = selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, mousePoint);
+        eventbus.once('split:cutPointFeature', function(cutGeom) {
+          var cutFeature = new ol.Feature({
+            geometry: cutGeom,
+            type: 'cut-line'
+          });
+          var style = new ol.style.Style({
+            fill : new ol.style.Fill({color: 'blue'}),
+            zIndex: 11
+          });
+          cutFeature.setStyle(style);
+          suravageRoadProjectLayer.getSource().addFeatures(cutFeature);
+        });
+
         projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
       };
     };

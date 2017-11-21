@@ -104,7 +104,7 @@
           terminatedC.splitPoint = mousePoint;
           applicationModel.removeSpinner();
           eventbus.trigger('split:projectLinks', [suravageA, suravageB, terminatedC]);
-
+          eventbus.trigger('split:cutPointFeature', data.split);
           // if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
           //   // Re-split with a new split point
           //   ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
