@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink}
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
@@ -111,6 +111,16 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(0.0),SideCode.Unknown,
       None, None, Anomaly.None, 0, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), reversed= false, None, None)
   }
+
+  def build(ral: RoadAddressLinkLike): ProjectAddressLink = {
+    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,
+      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.roadName, ral.municipalityCode, ral.modifiedAt, ral.modifiedBy,
+      ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
+      ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
+      ral.anomaly, ral.lrmPositionId, LinkStatus.Unknown, ral.id)
+  }
+
+
 
   private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long,
                     trackCode: Int, roadName: String, municipalityCode: Int, linkType: LinkType, roadLinkType: RoadLinkType,
