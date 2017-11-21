@@ -645,7 +645,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getRoadAddressAllProjects(): Seq[RoadAddressProject] = {
     withDynTransaction {
-      ProjectDAO.getRoadAddressProjects().sortBy(_.ely)
+      ProjectDAO.getRoadAddressProjects()
     }
   }
 
