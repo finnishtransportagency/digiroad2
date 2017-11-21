@@ -344,8 +344,8 @@ object GeometryUtils {
 
   def midPointGeometry(geometry: Seq[Point], controlPoints: Seq[Point] = Seq()): Point = {
     if (geometry.size > 1) {
-      val controlX = (1-0.5) * geometry.head.x + geometry.tail.head.x
-      val controlY = (1-0.5) * geometry.head.y + geometry.tail.head.y
+      val controlX = (1-0.5) * geometry.head.x + 0.5 * geometry.tail.head.x
+      val controlY = (1-0.5) * geometry.head.y + 0.5 * geometry.tail.head.y
       midPointGeometry(geometry.tail, controlPoints :+ Point(controlX,controlY))
     }
     else if (controlPoints.size > 1 ) {
