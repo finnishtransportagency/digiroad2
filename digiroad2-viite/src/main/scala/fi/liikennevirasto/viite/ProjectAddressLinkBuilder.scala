@@ -3,14 +3,47 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadLinkType}
 import fi.liikennevirasto.digiroad2.RoadLinkType._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource._
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, LinkType, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink}
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
-  // TODO: remove road link dependency from project link, use only project link data VIITE-877
+  def build(pl: ProjectLink, splitPart: Option[ProjectLink] = None): ProjectAddressLink = {
+    val roadLinkType = pl.linkGeomSource match {
+      case NormalLinkInterface => NormalRoadLinkType
+      case ComplimentaryLinkInterface => ComplementaryRoadLinkType
+      case SuravageLinkInterface => SuravageRoadLink
+      case FrozenLinkInterface => NormalRoadLinkType
+      case HistoryLinkInterface => FloatingRoadLinkType
+      case LinkGeomSource.Unknown => UnknownRoadLinkType
+    }
+
+    val roadName = s"${pl.roadNumber}/${pl.roadPartNumber}/${pl.track.value}"
+
+    val linkType = UnknownLinkType
+
+    val originalGeometry =
+      if (pl.isSplit)
+        if (splitPart.nonEmpty)
+          combineGeometries(pl, splitPart.get)
+        else
+          // TODO Is this case needed?
+          Some(pl.geometry)
+      else
+        None
+
+    ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
+      pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, roadLinkType, ConstructionType.UnknownConstructionType,
+      pl.linkGeomSource, pl.roadType, roadName, 0L, None, Some("vvh_modified"),
+      Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
+      pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, pl.calibrationPoints._1,
+      pl.calibrationPoints._2, Anomaly.None, pl.lrmPositionId, pl.status, pl.roadAddressId,
+      pl.reversed, pl.connectedLinkId, originalGeometry)
+  }
+
+  @Deprecated
   def build(roadLink: RoadLinkLike, projectLink: ProjectLink): ProjectAddressLink = {
     val roadLinkType = roadLink.linkSource match {
       case NormalLinkInterface => NormalRoadLinkType
@@ -100,4 +133,16 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       reversed, connectedLinkId, originalGeometry)
   }
 
+  private def combineGeometries(split1: ProjectLink, split2: ProjectLink) = {
+    def safeTail(seq: Seq[Point]) = {
+      if (seq.isEmpty)
+        Seq()
+      else
+        seq.tail
+    }
+    if (split1.startMValue < split2.startMValue)
+      Some(split1.geometry ++ safeTail(split2.geometry))
+    else
+      Some(split2.geometry ++ safeTail(split1.geometry))
+  }
 }

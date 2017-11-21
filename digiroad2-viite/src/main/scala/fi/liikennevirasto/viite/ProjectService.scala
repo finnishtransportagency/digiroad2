@@ -1162,6 +1162,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case 1 => projectLinks
       case _ => fuseProjectLinks(projectLinks)
     }
+    // TODO: Start using the non-road link requiring build (rl)
     pl.map(l => ProjectAddressLinkBuilder.build(rl, l))
   }
 
