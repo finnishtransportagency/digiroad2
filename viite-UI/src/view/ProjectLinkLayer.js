@@ -260,7 +260,6 @@
       };
 
       var indicatorsForSplit = function() {
-        // return mapOverLinkMiddlePoints(links, function(link, middlePoint) {
         return _.map(links, function(link){
           markerContainer(link, link.middlePoint);
         });
@@ -674,27 +673,13 @@
           return;
         }
         var nearestSuravage = nearest.feature.projectLinkData;
-        nearestSuravage.points = _.isUndefined(nearestSuravage.originalGeometry) ?
-          nearestSuravage.points : nearestSuravage.originalGeometry;
-        var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
+        nearestSuravage.points = _.isUndefined(nearestSuravage.originalGeometry) ? nearestSuravage.points : nearestSuravage.originalGeometry;
         if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
           nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
         }
-        // selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
         selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, mousePoint);
         projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
       };
-    };
-
-    var mapOverLinkMiddlePoints = function(links, transformation) {
-      return _.map(links, function(link) {
-        var points = _.map(link.geometry, function(point) {
-          return [point.x, point.y];
-        });
-        var lineString = new ol.geom.LineString(points);
-        var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
-        return transformation(link, middlePoint);
-      });
     };
 
     var projectLinkStatusIn = function(projectLink, possibleStatus){
@@ -702,7 +687,6 @@
         return _.contains(possibleStatus, projectLink.status);
       else return false;
     };
-    
 
     var suravageCutter = new SuravageCutter(suravageRoadProjectLayer, projectCollection, me.eventListener);
 

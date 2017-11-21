@@ -7,10 +7,7 @@
 
     var currentProject = false;
     var selectedProjectLink = false;
-    var markers = ['A', 'B', 'C'];
     var formCommon = new FormCommon('split-');
-
-    var options =['Valitse'];
 
     var showProjectChangeButton = function() {
       return '<div class="split-form form-controls">' +
@@ -97,7 +94,7 @@
       return mod;
     };
 
-    var selectedProjectLinkTemplate = function(project, optionTags, selected) {
+    var selectedProjectLinkTemplate = function(project, selected) {
       var selection = selectedSplitData(selected);
       return _.template('' +
         '<header>' +
@@ -132,31 +129,31 @@
       var splitPoint = ((applicationModel.getSelectedTool() != "Cut" ? getSplitPointBySideCode(firstLink) : firstLink.splitPoint));
 
       return '<form id="roadAddressProjectFormCut" class="input-unit-combination split-form-group form-horizontal roadAddressProject">'+
-          '<input type="hidden" id="splitx" value="' + splitPoint.x + '"/>' +
-          '<input type="hidden" id="splity" value="' + splitPoint.y + '"/>' +
-        '<label>Toimenpiteet,' + selection[0]  + '</label>' +
-          '<span class="marker">'+markers[0]+'</span>'+
-          dropdownOption(0, selected) +
-          '<hr class="horizontal-line"/>' +
-          secondPartForm(selection[1], selected) +
+        '<input type="hidden" id="splitx" value="' + splitPoint.x + '"/>' +
+        '<input type="hidden" id="splity" value="' + splitPoint.y + '"/>' +
+        '<label>SUUMMITELMALINKKI</label>' + '<span class="marker">'+selected[0].marker+'</span>'+
+      '<br>'+'<label>Toimenpiteet,' + selection[0] + '</label>' +
+        dropdownOption(0, selected) +
+        '<hr class="horizontal-line"/>' +
+        secondPartForm(selection[1], selected) +
         formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
         '<hr class="horizontal-line"/>' +
         thirdPartForm(selection[2], selected) +
-          '</form>';
+        '</form>';
     };
 
     var secondPartForm = function(selection, selected){
       if (selected[1].endAddressM !== selected[1].startAddressM) {
-        return '<label>Toimenpiteet,' + selection  + '</label>' +
-          '<span class="marker">'+markers[1]+'</span>' +
+        return '<label>SUUMMITELMALINKKI</label>'+ '<span class="marker">'+selected[1].marker+'</span>' +
+        '<br>'+'<label>Toimenpiteet,' + selection  + '</label>' +
           dropdownOption(1, selected);
       } else return '';
     };
 
     var thirdPartForm = function(selection, selected){
       if (selected[2].endAddressM !== selected[2].startAddressM) {
-        return '<label>Toimenpiteet,' + selection  + '</label>' +
-          '<span class="marker">'+markers[2]+'</span>' +
+      return '<label>NYKYLINKKI</label>'+ '<span class="marker">'+selected[2].marker+'</span>' +
+        '<br>'+'<label>Toimenpiteet,' + selection  + '</label>' +
           dropdownOption(2, selected);
       } else return '';
     };
@@ -177,10 +174,10 @@
 
     var emptyTemplate = function(project) {
       return _.template('' +
-          '<header style ="display:-webkit-inline-box;">' +
-          formCommon.titleWithProjectName(project.name, currentProject) +
-          '</header>' +
-          '<footer>'+showProjectChangeButton()+'</footer>');
+        '<header style ="display:-webkit-inline-box;">' +
+        formCommon.titleWithProjectName(project.name, currentProject) +
+        '</header>' +
+        '<footer>'+showProjectChangeButton()+'</footer>');
     };
 
     var isProjectPublishable = function(){
@@ -235,7 +232,7 @@
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         formCommon.checkInputs('.split-');
         formCommon.toggleAdditionalControls();
@@ -294,13 +291,13 @@
       });
 
       rootElement.on('click','.revertSplit', function () {
-          projectCollection.removeProjectLinkSplit(projectCollection.getCurrentProject().project, selectedProjectLink);
+        projectCollection.removeProjectLinkSplit(projectCollection.getCurrentProject().project, selectedProjectLink);
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
-          if(applicationModel.getSelectedTool() == "Cut") {
-              new ModalConfirm(result.toString());
-          }
+        if(applicationModel.getSelectedTool() == "Cut") {
+          new ModalConfirm(result.toString());
+        }
       });
 
       eventbus.on('roadAddressProject:discardChanges',function(){
@@ -440,7 +437,7 @@
       });
 
       rootElement.on('click', ' .split-form button.cancelLink', function(){
-              cancelChanges();
+        cancelChanges();
       });
 
       rootElement.on('click', '.split-form button.send', function(){

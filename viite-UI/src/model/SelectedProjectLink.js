@@ -88,21 +88,22 @@
       projectLinkCollection.preSplitProjectLinks(suravage.linkId, mousePoint);
         eventbus.once('projectLink:preSplitSuccess', function(data){
           preSplitData = data;
-          var selection = [data.a, data.b];
-          var splitedA = data.a;
-          var splitedB = data.b;
-          var suravageC = data.c;
-          ids = projectLinkCollection.getMultiSelectIds(splitedA.linkId);
+          var suravageA = data.a;
+          var suravageB = data.b;
+          var terminatedC = data.c;
+          ids = projectLinkCollection.getMultiSelectIds(suravageA.linkId);
           current = projectLinkCollection.getByLinkId(_.flatten(ids));
-          splitedA.marker = "A";
-          splitedB.marker = "B";
-          suravageC.marker = "C";
-          splitedA.splitPoint = mousePoint;
-          splitedB.splitPoint = mousePoint;
-          suravageC.splitPoint = mousePoint;
+          suravageA.marker = "A";
+          suravageB.marker = "B";
+          terminatedC.marker = "C";
+          suravageA.text = "SUUNNITELMALINKKI";
+          suravageB.text = "SUUNNITELMALINKKI";
+          terminatedC.text = "NYKYLINKKI";
+          suravageA.splitPoint = mousePoint;
+          suravageB.splitPoint = mousePoint;
+          terminatedC.splitPoint = mousePoint;
           applicationModel.removeSpinner();
-          eventbus.trigger('split:projectLinks', [splitedA, splitedB, suravageC]);
-
+          eventbus.trigger('split:projectLinks', [suravageA, suravageB, terminatedC]);
 
           // if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
           //   // Re-split with a new split point
