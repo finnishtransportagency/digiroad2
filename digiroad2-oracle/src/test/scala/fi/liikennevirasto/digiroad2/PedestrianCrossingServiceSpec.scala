@@ -67,8 +67,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
-      OraclePedestrianCrossingDao.update(600029, PedestrianCrossingToBePersisted(1611317, 374406.8,
-        6677308.2, 31.550, 235, "Hannu"), linkSource = NormalLinkInterface)
+      OraclePedestrianCrossingDao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, 1611317), 31.550,  "Hannu", 235, None, linkSource = NormalLinkInterface)
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374406, 6677306.5), Point(374408.5, 6677309.5))).head
       result.id should equal(600029)
       result.linkId should equal(1611317)

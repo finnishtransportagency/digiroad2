@@ -21,27 +21,32 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     persistedAsset.copy(floating = floating)
   }
 
+  override def setAssetPosition(asset: IncomingPedestrianCrossing, geometry: Seq[Point], mValue: Double): IncomingPedestrianCrossing = {
+      GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+        case Some(point) =>
+          asset.copy(lon = point.x, lat = point.y)
+        case _ =>
+          asset
+      }
+  }
+
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
-    val assetPoint = Point(asset.lon, asset.lat, 0)
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, roadLink.geometry)
-    val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(assetPoint)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
     withDynTransaction {
-      OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, point.x, point.y, mValue, roadLink.municipalityCode, username), username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      OraclePedestrianCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 
-  override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val oldAsset = getById(id)
-    val assetPoint = Point(updatedAsset.lon, updatedAsset.lat, 0)
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, geometry)
-    val point = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(assetPoint)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
       oldAsset match {
         case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
           updateExpiration(id, expired = true, username)
-          OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+          OraclePedestrianCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
         case _ =>
-          OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+          OraclePedestrianCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
           id
       }
     }
@@ -57,8 +62,8 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
-    OraclePedestrianCrossingDao.update(adjustment.assetId, PedestrianCrossingToBePersisted(adjustment.linkId,
-      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
+    val updated = IncomingPedestrianCrossing(adjustment.lon, adjustment.lat, adjustment.linkId)
+    OraclePedestrianCrossingDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedAsset.municipalityCode, Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {

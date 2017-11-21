@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.{Point, PersistedPointAsset}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Sequences, Queries}
+import fi.liikennevirasto.digiroad2.{IncomingPedestrianCrossing, PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
@@ -24,17 +24,17 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 case class PedestrianCrossingToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OraclePedestrianCrossingDao {
-  def update(id: Long, persisted: PedestrianCrossingToBePersisted, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
-    sqlu""" update asset set municipality_code = ${persisted.municipalityCode} where id = $id """.execute
+  def update(id: Long, persisted: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
+    sqlu""" update asset set municipality_code = ${municipality} where id = $id """.execute
     updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
-    updateAssetModified(id, persisted.createdBy).execute
+    updateAssetModified(id, username).execute
 
     adjustedTimeStampOption match {
       case Some(adjustedTimeStamp) =>
         sqlu"""
           update lrm_position
            set
-           start_measure = ${persisted.mValue},
+           start_measure = ${mValue},
            link_id = ${persisted.linkId},
            adjusted_timestamp = ${adjustedTimeStamp},
            link_source = ${linkSource.value}
@@ -44,7 +44,7 @@ object OraclePedestrianCrossingDao {
         sqlu"""
           update lrm_position
            set
-           start_measure = ${persisted.mValue},
+           start_measure = ${mValue},
            link_id = ${persisted.linkId},
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
@@ -53,16 +53,16 @@ object OraclePedestrianCrossingDao {
     id
   }
 
-  def create(crossing: PedestrianCrossingToBePersisted, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {
+  def create(crossing: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 200, $username, sysdate, ${crossing.municipalityCode})
+        values ($id, 200, $username, sysdate, ${municipality})
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${crossing.mValue}, ${crossing.linkId}, $adjustedTimestamp, ${linkSource.value})
+        values ($lrmPositionId, ${mValue}, ${crossing.linkId}, $adjustedTimestamp, ${linkSource.value})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

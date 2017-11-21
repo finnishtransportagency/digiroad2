@@ -17,7 +17,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   override def typeId: Int = 230
 
-  private def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset = {
+  override def setAssetPosition(asset: IncomingRailwayCrossing, geometry: Seq[Point], mValue: Double): IncomingRailwayCrossing = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
         asset.copy(lon = point.x, lat = point.y)

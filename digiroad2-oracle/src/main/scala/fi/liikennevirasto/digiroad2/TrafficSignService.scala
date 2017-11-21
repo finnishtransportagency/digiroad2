@@ -58,7 +58,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def typeId: Int = 300
 
-  private def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset = {
+  override def setAssetPosition(asset: IncomingTrafficSign, geometry: Seq[Point], mValue: Double): IncomingTrafficSign = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
         asset.copy(lon = point.x, lat = point.y)
@@ -73,7 +73,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
     persistedAsset.copy(floating = floating)
   }
 
-//  override def create(asset: IncomingTrafficSign, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
   override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
     withDynTransaction {

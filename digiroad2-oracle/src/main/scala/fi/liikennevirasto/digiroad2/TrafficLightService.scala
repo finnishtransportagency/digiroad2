@@ -16,18 +16,25 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   override def typeId: Int = 280
 
-  override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def setAssetPosition(asset: IncomingTrafficLight, geometry: Seq[Point], mValue: Double): IncomingTrafficLight = {
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        asset.copy(lon = point.x, lat = point.y)
+      case _ =>
+        asset
+    }
+  }
+
+  override def update(id: Long, updatedAsset: IncomingTrafficLight, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val oldAsset = getById(id)
-    val assetPoint = Point(updatedAsset.lon, updatedAsset.lat, 0)
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, geometry)
-    val point = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(assetPoint)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
       oldAsset match {
         case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
           updateExpiration(id, expired = true, username)
-          OracleTrafficLightDao.create(TrafficLightToBePersisted(updatedAsset.linkId, updatedAsset.lon, point.y, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+          OracleTrafficLightDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
         case _ =>
-          OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+          OracleTrafficLightDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
           id
       }
     }
@@ -41,12 +48,10 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     OracleTrafficLightDao.fetchByFilter(queryFilter)
   }
 
-  override def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long = {
-    val assetPoint = Point(asset.lon, asset.lat, 0)
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, roadLink.geometry)
-    val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(assetPoint)
+  override def create(asset: IncomingTrafficLight, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
     withDynTransaction {
-      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, point.y, mValue, roadLink.municipalityCode, username), username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      OracleTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 
@@ -60,8 +65,8 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
-    OracleTrafficLightDao.update(adjustment.assetId, TrafficLightToBePersisted(adjustment.linkId,
-      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
+    val updated = IncomingTrafficLight(adjustment.lon, adjustment.lat, adjustment.linkId)
+    OracleTrafficLightDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedAsset.municipalityCode, Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {

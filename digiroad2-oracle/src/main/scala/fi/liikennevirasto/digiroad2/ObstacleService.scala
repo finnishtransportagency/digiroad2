@@ -21,7 +21,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     persistedAsset.copy(floating = floating)
   }
 
-  private def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset = {
+  override def setAssetPosition(asset: IncomingObstacle, geometry: Seq[Point], mValue: Double): IncomingObstacle = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
         asset.copy(lon = point.x, lat = point.y)

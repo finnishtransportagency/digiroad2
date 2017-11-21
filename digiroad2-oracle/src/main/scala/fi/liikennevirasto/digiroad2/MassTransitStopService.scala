@@ -138,6 +138,16 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  //TODO: check if this is needed for MassTransitStop
+  override def setAssetPosition(asset: NewMassTransitStop, geometry: Seq[Point], mValue: Double): NewMassTransitStop = {
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        asset.copy(lon = point.x, lat = point.y)
+      case _ =>
+        asset
+    }
+  }
+
   override def update(id: Long, updatedAsset: NewMassTransitStop, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     throw new NotImplementedError("Use updateExisting instead. Mass transit is legacy.")
   }

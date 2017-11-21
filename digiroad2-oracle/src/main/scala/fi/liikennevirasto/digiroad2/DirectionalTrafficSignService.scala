@@ -12,7 +12,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
   type IncomingAsset = IncomingDirectionalTrafficSign
   type PersistedAsset = DirectionalTrafficSign
 
-  private def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset = {
+  override def setAssetPosition(asset: IncomingDirectionalTrafficSign, geometry: Seq[Point], mValue: Double): IncomingDirectionalTrafficSign = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
         asset.copy(lon = point.x, lat = point.y)
