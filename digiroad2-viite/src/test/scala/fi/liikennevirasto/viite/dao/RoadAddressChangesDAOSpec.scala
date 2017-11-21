@@ -41,7 +41,9 @@ class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
   }
 
   test("confirm data insertion") {
-    val newProjectLink = ProjectLink(1, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, None, None, None, 0, 0, 0.0, 0.0, SideCode.Unknown, (None, None), false, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 5, false)
+    val newProjectLink = ProjectLink(1, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, None, None, None, 0, 0, 0.0, 0.0,
+      SideCode.Unknown, (None, None), false, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 5, false,
+      None, 748800L)
     val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
