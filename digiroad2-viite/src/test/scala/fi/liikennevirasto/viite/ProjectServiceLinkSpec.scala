@@ -711,6 +711,47 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("New Project link (Uusi) update of road_number, road_part_number and track_code") {
+    runWithRollback {
+      sqlu"DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+
+      val points5176552 = "[{\"x\":537869.292,\"y\":6997722.466,\"z\":110.39800000000105}," +
+        "{\"x\":538290.056,\"y\":6998265.169,\"z\":85.4429999999993}]"
+      val points5176512 = "[{\"x\":537152.306,\"y\":6996873.826,\"z\":108.27700000000186}," +
+        "{\"x\":537869.292,\"y\":6997722.466,\"z\":110.39800000000105}]"
+      val oldgeom512 = JSON.parseFull(points5176512).get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
+      val oldgeom552 = JSON.parseFull(points5176552).get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
+
+      val geometries = StaticTestData.mappedGeoms(Set(5176552, 5176512))
+      val geom512 = geometries(5176512)
+      val geom552 = geometries(5176552)
+
+      oldgeom512 should be(geom512)
+      oldgeom552 should be(geom552)
+      val addProjectAddressLink512 = ProjectAddressLink(NewRoadAddress, 5176512, geom512, GeometryUtils.geometryLength(geom512),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom512),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addProjectAddressLink552 = ProjectAddressLink(NewRoadAddress, 5176552, geom552, GeometryUtils.geometryLength(geom552),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom552),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
+      mockForProject(id, addresses)
+      projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L, 5L, ProjectCoordinates(0, 1, 1), "U", addresses.minBy(_.endMValue).linkId) should be(None)
+      val links = ProjectDAO.getProjectLinks(id)
+      projectService.updateProjectLinks(id, links.map(_.linkId).toSet, LinkStatus.New, "test",new ProjectCoordinates(0, 1, 1), 123456, 12345, Option(0), RoadType.FerryRoad.value, Discontinuity.EndOfRoad.value, 8, false, 0)
+      val linksAfterUpdate = ProjectDAO.getProjectLinks(id)
+      val firstLink = linksAfterUpdate.head
+      firstLink.roadNumber should be (123456)
+      firstLink.roadPartNumber should be (12345)
+      firstLink.track.value should be (0)
+    }
+  }
+
   test("Project links direction change shouldn't work due to unchanged links on road") {
     runWithRollback {
       sqlu"DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
