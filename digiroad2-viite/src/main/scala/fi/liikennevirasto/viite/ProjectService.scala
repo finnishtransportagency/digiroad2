@@ -88,30 +88,30 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def calculateProjectCoordinates(links: Seq[ProjectLink], resolution: Int): ProjectCoordinates = {
-      val corners = GeometryUtils.boundingRectangleCorners(links.flatten(_.geometry))
-      val centerX = (corners._1.x + corners._2.x) / 2
-      val centerY = (corners._1.y + corners._2.y) / 2
-      val (xLength,yLength) = (Math.abs(corners._2.x - corners._1.x), Math.abs(corners._2.y - corners._1.y))
-      val zoom = Resolutions.map(r => {
-        (xLength / r, yLength / r) match {
-          case (x, y) if x < DefaultScreenWidth && y < DefaultScreenHeight  => Resolutions.indexOf(r)
-          case _ => 0
-        }
-      })
-      ProjectCoordinates(centerX, centerY, zoom.max)
+  def calculateProjectCoordinates(projectId: Long, resolution: Int): ProjectCoordinates = {
+    withDynTransaction{
+      val links = ProjectDAO.getProjectLinks(projectId)
+      if (links.nonEmpty) {
+        val corners = GeometryUtils.boundingRectangleCorners(links.flatten(_.geometry))
+        val centerX = (corners._1.x + corners._2.x) / 2
+        val centerY = (corners._1.y + corners._2.y) / 2
+        val (xLength,yLength) = (Math.abs(corners._2.x - corners._1.x), Math.abs(corners._2.y - corners._1.y))
+        val zoom = Resolutions.map(r => {
+          (xLength / r, yLength / r) match {
+            case (x, y) if x < DefaultScreenWidth && y < DefaultScreenHeight  => Resolutions.indexOf(r)
+            case _ => 0
+          }
+        })
+        ProjectCoordinates(centerX, centerY, zoom.max)
+      } else {
+        ProjectCoordinates(0,0,0)
+      }
+    }
   }
 
   def saveProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates): Unit = {
     withDynSession {
       ProjectDAO.updateProjectCoordinates(projectId, coordinates)
-    }
-  }
-
-  def saveProjectRegion(roadAddressProject: RoadAddressProject, resolution: Int): Unit = {
-    withDynSession {
-      val coordinates = calculateProjectCoordinates(ProjectDAO.getProjectLinks(roadAddressProject.id), resolution)
-      saveProjectCoordinates(roadAddressProject.id, coordinates)
     }
   }
 
