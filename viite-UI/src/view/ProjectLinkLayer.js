@@ -679,15 +679,19 @@
         }
         var cutGeometry = selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, mousePoint);
         eventbus.once('split:cutPointFeature', function(cutGeom) {
+          var points = _.map(cutGeom.geometry, function (point) {
+            return [point.x, point.y];
+          });
           var cutFeature = new ol.Feature({
-            geometry: cutGeom,
+            geometry: new ol.geom.LineString([points]),
             type: 'cut-line'
           });
           var style = new ol.style.Style({
-            fill : new ol.style.Fill({color: 'blue'}),
-            zIndex: 11
+            stroke: new ol.style.Stroke({color: [0, 0 , 255, 0.5], width: 6}),
+            zIndex: 14
           });
           cutFeature.setStyle(style);
+          vectorLayer.getSource().addFeatures(cutFeature);
           suravageRoadProjectLayer.getSource().addFeatures(cutFeature);
         });
 

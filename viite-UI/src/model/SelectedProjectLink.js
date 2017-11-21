@@ -50,40 +50,6 @@
       eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
     };
 
-    /*var splitSuravageLink = function(suravage, split, mousePoint) {
-      splitSuravageLinks(suravage, split, mousePoint, function(splitSuravageLinks) {
-        var selection = [splitSuravageLinks.created, splitSuravageLinks.existing];
-        if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
-          // Re-split with a new split point
-          ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
-          current = projectLinkCollection.getByLinkId(_.flatten(ids));
-          var orderedSplitParts = orderSplitParts(get());
-          var orderedPreviousSplit = orderSplitParts(selection);
-          var suravageA = orderedSplitParts[0];
-          var suravageB = orderedSplitParts[1];
-          if (!suravageB) {
-            suravageB = zeroLengthSplit(suravageA);
-          }
-          suravageA.marker = "A";
-          suravageB.marker = "B";
-          suravageA.points = orderedPreviousSplit[0].points;
-          suravageB.points = orderedPreviousSplit[1].points;
-          suravageA.splitPoint = mousePoint;
-          suravageB.splitPoint = mousePoint;
-          var measureLeft = calculateMeasure(suravageA);
-          var measureRight = calculateMeasure(suravageB);
-          suravageA.startMValue = 0;
-          suravageA.endMValue = measureLeft;
-          suravageB.startMValue = measureLeft;
-          suravageB.endMValue = measureLeft + measureRight;
-          eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
-        } else {
-          ids = _.uniq(_.pluck(selection, 'linkId'));
-          eventbus.trigger('split:projectLinks', selection);
-        }
-      });
-    };*/
-
     var preSplitSuravageLink = function(suravage, mousePoint) {
       projectLinkCollection.preSplitProjectLinks(suravage.linkId, mousePoint);
         eventbus.once('projectLink:preSplitSuccess', function(data){
@@ -105,35 +71,6 @@
           applicationModel.removeSpinner();
           eventbus.trigger('split:projectLinks', [suravageA, suravageB, terminatedC]);
           eventbus.trigger('split:cutPointFeature', data.split);
-          // if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
-          //   // Re-split with a new split point
-          //   ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
-          //   current = projectLinkCollection.getByLinkId(_.flatten(ids));
-          //   var orderedSplitParts = orderSplitParts(get());
-          //   var orderedPreviousSplit = orderSplitParts(selection);
-          //   var suravageA = orderedSplitParts[0];
-          //   var suravageB = orderedSplitParts[1];
-          //   if (!suravageB) {
-          //     suravageB = zeroLengthSplit(suravageA);
-          //   }
-          //   suravageA.marker = "A";
-          //   suravageB.marker = "B";
-          //   suravageA.points = orderedPreviousSplit[0].points;
-          //   suravageB.points = orderedPreviousSplit[1].points;
-          //   suravageA.splitPoint = mousePoint;
-          //   suravageB.splitPoint = mousePoint;
-          //   var measureLeft = calculateMeasure(suravageA);
-          //   var measureRight = calculateMeasure(suravageB);
-          //   suravageA.startMValue = 0;
-          //   suravageA.endMValue = measureLeft;
-          //   suravageB.startMValue = measureLeft;
-          //   suravageB.endMValue = measureLeft + measureRight;
-          //   eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
-          // } else {
-          //   ids = _.uniq(_.pluck(selection, 'linkId'));
-          //   eventbus.trigger('split:projectLinks', selection);
-          // }
-        // });
         });
     };
 
@@ -159,22 +96,6 @@
       splitSuravage.existing.marker = 'B';
 
       callback(splitSuravage);
-    };
-
-    var zeroLengthSplit = function(adjacentLink) {
-      return {
-        roadNumber: adjacentLink.roadNumber,
-        roadPartNumber: adjacentLink.roadPartNumber,
-        roadLinkSource: adjacentLink.roadLinkSource,
-        connectedLinkId: adjacentLink.connectedLinkId,
-        linkId: adjacentLink.linkId,
-        status: LinkValues.LinkStatus.NotHandled.value,
-        points:  getPoint(adjacentLink),
-        startAddressM: 0,
-        endAddressM: 0,
-        startMValue: 0,
-        endMValue: 0
-      };
     };
 
     var getPoint = function(link) {
