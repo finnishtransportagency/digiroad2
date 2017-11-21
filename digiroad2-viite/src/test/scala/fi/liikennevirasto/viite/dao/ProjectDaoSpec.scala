@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.SQLException
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -328,6 +328,25 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       val reserved = ProjectDAO.fetchByProjectRoadParts(Set((5,203), (5, 205)), id)
       reserved.map(_.id).toSet should be (reserved203.map(_.id).toSet ++ reserved205.map(_.id).toSet)
       reserved should have size (addresses.size)
+    }
+  }
+
+  test("update ProjectLinkgeom") {
+    //Creation of Test road
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.reserveRoadPart(id, 5, 203, "TestUser")
+      ProjectDAO.create(addresses)
+      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      val projectlinksWithDummyGeom = ProjectDAO.getProjectLinks(id).map(x=>x.copy(geometry = Seq(Point(1,1,1),Point(2,2,2),Point(1,2))))
+      ProjectDAO.updateProjectLinksGeometry(projectlinksWithDummyGeom,"test")
+      val updatedProjectlinks=ProjectDAO.getProjectLinks(id)
+      updatedProjectlinks.head.geometry.size should be (3)
+      updatedProjectlinks.head.geometry should be (Stream(Point(1.0,1.0,1.0), Point(2.0,2.0,2.0), Point(1.0,2.0,0.0)))
     }
   }
 }
