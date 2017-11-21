@@ -1067,6 +1067,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set()) = {
+    def setTrackAndReversedFlag(adjustedLink: ProjectLink, before: Option[ProjectLink]): ProjectLink = {
+      before.map(_.sideCode) match {
+        case Some(value) if value != adjustedLink.sideCode && value != SideCode.Unknown =>
+          adjustedLink.copy(reversed = !adjustedLink.reversed, track = Track.switch(adjustedLink.track))
+        case _ => adjustedLink
+      }
+    }
     val projectLinks = withGeometry(
       if (roadParts.isEmpty)
         ProjectDAO.getProjectLinks(projectId)
@@ -1079,7 +1086,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
       grp =>
         val calibrationPoints = CalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
-        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints)
+        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map( rpl =>
+          setTrackAndReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadAddressId != 0L))
+        )
         ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
     }, "recalculated links in %.3f sec")
   }
