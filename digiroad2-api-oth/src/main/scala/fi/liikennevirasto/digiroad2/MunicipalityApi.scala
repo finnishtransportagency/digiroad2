@@ -286,7 +286,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     getManoeuvreAndRoadLinks(manoeuvreIds.map(_.toInt)).getOrElse(halt(InternalServerError("Asset not created")))
   }
 
-
   def convertValidityPeriod(validityOpt: Option[ManoeuvreProperties]): Option[Set[ValidityPeriod]] = {
     validityOpt match {
       case Some(validityPeriod) => Some(validityPeriod.value.asInstanceOf[List[Map[String, Any]]].map { a =>
@@ -369,9 +368,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
       val elements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement).map(_.sourceLinkId)
 
-      Seq(Map("name" -> "sourceLinkId", "value" -> manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)
+      Seq(Map("name" -> "sourceLinkId", "value" -> manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).get
       ),Map("name" -> "elements", "value" -> elements),
-        Map("name" -> "destLinkId", "value" -> manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId)
+        Map("name" -> "destLinkId", "value" -> manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).get
         )) ++ exceptions ++ additionalInfo ++ validityPeriods
   }
 
@@ -478,7 +477,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
     Map("id" -> manoeuvre.id,
       "properties" -> extractManoeuvreProperties(manoeuvre),
-      "linkId" -> manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId),
+      "linkId" -> manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).get,
       "startMeasure" -> 0,
       "endMeasure" -> GeometryUtils.geometryLength(geomtry),
       "modifiedAt" -> manoeuvre.modifiedDateTime,
@@ -648,9 +647,34 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
 
     val roadLinks = roadLinkService.getRoadsLinksFromVVH(getAllLinkIds(manoeuvres).toSet)
-    validateNotMandatoryManoeuvreProp(manoeuvres)
+    //validate all LinkIds
+    manoeuvres.foreach { manoeuvre =>
+      val destLinkId = manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("destLinkId not found")))
+      val linkIdAll = Seq(manoeuvre.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("sourceLinkId not found")))) ++
+      manoeuvre.properties.find(_.name == "elements").map(_.value.asInstanceOf[Seq[BigInt]].map(_.toLong)).getOrElse(Seq()) ++ Seq(destLinkId)
+
+      if(roadLinks.map(_.linkId).count(linkIdAll.contains) != linkIdAll.size)
+        halt(UnprocessableEntity("At least one of this linkId are not valid"))
+
+      manoeuvre.startMeasure match {
+        case Some(measure) =>
+          if (measure < 0)
+            halt(UnprocessableEntity("StartMeasure should be greater than 0"))
+        case _ => None
+      }
+
+      manoeuvre.endMeasure match {
+        case Some(measure) =>
+          if (measure > GeometryUtils.geometryLength(roadLinks.find(_.linkId == destLinkId).get.geometry))
+            halt(UnprocessableEntity("endMeasure is greater than destLinkId "))
+        case _ => None
+      }
+    }
+
+      validateNotMandatoryManoeuvreProp(manoeuvres)
   }
   def validateManoeuvrePropForUpdate(manoeuvre: NewManoeuvreValues):Unit = {
+
     if (manoeuvre.properties.map(_.name).contains("sourceLinkId") || manoeuvre.properties.map(_.name).contains("elements") || manoeuvre.properties.map(_.name).contains("destLinkId"))
       halt(Found("Not allow update sourceLinkId, destLinkId or elements"))
 

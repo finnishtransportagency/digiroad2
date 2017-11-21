@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Weekday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
 import org.apache.commons.codec.binary.Base64
 import org.json4s.{DefaultFormats, Formats}
@@ -10,7 +11,6 @@ import org.scalatra.test.scalatest.ScalatraSuite
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-
 
 class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter with AuthenticatedApiSpec {
 
@@ -86,7 +86,6 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockOnOffLinearAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
   when(mockAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
 
-  //  when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(Seq(roadLink))
   val manoeuvreElement = Seq(ManoeuvreElement(10L, 1000L, 1001L, ElementTypes.FirstElement),
     ManoeuvreElement(10L, 1001L, 1002L, ElementTypes.IntermediateElement),
     ManoeuvreElement(10L, 1002L, 1003L, ElementTypes.IntermediateElement),
@@ -99,6 +98,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(newRoadLinks)
   when(mockRoadLinkService.getRoadsLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newRoadLinks)
+
   when(mockManoeuvreService.getByMunicipalityAndRoadLinks(235)).thenReturn(Seq((Manoeuvre(1, manoeuvreElement, Set.empty, Nil, "18.11.2017 03:01:03", "", ""), newRoadLinks)))
   when(mockManoeuvreService.createManoeuvre(any[String], any[NewManoeuvre])).thenReturn(10)
   when(mockManoeuvreService.find(any[Long])).thenReturn(Some(Manoeuvre(1, manoeuvreElement, Set.empty, Nil, "18.11.2017 03:01:03", "", "")))
@@ -367,6 +367,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
         "geometryTimestamp" -> 0,
         "municipalityCode" -> 235
       ))
+
       withClue("assetName TotalWeightLimit" ) {
         municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TotalWeightLimit.typeId , 0, None, linkSource = NormalLinkInterface), roadLink))) should be (mapAsset)}
       withClue("assetName TrailerTruckWeightLimit" ) {
@@ -411,10 +412,10 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       }
     }
 
-  val propManoeuvre = """ "properties":[{"value":1100, "name":"sourceLinkId"},{"value":1105,"name":"destLinkId"},{"value":[1101,1102], "name":"elements"}, {"value":[10,22], "name":"exceptions"},{"value":[{"startHour":12, "startMinute": 30, "endHour": 13, "endMinute": 35, "days": "Weekday"}, {"startHour": 10, "startMinute": 20, "endHour":14, "endMinute": 35,"days": "Weekday"}],"name":"validityPeriods"}]"""
+  val propManoeuvre = """ "properties":[{"value":1000, "name":"sourceLinkId"},{"value":1003,"name":"destLinkId"},{"value":[1001,1002], "name":"elements"}, {"value":[10,22], "name":"exceptions"},{"value":[{"startHour":12, "startMinute": 30, "endHour": 13, "endMinute": 35, "days": "Weekday"}, {"startHour": 10, "startMinute": 20, "endHour":14, "endMinute": 35,"days": "Weekday"}],"name":"validityPeriods"}]"""
 
   test("create new Manoeuvre asset", Tag("db")) {
-    val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, """ + propManoeuvre + """}]"""
+    val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 10, """ + propManoeuvre + """}]"""
 
     postJsonWithUserAuth("/manoeuvre", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
         status should be(200)
@@ -435,19 +436,19 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-//  test("Manoeuvre asset is not created if the asset is longer than the road"){
-//    val requestPayloadManoeuvre = """[{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, """ + propManoeuvre + """  }]"""
-//    postJsonWithUserAuth("/manoeuvre", requestPayloadManoeuvre.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
-//      status should equal(422)
-//    }
-//  }
-//
-//  test("Manoeuvre asset is not created if one measure is less than 0"){
-//    val requestPayloadManoeuvre = """[{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, """ + propManoeuvre + """  }]"""
-//    postJsonWithUserAuth("/manoeuvre", requestPayloadManoeuvre.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
-//      status should equal(422)
-//    }
-//  }
+  test("Manoeuvre asset is not created if the asset is longer than the road"){
+    val requestPayloadManoeuvre = """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, """ + propManoeuvre + """  }]"""
+    postJsonWithUserAuth("/manoeuvre", requestPayloadManoeuvre.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+      status should equal(422)
+    }
+  }
+
+  test("Manoeuvre asset is not created if one measure is less than 0"){
+    val requestPayloadManoeuvre = """[{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, """ + propManoeuvre + """  }]"""
+    postJsonWithUserAuth("/manoeuvre", requestPayloadManoeuvre.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+      status should equal(422)
+    }
+  }
 
   test("delete Manoeuvre asset with wrong authentication", Tag("db")){
     deleteWithUserAuth("/manoeuvre/1", getAuthorizationHeader("kalpa", "")){
@@ -464,10 +465,33 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("Manoeuvre asset is not updated if timestamp is older than the existing asset"){
-    val requestPayloadManoeuvre = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47",  "geometryTimestamp": 1511264400, "endMeasure": 15, "sideCode": 1, """ + propManoeuvreUpd + """}"""
+    val requestPayloadManoeuvre = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47",  "geometryTimestamp": 1511264400, "endMeasure": 15, """ + propManoeuvreUpd + """}"""
     putJsonWithUserAuth("/manoeuvre/1", requestPayloadManoeuvre.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
         status should equal(422)
     }
   }
 
+  test("encode Manoeuvre asset") {
+    val manoeuvreAsset = Manoeuvre(1, manoeuvreElement, Set(ValidityPeriod(12, 13, Weekday , 30, 35)), Seq(10,22), "18.11.2017 03:01:03", "", "test")
+
+    val manoeuvreMap =  municipalityApi.manoeuvreAssetToApi(manoeuvreAsset, newRoadLinks)
+    manoeuvreMap.get("id").get should be (1)
+    manoeuvreMap.get("linkId").get should be (1003)
+    manoeuvreMap.get("startMeasure").get should be (0)
+    manoeuvreMap.get("endMeasure").get should be (10)
+    manoeuvreMap.get("modifiedAt").get should be ("18.11.2017 03:01:03")
+    manoeuvreMap.get("geometryTimestamp").get should be (1510966863000L)
+    manoeuvreMap.get("municipalityCode").get should be (235)
+    val properties = manoeuvreMap.get("properties").get.asInstanceOf[Seq[Map[String, Any]]]
+    properties.find(_.get("name") == Some("sourceLinkId")).map(_.getOrElse("value", 0)).get should be (1000L)
+    properties.find(_.get("name") == Some("destLinkId")).map(_.getOrElse("value", 0)).get should be (1003L)
+    properties.find(_.get("name") == Some("additionalInfo")).map(_.getOrElse("value", 0)).get should be ("test")
+    properties.find(_.get("name") == Some("exceptions")).map(_.getOrElse("value", Seq())).get should be (List(10,22))
+    val validityPeriod = properties.find(_.get("name") == Some("validityPeriods")).map(_.getOrElse("value", Seq())).get.asInstanceOf[Set[Map[String, Any]]].head
+    validityPeriod.find(_._1 == "startHour").map(_._2).get should be (12)
+    validityPeriod.find(_._1 == "endHour").map(_._2).get should be (13)
+    validityPeriod.find(_._1 == "days").map(_._2).get should be ("Weekday")
+    validityPeriod.find(_._1 == "startMinute").map(_._2).get should be (30)
+    validityPeriod.find(_._1 == "endMinute").map(_._2).get should be (35)
+  }
 }
