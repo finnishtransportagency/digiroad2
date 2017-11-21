@@ -456,7 +456,7 @@ trait MassTransitStopService extends PointAssetOperations {
       asset.created, asset.modified, asset.propertyData, asset.linkSource, asset.terminalId)
   }
 
-  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
+  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     updateAjustedGeometry(adjustment, persistedAsset.linkSource)
     persistedAsset.id
   }

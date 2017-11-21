@@ -126,26 +126,27 @@ trait PointAssetOperations {
     Some(AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, reason))
   }
 
-  protected def floatingAdjustment(adjustmentOperation: ((PersistedAsset, AssetAdjustment) => Any), createOperation: ((PersistedAsset, AssetAdjustment) => PersistedAsset))
+  protected def floatingAdjustment(adjustmentOperation: ((PersistedAsset, AssetAdjustment, RoadLink) => Any), createOperation: ((PersistedAsset, AssetAdjustment) => PersistedAsset))
                                       (roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], persistedAsset: PersistedAsset, floating: Boolean, floatingReason: Option[FloatingReason]
   ): Option[AssetBeforeUpdate]= {
 
-      val roadLink = roadLinks.find(_.linkId == persistedAsset.linkId)
-      PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match {
-        case Some(adjustment) =>
-          adjustmentOperation(persistedAsset, adjustment)
-          val persitedAsset = createOperation(persistedAsset, adjustment)
-          Some(AssetBeforeUpdate(persitedAsset, adjustment.floating, Some(FloatingReason.Unknown)))
-        case None if (roadLink.isEmpty || floating) =>
-          None
-        case _ =>
-          PointAssetFiller.snapPersistedAssetToRoadLink(persistedAsset, roadLink.get) match {
-            case Some(adjustment) =>
-              adjustmentOperation(persistedAsset, adjustment)
-              Some(AssetBeforeUpdate(createOperation(persistedAsset, adjustment), adjustment.floating, Some(FloatingReason.Unknown)))
-            case _ =>
-              None
-      }
+    roadLinks.find(_.linkId == persistedAsset.linkId) match {
+      case Some(roadLink) =>
+        PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match {
+          case Some(adjustment) =>
+            adjustmentOperation(persistedAsset, adjustment, roadLink)
+            val persitedAsset = createOperation(persistedAsset, adjustment)
+            Some(AssetBeforeUpdate(persitedAsset, adjustment.floating, Some(FloatingReason.Unknown)))
+          case None if floating =>  None
+          case _ =>
+            PointAssetFiller.snapPersistedAssetToRoadLink(persistedAsset, roadLink) match {
+              case Some(adjustment) =>
+                adjustmentOperation(persistedAsset, adjustment, roadLink)
+                Some(AssetBeforeUpdate(createOperation(persistedAsset, adjustment), adjustment.floating, Some(FloatingReason.Unknown)))
+              case _ => None
+            }
+        }
+      case _ => None
     }
   }
 
@@ -237,10 +238,14 @@ trait PointAssetOperations {
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedAsset] = {
     withDynSession {
+      getPersistedAssetsByIdsWithoutTransaction(ids)
+    }
+  }
+
+  def getPersistedAssetsByIdsWithoutTransaction(ids: Set[Long]): Seq[PersistedAsset] = {
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
       fetchPointAssets(withFilter(filter))
-    }
   }
 
   def expire(id: Long, username: String): Long = {

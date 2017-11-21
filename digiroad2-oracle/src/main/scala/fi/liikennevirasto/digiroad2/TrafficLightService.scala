@@ -26,17 +26,22 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   }
 
   override def update(id: Long, updatedAsset: IncomingTrafficLight, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    val oldAsset = getById(id)
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      oldAsset match {
-        case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
-          updateExpiration(id, expired = true, username)
-          OracleTrafficLightDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
-        case _ =>
-          OracleTrafficLightDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
-          id
-      }
+      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource)
+    }
+  }
+
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficLight, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+    val oldAsset = getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
+    oldAsset match {
+      case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
+        updateExpiration(id, expired = true, username)
+        OracleTrafficLightDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+      case _ =>
+        OracleTrafficLightDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
+        id
+
     }
   }
 
@@ -64,9 +69,9 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     createPersistedAsset(asset, adjustment)
   }
 
-  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
+  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     val updated = IncomingTrafficLight(adjustment.lon, adjustment.lat, adjustment.linkId)
-    OracleTrafficLightDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedAsset.municipalityCode, Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
+    updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode, "vvh_generated", persistedAsset.linkSource)
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
