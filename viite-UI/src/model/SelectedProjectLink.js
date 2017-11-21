@@ -41,6 +41,10 @@
       var suravageA = orderedSplitParts[0];
       var suravageB = orderedSplitParts[1];
       suravageA.marker = "A";
+      if (!suravageB){
+        suravageB = zeroLengthSplit(suravageA);
+        suravageA.points = suravageA.originalGeometry;
+      }
       suravageB.marker = "B";
       eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
     };
@@ -56,6 +60,9 @@
           var orderedPreviousSplit = orderSplitParts(selection);
           var suravageA = orderedSplitParts[0];
           var suravageB = orderedSplitParts[1];
+          if (!suravageB) {
+            suravageB = zeroLengthSplit(suravageA);
+          }
           suravageA.marker = "A";
           suravageB.marker = "B";
           suravageA.points = orderedPreviousSplit[0].points;
@@ -98,6 +105,30 @@
       splitSuravage.existing.marker = 'B';
 
       callback(splitSuravage);
+    };
+
+    var zeroLengthSplit = function(adjacentLink) {
+      return {
+        roadNumber: adjacentLink.roadNumber,
+        roadPartNumber: adjacentLink.roadPartNumber,
+        roadLinkSource: adjacentLink.roadLinkSource,
+        connectedLinkId: adjacentLink.connectedLinkId,
+        linkId: adjacentLink.linkId,
+        status: LinkValues.LinkStatus.NotHandled.value,
+        points:  getPoint(adjacentLink),
+        startAddressM: 0,
+        endAddressM: 0,
+        startMValue: 0,
+        endMValue: 0
+      };
+    };
+
+    var getPoint = function(link) {
+      if (link.sideCode == LinkValues.SideCode.AgainstDigitizing.value) {
+        return _.first(link.points);
+      } else {
+        return _.last(link.points);
+      }
     };
 
     var calculateMeasure = function(link) {

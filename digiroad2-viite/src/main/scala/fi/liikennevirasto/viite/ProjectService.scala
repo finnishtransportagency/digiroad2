@@ -637,9 +637,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getRoadAddressSingleProject(projectId: Long): Option[RoadAddressProject] = {
+  def getRoadAddressSingleProject(projectId: Long, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus]): Option[RoadAddressProject] = {
     withDynTransaction {
-      ProjectDAO.getRoadAddressProjects(projectId).headOption
+      ProjectDAO.getRoadAddressProjects(projectId, filterNotStatus).headOption
     }
   }
 
@@ -648,6 +648,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectDAO.getRoadAddressProjects()
     }
   }
+
+  def updateProjectLinkGeometry(projectId:Long, username:String, onlyNotHandled:Boolean =false): Unit = {
+    withDynTransaction {
+      val projectLinks= if(onlyNotHandled) ProjectDAO.getProjectLinks(projectId).filter(x=>x.status==LinkStatus.NotHandled) else ProjectDAO.getProjectLinks(projectId)
+      val normalcomplimentaryProjectLinks= roadLinkService.getCurrentAndComplementaryVVHRoadLinks(projectLinks.filter(x=>x.linkGeomSource==LinkGeomSource.NormalLinkInterface
+        || x.linkGeomSource==LinkGeomSource.FrozenLinkInterface || x.linkGeomSource==LinkGeomSource.ComplimentaryLinkInterface).map(x=>x.linkId).toSet)
+      val suravageLinks=roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(projectLinks.filter(x=>x.linkGeomSource==LinkGeomSource.SuravageLinkInterface).map(x=>x.linkId).toSet)
+      val vvhLinks=normalcomplimentaryProjectLinks++suravageLinks
+      val updatedProjectLinks=projectLinks.map(pl=>pl.copy(geometry=vvhLinks.find(vvhLink=>vvhLink.linkId==pl.linkId) match {
+        case Some(geom) => geom.geometry
+        case None => println("test")
+          Seq.empty[Point]
+      }
+      ))
+      ProjectDAO.updateProjectLinksGeometry(updatedProjectLinks,username)
+    }
+  }
+
 
   def getSplitLinkData(projectId: Long, linkId: Long): Seq[ProjectLink] = {
     withDynTransaction {
@@ -1001,9 +1019,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           }
           case LinkStatus.Numbering => {
             val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
-            if (!project.isReserved(newRoadNumber, newRoadPartNumber))
-              ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy,ely)
-            ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPartNumber, userName)
+            ProjectDAO.getProjectLinksByLinkId(updatedProjectLinks.head.linkId).headOption match {
+              case Some(roadPartLink) =>
+                if (roadPartLink.roadNumber == roadNumber && roadPartLink.roadPartNumber == roadPartNumber)
+                  throw new ProjectValidationException(s"Numeroinnissa ei voi käyttää alkuperäistä tienumeroa ja -osanumeroa") // you cannot use current roadnumber and roadpart number in numbering operation
+                if (!project.isReserved(newRoadNumber, newRoadPartNumber))
+                  ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy, ely)
+                ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPartNumber, userName)
+              case _ => throw new ProjectValidationException(s"Linkkiä ei löytynyt projektista")
+            }
           }
           case LinkStatus.Transfer => {
             if (isRoadPartTransfer(projectLinks, updatedProjectLinks, newRoadNumber, newRoadPartNumber)) {
