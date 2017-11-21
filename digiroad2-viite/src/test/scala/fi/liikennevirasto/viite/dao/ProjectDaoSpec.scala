@@ -47,7 +47,7 @@ class ProjectDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("create road address project with project links") {
+  test("create road address project with project links and verify if the geometry is set") {
     val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -60,6 +60,8 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       val projectlinks = ProjectDAO.getProjectLinks(id)
       projectlinks.length should be > 0
       projectlinks.forall(_.status == LinkStatus.NotHandled) should be(true)
+      projectlinks.forall(_.geometry.size == 2) should be (true)
+      projectlinks.sortBy(_.endAddrMValue).map(_.geometry).zip(addresses.sortBy(_.endAddrMValue).map(_.geometry)).forall {case (x, y) => x == y}
       ProjectDAO.fetchFirstLink(id, 5, 203) should be(Some(projectlinks.minBy(_.startAddrMValue)))
     }
   }
@@ -319,13 +321,13 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       ProjectDAO.create(addresses)
       ProjectDAO.roadPartReservedByProject(5, 203) should be(Some("TestProject"))
       ProjectDAO.roadPartReservedByProject(5, 205) should be(Some("TestProject"))
-      val reserved203 = ProjectDAO.fetchByProjectRoadParts(Set((5, 203)), id)
+      val reserved203 = ProjectDAO.fetchByProjectRoadParts(Set((5L, 203L)), id)
       reserved203.nonEmpty should be (true)
-      val reserved205 = ProjectDAO.fetchByProjectRoadParts(Set((5, 205)), id)
+      val reserved205 = ProjectDAO.fetchByProjectRoadParts(Set((5L, 205L)), id)
       reserved205.nonEmpty should be (true)
       reserved203 shouldNot be (reserved205)
       reserved203.toSet.intersect(reserved205.toSet) should have size (0)
-      val reserved = ProjectDAO.fetchByProjectRoadParts(Set((5,203), (5, 205)), id)
+      val reserved = ProjectDAO.fetchByProjectRoadParts(Set((5L,203L), (5L, 205L)), id)
       reserved.map(_.id).toSet should be (reserved203.map(_.id).toSet ++ reserved205.map(_.id).toSet)
       reserved should have size (addresses.size)
     }

@@ -181,13 +181,23 @@ object ProjectDAO {
     Q.queryNA[ProjectLink](query).iterator.toSeq
   }
 
+  private def encodeGeometry(geometry: Seq[Point]) :String = {
+    def truncate(value: Double): Double = {
+      BigDecimal(value).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
+    geometry.map(point => {
+      "[" + truncate(point.x) + "," + truncate(point.y) + "," + truncate(point.z) +"]"
+    }).mkString(",")
+  }
+
+
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed) values " +
-      "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry) values " +
+      "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val lrmIds = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     val (ready, idLess) = roadAddresses.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
     val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
@@ -195,7 +205,7 @@ object ProjectDAO {
       x._1.copy(id = x._2)
     )
     projectLinks.toList.zip(lrmIds).foreach { case (address, lrmId) =>
-      RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
+      RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, new Date().getTime, address.linkGeomSource.value)
       addressPS.setLong(1, address.id)
       addressPS.setLong(2, address.projectId)
       addressPS.setLong(3, lrmId)
@@ -219,6 +229,7 @@ object ProjectDAO {
         addressPS.setString(15, null)
       addressPS.setLong(16, address.ely)
       addressPS.setBoolean(17, address.reversed)
+      addressPS.setString(18, encodeGeometry(address.geometry))
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
