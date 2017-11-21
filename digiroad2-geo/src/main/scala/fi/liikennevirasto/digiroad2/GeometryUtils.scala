@@ -342,5 +342,18 @@ object GeometryUtils {
     }
   }
 
+  def midPointGeometry(geometry: Seq[Point])(controlPoints: Seq[Point]): Point = {
+    if (geometry.size > 1) {
+      val controlX = (1-0.5) * geometry.head.x + geometry.tail.head.x
+      val controlY = (1-0.5) * geometry.head.y + geometry.tail.head.y
+      midPointGeometry(geometry.tail)(controlPoints :+ Point(controlX,controlY))
+    }
+    else if (controlPoints.size > 1 ) {
+      midPointGeometry(controlPoints)(Seq())
+    } else {
+      controlPoints.head
+    }
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }

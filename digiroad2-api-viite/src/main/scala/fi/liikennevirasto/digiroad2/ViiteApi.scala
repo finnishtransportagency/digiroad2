@@ -704,7 +704,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map(
           "linkId" -> splittedLinks.linkId,
           "geometry"-> splittedLinks.geometry,
-          "middlePoint" -> 0, //TODO middle point
+          "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
           "startAddressM" -> splittedLinks.startAddrMValue,
           "endAddressM" -> splittedLinks.endAddrMValue
         ))
@@ -714,7 +714,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map(
           "linkId" -> splittedLinks.linkId,
           "geometry"-> splittedLinks.geometry,
-          "middlePoint" -> 0, //TODO middle point
+          "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
           "startAddressM" -> splittedLinks.startAddrMValue,
           "endAddressM" -> splittedLinks.endAddrMValue
         ))
@@ -724,7 +724,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map(
           "linkId" -> splittedLinks.linkId,
           "geometry"-> splittedLinks.geometry,
-          "middlePoint" -> 0, //TODO middle point
+          "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
           "startAddressM" -> splittedLinks.startAddrMValue,
           "endAddressM" -> splittedLinks.endAddrMValue
         ))
