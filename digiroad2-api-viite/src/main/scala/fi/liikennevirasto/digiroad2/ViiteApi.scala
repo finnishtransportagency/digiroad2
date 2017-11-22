@@ -707,7 +707,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
           "startAddressM" -> splittedLinks.startAddrMValue,
           "endAddressM" -> splittedLinks.endAddrMValue,
-          "status" -> splittedLinks.status.value
+          "status" -> splittedLinks.status.value,
+          "roadType" -> splittedLinks.roadType.value,
+          "discontinuity" -> splittedLinks.discontinuity.value
         ))
       }
       case LinkStatus.Terminated => {
@@ -718,7 +720,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
           "startAddressM" -> splittedLinks.startAddrMValue,
           "endAddressM" -> splittedLinks.endAddrMValue,
-          "status" -> splittedLinks.status.value
+          "status" -> splittedLinks.status.value,
+          "roadType" -> splittedLinks.roadType.value,
+          "discontinuity" -> splittedLinks.discontinuity.value
         ))
       }
       case _ => {
@@ -729,7 +733,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
           "startAddressM" -> splittedLinks.startAddrMValue,
           "endAddressM" -> splittedLinks.endAddrMValue,
-          "status" -> splittedLinks.status.value
+          "status" -> splittedLinks.status.value,
+          "roadType" -> splittedLinks.roadType.value,
+          "discontinuity" -> splittedLinks.discontinuity.value
         ))
       }
     }

@@ -17,20 +17,20 @@
       '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
     };
 
-    var newRoadAddressInfo = function(selected, link){
-      var road = link.roadNumber;
-      var part = link.roadPartNumber;
-      var track = link.trackCode;
+    var newRoadAddressInfo = function(selected, link, road){
+      var roadNumber = road.roadNumber;
+      var part = road.roadPartNumber;
+      var track = road.trackCode;
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
         (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie',(road !== 0 ? road : '')) +
+        addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
         addSmallInputNumber('ajr',(track !== 99 ? track :
-          (road >= 20001 && road <= 39999 ? '0' : ''))) +
+          (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
@@ -136,9 +136,9 @@
       return span;
     };
 
-    var actionButtons = function(btnPrefix, disabled) {
+    var actionButtons = function(btnPrefix, notDisabled) {
       return '<div class="'+btnPrefix+'form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save" ' + (disabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
+        '<button class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
     };
