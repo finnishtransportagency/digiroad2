@@ -877,7 +877,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val returnedProject = projectService.getRoadAddressSingleProject(proj.id).get
       returnedProject.name should be("testiprojekti")
       returnedProject.ely.getOrElse(-1) should be (-1)
-      val projupdated=projectService.saveProject(proj.copy(reservedParts = addresses),8)
+      val projupdated=projectService.saveProject(proj.copy(reservedParts = addresses),7)
       val updatedReturnProject= projectService.getRoadAddressSingleProject(proj.id).head
       updatedReturnProject.ely.getOrElse(-1) should be (8)
         sqlu"""
