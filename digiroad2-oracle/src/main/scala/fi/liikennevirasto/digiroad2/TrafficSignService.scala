@@ -109,7 +109,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
 
-  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.TurningRestrictions)
+  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions)
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
@@ -221,7 +221,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
                 getAssetValidityDirection(assetBearing).get
               }
               val asset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
-              create(asset, userProvider.getCurrentUser().username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
+              create(asset, userProvider.getCurrentUser().username, link)
             case None =>
               val validityDirection = if(twoSided.get){
                 BothDirections.value
@@ -229,7 +229,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
                 getTrafficSignValidityDirection(Point(lon, lat), link.geometry)
               }
               val asset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse("")), validityDirection , Some(GeometryUtils.calculateBearing(link.geometry)))
-              create(asset, userProvider.getCurrentUser().username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
+              create(asset, userProvider.getCurrentUser().username, link)
           }
         case _ => None
       }
