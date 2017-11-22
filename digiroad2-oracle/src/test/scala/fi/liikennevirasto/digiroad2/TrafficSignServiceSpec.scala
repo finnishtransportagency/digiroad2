@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.{FunSuite, Matchers}
 
 class TrafficSignServiceSpec extends FunSuite with Matchers {
   def toRoadLink(l: VVHRoadlink) = {
@@ -126,6 +126,65 @@ class TrafficSignServiceSpec extends FunSuite with Matchers {
       updatedTrafficSign.id should equal(updatedTrafficSign.id)
       updatedTrafficSign.modifiedBy should equal(Some("unit_test"))
       updatedTrafficSign.modifiedAt shouldBe defined
+    }
+  }
+
+  test("Update traffic sign with geometry changes"){
+    runWithRollback {
+
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val propertiesToUpdate = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("2"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("60"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), "jakke", roadLink )
+
+      val newId = service.update(id, IncomingTrafficSign(0.0, 10.0,388553075, propertiesToUpdate, 1, None),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+
+      val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
+      updatedAsset.id should not be id
+      updatedAsset.lon should equal (0.0)
+      updatedAsset.lat should equal (10.0)
+      updatedAsset.createdBy should equal (Some("test"))
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("2")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("60")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
+    }
+  }
+
+  test("Update traffic sign without geometry changes"){
+    runWithRollback {
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val propertiesToUpdate = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("2"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("60"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for update test"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), "jakke", roadLink )
+      val asset = service.getPersistedAssetsByIds(Set(id)).head
+
+      val newId = service.update(id, IncomingTrafficSign(0.0, 20.0,388553075, propertiesToUpdate, 1, None),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+
+      val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
+      updatedAsset.id should be (id)
+      updatedAsset.lon should be (asset.lon)
+      updatedAsset.lat should be (asset.lat)
+      updatedAsset.createdBy should equal (Some("jakke"))
+      updatedAsset.modifiedBy should equal (Some("test"))
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("2")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("60")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for update test")
     }
   }
 }

@@ -1,18 +1,16 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.pointasset.oracle.RailwayCrossing
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import org.joda.time.DateTime
 
 class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   def toRoadLink(l: VVHRoadlink) = {
@@ -80,6 +78,41 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       service.expire(600051, "unit_test")
 
       service.getByMunicipality(235).find(_.id == 600051) should equal(None)
+    }
+  }
+
+  test("Update railway crossing with geometry changes"){
+    runWithRollback {
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, 1, None), "jakke", roadLink )
+
+      val newId = service.update(id, IncomingRailwayCrossing(0.0, 10.0,388553075, 2, None),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+
+      val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
+      updatedAsset.id should not be id
+      updatedAsset.lon should equal (0.0)
+      updatedAsset.lat should equal (10.0)
+      updatedAsset.safetyEquipment should equal(2)
+      updatedAsset.createdBy should equal (Some("test"))
+    }
+  }
+
+  test("Update railway crossing without geometry changes"){
+    runWithRollback {
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, 2, None), "jakke", roadLink )
+      val asset = service.getPersistedAssetsByIds(Set(id)).head
+
+      val newId = service.update(id, IncomingRailwayCrossing(0.0, 20.0,388553075,1, Some("nameTest")),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+
+      val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
+      updatedAsset.id should be (id)
+      updatedAsset.lon should be (asset.lon)
+      updatedAsset.lat should be (asset.lat)
+      updatedAsset.createdBy should equal (Some("jakke"))
+      updatedAsset.modifiedBy should equal (Some("test"))
+      updatedAsset.safetyEquipment should equal(1)
+      updatedAsset.name should equal (Some("nameTest"))
     }
   }
 }

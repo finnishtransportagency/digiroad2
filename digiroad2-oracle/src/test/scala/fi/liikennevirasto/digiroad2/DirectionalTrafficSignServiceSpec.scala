@@ -159,7 +159,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.createdAt shouldBe defined
 
 
-      val newAssetId = service.update(assetCreatedID, IncomingDirectionalTrafficSign(100, 0, 388553075, 3, Some("New text"), Some(0)), linkGeometry, 235, "test", linkSource = NormalLinkInterface)
+      service.update(assetCreatedID, IncomingDirectionalTrafficSign(100, 0, 388553075, 3, Some("New text"), Some(0)), linkGeometry, 235, "test", linkSource = NormalLinkInterface)
 
       val afterUpdate = service.getByMunicipality(235).find(_.id == assetCreatedID).get
       afterUpdate.id should equal(assetCreatedID)
