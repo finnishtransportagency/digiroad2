@@ -743,7 +743,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       mockForProject(id, addresses)
       projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L, 5L, ProjectCoordinates(0, 1, 1), "U", addresses.minBy(_.endMValue).linkId) should be(None)
       val links = ProjectDAO.getProjectLinks(id)
-      projectService.updateProjectLinks(id, links.map(_.linkId).toSet, LinkStatus.New, "test",new ProjectCoordinates(0, 1, 1), 123456, 12345, Option(0), RoadType.FerryRoad.value, Discontinuity.EndOfRoad.value, 8, false, 0)
+      projectService.updateProjectLinks(id, links.map(_.linkId).toSet, LinkStatus.New, "test",new ProjectCoordinates(0, 1, 1), 123456, 12345, 0, None, RoadType.FerryRoad.value, Discontinuity.EndOfRoad.value, Some(8), false)
       val linksAfterUpdate = ProjectDAO.getProjectLinks(id)
       val firstLink = linksAfterUpdate.head
       firstLink.roadNumber should be (123456)

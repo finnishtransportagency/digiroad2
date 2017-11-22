@@ -1044,8 +1044,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.UnChanged => {
             checkAndMakeReservation(toUpdateLinks.head.ely)
             // Reset back to original values
-            RoadAddressDAO.queryById(toUpdateLinks.map(_.roadAddressId).toSet).foreach(ra =>
-              ProjectDAO.updateProjectLinkValues(projectId, ra))
+            resetLinkValues(toUpdateLinks)
             updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
           }
           case LinkStatus.New => {
