@@ -17,6 +17,7 @@
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
+    var assetPosition;
 
     var close = function() {
       assetHasBeenModified = false;
@@ -26,7 +27,7 @@
     };
 
     eventbus.on('tool:changed', function(tool) {
-      if (tool !== 'Add' && exists()) {
+      if ((tool !== 'Add' && tool !== 'AddTerminal')  && exists()) {
         backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
           if (exists()) { eventbus.trigger('asset:fetched', asset); }
         });
@@ -38,7 +39,8 @@
         var transformValue = function(value) {
           return {
             propertyValue: value.propertyValue,
-            propertyDisplayValue: value.propertyDisplayValue
+            propertyDisplayValue: value.propertyDisplayValue,
+            checked: value.checked
           };
         };
 
@@ -87,7 +89,8 @@
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
-      backend.getAssetTypeProperties(function(properties) {
+      var assetPosition = asset.stopTypes && asset.stopTypes.length > 0 ? { lon: asset.lon, lat: asset.lat } : undefined;
+      backend.getAssetTypeProperties(assetPosition, function(properties) {
         _.find(properties, function (property) {
           return property.publicId === 'vaikutussuunta';
         }).values.map(function (value) {
@@ -122,13 +125,13 @@
       assetHasBeenModified = false;
       if (currentAsset.id) {
         backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-          open(asset);
           eventbus.trigger('asset:updateCancelled', asset);
         });
       } else {
         currentAsset = {};
         eventbus.trigger('asset:creationCancelled');
       }
+      eventbus.trigger('terminalBusStop:selected', false);
     };
 
     eventbus.on('application:readOnly', function() {
@@ -160,6 +163,7 @@
       currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
+      eventbus.trigger('terminalBusStop:selected', asset.stopTypes[0] == 6);
       eventbus.trigger('asset:modified');
     };
 
@@ -203,6 +207,12 @@
 
     var requiredPropertiesMissing = function() {
       var isRequiredProperty = function(publicId) {
+        //ignore if it is a terminal
+        //TODO we need to get a way to know the mandatory fields depending on the bus stop type (this was code after merging)
+        if(currentAsset.stopTypes && currentAsset.stopTypes[0] == 6 && _.some())
+          return 'liitetyt_pysakit' == publicId;
+        if(currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties))
+          return 'liitetyt_pysakit' == publicId;
         return getPropertyMetadata(publicId).required;
       };
       var isChoicePropertyWithUnknownValue = function(property) {
@@ -263,23 +273,20 @@
     var validateDirectionsForSave = function () {
       if(roadCollection){
         var roadLinkDirection = getRoadLinkDirection();
-        var massTransitStopDirection =  currentAsset.payload.validityDirection;
-        return roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
-      }else{
-        return false;
+        var massTransitStopDirection = currentAsset.payload.validityDirection;
+        return isTerminalBusStop(currentAsset.payload.properties) || roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
       }
+      return false;
     };
 
     var validateDirectionsForCreation = function () {
-      if(roadCollection){
+      if(roadCollection && !currentAsset.id){
         var roadLinkDirection = getRoadLinkDirection();
         var massTransitStopDirection = currentAsset.payload.validityDirection;
         if(roadLinkDirection != 1)
           return massTransitStopDirection != roadLinkDirection;
-        return true;
-      }else{
-        return false;
       }
+      return true;
     };
 
     var getRoadLinkDirection = function(){
@@ -465,6 +472,23 @@
       eventbus.trigger('textElementValue:set', newRoadLinkData.roadNameSe, public_ids.roadNameSe);
     }
 
+    function isTerminalBusStop(properties) {
+      return _.some(properties, function(property) {
+        return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
+          return value.propertyValue == "6";
+        });
+      });
+    }
+
+    function isTerminalChild(properties) {
+      if (!properties)
+        properties = getProperties();
+
+      return _.some(properties, function (property) {
+        return property.publicId === 'liitetty_terminaaliin' && !_.isEmpty(property.values);
+      });
+    }
+
     return {
       close: close,
       save: save,
@@ -497,7 +521,8 @@
       validateDirectionsForCreation: validateDirectionsForCreation,
       getEndDate: getEndDate,
       isRoadNameDif: isRoadNameDif,
-      setRoadNameFields: setRoadNameFields
+      setRoadNameFields: setRoadNameFields,
+      isTerminalChild: isTerminalChild
     };
   };
 

@@ -223,14 +223,14 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel);
+     PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
     });
 
     var trafficSignReadOnlyLayer = function(layerName){
       return new TrafficSignReadOnlyLayer({
         layerName: layerName,
         style: new PointAssetStyle('trafficSigns'),
-        collection: new TrafficSignsCollection(backend, 'trafficSigns', true),
+        collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
         assetLabel: new TrafficSignLabel(),
         assetGrouping: new AssetGrouping(9),
         map: map

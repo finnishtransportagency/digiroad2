@@ -155,10 +155,12 @@ window.SpeedLimitLayer = function(params) {
       if (!closestSpeedLimitLink) {
         return;
       }
-      if (isWithinCutThreshold(closestSpeedLimitLink.distance)) {
-        moveTo(closestSpeedLimitLink.point[0], closestSpeedLimitLink.point[1]);
-      } else {
-        remove();
+      if (!editConstrains(closestSpeedLimitLink)) {
+        if (isWithinCutThreshold(closestSpeedLimitLink.distance)) {
+          moveTo(closestSpeedLimitLink.point[0], closestSpeedLimitLink.point[1]);
+        } else {
+          remove();
+        }
       }
     };
 
@@ -183,10 +185,12 @@ window.SpeedLimitLayer = function(params) {
       }
 
       var nearestSpeedLimit = nearest.feature.getProperties();
-      var splitProperties = calculateSplitProperties(nearestSpeedLimit, mousePoint);
-      selectedSpeedLimit.splitSpeedLimit(nearestSpeedLimit.id, splitProperties);
+      if(!editConstrains(nearestSpeedLimit)){
+        var splitProperties = calculateSplitProperties(nearestSpeedLimit, mousePoint);
+        selectedSpeedLimit.splitSpeedLimit(nearestSpeedLimit.id, splitProperties);
 
-      remove();
+        remove();
+      }
     };
   };
 
@@ -236,6 +240,11 @@ window.SpeedLimitLayer = function(params) {
     }
   }
   var showDialog = function (speedLimits) {
+
+    speedLimits = _.filter(speedLimits, function(asset){
+      return !editConstrains(asset);
+    });
+
     activateSelectionStyle(speedLimits);
 
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
@@ -567,6 +576,12 @@ window.SpeedLimitLayer = function(params) {
   var refreshSelectedView = function(){
     if(applicationModel.getSelectedLayer() == layerName)
       me.refreshView();
+  };
+
+  var editConstrains = function(selectedAsset) {
+    return false;
+    //TODO revert this when DROTH-909
+    //return selectedAsset.administrativeClass === 'State';
   };
 
   return {

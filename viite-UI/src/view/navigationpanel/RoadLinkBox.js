@@ -1,8 +1,9 @@
 (function(root) {
-  root.RoadLinkBox = function(linkPropertiesModel) {
+  root.RoadLinkBox = function(selectedProjectLinkProperty) {
     var className = 'road-link';
     var title = 'Selite';
-
+    var selectToolIcon = '<img src="images/select-tool.svg"/>';
+    var cutToolIcon = '<img src="images/cut-tool.svg"/>';
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -29,7 +30,7 @@
         '</div>' +
       '</div>');
 
-    var roadClassLegend = $('<div class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
+    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
 
     var floatingLegend = $('' +
       '<div class="legend-entry">' +
@@ -76,16 +77,117 @@
         '<div class="symbol linear linear-asset-' + roadClass[0] + '" />' +
         '</div>';
     }).join('');
+
+    var roadProjectOperations = function () {
+      return '<div class="legend-entry">' +
+        '<div class="label">Ennallaan</div>' +
+        '<div class="symbol linear operation-type-unchanged" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Uusi</div>' +
+        '<div class="symbol linear operation-type-new" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Siirto</div>' +
+        '<div class="symbol linear operation-type-transfer" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Lakkautus</div>' +
+        '<div class="symbol linear operation-type-terminated" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Numerointi</div>' +
+        '<div class="symbol linear operation-type-renumbered" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Käsittelemätön</div>' +
+        '<div class="symbol linear operation-type-unhandeled" />' +
+        '</div>';
+    };
+
     roadClassLegend.append(roadClassLegendEntries);
     roadClassLegend.append(constructionTypeLegendEntries);
     roadClassLegend.append(floatingLegend);
     roadClassLegend.append(calibrationPointPicture);
 
-    var editModeToggle = new EditModeToggleButton({
-      hide: function() {},
-      reset: function() {},
-      show: function() {}
-    });
+    var Tool = function(toolName, icon) {
+      var className = toolName.toLowerCase();
+      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
+        executeOrShowConfirmDialog(function() {
+          applicationModel.setSelectedTool(toolName);
+        });
+      });
+      var deactivate = function() {
+        element.removeClass('active');
+      };
+      var activate = function() {
+        element.addClass('active');
+      };
+
+      var executeOrShowConfirmDialog = function(f) {
+        if (selectedProjectLinkProperty.isDirty()) {
+          new Confirm();
+        } else {
+          f();
+        }
+      };
+
+      return {
+        element: element,
+        deactivate: deactivate,
+        activate: activate,
+        name: toolName
+      };
+    };
+
+    var ToolSelection = function(tools) {
+      var element = $('<div class="panel-section panel-actions" />');
+      _.each(tools, function(tool) {
+        element.append(tool.element);
+      });
+      var hide = function() {
+        element.hide();
+      };
+      var show = function() {
+        element.show();
+      };
+      var deactivateAll = function() {
+        _.each(tools, function(tool) {
+          tool.deactivate();
+        });
+      };
+      var reset = function() {
+        deactivateAll();
+        tools[0].activate();
+      };
+      eventbus.on('tool:changed', function(name) {
+        _.each(tools, function(tool) {
+          if (tool.name != name) {
+            tool.deactivate();
+          } else {
+            tool.activate();
+          }
+        });
+      });
+
+      hide();
+      
+      return {
+        element: element,
+        reset: reset,
+        show: show,
+        hide: hide
+      };
+    };
+
+    var toolSelection = new ToolSelection([
+      new Tool('Select', selectToolIcon),
+      new Tool('Cut', cutToolIcon)
+    ]);
+
+    var editModeToggle = new EditModeToggleButton(
+      toolSelection
+    );
 
     var templateAttributes = {
       className: className,
@@ -107,7 +209,19 @@
 
     eventbus.on('editMode:setReadOnly', function(mode) {
       editModeToggle.toggleEditMode(mode);
+      elements.expanded.append(toolSelection.element);
     });
+
+    eventbus.on('application:readOnly', function() {
+      if(applicationModel.getSelectedLayer() != "linkProperty")
+      elements.expanded.append(toolSelection.element);
+    });
+
+    eventbus.on('roadAddressProject:clearTool', function(){
+      toolSelection.hide();
+    });
+
+    eventbus.on('layer:selected roadAddressProject', toggleProjectLegends);
 
     bindExternalEventHandlers();
 
@@ -121,6 +235,21 @@
 
     function hide() {
       element.hide();
+    }
+
+    function toggleProjectLegends() {
+      var container = $('#legendDiv');
+      if(applicationModel.getSelectedLayer() !== "linkProperty") {
+        container.empty();
+        container.append(roadProjectOperations());
+        container.append(calibrationPointPicture);
+      } else {
+        container.empty();
+        roadClassLegend.append(roadClassLegendEntries);
+        roadClassLegend.append(constructionTypeLegendEntries);
+        roadClassLegend.append(floatingLegend);
+        roadClassLegend.append(calibrationPointPicture);
+      }
     }
 
     return {

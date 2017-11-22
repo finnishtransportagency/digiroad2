@@ -96,6 +96,14 @@
       return currentAction;
     };
 
+    var getUserGeoLocation = function() {
+      return {
+        x: centerLonLat[0],
+        y:centerLonLat[1],
+        zoom:zoom.level
+      };
+    };
+
     var setCurrentAction = function(action) {
       currentAction = action;
     };
@@ -124,6 +132,7 @@
         centerLonLat = center;
         eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
       },
+      getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
       getSelectedTool: function() {
         return selectedTool;
@@ -133,14 +142,14 @@
       setMinDirtyZoomLevel: function(level) {
         minDirtyZoomLevel = level;
       },
-      selectLayer: function(layer, toggleStart) {
+      selectLayer: function(layer, toggleStart, noSave) {
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
         } else if(layer === 'linkProperty' && toggleStart) {
-          eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer);
+          eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
         }
       },
       getSelectedLayer: function() {
