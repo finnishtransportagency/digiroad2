@@ -113,38 +113,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     }
   }
 
-  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
-
-    validateBusStopDirections(asset.properties, roadLink)
-
-    val assetId = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val nationalId = massTransitStopDao.getNationalBusStopId
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
-    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
-    val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue))
-    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, roadLink.linkSource)
-    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, roadLink.municipalityCode, floating)
-    massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
-
-    val properties = MassTransitStopOperations.setPropertiesDefaultValues(asset.properties, roadLink)
-
-    val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-    if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
-      throw new IllegalArgumentException
-
-    massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
-    updateAdministrativeClassValue(assetId, roadLink.administrativeClass)
-
-    val liviId = toLiviId.format(nationalId)
-    massTransitStopDao.updateTextPropertyValue(assetId, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
-
-    val persistedAsset = fetchAsset(assetId)
-
-    createTierekisteriBusStop(persistedAsset, roadLink, liviId)
-
-    persistedAsset
-  }
+  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop =
+    create(asset, username, point, roadLink, createTierekisteriBusStop)
 
   //TODO this can be improved for sure
   override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
@@ -172,18 +142,14 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
       filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
 
-    //If it was already in Tierekisteri
+    //If it was already stored in Tierekisteri
     if (was(asset)) {
       val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
       if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
         val position = optionalPosition.get
-
-        //Expire the old asset
-        expireMassTransitStop(username, liviId, asset)
-
-        //Create a new asset
+        massTransitStopDao.expireMassTransitStop(username, asset.id)
         create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
-          mergedProperties), username, Point(position.lon, position.lat), roadLink)
+          mergedProperties), username, Point(position.lon, position.lat), roadLink, replaceTirekisteriBusStop(liviId))
 
       }else{
         optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
@@ -221,6 +187,39 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     deleteTierekisteriBusStop(liviId)
   }
 
+  private def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit): PersistedMassTransitStop = {
+
+    validateBusStopDirections(asset.properties, roadLink)
+
+    val assetId = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val nationalId = massTransitStopDao.getNationalBusStopId
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
+    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
+    val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue))
+    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, roadLink.linkSource)
+    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, roadLink.municipalityCode, floating)
+    massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
+
+    val properties = MassTransitStopOperations.setPropertiesDefaultValues(asset.properties, roadLink)
+
+    val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+    if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
+      throw new IllegalArgumentException
+
+    massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
+    updateAdministrativeClassValue(assetId, roadLink.administrativeClass)
+
+    val liviId = toLiviId.format(nationalId)
+    massTransitStopDao.updateTextPropertyValue(assetId, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
+
+    val persistedAsset = fetchAsset(assetId)
+
+    tierekisteriOperation(persistedAsset, roadLink, liviId)
+
+    persistedAsset
+  }
+
   private def getLiviIdValue(properties: Seq[AbstractProperty]) = {
     properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId).flatMap(prop => prop.values.headOption).map(_.propertyValue)
   }
@@ -233,13 +232,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         assetPoint.distance2DTo(newPoint)
       case _ => 0
     }
-  }
-
-  //  @throws(classOf[TierekisteriClientException])
-  private def expireMassTransitStop(username: String, liviId: String, persistedStop: PersistedMassTransitStop) = {
-    massTransitStopDao.expireMassTransitStop(username, persistedStop.id)
-    //TODO This need to be changed because if after expire the asset, the update in OTH side fails the we are not doing rollback
-    expireTierekisteriBusStop(persistedStop, liviId, username)
   }
 
   /**
@@ -314,6 +306,9 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
   private def createTierekisteriBusStop(persistedStop: PersistedMassTransitStop, roadLink: RoadLink, liviId: String): Unit =
     if(tierekisteriClient.isTREnabled) tierekisteriClient.createMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)))
+
+  private def replaceTirekisteriBusStop(replaceLiviId: String)(persistedStop: PersistedMassTransitStop, roadLink: RoadLink, liviId: String): Unit =
+    if(tierekisteriClient.isTREnabled) tierekisteriClient.createMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)), Some(replaceLiviId))
 
   private def updateTierekisteriBusStop(persistedStop: PersistedMassTransitStop, roadLink: RoadLink, liviId: String): Unit =
     if(tierekisteriClient.isTREnabled) tierekisteriClient.updateMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)), Some(liviId))
