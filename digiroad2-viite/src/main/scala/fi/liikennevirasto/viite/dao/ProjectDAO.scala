@@ -573,6 +573,16 @@ object ProjectDAO {
     }
   }
 
+  def updateProjectLinksToTerminated(projectLinkIds: Set[Long], userName: String): Unit = {
+    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
+    projectLinkIds.grouped(500).foreach {
+      grp =>
+        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${LinkStatus.Terminated.value}, CALIBRATION_POINTS = 0, MODIFIED_BY='$user' " +
+          s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
+        Q.updateNA(sql).execute
+    }
+  }
+
   def addRotatingTRProjectId(projectId: Long) = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = VIITE_PROJECT_SEQ.nextval WHERE ID= $projectId").execute
   }
