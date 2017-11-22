@@ -483,7 +483,14 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
   private val trUser = "kayttajatunnus"
   private val trInventoryDate = "inventointipvm"
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
+
   private def serviceUrl(id: String) : String = serviceUrl + id
+  private def serviceUrl(replaceIdOption: Option[String]) : String = {
+    replaceIdOption match {
+      case Some(replaceId) => serviceUrl + "?replace=" + replaceId
+      case _ => serviceUrl
+    }
+  }
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
@@ -541,9 +548,9 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
     *
     * @param trMassTransitStop
     */
-  def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+  def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop, replaceLiviId: Option[String] = None): Unit ={
     logger.info("Creating stop %s in Tierekisteri".format(trMassTransitStop.liviId))
-    post(serviceUrl, trMassTransitStop, createJson) match {
+    post(serviceUrl(replaceLiviId), trMassTransitStop, createJson) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ; // do nothing
     }
