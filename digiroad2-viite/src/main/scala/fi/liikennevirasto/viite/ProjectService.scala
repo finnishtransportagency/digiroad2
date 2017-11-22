@@ -297,7 +297,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
           } else
             newLinks
-        ProjectDAO.create(createLinks)
+        ProjectDAO.create(createLinks.map(_.copy(modifiedBy = Some(user))))
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
         None
       }

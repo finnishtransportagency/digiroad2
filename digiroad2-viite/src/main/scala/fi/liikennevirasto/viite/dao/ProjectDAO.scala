@@ -193,7 +193,7 @@ object ProjectDAO {
       addressPS.setLong(7, pl.discontinuity.value)
       addressPS.setLong(8, pl.startAddrMValue)
       addressPS.setLong(9, pl.endAddrMValue)
-      addressPS.setString(10, pl.modifiedBy.get)
+      addressPS.setString(10, pl.modifiedBy.getOrElse(null))
       addressPS.setDouble(11, CalibrationCode.getFromAddress(pl).value)
       addressPS.setLong(12, pl.status.value)
       addressPS.setLong(13, pl.roadType.value)
