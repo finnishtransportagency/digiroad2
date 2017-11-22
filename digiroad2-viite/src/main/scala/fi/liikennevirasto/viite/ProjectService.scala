@@ -29,7 +29,7 @@ import scala.util.control.NonFatal
 
 case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt)
 
-case class LinkToRevert(id: Long, linkId: Long, status: Long)
+case class LinkToRevert(id: Long, linkId: Long, status: Long, geometry: Seq[Point])
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
 
@@ -469,17 +469,40 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def revertSplit(projectId: Long, linkId: Long, userName: String): Option[String] = {
-    withDynTransaction {
-      val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
-      if (previousSplit.nonEmpty) {
-        val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-        revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
-          suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
-          original.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
-          userName)
-      } else
-        Some(s"No split for link id $linkId found!")
+
+    def getSplitLinks: Seq[ProjectLink] = {
+      withDynSession {
+        ProjectDAO.fetchSplitLinks(projectId, linkId)
+      }
     }
+
+    def getNewestGeometry(linkId: Long, roadLinks: Seq[RoadLink], vvhHistoryLinks: Seq[VVHHistoryRoadLink], linksToRevert: Seq[LinkToRevert] = Seq()): Seq[Point] = {
+      roadLinks.map(roadLink => {
+        vvhHistoryLinks.find(h => h.linkId == linkId && h.linkId == roadLink.linkId) match {
+          case Some(historyRoadLink) => {
+            if (roadLink.attributes.get("CREATED_DATE").getOrElse(0).asInstanceOf[BigInt] >= historyRoadLink.createdDate) {
+              roadLink.geometry
+            } else {
+              historyRoadLink.geometry
+            }
+          }
+          case None => roadLink.geometry
+        }
+      }).head
+    }
+
+    val previousSplit = getSplitLinks
+    if (previousSplit.nonEmpty) {
+      val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(previousSplit.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled)
+      val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      withDynSession {
+        revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
+          suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
+          original.map(link => LinkToRevert(link.id, link.linkId, link.status.value, getNewestGeometry(link.linkId, roadLinks, vvhHistoryLinks))),
+          userName)
+      }
+    } else
+      Some(s"No split for link id $linkId found!")
   }
 
   def splitSuravageLink(linkId: Long, username: String,
@@ -491,7 +514,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def splitSuravageLinkInTX(linkId: Long, username: String,
                             splitOptions: SplitOptions): Option[String] = {
-    val sOption = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(linkId))).headOption
+    val sOption = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(linkId)), false).headOption
     if (sOption.isEmpty) {
       Some(ErrorSuravageLinkNotFound)
     } else {
@@ -500,8 +523,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       if (previousSplit.nonEmpty) {
         val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
         revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
-          suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
-          original.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
+          suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
+          original.map(link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
           username, false)
       }
       val suravageLink = sOption.get
@@ -841,7 +864,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new IllegalArgumentException("Reverting links from multiple road parts at once is not allowed")
     val l = links.head
     revertLinks(l.projectId, l.roadNumber, l.roadPartNumber, links.map(
-      link => LinkToRevert(link.id, link.linkId, link.status.value)), userName)
+      link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)), userName)
   }
 
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
@@ -849,7 +872,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
     val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
     RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
-      ProjectDAO.updateProjectLinkValues(projectId, ra))
+      modified.find(mod => mod.linkId == ra.linkId) match {
+        case Some(mod) => ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = mod.geometry))
+        case None => ProjectDAO.updateProjectLinkValues(projectId, ra)
+      })
     if (recalculate)
       recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
     val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(projectId, roadNumber, roadPartNumber)
@@ -877,7 +903,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           // Numbering change affects the whole road part
           revertLinks(projectId, roadNumber, roadPartNumber, added,
             ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId).map(
-              link => LinkToRevert(link.id, link.linkId, link.status.value)),
+              link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
             userName)
         } else {
           revertLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
