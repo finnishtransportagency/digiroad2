@@ -238,7 +238,7 @@ class ProjectDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("roadpart reserved and released by project test") {
+  test("roadpart reserved, fetched with and without filtering, and released by project test") {
     //Creation of Test road
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -251,6 +251,8 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       project should be(Some("TestProject"))
       val reserved = ProjectDAO.fetchReservedRoadPart(5, 203)
       reserved.nonEmpty should be(true)
+      ProjectDAO.fetchReservedRoadParts(id) should have size (1)
+      ProjectDAO.fetchReservedRoadParts(id, Seq(NotHandled.value)) should have size (0)
       ProjectDAO.removeReservedRoadPart(id, reserved.get)
       val projectAfter = ProjectDAO.roadPartReservedByProject(5, 203)
       projectAfter should be(None)

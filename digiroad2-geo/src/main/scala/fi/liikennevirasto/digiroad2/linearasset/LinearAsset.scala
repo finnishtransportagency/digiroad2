@@ -22,8 +22,8 @@ case class NumericValue(value: Int) extends Value {
 case class TextualValue(value: String) extends Value {
   override def toJson: Any = value
 }
-case class MaintenanceRoad(maintenanceRoad: Seq[Properties]) extends Value{
-  override def toJson: Any = maintenanceRoad
+case class MaintenanceRoad(properties: Seq[Properties]) extends Value{
+  override def toJson: Any = properties
 }
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions

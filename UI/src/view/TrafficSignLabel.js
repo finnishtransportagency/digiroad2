@@ -4,13 +4,13 @@
     AssetLabel.call(this);
     var me = this;
 
-    var propertyText = '';
+    var MIN_DISTANCE = 3;
     var populatedPoints = [];
 
-    var backgroundStyle = function (value, counter) {
+    var backgroundStyle = function (trafficSign, counter) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: isSignWithValue(value) ? correctValue(propertyText) ? getImage(value) : 'images/traffic-signs/badValue.png' : getImage(value),
+          src: getLabelProperty(trafficSign, counter).findImage(),
           anchor : [0.5, 1+(counter)]
         }))
       });
@@ -25,47 +25,115 @@
       });
     };
 
-    var getImage = function (value) {
-      var images = {
-        'images/traffic-signs/speedLimitSign.png':              {signValue: [1, 8]},
-        'images/traffic-signs/endOfSpeedLimitSign.png':         {signValue: [2]},
-        'images/traffic-signs/speedLimitZoneSign.png':          {signValue: [3]},
-        'images/traffic-signs/endOfSpeedLimitZoneSign.png':     {signValue: [4]},
-        'images/traffic-signs/urbanAreaSign.png':               {signValue: [5]},
-        'images/traffic-signs/endOfUrbanAreaSign.png':          {signValue: [6]},
-        'images/traffic-signs/crossingSign.png':                {signValue: [7]},
-        'images/traffic-signs/warningSign.png':                 {signValue: [9]},
-        'images/traffic-signs/turningRestrictionLeftSign.png':  {signValue: [10]},
-        'images/traffic-signs/turningRestrictionRightSign.png': {signValue: [11]},
-        'images/traffic-signs/uTurnRestrictionSign.png':        {signValue: [12]}
-      };
-      return _.findKey(images, function (image) {
-        return _.contains(image.signValue, value);
+    var getLabelProperty = function (trafficSign, counter) {
+
+      var labelingProperties = [
+        {signValue: [1, 8], image: 'images/traffic-signs/speedLimitSign.png', validation: validateSpeedLimitValues},
+        {signValue: [2], image: 'images/traffic-signs/endOfSpeedLimitSign.png', validation: validateSpeedLimitValues},
+        {signValue: [3], image: 'images/traffic-signs/speedLimitZoneSign.png', validation: validateSpeedLimitValues},
+        {signValue: [4], image: 'images/traffic-signs/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues},
+        {signValue: [5], image:  'images/traffic-signs/urbanAreaSign.png'},
+        {signValue: [6], image: 'images/traffic-signs/endOfUrbanAreaSign.png'},
+        {signValue: [7], image: 'images/traffic-signs/crossingSign.png'},
+        {signValue: [9], image: 'images/traffic-signs/warningSign.png'},
+        {signValue: [10], image: 'images/traffic-signs/turningRestrictionLeftSign.png'},
+        {signValue: [11], image: 'images/traffic-signs/turningRestrictionRightSign.png'},
+        {signValue: [12], image: 'images/traffic-signs/uTurnRestrictionSign.png'},
+        {signValue: [13], image: 'images/traffic-signs/noVehicles.png'},
+        {signValue: [14], image: 'images/traffic-signs/noPowerDrivenVehiclesSign.png'},
+        {signValue: [15], image: 'images/traffic-signs/noLorriesSign.png'},
+        {signValue: [16], image: 'images/traffic-signs/noVehicleCombinationsSign.png'},
+        {signValue: [17], image: 'images/traffic-signs/noTractorSign.png'},
+        {signValue: [18], image: 'images/traffic-signs/noMotorCycleSign.png'},
+        {signValue: [19], image: 'images/traffic-signs/noMotorSledgesSign.png'},
+        {signValue: [20], image: 'images/traffic-signs/noDangerousGoodsSign.png'},
+        {signValue: [21], image: 'images/traffic-signs/noBusSign.png'},
+        {signValue: [22], image: 'images/traffic-signs/noMopedsSign.png'},
+        {signValue: [23], image: 'images/traffic-signs/noCycleSign.png'},
+        {signValue: [24], image: 'images/traffic-signs/noPedestrianSign.png'},
+        {signValue: [25], image: 'images/traffic-signs/noPedestrianOrCycleSign.png'},
+        {signValue: [26], image: 'images/traffic-signs/noHorsesSign.png'},
+        {signValue: [27], image: 'images/traffic-signs/noEntrySign.png'},
+        {signValue: [28], image: 'images/traffic-signs/overtakingProhibitedSign.png'},
+        {signValue: [29], image: 'images/traffic-signs/endOfOvertakingProhibitonSign.png'},
+        {signValue: [30], image: 'images/traffic-signs/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters },
+        {signValue: [31], image: 'images/traffic-signs/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
+        {signValue: [32], image: 'images/traffic-signs/totalWeightLimit.png', validation: validateMaximumRestrictions, offset: -15 - (counter * 30), convertion: convertToTons },
+        {signValue: [33], image: 'images/traffic-signs/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, offset: -10 - (counter * 30), convertion: convertToTons },
+        {signValue: [34], image: 'images/traffic-signs/axleWeightLimit.png', validation: validateMaximumRestrictions, offset: -18 - (counter * 30), convertion: convertToTons },
+        {signValue: [35], image: 'images/traffic-signs/bogieWeightLimit.png', validation: validateMaximumRestrictions, offset: -18 - (counter * 30), convertion: convertToTons },
+        {signValue: [36], image: 'images/traffic-signs/rightBendSign.png'},
+        {signValue: [37], image: 'images/traffic-signs/leftBendSign.png'},
+        {signValue: [38], image: 'images/traffic-signs/severalBendRightSign.png'},
+        {signValue: [39], image: 'images/traffic-signs/severalBendLeftSign.png'},
+        {signValue: [40], image: 'images/traffic-signs/dangerousDescentSign.png'},
+        {signValue: [41], image: 'images/traffic-signs/steepAscentSign.png'},
+        {signValue: [42], image: 'images/traffic-signs/unevenRoadSign.png'},
+        {signValue: [43], image: 'images/traffic-signs/childrenSign.png'}
+      ];
+
+      var labelProperty = _.find(labelingProperties, function(properties) {
+          return _.contains(properties.signValue, trafficSign.type);
       });
+
+
+      function findImage() {
+        return labelProperty && labelProperty.image ? labelProperty.image : 'images/traffic-signs/badValue.png';
+      }
+
+      function getTextOffset(){
+        return labelProperty && labelProperty.offset ? labelProperty.offset :  -15 - (counter * 30);
+      }
+
+      function getValidation(){
+        return labelProperty && labelProperty.validation ? labelProperty.validation.call(trafficSign) : false ;
+      }
+
+      function getValue(){
+        return labelProperty && labelProperty.convertion ? labelProperty.convertion.call(trafficSign) : trafficSign.value;
+      }
+
+      return {
+        findImage: findImage,
+        getTextOffset: getTextOffset,
+        getValidation: getValidation,
+        getValue : getValue
+      };
     };
 
-    var textStyle = function (value) {
-      if (!correctValue(value))
+    var textStyle = function (trafficSign) {
+      if (!getLabelProperty(trafficSign).getValidation())
         return '';
-      return "" + value;
+      return "" + getLabelProperty(trafficSign).getValue();
     };
 
-    var correctValue = function (value) {
-      if (!value || (value > 120 || value < 0))
-        return false;
-      return true;
+    var convertToTons = function(){
+      return this.value / 1000;
     };
 
-    this.getStyle = function (value, counter) {
-      return [backgroundStyle(value, counter), new ol.style.Style({
+    var convertToMeters = function(){
+      return this.value / 100;
+    };
+
+    var validateSpeedLimitValues = function () {
+      return this.value && (this.value > 0 && this.value <= 120);
+    };
+
+    var validateMaximumRestrictions = function () {
+      // Not specified the maximum restriction value
+      return this.value && (this.value > 0 && this.value < 100000);
+    };
+
+    this.getStyle = function (trafficSign, counter) {
+      return [backgroundStyle(trafficSign, counter), new ol.style.Style({
         text: new ol.style.Text({
-          text: textStyle(propertyText),
+          text: textStyle(trafficSign),
           fill: new ol.style.Fill({
             color: '#000000'
           }),
           font: 'bold 12px sans-serif',
           offsetX: 0,
-          offsetY: -15 - (counter * 30)
+          offsetY: getLabelProperty(trafficSign, counter).getTextOffset()
         })
       })];
     };
@@ -83,19 +151,19 @@
 
       return _.chain(assets).
       map(function(asset){
-        var assetValue = me.getValue(asset);
+        var trafficSign = me.getValue(asset);
         var assetLocation = getPoint(asset);
-        if(assetValue !== undefined){
+        if(trafficSign !== undefined){
           var styles = [];
           styles = styles.concat(me.getStickStyle());
-          styles = styles.concat(me.getStyle(assetValue, assetLocation[1]));
+          styles = styles.concat(me.getStyle(trafficSign, assetLocation[1]));
           var feature = me.createFeature(assetLocation[0]);
           feature.setStyle(styles);
           feature.setProperties(asset);
           return feature;
         }
       }).
-      filter(function(feature){ return feature !== undefined; }).
+      filter(function(feature){ return !_.isUndefined(feature); }).
       value();
     };
 
@@ -109,28 +177,11 @@
       }).values);
     };
 
-    var handleValue = function (asset) {
-      propertyText = '';
-      if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
-        return;
-      var trafficSignType = parseInt(getProperty(asset, "trafficSigns_type").propertyValue);
-      if (isSignWithValue)
-        setProperty(asset);
-      return trafficSignType;
-    };
-
-    var isSignWithValue = function(trafficSignType){
-      return trafficSignType < 5 || trafficSignType == 8;
-    };
-
-    var setProperty = function (asset) {
-      var existingValue = getProperty(asset, "trafficSigns_value");
-      if (existingValue)
-        propertyText = existingValue.propertyValue;
-    };
-
     this.getValue = function (asset) {
-      return handleValue(asset);
+      if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
+          return;
+      var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : '';
+      return {value : value, type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue)};
     };
 
     var clearPoints = function () {
@@ -138,7 +189,7 @@
     };
 
     var isInProximity = function (pointA, pointB) {
-      return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < 3;
+      return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < MIN_DISTANCE;
     };
 
     this.getCoordinateForGrouping = function(point){

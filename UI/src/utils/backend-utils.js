@@ -10,6 +10,15 @@
         });
     };
 
+      this.getAssetEnumeratedPropertyValues = function(assetType) {
+          $.getJSON('api/enumeratedPropertyValues/'+assetType, function (enumeratedPropertyValues) {
+              eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValues});
+          })
+              .fail(function () {
+                  console.log("error");
+              });
+      };
+
     this.getAssetTypeMetadata = function(assetTypeId) {
       $.getJSON('api/getAssetTypeMetadata/'+ assetTypeId, function (getAssetTypeMetadata) {
         eventbus.trigger('getAssetTypeMetadata:fetched', getAssetTypeMetadata);
@@ -499,7 +508,14 @@
 
     this.withEnumeratedPropertyValues = function(enumeratedPropertyValuesData) {
       self.getEnumeratedPropertyValues = function () {
-        eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+          eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+      };
+      return self;
+    };
+
+    this.withAssetEnumeratedPropertyValues = function(enumeratedPropertyValuesData, typeId) {
+      self.getAssetEnumeratedPropertyValues = function (typeId) {
+          eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValuesData});
       };
       return self;
     };
