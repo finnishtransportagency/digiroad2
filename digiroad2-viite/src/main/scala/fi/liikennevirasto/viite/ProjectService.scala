@@ -1032,10 +1032,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
           }
           case LinkStatus.Transfer => {
-            val track = Track.apply(newTrackCode)
             checkAndMakeReservation(toUpdateLinks.head.ely)
             val updated = toUpdateLinks.map(l => {
-              l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = track,
+              l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
                 status = linkStatus, calibrationPoints = (None, None), roadType = RoadType.apply(roadType.toInt))
             })
             ProjectDAO.updateProjectLinksToDB(updated, userName)
