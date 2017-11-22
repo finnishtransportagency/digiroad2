@@ -625,8 +625,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       removed.foreach(p => ProjectDAO.removeReservedRoadPart(roadAddressProject.id, p))
       addLinksToProject(roadAddressProject, resolution)
       val updatedProject = ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-      if (updatedProject.reservedParts.nonEmpty){
-        ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely =Some(ProjectDAO.getProjectLinks(roadAddressProject.id).head.ely)))
+      if (updatedProject.reservedParts.nonEmpty) {
+        ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = Some(ProjectDAO.getProjectLinks(roadAddressProject.id).head.ely)))
       }
       else
         ProjectDAO.updateRoadAddressProject(roadAddressProject)

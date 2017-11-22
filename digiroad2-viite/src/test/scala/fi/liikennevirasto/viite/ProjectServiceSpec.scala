@@ -847,9 +847,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
 
-
   test("Project ELY -1 update when reserving roadpart") {
-    val projectIdNew =  0L
+    val projectIdNew = 0L
     val roadNumber = 1943845
     val roadPartNumber = 1
     val linkId = 12345L
@@ -859,9 +858,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing,0, (None, None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface,8))
-      val rl = RoadLink(linkId, ra.head.geometry, 9.8, State,1, TrafficDirection.BothDirections,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8))
+      val rl = RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(rl))
@@ -876,18 +875,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val proj = projectService.createRoadLinkProject(project, 8)
       val returnedProject = projectService.getRoadAddressSingleProject(proj.id).get
       returnedProject.name should be("testiprojekti")
-      returnedProject.ely.getOrElse(-1) should be (-1)
-      val projupdated=projectService.saveProject(proj.copy(reservedParts = addresses),7)
-      val updatedReturnProject= projectService.getRoadAddressSingleProject(proj.id).head
-      updatedReturnProject.ely.getOrElse(-1) should be (8)
-        sqlu"""
+      returnedProject.ely.getOrElse(-1) should be(-1)
+      val projupdated = projectService.saveProject(proj.copy(reservedParts = addresses), 7)
+      val updatedReturnProject = projectService.getRoadAddressSingleProject(proj.id).head
+      updatedReturnProject.ely.getOrElse(-1) should be(8)
+      sqlu"""
        update project set ely = null, modified_date = sysdate where id = ${proj.id}
       """.execute
-      val updatedReturnProject2= projectService.getRoadAddressSingleProject(proj.id).head
-      projectService.saveProject(proj.copy(reservedParts = addresses),8)
-      updatedReturnProject2.ely.getOrElse(-1) should be (-1)
-      val updatedReturnProject3= projectService.getRoadAddressSingleProject(proj.id).head
-      updatedReturnProject3.ely.getOrElse(-1) should be (8)
+      val updatedReturnProject2 = projectService.getRoadAddressSingleProject(proj.id).head
+      projectService.saveProject(proj.copy(reservedParts = addresses), 8)
+      updatedReturnProject2.ely.getOrElse(-1) should be(-1)
+      val updatedReturnProject3 = projectService.getRoadAddressSingleProject(proj.id).head
+      updatedReturnProject3.ely.getOrElse(-1) should be(8)
     }
   }
 
