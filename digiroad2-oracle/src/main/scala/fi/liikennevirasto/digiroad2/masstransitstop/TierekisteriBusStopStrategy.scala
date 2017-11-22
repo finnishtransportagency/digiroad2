@@ -116,7 +116,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop =
     create(asset, username, point, roadLink, createTierekisteriBusStop)
 
-  //TODO this can be improved for sure
   override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
 
     if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
@@ -146,37 +145,21 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     if (was(asset)) {
       val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
       if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
+        //Expires the current asset and creates a new one in OTH and expire and creates a new one in Tierekisteri
         val position = optionalPosition.get
         massTransitStopDao.expireMassTransitStop(username, asset.id)
         create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
           mergedProperties), username, Point(position.lon, position.lat), roadLink, replaceTirekisteriBusStop(liviId))
 
       }else{
-        optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
-        massTransitStopDao.updateAssetLastModified(asset.id, username)
-        massTransitStopDao.updateAssetProperties(asset.id, verifiedProperties.toSeq)
-        massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
-        updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
-
-        val persistedAsset = fetchAsset(asset.id)
-
-        updateTierekisteriBusStop(persistedAsset, roadLink, liviId)
-
-        persistedAsset
+        //Updates the asset in OTH and Tierekisteri
+        update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
+          username, updateTierekisteriBusStop)
       }
     }else{
-      val newLiviId = toLiviId.format(asset.nationalId)
-      optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
-      massTransitStopDao.updateAssetLastModified(asset.id, username)
-      massTransitStopDao.updateAssetProperties(asset.id, verifiedProperties.toSeq)
-      massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, newLiviId)
-      updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
-
-      val persistedAsset = fetchAsset(asset.id)
-
-      createTierekisteriBusStop(persistedAsset, roadLink, newLiviId)
-
-      persistedAsset
+      //Updates the asset in OTH and creates a new one in Tierekisteri
+      update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, toLiviId.format(asset.nationalId),
+        username, createTierekisteriBusStop)
     }
   }
 
@@ -214,6 +197,20 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     massTransitStopDao.updateTextPropertyValue(assetId, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
 
     val persistedAsset = fetchAsset(assetId)
+
+    tierekisteriOperation(persistedAsset, roadLink, liviId)
+
+    persistedAsset
+  }
+
+  private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimpleProperty], roadLink: RoadLink, liviId: String, username: String, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit) = {
+    optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
+    massTransitStopDao.updateAssetLastModified(asset.id, username)
+    massTransitStopDao.updateAssetProperties(asset.id, properties)
+    massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
+    updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
+
+    val persistedAsset = fetchAsset(asset.id)
 
     tierekisteriOperation(persistedAsset, roadLink, liviId)
 
