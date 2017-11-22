@@ -61,31 +61,29 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService
 
-  val trafficSignAssetTypeId: Int = 300
-  val authorizedValues: List[Int] = List(341, 342, 344, 345, 346, 347, 361, 363, 364, 572, 571, 551, 376, 374, 375, 373, 372, 352, 351, 342, 333, 331, 324, 312, 311, 152, 511, 371)
+  private val supportedTrafficSigns = Set[TRTrafficSignType](TRTrafficSignType.SpeedLimit, TRTrafficSignType.EndSpeedLimit, TRTrafficSignType.SpeedLimitZone, TRTrafficSignType.EndSpeedLimitZone,
+    TRTrafficSignType.UrbanArea, TRTrafficSignType.EndUrbanArea, TRTrafficSignType.PedestrianCrossing, TRTrafficSignType.MaximumLength, TRTrafficSignType.Warning,
+    TRTrafficSignType.NoLeftTurn, TRTrafficSignType.NoRightTurn, TRTrafficSignType.NoUTurn)
 
   private val longValueFieldMappings = Map(
-    "Koordinaatti X" -> "lon",
-    "Koordinaatti Y" -> "lat"
+    "Koordinaatti x" -> "lon",
+    "Koordinaatti y" -> "lat"
   )
 
   private val nonMandatoryMappings = Map(
     "Arvo" -> "value",
     "Kaksipuolinen merkki" -> "twoSided",
-    "Liikennevirran suunta" -> "trafficDirection"
-  )
-
-  private val intFieldMappings = Map(
-    "suuntima" -> "bearing"
+    "Liikennevirran suunta" -> "trafficDirection",
+    "Suuntima" -> "bearing"
   )
 
   private val codeValueFieldMappings = Map(
     "Liikennemerkin tyyppi" -> "trafficSignType"
   )
 
-  val mappings = intFieldMappings ++ longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings
+  val mappings = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings
 
-  private val mandatoryFields = List("Koordinaatti X", "Koordinaatti Y", "Liikennemerkin tyyppi")
+  private val mandatoryFields = List("Koordinaatti x", "Koordinaatti y", "Liikennemerkin tyyppi")
 
   val MandatoryParameters: Set[String] = mappings.keySet ++ mandatoryFields
 
@@ -97,13 +95,6 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'" } mkString ", "
   }
 
-  private def verifyValueType(parameterName: String, parameterValue: String): ParsedAssetRow = {
-    parameterValue.forall(_.isDigit) match {
-      case true => (Nil, List(AssetProperty(columnName = intFieldMappings(parameterName), value = parameterValue.toInt)))
-      case false => (List(parameterName), Nil)
-    }
-  }
-
   private def verifyDoubleType(parameterName: String, parameterValue: String): ParsedAssetRow = {
     if(parameterValue.matches("[0-9.]*")) {
       (Nil, List(AssetProperty(columnName = longValueFieldMappings(parameterName), value = BigDecimal(parameterValue))))
@@ -113,13 +104,10 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   }
 
   private def verifyValueCode(parameterName: String, parameterValue: String): ParsedAssetRow = {
-    parameterValue.forall(_.isDigit) match {
-      case true => if (authorizedValues.contains(parameterValue.toInt)) {
-        (Nil, List(AssetProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toInt)))
-      } else {
-        (List(parameterName), Nil)
-      }
-      case false => (List(parameterName), Nil)
+    if(parameterValue.forall(_.isDigit) && supportedTrafficSigns.contains(TRTrafficSignType.apply(parameterValue.toInt))){
+      (Nil, List(AssetProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toInt)))
+    }else{
+      (List(parameterName), Nil)
     }
   }
 
@@ -139,10 +127,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
         }else
           result
       } else {
-        if (intFieldMappings.contains(key)) {
-          val (malformedParameters, properties) = verifyValueType(key, value.toString)
-          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-        } else if (longValueFieldMappings.contains(key)) {
+          if (longValueFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (codeValueFieldMappings.contains(key)) {
@@ -161,14 +146,14 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   def createTrafficSigns(trafficSignAttributes: CsvAssetRow): Unit ={
     val value = tryToInt(getPropertyValue(trafficSignAttributes, "value").map(_.value).get.toString)
     val trafficSignType = getPropertyValue(trafficSignAttributes, "trafficSignType").map(_.value).get.toString.toInt
-    val bearing = getPropertyValue(trafficSignAttributes, "bearing").map(_.value).get.toString.toInt
+    val bearing = tryToInt(getPropertyValue(trafficSignAttributes, "bearing").map(_.value).get.toString)
     val trafficDirection = tryToInt(getPropertyValue(trafficSignAttributes, "trafficDirection").map(_.value).get.toString)
-    val twoSided = tryToInt(getPropertyValue(trafficSignAttributes, "twoSided").map(_.value).get.toString)
+    val twoSided = getPropertyValue(trafficSignAttributes, "twoSided").map(_.value).get.toString match { case "Kaksipuoleinen" => true case _ => false }
     val lon = getPropertyValue(trafficSignAttributes, "lon").map(_.value).get.asInstanceOf[BigDecimal].toLong
     val lat = getPropertyValue(trafficSignAttributes, "lat").map(_.value).get.asInstanceOf[BigDecimal].toLong
 
 
-//    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, false, TrafficDirection.UnknownDirection, Some(bearing))
+    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided), TrafficDirection.apply(trafficDirection), bearing)
   }
 
 
@@ -194,15 +179,13 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
           })
 
       } else {
-        withDynTransaction {
           val parsedRow = CsvAssetRow(properties = properties)
           createTrafficSigns(parsedRow)
-
           result
-        }
       }
+
     }
-    }
+  }
 }
 class RoadLinkCsvImporter extends CsvDataImporterOperations {
 

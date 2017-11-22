@@ -16,7 +16,7 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
 
   protected implicit val jsonFormats: Formats = DefaultFormats
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
-  private val  ROAD_LINK_LOG = "road link import"
+  private val ROAD_LINK_LOG = "road link import"
   private val TRAFFIC_SIGN_LOG = "traffic sign import"
   private val roadLinkCsvImporter = new RoadLinkCsvImporter
   private val trafficSignCsvImporter = new TrafficSignCsvImporter

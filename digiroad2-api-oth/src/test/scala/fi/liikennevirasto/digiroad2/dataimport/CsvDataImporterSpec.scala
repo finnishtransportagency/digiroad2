@@ -4,7 +4,6 @@ import java.io.{ByteArrayInputStream, InputStream}
 import javax.sql.DataSource
 
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, Municipality, State}
-import fi.liikennevirasto.digiroad2.dataimport.CsvDataImporterOperations
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
@@ -314,7 +313,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation for traffic sign import fails if type contains illegal characters", Tag("db")) {
-    val assetFields = Map("Koordinaatti X" -> 1, "Koordinaatti Y" -> 1, "Liikennemerkin tyyppi" -> "a")
+    val assetFields = Map("Koordinaatti x" -> 1, "Koordinaatti y" -> 1, "Liikennemerkin tyyppi" -> "a")
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
 

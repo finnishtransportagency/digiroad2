@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
+import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -806,6 +807,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
       else
         getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+
+    if (roadLinks.isEmpty)
+      None
+    else
+      Some(roadLinks.minBy(roadlink => minimumDistance(point, roadlink.geometry)))
+  }
+
+  def getClosestRoadlinkForCarTrafficFromVVH(user: User, point: Point): Option[VVHRoadlink] = {
+    val diagonal = Vector3d(500, 500, 0)
+
+    val roadLinks =
+      if (user.isOperator())
+        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal)).filter(_.featureClass != FeatureClass.CycleOrPedestrianPath)
+      else
+        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities).filter(_.featureClass != FeatureClass.CycleOrPedestrianPath)
 
     if (roadLinks.isEmpty)
       None
