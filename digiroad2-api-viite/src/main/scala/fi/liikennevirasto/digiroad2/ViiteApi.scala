@@ -462,32 +462,34 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/project/presplit") {
+  put("/project/presplit/:linkID") {
     val user = userProvider.getCurrentUser()
-    val data = JSON.parseFull(params.get("splitData").get).get.asInstanceOf[Map[String, Any]]
-    try {
-      val writableProject = projectWritable(data("projectId").asInstanceOf[Long])
-      val splitLinks = writableProject.preSplitSuravageLink(data("linkId").asInstanceOf[Long], data("x").asInstanceOf[Double],
-        data("y").asInstanceOf[Double], data("projectId").asInstanceOf[Long], user.username)
-      val point = Point(data("x").asInstanceOf[Double],data("y").asInstanceOf[Double])
-      val vectorRotate1 = point.+(Vector3d(3,3,0)).toVector.rotateRight()
-      val vectorRotate2 = point.-(Vector3d(3,3,0)).toVector.rotateRight()
-      val split: Map[String, Any] = Map(
-        "roadNumber" -> splitLinks.head.roadNumber,
-        "roadPartNumber" -> splitLinks.head.roadPartNumber,
-        "trackCode" -> splitLinks.head.track,
-        "split" -> Map(
-          "geometry" -> Seq(
-            Point(Math.abs(vectorRotate1.y), Math.abs(vectorRotate1.x)),
-            point,
-            Point(Math.abs(vectorRotate2.y), Math.abs(vectorRotate2.x))
-          )
-        )
-      ) ++ splitLinks.flatMap(splitToApi)
-      Map("success" -> splitLinks.nonEmpty, "response" -> split)
-    } catch {
-      case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
-      case _: NumberFormatException => BadRequest("Missing mandatory data")
+    params.get("linkID").map(_.toLong) match {
+      case Some(link) =>
+        try {
+          val options = parsedBody.extract[SplitOptions]
+          val writableProject = projectWritable(options.projectId)
+          val splitLinks = writableProject.preSplitSuravageLink(link, options.splitPoint, options.projectId, user.username)
+          val vectorRotate1 = options.splitPoint.+(Vector3d(3, 3, 0)).toVector.rotateRight()
+          val vectorRotate2 = options.splitPoint.-(Vector3d(3, 3, 0)).toVector.rotateRight()
+          val split: Map[String, Any] = Map(
+            "roadNumber" -> splitLinks.head.roadNumber,
+            "roadPartNumber" -> splitLinks.head.roadPartNumber,
+            "trackCode" -> splitLinks.head.track,
+            "split" -> Map(
+              "geometry" -> Seq(
+                Point(Math.abs(vectorRotate1.y), Math.abs(vectorRotate1.x)),
+                options.splitPoint,
+                Point(Math.abs(vectorRotate2.y), Math.abs(vectorRotate2.x))
+              )
+            )
+          ) ++ splitLinks.flatMap(splitToApi)
+          Map("success" -> splitLinks.nonEmpty, "response" -> split)
+        } catch {
+          case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
+          case _: NumberFormatException => BadRequest("Missing mandatory data")
+        }
+      case _ => BadRequest("Missing Linkid from url")
     }
   }
 

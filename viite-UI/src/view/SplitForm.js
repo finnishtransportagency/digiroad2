@@ -221,6 +221,7 @@
         currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
+        rootElement.find("split-" + 'form button.update').prop("disabled", false);
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         formCommon.checkInputs('.split-');
         formCommon.toggleAdditionalControls();

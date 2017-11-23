@@ -302,13 +302,26 @@
     this.preSplitProjectLinks = function(linkId, nearestPoint){
       applicationModel.addSpinner();
       var form = $('#roadAddressProjectFormCut');
-      var data = {
-      "projectId": projectinfo.id,
-      "linkId": linkId,
-      "x": nearestPoint.x,
-      "y": nearestPoint.y
+      var projectId = projectinfo.id;
+      var coordinates = applicationModel.getUserGeoLocation();
+      var dataJson = {
+        splitPoint: {
+          x: nearestPoint.x,
+          y: nearestPoint.y
+        },
+        statusA: 3,
+        statusB: 99,
+        roadNumber: 0,
+        roadPartNumber: 0,
+        trackCode: 0,
+        discontinuity: 0,
+        ely: 0,
+        roadLinkSource: 99,
+        roadType: 99,
+        projectId: projectId,
+        coordinates:coordinates
       };
-      backend.getPreSplitedData(data, function(successObject){
+      backend.getPreSplitedData(dataJson, linkId, function(successObject){
         if (!successObject.success) {
           new ModalConfirm(successObject.errorMessage);
           applicationModel.removeSpinner();

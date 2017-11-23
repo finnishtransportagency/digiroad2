@@ -252,11 +252,17 @@
       });
     };
 
-    this.getPreSplitedData = _.throttle(function(splitData, callback) {
-      return $.getJSON('api/viite/project/presplit?splitData=' +JSON.stringify(splitData), function(data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
+    this.getPreSplitedData = _.throttle(function(data, linkId, success, errorCallback){
+        $.ajax({
+          contentType: "application/json",
+          type: "PUT",
+          url: "api/viite/project/presplit/" + linkId,
+          data: JSON.stringify(data),
+          dataType: "json",
+          success: success,
+          error: errorCallback
+        });
+      }, 1000);
 
     this.saveProjectLinkSplit = _.throttle(function(data, linkId, success, errorCallback){
      $.ajax({
@@ -268,8 +274,7 @@
        success: success,
        error: errorCallback
      });
-    },
-      1000);
+    }, 1000);
 
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);

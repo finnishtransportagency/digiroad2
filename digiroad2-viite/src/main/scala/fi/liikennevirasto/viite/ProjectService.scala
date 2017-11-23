@@ -527,9 +527,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def preSplitSuravageLink(linkId: Long, xSplit: Double, ySplit: Double, projectId: Long, username: String): Seq[ProjectLink] = {
+  def preSplitSuravageLink(linkId: Long, splitPoint: Point, projectId: Long, username: String): Seq[ProjectLink] = {
     withDynSession {
-      preSplitSuravageLinkInTX(linkId: Long, xSplit: Double, ySplit: Double, projectId: Long, username: String)
+      preSplitSuravageLinkInTX(linkId: Long, splitPoint, projectId: Long, username: String)
     }
   }
 
@@ -540,7 +540,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def preSplitSuravageLinkInTX(linkId: Long, xSplit: Double, ySplit: Double, projectId: Long, username: String): Seq[ProjectLink] = {
+  def preSplitSuravageLinkInTX(linkId: Long, splitPoint: Point, projectId: Long, username: String): Seq[ProjectLink] = {
     val sOption = getProjectSuravageRoadLinksByLinkIds(Set(Math.abs(linkId))).headOption
     val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
     val project = ProjectDAO.getRoadAddressProjectById(projectId).get
@@ -561,9 +561,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
 
-      val splitOptions = SplitOptions(Point(xSplit,ySplit), LinkStatus.New, LinkStatus.Transfer, projectLinks.head.roadNumber, projectLinks.head.roadPartNumber,
+      val splitOptions = SplitOptions(splitPoint, LinkStatus.New, LinkStatus.Transfer, projectLinks.head.roadNumber, projectLinks.head.roadPartNumber,
         projectLinks.head.track, projectLinks.head.discontinuity, projectLinks.head.ely, projectLinks.head.linkGeomSource, projectLinks.head.roadType, projectId,
-        ProjectCoordinates(xSplit,ySplit,project.coordinates.get.zoom))
+        ProjectCoordinates(splitPoint.x, splitPoint.y, project.coordinates.get.zoom))
       val suravageProjectLink = suravageLink
       val projectLinksConnected = projectLinks.filter(l =>
         GeometryUtils.areAdjacent(l.geometry, suravageProjectLink.geometry))
