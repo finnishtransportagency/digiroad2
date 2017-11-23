@@ -715,7 +715,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "endAddressM" -> splittedLinks.endAddrMValue,
           "status" -> splittedLinks.status.value,
           "roadType" -> splittedLinks.roadType.value,
-          "discontinuity" -> splittedLinks.discontinuity.value
+          "discontinuity" -> splittedLinks.discontinuity.value,
+          "elyCode" -> splittedLinks.ely
         ))
       }
       case LinkStatus.Terminated => {
@@ -728,7 +729,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "endAddressM" -> splittedLinks.endAddrMValue,
           "status" -> splittedLinks.status.value,
           "roadType" -> splittedLinks.roadType.value,
-          "discontinuity" -> splittedLinks.discontinuity.value
+          "discontinuity" -> splittedLinks.discontinuity.value,
+          "elyCode" -> splittedLinks.ely
         ))
       }
       case _ => {
@@ -741,7 +743,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "endAddressM" -> splittedLinks.endAddrMValue,
           "status" -> splittedLinks.status.value,
           "roadType" -> splittedLinks.roadType.value,
-          "discontinuity" -> splittedLinks.discontinuity.value
+          "discontinuity" -> splittedLinks.discontinuity.value,
+          "elyCode" -> splittedLinks.ely
         ))
       }
     }
