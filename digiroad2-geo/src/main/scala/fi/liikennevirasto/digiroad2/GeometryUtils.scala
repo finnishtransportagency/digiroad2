@@ -368,7 +368,7 @@ object GeometryUtils {
     if (len < mValue || geometry.length < 2)
       None
     else {
-      heading(truncateGeometry3D(geometry, Math.max(0.0, mValue-.1), Math.min(len, mValue+.1)))
+      Some(heading(truncateGeometry3D(geometry, Math.max(0.0, mValue-.1), Math.min(len, mValue+.1))))
     }
   }
 

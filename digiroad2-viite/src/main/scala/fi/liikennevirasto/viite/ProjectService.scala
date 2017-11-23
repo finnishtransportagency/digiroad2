@@ -576,7 +576,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val bestFit = commonSections.maxBy(_._2)._1
         val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageProjectLink, project, SideCode.TowardsDigitizing,
           Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
-        (splitLinks, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint)
+        (splitLinks, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
   }

@@ -475,7 +475,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
             case _ => Seq()
           }
-          if (splitLinks.nonEmpty)
+          if (splitLinks.isEmpty)
             Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
           else {
             val split: Map[String, Any] = Map(
