@@ -1510,11 +1510,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val nullElyProjects = ProjectDAO.getRoadAddressProjects(0, Seq.empty[LinkStatus], true)
       nullElyProjects.foreach(project => {
         //Get all the reserved road parts of said projects
-        val reservedRoadPartsLinkIds = ProjectDAO.fetchReservedRoadParts(project.id).filterNot(_.startingLinkId.isEmpty).map(_.startingLinkId.get)
+        val reservedRoadParts = ProjectDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)
         //Find the lowest maddressValue of the reserved road parts
-        val lowestReservedRoadAddresses = RoadAddressDAO.fetchByLinkId(reservedRoadPartsLinkIds.toSet).minBy(_.endAddrMValue)
+        val reservedRoadAddresses = RoadAddressDAO.fetchByRoadPart(reservedRoadParts.head.roadNumber, reservedRoadParts.head.roadPartNumber).minBy(_.endAddrMValue)
         //Use this part ELY code and set it on the project
-        ProjectDAO.updateProjectEly(project.id, lowestReservedRoadAddresses.ely)
+        ProjectDAO.updateProjectEly(project.id, reservedRoadAddresses.ely)
       })
     }
   }
