@@ -1265,13 +1265,13 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       sqlu"""UPDATE PROJECT_LINK SET status = ${LinkStatus.UnChanged.value} WHERE project_id = ${project.id} AND status = ${LinkStatus.NotHandled.value}""".execute
 
       mockForProject(project.id, Seq(link1, link2))
-      projectService.addNewLinksToProject(Seq(link1,link2).map(backToProjectLink(rap)), project.id, "U", Seq(link1, link2).minBy(_.endMValue).linkId) should be (None)
+      projectService.addNewLinksToProject(Seq(link1,link2).map(backToProjectLink(rap.copy(id = project.id))), project.id, "U", Seq(link1, link2).minBy(_.endMValue).linkId) should be (None)
       mockForProject(project.id, Seq(link3))
-      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(link3)), project.id, "U", link3.linkId) should be (None)
+      projectService.addNewLinksToProject(Seq(backToProjectLink(rap.copy(id = project.id))(link3)), project.id, "U", link3.linkId) should be (None)
       mockForProject(project.id, Seq(link4))
-      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(link4)), project.id, "U", link4.linkId) should be (None)
+      projectService.addNewLinksToProject(Seq(backToProjectLink(rap.copy(id = project.id))(link4)), project.id, "U", link4.linkId) should be (None)
       mockForProject(project.id, Seq(link5))
-      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(link5)), project.id, "U", link5.linkId) should be (None)
+      projectService.addNewLinksToProject(Seq(backToProjectLink(rap.copy(id = project.id))(link5)), project.id, "U", link5.linkId) should be (None)
 
       val linksAfter = ProjectDAO.getProjectLinks(project.id)
       val newLinks = linksAfter.filter(_.status == LinkStatus.New).sortBy(_.startAddrMValue)

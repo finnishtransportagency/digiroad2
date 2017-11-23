@@ -133,7 +133,7 @@ object ProjectDAO {
       val createdBy = r.nextString()
       val modifiedBy = r.nextString()
       val linkId = r.nextLong()
-      val geom=r.nextString()
+      val geom=r.nextStringOption()
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -150,7 +150,7 @@ object ProjectDAO {
       val geometryTimeStamp = r.nextLong()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
-        None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom), projectId,
+        None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom.getOrElse("")), projectId,
         status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp)
     }
   }

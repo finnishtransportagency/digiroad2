@@ -299,19 +299,19 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             values (${lrms(3)},null,'3',63.752,86.818,null,'6550673','0',sysdate,'1')""".execute
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
             START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
-            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY)
             values (${ids(1)},${project.id},'0','5','6591','1','0','62',${lrms(1)},'silari',null,
-            to_date('20.10.2017','DD.MM.RRRR'),null,'1','0','1',${ids(0)},'6550673')""".execute
+            to_date('20.10.2017','DD.MM.RRRR'),null,'1','0','1',${ids(0)},'6550673','')""".execute
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
             START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
-            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY)
              values (${ids(2)},${project.id},'0','5','6591','1','62','85',${lrms(2)},'silari',null,
-             to_date('20.10.2017','DD.MM.RRRR'),null,'2','0','1',${ids(0)},'6550673')""".execute
+             to_date('20.10.2017','DD.MM.RRRR'),null,'2','0','1',${ids(0)},'6550673','')""".execute
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
             START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
-            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY)
             values (${ids(3)},${project.id},'0','5','6591','1','62','85',${lrms(3)},'silari',null,
-            to_date('20.10.2017','DD.MM.RRRR'),null,'5','2','9',${ids(0)},'499972936')""".execute
+            to_date('20.10.2017','DD.MM.RRRR'),null,'5','2','9',${ids(0)},'499972936','')""".execute
       val delta = ProjectDeltaCalculator.delta(project.id)
       delta.terminations should have size (1)
       delta.unChanged.mapping should have size (1)
