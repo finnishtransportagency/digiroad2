@@ -527,9 +527,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def preSplitSuravageLink(linkId: Long, splitPoint: Point, projectId: Long, username: String): Seq[ProjectLink] = {
+  def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Seq[ProjectLink], Option[(Point, Vector3d)]) = {
     withDynSession {
-      preSplitSuravageLinkInTX(linkId: Long, splitPoint, projectId: Long, username: String)
+      preSplitSuravageLinkInTX(linkId, userName, splitOptions)
     }
   }
 
@@ -540,7 +540,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def preSplitSuravageLinkInTX(linkId: Long, splitPoint: Point, projectId: Long, username: String): Seq[ProjectLink] = {
+  def preSplitSuravageLinkInTX(linkId: Long, username: String,
+                               splitOptions: SplitOptions): (Seq[ProjectLink], Option[(Point, Vector3d)]) = {
+    val projectId = splitOptions.projectId
     val sOption = getProjectSuravageRoadLinksByLinkIds(Set(Math.abs(linkId))).headOption
     val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
     val project = ProjectDAO.getRoadAddressProjectById(projectId).get
@@ -561,9 +563,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
 
-      val splitOptions = SplitOptions(splitPoint, LinkStatus.New, LinkStatus.Transfer, projectLinks.head.roadNumber, projectLinks.head.roadPartNumber,
-        projectLinks.head.track, projectLinks.head.discontinuity, projectLinks.head.ely, projectLinks.head.linkGeomSource, projectLinks.head.roadType, projectId,
-        ProjectCoordinates(splitPoint.x, splitPoint.y, project.coordinates.get.zoom))
       val suravageProjectLink = suravageLink
       val projectLinksConnected = projectLinks.filter(l =>
         GeometryUtils.areAdjacent(l.geometry, suravageProjectLink.geometry))
@@ -577,57 +576,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val bestFit = commonSections.maxBy(_._2)._1
         val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageProjectLink, project, SideCode.TowardsDigitizing,
           Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
-         splitLinks
+        (splitLinks, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint)
       }
     }
-
   }
 
   def splitSuravageLinkInTX(linkId: Long, username: String,
                             splitOptions: SplitOptions): Seq[ProjectLink] = {
-    val sOption = getProjectSuravageRoadLinksByLinkIds(Set(Math.abs(linkId))).headOption
-    if (sOption.isEmpty) {
-      throw new RuntimeException(ErrorSuravageLinkNotFound)
-    } else {
-      val projectId = splitOptions.projectId
-      val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
-      if (previousSplit.nonEmpty) {
-        val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-        revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
-          suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
-          original.map(link => LinkToRevert(link.id, link.linkId, link.status.value)), splitOptions.coordinates,
-          username, false)
-      }
-      val suravageLink = sOption.get
-      val endPoints = GeometryUtils.geometryEndpoints(suravageLink.geometry)
-      val x = if (endPoints._1.x > endPoints._2.x) (endPoints._2.x, endPoints._1.x) else (endPoints._1.x, endPoints._2.x)
-      val rightTop = Point(x._2, endPoints._2.y)
-      val leftBottom = Point(x._1, endPoints._1.y)
-      val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
-      val suravageProjectLink = suravageLink
-      val projectLinksConnected = projectLinks.filter(l =>
-        GeometryUtils.areAdjacent(l.geometry, suravageProjectLink.geometry))
-      //we rank template links near suravagelink by how much they overlap with suravage geometry
-      val commonSections = projectLinksConnected.map(x =>
-        x -> ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink, x).map(GeometryUtils.geometryLength)
-          .getOrElse(0.0)).filter(_._2 > MinAllowedRoadAddressLength)
-      if (commonSections.isEmpty)
-        throw new RuntimeException(ErrorNoMatchingProjectLinkForSplit)
-      else {
-        val bestFit = commonSections.maxBy(_._2)._1
-        val project = ProjectDAO.getRoadAddressProjectById(projectId).get
-        val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageProjectLink, project, SideCode.TowardsDigitizing,
-          Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
-          ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
-          ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
-          ProjectDAO.updateProjectCoordinates(projectId, splitOptions.coordinates)
-        recalculateProjectLinks(project.id, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
-        splitLinks
-      }
-    }
-
+    val splitLinks = preSplitSuravageLinkInTX(linkId, username, splitOptions)._1
+    ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.map(_.linkId).toSet)
+    ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
+    ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
+    recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
+    splitLinks
   }
-
 
   def getProjectLinksInBoundingBox(bbox: BoundingRectangle, projectId: Long): (Seq[ProjectLink]) = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bbox, Set(), false).map(rl => rl.linkId -> rl).toMap

@@ -469,22 +469,26 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         try {
           val options = parsedBody.extract[SplitOptions]
           val writableProject = projectWritable(options.projectId)
-          val splitLinks = writableProject.preSplitSuravageLink(link, options.splitPoint, options.projectId, user.username)
-          val vectorRotate1 = options.splitPoint.+(Vector3d(3, 3, 0)).toVector.rotateRight()
-          val vectorRotate2 = options.splitPoint.-(Vector3d(3, 3, 0)).toVector.rotateRight()
-          val split: Map[String, Any] = Map(
-            "roadNumber" -> splitLinks.head.roadNumber,
-            "roadPartNumber" -> splitLinks.head.roadPartNumber,
-            "trackCode" -> splitLinks.head.track,
-            "split" -> Map(
-              "geometry" -> Seq(
-                Point(Math.abs(vectorRotate1.y), Math.abs(vectorRotate1.x)),
-                options.splitPoint,
-                Point(Math.abs(vectorRotate2.y), Math.abs(vectorRotate2.x))
+          val (splitLinks, splitLine) = writableProject.preSplitSuravageLink(link, user.username, options)
+          val cutGeom = splitLine match {
+            case Some(x) => val (p, v) = x
+              Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
+            case _ => Seq()
+          }
+          if (splitLinks.nonEmpty)
+            Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
+          else {
+            val split: Map[String, Any] = Map(
+              "roadNumber" -> splitLinks.head.roadNumber,
+              "roadPartNumber" -> splitLinks.head.roadPartNumber,
+              "trackCode" -> splitLinks.head.track,
+              "split" -> Map(
+                "geometry" -> cutGeom
               )
-            )
-          ) ++ splitLinks.flatMap(splitToApi)
-          Map("success" -> splitLinks.nonEmpty, "response" -> split)
+            ) ++ splitLinks.flatMap(splitToApi)
+            Map("success" -> splitLinks.nonEmpty, "response" -> split)
+
+          }
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")
@@ -500,8 +504,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         try {
           val options = parsedBody.extract[SplitOptions]
           val writableProject = projectWritable(options.projectId)
-          val splitError = writableProject.splitSuravageLink(link, user.username, options)
-          Map("success" -> splitError.isEmpty)
+          val links = writableProject.splitSuravageLink(link, user.username, options)
+          Map("success" -> links.isEmpty)
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")

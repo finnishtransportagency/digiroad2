@@ -355,5 +355,22 @@ object GeometryUtils {
     }
   }
 
+  def calculatePointAndHeadingOnGeometry(geometry: Seq[Point], point: Point): Option[(Point, Vector3d)] = {
+    calculateHeadingFromLinearReference(geometry, calculateLinearReferenceFromPoint(point, geometry)).map(v =>
+      (point, v))
+  }
+
+  def calculateHeadingFromLinearReference(geometry: Seq[Point], mValue: Double): Option[Vector3d] = {
+    def heading(s: Seq[Point]) = {
+      s.zip(s.tail).map{case (p1, p2) => p2-p1}.fold(Vector3d(0.0,0.0,0.0)){ case (v1, v2) => v1+v2}.normalize()
+    }
+    val len = geometryLength(geometry)
+    if (len < mValue || geometry.length < 2)
+      None
+    else {
+      heading(truncateGeometry3D(geometry, Math.max(0.0, mValue-.1), Math.min(len, mValue+.1)))
+    }
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }

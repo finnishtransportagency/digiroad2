@@ -101,6 +101,7 @@ object ProjectLinkSplitter {
       Seq(splits._1, splits._2, splits._3).filter(pl => Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength)
     }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
+    val suravageSplitHeading = GeometryUtils.calculateHeadingFromLinearReference(suravage.geometry, suravageM)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
     val splitAddressM = templateLink.startAddrMValue + Math.round(templateM / templateLink.geometryLength *
       (templateLink.endAddrMValue - templateLink.startAddrMValue))
@@ -114,7 +115,6 @@ object ProjectLinkSplitter {
       toSeq(switchDigitization(splits))
     else
       toSeq(splits)
-
   }
 
   def findMatchingGeometrySegment(suravage: PolyLine, template: PolyLine): Option[Seq[Point]] = {
