@@ -78,6 +78,39 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     manoeuvreId
   }
 
+  def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String]): Long = {
+    val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
+    val additionalInfo = additionalInfoOpt match {
+      case Some(additionalValue) => additionalValue
+      case _ => oldManoeuvreRow.additionalInfo
+    }
+
+    sqlu"""
+            insert into manoeuvre(id, type, created_by, created_date, additional_info)
+            values ($manoeuvreId, 2, $userName, sysdate, $additionalInfo)
+          """.execute
+
+    sqlu"""
+             insert into manoeuvre_element(manoeuvre_id, element_type, link_id, dest_link_id)
+             select $manoeuvreId, element_type, link_id, dest_link_id
+             from manoeuvre_element where manoeuvre_Id = ${oldManoeuvreRow.id}
+          """.execute
+
+    sqlu"""
+             insert into manoeuvre_exceptions(manoeuvre_id, exception_type)
+             select $manoeuvreId, exception_type
+             from manoeuvre_exceptions where manoeuvre_Id = ${oldManoeuvreRow.id}
+          """.execute
+
+    sqlu"""
+             insert into manoeuvre_validity_period(id, manoeuvre_id, type, start_hour, end_hour, start_minute, end_minute)
+             select primary_key_seq.nextval, $manoeuvreId, type, start_hour, end_hour, start_minute, end_minute
+             from manoeuvre_validity_period where manoeuvre_Id = ${oldManoeuvreRow.id}
+          """.execute
+
+    manoeuvreId
+  }
+
   def addManoeuvreExceptions(manoeuvreId: Long, exceptions: Seq[Int]) {
     if (exceptions.nonEmpty) {
       val query = s"insert all " +
@@ -222,11 +255,12 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
         """.execute
   }
 
-  def updateManoueuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
-    manoeuvreUpdates.additionalInfo.foreach(setManoeuvreAdditionalInfo(manoeuvreId))
+  def updateManoeuvre(userName: String, oldManoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
+    val manoeuvreRowOld = fetchManoeuvreById(oldManoeuvreId).head
+    val manoeuvreId = createManoeuvreForUpdate(userName, manoeuvreRowOld, manoeuvreUpdates.additionalInfo)
+    deleteManoeuvre(userName, oldManoeuvreId)
     manoeuvreUpdates.exceptions.foreach(setManoeuvreExceptions(manoeuvreId))
     manoeuvreUpdates.validityPeriods.foreach(setManoeuvreValidityPeriods(manoeuvreId))
-    updateModifiedData(userName, manoeuvreId)
   }
 
   def getByRoadLinks(roadLinkIds: Seq[Long]): Seq[Manoeuvre] = {

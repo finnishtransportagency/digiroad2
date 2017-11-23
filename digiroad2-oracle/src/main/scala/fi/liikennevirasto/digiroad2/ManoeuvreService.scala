@@ -35,7 +35,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
     withDynTransaction {
-      dao.updateManoueuvre(userName, manoeuvreId, manoeuvreUpdates)
+      dao.updateManoeuvre(userName, manoeuvreId, manoeuvreUpdates)
     }
   }
 
