@@ -292,6 +292,10 @@ object Digiroad2Context {
     new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
   }
 
+  lazy val prohibitionService: ProhibitionService = {
+    new ProhibitionService(roadLinkService, eventbus)
+  }
+
   lazy val pedestrianCrossingService: PedestrianCrossingService = {
     new PedestrianCrossingService(roadLinkService)
   }

@@ -48,7 +48,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
-                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService)
+                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
+                   val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1216,6 +1217,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
       case LinearAssetTypes.PavingAssetTypeId => pavingService
       case LinearAssetTypes.RoadWidthAssetTypeId => roadWidthService
+      case LinearAssetTypes.ProhibitionAssetTypeId => prohibitionService
+      case LinearAssetTypes.HazmatTransportProhibitionAssetTypeId => prohibitionService
       case _ => linearAssetService
     }
   }
