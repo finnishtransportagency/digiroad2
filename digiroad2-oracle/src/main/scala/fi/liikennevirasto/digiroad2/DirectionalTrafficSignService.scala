@@ -12,6 +12,8 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
   type IncomingAsset = IncomingDirectionalTrafficSign
   type PersistedAsset = DirectionalTrafficSign
 
+  override def typeId: Int = 240
+
   override def setAssetPosition(asset: IncomingDirectionalTrafficSign, geometry: Seq[Point], mValue: Double): IncomingDirectionalTrafficSign = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
@@ -20,8 +22,6 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
         asset
     }
   }
-
-  override def typeId: Int = 240
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[DirectionalTrafficSign] = {
     val assets = OracleDirectionalTrafficSignDao.fetchByFilter(queryFilter)
@@ -34,7 +34,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
   }
 
   override def create(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     withDynTransaction {
       OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username)
     }
@@ -48,7 +48,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val oldAsset = getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
     oldAsset match {
       case Some(old) if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
         expireWihoutTransaction(id, username)

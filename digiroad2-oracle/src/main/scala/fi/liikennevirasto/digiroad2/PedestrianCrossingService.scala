@@ -30,7 +30,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   }
 
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     withDynTransaction {
       OraclePedestrianCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
@@ -44,7 +44,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val oldAsset = getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
     oldAsset match {
       case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWihoutTransaction(id, username)
