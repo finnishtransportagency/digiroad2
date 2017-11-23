@@ -87,7 +87,7 @@ package object util {
       None, rl.modifiedBy, 0L, rl.linkId, rl.startMValue, rl.endMValue,
       rl.sideCode, (rl.startCalibrationPoint, rl.endCalibrationPoint), floating=false, rl.geometry, project.id,
       LinkStatus.NotHandled, RoadType.PublicRoad,
-      rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), rl.id, rl.elyCode,false,
+      rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New ) 0 else rl.id, rl.elyCode,false,
       None, rl.vvhTimeStamp)
   }
 

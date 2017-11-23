@@ -1017,14 +1017,14 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
 
       val reservedRoadPart1 = ReservedRoadPart(164, 77, 35, 5405, 5405, Discontinuity.EndOfRoad, 8, None, None)
-      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1), None, None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
       val addressesOnPart = RoadAddressDAO.fetchByRoadPart(77, 35, false)
       val l = addressesOnPart.map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
-      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(l.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
+      mockForProject(project.id, l)
+      projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart1)))
 
       val linksBefore = ProjectDAO.fetchByProjectRoadPart(77, 35, project.id).groupBy(_.linkId).map(_._2.head).toList
 
@@ -1080,14 +1080,14 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Terminate link and new link in the beginning of road part, transfer to the rest of road part") {
     runWithRollback {
       val reservedRoadPart1 = ReservedRoadPart(3192, 847, 6, 3192, 3192, Discontinuity.EndOfRoad, 12, None, None)
-      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1), None, None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
       val addressesOnPart = RoadAddressDAO.fetchByRoadPart(847, 6, false)
       val l = addressesOnPart.map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
-      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(l.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
+      mockForProject(project.id,l)
+      projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart1)))
 
       val linksBefore = ProjectDAO.fetchByProjectRoadPart(847, 6, project.id).groupBy(_.linkId).map(_._2.head).toList
       val mappedGeoms2 = StaticTestData.mappedGeoms(l.map(_.linkId))
@@ -1110,7 +1110,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
       projectService.updateProjectLinks(project.id, Set(linkToTerminate.linkId), LinkStatus.Terminated, "Test User", 0, 0, 0, Option.empty[Int]) should be(None)
 
-      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(newLink)), project.id, "U", newLink.linkId) should be (None)
+      projectService.addNewLinksToProject(Seq(backToProjectLink(rap.copy(id = project.id))(newLink)), project.id, "U", newLink.linkId) should be (None)
 
       val allLinks = ProjectDAO.getProjectLinks(project.id)
       val transferLinks = allLinks.filter(al => {
@@ -1219,7 +1219,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val address2 = RoadAddressDAO.fetchByRoadPart(5, 202, false).sortBy(_.startAddrMValue)
       val reservedRoadPart1 = ReservedRoadPart(address1.head.id, address1.head.roadNumber, address1.head.roadPartNumber, address1.last.endAddrMValue, address1.last.endAddrMValue, address1.head.discontinuity, 8, None, None)
       val reservedRoadPart2 = ReservedRoadPart(address2.head.id, address2.head.roadNumber, address2.head.roadPartNumber, address2.last.endAddrMValue, address2.last.endAddrMValue, address2.head.discontinuity, 8, None, None)
-      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1, reservedRoadPart2), None, None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
 
       val ad = address1.map(a => {
         if (a.linkId == 2229329) {
@@ -1231,12 +1231,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val allRoadParts = (ad ++ address2).map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
-      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
-        toMockAnswer(allRoadParts.map(toRoadLink)))
       val project = projectService.createRoadLinkProject(rap)
       reset(mockRoadLinkService)
-      mockForProject(project.id)
+      mockForProject(project.id, (address1 ++ address2).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart1, reservedRoadPart2)))
 
       projectService.updateProjectLinks(project.id, Set(2226690, 2226637), LinkStatus.Terminated, "TestUser", 0, 0, 0, Option.empty[Int]) should be(None)
       projectService.updateProjectLinks(project.id, Set(2226636), LinkStatus.Terminated, "TestUser", 0, 0, 0, Option.empty[Int]) should be(None)
@@ -1365,21 +1363,18 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 201, false).sortBy(_.startAddrMValue)
       val reservedRoadPart = ReservedRoadPart(addresses.head.id, addresses.head.roadNumber, addresses.head.roadPartNumber, addresses.last.endAddrMValue, addresses.last.endAddrMValue, addresses.head.discontinuity, 8, None, None)
-      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart), None, None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
 
       val addressLinks = addresses.map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
-      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
-        toMockAnswer(addressLinks.map(toRoadLink)))
       val project = projectService.createRoadLinkProject(rap)
-      val projectLinks = addresses.map(address => {
-        toProjectLink(project, LinkStatus.NotHandled)(address)
-      })
-      project.reservedParts should have size (1)
+      mockForProject(project.id, addresses.map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart)))
+      val savedProject = projectService.getRoadAddressSingleProject(project.id).get
+      savedProject.reservedParts should have size (1)
       reset(mockRoadLinkService)
-      mockForProject(project.id)
+
       projectService.updateProjectLinks(project.id, addresses.map(_.linkId).toSet, LinkStatus.Numbering, "TestUser",
         19998, 101, 0, Option.empty[Int]) should be(None)
 
