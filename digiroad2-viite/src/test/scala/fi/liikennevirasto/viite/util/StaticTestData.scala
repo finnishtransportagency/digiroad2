@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.util
 import java.io.{File, FileReader}
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2._
 import org.json4s.JsonAST.{JInt, JString}
@@ -27,6 +27,18 @@ object StaticTestData {
 
   def toGeom(json: Option[Any]): List[Point] = {
     json.get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
+  }
+
+  def roadLinkMocker[T <: RoadLinkLike](template: T)(linkIds: Set[Long], geometryMap: Map[Long, Seq[Point]] = Map()): Seq[T] = {
+    val geomMap = geometryMap.filterKeys(l => linkIds.contains(l)) ++ mappedGeoms(linkIds -- geometryMap.keySet).toSeq
+    val links =
+      template match {
+        case x: RoadLink => val rl = x.asInstanceOf[RoadLink]
+          geomMap.map{ case (linkId, geom) => rl.copy(linkId = linkId, geometry = geom)}
+        case x: VVHRoadlink => val rl = x.asInstanceOf[VVHRoadlink]
+          geomMap.map{ case (linkId, geom) => rl.copy(linkId = linkId, geometry = geom)}
+      }
+    links.asInstanceOf[Seq[T]]
   }
 
 

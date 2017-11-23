@@ -154,6 +154,13 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       ))
   }
 
+  private def mockRoadLinksWithStaticTestData(linkIds: Set[Long], linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface): Seq[RoadLink] = {
+    val roadLinkTemplate =
+      RoadLink(-1, Seq(), 540.3960283713503, State, 99, TrafficDirection.BothDirections, UnknownLinkType, Some("25.06.2015 03:00:00"),
+        Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
+    StaticTestData.roadLinkMocker(roadLinkTemplate)(linkIds)
+  }
+
   ignore("Fetch project links") { // Needs more of mocking because of Futures + transactions disagreeing
     val roadLinkService = new RoadLinkService(new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint")), mockEventBus, new DummySerializer) {
       override def withDynSession[T](f: => T): T = f
