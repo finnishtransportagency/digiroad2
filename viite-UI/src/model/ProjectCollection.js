@@ -310,7 +310,7 @@
           y: nearestPoint.y
         },
         statusA: 3,
-        statusB: 99,
+        statusB: 2,
         roadNumber: 0,
         roadPartNumber: 0,
         trackCode: 0,
