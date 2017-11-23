@@ -299,9 +299,10 @@
       }
     };
 
-    this.preSplitProjectLinks = function(linkId, nearestPoint){
+    this.preSplitProjectLinks = function(suravage, nearestPoint){
       applicationModel.addSpinner();
       var form = $('#roadAddressProjectFormCut');
+      var linkId = suravage.linkId;
       var projectId = projectinfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
@@ -311,13 +312,13 @@
         },
         statusA: 3,
         statusB: 2,
-        roadNumber: 0,
-        roadPartNumber: 0,
-        trackCode: 0,
-        discontinuity: 0,
-        ely: 0,
-        roadLinkSource: 99,
-        roadType: 99,
+        roadNumber: suravage.roadNumber,
+        roadPartNumber: suravage.roadPartNumber,
+        trackCode: suravage.trackCode,
+        discontinuity: suravage.discontinuity,
+        ely: suravage.elyCode,
+        roadLinkSource: suravage.roadLinkSource,
+        roadType: suravage.roadTypeId,
         projectId: projectId,
         coordinates:coordinates
       };
@@ -327,7 +328,8 @@
           applicationModel.removeSpinner();
         } else {
           eventbus.trigger('projectLink:preSplitSuccess', successObject.response);
-        }}, function(failureObject){
+        }
+      }, function(failureObject){
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', INTERNAL_SERVER_ERROR_500);
       });
 

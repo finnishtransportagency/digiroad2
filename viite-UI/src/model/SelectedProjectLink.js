@@ -51,7 +51,7 @@
     };
 
     var preSplitSuravageLink = function(suravage, nearestPoint) {
-      projectLinkCollection.preSplitProjectLinks(suravage.linkId, nearestPoint);
+      projectLinkCollection.preSplitProjectLinks(suravage, nearestPoint);
         eventbus.once('projectLink:preSplitSuccess', function(data){
           preSplitData = data;
           var suravageA = data.a;
