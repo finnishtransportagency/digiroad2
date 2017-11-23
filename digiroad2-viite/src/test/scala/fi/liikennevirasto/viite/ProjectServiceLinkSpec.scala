@@ -678,6 +678,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val links=ProjectDAO.getProjectLinks(id)
       links.map(_.linkId).toSet should be (addresses.map(_.linkId).toSet)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
+      projectService.updateProjectLinks(id, addresses.map(_.linkId).toSet, LinkStatus.Transfer, "Test", 75, 2, 0, None)
       projectService.changeDirection(id, 75, 2, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)),"testuser") should be(None)
       val changedLinks = ProjectDAO.getProjectLinksByIds(links.map { l => l.id })
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
