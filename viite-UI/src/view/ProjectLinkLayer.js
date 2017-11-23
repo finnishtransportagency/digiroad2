@@ -735,6 +735,7 @@
           selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, true);
         else
           selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, false);
+        calibrationPointLayer.getSource().clear();
       });
     });
 
