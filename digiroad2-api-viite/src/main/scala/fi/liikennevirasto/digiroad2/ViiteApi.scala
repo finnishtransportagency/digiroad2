@@ -660,7 +660,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "status" -> projectAddressLink.status.value,
           "connectedLinkId" -> projectAddressLink.connectedLinkId,
           "originalGeometry" -> projectAddressLink.originalGeometry,
-          "reversed" -> projectAddressLink.reversed
+          "reversed" -> projectAddressLink.reversed,
+          "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry)
         )
       else
         Map(

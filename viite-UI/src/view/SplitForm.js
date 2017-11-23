@@ -134,8 +134,8 @@
         '<hr class="horizontal-line"/>' +
         secondPartForm(selection[1], selected) +
         formCommon.newRoadAddressInfo(selected, selectedProjectLink[0], road) +
-        '<hr class="horizontal-line"/>' +
-        thirdPartForm(selection[2], selected) +
+        ((!_.isUndefined(selected[0].connectedLinkId)) ? '' : '<hr class="horizontal-line"/>' +
+        thirdPartForm(selection[2], selected)) +
         '</form>';
     };
 
@@ -302,23 +302,6 @@
         var statusDropdown_0 =$('#dropdown_0').val();
         var statusDropdown_1 = $('#dropdown_1').val();
         switch (statusDropdown_0){
-          case LinkStatus.Unchanged.description : {
-            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
-            break;
-          }
-          case LinkStatus.New.description : {
-            if(statusDropdown_1 == LinkStatus.Unchanged.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
-            }
-            else if(_.isUndefined(statusDropdown_1) || statusDropdown_1 == LinkStatus.Transfer.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
-            }
-            break;
-          }
-          case LinkStatus.Transfer.description : {
-            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value, LinkStatus.New.value);
-            break;
-          }
           case LinkStatus.Revert.description : {
             var separated = _.partition(selectedProjectLink, function (link) {
               return !_.isUndefined(link.connectedLinkId);
@@ -331,6 +314,9 @@
               projectCollection.removeProjectLinkSplit(separated[1]);
             }
             break;
+          }
+          default: {
+            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), statusDropdown_0, statusDropdown_1);
           }
         }
         selectedProjectLinkProperty.setDirty(false);
@@ -365,20 +351,12 @@
         eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
         var disabled = false;
         if(this.value == LinkStatus.Unchanged.description){
-          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
-          })));
-          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           $("#dropDown_0 option[value="+ LinkStatus.Transfer.description +"]").prop('disabled',false).prop('hidden', false);
           disabled = true;
           $('#tie').val(currentSplitData.roadNumber);
           $('#osa').val(currentSplitData.roadPartNumber);
         }
         else if(this.value == LinkStatus.Transfer.description) {
-          projectCollection.setDirty(_.filter(projectCollection.getDirty(), function(dirty) {return dirty.status === LinkStatus.Transfer.value;}).concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
-          })));
-          projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
           $("#dropDown_0 option[value="+ LinkStatus.Unchanged.description +"]").prop('disabled',false).prop('hidden', false);
           disabled = false;

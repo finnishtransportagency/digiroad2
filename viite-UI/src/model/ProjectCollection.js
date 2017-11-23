@@ -335,7 +335,7 @@
 
     };
 
-    this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
+    this.saveCuttedProjectLinks = function(changedLinks, statusA, statusB){
       applicationModel.addSpinner();
       
       var linkId = Math.abs(changedLinks[0].linkId);
@@ -343,13 +343,19 @@
       var projectId = projectinfo.id;
       var form = $('#roadAddressProjectFormCut');
       var coordinates = applicationModel.getUserGeoLocation();
+      var objectA = _.find(LinkStatus, function(obj){
+        return obj.description === statusA;
+      });
+      var objectB = _.find(LinkStatus, function(obj){
+        return obj.description === statusB;
+      });
       var dataJson = {
         splitPoint: {
           x: Number(form.find('#splitx')[0].value),
           y: Number(form.find('#splity')[0].value)
         },
-        statusA: statusCodeA,
-        statusB: statusCodeB,
+        statusA: objectA.value,
+        statusB: objectB.value,
         roadNumber: Number(form.find('#tie')[0].value),
         roadPartNumber: Number(form.find('#osa')[0].value),
         trackCode: Number(form.find('#ajr')[0].value),
