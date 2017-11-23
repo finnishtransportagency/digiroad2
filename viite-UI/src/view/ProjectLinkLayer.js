@@ -21,6 +21,7 @@
     Layer.call(this, layerName, roadLayer);
     var me = this;
     var styler = new RoadLinkStyler(true);
+
     var projectLinkStyler = new ProjectLinkStyler();
 
     var vectorSource = new ol.source.Vector({
@@ -303,7 +304,7 @@
       suravageProjectDirectionMarkerLayer.getSource().clear();
       suravageRoadProjectLayer.getSource().clear();
     };
-
+    clearLayers();
     var highlightFeatures = function () {
       clearHighlights();
       var featuresToHighlight = [];
@@ -735,7 +736,7 @@
           selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, true);
         else
           selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, false);
-        calibrationPointLayer.getSource().clear();
+        clearLayers();
       });
     });
 
