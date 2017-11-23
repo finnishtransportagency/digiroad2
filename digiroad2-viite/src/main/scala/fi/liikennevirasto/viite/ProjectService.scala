@@ -440,7 +440,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.debug(s"Reserve $reservation")
           val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber, false)
           val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false, frozenTimeVVHAPIServiceEnabled)
-            .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
+            .map(rl => rl.linkId -> addressesOnPart.find(_.linkId == rl.linkId).head.roadType).toMap
           val reserved = checkAndReserve(project, reservation)
           if (reserved.isEmpty)
             throw new RuntimeException(s"Can't reserve road part ${reservation.roadNumber}/${reservation.roadPartNumber}")
@@ -728,8 +728,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         relatedRoadLink match {
           case None => t
           case Some(rl) =>
-            val roadType = RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)
-            t.copy(roadType = roadType)
+            t.roadType match {
+              case RoadType.Unknown => {
+                val roadType = RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)
+                t.copy(roadType = roadType)
+              }
+              case _ => t
+            }
+
         }
     }
     withRoadType.toList
