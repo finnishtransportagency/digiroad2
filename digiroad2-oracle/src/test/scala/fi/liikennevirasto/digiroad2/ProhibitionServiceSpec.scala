@@ -177,20 +177,21 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), null)))
 
-      ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+      val createdId = ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+      val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId(1))).head
+      val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId.head)).head
 
       val limits = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360))
-      val oldLimit = limits.find(_.id == assetId).get
-      oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
-      oldLimit.value should be (Some(prohibitionA))
-      oldLimit.modifiedBy should be (Some("unittest"))
 
-      val createdLimit = limits.find(_.id != assetId).get
-      createdLimit.linkId should be (388562360)
-      createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
-      createdLimit.value should be (Some(prohibitionB))
-      createdLimit.createdBy should be (Some("unittest"))
+      oldProhibition.linkId should be (388562360)
+      oldProhibition.sideCode should be (SideCode.TowardsDigitizing.value)
+      oldProhibition.value should be (Some(prohibitionA))
+      oldProhibition.modifiedBy should be (Some("unittest"))
+
+      createdProhibition.linkId should be (388562360)
+      createdProhibition.sideCode should be (SideCode.AgainstDigitizing.value)
+      createdProhibition.value should be (Some(prohibitionB))
+      createdProhibition.createdBy should be (Some("unittest"))
     }
   }
 
@@ -201,10 +202,11 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), null)))
 
-      ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+      val ids = ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+      val createdId = ids(1)
+      val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId)).head
+      val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(190, Set(ids.head)).head
 
-      val prohibitions = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360))
-      val oldProhibition = prohibitions.find(_.id == assetId).get
       oldProhibition.linkId should be (388562360)
       oldProhibition.sideCode should be (SideCode.BothDirections.value)
       oldProhibition.value should be (Some(prohibitionA))
@@ -212,7 +214,6 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       oldProhibition.startMeasure should be (0.0)
       oldProhibition.endMeasure should be (6.0)
 
-      val createdProhibition = prohibitions.find(_.id != assetId).get
       createdProhibition.linkId should be (388562360)
       createdProhibition.sideCode should be (SideCode.BothDirections.value)
       createdProhibition.value should be (Some(prohibitionB))
