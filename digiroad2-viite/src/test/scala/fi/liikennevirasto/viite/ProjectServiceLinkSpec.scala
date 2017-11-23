@@ -1063,7 +1063,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         SideCode.AgainstDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
-      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(newLink)), project.id, "U", newLink.linkId) should be (None)
+      projectService.addNewLinksToProject(Seq(backToProjectLink(rap.copy(id = project.id))(newLink)), project.id, "U", newLink.linkId) should be (None)
 
       val allLinks = ProjectDAO.getProjectLinks(project.id)
       val transferLinks = allLinks.filter(_.status != LinkStatus.New)
