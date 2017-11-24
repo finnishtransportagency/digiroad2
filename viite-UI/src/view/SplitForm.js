@@ -113,7 +113,7 @@
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="split-form-group editable form-editable-roadAddressProject"> '+
         selectionFormCutted(selection, selected, currentSplitData)+
-        ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : formCommon.changeDirection(selected)) +
+        ((!_.isUndefined(selected[0].connectedLinkId)) ? '' : formCommon.changeDirection(selected)) +
         formCommon.actionSelectedField()+
         ((!_.isUndefined(selected[0].connectedLinkId)) ? revertSplitButton(): '') +
         '</div>'+
@@ -366,10 +366,10 @@
           $('#osa').val(currentSplitData.roadPartNumber);
         }
         else if(this.value == LinkStatus.Transfer.description) {
-          rootElement.find('.new-road-address').prop("hidden", false);
           $("#dropDown_0 option[value="+ LinkStatus.Unchanged.description +"]").prop('disabled',false).prop('hidden', false);
           disabled = false;
         }
+        rootElement.find('.new-road-address').prop("hidden", false);
         $('#tie').prop('disabled', disabled);
         $('#osa').prop('disabled', disabled);
         $('#ajr').prop('disabled', disabled);
