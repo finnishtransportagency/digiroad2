@@ -46,6 +46,9 @@ package object util {
     BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
+  def toTransition(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): (RoadAddress, ProjectLink) = {
+    (roadAddress, toProjectLink(project, status)(roadAddress))
+  }
   def toProjectLink(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
     if (status == LinkStatus.New) {
       ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,

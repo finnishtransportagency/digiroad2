@@ -227,14 +227,16 @@ object ProjectDeltaCalculator {
     * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
     * It is impossible to tell afterwards the exact mapping unless done at this point
     * Deprecated: Use partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection]
-    * instead!
+    * instead! To be removed in December
+    *
     * @param roadAddresses Road Addresses that were the source
     * @param projectLinks Project Links that have the transfer address values
     * @return Map between the sections old -> new
     */
   @Deprecated
+  //TODO: Remove method
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
-    partition(pair(roadAddresses, projectLinks.groupBy(_.roadAddressId)))
+    throw new RuntimeException("This method does not work properly and is not used - remove from all test use as well")
   }
 
   def partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection] = {
