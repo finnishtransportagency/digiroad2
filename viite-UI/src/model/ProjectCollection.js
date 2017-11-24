@@ -310,8 +310,8 @@
           x: nearestPoint.x,
           y: nearestPoint.y
         },
-        statusA: 3,
-        statusB: 2,
+        statusA: LinkStatus.Transfer.value,
+        statusB: LinkStatus.New.value,
         roadNumber: suravage.roadNumber,
         roadPartNumber: suravage.roadPartNumber,
         trackCode: suravage.trackCode,

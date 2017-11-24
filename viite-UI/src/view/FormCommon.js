@@ -138,8 +138,7 @@
 
     var actionButtons = function(btnPrefix, notDisabled) {
       return '<div class="'+btnPrefix+'form form-controls" id="actionButtons">' +
-        // '<button class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
-        '<button class="update btn btn-save" ' + ' style="width:auto;">Tallenna</button>' +
+        '<button class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
     };
