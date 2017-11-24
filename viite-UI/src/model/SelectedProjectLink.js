@@ -74,6 +74,22 @@
         });
     };
 
+    var zeroLengthSplit = function(adjacentLink) {
+      return {
+        roadNumber: adjacentLink.roadNumber,
+        roadPartNumber: adjacentLink.roadPartNumber,
+        roadLinkSource: adjacentLink.roadLinkSource,
+        connectedLinkId: adjacentLink.connectedLinkId,
+        linkId: adjacentLink.linkId,
+        status: LinkValues.LinkStatus.NotHandled.value,
+        points:  getPoint(adjacentLink),
+        startAddressM: 0,
+        endAddressM: 0,
+        startMValue: 0,
+        endMValue: 0
+      };
+    };
+
     var splitSuravageLinks = function(nearestSuravage, split, mousePoint, callback) {
       var left = _.cloneDeep(nearestSuravage);
       left.points = split.firstSplitVertices;

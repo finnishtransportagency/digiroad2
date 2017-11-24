@@ -91,7 +91,16 @@
     };
 
     var selectedProjectLinkTemplate = function(project, selected) {
-      currentSplitData = selectedProjectLinkProperty.getPreSplitData();
+      if(_.isUndefined(selected[0].connectedLinkId))
+        currentSplitData = selectedProjectLinkProperty.getPreSplitData();
+      else
+        currentSplitData = {
+          roadNumber: selected[0].roadNumber,
+          roadPartNumber: selected[0].roadPartNumber,
+          trackCode: selected[0].trackCode,
+          a: selected[0],
+          b: selected[1]
+        };
       var selection = selectedSplitData(selected, currentSplitData);
       return _.template('' +
         '<header>' +
@@ -203,7 +212,7 @@
         $("#dropDown_2 option[value="+ LinkStatus.Terminated.description +"]").attr('selected', 'selected').change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[0].discontinuity);
-      $('#roadTypeDropDown').val(selectedProjectLink[0].roadType);
+      $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
     };
 
     var disableFormInputs = function () {
@@ -316,7 +325,7 @@
             break;
           }
           default: {
-            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), statusDropdown_0, statusDropdown_1);
+            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty().concat(selectedProjectLink), statusDropdown_0, statusDropdown_1);
           }
         }
         selectedProjectLinkProperty.setDirty(false);
