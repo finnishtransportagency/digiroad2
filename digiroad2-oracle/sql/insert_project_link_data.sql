@@ -55,4 +55,4 @@ Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBE
 UPDATE PROJECT_LINK SET
   ROAD_TYPE = 1,
   ELY = 1,
-  GEOMETRY = '[0.0,' || start_addr_m || '],[0.0,' || end_addr_m || ']';
+  GEOMETRY = '[6975409.0,' || 525303 + start_addr_m || '],[6975409,' || 525303 + end_addr_m || ']';
