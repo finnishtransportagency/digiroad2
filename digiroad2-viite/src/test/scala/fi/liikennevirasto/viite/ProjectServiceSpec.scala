@@ -866,18 +866,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = RoadAddressProject(projectIdNew, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
         DateTime.now(), DateTime.now(), "info",
         List.empty, None)
-      val proj = projectService.createRoadLinkProject(project, 8)
+      val proj = projectService.createRoadLinkProject(project)
       val returnedProject = projectService.getRoadAddressSingleProject(proj.id).get
       returnedProject.name should be("testiprojekti")
       returnedProject.ely.getOrElse(-1) should be(-1)
-      val projupdated = projectService.saveProject(proj.copy(reservedParts = addresses), 7)
+      val projupdated = projectService.saveProject(proj.copy(reservedParts = addresses))
       val updatedReturnProject = projectService.getRoadAddressSingleProject(proj.id).head
       updatedReturnProject.ely.getOrElse(-1) should be(8)
       sqlu"""
        update project set ely = null, modified_date = sysdate where id = ${proj.id}
       """.execute
       val updatedReturnProject2 = projectService.getRoadAddressSingleProject(proj.id).head
-      projectService.saveProject(proj.copy(reservedParts = addresses), 8)
+      projectService.saveProject(proj.copy(reservedParts = addresses))
       updatedReturnProject2.ely.getOrElse(-1) should be(-1)
       val updatedReturnProject3 = projectService.getRoadAddressSingleProject(proj.id).head
       updatedReturnProject3.ely.getOrElse(-1) should be(8)
