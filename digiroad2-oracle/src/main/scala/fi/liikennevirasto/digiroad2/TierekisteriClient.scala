@@ -122,7 +122,7 @@ object TRRoadSide {
   case object Right extends TRRoadSide { def value = "oikea"; def propertyValues = Set(1) }
   case object Left extends TRRoadSide { def value = "vasen"; def propertyValues = Set(2) }
   case object Off extends TRRoadSide { def value = "paassa"; def propertyValues = Set(99) } // Not supported by OTH
-  case object Unknown extends TRRoadSide { def value = "ei_tietoa"; def propertyValues = Set(0) }
+  case object Unknown extends TRRoadSide { def value = "ei tietoa"; def propertyValues = Set(0) }
 }
 
 
