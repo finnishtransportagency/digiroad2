@@ -674,11 +674,12 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
       mockForProject(id, addresses)
-      projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.minBy(_.endMValue).linkId) should be (None)
+      val newLinks = addresses.map(backToProjectLink(rap)).map(_.copy(status = LinkStatus.New))
+      projectService.addNewLinksToProject(newLinks, id, "U", addresses.minBy(_.endMValue).linkId) should be (None)
       val links=ProjectDAO.getProjectLinks(id)
       links.map(_.linkId).toSet should be (addresses.map(_.linkId).toSet)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
-      projectService.updateProjectLinks(id, addresses.map(_.linkId).toSet, LinkStatus.Transfer, "Test", 75, 2, 0, None)
+      projectService.updateProjectLinks(id, addresses.map(_.linkId).toSet, LinkStatus.New, "Test", 75, 2, 0, None)
       projectService.changeDirection(id, 75, 2, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)),"testuser") should be(None)
       val changedLinks = ProjectDAO.getProjectLinksByIds(links.map { l => l.id })
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
@@ -696,8 +697,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val linksAfter = ProjectDAO.getProjectLinks(id)
       linksAfter should have size (links.size + 1)
       linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be(Some(AgainstDigitizing))
-      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be(2004)
-      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be(893)
+      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be(1798)
+      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be(687)
       linksAfter.find(_.linkId == 5176584).get.startAddrMValue should be(0)
     }
   }
