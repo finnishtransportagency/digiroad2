@@ -241,7 +241,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       else
         ra.copy(roadType = RoadType.MunicipalityStreetRoad)
     )
-    val unchanged = addresses.map(toProjectLink(project, LinkStatus.UnChanged))
+    val unchanged = addresses.map(a => (a, toProjectLink(project, LinkStatus.UnChanged)(a)))
 
     val newLinks = Seq(ProjectLink(981, 5, 205, Track.Combined,
       Discontinuity.MinorDiscontinuity, 120, 130, None, None,
@@ -249,8 +249,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L, 8,false,
       None, 748800L))
-
-    val uncParts = ProjectDeltaCalculator.partition(addresses, unchanged)
+    val uncParts = ProjectDeltaCalculator.partition(unchanged)
     uncParts should have size(2)
     uncParts.foreach(x => {
       val (fr, to) = x
@@ -334,8 +333,8 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
 
   test ("road with ely change") {
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L))
-    val links = addresses.filter(_.endAddrMValue < 61).map(a => toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5)))
-    val partitioned = ProjectDeltaCalculator.partition(addresses, links)
+    val links = addresses.filter(_.endAddrMValue < 61).map(a => (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))))
+    val partitioned = ProjectDeltaCalculator.partition(links)
     partitioned.size should be (1)
     val (fr, to) = partitioned.head
     fr.startMAddr should be (to.startMAddr)

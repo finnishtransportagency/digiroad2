@@ -105,7 +105,7 @@ object ProjectDeltaCalculator {
       (!pl1.reversed && pl1.discontinuity == Discontinuity.Continuous)
     if (matchAddr && matchContinuity &&
       ra1.endAddrMValue == ra2.startAddrMValue && ra1.discontinuity == Discontinuity.Continuous &&
-    pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
+      ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
           case x: RoadAddress => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
@@ -226,6 +226,8 @@ object ProjectDeltaCalculator {
   /**
     * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
     * It is impossible to tell afterwards the exact mapping unless done at this point
+    * Deprecated: Use partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection]
+    * instead!
     * @param roadAddresses Road Addresses that were the source
     * @param projectLinks Project Links that have the transfer address values
     * @return Map between the sections old -> new
