@@ -1191,9 +1191,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (links.exists(_.isSplit))
       links
     else {
-      val (startM, endM, startA, endA, geom) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
-        links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max, links.map(_.geometry).foldLeft(Seq[Point]())((geometries, point) => geometries ++ point))
-      Seq(links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA, geometry = geom.reverse))
+      val geom = links.head.sideCode match {
+        case SideCode.TowardsDigitizing => links.map(_.geometry).foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
+        case _ => links.map(_.geometry).reverse.foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
+      }
+      val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
+        links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
+      Seq(links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA, geometry = geom))
     }
   }
 
