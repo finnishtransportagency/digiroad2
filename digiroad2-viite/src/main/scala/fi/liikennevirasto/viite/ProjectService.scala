@@ -1021,8 +1021,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
             ProjectDAO.getProjectLinksByLinkId(updatedProjectLinks.head.linkId).headOption match {
               case Some(roadPartLink) =>
-                if (roadPartLink.roadNumber == newRoadNumber && roadPartLink.roadPartNumber == newRoadPartNumber)
-                  if (ProjectDAO.getProjectLinksByProjectAndLinkId(linkIds,projectId).exists(x=>x.status!=LinkStatus.Numbering)) //check if renumbering has already been done (and we are actually doing ie direction change)
+                val floaters, history = false
+                if (!RoadAddressDAO.fetchByLinkId(linkIds, floaters, history).exists(x => x.roadPartNumber != newRoadNumber && x.roadPartNumber != newRoadPartNumber)) //check if renumbering has already been done (and we are actually doing ie direction change)
                   throw new ProjectValidationException(s"Numeroinnissa ei voi käyttää alkuperäistä tienumeroa ja -osanumeroa") // you cannot use current roadnumber and roadpart number in numbering operation
                 if (!project.isReserved(newRoadNumber, newRoadPartNumber))
                   ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy, ely)
