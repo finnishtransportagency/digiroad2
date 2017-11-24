@@ -190,7 +190,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     }.groupBy(_.id)
   }
 
-  private def fetchManoeuvreById(id: Long): Seq[PersistedManoeuvreRow] = {
+  def fetchManoeuvreById(id: Long): Seq[PersistedManoeuvreRow] = {
     val manoeuvre =
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by
             FROM MANOEUVRE m
@@ -253,14 +253,6 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
            set additional_info = $additionalInfo
            where id = $manoeuvreId
         """.execute
-  }
-
-  def updateManoeuvre(userName: String, oldManoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
-    val manoeuvreRowOld = fetchManoeuvreById(oldManoeuvreId).head
-    val manoeuvreId = createManoeuvreForUpdate(userName, manoeuvreRowOld, manoeuvreUpdates.additionalInfo)
-    deleteManoeuvre(userName, oldManoeuvreId)
-    manoeuvreUpdates.exceptions.foreach(setManoeuvreExceptions(manoeuvreId))
-    manoeuvreUpdates.validityPeriods.foreach(setManoeuvreValidityPeriods(manoeuvreId))
   }
 
   def getByRoadLinks(roadLinkIds: Seq[Long]): Seq[Manoeuvre] = {

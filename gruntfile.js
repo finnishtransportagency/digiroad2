@@ -93,11 +93,14 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            host: 'karttamoottori.maanmittauslaitos.fi',
+            host: '172.17.204.46',
+            /*host: '172.17.206.180',*/
+            port: '8080',
             https: false,
             changeOrigin: true,
-            xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+            rewrite: {
+              '^/maasto': '/digiroad/maasto'
+            }
           },
           {
             context: '/vkm',
@@ -147,11 +150,14 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            host: 'karttamoottori.maanmittauslaitos.fi',
+            host: '172.17.204.46',
+            port: '8080',
             https: false,
             changeOrigin: true,
             xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+            rewrite: {
+              '^/maasto': '/digiroad/maasto'
+            }
           },
           {
             context: '/vkm',
