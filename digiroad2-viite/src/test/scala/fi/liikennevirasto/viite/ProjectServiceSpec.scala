@@ -870,6 +870,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val returnedProject = projectService.getRoadAddressSingleProject(proj.id).get
       returnedProject.name should be("testiprojekti")
       returnedProject.ely.getOrElse(-1) should be(-1)
+      mockForProject(proj.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(proj)))
       val projupdated = projectService.saveProject(proj.copy(reservedParts = addresses))
       val updatedReturnProject = projectService.getRoadAddressSingleProject(proj.id).head
       updatedReturnProject.ely.getOrElse(-1) should be(8)
