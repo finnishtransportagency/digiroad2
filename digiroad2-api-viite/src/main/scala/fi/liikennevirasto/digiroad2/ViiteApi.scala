@@ -745,7 +745,7 @@ object ProjectConverter {
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     RoadAddressProject(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim,
-      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(),
+      user.username, DateTime.now(), user.username, formatter.parseDateTime(project.startDate), DateTime.now(),
       project.additionalInfo, project.roadPartList.map(toReservedRoadPart), Option(project.additionalInfo), project.projectEly,
       Some(ProjectCoordinates(DefaultLatitude, DefaultLongitude, DefaultZoomLevel)))
   }
