@@ -608,7 +608,7 @@
           type: 'cut-line'
         });
         var style = new ol.style.Style({
-          stroke: new ol.style.Stroke({color: [0, 0 , 255, 1], width: 9}),
+          stroke: new ol.style.Stroke({color: [20, 20 , 255, 1], width: 9}),
           zIndex: 11
         });
         cutFeature.setStyle(style);

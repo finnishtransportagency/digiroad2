@@ -547,7 +547,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
     val project = ProjectDAO.getRoadAddressProjectById(projectId).get
     if (sOption.isEmpty) {
-      throw new RuntimeException(ErrorSuravageLinkNotFound)
+      throw new SplittingException(ErrorSuravageLinkNotFound)
     } else {
       if (previousSplit.nonEmpty) {
         val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
@@ -1522,6 +1522,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 }
 
 class ProjectValidationException(s: String) extends RuntimeException {
+  override def getMessage: String = s
+}
+
+class SplittingException(s: String) extends RuntimeException {
   override def getMessage: String = s
 }
 
