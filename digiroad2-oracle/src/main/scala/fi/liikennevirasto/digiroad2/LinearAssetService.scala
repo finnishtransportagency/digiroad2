@@ -23,12 +23,9 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 object LinearAssetTypes {
   val ProhibitionAssetTypeId = 190
-  val PavingAssetTypeId = 110
-  val RoadWidthAssetTypeId = 120
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
   val ExitNumberAssetTypeId = 270
-  val MaintenanceRoadAssetTypeId = 290
   val numericValuePropertyId: String = "mittarajoitus"
   val europeanRoadPropertyId: String = "eurooppatienumero"
   val exitNumberPropertyId: String = "liittymänumero"

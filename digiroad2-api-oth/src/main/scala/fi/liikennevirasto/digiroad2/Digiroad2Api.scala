@@ -751,7 +751,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode, 0, None))
       case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode, 0, None))
-      case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+      case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
       case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
@@ -1205,9 +1205,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
-      case LinearAssetTypes.PavingAssetTypeId => pavingService
-      case LinearAssetTypes.RoadWidthAssetTypeId => roadWidthService
+      case MaintenanceRoadAsset.typeId => maintenanceRoadService
+      case PavedRoad.typeId => pavingService
+      case RoadWidth.typeId => roadWidthService
       case _ => linearAssetService
     }
   }
