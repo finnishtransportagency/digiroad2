@@ -7,7 +7,7 @@
     this.filterComplementaries = function (assets) {
       if(isComplementaryActive || !isAllowComplementary )
         return assets;
-      return _.where(assets, {linkSource: 1});
+      return _.filter(assets, function(asset) { return asset.linkSource != 2 });
     };
 
     this.fetch = function(boundingBox) {

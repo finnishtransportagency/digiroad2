@@ -28,7 +28,7 @@
     var filterComplementaries = function (speedLimits) {
       if(isComplementaryActive)
          return speedLimits;
-      return _.map(speedLimits, function(speedLimitFilter) { return _.where(speedLimitFilter, {linkSource: 1});});
+      return _.map(speedLimits, function(speedLimitFilter) { return _.filter(speedLimitFilter, function(asset) { return asset.linkSource != 2 });});
     };
 
     this.getAll = function() {

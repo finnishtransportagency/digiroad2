@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import slick.jdbc.StaticQuery
 
 import scala.util.Try
 
@@ -117,16 +118,21 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     persistedAsset.copy(floating = floating)
   }
 
-//  override def create(asset: IncomingTrafficSign, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
   override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     withDynTransaction {
       OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 
+  def createFloating(asset: IncomingTrafficSign, username: String, municipality: Int): Long = {
+    withDynTransaction {
+       OracleTrafficSignDao.create(asset, 0, username, municipality, VVHClient.createVVHTimeStamp(), LinkGeomSource.Unknown, floating = true)
+    }
+  }
+
   override def update(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
     withDynTransaction {
       OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
     }
@@ -205,33 +211,26 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     Set(typeProperty, valueProperty)
   }
 
-  def tryToInt(propertyValue: String ) = {
-    Try(propertyValue.toInt).toOption
-  }
-
-  def createFromCoordinates(lon: Long, lat: Long, trafficSignType: TRTrafficSignType, value: Option[Int], twoSided: Option[Boolean], trafficDirection: TrafficDirection, bearing: Option[Int]) ={
-    roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon, lat)).map { vvhroad =>
-      roadLinkService.getRoadLinkFromVVH(vvhroad.linkId).filter(_.functionalClass != CycleOrPedestrianPath.value) match {
-        case Some(link) =>
-          bearing match {
-            case Some(assetBearing) =>
-              val validityDirection = if(twoSided.get){
-                BothDirections.value
-              }else{
-                getAssetValidityDirection(assetBearing).get
-              }
-              val asset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
-              create(asset, userProvider.getCurrentUser().username, link)
-            case None =>
-              val validityDirection = if(twoSided.get){
-                BothDirections.value
-              }else{
-                getTrafficSignValidityDirection(Point(lon, lat), link.geometry)
-              }
-              val asset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse("")), validityDirection , Some(GeometryUtils.calculateBearing(link.geometry)))
-              create(asset, userProvider.getCurrentUser().username, link)
-          }
-        case _ => None
+  def createFromCoordinates(lon: Long, lat: Long, trafficSignType: TRTrafficSignType, value: Option[Int], twoSided: Option[Boolean], trafficDirection: TrafficDirection, bearing: Option[Int]) = {
+    val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon, lat))
+    val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry)).municipalityCode)
+    if (vvhRoad.isEmpty || vvhRoad.size > 1) {
+      val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse("")), 0, None)
+      createFloating(asset, userProvider.getCurrentUser().username, municipality)
+    }
+    else {
+      roadLinks.map { roadLink =>
+        roadLinkService.getRoadLinkFromVVH(roadLink.linkId).map { link =>
+          val validityDirection =
+            bearing match {
+              case Some(assetBearing) if twoSided.getOrElse(false) => BothDirections.value
+              case Some(assetBearing) => getAssetValidityDirection(assetBearing).get
+              case None if twoSided.getOrElse(false) =>  BothDirections.value
+              case _ =>  getTrafficSignValidityDirection(Point(lon, lat), link.geometry)
+            }
+          val asset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
+          create(asset, userProvider.getCurrentUser().username, link)
+        }
       }
     }
   }

@@ -11,7 +11,7 @@
     var filterComplementaries = function(assets){
       if(isComplementaryActive)
         return assets;
-      return _.where(assets, {linkSource: 1});
+      return _.filter(assets, function(asset) { return asset.linkSource != 2 });
     };
 
     var filterNonExistingAssets = function(assets, existingAssets) {
