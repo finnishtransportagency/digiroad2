@@ -6,10 +6,10 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.viite.dao.{MunicipalityDAO, RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
+import fi.liikennevirasto.viite.{ProjectService, RoadAddressLinkBuilder, RoadAddressService}
 import org.joda.time.DateTime
 import slick.jdbc.{StaticQuery => Q}
 
@@ -213,6 +213,25 @@ object DataFixture {
 
   }
 
+  private def updateProjectLinkGeom(): Unit = {
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
+    val projectsIDs= projectService.getRoadAddressAllProjects().map(x=>x.id)
+    val projectCount=projectsIDs.size
+    var c=0
+    projectsIDs.foreach(x=>
+    {
+      c+=1
+      println("Updating Geometry for project " +c+ "/"+projectCount)
+      projectService.updateProjectLinkGeometry(x,"BJ")
+    })
+
+  }
+
+
+
+
   private def updateRoadAddressGeometrySource(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
@@ -305,6 +324,8 @@ object DataFixture {
         showFreezeInfo()
       case Some ("update_road_address_link_source") =>
         updateRoadAddressGeometrySource()
+      case Some ("update_project_link_geom") =>
+        updateProjectLinkGeom()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+

@@ -26,24 +26,23 @@
     ];
 
     var projectStyles= [
-      new StyleRule().where('roadClass').is(1).use({stroke: {color: 'rgba(255, 0, 0, 0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(2).use({stroke: {color: 'rgba(255, 102, 0, 0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(3).use({stroke: {color: 'rgba(255, 153, 51,0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(4).use({stroke: {color: 'rgba(0, 17, 187, 0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(5).use({stroke: {color: 'rgba(51, 204, 204, 0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(6).use({stroke: {color: 'rgba(224, 29, 217,0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(7).use({stroke: {color: 'rgba(0, 204, 221,0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(8).use({stroke: {color: 'rgba(252, 109, 160, 0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(9).use({stroke: {color: 'rgba(255, 85, 221, 0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(10).use({stroke: {color: 'rgba(255, 85, 221 0.05)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(11).use({stroke: {color: 'rgba(68, 68, 68, 0.1)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(97).use({stroke: {color: 'rgba(rgba(30, 30, 30, 0.1)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(98).use({stroke: {color: 'rgba(250, 250, 250, 0.1)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(1).use({stroke: {color: 'rgba(255, 0, 0, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(2).use({stroke: {color: 'rgba(255, 102, 0, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(3).use({stroke: {color: 'rgba(255, 153, 51,0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(4).use({stroke: {color: 'rgba(0, 17, 187, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(5).use({stroke: {color: 'rgba(51, 204, 204, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(6).use({stroke: {color: 'rgba(224, 29, 217,0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(7).use({stroke: {color: 'rgba(0, 204, 221,0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(8).use({stroke: {color: 'rgba(252, 109, 160, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(9).use({stroke: {color: 'rgba(255, 85, 221, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(10).use({stroke: {color: 'rgba(255, 85, 221 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(11).use({stroke: {color: 'rgba(68, 68, 68, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(97).use({stroke: {color: 'rgba(30, 30, 30, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(98).use({stroke: {color: 'rgba(250, 250, 250, 0.15)', width: 8, lineCap: 'round'}}),
       new StyleRule().where('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use(
-        {stroke: {color: 'rgba(255, 153, 0, 0.1)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('gapTransfering').is(true).use({stroke: {color: 'rgb(0, 255, 0, 0.1)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(99).use({stroke: {color: 'rgba(164, 164, 162, 0.05)', width: 8, lineCap: 'round'}})
-
+        {stroke: {color: 'rgba(255, 153, 0, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('gapTransfering').is(true).use({stroke: {color: 'rgb(0, 255, 0, 0.15)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(99).use({stroke: {color: 'rgba(164, 164, 162, 0.65)', width: 8, lineCap: 'round'}})
     ];
 
     var selectionStyleRules = [

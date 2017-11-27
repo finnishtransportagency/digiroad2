@@ -163,6 +163,8 @@
         highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
+        projectCollection.setTmpDirty([]);
+        projectCollection.setDirty([]);
         $('.wrapper').remove();
         $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
         if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
@@ -738,6 +740,8 @@
     });
 
     eventbus.on('projectLink:revertedChanges', function () {
+      isNotEditingData = true;
+      selectedProjectLinkProperty.setDirty(false);
       eventbus.trigger('roadAddress:projectLinksUpdated');
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
       showChangesAndSendButton();

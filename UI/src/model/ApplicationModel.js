@@ -57,6 +57,7 @@
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
+          eventbus.trigger('readOnlyLayer:' + layer + ':shown', layer);
         } else {
           eventbus.trigger('layer:' + selectedLayer + ':shown');
         }
