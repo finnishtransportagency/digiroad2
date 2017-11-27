@@ -52,7 +52,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     oldAsset match {
       case Some(old) if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
         expireWihoutTransaction(id, username)
-        OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality ,username)
+        OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username,old.createdBy, old.createdAt)
       case _ =>
         OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username)
         id

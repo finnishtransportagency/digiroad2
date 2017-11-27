@@ -48,7 +48,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     oldAsset match {
       case Some(old) if old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWihoutTransaction(id, username)
-        OracleObstacleDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+        OracleObstacleDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource, old.createdBy, old.createdAt)
       case _ =>
         OracleObstacleDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
         id

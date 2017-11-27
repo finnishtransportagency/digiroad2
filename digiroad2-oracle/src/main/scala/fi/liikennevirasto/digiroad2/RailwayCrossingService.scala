@@ -75,7 +75,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     oldAsset match {
       case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon=>
         expireWihoutTransaction(id, username)
-        OracleRailwayCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, VVHClient.createVVHTimeStamp(), linkSource)
+        OracleRailwayCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, VVHClient.createVVHTimeStamp(), linkSource, old.createdBy, old.createdAt)
       case _ =>
         OracleRailwayCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
         id

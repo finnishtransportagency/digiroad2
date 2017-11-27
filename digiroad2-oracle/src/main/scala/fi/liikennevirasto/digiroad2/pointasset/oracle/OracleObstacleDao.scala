@@ -10,6 +10,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import slick.jdbc.{StaticQuery, GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 case class Obstacle(id: Long, linkId: Long,
                     lon: Double, lat: Double,
@@ -71,6 +72,27 @@ object OracleObstacleDao {
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
         values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value})
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+
+      select * from dual
+    """.execute
+    updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
+    insertSingleChoiceProperty(id, getPropertyId, obstacle.obstacleType).execute
+    id
+  }
+
+  def create(obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime]): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
+        values ($id, 220, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, sysdate)
+
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
+        values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value}, sysdate)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

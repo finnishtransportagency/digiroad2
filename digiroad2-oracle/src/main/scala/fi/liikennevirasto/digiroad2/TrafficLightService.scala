@@ -35,7 +35,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     oldAsset match {
       case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWihoutTransaction(id, username)
-        OracleTrafficLightDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+        OracleTrafficLightDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource, old.createdBy, old.createdAt)
       case _ =>
         OracleTrafficLightDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
         id

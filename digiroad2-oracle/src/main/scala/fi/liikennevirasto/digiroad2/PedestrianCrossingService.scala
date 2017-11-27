@@ -48,7 +48,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     oldAsset match {
       case Some(old) if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWihoutTransaction(id, username)
-        OraclePedestrianCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+        OraclePedestrianCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource, old.createdBy, old.createdAt)
       case _ =>
         OraclePedestrianCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
         id

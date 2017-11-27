@@ -9,6 +9,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 case class TrafficLight(id: Long, linkId: Long,
                               lon: Double, lat: Double,
@@ -65,6 +66,26 @@ object OracleTrafficLightDao {
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${mValue}, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value})
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+    updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
+
+    id
+  }
+
+  def create(trafficLight: IncomingTrafficLight, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long, linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime]): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
+        values ($id, 280, $createdByFromUpdate, $createdDateTimeFromUpdate, ${municipality}, $username, sysdate)
+
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
+        values ($lrmPositionId, ${mValue}, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value}, sysdate)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

@@ -142,14 +142,18 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = service.create(IncomingTrafficLight(0.0, 20.0, 388553075), "jakke", roadLink )
-
+      val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
+      oldAsset.modifiedAt.isDefined should equal(false)
       val newId = service.update(id, IncomingTrafficLight(0.0, 10.0, 388553075),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
       updatedAsset.lon should equal (0.0)
       updatedAsset.lat should equal (10.0)
-      updatedAsset.createdBy should equal (Some("test"))
+      updatedAsset.createdBy should equal (oldAsset.createdBy)
+      updatedAsset.createdAt should equal (oldAsset.createdAt)
+      updatedAsset.modifiedBy should equal (Some("test"))
+      updatedAsset.modifiedAt.isDefined should equal(true)
     }
   }
 
