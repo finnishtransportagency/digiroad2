@@ -38,8 +38,14 @@
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
     };
 
-    var titleWithProjectName = function (projectName) {
-      return '<span class ="edit-mode-title">' + projectName + '<button id="editProject_' + currentProject.id + '" ' +
+    var titleWithDeletingTool = function (projectName) {
+      return '<span class ="edit-mode-title">' + projectName + '</span>' +
+        '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI  <button id="deleteProject_' + currentProject.id + '" ' +
+        'class="btn-delete-project" value="' + currentProject.id + '"></button></span>';
+    };
+
+    var titleWithEditingTool = function (projectName) {
+      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
@@ -90,7 +96,7 @@
     var openProjectTemplate = function (project, reservedRoads, newReservedRoads) {
       return _.template('' +
         '<header>' +
-        titleWithProjectName(project.name) +
+        titleWithDeletingTool(project.name) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -135,7 +141,7 @@
     var selectedProjectLinkTemplate = function (project) {
       return _.template('' +
         '<header>' +
-        titleWithProjectName(project.name) +
+        titleWithDeletingTool(project.name) +
         '</header>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
@@ -204,6 +210,9 @@
       };
 
       var toggleAditionalControls = function () {
+        rootElement.find('header').replaceWith('<header>' +
+        titleWithEditingTool(currentProject.name) +
+        '</header>');
         $('[id^=editProject]').css('visibility', 'visible');
         $('#closeProjectSpan').css('visibility', 'visible');
       };
