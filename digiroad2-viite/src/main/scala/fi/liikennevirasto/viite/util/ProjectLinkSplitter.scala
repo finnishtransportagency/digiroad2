@@ -40,7 +40,8 @@ object ProjectLinkSplitter {
         roadAddressId = templateLink.roadAddressId,
         connectedLinkId = Some(templateLink.linkId),
         geometry = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength),
-        geometryLength = suravage.geometryLength - suravageM
+        geometryLength = suravage.geometryLength - suravageM,
+        ely = templateLink.ely
       ),
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
@@ -56,7 +57,9 @@ object ProjectLinkSplitter {
         roadAddressId = templateLink.roadAddressId,
         connectedLinkId = Some(templateLink.linkId),
         geometry = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM),
-        geometryLength = suravageM)
+        geometryLength = suravageM,
+        ely = templateLink.ely
+        )
       )
   }
 
@@ -90,13 +93,9 @@ object ProjectLinkSplitter {
       val (splitA, splitB, splitT) = splits
       (
         splitB.copy(
-          sideCode = SideCode.switch(splitA.sideCode),
-          startMValue = 0.0,
-          endMValue = splitB.startMValue),
+          sideCode = SideCode.switch(splitA.sideCode)),
         splitA.copy(
-          sideCode = SideCode.switch(splitA.sideCode),
-          startMValue = splitB.startMValue,
-          endMValue = splitB.endMValue
+          sideCode = SideCode.switch(splitA.sideCode)
         ),
         splitT)
     }
@@ -104,7 +103,6 @@ object ProjectLinkSplitter {
       Seq(splits._1, splits._2, splits._3).filter(pl => Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength)
     }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
-    val suravageSplitHeading = GeometryUtils.calculateHeadingFromLinearReference(suravage.geometry, suravageM)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
     val splitAddressM = templateLink.startAddrMValue + Math.round(templateM / templateLink.geometryLength *
       (templateLink.endAddrMValue - templateLink.startAddrMValue))
