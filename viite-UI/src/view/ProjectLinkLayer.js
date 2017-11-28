@@ -910,7 +910,7 @@
     });
 
     eventbus.on('roadAddressProject:projectLinkSaved', function (projectId, isPublishable) {
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom(), projectId, isPublishable);
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom()+1, projectId, isPublishable);
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);
