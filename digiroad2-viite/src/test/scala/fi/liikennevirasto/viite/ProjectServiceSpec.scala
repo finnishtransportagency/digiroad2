@@ -849,7 +849,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
 
-  test("Project ELY -1 update when reserving roadpart") {
+  test("Project ELY -1 update when reserving roadpart and revert to -1 when all reserved roadparts are removed") {
     val projectIdNew = 0L
     val roadNumber = 1943845
     val roadPartNumber = 1
@@ -881,18 +881,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projupdated = projectService.saveProject(proj.copy(reservedParts = addresses), 7)
       val updatedReturnProject = projectService.getRoadAddressSingleProject(proj.id).head
       updatedReturnProject.ely.getOrElse(-1) should be(8)
-      sqlu"""
-       update project set ely = null, modified_date = sysdate where id = ${proj.id}
-      """.execute
+      projectService.saveProject(proj.copy(ely = Some(8)),7) //returns project to null
       val updatedReturnProject2 = projectService.getRoadAddressSingleProject(proj.id).head
-      projectService.saveProject(proj.copy(reservedParts = addresses), 8)
       updatedReturnProject2.ely.getOrElse(-1) should be(-1)
+      projectService.saveProject(proj.copy(reservedParts = addresses), 8)
       val updatedReturnProject3 = projectService.getRoadAddressSingleProject(proj.id).head
       updatedReturnProject3.ely.getOrElse(-1) should be(8)
     }
   }
-
-
 
   test("get the project with it's reserved road parts") {
     var projectId = 0L

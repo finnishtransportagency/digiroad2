@@ -292,6 +292,13 @@ object ProjectDAO {
          """.execute
   }
 
+  def getProjectLinksFirstEly(projectId: Long): Seq[ProjectLink] = {
+     val query =
+      s"""$projectLinkQueryBase
+                where PROJECT_LINK.PROJECT_ID =$projectId  and PROJECT_LINK.ELY is not null AND  rownum < 2  """
+    listQuery(query)
+  }
+
   def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
     val query =
