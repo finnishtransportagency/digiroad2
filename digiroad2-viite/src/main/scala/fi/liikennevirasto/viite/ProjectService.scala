@@ -87,17 +87,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def calculateProjectCoordinates(links: Seq[ProjectLink], resolution: Int): ProjectCoordinates = {
-      val corners = GeometryUtils.boundingRectangleCorners(withGeometry(links).flatten(_.geometry))
-      val centerX = (corners._1.x + corners._2.x) / 2
-      val centerY = (corners._1.y + corners._2.y) / 2
-      val (xLength,yLength) = (Math.abs(corners._2.x - corners._1.x), Math.abs(corners._2.y - corners._1.y))
-      val zoom = Resolutions.map(r => {
-        (xLength / r, yLength / r) match {
-          case (x, y) if x < DefaultScreenWidth && y < DefaultScreenHeight  => Resolutions.indexOf(r)
-          case _ => 0
-        }
-      })
-      ProjectCoordinates(centerX,centerY, zoom.max)
+    val corners = GeometryUtils.boundingRectangleCorners(withGeometry(links).flatten(_.geometry))
+    val centerX = (corners._1.x + corners._2.x) / 2
+    val centerY = (corners._1.y + corners._2.y) / 2
+    val (xLength,yLength) = (Math.abs(corners._2.x - corners._1.x), Math.abs(corners._2.y - corners._1.y))
+    val zoom = Resolutions.map(r => {
+      (xLength / r, yLength / r) match {
+        case (x, y) if x < DefaultScreenWidth && y < DefaultScreenHeight  => Resolutions.indexOf(r)
+        case _ => 0
+      }
+    })
+    ProjectCoordinates(centerX,centerY, zoom.max)
   }
 
   private def createProject(roadAddressProject: RoadAddressProject, resolution: Int): RoadAddressProject = {
@@ -310,6 +310,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Will attempt to find relevant sideCode information to the projectLinks given a number of factors
     * for example if they are of suravage or complementary origin
+    *
     * @param linkIds the linkIds to process
     * @param roadNumber the roadNumber to apply/was applied to said linkIds
     * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
@@ -1456,6 +1457,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   /**
     * Called for road addresses that are replaced by a new version at end date
+    *
     * @param roadAddress
     * @param pl
     * @param vvhLink
@@ -1463,7 +1465,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink]): Option[RoadAddress] = {
     pl.status match {
-        // Unchanged does not get an end date, terminated is created from the project link in convertProjectLinkToRoadAddress
+      // Unchanged does not get an end date, terminated is created from the project link in convertProjectLinkToRoadAddress
       case UnChanged | Terminated =>
         None
       case Transfer | Numbering =>
@@ -1483,6 +1485,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         ProjectDAO.updateProjectEly(currentProjectId, newEly)
         None
       }
+    }
+  }
+
+  def correctNullProjectEly(): Unit = {
+    withDynSession {
+      //Get all the projects with non-existant ely code
+      val nullElyProjects = ProjectDAO.getRoadAddressProjects(0, Seq.empty[LinkStatus], true)
+      nullElyProjects.foreach(project => {
+        //Get all the reserved road parts of said projects
+        val reservedRoadParts = ProjectDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)
+        //Find the lowest maddressValue of the reserved road parts
+        val reservedRoadAddresses = RoadAddressDAO.fetchByRoadPart(reservedRoadParts.head.roadNumber, reservedRoadParts.head.roadPartNumber).minBy(_.endAddrMValue)
+        //Use this part ELY code and set it on the project
+        ProjectDAO.updateProjectEly(project.id, reservedRoadAddresses.ely)
+      })
     }
   }
 
