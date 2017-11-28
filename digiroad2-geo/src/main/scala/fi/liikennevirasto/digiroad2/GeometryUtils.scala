@@ -342,16 +342,15 @@ object GeometryUtils {
     }
   }
 
-  def midPointGeometry(geometry: Seq[Point], controlPoints: Seq[Point] = Seq()): Point = {
+  def midPointGeometry(geometry: Seq[Point]): Point = {
     if (geometry.size > 1) {
-      val controlX = (1-0.5) * geometry.head.x + 0.5 * geometry.tail.head.x
-      val controlY = (1-0.5) * geometry.head.y + 0.5 * geometry.tail.head.y
-      midPointGeometry(geometry.tail, controlPoints :+ Point(controlX,controlY))
-    }
-    else if (controlPoints.size > 1 ) {
-      midPointGeometry(controlPoints)
+      midPointGeometry(geometry.zip(geometry.tail).foldLeft(Seq.empty[Point])((b , g) => {
+        val controlX = (1-0.5) * g._1.x + 0.5 * g._2.x
+        val controlY = (1-0.5) * g._1.y + 0.5 * g._2.y
+        b :+ Point(controlX, controlY)
+      }))
     } else {
-      controlPoints.head
+      geometry.head
     }
   }
 
