@@ -211,7 +211,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     getPointAssetById(typeId, assetId)
   }
 
-  def updateSpeedLimitAsset(assetId: Long, parsedBody: JValue, linkId: Int): (SpeedLimit, RoadLink) = {
+  def updateSpeedLimitAsset(assetId: Long, parsedBody: JValue, linkId: Long): (SpeedLimit, RoadLink) = {
     val oldAsset = speedLimitService.getSpeedLimitAssetsByIds(Set(assetId)).filterNot(_.expired).headOption
       .getOrElse(halt(NotFound("Asset not found.")))
 
@@ -542,6 +542,15 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     new SimpleDateFormat("dd.MM.yyyy hh:mm:ss").parse(strDate).getTime
   }
 
+  private def linkIdValidation(linkIds: Set[Long]): Seq[RoadLink] = {
+    val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIds)
+    linkIds.foreach { linkId =>
+      roadLinks.find(road => road.linkId == linkId && road.administrativeClass != State).
+        getOrElse(halt(UnprocessableEntity(s"Link id: $linkId is not valid, doesn't exist or have an administrative class 'State'.")))
+    }
+    roadLinks
+  }
+
   private def validateJsonField(fieldsNotAllowed: Seq[String], body: Seq[JObject] ): Unit = {
     val notAllowed = StringBuilder.newBuilder
 
@@ -639,22 +648,19 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  def validateManoeuvrePropForCreate(manoeuvres: Seq[NewManoeuvreValues]):Unit = {
+  private def validateManoeuvrePropForCreate(manoeuvres: Seq[NewManoeuvreValues]):Unit = {
     def getAllLinkIds(manoeuvres: Seq[NewManoeuvreValues]): Seq[Long] = {
       manoeuvres.map(_.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("sourceLinkId not found"))))++
         manoeuvres.flatMap(_.properties.find(_.name == "elements").map(_.value.asInstanceOf[Seq[BigInt]].map(_.toLong)).getOrElse(Seq())) ++
         manoeuvres.map(_.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("destLinkId not found"))))
     }
 
-    val roadLinks = roadLinkService.getRoadsLinksFromVVH(getAllLinkIds(manoeuvres).toSet)
+    val roadLinks = linkIdValidation(getAllLinkIds(manoeuvres).toSet)
     //validate all LinkIds
     manoeuvres.foreach { manoeuvre =>
       val destLinkId = manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("destLinkId not found")))
       val linkIdAll = Seq(manoeuvre.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("sourceLinkId not found")))) ++
       manoeuvre.properties.find(_.name == "elements").map(_.value.asInstanceOf[Seq[BigInt]].map(_.toLong)).getOrElse(Seq()) ++ Seq(destLinkId)
-
-      if(roadLinks.map(_.linkId).count(linkIdAll.contains) != linkIdAll.size)
-        halt(UnprocessableEntity("At least one of this linkId are not valid"))
 
       manoeuvre.startMeasure match {
         case Some(measure) =>
@@ -670,10 +676,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         case _ => None
       }
     }
-
-      validateNotMandatoryManoeuvreProp(manoeuvres)
+    validateNotMandatoryManoeuvreProp(manoeuvres)
   }
-  def validateManoeuvrePropForUpdate(manoeuvre: NewManoeuvreValues):Unit = {
+
+  private def validateManoeuvrePropForUpdate(manoeuvre: NewManoeuvreValues):Unit = {
 
     if (manoeuvre.properties.map(_.name).contains("sourceLinkId") || manoeuvre.properties.map(_.name).contains("elements") || manoeuvre.properties.map(_.name).contains("destLinkId"))
       halt(UnprocessableEntity("Not allow update sourceLinkId, destLinkId or elements"))
@@ -794,12 +800,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     contentType = formats("json")
     val assetTypeName = params("assetType")
     val assetTypeId = getAssetTypeId(assetTypeName)
-
     val body = parsedBody.extractOpt[Seq[JObject]].getOrElse(halt(BadRequest("Incorrect Json format, expected a Json Array")))
-    val linkIds = body.map(bd => (bd \ "linkId").extractOrElse[Long]
-      (halt(UnprocessableEntity("Missing mandatory 'linkId' parameter"))))
-    linkIds.map(linkId => roadLinkService.getRoadLinkGeometry(linkId).getOrElse(halt(UnprocessableEntity(s"Link id: $linkId is not valid or doesn't exist."))))
     body.map(bd => (bd \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter"))))
+    val linkIds = body.map(bd => (bd \ "linkId").extractOrElse[Long](halt(UnprocessableEntity("Missing mandatory 'linkId' parameter"))))
 
     AssetTypeInfo.apply(assetTypeId).geometryType match {
       case "linear" =>
@@ -814,6 +817,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           manoeuvreAssetsToApi(createManoeuvreAssets(parsedBody))
 
         } else {
+          linkIdValidation(linkIds.toSet)
+
           body.map(bd => (bd \ "sideCode").extractOrElse[Int](halt(BadRequest("Missing mandatory 'sideCode' parameter"))))
           val properties = body.map(bd => (bd \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties"))))
           validateAssetProperties(assetTypeId, properties)
@@ -823,7 +828,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           else
             linearAssetsToApi(createLinearAssets(assetTypeId, parsedBody, linkIds))
         }
-      case "point" => pointAssetsToApi(createPointAssets(parsedBody, assetTypeId), assetTypeId)
+      case "point" =>
+        val linkIds = body.map(bd => (bd \ "linkId").extractOrElse[Long](halt(UnprocessableEntity("Missing mandatory 'linkId' parameter"))))
+        linkIdValidation(linkIds.toSet)
+        pointAssetsToApi(createPointAssets(parsedBody, assetTypeId), assetTypeId)
       case _ =>
     }
   }
@@ -833,8 +841,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
     val assetType = params("assetType")
     val assetTypeId = getAssetTypeId(assetType)
-    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
-    (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
     val assetId = params("assetId").toInt
 
@@ -845,6 +851,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
         manoeuvreAssetToApi(updateManoeuvreAssets(assetId, parsedBody))
       case _ =>
+        val linkId = (parsedBody \ "linkId").extractOrElse[Long](halt(BadRequest("Missing mandatory 'linkId' parameter")))
+        (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
+
+        linkIdValidation(Set(linkId))
+
         val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties")))
         validateAssetProperties(assetTypeId,Seq(properties))
 
