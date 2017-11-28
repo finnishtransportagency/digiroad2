@@ -131,10 +131,10 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       afterUpdate.mValue should equal(100)
       afterUpdate.linkId should equal(123)
       afterUpdate.municipalityCode should equal(91)
-      afterUpdate.createdBy should equal(Some("test"))
-      afterUpdate.createdAt should equal(afterUpdate.createdAt)
-      afterUpdate.modifiedBy should equal(None)
-      afterUpdate.modifiedAt.isDefined should equal(false)
+      afterUpdate.createdBy should equal(beforeUpdate.createdBy)
+      afterUpdate.createdAt should equal(beforeUpdate.createdAt)
+      afterUpdate.modifiedBy should equal(Some("test"))
+      afterUpdate.modifiedAt.isDefined should equal(true)
     }
   }
 
