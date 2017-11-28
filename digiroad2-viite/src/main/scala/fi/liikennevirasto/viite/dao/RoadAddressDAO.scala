@@ -117,9 +117,11 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: Boolean = false, reversed: Boolean = false) extends BaseRoadAddress {
+                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: Boolean = false) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
+
+  def reversed: Boolean = false
 
   def addressBetween(a: Double, b: Double): (Long, Long) = {
     val (addrA, addrB) = (addrAt(a), addrAt(b))
