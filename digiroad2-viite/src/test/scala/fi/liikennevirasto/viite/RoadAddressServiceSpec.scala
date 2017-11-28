@@ -697,7 +697,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     link456.get.endCalibrationPoint.nonEmpty should be (false)
   }
 
-  test("test mapping 6760") {
+  ignore("test mapping 6760") {
     val properties: Properties = {
       val props = new Properties()
       props.load(getClass.getResourceAsStream("/digiroad2.properties"))
