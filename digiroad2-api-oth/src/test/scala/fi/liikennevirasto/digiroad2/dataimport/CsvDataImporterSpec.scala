@@ -313,25 +313,28 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation for traffic sign import fails if type contains illegal characters", Tag("db")) {
-    val assetFields = Map("Koordinaatti x" -> 1, "Koordinaatti y" -> 1, "Liikennemerkin tyyppi" -> "a")
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "a")
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
 
     trafficSignCsvImporter.importTrafficSigns(invalidCsv) should equal(trafficSignCsvImporter.ImportResult(
       malformedAssets = List(trafficSignCsvImporter.MalformedAsset(
-        malformedParameters = List("Liikennemerkin tyyppi"),
+        malformedParameters = List("liikennemerkin tyyppi"),
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
 
   test("validation for traffic sign import fails if mandatory parameters are missing", Tag("db")) {
-    val assetFields = Map("Koordinaatti x" -> "", "Koordinaatti y" -> "", "Liikennemerkin tyyppi" -> "")
+    val assetFields = Map("koordinaatti x" -> "", "koordinaatti y" -> "", "liikennemerkin tyyppi" -> "")
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
+    val csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)
+    val assets = trafficSignCsvImporter.importTrafficSigns(invalidCsv)
 
-    trafficSignCsvImporter.importTrafficSigns(invalidCsv) should equal(trafficSignCsvImporter.ImportResult(
-      malformedAssets = List(trafficSignCsvImporter.MalformedAsset(
-        malformedParameters = List("Koordinaatti x", "Koordinaatti y", "Liikennemerkin tyyppi"),
-        csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
+    assets.malformedAssets.flatMap(_.malformedParameters) should contain allOf ("koordinaatti x", "koordinaatti y", "liikennemerkin tyyppi")
+    assets.malformedAssets.foreach {
+      asset =>
+        asset.csvRow should be (trafficSignCsvImporter.rowToString(defaultValues ++ assetFields))
+    }
   }
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
