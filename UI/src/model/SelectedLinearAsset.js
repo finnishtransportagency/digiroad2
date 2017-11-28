@@ -183,6 +183,10 @@
       }
     };
 
+    this.verify = function() {
+      console.log("Verified!");
+    };
+
     this.exists = function() {
       return !_.isEmpty(selection);
     };

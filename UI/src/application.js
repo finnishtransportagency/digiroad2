@@ -219,7 +219,8 @@
        linearAsset.newTitle,
        linearAsset.title,
        linearAsset.editConstrains || function() {return false;},
-       linearAsset.layerName );
+       linearAsset.layerName,
+       linearAsset.hasVerificationButton);
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
