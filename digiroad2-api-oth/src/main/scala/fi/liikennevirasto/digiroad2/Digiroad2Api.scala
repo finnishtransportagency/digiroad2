@@ -300,7 +300,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     massTransitStopService.getFloatingAssetsWithReason(includedMunicipalities, Some(user.isOperator()))
   }
 
-
   get("/massTransitStops/metadata") {
     def constructPosition(position: String): Point = {
       val PositionList = position.split(",").map(_.toDouble)
@@ -550,6 +549,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     roadLinkService.getAdjacents(ids.toSet).mapValues(_.map(roadLinkToApi))
   }
 
+  get("/roadlinks/complementaries"){
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox")
+      .map(getRoadlinksWithComplementaryFromVVH(municipalities))
+      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
   get("/roadLinks/incomplete") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
@@ -570,17 +580,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       maintenanceRoadService.getUncheckedLinearAssets(includedAreas)
     else
       BadRequest("Linear Asset type not allowed")
-  }
-
-  get("/roadlinks/complementaries"){
-    response.setHeader("Access-Control-Allow-Headers", "*")
-
-    val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
-
-    params.get("bbox")
-      .map(getRoadlinksWithComplementaryFromVVH(municipalities))
-      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   put("/linkproperties") {

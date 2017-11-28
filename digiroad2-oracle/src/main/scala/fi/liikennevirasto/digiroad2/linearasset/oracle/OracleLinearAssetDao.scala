@@ -877,6 +877,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
+    * Updates validity of asset in db.
+    */
+  def updateExpiration(id: Long) = {
+
+    val propertiesUpdated =
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+
+    if (propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
