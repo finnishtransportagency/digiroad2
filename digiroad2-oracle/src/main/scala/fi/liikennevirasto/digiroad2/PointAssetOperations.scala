@@ -249,11 +249,21 @@ trait PointAssetOperations {
 
   def expire(id: Long, username: String): Long = {
     withDynSession {
-      expireWihoutTransaction(id, username)
+      expireWithoutTransaction(id, username)
     }
   }
 
-  def expireWihoutTransaction(id: Long, username: String) = {
+  def expire(id: Long): Long = {
+    withDynSession{
+      expireWithoutTransaction(id)
+    }
+  }
+
+  def expireWithoutTransaction(id: Long) = {
+    sqlu"update asset set valid_to = sysdate where id = $id".first
+  }
+
+  def expireWithoutTransaction(id: Long, username: String) = {
     Queries.updateAssetModified(id, username).first
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }

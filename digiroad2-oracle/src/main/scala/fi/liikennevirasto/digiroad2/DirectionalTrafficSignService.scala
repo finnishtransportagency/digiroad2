@@ -47,16 +47,13 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
   }
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    val oldAsset = getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
-    oldAsset match {
-      case Some(old) if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
-        expireWihoutTransaction(id, username)
+    getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
+      case old if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
+        expireWithoutTransaction(id)
         OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username,old.createdBy, old.createdAt)
       case _ =>
         OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username)
-        id
-
     }
   }
 }
