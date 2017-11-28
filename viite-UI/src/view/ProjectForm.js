@@ -231,7 +231,7 @@
         if(!_.isUndefined(currentProject) && currentProject.id !== 0){
           projectCollection.deleteProject(currentProject.id);
         }
-      }
+      };
 
       var saveChanges = function () {
         applicationModel.addSpinner();
