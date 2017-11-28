@@ -262,7 +262,9 @@
       };
 
       var indicatorsForSplit = function() {
-        return _.map(links, function(link){
+        return _.map(_.filter(links, function(fl){
+          return !_.isUndefined(fl.middlePoint);
+        }), function(link){
           markerContainer(link, link.middlePoint);
         });
       };

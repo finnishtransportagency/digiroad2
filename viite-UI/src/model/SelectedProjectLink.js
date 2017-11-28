@@ -56,7 +56,13 @@
           preSplitData = data;
           var suravageA = data.a;
           var suravageB = data.b;
+          if (!suravageB) {
+            suravageB = zeroLengthSplit(suravageA);
+          }
           var terminatedC = data.c;
+          if (!terminatedC) {
+            terminatedC = zeroLengthTerminated(suravageA);
+          }
           ids = projectLinkCollection.getMultiSelectIds(suravageA.linkId);
           current = projectLinkCollection.getByLinkId(_.flatten(ids));
           suravageA.marker = "A";
@@ -76,13 +82,21 @@
 
     var zeroLengthSplit = function(adjacentLink) {
       return {
-        roadNumber: adjacentLink.roadNumber,
-        roadPartNumber: adjacentLink.roadPartNumber,
-        roadLinkSource: adjacentLink.roadLinkSource,
         connectedLinkId: adjacentLink.connectedLinkId,
         linkId: adjacentLink.linkId,
-        status: LinkValues.LinkStatus.NotHandled.value,
-        points:  getPoint(adjacentLink),
+        status: LinkValues.LinkStatus.New.value,
+        startAddressM: 0,
+        endAddressM: 0,
+        startMValue: 0,
+        endMValue: 0
+      };
+    };
+
+    var zeroLengthTerminated = function(adjacentLink) {
+      return {
+        connectedLinkId: adjacentLink.connectedLinkId,
+        linkId: adjacentLink.linkId,
+        status: LinkValues.LinkStatus.Terminated.value,
         startAddressM: 0,
         endAddressM: 0,
         startMValue: 0,
