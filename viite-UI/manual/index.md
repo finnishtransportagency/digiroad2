@@ -578,7 +578,15 @@ Tieosoiteprojektissa uudelle tieosoitteistettavalle tieosalle on mahdollista ase
 --------------------------
 [Ei viel&auml; toteutettu]
 
-11.1.9 Useiden muutosten tekeminen samalle tieosalle
+11.1.9 Suunnitelmalinkkien tieosoitteistaminen ja sen jakaminen saksi-ty&ouml;kalulla
+--------------------------
+
+__Saksi-ty&ouml;kalun k&auml;ytt&ouml; suunnitelmalinkin jakamiseen__
+
+Saksi-ty&ouml;kalulla voi jakaa suunnitelmalinkin kahteen osaan. Ty&ouml;kalua hy&ouml;dynnet&auml;&auml;n, kun linkin osat halutaan k&auml;sitell&auml; eri toimenpiteill&auml;. Ensin valitaan saksi-ty&ouml;kalu selitteen alaosasta. Seitten ristikursorilla klikataan kartalta tielinkin kohdasta, josta tie jaetaan. Suunnitelmalinkki jakaantuu t&auml;ll&ouml;in A ja B osaan. Sivun oikeaan reunaan avautuu A ja B osille lomake, johon eri toimenpiteet m&auml;&auml;ritell&auml;&auml;n ja tehd&auml;&auml;n tallennus.
+Kun osioiden toimenpiteet on tallennettu, suunnitelmalinkin alla sijaitseva nykylinkki tarvittavilta osin lakkautuu automaattisesti oikeasta leikkauskohdasta ja se n&auml;kyy jatkossa C osana lomakkeella. 
+
+11.1.10 Useiden muutosten tekeminen samalle tieosalle
 --------------------------
 
 

@@ -490,7 +490,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         toMockAnswer(projectLinks ++ newLinkTemplates, roadLink)
       )
       ProjectDAO.getProjectLinks(savedProject.id).foreach { l =>
-        l.roadType should be(RoadType.UnknownOwnerRoad)
+        l.roadType should be(RoadType.PublicRoad)
       }
       projectService.updateProjectLinks(savedProject.id, Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Terminated, "-", ProjectCoordinates(0, 1, 1), 5, 205, 0, None)
       linkIds.keySet.foreach( k =>
