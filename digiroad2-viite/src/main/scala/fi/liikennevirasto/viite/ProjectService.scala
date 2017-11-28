@@ -420,12 +420,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * project links that are no longer reserved for the project. Reservability is check before this.
     */
   private def addLinksToProject(project: RoadAddressProject, resolution: Int): Option[String] = {
-    def toProjectLink(roadTypeMap: Map[Long, RoadType])(roadAddress: RoadAddress): ProjectLink = {
+    def toProjectLink(roadAddress: RoadAddress): ProjectLink = {
       ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
         roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id,
-        LinkStatus.NotHandled, roadTypeMap.getOrElse(roadAddress.linkId, RoadType.Unknown), roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely, reversed = false)
+        LinkStatus.NotHandled, roadAddress.roadType, roadAddress.linkGeomSource, roadAddress.endMValue - roadAddress.startMValue, roadAddress.id, roadAddress.ely, reversed = false)
     }
 
     //TODO: Check that there are no floating road addresses present when starting
@@ -439,8 +439,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val addresses = project.reservedParts.flatMap { reservation =>
           logger.debug(s"Reserve $reservation")
           val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber, false)
-          val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false, frozenTimeVVHAPIServiceEnabled)
-            .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
           val reserved = checkAndReserve(project, reservation)
           if (reserved.isEmpty)
             throw new RuntimeException(s"Can't reserve road part ${reservation.roadNumber}/${reservation.roadPartNumber}")
@@ -449,7 +447,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               info.copy(id = reserved.get.id)
             case None => reservation.copy(id = reserved.get.id)
           }
-          val projectLinks = addressesOnPart.map(toProjectLink(mapping))
+          val projectLinks = addressesOnPart.map(toProjectLink)
           ProjectDAO.updateReservedRoadPart(generatedInfo)
           logger.debug(s"New parts updated $generatedInfo")
           projectLinks
@@ -719,20 +717,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
     changeProjectData
-  }
-
-  def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
-    val withRoadType = terminations.par.map {
-      t =>
-        val relatedRoadLink = roadlinks.find(rl => rl.linkId == t.linkId)
-        relatedRoadLink match {
-          case None => t
-          case Some(rl) =>
-            val roadType = RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)
-            t.copy(roadType = roadType)
-        }
-    }
-    withRoadType.toList
   }
 
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
