@@ -37,7 +37,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     withDynTransaction {
       val manoeuvreRowOld = dao.fetchManoeuvreById(oldManoeuvreId).head
       val manoeuvreId = dao.createManoeuvreForUpdate(userName, manoeuvreRowOld, manoeuvreUpdates.additionalInfo)
-      dao.deleteManoeuvre(userName, oldManoeuvreId)
+      dao.expireManoeuvre(oldManoeuvreId)
       manoeuvreUpdates.exceptions.foreach(dao.setManoeuvreExceptions(manoeuvreId))
       manoeuvreUpdates.validityPeriods.foreach(dao.setManoeuvreValidityPeriods(manoeuvreId))
       manoeuvreId

@@ -45,6 +45,14 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
           """.execute
   }
 
+  def expireManoeuvre(id: Long) = {
+    sqlu"""
+             update manoeuvre
+             set valid_to = sysdate
+             where id = $id
+          """.execute
+  }
+
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre): Long = {
     val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
     val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
@@ -86,8 +94,8 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     }
 
     sqlu"""
-            insert into manoeuvre(id, type, created_by, created_date, additional_info)
-            values ($manoeuvreId, 2, $userName, sysdate, $additionalInfo)
+            insert into manoeuvre(id, type, created_by, created_date, additional_info, modified_by, modified_date)
+            values ($manoeuvreId, 2, ${oldManoeuvreRow.createdBy}, ${oldManoeuvreRow.createdDate}, $additionalInfo, $userName, sysdate)
           """.execute
 
     sqlu"""
