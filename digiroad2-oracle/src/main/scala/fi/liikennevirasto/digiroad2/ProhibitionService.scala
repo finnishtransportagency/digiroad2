@@ -163,7 +163,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     //Get Old Asset
     dao.fetchProhibitionsByIds(assetTypeId, Set(assetId)).headOption.map {
       oldAsset =>
-      if(oldAsset.value == Some(prohibitions)){
+      if(oldAsset.value.contains(prohibitions)){
         dao.updateProhibitionValue(assetId, prohibitions, username, measures).head
       } else {
         //Expire the old asset
@@ -188,5 +188,4 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
     id
   }
-
 }

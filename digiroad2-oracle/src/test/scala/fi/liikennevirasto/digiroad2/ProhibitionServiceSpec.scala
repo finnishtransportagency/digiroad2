@@ -449,5 +449,28 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Two prohibitions with same exceptions and validityPeriods in diferent order should return true"){
+    val validityPeriods1 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3))
+    val prohibition1 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
+    val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
+    val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
+    prohibition1 == prohibition2 should be (true)
+  }
+
+  test("Two prohibitions without same exceptions and the same validityPeriods in diferent order should return false"){
+    val validityPeriods1 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3))
+    val prohibition1 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
+    val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
+    val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(2,1), "test")))
+    prohibition1 == prohibition2 should be (false)
+  }
+
+  test("Two prohibitions with same exceptions and the without same validityPeriods in diferent order should return false"){
+    val validityPeriods1 = Set(ValidityPeriod(1,1, ValidityPeriodDayOfWeek.Saturday, 1, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3))
+    val prohibition1 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
+    val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
+    val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
+    prohibition1 == prohibition2 should be (false)
+  }
 
 }
