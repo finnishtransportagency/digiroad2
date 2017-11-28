@@ -5,7 +5,7 @@ import java.util.Date
 import java.util.regex.{Matcher, Pattern}
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
@@ -15,14 +15,12 @@ import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd,
 import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
 import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import fi.liikennevirasto.viite.toGeometry
-import fi.liikennevirasto.viite.toGeomString
 
 import scala.util.control.NonFatal
 
@@ -96,6 +94,13 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
+  }
+
+  def toNewRoadAddress(): RoadAddress = {
+    RoadAddress(NewRoadAddress, roadNumber, this.roadPartNumber, roadType, track, discontinuity, startAddrMValue, endAddrMValue,
+      startDate, endDate, modifiedBy, 0L, linkId, startMValue, endMValue, sideCode, linkGeometryTimeStamp, calibrationPoints,
+      floating, Seq(GeometryUtils.geometryEndpoints(geometry)._1, GeometryUtils.geometryEndpoints(geometry)._2),
+      linkGeomSource, ely, LinkStatus.Terminated == status)
   }
 }
 
@@ -176,7 +181,7 @@ object ProjectDAO {
       "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry) values " +
       "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val lrmIds = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${links.size}""".as[Long].list
-    val (ready, idLess) = links.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
+    val (ready, idLess) = links.partition(_.id != NewRoadAddress)
     val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
     val projectLinks = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
