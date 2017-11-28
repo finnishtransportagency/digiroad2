@@ -227,6 +227,12 @@
         }
       };
 
+      var deleteProject = function() {
+        if(!_.isUndefined(currentProject) && currentProject.id !== 0){
+          projectCollection.deleteProject(currentProject.id);
+        }
+      }
+
       var saveChanges = function () {
         applicationModel.addSpinner();
         eventbus.once('roadAddress:projectSaved', function (result) {
@@ -546,6 +552,18 @@
         });
       };
 
+      var displayDeleteConfirmMessage= function (popupMessage) {
+        new GenericConfirmPopup(popupMessage, {
+          successCallback: function () {
+              deleteProject();
+              closeProjectMode(true);
+          },
+          closeCallback: function () {
+            closeProjectMode(true);
+          }
+        });
+      };
+
       var cancelChanges = function() {
           projectCollection.revertLinkStatus();
           projectCollection.setDirty([]);
@@ -595,6 +613,11 @@
       });
       rootElement.on('click', '#closeProjectSpan', function () {
         displayCloseConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true);
+      });
+
+      rootElement.on('click', '#deleteProjectSpan', function(){
+        //Insert the correct message for delete confirmation here!
+        displayDeleteConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true)
       });
 
       rootElement.on('change', '.input-required', function () {

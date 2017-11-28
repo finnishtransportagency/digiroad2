@@ -47,6 +47,7 @@ object ProjectState {
   case object TRProcessing extends ProjectState {def value=4; def description="Tierekisterissä käsittelyssä"}
   case object Saved2TR extends ProjectState{def value=5;def description ="Viety tierekisteriin"}
   case object Failed2GenerateTRIdInViite extends ProjectState { def value = 6; def description = "Tierekisteri ID:tä ei voitu muodostaa"}
+  case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
   case object Unknown extends ProjectState{def value=99;def description ="Tuntematon"}
 }
 

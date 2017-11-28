@@ -259,6 +259,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  delete("/roadlinks/roadaddress/project"){
+    val projectId = parsedBody.extract[Long]
+    val user = userProvider.getCurrentUser()
+    if(projectId != 0){
+
+    }
+  }
+
   post("/roadlinks/roadaddress/project/sendToTR") {
     val projectId = (parsedBody \ "projectID").extract[Long]
 
