@@ -264,8 +264,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       if (projectId != 0) {
         projectService.deleteProject(projectId)
+        Map("success" -> true)
       }
-      Map("success" -> true)
+      else{
+        Map("success" -> false, "errorMessage" -> "Projekti ei ole vielä luotu")
+      }
     }
     catch {
       case ex: Exception => Map("success" -> false, "errorMessage" -> ex.getMessage)

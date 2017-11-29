@@ -31,7 +31,7 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR, Failed2GenerateTRIdInViite, Unknown)
+  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR, Failed2GenerateTRIdInViite, Deleted, Unknown)
 
   // These states are final
   val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)

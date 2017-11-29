@@ -617,7 +617,7 @@
 
       rootElement.on('click', '#deleteProjectSpan', function(){
         //Insert the correct message for delete confirmation here!
-        displayDeleteConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true)
+        displayDeleteConfirmMessage("Haluatko varmasti poistaa tämän projektin?", true);
       });
 
       rootElement.on('change', '.input-required', function () {
