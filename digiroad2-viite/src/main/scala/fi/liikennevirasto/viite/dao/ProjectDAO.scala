@@ -464,11 +464,12 @@ object ProjectDAO {
     }
   }
 
-  def getRoadAddressProjects(projectId: Long = 0, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus]): List[RoadAddressProject] = {
+  def getRoadAddressProjects(projectId: Long = 0, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus], withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
     val filter = projectId match {
-      case 0 => ""
-      case _ => s""" where id =$projectId """
+      case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
+      case _ => if(withNullElyFilter) s""" where id =$projectId AND ELY IS NULL """ else s""" where id =$projectId """
     }
+
     val query =
       s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
            add_info, status_info, ely, coord_x, coord_y, zoom

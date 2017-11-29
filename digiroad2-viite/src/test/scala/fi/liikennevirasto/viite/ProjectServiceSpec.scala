@@ -19,7 +19,7 @@ import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
-import fi.liikennevirasto.viite.dao.{AddressChangeType, Discontinuity, ProjectDAO, ProjectState, RoadAddressProject, _}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.joda.time.DateTime
@@ -207,8 +207,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-
-
   test("change roadpart direction and check reversed attribute, service level") {
     runWithRollback {
       val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -238,8 +236,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely, false,
       None, roadAddress.adjustedTimestamp)
   }
-
-
 
   test("Using TR_id as project_id when querying should be empty") {
     runWithRollback {
@@ -840,7 +836,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-
   test("Project ELY -1 update when reserving roadpart") {
     val projectIdNew = 0L
     val roadNumber = 1943845
@@ -885,8 +880,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-
-
   test("get the project with it's reserved road parts") {
     var projectId = 0L
     val roadNumber = 1943845
@@ -920,8 +913,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
 
   }
-
-
 
   test("error message when reserving already used road number&part (in other project ids). Empty error message if same road number&part but == proj id ") {
     runWithRollback {
@@ -1063,5 +1054,22 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result.count(_.startDate == roadAddress.startDate) should be (2)
     result.count(_.startDate.get == project.startDate) should be (1)
     result.count(_.endDate.isEmpty) should be (2)
+  }
+
+  test("verify correction of a null ELY code project") {
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap, 8)
+      val id = project.id
+      val roadParts = RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project))
+      mockForProject(id, roadParts)
+      ProjectDAO.reserveRoadPart(id, roadParts.head.roadNumber, roadParts.head.roadPartNumber, "TestUser", roadParts.head.ely)
+      ProjectDAO.create(Seq(roadParts.head))
+      ProjectDAO.getProjectEly(project.id).isEmpty should be (true)
+      projectService.correctNullProjectEly()
+      ProjectDAO.getProjectEly(project.id).isEmpty should be (false)
+    }
   }
 }

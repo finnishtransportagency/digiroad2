@@ -741,6 +741,8 @@
     });
 
     eventbus.on('projectLink:revertedChanges', function () {
+      isNotEditingData = true;
+      selectedProjectLinkProperty.setDirty(false);
       eventbus.trigger('roadAddress:projectLinksUpdated');
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
       showChangesAndSendButton();
@@ -908,7 +910,7 @@
     });
 
     eventbus.on('roadAddressProject:projectLinkSaved', function (projectId, isPublishable) {
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom(), projectId, isPublishable);
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom()+1, projectId, isPublishable);
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);

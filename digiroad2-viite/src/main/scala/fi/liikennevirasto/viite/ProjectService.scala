@@ -309,6 +309,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Will attempt to find relevant sideCode information to the projectLinks given a number of factors
     * for example if they are of suravage or complementary origin
+    *
     * @param linkIds the linkIds to process
     * @param roadNumber the roadNumber to apply/was applied to said linkIds
     * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
@@ -692,20 +693,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
     changeProjectData
-  }
-
-  def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
-    val withRoadType = terminations.par.map {
-      t =>
-        val relatedRoadLink = roadlinks.find(rl => rl.linkId == t.linkId)
-        relatedRoadLink match {
-          case None => t
-          case Some(rl) =>
-            val roadType = RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)
-            t.copy(roadType = roadType)
-        }
-    }
-    withRoadType.toList
   }
 
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
@@ -1430,6 +1417,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   /**
     * Called for road addresses that are replaced by a new version at end date
+    *
     * @param roadAddress
     * @param pl
     * @param vvhLink
@@ -1437,7 +1425,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink]): Option[RoadAddress] = {
     pl.status match {
-        // Unchanged does not get an end date, terminated is created from the project link in convertProjectLinkToRoadAddress
+      // Unchanged does not get an end date, terminated is created from the project link in convertProjectLinkToRoadAddress
       case UnChanged | Terminated =>
         None
       case Transfer | Numbering =>
@@ -1457,6 +1445,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         ProjectDAO.updateProjectEly(currentProjectId, newEly)
         None
       }
+    }
+  }
+
+  def correctNullProjectEly(): Unit = {
+    withDynSession {
+      //Get all the projects with non-existant ely code
+      val nullElyProjects = ProjectDAO.getRoadAddressProjects(0, Seq.empty[LinkStatus], true)
+      nullElyProjects.foreach(project => {
+        //Get all the reserved road parts of said projects
+        val reservedRoadParts = ProjectDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)
+        //Find the lowest maddressValue of the reserved road parts
+        val reservedRoadAddresses = RoadAddressDAO.fetchByRoadPart(reservedRoadParts.head.roadNumber, reservedRoadParts.head.roadPartNumber).minBy(_.endAddrMValue)
+        //Use this part ELY code and set it on the project
+        ProjectDAO.updateProjectEly(project.id, reservedRoadAddresses.ely)
+      })
     }
   }
 
