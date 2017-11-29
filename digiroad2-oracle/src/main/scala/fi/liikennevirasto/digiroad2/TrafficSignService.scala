@@ -82,18 +82,18 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def update(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource)
+      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
+    val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
         expireWithoutTransaction(id)
-        OracleTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource, old.createdBy, old.createdAt)
+        OracleTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, value), value, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
       case _  =>
-        OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
+        OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, value), value, municipality, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
     }
   }
 
@@ -111,7 +111,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
       persistedAsset.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet,
       persistedAsset.validityDirection, persistedAsset.bearing)
 
-    updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode, "vvh_generated", persistedAsset.linkSource)
+    updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode,
+                            "vvh_generated", persistedAsset.linkSource, Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {

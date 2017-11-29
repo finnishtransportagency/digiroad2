@@ -38,18 +38,18 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   override def update(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource)
+      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
+    val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found"))  match {
       case old if old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        OracleObstacleDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource, old.createdBy, old.createdAt)
+        OracleObstacleDao.create(setAssetPosition(updatedAsset, geometry, value), value, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
       case _ =>
-        OracleObstacleDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
+        OracleObstacleDao.update(id, setAssetPosition(updatedAsset, geometry, value), value, username, municipality, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
     }
   }
 
@@ -64,7 +64,8 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.obstacleType)
-    updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode, "vvh_generated", persistedAsset.linkSource)
+    updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode, "vvh_generated",
+                             persistedAsset.linkSource, Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {

@@ -38,18 +38,18 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
 
   override def update(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource)
+      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        OraclePedestrianCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource, old.createdBy, old.createdAt)
+        OraclePedestrianCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
       case _ =>
-        OraclePedestrianCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
+        OraclePedestrianCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
     }
   }
 
@@ -64,7 +64,8 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     val updated = IncomingPedestrianCrossing(adjustment.lon, adjustment.lat, adjustment.linkId)
-    updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode, "vvh_generated", persistedAsset.linkSource)
+    updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode, "vvh_generated",
+                             persistedAsset.linkSource, Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
