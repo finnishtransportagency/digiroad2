@@ -1061,7 +1061,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
         Seq(), None)
-      val project = projectService.createRoadLinkProject(rap, 8)
+      val project = projectService.createRoadLinkProject(rap)
       val id = project.id
       val roadParts = RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project))
       mockForProject(id, roadParts)
