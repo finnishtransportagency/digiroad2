@@ -9,20 +9,13 @@ import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
+import fi.liikennevirasto.viite.util._
 
 class TrackSectionOrderSpec extends FunSuite with Matchers {
   val projectId = 1
   val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
     List.empty[ReservedRoadPart], None)
-
-  private def toProjectLink(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
-    ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
-      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-      roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status, RoadType.PublicRoad,
-      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely,false)
-  }
 
   test("orderProjectLinksTopologyByGeometry") {
     val idRoad0 = 0L //   >

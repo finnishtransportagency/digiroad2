@@ -15,6 +15,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+import fi.liikennevirasto.viite.util.toProjectLink
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
@@ -30,14 +31,6 @@ class ProjectDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  private def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
-    ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
-      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-      roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
-      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely, false)
-  }
-
   test("create empty road address project") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -47,7 +40,7 @@ class ProjectDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("create road address project with project links") {
+  test("create road address project with project links and verify if the geometry is set") {
     val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -60,6 +53,8 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       val projectlinks = ProjectDAO.getProjectLinks(id)
       projectlinks.length should be > 0
       projectlinks.forall(_.status == LinkStatus.NotHandled) should be(true)
+      projectlinks.forall(_.geometry.size == 2) should be (true)
+      projectlinks.sortBy(_.endAddrMValue).map(_.geometry).zip(addresses.sortBy(_.endAddrMValue).map(_.geometry)).forall {case (x, y) => x == y}
       ProjectDAO.fetchFirstLink(id, 5, 203) should be(Some(projectlinks.minBy(_.startAddrMValue)))
     }
   }
@@ -321,13 +316,13 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       ProjectDAO.create(addresses)
       ProjectDAO.roadPartReservedByProject(5, 203) should be(Some("TestProject"))
       ProjectDAO.roadPartReservedByProject(5, 205) should be(Some("TestProject"))
-      val reserved203 = ProjectDAO.fetchByProjectRoadParts(Set((5, 203)), id)
+      val reserved203 = ProjectDAO.fetchByProjectRoadParts(Set((5L, 203L)), id)
       reserved203.nonEmpty should be (true)
-      val reserved205 = ProjectDAO.fetchByProjectRoadParts(Set((5, 205)), id)
+      val reserved205 = ProjectDAO.fetchByProjectRoadParts(Set((5L, 205L)), id)
       reserved205.nonEmpty should be (true)
       reserved203 shouldNot be (reserved205)
       reserved203.toSet.intersect(reserved205.toSet) should have size (0)
-      val reserved = ProjectDAO.fetchByProjectRoadParts(Set((5,203), (5, 205)), id)
+      val reserved = ProjectDAO.fetchByProjectRoadParts(Set((5L,203L), (5L, 205L)), id)
       reserved.map(_.id).toSet should be (reserved203.map(_.id).toSet ++ reserved205.map(_.id).toSet)
       reserved should have size (addresses.size)
     }
@@ -350,5 +345,20 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       updatedProjectlinks.head.geometry.size should be (3)
       updatedProjectlinks.head.geometry should be (Stream(Point(1.0,1.0,1.0), Point(2.0,2.0,2.0), Point(1.0,2.0,0.0)))
     }
+  }
+
+  test("Write and read geometry from string notation") {
+    val seq = Seq(Point(123,456,789), Point(4848.125000001,4857.1229999999,48775.123), Point(498487,48373), Point(472374,238474,0.1), Point(0.0, 0.0), Point(-10.0, -20.09, -30.0))
+    val converted = fi.liikennevirasto.viite.toGeomString(seq)
+    converted.contains(".000") should be (false)
+    converted.contains("4848.125,") should be (true)
+    converted.contains("4857.123,") should be (true)
+    val back = fi.liikennevirasto.viite.toGeometry(converted)
+    back.zip(seq).foreach{ case (p1,p2) =>
+      p1.x should be (p2.x +- 0.0005)
+      p1.y should be (p2.y +- 0.0005)
+      p1.z should be (p2.z +- 0.0005)
+    }
+
   }
 }
