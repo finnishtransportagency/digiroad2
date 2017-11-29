@@ -143,7 +143,7 @@
     var changeDropDownValue = function (statusCode) {
       var rootElement = $('#feature-attributes');
       var link = _.first(_.filter(selectedProjectLink, function (l) {
-        return l.endAddrMValue !== 0 && l.status != LinkStatus.Undefined.value;
+        return !_.isUndefined(l.status);
       }));
       if (statusCode === LinkStatus.Unchanged.value) {
         $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").prop('disabled', false).prop('hidden', false);
@@ -152,8 +152,6 @@
       else if (statusCode == LinkStatus.Transfer.value) {
         $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
         $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected').change();
-        if (selectedProjectLink[0].id !== 0)
-          rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       else if (statusCode == LinkStatus.New.value) {
         $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").prop('disabled', false).prop('hidden', false);
@@ -189,6 +187,8 @@
           changeDropDownValue(link.status);
         });
         disableFormInputs();
+        $('#feature-attributes').find('.changeDirectionDiv').prop("hidden", false);
+        $('#feature-attributes').find('.new-road-address').prop("hidden", false);
       });
 
       eventbus.on('roadAddress:projectFailed', function () {

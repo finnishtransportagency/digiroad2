@@ -58,7 +58,6 @@
           var suravageA = data.a;
           if (!suravageA) {
             suravageA = zeroLengthSplit(data.b);
-            suravageA.status = LinkStatus.Undefined.value;
           }
           var suravageB = data.b;
           if (!suravageB) {

@@ -23,14 +23,14 @@
       var part = road.roadPartNumber;
       var track = road.trackCode;
       var link = _.first(_.filter(links, function (l) {
-        return l.endAddrMValue !== 0 && l.status != LinkStatus.Undefined.value;
+        return !_.isUndefined(l.status);
       }));
-      return '<div class="'+prefix+'form-group new-road-address">' +
+      return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
         (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
-        '<div class="'+prefix+'form-group new-road-address" id="new-address-input1">'+
+        '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
         addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
         addSmallInputNumber('ajr',(track !== 99 ? track :
