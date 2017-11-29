@@ -2,7 +2,6 @@
   "name": "digiroad2",
   "version": "0.0.1",
   "devDependencies": {
-    "bower": "~1.2.7",
     "chai": "1.10.0",
     "grunt": "~0.4.1",
     "grunt-cache-breaker": "~1.0.1",
