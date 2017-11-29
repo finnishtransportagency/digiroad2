@@ -24,11 +24,7 @@
       var splitLinks =  _.partition(links, function(link){
         return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && !_.isUndefined(link.connectedLinkId);
       });
-      return _.sortBy(splitLinks[0], [
-        function (s) {
-          return (_.isUndefined(s.points) || _.isUndefined(s.points[0])) ? Infinity : s.points[0].y;},
-        function (s) {
-          return (_.isUndefined(s.points) || _.isUndefined(s.points[0])) ? Infinity : s.points[0].x;}]);
+      return _.sortBy(splitLinks[0], function (s) {return s.status == LinkStatus.Transfer.value ? 1 : s.status;});
     };
 
     var openSplit = function (linkid, multiSelect) {
