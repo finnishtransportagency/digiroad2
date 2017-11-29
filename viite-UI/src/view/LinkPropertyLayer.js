@@ -20,6 +20,7 @@
     var geometryChangedVector = new ol.source.Vector({});
     var suravageRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
+    var historicRoadsVector = new ol.source.Vector({});
 
     var normalRoadLinkType = 1;
     var floatingRoadLinkType=-1;
@@ -132,6 +133,14 @@
       }
     });
 
+    var historicRoadsLayer = new ol.layer.Vector({
+      source: historicRoadsVector,
+      name: 'historicRoadsLayer',
+      style: function(feature) {
+        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+      }
+    });
+
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
     map.addLayer(directionMarkerLayer);
@@ -182,6 +191,7 @@
       anomalousMarkerLayer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
       suravageRoadLayer.setOpacity(opacity);
+      historicRoadsLayer.setOpacity(opacity);
     };
 
     /**
@@ -1299,6 +1309,27 @@
 
     eventbus.on('linkProperties:addFeaturesToInteractions', function(){
       activateSelectInteractions();
+    });
+    
+    
+    
+    eventbus.on('linkProperty:fetchedHistoryLinks', function(historyLinkData) {
+      var points = _.map(historyLinkData.geometry, function(point) {
+        return [point.x, point.y];
+      });
+      var historyFeatures = _.map(historyLinkData, function(link) {
+        var feature = new ol.Feature({
+          geometry: new ol.geom.LineString(points)
+        });
+        feature.roadLinkData = link;
+        return feature;
+      });
+      historicRoadsLayer.getSource().addFeatures(historyFeatures);
+    });
+    
+    eventbus.on('linkProperty:fetchHistoryLinks', function(date){
+      roadCollection.setDate(date);
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom());
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:unselected', function() {
