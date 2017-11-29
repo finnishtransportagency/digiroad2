@@ -387,6 +387,7 @@ object ProjectDAO {
     * @param reservedRoadPart Road part to be removed
     */
   def removeReservedRoadPart(projectId: Long, reservedRoadPart: ReservedRoadPart): Unit = {
+    // TODO Update to VIITE-925
     sqlu"""
            DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND ROAD_NUMBER = ${reservedRoadPart.roadNumber}
            AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
@@ -439,28 +440,82 @@ object ProjectDAO {
       ""
     val sql =
       s"""
-           SELECT id, road_number, road_part_number, road_length, ADDRESS_LENGTH, discontinuity, ely, first_link_id,
-           (select PROJECT_LINK.ID from PROJECT_LINK WHERE PROJECT_LINK.ROAD_NUMBER = rp.ROAD_NUMBER AND
-           PROJECT_LINK.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER AND
-           PROJECT_LINK.PROJECT_ID = rp.PROJECT_ID AND ROWNUM < 2) as pl_id
-           FROM PROJECT_RESERVED_ROAD_PART rp WHERE project_id = $projectId $filter ORDER BY road_number, road_part_number
-         """
-    Q.queryNA[(Long, Long, Long, Double, Long, Int, Long, Option[Long], Option[Long])](sql).list.map {
-      case (id, road, part, length, addrLength, discontinuity, ely, linkId, plId) => ReservedRoadPart(id, road, part,
-        length, addrLength, Discontinuity.apply(discontinuity), ely, None, None, linkId, plId.nonEmpty)
+        SELECT id, road_number, road_part_number, length, length_new,
+          ely, ely_new,
+          (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
+          ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+          AND END_ADDR_M = gr.length) as discontinuity,
+          (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
+          AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
+          AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
+          AND END_ADDR_M = gr.length_new) as discontinuity_new,
+          (SELECT LINK_ID FROM PROJECT_LINK pl JOIN LRM_POSITION lrm ON (lrm.id = pl.LRM_POSITION_ID)
+            WHERE pl.project_id = gr.project_id
+            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
+            AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1) AND pl.START_ADDR_M = 0
+            AND pl.END_ADDR_M > 0 AND ROWNUM < 2) as first_link
+          FROM (
+            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
+              MAX(ra.END_ADDR_M) as length,
+              MAX(pl.END_ADDR_M) as length_new,
+              MAX(ra.ely) as ELY,
+              MAX(pl.ely) as ELY_NEW
+              FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
+              ROAD_ADDRESS ra ON (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number)
+              LEFT JOIN
+              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
+              WHERE
+                rp.project_id = $projectId AND
+                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
+                (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)))
+              GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
+              ) gr;
+    """
+    Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Discontinuity],
+      Option[Discontinuity], Option[Long])](sql).list.map {
+      case (id, road, part, length, newLength, discontinuity, newDiscontinuity, ely, newEly, linkId) =>
+        ReservedRoadPart(id, road, part, length, ely, discontinuity, newLength, newEly, newDiscontinuity, linkId)
     }
   }
 
   def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ReservedRoadPart] = {
-    val sql = "SELECT id, road_number, road_part_number, road_length, ADDRESS_LENGTH, discontinuity, ely, first_link_id, project_id," +
-      s"(select PROJECT_LINK.ID from PROJECT_LINK WHERE PROJECT_LINK.ROAD_NUMBER = PROJECT_RESERVED_ROAD_PART.ROAD_NUMBER AND " +
-      s"PROJECT_LINK.ROAD_PART_NUMBER = PROJECT_RESERVED_ROAD_PART.ROAD_PART_NUMBER AND " +
-      s"PROJECT_LINK.PROJECT_ID = PROJECT_RESERVED_ROAD_PART.PROJECT_ID AND ROWNUM < 2) as pl_id " +
-      s"FROM " +
-      s"PROJECT_RESERVED_ROAD_PART WHERE road_number = $roadNumber AND road_part_number=$roadPartNumber"
-    Q.queryNA[(Long, Long, Long, Double, Long, Int, Long, Option[Long], Long, Option[Long])](sql).firstOption.map {
-      case (id, road, part, length, addrLength, discontinuity, ely, linkId, projectId, plId) => ReservedRoadPart(id, road, part,
-        length, addrLength, Discontinuity.apply(discontinuity), ely, None, None, linkId, plId.nonEmpty)
+    val sql =
+      s"""
+        SELECT id, road_number, road_part_number, length, length_new,
+          ely, ely_new,
+          (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
+          ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+          AND END_ADDR_M = gr.length) as discontinuity,
+          (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
+          AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
+          AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
+          AND END_ADDR_M = gr.length_new) as discontinuity_new,
+          (SELECT LINK_ID FROM PROJECT_LINK pl JOIN LRM_POSITION lrm ON (lrm.id = pl.LRM_POSITION_ID)
+            WHERE pl.project_id = gr.project_id
+            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
+            AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1) AND pl.START_ADDR_M = 0
+            AND pl.END_ADDR_M > 0 AND ROWNUM < 2) as first_link
+          FROM (
+            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
+              MAX(ra.END_ADDR_M) as length,
+              MAX(pl.END_ADDR_M) as length_new,
+              MAX(ra.ely) as ELY,
+              MAX(pl.ely) as ELY_NEW
+              FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
+              ROAD_ADDRESS ra ON (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number)
+              LEFT JOIN
+              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
+              WHERE
+                rp.road_number = $roadNumber AND rp.road_part_number = $roadPartNumber AND
+                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
+                (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)))
+              GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
+              ) gr;
+              """
+    Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Discontinuity],
+      Option[Discontinuity], Option[Long])](sql).firstOption.map {
+      case (id, road, part, length, newLength, discontinuity, newDiscontinuity, ely, newEly, linkId) =>
+        ReservedRoadPart(id, road, part, length, ely, discontinuity, newLength, newEly, newDiscontinuity, linkId)
     }
   }
 
@@ -657,15 +712,13 @@ object ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
-  def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String,ely:Long): Unit = {
-    sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by, ely)
-      SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user, $ely FROM DUAL""".execute
+  def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
+    sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
+      SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user FROM DUAL""".execute
   }
 
+  @Deprecated
   def updateReservedRoadPart(reserved: ReservedRoadPart): Unit = {
-    sqlu"""UPDATE PROJECT_RESERVED_ROAD_PART SET ROAD_LENGTH = ${reserved.roadLength},
-            ADDRESS_LENGTH = ${reserved.addressLength}, discontinuity = ${reserved.discontinuity.value},
-            ely = ${reserved.ely}, FIRST_LINK_ID = ${reserved.startingLinkId} WHERE id = ${reserved.id}""".execute
   }
 
   def countLinksUnchangedUnhandled(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
@@ -795,5 +848,11 @@ object ProjectDAO {
 
   def toTimeStamp(dateTime: Option[DateTime]) = {
     dateTime.map(dt => new Timestamp(dt.getMillis))
+  }
+
+  implicit val getDiscontinuity = new GetResult[Option[Discontinuity]] {
+    def apply(r: PositionedResult) = {
+      r.nextLongOption().map(l => Discontinuity.apply(l))
+    }
   }
 }
