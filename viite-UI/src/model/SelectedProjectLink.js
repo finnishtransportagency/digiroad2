@@ -6,6 +6,7 @@
     var dirty = false;
     var splitSuravage = {};
     var LinkGeomSource = LinkValues.LinkGeomSource;
+    var LinkStatus = LinkValues.LinkStatus;
     var preSplitData = null;
 
     var open = function (linkid, multiSelect) {
@@ -55,9 +56,14 @@
         eventbus.once('projectLink:preSplitSuccess', function(data){
           preSplitData = data;
           var suravageA = data.a;
+          if (!suravageA) {
+            suravageA = zeroLengthSplit(data.b);
+            suravageA.status = LinkStatus.Undefined.value;
+          }
           var suravageB = data.b;
           if (!suravageB) {
             suravageB = zeroLengthSplit(suravageA);
+            suravageB.status = LinkStatus.New.value;
           }
           var terminatedC = data.c;
           if (!terminatedC) {
@@ -80,11 +86,10 @@
         });
     };
 
-    var zeroLengthSplit = function(adjacentLink) {
+    var zeroLengthSplit = function(suravageLink) {
       return {
-        connectedLinkId: adjacentLink.connectedLinkId,
-        linkId: adjacentLink.linkId,
-        status: LinkValues.LinkStatus.New.value,
+        connectedLinkId: suravageLink.connectedLinkId,
+        linkId: suravageLink.linkId,
         startAddressM: 0,
         endAddressM: 0,
         startMValue: 0,
@@ -96,7 +101,7 @@
       return {
         connectedLinkId: adjacentLink.connectedLinkId,
         linkId: adjacentLink.linkId,
-        status: LinkValues.LinkStatus.Terminated.value,
+        status: LinkStatus.Terminated.value,
         startAddressM: 0,
         endAddressM: 0,
         startMValue: 0,

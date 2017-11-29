@@ -1,6 +1,7 @@
 (function (root) {
   root.FormCommon = function(prefix) {
-    var projectStatus = LinkValues.ProjectStatus;
+    var ProjectStatus = LinkValues.ProjectStatus;
+    var LinkStatus = LinkValues.LinkStatus;
 
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
@@ -17,16 +18,19 @@
       '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
     };
 
-    var newRoadAddressInfo = function(selected, link, road){
+    var newRoadAddressInfo = function(selected, links, road){
       var roadNumber = road.roadNumber;
       var part = road.roadPartNumber;
       var track = road.trackCode;
-      return '<div class="'+prefix+'form-group new-road-address" hidden>' +
+      var link = _.first(_.filter(links, function (l) {
+        return l.endAddrMValue !== 0 && l.status != LinkStatus.Undefined.value;
+      }));
+      return '<div class="'+prefix+'form-group new-road-address">' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
         (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
-        '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
+        '<div class="'+prefix+'form-group new-road-address" id="new-address-input1">'+
         addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
         addSmallInputNumber('ajr',(track !== 99 ? track :
@@ -185,7 +189,7 @@
     };
 
     var sendRoadAddressChangeButton = function(localPrefix, projectData) {
-      var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === projectStatus.ErroredInTR.value;
+      var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
       return '<div class="'+localPrefix+'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
         '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
