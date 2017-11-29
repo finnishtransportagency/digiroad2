@@ -402,6 +402,12 @@ object ProjectDAO {
          """.execute
   }
 
+  def removeReservedRoadPartsByProject(projectId: Long): Unit = {
+    sqlu"""
+         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId}
+         """.execute
+  }
+
   def getProjectEly(roadAddressProjectId: Long): Option[Long] = {
     val query =
       s"""

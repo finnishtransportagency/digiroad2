@@ -627,6 +627,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def deleteProject(projectId : Long) = {
+    withDynTransaction{
+      ProjectDAO.removeProjectLinksByProject(projectId)
+      ProjectDAO.removeReservedRoadPartsByProject(projectId)
+      RoadAddressChangesDAO.clearRoadChangeTable(projectId)
+      ProjectDAO.updateProjectStatus(projectId, ProjectState.Deleted)
+      ProjectDAO.updateProjectStateInfo(ProjectState.Deleted.description, projectId)
+    }
+  }
+
   def createRoadLinkProject(roadAddressProject: RoadAddressProject, resolution: Int): RoadAddressProject = {
     if (roadAddressProject.id != 0)
       throw new IllegalArgumentException(s"Road address project to create has an id ${roadAddressProject.id}")

@@ -261,9 +261,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   delete("/roadlinks/roadaddress/project"){
     val projectId = parsedBody.extract[Long]
-    val user = userProvider.getCurrentUser()
-    if(projectId != 0){
-
+    try {
+      if (projectId != 0) {
+        projectService.deleteProject(projectId)
+      }
+      Map("success" -> true)
+    }
+    catch {
+      case ex: Exception => Map("success" -> false, "errorMessage" -> ex.getMessage)
     }
   }
 
