@@ -21,6 +21,7 @@
     Layer.call(this, layerName, roadLayer);
     var me = this;
     var styler = new RoadLinkStyler(true);
+
     var projectLinkStyler = new ProjectLinkStyler();
 
     var vectorSource = new ol.source.Vector({
@@ -307,7 +308,8 @@
       suravageProjectDirectionMarkerLayer.getSource().clear();
       suravageRoadProjectLayer.getSource().clear();
     };
-
+    clearLayers();
+    vectorLayer.getSource().clear();
     var highlightFeatures = function () {
       clearHighlights();
       var featuresToHighlight = [];
@@ -729,6 +731,7 @@
     });
 
     eventbus.on('changeProjectDirection:clicked', function () {
+      vectorLayer.getSource().clear();
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
       eventbus.once('roadAddressProject:fetched', function () {
         if (selectedProjectLinkProperty.get().length > 1 && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId)) {
@@ -911,7 +914,7 @@
     });
 
     eventbus.on('roadAddressProject:projectLinkSaved', function (projectId, isPublishable) {
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom(), projectId, isPublishable);
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom()+1, projectId, isPublishable);
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);
