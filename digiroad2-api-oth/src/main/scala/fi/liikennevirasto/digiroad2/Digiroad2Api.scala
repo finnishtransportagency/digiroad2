@@ -764,7 +764,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -804,6 +803,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     } catch {
       case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
     }
+  }
+
+  put("/linearasset/verified") {
+    val user = userProvider.getCurrentUser()
+    val ids = (parsedBody \ "ids").extract[Set[Long]]
+    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    val usedService = getLinearAssetService(typeId)
+    val linkIds = usedService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
+    roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
+      .map(_.municipalityCode)
+      .foreach(validateUserMunicipalityAccess(user))
+
+    usedService.updateVerifiedInfo(ids, user.username, typeId)
   }
 
   delete("/linearassets") {

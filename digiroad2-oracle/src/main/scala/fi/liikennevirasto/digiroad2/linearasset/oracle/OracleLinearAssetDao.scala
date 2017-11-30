@@ -1099,5 +1099,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def getMunicipalityById(id: Long): Seq[Long] = {
     sql"""select id from municipality where id = $id """.as[Long].list
   }
+
+  def updateVerifiedInfo(ids: Set[Long], verifiedBy: String): Unit = {
+      sqlu"update asset set verified_by = $verifiedBy, verified_date = sysdate where asset_id in (${ids.mkString(",")})".execute
+  }
 }
 

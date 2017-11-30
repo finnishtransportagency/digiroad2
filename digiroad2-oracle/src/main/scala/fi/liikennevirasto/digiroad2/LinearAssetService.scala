@@ -116,8 +116,7 @@ trait LinearAssetOperations {
 
   def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    val roadLink: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4 || typeId != LinearAssetTypes.MaintenanceRoadAssetTypeId)
-    val linkIds = roadLink.map(_.linkId)
+    val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     withDynTransaction {
       typeId match {
@@ -808,9 +807,14 @@ trait LinearAssetOperations {
     }
   }
 
-//  def updateVerifiedInfo(id: Long, userName: String, type_id: Int): Option[Long] = {
-//    getVerifiedBy(userName, type_id)
-//  }
+  def updateVerifiedInfo(ids: Set[Long], userName: String, type_id: Int): Unit = {
+    withDynTransaction {
+      getVerifiedBy(userName, type_id) match {
+        case Some(user) => dao.updateVerifiedInfo(ids, user)
+        case _ =>
+      }
+    }
+  }
 
 }
 
