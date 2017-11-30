@@ -306,6 +306,18 @@
       });
     };
 
+    this.verifyLinearAssets = function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/linearassets/verify",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.deleteAllMassTransitStopData = function(assetId,success, failure){
       $.ajax({
         contentType: "application/json",

@@ -64,8 +64,10 @@
     var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';
     var createdBy = selectedLinearAsset.getCreatedBy() || '-';
     var createdDateTime = selectedLinearAsset.getCreatedDateTime() ? ' ' + selectedLinearAsset.getCreatedDateTime() : '';
+    var verifiedBy = selectedLinearAsset.getVerifiedBy();
+    var verifiedDateTime = selectedLinearAsset.getVerifiedDateTime();
     var disabled = selectedLinearAsset.isDirty() ? '' : 'disabled';
-    var buttons = [hasVerificationButton ? '<button class="verify btn btn-primary">Merkitse tarkistetuksi</button>' : '',
+    var buttons = [(hasVerificationButton && !_.isNull(selectedLinearAsset.getId())) ? '<button class="verify btn btn-primary">Merkitse tarkistetuksi</button>' : '',
                    '<button class="save btn btn-primary" disabled> Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var topButtons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
@@ -107,6 +109,12 @@
         '</div>';
     };
 
+    var verifiedFields = function() {
+      return (hasVerificationButton && verifiedBy && verifiedDateTime) ? '<div class="form-group">' +
+      '<p class="form-control-static asset-log-info">Tarkistettu: ' + verifiedBy + verifiedDateTime + '</p>' +
+      '</div>' : '';
+    };
+
     var header = '<header>' + generateTitle() + '<div class="linear-asset form-controls">' + topButtons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
@@ -117,6 +125,7 @@
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
                '</div>' +
+               verifiedFields() +
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinearAsset.count() + '</p>' +
                '</div>' +

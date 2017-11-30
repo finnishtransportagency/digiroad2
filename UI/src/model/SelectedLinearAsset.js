@@ -184,7 +184,16 @@
     };
 
     this.verify = function() {
-      console.log("Verified!");
+      var knownLinearAssets = _.reject(selection, isUnknown);
+      var payload = {ids: _.pluck(knownLinearAssets, 'id')};
+      backend.verifyLinearAssets(payload, function() {
+        dirty = false;
+        self.close();
+        //TODO: new event for verification
+        eventbus.trigger(singleElementEvent('saved'));
+      }, function() {
+        eventbus.trigger('asset:verificationFailed');
+      });
     };
 
     this.exists = function() {
@@ -223,6 +232,14 @@
     this.getAdministrativeClass = function() {
       var value = getProperty('administrativeClass');
       return _.isNull(value) ? undefined : value;
+    };
+
+    this.getVerifiedBy = function() {
+      return selection.length === 1 ? getProperty('verifiedBy') : null;
+    };
+
+    this.getVerifiedDateTime = function() {
+      return selection.length === 1 ? getProperty('verifiedAt') : null;
     };
 
     this.get = function() {
