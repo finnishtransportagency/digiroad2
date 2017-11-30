@@ -492,6 +492,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
           original.map(link => LinkToRevert(link.id, link.linkId, link.status.value, getNewestGeometry(link.linkId, roadLinks, vvhHistoryLinks))),
           userName)
+        None
       }
     } else
       Some(s"No split for link id $linkId found!")
@@ -843,7 +844,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
-                          modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true) = {
+                          modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
     val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
     RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
@@ -857,7 +858,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (afterUpdateLinks.isEmpty){
       releaseRoadPart(projectId, roadNumber, roadPartNumber, userName)
     }
-    None
   }
 
   def isProjectWithGivenLinkIdWritable(linkId: Long): Boolean = {
@@ -883,6 +883,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         } else {
           revertLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
         }
+        None
       }
     }
     catch {

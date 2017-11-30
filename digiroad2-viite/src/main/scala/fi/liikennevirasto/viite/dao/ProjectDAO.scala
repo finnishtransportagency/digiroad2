@@ -475,10 +475,11 @@ object ProjectDAO {
               GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
               ) gr;
     """
-    Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Discontinuity],
-      Option[Discontinuity], Option[Long])](sql).list.map {
-      case (id, road, part, length, newLength, discontinuity, newDiscontinuity, ely, newEly, linkId) =>
-        ReservedRoadPart(id, road, part, length, ely, discontinuity, newLength, newEly, newDiscontinuity, linkId)
+    Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
+      Option[Long], Option[Long])](sql).list.map {
+      case (id, road, part, length, ely, newEly, newLength, discontinuity, newDiscontinuity, linkId) =>
+        ReservedRoadPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
+          newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
     }
   }
 
@@ -516,10 +517,11 @@ object ProjectDAO {
               GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
               ) gr;
               """
-    Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Discontinuity],
-      Option[Discontinuity], Option[Long])](sql).firstOption.map {
-      case (id, road, part, length, newLength, discontinuity, newDiscontinuity, ely, newEly, linkId) =>
-        ReservedRoadPart(id, road, part, length, ely, discontinuity, newLength, newEly, newDiscontinuity, linkId)
+    Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
+      Option[Long], Option[Long])](sql).firstOption.map {
+      case (id, road, part, length, ely, newEly, newLength, discontinuity, newDiscontinuity, linkId) =>
+        ReservedRoadPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
+          newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
     }
   }
 
