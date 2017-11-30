@@ -192,20 +192,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
 
   def validateProjectDate(reservedParts: Seq[ReservedRoadPart], date: DateTime): Option[String] = {
-    reservedParts.map(rp => (rp.roadNumber, rp.roadPartNumber) -> RoadAddressDAO.getRoadPartInfo(rp.roadNumber, rp.roadPartNumber)).toMap.
-      filterNot(_._2.isEmpty).foreach {
-      case ((roadNumber, roadPartNumber), value) =>
-        val (startDate, endDate) = value.map(v => (v._6, v._7)).get
-        if (startDate.nonEmpty && startDate.get.isAfter(date))
-          return Option(s"Tieosalla TIE ${roadNumber} OSA ${roadPartNumber} alkupäivämäärä " +
-            s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
-            s"${date.toString("dd.MM.yyyy")}, tarkista tiedot.")
-        if (endDate.nonEmpty && endDate.get.isAfter(date))
-          return Option(s"Tieosalla TIE ${roadNumber} OSA ${roadPartNumber} loppupäivämäärä " +
-            s"${endDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
-            s"${date.toString("dd.MM.yyyy")}, tarkista tiedot.")
+    withDynSession {
+      reservedParts.map(rp => (rp.roadNumber, rp.roadPartNumber) -> RoadAddressDAO.getRoadPartInfo(rp.roadNumber, rp.roadPartNumber)).toMap.
+        filterNot(_._2.isEmpty).foreach {
+        case ((roadNumber, roadPartNumber), value) =>
+          val (startDate, endDate) = value.map(v => (v._6, v._7)).get
+          if (startDate.nonEmpty && startDate.get.isAfter(date))
+            return Option(s"Tieosalla TIE ${roadNumber} OSA ${roadPartNumber} alkupäivämäärä " +
+              s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
+              s"${date.toString("dd.MM.yyyy")}, tarkista tiedot.")
+          if (endDate.nonEmpty && endDate.get.isAfter(date))
+            return Option(s"Tieosalla TIE ${roadNumber} OSA ${roadPartNumber} loppupäivämäärä " +
+              s"${endDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
+              s"${date.toString("dd.MM.yyyy")}, tarkista tiedot.")
+      }
+      None
     }
-    None
   }
 
   private def getAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ReservedRoadPart] = {

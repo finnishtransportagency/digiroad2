@@ -1,7 +1,6 @@
 (function (root) {
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
     var currentProject = false;
-    var selectedProjectLink = false;
     var activeLayer = false;
     var hasReservedRoadParts = false;
     var ProjectStatus = LinkValues.ProjectStatus;
@@ -15,7 +14,7 @@
       return field;
     };
 
-    var options = ['Valitse'];
+    //var options = ['Valitse'];
 
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
@@ -76,14 +75,14 @@
         addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') + addReserveButton() +
         '</div>' +
         '</form>' +
-        ' </div>' +
+        '</div>' +
         '</div>' + '<div class = "form-result">' + '<label >' + 'PROJEKTIIN VALITUT TIEOSAT:' + '</label>' +
         '<div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
         '</div>' +
         '<div id ="roadpartList">' +
         '</div></div>' +
-        '</div> </div>' +
+        '</div></div>' +
         '<footer>' + actionButtons(false) + '</footer>');
     };
 
@@ -114,7 +113,7 @@
         '</div>' +
         '</div>' +
         '<div class = "form-result">' +
-        '<label>PROJEKTIIN VALITUT TIEOSAT:</label>' +
+        '<label>Current Reserved list:</label>' + //TODO finnish translation
         '<div style="margin-left: 16px;">' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
         '</div>' +
@@ -122,7 +121,7 @@
         reservedRoads +
         '</div></div></br></br>' +
         '<div class = "form-result">' +
-        '<label>UUDET VARATUT TIEOSAT:</label>' +
+        '<label>Project Reserved list:</label>' + //TODO finnish translation
         '<div style="margin-left: 16px;">' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
         '</div>' +
@@ -181,9 +180,9 @@
     var bindEvents = function () {
 
       var rootElement = $('#feature-attributes');
-      var toggleMode = function (readOnly) {
+      /*var toggleMode = function (readOnly) {
         rootElement.find('.wrapper read-only').toggle();
-      };
+      };*/
 
       var removePart = function (roadNumber, roadPartNumber) {
         projectCollection.setDirtyRoadParts(projectCollection.deleteRoadPartFromList(projectCollection.getDirtyRoadParts(), roadNumber, roadPartNumber));
@@ -211,7 +210,7 @@
       var createOrSaveProject = function () {
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
-          projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
+          //projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
           projectCollection.createProject(data, map.getView().getResolution());
         } else {
           projectCollection.saveProject(data, map.getView().getResolution());
@@ -227,8 +226,9 @@
           disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
           var text = '';
           var index = 0;
-          projectCollection.setCurrentRoadPartList(result.formInfo);
-          projectCollection.setReservedDirtyRoadParts([]);
+          projectCollection.setCurrentReservedParts(result.formInfo);
+          //projectCollection.setCurrentRoadPartList(result.formInfo);
+          //projectCollection.setReservedDirtyRoadParts([]);
           _.each(result.formInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
             text += '<div class="form-reserved-roads-list">' + button +
@@ -332,12 +332,12 @@
         currentProject.isDirty = false;
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
-        projectCollection.setCurrentRoadPartList(result.projectLinks);
+        projectCollection.setCurrentReservedParts(result.projectLinks);
         var text = '';
         var index = 0;
         _.each(result.projectLinks, function (line) {
           var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
-          text += '<div class="form-reserved-roads-list">' + button +
+          text += '<div id="" class="form-reserved-roads-list">' + button +
             addSmallLabel(line.roadNumber) +
             addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
             '</div>';

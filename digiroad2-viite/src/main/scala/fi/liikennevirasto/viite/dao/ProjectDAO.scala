@@ -473,11 +473,10 @@ object ProjectDAO {
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
                 (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)))
               GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-              ) gr;
-    """
+              ) gr"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
       Option[Long], Option[Long])](sql).list.map {
-      case (id, road, part, length, ely, newEly, newLength, discontinuity, newDiscontinuity, linkId) =>
+      case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
         ReservedRoadPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
           newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
     }
@@ -515,11 +514,10 @@ object ProjectDAO {
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
                 (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)))
               GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-              ) gr;
-              """
+              ) gr"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
       Option[Long], Option[Long])](sql).firstOption.map {
-      case (id, road, part, length, ely, newEly, newLength, discontinuity, newDiscontinuity, linkId) =>
+      case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
         ReservedRoadPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
           newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
     }
@@ -538,7 +536,7 @@ object ProjectDAO {
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
-          modifiedDate, addInfo, fetchReservedRoadParts(projectId, filterNotStatus.map(_.value)), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          modifiedDate, addInfo, fetchReservedRoadParts(id, filterNotStatus.map(_.value)), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
       }
     }
   }
