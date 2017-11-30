@@ -116,14 +116,15 @@ class VioniceProxyServlet extends ProxyServlet {
     properties.load(getClass.getResourceAsStream("/keys.properties"))
     val apiKey = properties.getProperty("vioniceApiKey", "")
     raLogger.info("Vionice key property " + apiKey)
-    val uri = req.getRequestURI
-    raLogger.info("Vionice request from " + uri + " to " + appendQueryString(java.net.URI.create("https://map.vionice.io" + regex.replaceAllIn(uri, "")), s"""apiKey=$apiKey"""))
-    appendQueryString(java.net.URI.create("https://map.vionice.io" + regex.replaceAllIn(uri, "")), s"""apiKey=$apiKey""")
+    val queryString = if(req.getQueryString == null) "" else "?" + req.getQueryString
+    val uri = java.net.URI.create("https://map.vionice.io" + req.getPathInfo + queryString)
+    raLogger.info("Vionice request " + appendQueryString(uri, s"""apiKey=$apiKey"""))
+    appendQueryString(uri, s"""apiKey=$apiKey""")
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    proxyRequest.header("Referer", "map.vionice.io:443")
-    proxyRequest.header("Host", "map.vionice.io:443")
+    proxyRequest.header("Referer", "map.vionice.io")
+    proxyRequest.header("Host", "map.vionice.io")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 
