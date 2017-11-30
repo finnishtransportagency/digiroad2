@@ -101,7 +101,7 @@ class NLSProxyServlet extends ProxyServlet {
 }
 
 class VioniceProxyServlet extends ProxyServlet {
-
+  val raLogger = LoggerFactory.getLogger(getClass)
   def regex = "/(digiroad)/(vionice)".r
 
   def appendQueryString(uri: java.net.URI, appendQuery: String): java.net.URI = {
@@ -111,10 +111,13 @@ class VioniceProxyServlet extends ProxyServlet {
   }
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
+    raLogger.info("Vionice request enter")
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/keys.properties"))
     val apiKey = properties.getProperty("vioniceApiKey", "")
+    raLogger.info("Vionice key property " + apiKey)
     val uri = req.getRequestURI
+    raLogger.info("Vionice request from " + uri + " to " + appendQueryString(java.net.URI.create("https://map.vionice.io" + regex.replaceAllIn(uri, "")), s"""apiKey=$apiKey"""))
     appendQueryString(java.net.URI.create("https://map.vionice.io" + regex.replaceAllIn(uri, "")), s"""apiKey=$apiKey""")
   }
 
