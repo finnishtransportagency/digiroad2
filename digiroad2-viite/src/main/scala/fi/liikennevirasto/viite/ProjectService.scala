@@ -246,7 +246,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val project = withDynSession {
       ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
     }
-    val projectLinks = linkIds.map { id =>
+    val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
       newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity,
         roadType, roadEly)
     }
@@ -506,6 +506,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       Some(s"No split for link id $linkId found!")
   }
 
+  def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Option[String], Option[(Point, Vector3d)]) = {
+    withDynSession {
+      preSplitSuravageLinkInTX(linkId, userName, splitOptions)
+    }
+  }
+
   def splitSuravageLink(linkId: Long, username: String,
                         splitOptions: SplitOptions): Option[String] = {
     withDynSession {
@@ -513,14 +519,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def splitSuravageLinkInTX(linkId: Long, username: String,
-                            splitOptions: SplitOptions): Option[String] = {
+  def preSplitSuravageLinkInTX(linkId: Long, username: String,
+                               splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Option[String], Option[(Point, Vector3d)]) = {
+    val projectId = splitOptions.projectId
     val sOption = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(linkId)), false).headOption
+    val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
+    val project = ProjectDAO.getRoadAddressProjectById(projectId).get
     if (sOption.isEmpty) {
-      Some(ErrorSuravageLinkNotFound)
+      (None, Some(ErrorSuravageLinkNotFound), None)
     } else {
-      val projectId = splitOptions.projectId
-      val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
       if (previousSplit.nonEmpty) {
         val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
         revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
@@ -534,6 +541,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val rightTop = Point(x._2, endPoints._2.y)
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
+      val suravageProjectLink = suravageLink
       val projectLinksConnected = projectLinks.filter(l =>
         GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
       //we rank template links near suravage link by how much they overlap with suravage geometry
@@ -541,19 +549,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         x -> ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink, x).map(GeometryUtils.geometryLength)
           .getOrElse(0.0)).filter(_._2 > MinAllowedRoadAddressLength)
       if (commonSections.isEmpty)
-        Some(ErrorNoMatchingProjectLinkForSplit)
+        (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
       else {
         val bestFit = commonSections.maxBy(_._2)._1
-        val project = ProjectDAO.getRoadAddressProjectById(projectId).get
         val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, splitOptions)
-        ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
-        ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
-        ProjectDAO.updateProjectCoordinates(projectId, splitOptions.coordinates)
-        recalculateProjectLinks(project.id, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
-        None
+        (Some(splitLinks), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
+  }
 
+  def splitSuravageLinkInTX(linkId: Long, username: String,
+                            splitOptions: SplitOptions): Option[String] = {
+    val (splitLinks, errorMessage, vector) = preSplitSuravageLinkInTX(linkId, username, splitOptions)
+    if(errorMessage.nonEmpty) errorMessage
+    ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.get.map(_.linkId).toSet)
+    ProjectDAO.create(splitLinks.get.map(x => x.copy(modifiedBy = Some(username))))
+    ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
+    recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
+    errorMessage
   }
 
   def getProjectLinksInBoundingBox(bbox: BoundingRectangle, projectId: Long): (Seq[ProjectLink]) = {
@@ -1473,6 +1486,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 }
 
 class ProjectValidationException(s: String) extends RuntimeException {
+  override def getMessage: String = s
+}
+
+class SplittingException(s: String) extends RuntimeException {
   override def getMessage: String = s
 }
 

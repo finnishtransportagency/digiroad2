@@ -9,7 +9,6 @@
     var formCommon = new FormCommon('');
 
     var endDistanceOriginalValue = '--';
-    var options =['Valitse'];
 
     var showProjectChangeButton = function() {
       return '<div class="project-form form-controls">' +
@@ -40,7 +39,12 @@
         return transitionModifiers(targetLinkStatus, linkStatus);
     };
 
-    var selectedProjectLinkTemplate = function(project, optionTags, selected) {
+    var selectedProjectLinkTemplate = function(project, selected) {
+      var road = {
+        roadNumber: selected[0].roadNumber,
+        roadPartNumber: selected[0].roadPartNumber,
+        trackCode: selected[0].trackCode
+      };
       var selection = formCommon.selectedData(selected);
       return _.template('' +
         '<header>' +
@@ -53,7 +57,7 @@
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
-        selectionForm(selection, selected, 0) +
+        selectionForm(selection, selected, road) +
         formCommon.changeDirection(selected) +
         formCommon.actionSelectedField()+
         '</div>'+
@@ -63,7 +67,7 @@
         '<footer>' + formCommon.actionButtons('project-', projectCollection.isDirty()) + '</footer>');
     };
 
-    var selectionForm = function(selection, selected){
+    var selectionForm = function(selection, selected, road){
       var defaultOption = (selected[0].status === LinkStatus.NotHandled.value ? LinkStatus.NotHandled.description : LinkStatus.Undefined.description);
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
@@ -78,7 +82,7 @@
         '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
-        formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
+        formCommon.newRoadAddressInfo(selected, selectedProjectLink, road) +
         '</form>';
     };
 
@@ -203,7 +207,7 @@
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         checkInputs('.project-');
         formCommon.toggleAdditionalControls();
