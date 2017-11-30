@@ -483,23 +483,25 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         try {
           val options = parsedBody.extract[SplitOptions]
           val writableProject = projectWritable(options.projectId)
-          val (splitLinks, splitLine) = writableProject.preSplitSuravageLink(link, user.username, options)
+          val (splitLinks, errorMessage, splitLine) = writableProject.preSplitSuravageLink(link, user.username, options)
           val cutGeom = splitLine match {
             case Some(x) => val (p, v) = x
               Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
             case _ => Seq()
           }
-          if (splitLinks.isEmpty)
+          if (errorMessage.nonEmpty){
+            Map("success" -> false, "errorMessage" -> errorMessage.get)
+          } else if(splitLinks.isEmpty){
             Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
-          else {
+          } else {
             val split: Map[String, Any] = Map(
-              "roadNumber" -> splitLinks.head.roadNumber,
-              "roadPartNumber" -> splitLinks.head.roadPartNumber,
-              "trackCode" -> splitLinks.head.track,
+              "roadNumber" -> splitLinks.get.head.roadNumber,
+              "roadPartNumber" -> splitLinks.get.head.roadPartNumber,
+              "trackCode" -> splitLinks.get.head.track,
               "split" -> Map(
                 "geometry" -> cutGeom
               )
-            ) ++ splitLinks.flatMap(splitToApi)
+            ) ++ splitLinks.get.flatMap(splitToApi)
             Map("success" -> splitLinks.nonEmpty, "response" -> split)
 
           }

@@ -374,12 +374,14 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(toRoadLink(suravageAddressLink)))
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
       val splitOptions = SplitOptions(Point(0, 45.3), LinkStatus.Transfer, LinkStatus.New, 0, 0, Track.Combined, Discontinuity.Continuous, 0, LinkGeomSource.Unknown, RoadType.Unknown, projectId, ProjectCoordinates(0, 45.3, 10))
-      val (split, vector) = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId,  "TestUser", splitOptions)
-      split.size should be (3)
-      split.filter(_.status == LinkStatus.New).size should be (1)
-      split.filter(_.status == LinkStatus.Terminated).size should be (1)
-      split.filter(_.status == LinkStatus.Transfer).size should be (1)
-      split.filter(_.status == LinkStatus.New).head.endMValue should be (split.filter(_.status == LinkStatus.Transfer).head.startMValue)
+      val (splitedLinks, errorMessage, vector) = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId,  "TestUser", splitOptions)
+      errorMessage.isEmpty should be (false)
+      splitedLinks.nonEmpty should be (true)
+      splitedLinks.get.size should be (3)
+      splitedLinks.get.filter(_.status == LinkStatus.New).size should be (1)
+      splitedLinks.get.filter(_.status == LinkStatus.Terminated).size should be (1)
+      splitedLinks.get.filter(_.status == LinkStatus.Transfer).size should be (1)
+      splitedLinks.get.filter(_.status == LinkStatus.New).head.endMValue should be (splitedLinks.get.filter(_.status == LinkStatus.Transfer).head.startMValue)
     }
   }
 
