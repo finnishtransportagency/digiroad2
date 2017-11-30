@@ -381,16 +381,20 @@ object ProjectDAO {
   }
 
   /**
-    * Removes reserved road part and deletes the project links associated to it
+    * Removes reserved road part and deletes the project links associated to it.
+    * Requires links that have been transferred to this road part to be reverted before
+    * or this will fail.
     *
     * @param projectId        Project's id
     * @param reservedRoadPart Road part to be removed
     */
   def removeReservedRoadPart(projectId: Long, reservedRoadPart: ReservedRoadPart): Unit = {
-    // TODO Update to VIITE-925
     sqlu"""
-           DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND ROAD_NUMBER = ${reservedRoadPart.roadNumber}
-           AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
+           DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
+           (EXISTS (SELECT 1 FROM ROAD_ADDRESS RA WHERE RA.ID = ROAD_ADDRESS_ID AND
+           RA.ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND RA.ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}))
+           OR (ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
+           AND STATUS = ${LinkStatus.New.value})
            """.execute
     sqlu"""
          DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE id = ${reservedRoadPart.id}
