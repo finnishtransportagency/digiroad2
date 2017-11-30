@@ -45,7 +45,7 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
             m =>
               if (m.endMeasure - m.startMeasure > 0.01)
                 createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-                  m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadlink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
+                  m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadlink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())), verifiedBy = oldAsset.verifiedBy)
           }
           None
         }else{

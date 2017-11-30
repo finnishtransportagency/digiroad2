@@ -1,6 +1,8 @@
 
 package fi.liikennevirasto.digiroad2
 
+import java.text.SimpleDateFormat
+
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
@@ -40,7 +42,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
 
@@ -145,9 +147,45 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       limit.expired should be (false)
     }
   }
+
+  test("Update numerical limit and verify asset") {
+    runWithRollback {
+      //Update Numeric Values By Expiring the Old Asset (asset type 30)
+      val limitToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "TestsUser")
+
+      //Verify if the new data of the new asset is equal to old asset
+      val limitUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
+
+      limitUpdated.id should not be limitToUpdate.id
+      limitUpdated.expired should be (false)
+      limitUpdated.verifiedBy should be (Some("TestsUser"))
+      limitUpdated.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+
+      //Verify if old asset is expired
+      val limitExpired = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      limitExpired.expired should be (true)
+    }
+  }
+
+  test("Update prohibition and verify asset") {
+    when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+    runWithRollback {
+      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "testeUser")
+      val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
+
+      limit.verifiedBy should be (Some("TestsUser"))
+      limit.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))))
+      limit.expired should be (false)
+    }
+    //TODO merge with branch 365 DROTH-365 Saving of light history: manoeuvres, hazmat prohibitions, vehicle prohibitions, this test should be OK
+  }
+
   test("Create new linear asset") {
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, NumericValue(1000), 1, 0, None)), 30, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
       val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
       asset.value should be (Some(NumericValue(1000)))
@@ -156,6 +194,18 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Create new linear asset with verified info") {
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
+      newAssets.length should be(1)
+      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
+      asset.value should be (Some(NumericValue(1000)))
+      asset.expired should be (false)
+      asset.verifiedBy.get should be ("testuser")
+      asset.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+      //TODO check is 100% correct compare date (sysdate could be different of Datetime.now)
+    }
+  }
 
   test("Create new prohibition") {
     val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
@@ -167,6 +217,20 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       asset.expired should be (false)
     }
   }
+
+  test("Create  new prohibition\"") {
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
+      newAssets.length should be(1)
+      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
+      asset.value should be (Some(NumericValue(1000)))
+      asset.expired should be (false)
+      asset.verifiedBy.get should be ("testuser")
+      asset.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+      //TODO check is 100% correct compare date (sysdate could be different of Datetime.now)
+    }
+  }
+
 
   test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
     val linearAssets = PassThroughService.getByBoundingBox(30, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
@@ -940,7 +1004,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-//      after.foreach(println)
+
       after.length should be(4)
       after.count(_.value.nonEmpty) should be (3)
 
@@ -999,6 +1063,35 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       head.startMeasure should be (0.1)
       head.endMeasure should be (10.1)
       head.expired should be (false)
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Should update asset without override verified by or date info ") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId1 = 1234
+    val oldLinkId2 = 1235
+    val assetTypeId = 100
+    val vvhTimeStamp = 14440000
+    OracleDatabase.withDynTransaction {
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val asset1 = Sequences.nextPrimaryKeySeqValue
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by, verified_by, verified_date) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+            'KX1', 'testeUser', TO_TIMESTAMP('2017-11-30 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'),40)""".execute
+
+      val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
+      val projectedLinearAssets = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
+      service.persistProjectedLinearAssets(projectedLinearAssets)
+      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
+      persisted.verifiedDate.get.toString("yyyy-MM-dd") should be ("2017-11-30")
+      persisted.verifiedBy.get should be ("testeUser")
       dynamicSession.rollback()
     }
   }
@@ -1063,6 +1156,38 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("when update on actor shouldn't override the verified by or date") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId1 = 1234
+    val assetTypeId = 190
+    val vvhTimeStamp = 14440000
+
+    OracleDatabase.withDynTransaction {
+      val lrm1 = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val asset1 = Sequences.nextPrimaryKeySeqValue
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by, verified_date, verified_by)
+             values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1', TO_TIMESTAMP('2017-11-30 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6') ,'testeUser')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
+
+      val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
+      val projectedProhibitions = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
+
+      service.persistProjectedLinearAssets(projectedProhibitions)
+      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
+      persisted.verifiedDate.get.toString("yyyy-MM-dd") should be ("2017-11-30")
+      persisted.verifiedBy.get should be ("testeUser")
+      dynamicSession.rollback()
+    }
+  }
+
   test("Should extend vehicle prohibition on road extension") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -1117,7 +1242,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-//      after.foreach(println)
       after.length should be(3)
       after.count(_.value.nonEmpty) should be (2)
 

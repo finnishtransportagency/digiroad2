@@ -42,7 +42,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockMaintenanceDao = MockitoSugar.mock[OracleMaintenanceDao]
   when(mockMaintenanceDao.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, Seq(1)))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, maintenanceRoadAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, maintenanceRoadAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val maintenanceDao = new OracleMaintenanceDao(mockVVHClient, mockRoadLinkService)
