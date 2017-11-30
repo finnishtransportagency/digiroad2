@@ -28,6 +28,7 @@ trait DigiroadServer {
     context.setParentLoaderPriority(true)
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     context.addServlet(classOf[NLSProxyServlet], "/maasto/*")
+    context.addServlet(classOf[VioniceProxyServlet], "/vionice/*")
     context.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     context.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
     context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
@@ -82,6 +83,44 @@ class NLSProxyServlet extends ProxyServlet {
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
     proxyRequest.header("Referer", "http://www.paikkatietoikkuna.fi/web/fi/kartta")
     proxyRequest.header("Host", null)
+    super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
+  }
+
+  override def getHttpClient: HttpClient = {
+    val client = super.getHttpClient
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    if (properties.getProperty("http.proxySet", "false").toBoolean) {
+      val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "80").toInt)
+      proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
+      client.getProxyConfiguration.getProxies.add(proxy)
+      client.setIdleTimeout(60000)
+    }
+    client
+  }
+}
+
+class VioniceProxyServlet extends ProxyServlet {
+
+  def regex = "/(digiroad)/(vionice)".r
+
+  def appendQueryString(uri: java.net.URI, appendQuery: String): java.net.URI = {
+    val newQuery = if (uri.getQuery == null) appendQuery else s"""${uri.getQuery}&${appendQuery}"""
+    new java.net.URI(uri.getScheme, uri.getAuthority,
+      uri.getPath, newQuery, uri.getFragment)
+  }
+
+  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/keys.properties"))
+    val apiKey = properties.getProperty("vioniceApiKey", "")
+    val uri = req.getRequestURI
+    appendQueryString(java.net.URI.create("https://map.vionice.io" + regex.replaceAllIn(uri, "")), s"""apiKey=$apiKey""")
+  }
+
+  override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    proxyRequest.header("Referer", "map.vionice.io:443")
+    proxyRequest.header("Host", "map.vionice.io:443")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 
