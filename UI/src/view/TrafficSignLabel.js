@@ -56,7 +56,7 @@
         {signValue: [26], image: 'images/traffic-signs/noHorsesSign.png'},
         {signValue: [27], image: 'images/traffic-signs/noEntrySign.png'},
         {signValue: [28], image: 'images/traffic-signs/overtakingProhibitedSign.png'},
-        {signValue: [29], image: 'images/traffic-signs/endOfOvertakingProhibitonSign.png'},
+        {signValue: [29], image: 'images/traffic-signs/endOfOvertakingProhibitionSign.png'},
         {signValue: [30], image: 'images/traffic-signs/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
         {signValue: [31], image: 'images/traffic-signs/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters},
         {signValue: [32], image: 'images/traffic-signs/totalWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons},
