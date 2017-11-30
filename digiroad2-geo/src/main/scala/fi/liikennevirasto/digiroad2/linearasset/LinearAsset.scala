@@ -126,7 +126,8 @@ case class PieceWiseLinearAsset(id: Long, linkId: Long, sideCode: SideCode, valu
                                 startMeasure: Double, endMeasure: Double,
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                 createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass, attributes: Map[String, Any] = Map()) extends LinearAsset
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass,
+                                attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime]) extends LinearAsset
 
 case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],

@@ -47,10 +47,10 @@ object LinearAssetUtils {
 
   private def persistedLinearAssetToLinearAsset(persisted: PersistedLinearAsset) = {
     PieceWiseLinearAsset(id = persisted.id, linkId = persisted.linkId, sideCode = SideCode.apply(persisted.sideCode),
-      value = persisted.value,
-      geometry = Seq(), expired = persisted.expired, startMeasure = persisted.startMeasure, endMeasure = persisted.endMeasure,
-      endpoints = Set(), modifiedBy = persisted.modifiedBy, modifiedDateTime = persisted.modifiedDateTime, createdBy =
-        persisted.createdBy, createdDateTime = persisted.createdDateTime, typeId = persisted.typeId, trafficDirection =
-        TrafficDirection.UnknownDirection, vvhTimeStamp = persisted.vvhTimeStamp, geomModifiedDate = persisted.geomModifiedDate, linkSource = persisted.linkSource, administrativeClass = Unknown)
+      value = persisted.value, geometry = Seq(), expired = persisted.expired, startMeasure = persisted.startMeasure,
+      endMeasure = persisted.endMeasure, endpoints = Set(), modifiedBy = persisted.modifiedBy, modifiedDateTime = persisted.modifiedDateTime,
+      createdBy = persisted.createdBy, createdDateTime = persisted.createdDateTime, typeId = persisted.typeId,
+      trafficDirection = TrafficDirection.UnknownDirection, vvhTimeStamp = persisted.vvhTimeStamp, geomModifiedDate = persisted.geomModifiedDate,
+      linkSource = persisted.linkSource, administrativeClass = Unknown, verifiedBy = persisted.verifiedBy, verifiedDate = persisted.verifiedDate)
   }
 }

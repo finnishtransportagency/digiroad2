@@ -427,7 +427,8 @@ trait LinearAssetOperations {
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
             endPoints, persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
             persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
-            persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate, persistedLinearAsset.linkSource, roadLink.administrativeClass)
+            persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate, persistedLinearAsset.linkSource, roadLink.administrativeClass,
+            verifiedBy = persistedLinearAsset.verifiedBy, verifiedDate = persistedLinearAsset.verifiedDate)
           ,
           link = roadLink
         )
@@ -806,6 +807,11 @@ trait LinearAssetOperations {
       dao.getMunicipalityById(id)
     }
   }
+
+//  def updateVerifiedInfo(id: Long, userName: String, type_id: Int): Option[Long] = {
+//    getVerifiedBy(userName, type_id)
+//  }
+
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
