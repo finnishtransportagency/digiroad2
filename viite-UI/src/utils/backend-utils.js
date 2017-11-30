@@ -17,7 +17,7 @@
       else
         return {
           url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
-        }
+        };
     });
 
     this.abortLoadingProject=(function() {
