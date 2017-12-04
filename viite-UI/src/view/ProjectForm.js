@@ -39,9 +39,13 @@
     };
 
     var titleWithDeletingTool = function (projectName) {
-      return '<span class ="edit-mode-title">' + projectName + '</span>' +
-        '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI  <button id="deleteProject_' + currentProject.id + '" ' +
+      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI  <button id="deleteProject_' + currentProject.id + '" ' +
         'class="btn-delete-project" value="' + currentProject.id + '"></button></span>';
+      var toReturn = '<span class ="edit-mode-title">' + projectName + '</span>';
+      if(currentProject.statusCode === ProjectStatus.Incomplete.value)
+        return toReturn + deleteButtons;
+      else
+        return toReturn;
     };
 
     var titleWithEditingTool = function (projectName) {
