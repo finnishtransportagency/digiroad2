@@ -45,7 +45,8 @@
         'work-list/railwayCrossings': 'railwayCrossingWorkList',
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
         'work-list/trafficSigns': 'trafficSigntWorkList',
-        'work-list/maintenanceRoad': 'maintenanceRoadWorkList'
+        'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
+        'verification-list/:layerName/:typeId': 'unverifiedLinearAssetWorkList'
       },
 
       massTransitStop: function (id) {
@@ -212,6 +213,10 @@
 
       maintenanceRoadWorkList: function () {
         eventbus.trigger('workList:select', 'maintenanceRoad', backend.getLinearAssetUnchecked(290));
+      },
+
+      unverifiedLinearAssetWorkList: function(layerName, typeId) {
+        eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedLinearAssets(typeId));
       }
     });
 

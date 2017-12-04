@@ -310,7 +310,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/linearassets/verify",
+        url: "api/linearasset/verified",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -395,6 +395,10 @@
 
     this.getLinearAssetUnchecked = function(typeId) {
       return $.getJSON('api/linearAsset/unchecked?typeId=' + typeId);
+    };
+
+    this.getUnverifiedLinearAssets = function(assetTypeId) {
+      return $.getJSON('api/linearassets/unverified?assetType=' + assetTypeId);
     };
 
     this.createAsset = function (data, errorCallback) {

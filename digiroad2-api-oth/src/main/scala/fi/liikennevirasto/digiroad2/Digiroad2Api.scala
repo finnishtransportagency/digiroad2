@@ -715,6 +715,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "modifiedAt" -> link.modifiedDateTime,
           "createdBy" -> link.createdBy,
           "createdAt" -> link.createdDateTime,
+          "verifiedBy" -> link.verifiedBy,
+          "verifiedAt" -> link.verifiedDate,
           "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
           "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
           "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
@@ -816,6 +818,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .foreach(validateUserMunicipalityAccess(user))
 
     usedService.updateVerifiedInfo(ids, user.username, typeId)
+  }
+
+  get("/linearassets/unverified"){
+    val assetTypeId = params.get("assetType")
+    //dummy
+    ("Testmunicipality", Map("Unknown" -> List(622114, 622116, 622110),
+      "Private" -> List(622116, 123456),
+      "State" -> List(666666)))
   }
 
   delete("/linearassets") {
