@@ -13,6 +13,7 @@ import org.eclipse.jetty.server.{Handler, Server}
 import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.server.handler.{ContextHandler, ContextHandlerCollection}
+import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.slf4j.LoggerFactory
 
 
@@ -110,6 +111,12 @@ class VioniceProxyServlet extends ProxyServlet {
       uri.getPath, newQuery, uri.getFragment)
   }
 
+  override def newHttpClient() : HttpClient = {
+    val factory = new SslContextFactory()
+    factory.setTrustAll(true)
+    new HttpClient(factory)
+  }
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     raLogger.info("Vionice request enter")
     val properties = new Properties()
@@ -123,8 +130,18 @@ class VioniceProxyServlet extends ProxyServlet {
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    proxyRequest.header("Referer", "map.vionice.io")
-    proxyRequest.header("Host", "map.vionice.io")
+    proxyRequest.header("Referer", null)
+    proxyRequest.header("Host", "map.vionice.io:443")
+    proxyRequest.header("Cookie", null)
+    proxyRequest.header("OAM_REMOTE_USER", null)
+    proxyRequest.header("OAM_IDENTITY_DOMAIN", null)
+    proxyRequest.header("OAM_LAST_REAUTHENTICATION_TIME", null)
+    proxyRequest.header("OAM_GROUPS", null)
+    proxyRequest.header("X-Forwarded-Host", null)
+    proxyRequest.header("X-Forwarded-Server", null)
+    proxyRequest.header("Via", null)
+    proxyRequest.header("X-Forwarded-For", null)
+    proxyRequest.header("X-Forwarded-Proto", null)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 
