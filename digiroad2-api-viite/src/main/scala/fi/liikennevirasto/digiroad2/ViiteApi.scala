@@ -678,9 +678,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "currentEly" -> reservedRoadPart.ely,
       "currentLength" -> reservedRoadPart.addressLength,
       "discontinuity" -> reservedRoadPart.discontinuity.map(_.description),
-      "newEly" -> reservedRoadPart.ely,
-      "newLength" -> reservedRoadPart.addressLength,
-      "newDiscontinuity" -> reservedRoadPart.discontinuity.map(_.description),
+      "newEly" -> reservedRoadPart.newEly,
+      "newLength" -> reservedRoadPart.newLength,
+      "newDiscontinuity" -> reservedRoadPart.newDiscontinuity.map(_.description),
       "linkId" -> reservedRoadPart.startingLinkId,
       "isDirty" -> reservedRoadPart.isDirty
     )

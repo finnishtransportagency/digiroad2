@@ -443,7 +443,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         None
     }
     val elyErrors = reservedRoadParts.flatMap(roadAddress =>
-      if (projectEly.filterNot(l => l == -1L).getOrElse(roadAddress.ely) != roadAddress.ely) {
+      if (projectEly.filterNot(l => l == -1L).getOrElse(roadAddress.ely.get) != roadAddress.ely.get) {
         Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber} (ELY ${roadAddress.ely} != ${projectEly.get})")
       } else None)
     if (errors.nonEmpty)
