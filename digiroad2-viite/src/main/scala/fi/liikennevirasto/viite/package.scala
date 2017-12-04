@@ -59,8 +59,8 @@ package object viite {
   val DefaultScreenWidth = 1920
   val DefaultScreenHeight = 1080
   val Resolutions = Array(2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625)
-  val DefaultLongitude = 390000.0
-  val DefaultLatitude = 6900000.0
+  val DefaultLongitude = 6900000.0
+  val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
 
 
