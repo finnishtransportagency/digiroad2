@@ -448,7 +448,7 @@ object ProjectDAO {
           ely, ely_new,
           (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
           ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-          AND END_ADDR_M = gr.length) as discontinuity,
+          AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
           AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
           AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
@@ -489,7 +489,7 @@ object ProjectDAO {
           ely, ely_new,
           (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
           ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-          AND END_ADDR_M = gr.length) as discontinuity,
+          AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
           AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
           AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
