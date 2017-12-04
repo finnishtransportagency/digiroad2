@@ -203,6 +203,7 @@
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
+    new TrafficSignToggle(map, mapPluginsContainer);
 
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
@@ -297,6 +298,8 @@
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
     }, linearAssetLayers, pointAssetLayers);
+
+    VioniceLayer({ map: map });
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());

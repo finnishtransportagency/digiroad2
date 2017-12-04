@@ -21,6 +21,7 @@
     Layer.call(this, layerName, roadLayer);
     var me = this;
     var styler = new RoadLinkStyler(true);
+
     var projectLinkStyler = new ProjectLinkStyler();
 
     var vectorSource = new ol.source.Vector({
@@ -262,8 +263,10 @@
       };
 
       var indicatorsForSplit = function() {
-        return mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-          markerContainer(link, middlePoint);
+        return _.map(_.filter(links, function(fl){
+          return !_.isUndefined(fl.middlePoint);
+        }), function(link){
+          markerContainer(link, link.middlePoint);
         });
       };
 
@@ -305,7 +308,8 @@
       suravageProjectDirectionMarkerLayer.getSource().clear();
       suravageRoadProjectLayer.getSource().clear();
     };
-
+    clearLayers();
+    vectorLayer.getSource().clear();
     var highlightFeatures = function () {
       clearHighlights();
       var featuresToHighlight = [];
@@ -599,6 +603,23 @@
         });
       };
 
+      var addCutLine = function(cutGeom){
+        var points = _.map(cutGeom.geometry, function (point) {
+          return [point.x, point.y];
+        });
+        var cutFeature = new ol.Feature({
+          geometry: new ol.geom.LineString(points),
+          type: 'cut-line'
+        });
+        var style = new ol.style.Style({
+          stroke: new ol.style.Stroke({color: [20, 20 , 255, 1], width: 9}),
+          zIndex: 11
+        });
+        cutFeature.setStyle(style);
+        removeFeaturesByType('cut-line');
+        addFeaturesToSelection([cutFeature]);
+      };
+
       var clickHandler = function(evt) {
         if (applicationModel.getSelectedTool() === 'Cut') {
           $('.wrapper').remove();
@@ -660,13 +681,6 @@
           return new ol.geom.LineString(coordPoints);
         };
 
-        var calculateSplitProperties = function(nearestSuravage, point) {
-          var lineString = pointsToLineString(nearestSuravage.points);
-          var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
-          var splitVertices = GeometryUtils.splitByPoint(lineString, point);
-          return _.merge({ splitMeasure: splitMeasure, point: splitVertices.secondSplitVertices[0] }, splitVertices);
-        };
-
         var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
 
         if (!nearest || !isWithinCutThreshold(nearest.distance)) {
@@ -675,26 +689,16 @@
           return;
         }
         var nearestSuravage = nearest.feature.projectLinkData;
-        nearestSuravage.points = _.isUndefined(nearestSuravage.originalGeometry) ?
-          nearestSuravage.points : nearestSuravage.originalGeometry;
-        var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
+        nearestSuravage.points = _.isUndefined(nearestSuravage.originalGeometry) ? nearestSuravage.points : nearestSuravage.originalGeometry;
         if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
           nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
         }
-        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
-        projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
-      };
-    };
-
-    var mapOverLinkMiddlePoints = function(links, transformation) {
-      return _.map(links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return [point.x, point.y];
+        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, {x: nearest.point[0], y: nearest.point[1]});
+        eventbus.once('split:cutPointFeature', function(cutGeom) {
+          addCutLine(cutGeom);
         });
-        var lineString = new ol.geom.LineString(points);
-        var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
-        return transformation(link, middlePoint);
-      });
+          projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
+      };
     };
 
     var projectLinkStatusIn = function(projectLink, possibleStatus){
@@ -702,7 +706,6 @@
         return _.contains(possibleStatus, projectLink.status);
       else return false;
     };
-    
 
     var suravageCutter = new SuravageCutter(suravageRoadProjectLayer, projectCollection, me.eventListener);
 
@@ -728,6 +731,7 @@
     });
 
     eventbus.on('changeProjectDirection:clicked', function () {
+      vectorLayer.getSource().clear();
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
       eventbus.once('roadAddressProject:fetched', function () {
         if (selectedProjectLinkProperty.get().length > 1 && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId)) {
@@ -910,7 +914,7 @@
     });
 
     eventbus.on('roadAddressProject:projectLinkSaved', function (projectId, isPublishable) {
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom(), projectId, isPublishable);
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom()+1, projectId, isPublishable);
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);
