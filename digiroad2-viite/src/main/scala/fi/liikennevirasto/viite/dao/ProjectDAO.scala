@@ -287,11 +287,10 @@ object ProjectDAO {
          """.execute
   }
 
-  def getProjectLinksFirstEly(projectId: Long): Seq[ProjectLink] = {
-     val query =
-      s"""$projectLinkQueryBase
-                where PROJECT_LINK.PROJECT_ID =$projectId  and PROJECT_LINK.ELY is not null AND  rownum < 2  """
-    listQuery(query)
+  def getElyFromProjectLinks(projectId:Long): Option[Long]= {
+    val query =
+      s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL AND ROWNUM < 2"""
+    Q.queryNA[Long](query).firstOption
   }
 
   def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
