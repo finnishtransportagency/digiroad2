@@ -14,8 +14,6 @@
       return field;
     };
 
-    //var options = ['Valitse'];
-
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
         '<label class="control-label">LISÄTIEDOT</label>' +
@@ -180,17 +178,15 @@
     var bindEvents = function () {
 
       var rootElement = $('#feature-attributes');
-      /*var toggleMode = function (readOnly) {
+      var toggleMode = function (readOnly) {
         rootElement.find('.wrapper read-only').toggle();
-      };*/
+      };
 
       var removePart = function (roadNumber, roadPartNumber) {
         currentProject.isDirty = true;
         projectCollection.setReservedParts(_.filter(projectCollection.getAllReservedParts(), function (part) {
           return part.roadNumber != roadNumber || part.roadPartNumber != roadPartNumber;
         }));
-        //projectCollection.setDirtyRoadParts(projectCollection.deleteRoadPartFromList(projectCollection.getDirtyRoadParts(), roadNumber, roadPartNumber));
-        //projectCollection.setReservedDirtyRoadParts(projectCollection.deleteRoadPartFromList(projectCollection.getReservedDirtyRoadParts(), roadNumber, roadPartNumber));
         fillForm(projectCollection.getCurrentReservedParts(), projectCollection.getNewReservedParts());
       };
 
@@ -217,7 +213,6 @@
       var createOrSaveProject = function () {
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
-          //projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
           projectCollection.createProject(data, map.getView().getResolution());
         } else {
           projectCollection.saveProject(data, map.getView().getResolution());
@@ -234,8 +229,6 @@
           var text = '';
           var index = 0;
           projectCollection.setReservedParts(result.formInfo);
-          //projectCollection.setCurrentRoadPartList(result.formInfo);
-          //projectCollection.setReservedDirtyRoadParts([]);
           _.each(result.formInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
             text += '<div class="form-reserved-roads-list">' + button +
@@ -481,7 +474,6 @@
 
       rootElement.on('click', '.btn-reserve', function () {
         var data;
-        //var lists = $('.roadAddressProject');
         if ($('#roadAddressProject').get(0) !== null) {
           data = $('#roadAddressProject').get(0);
         } else {

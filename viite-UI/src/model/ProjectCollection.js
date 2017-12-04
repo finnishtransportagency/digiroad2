@@ -34,10 +34,6 @@
       });
     };
 
-    /*this.getLinkStatus = function () {
-      return LinkStatus;
-    };*/
-
     this.reset = function(){
       fetchedProjectLinks = [];
     };
@@ -367,7 +363,6 @@
             publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-          //currentProject = result;
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
@@ -431,10 +426,6 @@
         eventbus.trigger('roadAddress:projectSentFailed', result.status);
       });
     };
-
-    /*var addSmallLabel = function (label) {
-      return '<label class="control-label-small">' + label + '</label>';
-    };*/
 
     var addSmallLabelWithIds = function(label, id){
       return '<label class="control-label-small" id='+ id+'>'+label+'</label>';
@@ -519,23 +510,10 @@
       if (reservedAndNew.false) {
         currentReservedParts = reservedAndNew.false;
       } else currentReservedParts = [];
-      //currentReservedParts = list;
     };
-
-    /*this.setNewReservedParts = function (list) {
-      newReservedParts = list;
-    };*/
 
     this.getAllReservedParts = function () {
       return self.getCurrentReservedParts().concat(self.getNewReservedParts());
-    };
-
-    this.getReservedDirtyRoadPartList = function () {
-      return reservedDirtyRoadPartList;
-    };
-
-    this.setReservedDirtyRoadPartList = function (list) {
-      reservedDirtyRoadPartList = list;
     };
 
     this.setTmpDirty = function(editRoadLinks){
@@ -546,24 +524,9 @@
       return dirtyProjectLinks;
     };
 
-    /*this.setCurrentRoadPartList = function(parts){
-      if(!_.isUndefined(parts)) {
-        currentRoadPartList = parts.slice(0);
-        dirtyRoadPartList = parts.slice(0);
-      }
-    };*/
-
     this.isDirty = function() {
       return dirtyProjectLinks.length > 0;
     };
-
-    /*this.roadIsOther = function(road){
-      return  0 === road.roadNumber && 0 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
-    };*/
-
-    /*this.roadIsUnknown = function(road){
-      return  0 === road.roadNumber && 1 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
-    };*/
 
     function arrayIntersection(a, b, areEqualFunction) {
       return _.filter(a, function(aElem) {

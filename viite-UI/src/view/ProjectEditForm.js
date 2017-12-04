@@ -97,7 +97,7 @@
         '</div></div>';
     };
 
-    /*var directionChangedInfo = function (selected, isPartialReversed) {
+    var directionChangedInfo = function (selected, isPartialReversed) {
       if (isPartialReversed) {
         return '<label class="split-form-group">Osittain käännetty</label>';
       } else if (selected[0].reversed) {
@@ -105,7 +105,7 @@
       } else {
         return '<label class="split-form-group">&#9744; Käännetty</label>';
       }
-    };*/
+    };
 
     var emptyTemplate = function(project) {
       return _.template('' +
