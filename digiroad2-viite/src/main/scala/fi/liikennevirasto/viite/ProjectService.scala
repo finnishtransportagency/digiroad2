@@ -41,7 +41,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private val logger = LoggerFactory.getLogger(getClass)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
-  private def validator = new ProjectValidator()
+  private def validator =  ProjectValidator
 
 
   private def withTiming[T](f: => T, s: String): T = {
@@ -1496,7 +1496,7 @@ class SplittingException(s: String) extends RuntimeException {
   override def getMessage: String = s
 }
 
-class ProjectValidator {
+object ProjectValidator {
 
   sealed trait ValidationError {
     def value: Int
