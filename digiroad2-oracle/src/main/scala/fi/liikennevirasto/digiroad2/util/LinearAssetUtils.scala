@@ -41,8 +41,7 @@ object LinearAssetUtils {
      Used by LinearAssetService and SpeedLimitService
    */
   def deletedRoadLinkIds(change: Seq[ChangeInfo], current: Seq[RoadLink]): Seq[Long] = {
-    change.filter(_.oldId.nonEmpty).flatMap(_.oldId).filterNot(id => current.exists(rl => rl.linkId == id)).
-      filterNot(id => change.exists(ci => ci.newId.getOrElse(0) == id))
+    change.filter(_.oldId.nonEmpty).filterNot(change => current.exists(rl => rl.linkId == change.oldId.getOrElse(0))).flatMap(_.oldId)
   }
 
   private def persistedLinearAssetToLinearAsset(persisted: PersistedLinearAsset) = {
