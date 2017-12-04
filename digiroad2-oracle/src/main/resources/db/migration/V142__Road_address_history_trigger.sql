@@ -30,7 +30,6 @@ DECLARE
 	)
 	OR
 	(valid_from<:NEW.valid_from AND start_date>:NEW.start_date)   /*to prevent alteration to history * cant add older road_start date to road than there already is*/
-	OR
 	AND ROWNUM < 2;
    IF error_c > 0
    THEN
