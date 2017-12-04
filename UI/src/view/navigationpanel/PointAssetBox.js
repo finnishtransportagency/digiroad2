@@ -19,13 +19,13 @@
                 '<label><input name="pedestrianCrossings" type="checkbox" /> Suojatiet</label> <br>' +
               '</div>' +
               '<div class="checkbox">' +
-                '<label><input name="maximumLengths" type="checkbox" /> Suurin sallittu pituus</label> <br>' +
+                '<label><input name="maximumRestrictions" type="checkbox" /> Suurin sallittu - rajoitukset</label> <br>' +
               '</div>' +
               '<div class="checkbox">' +
-                '<label><input name="generalWarnings" type="checkbox" /> Varoitukset</label> <br>' +
+                '<label><input name="generalWarningSigns" type="checkbox" /> Varoitukset</label> <br>' +
               '</div>' +
               '<div class="checkbox">' +
-                '<label><input name="turningRestrictions" type="checkbox" /> Kääntymiskiellot</label>' +
+                '<label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +
               '</div>' +
             '</div>' : "";
 

@@ -1,5 +1,5 @@
 (function(root) {
-  root.TileMapCollection = function(map, arcgisConfig) {
+  root.TileMapCollection = function(arcgisConfig) {
     var layerConfig = {
       // minResolution: ?,
       // maxResolution: ?,

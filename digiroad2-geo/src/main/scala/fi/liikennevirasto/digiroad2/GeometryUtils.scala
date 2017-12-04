@@ -302,10 +302,10 @@ object GeometryUtils {
     (Point(left, top), Point(right, bottom))
   }
 
-  def isLinear(polyLines: Seq[PolyLine]): Boolean =
+  def isLinear(polyLines: Iterable[PolyLine]): Boolean =
     !isNonLinear(polyLines)
 
-  def isNonLinear(polyLines: Seq[PolyLine]): Boolean = {
+  def isNonLinear(polyLines: Iterable[PolyLine]): Boolean = {
     if (polyLines.isEmpty)
       false
     else {
@@ -333,6 +333,41 @@ object GeometryUtils {
       case _ =>
         val (p1, p2) = (geometry.head, geometry.tail.head)
         Vector3d(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
+    }
+  }
+
+  def geometryToSegments(geometry: Seq[Point]): Seq[Seq[Point]] = {
+    geometry.zip(geometry.tail).map {
+      case (p1, p2) => Seq(p1, p2)
+    }
+  }
+
+  def midPointGeometry(geometry: Seq[Point]): Point = {
+    if (geometry.size > 1) {
+      midPointGeometry(geometry.zip(geometry.tail).foldLeft(Seq.empty[Point])((b , g) => {
+        val controlX = (1-0.5) * g._1.x + 0.5 * g._2.x
+        val controlY = (1-0.5) * g._1.y + 0.5 * g._2.y
+        b :+ Point(controlX, controlY)
+      }))
+    } else {
+      geometry.head
+    }
+  }
+
+  def calculatePointAndHeadingOnGeometry(geometry: Seq[Point], point: Point): Option[(Point, Vector3d)] = {
+    calculateHeadingFromLinearReference(geometry, calculateLinearReferenceFromPoint(point, geometry)).map(v =>
+      (point, v))
+  }
+
+  def calculateHeadingFromLinearReference(geometry: Seq[Point], mValue: Double): Option[Vector3d] = {
+    def heading(s: Seq[Point]) = {
+      s.zip(s.tail).map{case (p1, p2) => p2-p1}.fold(Vector3d(0.0,0.0,0.0)){ case (v1, v2) => v1+v2}.normalize()
+    }
+    val len = geometryLength(geometry)
+    if (len < mValue || geometry.length < 2)
+      None
+    else {
+      Some(heading(truncateGeometry3D(geometry, Math.max(0.0, mValue-.1), Math.min(len, mValue+.1))))
     }
   }
 

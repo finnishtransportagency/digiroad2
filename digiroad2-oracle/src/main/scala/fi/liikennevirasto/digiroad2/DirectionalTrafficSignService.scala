@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 
 case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, text: Option[String], bearing: Option[Int]) extends IncomingPointAsset
@@ -33,10 +33,10 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingDirectionalTrafficSign, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
+  override def create(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
     withDynTransaction {
-      OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, geometry, mValue), mValue, municipality ,username)
+      OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username)
     }
   }
 

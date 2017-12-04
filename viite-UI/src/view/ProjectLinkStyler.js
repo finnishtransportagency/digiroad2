@@ -36,6 +36,7 @@
       new StyleRule().where('status').is(numberingStatus).use({stroke: {color: '#8B4513', width: 5, lineCap: 'round'}}),
       new StyleRule().where('status').is(terminatedStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}}),
       new StyleRule().where('status').is(unknownStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}}),
+      new StyleRule().where('connectedLinkId').isDefined().and('status').is(terminatedStatus).use({stroke: {color: '#c6c00f', width: 3, lineCap: 'round'}}),
       new StyleRule().where('roadLinkSource').is(3).and('status').is(unknownStatus).use({stroke: {color: '#D3AFF6'}})
     ];
 
@@ -47,8 +48,12 @@
       new StyleRule().where('status').is(numberingStatus).use({stroke: {color: '#00FF00'}}),
       new StyleRule().where('status').is(terminatedStatus).use({stroke: {color: '#00FF00'}}),
       new StyleRule().where('roadLinkSource').is(3).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('anomaly').is(3).and(status).is(unknownStatus).use({stroke: {color: '#00FF00'}}),
+      new StyleRule().where('anomaly').is(3).and('status').is(unknownStatus).use({stroke: {color: '#00FF00'}}),
       new StyleRule().where('roadClass').is(99).use({stroke: {color: '#00FF00'}})
+    ];
+
+    var cutterStyleRules = [
+      new StyleRule().where('type').is('cutter-crosshair').use({icon: {src: 'images/cursor-crosshair.svg'}})
     ];
 
     var projectLinkStyle = new StyleRuleProvider({});
@@ -59,6 +64,7 @@
     selectionLinkStyle.addRules(projectLinkRules);
     selectionLinkStyle.addRules(strokeWidthRules);
     selectionLinkStyle.addRules(selectionStyleRules);
+    selectionLinkStyle.addRules(cutterStyleRules);
 
     var getProjectLinkStyle = function () {
       return projectLinkStyle;

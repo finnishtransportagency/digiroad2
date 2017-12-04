@@ -203,6 +203,7 @@
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
+    new TrafficSignToggle(map, mapPluginsContainer);
 
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
@@ -223,8 +224,19 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel);
+     PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
     });
+
+    var trafficSignReadOnlyLayer = function(layerName){
+      return new TrafficSignReadOnlyLayer({
+        layerName: layerName,
+        style: new PointAssetStyle('trafficSigns'),
+        collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
+        assetLabel: new TrafficSignLabel(),
+        assetGrouping: new AssetGrouping(9),
+        map: map
+      });
+    };
 
     var trafficSignReadOnlyLayer = function(layerName){
       return new TrafficSignReadOnlyLayer({
@@ -297,6 +309,8 @@
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
     }, linearAssetLayers, pointAssetLayers);
+
+    VioniceLayer({ map: map });
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());

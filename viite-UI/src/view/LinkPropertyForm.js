@@ -610,10 +610,16 @@
         }
       });
 
-      eventbus.on('roadLayer:toggleProjectSelectionInForm', function(layer){
+      eventbus.on('roadLayer:toggleProjectSelectionInForm', function(layer, noSave){
         if(layer === "linkProperty"){
           addOpenProjectButton();
-          $('#formProjectButton').click();
+          if(noSave){
+            $('#formProjectButton').click();
+          } else {
+            eventbus.once('roadAddress:projectSaved', function(){
+              $('#formProjectButton').click();
+            });
+          }
         }
       });
 

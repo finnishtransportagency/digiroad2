@@ -21,12 +21,12 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
+  override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
     val assetPoint = Point(asset.lon, asset.lat, 0)
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, geometry)
-    val point = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(assetPoint)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, roadLink.geometry)
+    val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(assetPoint)
     withDynTransaction {
-      OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, point.x, point.y, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+      OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, point.x, point.y, mValue, roadLink.municipalityCode, username), username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 

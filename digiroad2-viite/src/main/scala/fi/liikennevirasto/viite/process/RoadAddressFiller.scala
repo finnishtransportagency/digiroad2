@@ -50,7 +50,7 @@ object RoadAddressFiller {
   }
 
   private def extendToGeometry(roadLink: RoadLinkLike, segments: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
-    if (segments.isEmpty)
+    if (segments.isEmpty || segments.exists(_.connectedLinkId.nonEmpty))
       return segments
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val sorted = segments.sortBy(_.endMValue)(Ordering[Double].reverse)
@@ -122,14 +122,14 @@ object RoadAddressFiller {
     }
   }
 
-  def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[Long, ProjectAddressLink]): Seq[ProjectAddressLink] = {
+  def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[Long, Seq[ProjectAddressLink]]): Seq[ProjectAddressLink] = {
     val fillOperations: Seq[(RoadLinkLike, Seq[ProjectAddressLink]) => Seq[ProjectAddressLink]] = Seq(
       extendToGeometry
     )
 
     roadLinks.foldLeft(Seq.empty[ProjectAddressLink]) { case (acc, roadLink) =>
       val existingSegments = acc
-      val segment = roadAddressMap.get(roadLink.linkId).map(pal => Seq(pal)).getOrElse(Seq())
+      val segment = roadAddressMap.getOrElse(roadLink.linkId, Seq())
 
       val adjustedSegments = fillOperations.foldLeft(segment) { case (currentSegments, operation) =>
         operation(roadLink, currentSegments)

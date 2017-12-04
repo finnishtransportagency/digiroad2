@@ -318,7 +318,6 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetUnSelected = function () {
     selectToolControl.clear();
-    selectToolControl.activate();
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
   
@@ -489,11 +488,15 @@ window.LinearAssetLayer = function(params) {
   };
 
   var showWithComplementary = function() {
+    if(hasTrafficSignReadOnlyLayer)
+      trafficSignReadOnlyLayer.showTrafficSignsComplementary();
     isComplementaryChecked = true;
     me.refreshView();
   };
 
   var hideComplementary = function() {
+    if(hasTrafficSignReadOnlyLayer)
+      trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
     selectToolControl.clear();
     selectedLinearAsset.close();
     isComplementaryChecked = false;
