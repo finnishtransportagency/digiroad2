@@ -41,6 +41,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private val logger = LoggerFactory.getLogger(getClass)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
+  private def validator = new ProjectValidator()
+
+
   private def withTiming[T](f: => T, s: String): T = {
     val startTime = System.currentTimeMillis()
     val t = f
