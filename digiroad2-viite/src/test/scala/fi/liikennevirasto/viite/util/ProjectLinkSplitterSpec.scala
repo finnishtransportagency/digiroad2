@@ -1,19 +1,74 @@
 package fi.liikennevirasto.viite.util
 
+import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, Unknown}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
 import fi.liikennevirasto.viite.dao._
-import org.scalatest.{FunSuite, Matchers}
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
+import org.joda.time.DateTime
+import org.mockito.Matchers.any
+import org.mockito.Mockito.{reset, when}
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
-class ProjectLinkSplitterSpec extends FunSuite with Matchers {
+class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter {
+
+  val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+  val mockProjectService = MockitoSugar.mock[ProjectService]
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
+  val projectServiceWithRoadAddressMock = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
+  after {
+    reset(mockRoadLinkService)
+  }
+
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  def runWithRollback[T](f: => T): T = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val t = f
+      dynamicSession.rollback()
+      t
+    }
+  }
+
   test("Intersection point for simple case") {
     ProjectLinkSplitter.intersectionPoint((Point(0.0, 0.0), Point(10.0, 0.0)), (Point(0.0, 1.0), Point(10.0, -1.0))) should be (Some(Point(5.0, 0.0)))
   }
@@ -145,15 +200,14 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val terminatedLink = tl.head
     terminatedLink.status should be (LinkStatus.Terminated)
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
-    GeometryUtils.areAdjacent(terminatedLink.geometry,
-      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
+    GeometryUtils.areAdjacent(terminatedLink.geometry, GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
+    val (sA,sB) = sl.partition(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.Transfer)
     sl.foreach { l =>
       l.endAddrMValue == terminatedLink.startAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue should be(true)
       l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
       (l.endAddrMValue == template.endAddrMValue &&
-        l.status == LinkStatus.New) || l.endAddrMValue == terminatedLink.startAddrMValue  should be(true)
-      l.status == LinkStatus.New || l.status == LinkStatus.UnChanged should be (true)
-      GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be (true)
+        (l.status == LinkStatus.UnChanged || l.status == LinkStatus.Transfer)) || l.endAddrMValue == terminatedLink.startAddrMValue  should be(true)
+      l.status == LinkStatus.New || l.status == LinkStatus.UnChanged || l.status == LinkStatus.Transfer should be (true)
       l.roadNumber should be (template.roadNumber)
       l.roadPartNumber should be (template.roadPartNumber)
       l.sideCode should be (SideCode.TowardsDigitizing)
@@ -172,8 +226,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
-    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.New,
-      LinkStatus.UnChanged, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
+      LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
@@ -184,10 +238,9 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
     sl.foreach { l =>
       l.sideCode should be (SideCode.AgainstDigitizing)
-      l.endAddrMValue == template.endAddrMValue || l.startMValue > 0.0 should be (true)
-      l.startAddrMValue == template.startAddrMValue || l.startMValue == 0.0 should be (true)
+      l.endAddrMValue == template.endAddrMValue || l.startMValue == 0.0 should be (true)
+      l.startAddrMValue == template.startAddrMValue || l.startMValue > 0.0  should be (true)
     }
-
   }
 
   test("Split aligning project/suravage links joining at the end") {
@@ -213,8 +266,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be(true)
     sl.foreach { l =>
       l.roadAddressId should be(template.roadAddressId)
-      l.startAddrMValue == terminatedLink.endAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue &&
-        l.status == LinkStatus.New should be(true)
+      l.startAddrMValue == terminatedLink.endAddrMValue && l.status == LinkStatus.New || l.startAddrMValue == terminatedLink.startAddrMValue &&
+        (l.status == LinkStatus.UnChanged || l.status == LinkStatus.Transfer) should be(true)
       l.linkGeomSource should be(LinkGeomSource.SuravageLinkInterface)
       l.endAddrMValue == template.endAddrMValue || l.startAddrMValue == template.startAddrMValue should be(true)
       l.status == LinkStatus.New || l.status == LinkStatus.Transfer should be(true)
@@ -295,5 +348,73 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
         Point(445405.631,7004133.071,0.0), Point(445417.266,7004142.049,0.0)),452278,New,UnknownOwnerRoad,
       SuravageLinkInterface,313.38119201522017,0,9L,false, None, 85088L)
     ProjectLinkSplitter.findMatchingGeometrySegment(suravage, template) should be (None)
+  }
+
+  test("Preview the split") {
+    runWithRollback {
+      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val roadLink = RoadLink(1, Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
+        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+        InUse, NormalLinkInterface)
+      val suravageAddressLink = RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
+        AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.UnknownRoadLinkType, ConstructionType.Planned, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, "testRoad",
+        8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.AgainstDigitizing, None, None, Anomaly.None, 1)
+
+      when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink))
+      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val templateGeom = toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 123.5), Point(0.5, 140)))
+      sqlu""" insert into LRM_Position(id,start_Measure,end_Measure,Link_id) Values($lrmPositionId,0,87,1) """.execute
+      sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY, ROAD_LENGTH, ADDRESS_LENGTH, DISCONTINUITY, ELY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""',87,900,0,0)""".execute
+      sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, LRM_POSITION_ID, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,$lrmPositionId,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'), 0, $templateGeom)""".execute
+
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(toRoadLink(suravageAddressLink)))
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
+      val splitOptions = SplitOptions(Point(0, 45.3), LinkStatus.Transfer, LinkStatus.New, 0, 0, Track.Combined, Discontinuity.Continuous, 0, LinkGeomSource.Unknown, RoadType.Unknown, projectId, ProjectCoordinates(0, 45.3, 10))
+      val (splitedLinks, errorMessage, vector) = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId,  "TestUser", splitOptions)
+      errorMessage.isEmpty should be (true)
+      splitedLinks.nonEmpty should be (true)
+      splitedLinks.get.size should be (3)
+      splitedLinks.get.filter(_.status == LinkStatus.New).size should be (1)
+      splitedLinks.get.filter(_.status == LinkStatus.Terminated).size should be (1)
+      splitedLinks.get.filter(_.status == LinkStatus.Transfer).size should be (1)
+      splitedLinks.get.filter(_.status == LinkStatus.New).head.endMValue should be (splitedLinks.get.filter(_.status == LinkStatus.Transfer).head.startMValue)
+    }
+  }
+
+  private def toRoadLink(ral: RoadAddressLinkLike): RoadLink = {
+    RoadLink(ral.linkId, ral.geometry, ral.length, ral.administrativeClass, 1,
+      extractTrafficDirection(ral.sideCode, Track.apply(ral.trackCode.toInt)), ral.linkType, ral.modifiedAt, ral.modifiedBy, Map(
+        "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
+        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
+      ral.constructionType, ral.roadLinkSource)
+  }
+
+  def toGeomString(geometry: Seq[Point]): String = {
+    def toBD(d: Double): String = {
+      val zeroEndRegex = """(\.0+)$""".r
+      val lastZero = """(\.[0-9])0*$""".r
+      val bd = BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
+      lastZero.replaceAllIn(zeroEndRegex.replaceFirstIn(bd, ""), { m => m.group(0) } )
+    }
+    geometry.map(p =>
+      (if (p.z != 0.0)
+        Seq(p.x, p.y, p.z)
+      else
+        Seq(p.x, p.y)).map(toBD).mkString("[", ",","]")).mkString(",")
+  }
+
+  private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
+    (sideCode, track) match {
+      case (_, Track.Combined) => TrafficDirection.BothDirections
+      case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
+      case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
+      case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
+      case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
+      case (_, _) => TrafficDirection.UnknownDirection
+    }
   }
 }
