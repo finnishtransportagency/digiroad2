@@ -1101,7 +1101,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def updateVerifiedInfo(ids: Set[Long], verifiedBy: String): Unit = {
-      sqlu"update asset set verified_by = $verifiedBy, verified_date = sysdate where asset_id in (${ids.mkString(",")})".execute
+      sqlu"update asset set verified_by = $verifiedBy, verified_date = sysdate where id in (#${ids.mkString(",")})".execute
   }
 }
 

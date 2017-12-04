@@ -1427,4 +1427,42 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Update verified info prohibitions") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    OracleDatabase.withDynTransaction {
+      val assetNotVerified = service.dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(600020, 600024), false)
+      service.updateVerifiedInfo(Set(600020, 600024), "test", LinearAssetTypes.ProhibitionAssetTypeId)
+      val verifiedAsset = service.dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(600020, 600024), false)
+      assetNotVerified.find(_.id == 600020).flatMap(_.verifiedBy) should  be (None)
+      assetNotVerified.find(_.id == 600024).flatMap(_.verifiedBy) should be (None)
+      verifiedAsset.find(_.id == 600020).flatMap(_.verifiedBy) should be (Some("test"))
+      verifiedAsset.find(_.id == 600024).flatMap(_.verifiedBy) should be (Some("test"))
+      verifiedAsset.find(_.id == 600020).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+      verifiedAsset.find(_.id == 600024).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Update verified info") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    OracleDatabase.withDynTransaction {
+      val assetNotVerified = service.dao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus")
+      service.updateVerifiedInfo(Set(11111), "test", 30)
+      val verifiedAsset = service.dao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus")
+      assetNotVerified.find(_.id == 11111).flatMap(_.verifiedBy) should be(None)
+      verifiedAsset.find(_.id == 11111).flatMap(_.verifiedBy) should be(Some("test"))
+      verifiedAsset.find(_.id == 11111).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be(DateTime.now().toString("yyyy-MM-dd"))
+
+      dynamicSession.rollback()
+    }
+  }
 }

@@ -159,8 +159,9 @@ trait LinearAssetOperations {
   protected def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String,List[Long]]]
 
   protected def getVerifiedBy(userName: String, assetType: Int): Option[String] = {
-    val notVerifiedUser = Set("vvh_generated", "dr1_conversion", "dr1conversion")
     val alowedAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
+    val notVerifiedUser = Set("vvh_generated", "dr1_conversion", "dr1conversion")
+
     if (!notVerifiedUser.contains(userName) && alowedAssetType.contains(assetType)) Some(userName) else None
   }
 
@@ -795,11 +796,11 @@ trait LinearAssetOperations {
     }
   }
 
-  def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
-    val polygon= polygonTools.getPolygonByArea(areaId)
-    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
-    getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
-  }
+//  def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
+//    val polygon= polygonTools.getPolygonByArea(areaId)
+//    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
+//    getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
+//  }
 
   def getMunicipalityById (id: Long): Seq[Long]={
     withDynTransaction {
