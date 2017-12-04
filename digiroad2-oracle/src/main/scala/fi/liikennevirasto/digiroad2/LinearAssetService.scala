@@ -161,8 +161,11 @@ trait LinearAssetOperations {
 
   protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
+    val timing = System.currentTimeMillis
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
+    logger.info("Finnish delete road links at %d ms after start".format(System.currentTimeMillis - timing))
+
     val existingAssets =
       withDynTransaction {
         typeId match {
@@ -175,6 +178,8 @@ trait LinearAssetOperations {
         }
       }.filterNot(_.expired)
 
+    logger.info("Finnish fetch from database at %d ms after start".format(System.currentTimeMillis - timing))
+
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
 
     val projectableTargetRoadLinks = roadLinks.filter(
@@ -186,8 +191,7 @@ trait LinearAssetOperations {
       combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
 
     if (newAssets.nonEmpty) {
-      val timing = System.currentTimeMillis
-      logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
+      logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
@@ -200,6 +204,8 @@ trait LinearAssetOperations {
     //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "linearAssets:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
+
+    logger.info("Finnish get asset roadLinks at %d ms after start".format(System.currentTimeMillis - timing))
 
     filledTopology
   }
