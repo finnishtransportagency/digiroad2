@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -348,5 +348,22 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
         to.discontinuity should be (Discontinuity.Continuous)
       }
     })
+  }
+
+  test("Multiple transfers with reversal and discontinuity") {
+    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = MinorDiscontinuity),
+      createTransferProjectLink(1524, 502).copy(reversed = true)),
+      (createRoadAddress(502, 1524),
+        createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
+    val mapping =
+      ProjectDeltaCalculator.partition(transfer)
+    mapping should have size (2)
+    mapping.foreach{case (from, to) =>
+      from.endMAddr - from.startMAddr should be (to.endMAddr - to.startMAddr)
+      if (from.discontinuity != Continuous)
+        to.discontinuity should be (Continuous)
+      else
+        to.discontinuity should be (MinorDiscontinuity)
+    }
   }
 }
