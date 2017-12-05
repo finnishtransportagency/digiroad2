@@ -116,7 +116,8 @@
           { selectedRailwayCrossing: selectedRailwayCrossing },
           { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign },
           { selectedTrafficSign: selectedTrafficSign},
-          {selectedMaintenanceRoad: selectedMaintenanceRoad}
+          { selectedMaintenanceRoad: selectedMaintenanceRoad},
+          { linearAssets: linearAssets}
     ));
       eventbus.trigger('application:initialized');
     }

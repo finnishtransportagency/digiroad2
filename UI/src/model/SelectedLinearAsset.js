@@ -188,6 +188,7 @@
     };
 
     this.verify = function() {
+      eventbus.trigger(singleElementEvent('saving'));
       var knownLinearAssets = _.reject(selection, isUnknown);
       var payload = {ids: _.pluck(knownLinearAssets, 'id'), typeId: typeId};
       backend.verifyLinearAssets(payload, function() {

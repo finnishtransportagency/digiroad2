@@ -807,7 +807,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  put("/linearasset/verified") {
+  put("/linearassets/verified") {
     val user = userProvider.getCurrentUser()
     val ids = (parsedBody \ "ids").extract[Set[Long]]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -823,9 +823,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/linearassets/unverified"){
     val assetTypeId = params.get("assetType")
     //dummy
-    ("Testmunicipality", Map("Unknown" -> List(622114, 622116, 622110),
-      "Private" -> List(622116, 123456),
-      "State" -> List(666666)))
+    val municipalitySet: Map[String, Map[String ,List[Long]]] =
+      Map(
+        "Testmunicipality" -> Map("Unknown" -> List(622700, 622698),
+                                  "Private" -> List(622702)),
+
+      "Municipality2" -> Map("Unknown" -> List(616073),
+                             "Private" -> List(622695),
+                             "State" -> List(622686)))
+    municipalitySet
+  }
+
+  get("/linearassets/midpoint"){
+    val typeId = params("typeId").toInt
+    val service = getLinearAssetService(typeId)
+    val (id, pointInfo) = service.getLinearMiddlePointById(typeId, params("id").toLong)
+    pointInfo.map {
+      case middlePoint => Map("success" -> true, "id" -> id, "middlePoint" -> middlePoint)
+    }.getOrElse(Map("success" -> false, "Reason" -> "Id not found or invalid input"))
   }
 
   delete("/linearassets") {

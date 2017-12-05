@@ -36,6 +36,18 @@
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
         'trafficSigns/:id': 'trafficSigns',
         'maintenanceRoad/:linkId': 'maintenanceRoad',
+        ':totalWeightLimit/:id': 'linearCentering',
+        ':trailerTruckWeightLimit/:id': 'linearCentering',
+        ':axleWeightLimit/:id': 'linearCentering',
+        ':bogieWeightLimit/:id': 'linearCentering',
+        ':heightLimit/:id': 'linearCentering',
+        ':lengthLimit/:id': 'linearCentering',
+        ':widthLimit/:id': 'linearCentering',
+        ':width/:id': 'linearCentering',
+        ':numberOfLanes/:id': 'linearCentering',
+        ':massTransitLane/:id': 'linearCentering',
+        ':prohibition/:id': 'linearCentering',
+        ':hazardousMaterialTransportProhibition/:id': 'linearCentering',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -47,6 +59,26 @@
         'work-list/trafficSigns': 'trafficSigntWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'verification-list/:layerName/:typeId': 'unverifiedLinearAssetWorkList'
+      },
+
+      linearCentering: function(layerName, id){
+        applicationModel.selectLayer(layerName);
+        var selectedLinearAsset = _(models.linearAssets).find({ layerName: layerName }).selectedLinearAsset;
+        var multiElementEvent = _(models.linearAssets).find({ layerName: layerName }).multiElementEventCategory;
+        var typeId = _(models.linearAssets).find({ layerName: layerName }).typeId;
+        var linearAsset = selectedLinearAsset.getLinearAsset(parseInt(id));
+        if (linearAsset) {
+          selectedLinearAsset.open(linearAsset, true);
+          applicationModel.setSelectedTool('Select');
+        }
+        backend.getLinearAssetMidPoint(typeId, id).then(function (result) {
+          eventbus.once(multiElementEvent + ':fetched', function() {
+            var linearAsset = selectedLinearAsset.getLinearAsset(result.id);
+            selectedLinearAsset.open(linearAsset, true);
+            applicationModel.setSelectedTool('Select');
+          });
+          mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
+        });
       },
 
       massTransitStop: function (id) {
