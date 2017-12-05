@@ -194,7 +194,7 @@ trait LinearAssetOperations {
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
     val projectedAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      assetsOnChangedLinks, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
+      assetsOnChangedLinks, assetsOnChangedLinks, changes)
 
     val newAssets = projectedAssets ++ assetsWithoutChangedLinks
 
