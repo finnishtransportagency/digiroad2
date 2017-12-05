@@ -67,9 +67,10 @@ object LinearAssetUtils {
   }
 
   def deletedRoadLinkIds(changes: Map[Long, Seq[ChangeInfo]], currentLinkIds: Set[Long]): Seq[Long] = {
-    currentLinkIds.filter(linkId =>
-      changes.getOrElse(linkId, Seq.empty).exists(ci => ci.oldId.contains(linkId)) &&
-        !changes.getOrElse(linkId, Seq.empty).exists(ci => ci.newId.contains(linkId))).toSeq
+    changes.filter(c =>
+      !c._2.exists(ci => ci.newId.contains(c._1)) &&
+        !currentLinkIds.contains(c._1)
+    ).keys.toSeq
   }
 
   private def persistedLinearAssetToLinearAsset(persisted: PersistedLinearAsset) = {
