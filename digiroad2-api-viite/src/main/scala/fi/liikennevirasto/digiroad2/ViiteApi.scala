@@ -268,14 +268,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   delete("/roadlinks/roadaddress/project"){
     val projectId = parsedBody.extract[Long]
     try {
-      val project = ProjectDAO.getRoadAddressProjectById(projectId)
-      if (projectId != 0 && project.get.status == ProjectState.Incomplete ) {
-        projectService.deleteProject(projectId)
-        Map("success" -> true)
-      }
-      else{
-        Map("success" -> false, "errorMessage" -> "Projekti ei ole vielä luotu")
-      }
+        if (projectService.deleteProject(projectId)) {
+          Map("success" -> true)
+        }
+        else {
+          Map("success" -> false, "errorMessage" -> "Projekti ei ole vielä luotu")
+        }
     }
     catch {
       case ex: Exception => Map("success" -> false, "errorMessage" -> ex.getMessage)

@@ -603,12 +603,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def deleteProject(projectId : Long) = {
-    withDynTransaction{
-      ProjectDAO.removeProjectLinksByProject(projectId)
-      ProjectDAO.removeReservedRoadPartsByProject(projectId)
-      RoadAddressChangesDAO.clearRoadChangeTable(projectId)
-      ProjectDAO.updateProjectStatus(projectId, ProjectState.Deleted)
-      ProjectDAO.updateProjectStateInfo(ProjectState.Deleted.description, projectId)
+    withDynTransaction {
+      val project = ProjectDAO.getRoadAddressProjectById(projectId)
+      val canBeDeleted = projectId != 0 && project.isDefined && project.get.status == ProjectState.Incomplete
+      if(canBeDeleted) {
+        ProjectDAO.removeProjectLinksByProject(projectId)
+        ProjectDAO.removeReservedRoadPartsByProject(projectId)
+        RoadAddressChangesDAO.clearRoadChangeTable(projectId)
+        ProjectDAO.updateProjectStatus(projectId, ProjectState.Deleted)
+        ProjectDAO.updateProjectStateInfo(ProjectState.Deleted.description, projectId)
+      }
+      canBeDeleted
     }
   }
 
