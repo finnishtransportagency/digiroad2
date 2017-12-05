@@ -1103,5 +1103,20 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def updateVerifiedInfo(ids: Set[Long], verifiedBy: String): Unit = {
       sqlu"update asset set verified_by = $verifiedBy, verified_date = sysdate where id in (#${ids.mkString(",")})".execute
   }
+
+  def getUnVerifiedLinearAsset(assetTypeId: Int): List[(Long, Long)] = {
+    sql"""
+          Select a.id, pos.link_id
+          from ASSET a
+          join ASSET_LINK al on a.id = al.asset_id
+          join LRM_POSITION pos on al.position_id = pos.id
+          where a.asset_type_id = $assetTypeId
+          and(valid_to is NULL OR valid_to >= SYSDATE)
+          and a.created_by = 'dr1_conversion' AND a.modified_date is NULL AND a.verified_date is NULL
+      """.as[(Long, Long)].list
+  }
+
+
+
 }
 

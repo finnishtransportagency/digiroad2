@@ -40,6 +40,10 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388562360l))).thenReturn(Seq(RoadLink( 388562360l, Seq(Point(0.0, 0.0), Point(60.0, 0.0)),
+    10.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)),
+    ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))
+
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
@@ -203,7 +207,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       asset.expired should be (false)
       asset.verifiedBy.get should be ("testuser")
       asset.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-      //TODO check is 100% correct compare date (sysdate could be different of Datetime.now)
     }
   }
 
@@ -218,7 +221,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Create  new prohibition\"") {
+  test("Create  new prohibition with verified info") {
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
@@ -227,10 +230,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       asset.expired should be (false)
       asset.verifiedBy.get should be ("testuser")
       asset.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-      //TODO check is 100% correct compare date (sysdate could be different of Datetime.now)
     }
   }
-
 
   test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
     val linearAssets = PassThroughService.getByBoundingBox(30, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
@@ -1463,6 +1464,29 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       verifiedAsset.find(_.id == 11111).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be(DateTime.now().toString("yyyy-MM-dd"))
 
       dynamicSession.rollback()
+    }
+  }
+
+  test("get unVerified linear assets") {
+      runWithRollback {
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 30, 60, NumericValue(800), 1, 0, None)), 40, "testuser")
+
+      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40)
+      unVerifiedAssets.flatMap(_._2).keys.head should be ("235")
+      unVerifiedAssets.flatMap(_._2).values.head should be (newAssets1)
+    }
+  }
+
+  test("get unVerified prohibition assets") {
+    runWithRollback {
+      val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1, 0, None)), 190, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 20, 60, prohibition, 1, 0, None)), 190, "testuser")
+
+      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(190)
+      unVerifiedAssets.flatMap(_._2).keys.head should be ("235")
+      unVerifiedAssets.flatMap(_._2).values.head should be (newAssets1)
     }
   }
 }

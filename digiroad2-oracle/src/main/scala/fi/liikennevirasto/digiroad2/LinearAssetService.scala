@@ -158,11 +158,27 @@ trait LinearAssetOperations {
 
   protected def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String,List[Long]]]
 
+  def getUnverifiedLinearAssets(assetTypeId: Int): Map[String, Map[String,List[Long]]] = {
+     val unVerified = withDynTransaction {
+      val allowedAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
+       if (!allowedAssetType.contains(assetTypeId)) throw new IllegalStateException("Asset type not allowed")
+
+      val unVerifiedAssets = dao.getUnVerifiedLinearAsset(assetTypeId)
+
+       val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(unVerifiedAssets.map(_._2).toSet, false)
+
+       unVerifiedAssets.map {
+         case (id, linkId) => (id, roadLinks.find(_.linkId == linkId).getOrElse(throw new IllegalStateException("Road link no longer available")
+         ))}.groupBy(_._2.municipalityCode.toString).mapValues(x => x.map(_._1))
+     }
+    Map("UnVerified" -> unVerified)
+  }
+
   protected def getVerifiedBy(userName: String, assetType: Int): Option[String] = {
-    val alowedAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
+    val allowedAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
     val notVerifiedUser = Set("vvh_generated", "dr1_conversion", "dr1conversion")
 
-    if (!notVerifiedUser.contains(userName) && alowedAssetType.contains(assetType)) Some(userName) else None
+    if (!notVerifiedUser.contains(userName) && allowedAssetType.contains(assetType)) Some(userName) else None
   }
 
 
