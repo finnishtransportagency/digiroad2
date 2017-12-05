@@ -72,7 +72,7 @@
             var year = $('#yearBox').val();
             var newDate = [day, month,year];
             setDateValue(newDate);
-            eventbus.trigger('linkProperty:fetchHistoryLinks',newDate)
+            eventbus.trigger('linkProperty:fetchHistoryLinks',newDate);
           });
         }
       });
