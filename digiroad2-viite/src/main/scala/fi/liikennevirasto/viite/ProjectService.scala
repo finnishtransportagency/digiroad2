@@ -41,6 +41,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private val logger = LoggerFactory.getLogger(getClass)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
+  private def validator =  ProjectValidator
+
+
   private def withTiming[T](f: => T, s: String): T = {
     val startTime = System.currentTimeMillis()
     val t = f
@@ -1493,7 +1496,7 @@ class SplittingException(s: String) extends RuntimeException {
   override def getMessage: String = s
 }
 
-class ProjectValidator {
+object ProjectValidator {
 
   sealed trait ValidationError {
     def value: Int
@@ -1504,31 +1507,55 @@ class ProjectValidator {
     val values = Set(minorDiscontinuityFound, majorDiscontinuityFound, insufficientTrackCoverage, discontinuousAddressScheme,
       sharedLinkIdsExist, noContinuityCodesAtEnd, unsuccessfulRecalculation)
     //There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
-    case object minorDiscontinuityFound extends ValidationError {def value = 0; def message = ""}
+    case object minorDiscontinuityFound extends ValidationError {def value = 0; def message = "<TO_BE_DETERMINED>"}
     //There must be a major discontinuity if the jump is longer than 50 meters
-    case object majorDiscontinuityFound extends ValidationError {def value = 1; def message = ""}
+    case object majorDiscontinuityFound extends ValidationError {def value = 1;def message = "<TO_BE_DETERMINED>"}
     //For every track 1 there must exist track 2 that covers the same address span and vice versa
-    case object insufficientTrackCoverage extends ValidationError {def value = 2; def message = ""}
+    case object insufficientTrackCoverage extends ValidationError {def value = 2;def message = "<TO_BE_DETERMINED>"}
     //There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
-    case object discontinuousAddressScheme extends ValidationError {def value = 3; def message = ""}
+    case object discontinuousAddressScheme extends ValidationError {def value = 3;def message = "<TO_BE_DETERMINED>"}
     //There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
-    case object sharedLinkIdsExist extends ValidationError {def value = 4; def message = ""}
+    case object sharedLinkIdsExist extends ValidationError {def value = 4;def message = "<TO_BE_DETERMINED>"}
     //Continuity codes are given for end of road
-    case object noContinuityCodesAtEnd extends ValidationError {def value = 5; def message = ""}
+    case object noContinuityCodesAtEnd extends ValidationError {def value = 5;def message = "<TO_BE_DETERMINED>"}
     //Recalculation of M values and delta calculation are both successful for every road part in project
-    case object unsuccessfulRecalculation extends ValidationError {def value = 6; def message = ""}
+    case object unsuccessfulRecalculation extends ValidationError {def value = 6;def message = "<TO_BE_DETERMINED>"}
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
   }
 
-  case class validationErrorDetails(projectId: Long, validationError: ValidationError,
-                                    affectedLinkIds: Set[Long], coordinates: Map[Long,ProjectCoordinates],
+  case class ValidationErrorDetails(projectId: Long, validationError: ValidationError,
+                                    affectedLinkIds: Seq[Long], coordinates: Map[Long,ProjectCoordinates],
                                     optionalInformation: Option[String])
 
-  def validateProject(project: RoadAddressProject, projectLinks: Set[ProjectLink]): Set[validationErrorDetails] = {
+  def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation
+  }
 
-    Set.empty[validationErrorDetails]
+  private def checkProjectContinuity(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkProjectCoverage(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkProjectContinuousSchema(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkProjectSharedLinks(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkForContinuityCodes(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkForUnsuccessfulRecalculation(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
   }
 
 }
