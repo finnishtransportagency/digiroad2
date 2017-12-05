@@ -297,7 +297,7 @@ class AssetDataImporter {
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
             alkux, alkuy, loppux, loppuy
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely and loppupvm <= '2017-11-19'""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely and TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '2017-11-19'""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
     }
 
     print(s"\n${DateTime.now()} - ")
