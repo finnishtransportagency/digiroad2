@@ -86,13 +86,13 @@ trait LinearAssetOperations {
     */
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    val linearAssets = if(typeId == LinearAssetTypes.PavingAssetTypeId) getPavingByRoadLinks(typeId, roadLinks, change) else getByRoadLinks(typeId, roadLinks, change)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    val linearAssets = if(typeId == LinearAssetTypes.PavingAssetTypeId) getPavingByRoadLinks(typeId, roadLinks, change) else getByRoadLinks(typeId, roadLinks, change)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
@@ -109,7 +109,7 @@ trait LinearAssetOperations {
     val vVHRoadLinksAndChanges = polygons.map(getRoadlinks)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
     val changes = vVHRoadLinksAndChanges.flatMap(_._2)
-    val linearAssets = getByRoadLinks(typeId, roadLinks, changes)
+    val linearAssets = if(typeId == LinearAssetTypes.PavingAssetTypeId) getPavingByRoadLinks(typeId, roadLinks, changes) else getByRoadLinks(typeId, roadLinks, changes)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
@@ -163,6 +163,56 @@ trait LinearAssetOperations {
 
     val roadLinks: Seq[RoadLink] = roadLinksExist
     val linkIds = roadLinks.map(_.linkId)
+
+    val mappedChanges = (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
+      .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
+
+    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
+    val existingAssets =
+      withDynTransaction {
+        typeId match {
+          case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
+            dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
+          case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
+            dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
+          case _ =>
+            dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
+        }
+      }.filterNot(_.expired)
+
+    val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
+
+    val projectableTargetRoadLinks = roadLinks.filter(
+      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+
+    val timing = System.currentTimeMillis
+
+    val projectedAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+      assetsOnChangedLinks, assetsOnChangedLinks, changes)
+
+    val newAssets = projectedAssets ++ assetsWithoutChangedLinks
+
+    if (newAssets.nonEmpty) {
+      logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
+    }
+    val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
+
+    val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
+      changeSet.expiredAssetIds
+
+    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
+
+    //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "linearAssets:saveProjectedLinearAssets" is executed after the "linearAssets:update"
+    //it will update the mValues to the previous ones
+    eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
+
+    filledTopology
+  }
+
+  private def getPavingByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[PieceWiseLinearAsset] = {
+    val roadLinks: Seq[RoadLink] = roadLinksExist
+    val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     val existingAssets =
       withDynTransaction {
@@ -190,7 +240,7 @@ trait LinearAssetOperations {
     ) ++ newAndUpdatedPavingAssets
 
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
+      combinedAssets, assetsOnChangedLinks, changes)++ assetsWithoutChangedLinks
 
     val newAssets = newAndUpdatedPavingAssets.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId)) ++ filledNewAssets
 
@@ -211,7 +261,7 @@ trait LinearAssetOperations {
 
     //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "linearAssets:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
-    eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
+    eventBus.publish("linearAssets:saveProjectedLinearAssets", filledNewAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
 
     filledTopology
   }
