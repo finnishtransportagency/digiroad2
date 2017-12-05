@@ -140,7 +140,7 @@ trait LinearAssetOperations {
     */
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    getByRoadLinks(typeId, roadLinks, change)
+    if(typeId == LinearAssetTypes.PavingAssetTypeId) getPavingByRoadLinks(typeId, roadLinks, change) else getByRoadLinks(typeId, roadLinks, change)
   }
 
   def getLinearMiddlePointById(typeId: Int, assetId: Long): (Long, Option[Point])  = {
