@@ -452,7 +452,7 @@ _Ilmoitus, jos varattava tieosa ei ole voimassa p&auml;iv&auml;n&auml;, jolloin 
 10.1 Olemassa olevan tieosoiteprojektin avaaminen Tieosoiteprojektit -listalta
 --------------------------
 
-Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit -listalta painamalla Avaa -painiketta. Avaamisen yhteydess&auml; sovellus zoomaa kartan paikkaan, jonka k&auml;ytt&auml;j&auml; on viimeimm&auml;ksi tallentanut.
+Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit -listalta painamalla Avaa -painiketta. Avaamisen yhteydess&auml; sovellus zoomaa kartan paikkaan, jossa k&auml;ytt&auml;j&auml; on viimeimm&auml;ksi tallentanut toimenpiteen. Mik&auml;li toimenpiteit&auml; ei ole tehty, karttan&auml;kym&auml; rajautuu siten, ett&auml; kaikki varatut aihiot n&auml;kyv&auml;t karttan&auml;kym&auml;ss&auml;
 
 Tieosoiteprojektit -listalla n&auml;kyv&auml;t kaikkien k&auml;ytt&auml;jien projektit. Projektit on j&auml;rjestetty ELY-koodien mukaiseen j&auml;rjestykseen ja niiden sis&auml;ll&auml; projektin nimen ja k&auml;ytt&auml;j&auml;tunnuksen mukaiseen j&auml;rjestykseen. Projektin tekij&auml;n k&auml;ytt&auml;j&auml;tunnus n&auml;kyy my&ouml;s projektilistauksessa.
 
@@ -637,7 +637,9 @@ Muutosilmoitus vied&auml;&auml;n Tierekisteriin klikkaamalla oikean alakulman vi
 
 _Muutosilmoituspainike oikeassa alakulmassa._
 
-Kun muutosilmoitus on l&auml;hetetty, muuttuu projektilistauksessa ko. projektin Tila-tieto statukselle "L&auml;hetetty tierekisteriin". Viite-sovellus tarkistaa 10 minuutin v&auml;lein Tierekisterist&auml;, onko muutos k&auml;sitelty Tierekisteriss&auml; loppuun asti. Kun t&auml;m&auml; on tehty onnistuneesti, muuttuu Tila-tieto statukselle "Viety tierekisteriin". T&auml;ll&ouml;in tieosoiteprojekti on viety onnistuneesti Tierekisteriin, ja se on valmis. Mik&auml;li muutosilmoitus ei ole mennyt l&auml;pi tierekisteriin, lukee tilana "Virhe tierekisteriss&auml;" ja listalla on oranssi painike "Avaa uudelleen". Tarkemmin virheen tiedot p&auml;&auml;see tarkistamaan viem&auml;ll&auml; hiiren "Virhe tierekisteriss&auml;" -tekstin p&auml;&auml;lle, jolloin infolaatikko virheest&auml; tulee n&auml;kyviin. 
+Kun muutosilmoitus on l&auml;hetetty, muuttuu projektilistauksessa ko. projektin Tila-tieto statukselle "L&auml;hetetty tierekisteriin". Viite-sovellus tarkistaa 10 minuutin v&auml;lein Tierekisterist&auml;, onko muutos k&auml;sitelty Tierekisteriss&auml; loppuun asti. Kun t&auml;m&auml; on tehty onnistuneesti, muuttuu Tila-tieto statukselle "Viety tierekisteriin". T&auml;ll&ouml;in tieosoiteprojekti on viety onnistuneesti Tierekisteriin, ja se on valmis. Mik&auml;li muutosilmoitus ei ole mennyt l&auml;pi tierekisteriin, lukee tilana "Virhe tierekisteriss&auml;" ja listalla on oranssi painike "Avaa uudelleen". Tarkemmin virheen tiedot p&auml;&auml;see tarkistamaan viem&auml;ll&auml; hiiren "Virhe tierekisteriss&auml;" -tekstin p&auml;&auml;lle, jolloin infolaatikko virheest&auml; tulee n&auml;kyviin. Virhe korjataan avaamalla projekti oranssista painikkeesta ja tekem&auml;ll&auml; tarvittavat muokkaukset sek&auml; l&auml;hett&auml;m&auml;ll&auml; ilmoitukset uudelleen tierekisteriin.  
+
+Projektia ei voi muokata, kun sen tila on joko L&auml;hetetty tierekisteriin, Tierekisteriss&auml; k&auml;sittelyss&auml; tai Viety tiereksiteriin.
 
 ![Tila-statuksia](k39.JPG)
 
