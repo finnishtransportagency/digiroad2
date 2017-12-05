@@ -607,13 +607,14 @@ object ProjectDAO {
   }
 
 
-  def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress) = {
+  def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true) = {
+    val updateGeometry = if(updateGeom) s" ,GEOMETRY = '${toGeomString(roadAddress.geometry)}'" else s""
+
     val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, " +
       s" ROAD_PART_NUMBER = ${roadAddress.roadPartNumber}, TRACK_CODE = ${roadAddress.track.value}, " +
       s" DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ROAD_TYPE = ${roadAddress.roadType.value}, " +
       s" STATUS = ${LinkStatus.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue}, " +
-      s" CALIBRATION_POINTS = ${CalibrationCode.getFromAddress(roadAddress).value}, CONNECTED_LINK_ID = null, REVERSED = 0, " +
-      s" GEOMETRY = '${toGeomString(roadAddress.geometry)}'" +
+      s" CALIBRATION_POINTS = ${CalibrationCode.getFromAddress(roadAddress).value}, CONNECTED_LINK_ID = null, REVERSED = 0 $updateGeometry" +
       s" WHERE ROAD_ADDRESS_ID = ${roadAddress.id} AND PROJECT_ID = $projectId"
     Q.updateNA(updateProjectLink).execute
 
