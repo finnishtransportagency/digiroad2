@@ -390,6 +390,12 @@ class AssetDataImporter {
       else
         (address._15, address._16, address._13, address._14)
 
+      println(s"lrmid: $lrmId")
+      println(s"linkid: ${linkIdMapping.getOrElse(pos.linkId, pos.linkId)}")
+      println(s"sideCode: $sideCode")
+      println(s"startM: ${pos.startM}")
+      println(s"endM: ${pos.endM}")
+
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
       lrmPositionPS.setLong(3, sideCode)
