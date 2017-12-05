@@ -290,7 +290,6 @@ class AssetDataImporter {
       lrmPos.map(lrm => lrm.copy(startM = lrm.startM * coefficient, endM = lrm.endM * coefficient))
     }
     val roads = conversionDatabase.withDynSession {
-      if (importOptions.onlyComplementaryLinks)
         sql"""select linkid, alku, loppu,
             tie, aosa, ajr,
             ely, tietyyppi,
@@ -298,16 +297,7 @@ class AssetDataImporter {
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
             alkux, alkuy, loppux, loppuy
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
-      else
-        sql"""select linkid, alku, loppu,
-            tie, aosa, ajr,
-            ely, tietyyppi,
-            jatkuu, aet, let,
-            TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
-            kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
-            alkux, alkuy, loppux, loppuy
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely and loppupvm <= '2017-11-19'""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
     }
 
     print(s"\n${DateTime.now()} - ")
@@ -319,7 +309,7 @@ class AssetDataImporter {
     println("Total of %d link ids".format(lrmList.keys.size))
     val linkIdSet = lrmList.keys.toSet // Mapping LinkId -> Id
 
-    val vvhRoadLinkClient = if (importOptions.useFrozenLinkService) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
+    //val vvhRoadLinkClient = if (importOptions.useFrozenLinkService) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
     val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
       // DEV complementary link load
       if (importOptions.onlyComplementaryLinks)
@@ -328,7 +318,7 @@ class AssetDataImporter {
       else {
         // If in production or QA environment -> load complementary links, too
         if (vvhClientProd.isEmpty)
-          vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
+          vvhClient.roadLinkData.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
         else
         // If in DEV environment -> don't load complementary links at this stage (no data for them)
           vvhClientProd.get.roadLinkData.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchByLinkIds(group)

@@ -101,7 +101,7 @@ object DataFixture {
     } else {
       println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
       val vvhClientProd = if (isDevDatabase) {
-        Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+        Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH_TEST/")))
       } else {
         None
       }
@@ -109,7 +109,7 @@ object DataFixture {
         onlyComplementaryLinks = false,
         useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
         geometryAdjustedTimeStamp.toLong)
-      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
+      dataImporter.importRoadAddressHistory(Conversion.database(), vvhClient, vvhClientProd, importOptions)
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
@@ -362,7 +362,7 @@ object DataFixture {
         updateProjectLinkGeom()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
-      case Some("import_road_addresses_history") =>
+      case Some("import_road_address_history") =>
         importRoadAddressesHistory(username.startsWith("dr2dev") || username.startsWith("dr2test"))
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
