@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.util
 
+import java.text.DecimalFormat
 import java.util.Properties
 import javax.sql.DataSource
 
@@ -28,6 +29,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 import scala.collection.mutable
+import scala.math.BigDecimal.RoundingMode
 
 object
 AssetDataImporter {
@@ -376,6 +378,7 @@ class AssetDataImporter {
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmPositions.size}""".as[Long].list
+    val df = new DecimalFormat("#.###")
     assert(ids.size == lrmPositions.size || lrmPositions.isEmpty)
     lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
       assert(addressList.get(pos.id).size == 1)
@@ -393,14 +396,14 @@ class AssetDataImporter {
       println(s"lrmid: $lrmId")
       println(s"linkid: ${linkIdMapping.getOrElse(pos.linkId, pos.linkId)}")
       println(s"sideCode: $sideCode")
-      println(s"startM: ${pos.startM}")
-      println(s"endM: ${math.rint(pos.endM * 1000) / 1000}")
+      println(s"startM: ${df.format(pos.startM)}")
+      println(s"endM: ${df.format(pos.endM)}")
 
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
       lrmPositionPS.setLong(3, sideCode)
-      lrmPositionPS.setDouble(4, math.rint(pos.startM * 1000) / 1000)
-      lrmPositionPS.setDouble(5, math.rint(pos.endM * 1000) / 1000)
+      lrmPositionPS.setDouble(4, df.format(pos.startM).toDouble)
+      lrmPositionPS.setDouble(5, df.format(pos.endM).toDouble)
       lrmPositionPS.addBatch()
       addressPS.setLong(1, lrmId)
       addressPS.setLong(2, address._1)
