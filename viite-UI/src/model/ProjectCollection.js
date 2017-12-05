@@ -139,7 +139,7 @@
         additionalInfo: data[2].value,
         roadPartList: _.map(self.getAllReservedParts(), function(part){
           return {
-            discontinuity: (part.newDiscontinuity ? part.newDiscontinuity: part.discontinuity),
+            discontinuity: (part.newDiscontinuity ? part.newDiscontinuity: part.currentDiscontinuity),
             ely: (part.newEly ? part.newEly: part.currentEly),
             roadLength: (part.newLength ? part.newLength: part.currentLength),
             roadNumber: part.roadNumber,
@@ -444,7 +444,7 @@
             addSmallLabelWithIds(row.roadNumber,'reservedRoadNumber') +
             addSmallLabelWithIds(row.roadPartNumber, 'reservedRoadPartNumber') +
             addSmallLabelWithIds((row.newLength ? row.newLength : row.currentLength), 'reservedRoadLength') +
-            addSmallLabelWithIds((row.newDiscontinuity ? row.newDiscontinuity : row.discontinuity), 'reservedDiscontinuity') +
+            addSmallLabelWithIds((row.newDiscontinuity ? row.newDiscontinuity : row.currentDiscontinuity), 'reservedDiscontinuity') +
             addSmallLabelWithIds((row.newEly ? row.newEly : row.currentEly), 'reservedEly') +'</div>';
         }
       );
@@ -502,7 +502,7 @@
 
     this.setReservedParts = function (list) {
       var reservedAndNew = _.groupBy(list, function (part) {
-        return (_.isUndefined(part.currentLength) && _.isUndefined(part.currentEly) && _.isUndefined(part.discontinuity));
+        return (_.isUndefined(part.currentLength) && _.isUndefined(part.currentEly) && _.isUndefined(part.currentDiscontinuity));
       });
       if (reservedAndNew.true) {
         newReservedParts = reservedAndNew.true;

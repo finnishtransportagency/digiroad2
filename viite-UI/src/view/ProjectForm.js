@@ -198,7 +198,7 @@
             addSmallLabel(line.roadNumber) +
             addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
             addSmallLabelWithIds((line.newLength ? line.newLength : line.currentLength), 'reservedRoadLength') +
-            addSmallLabelWithIds((line.newDiscontinuity ? line.newDiscontinuity : line.discontinuity), 'reservedDiscontinuity') +
+            addSmallLabelWithIds((line.newDiscontinuity ? line.newDiscontinuity : line.currentDiscontinuity), 'reservedDiscontinuity') +
             addSmallLabelWithIds((line.newEly ? line.newEly : line.currentEly), 'reservedEly') +
             '</div>';
         });
@@ -340,7 +340,7 @@
           var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
           currentReserved += '<div id="" class="form-reserved-roads-list">' + button +
             addSmallLabel(line.roadNumber) +
-            addSmallLabel(line.roadPartNumber) + addSmallLabel(line.currentLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.currentEly) +
+            addSmallLabel(line.roadPartNumber) + addSmallLabel(line.currentLength) + addSmallLabel(line.currentDiscontinuity) + addSmallLabel(line.currentEly) +
             '</div>';
         });
         _.each(projectCollection.getNewReservedParts(), function (line) {
