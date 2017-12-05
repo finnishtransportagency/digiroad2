@@ -103,6 +103,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     //TODO
   }
 
+  test("insert roadaddress overlapping history"){
+    runWithRollback {
+      val roadNumber = 1000
+      val roadPartNumber = 1
+      val linkId = 12346L
+      val startDate = Some(DateTime.parse("1901-01-01"))
+      val endDate = Some(DateTime.parse("1920-01-01"))
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
+        startDate, endDate, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8))
+      val returns = RoadAddressDAO.create(ra)
+      val test = 0
+    }
+
+  }
+
+
   test("test getRoadLinkFromVVH should have specific fields (still to be defined) not empty"){
 
     OracleDatabase.withDynTransaction {
