@@ -92,6 +92,29 @@ object DataFixture {
     println()
   }
 
+  def importRoadAddressesHistory(isDevDatabase: Boolean): Unit = {
+    println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
+    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
+      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
+    } else {
+      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
+      val vvhClientProd = if (isDevDatabase) {
+        Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+      } else {
+        None
+      }
+      val importOptions = ImportOptions(
+        onlyComplementaryLinks = false,
+        useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
+        geometryAdjustedTimeStamp.toLong)
+      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
+    }
+    println(s"Road address import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def updateRoadAddressesValues(vVHClient: VVHClient): Unit = {
     println(s"\nStarting road address update values from conversion at time: ${DateTime.now()}")
     dataImporter.updateRoadAddressesValues(Conversion.database(), vvhClient)
@@ -339,6 +362,8 @@ object DataFixture {
         updateProjectLinkGeom()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
+      case Some("import_road_addresses_history") =>
+        importRoadAddressesHistory(username.startsWith("dr2dev") || username.startsWith("dr2test"))
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+
