@@ -312,6 +312,25 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
+  test("create and delete project") {
+    var count = 0
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
+      val project = projectService.createRoadLinkProject(roadAddressProject)
+      mockForProject(project.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(roadAddressProject)))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 5, 203, 0.0, 0L, Continuous, 8L, None, None, None, true))))
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be(count)
+      projectService.deleteProject(project.id)
+      val projectsAfterOperations = projectService.getRoadAddressAllProjects()
+      projectsAfterOperations.size should be(count)
+      projectsAfterOperations.exists(_.id == project.id) should be (true)
+      projectsAfterOperations.find(_.id == project.id).get.status should be (ProjectState.Deleted)
+    }
+  }
+
   test("Unchanged with termination test, repreats termination update, checks calibration points are cleared and moved to correct positions") {
     var count = 0
     val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))

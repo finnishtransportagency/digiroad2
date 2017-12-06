@@ -618,6 +618,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Delete road link project, if it exists and the state is Incomplete
+    *
+    * @param projectId Id of the project to delete
+    * @return boolean that confirms if the project is deleted
+    */
+  def deleteProject(projectId : Long) = {
+    withDynTransaction {
+      val project = ProjectDAO.getRoadAddressProjectById(projectId)
+      val canBeDeleted = projectId != 0 && project.isDefined && project.get.status == ProjectState.Incomplete
+      if(canBeDeleted) {
+        ProjectDAO.removeProjectLinksByProject(projectId)
+        ProjectDAO.removeReservedRoadPartsByProject(projectId)
+        RoadAddressChangesDAO.clearRoadChangeTable(projectId)
+        ProjectDAO.updateProjectStatus(projectId, ProjectState.Deleted)
+        ProjectDAO.updateProjectStateInfo(ProjectState.Deleted.description, projectId)
+      }
+      canBeDeleted
+    }
+  }
+
   def createRoadLinkProject(roadAddressProject: RoadAddressProject): RoadAddressProject = {
     if (roadAddressProject.id != 0)
       throw new IllegalArgumentException(s"Road address project to create has an id ${roadAddressProject.id}")
@@ -875,7 +896,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) => ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = mod.geometry))
-        case None => ProjectDAO.updateProjectLinkValues(projectId, ra)
+        case None => ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
       })
     if (recalculate)
       recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
@@ -960,7 +981,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def resetLinkValues(toReset: Seq[ProjectLink]) = {
       RoadAddressDAO.queryById(toReset.map(_.roadAddressId).toSet).foreach(ra =>
-        ProjectDAO.updateProjectLinkValues(projectId, ra))
+        ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false))
     }
 
     try {

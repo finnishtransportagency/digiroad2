@@ -414,6 +414,20 @@
       });
     };
 
+    this.deleteProject = function(projectId){
+      backend.deleteRoadAddressProject(projectId, function (result) {
+        if (result.success) {
+          dirtyRoadPartList = [];
+          currentProject = [];
+        }
+        else {
+          eventbus.trigger('roadAddress:projectDeleteFailed', result.errorMessage);
+        }
+      }, function () {
+        eventbus.trigger('roadAddress:projectFailed');
+      });
+    };
+
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
       var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});

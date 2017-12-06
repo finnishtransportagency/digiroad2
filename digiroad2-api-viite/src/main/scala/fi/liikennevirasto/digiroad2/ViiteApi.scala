@@ -268,6 +268,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  delete("/roadlinks/roadaddress/project"){
+    val projectId = parsedBody.extract[Long]
+    try {
+        if (projectService.deleteProject(projectId)) {
+          Map("success" -> true)
+        }
+        else {
+          Map("success" -> false, "errorMessage" -> "Projekti ei ole vielä luotu")
+        }
+    }
+    catch {
+      case ex: Exception => Map("success" -> false, "errorMessage" -> ex.getMessage)
+    }
+  }
+
   post("/roadlinks/roadaddress/project/sendToTR") {
     val projectId = (parsedBody \ "projectID").extract[Long]
 
