@@ -1192,10 +1192,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     if (!user.isServiceRoadMaintainer() && !user.isOperator)
       halt(Unauthorized("User is not authorized to alter serviceroad assets"))
-      val (id, pointInfo) = service.getLinearMiddlePointById(typeId, params("id").toLong)
+      val (id, pointInfo, source) = service.getLinearMiddlePointAndSourceById(typeId, params("id").toLong)
       pointInfo.map {
-        case middlePoint => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint)
-      }.getOrElse(Map("success:" ->false, "Reason"->"Id not found or invalid input"))
+        case middlePoint => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source)
+      }.getOrElse(Map("success" ->false, "Reason"->"Id not found or invalid input"))
   }
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {

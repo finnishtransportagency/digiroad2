@@ -158,12 +158,28 @@
           applicationModel.setSelectedTool('Select');
         }
         backend.getLinearAssetById(id, 'maintenanceRoad').then(function (result) {
-          eventbus.once('maintenanceRoads:fetched', function() {
-            var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
-            models.selectedMaintenanceRoad.open(linearAsset, true);
-            applicationModel.setSelectedTool('Select');
-          });
-          mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
+          if(result.success){
+            if(result.source === 1){
+              eventbus.once('maintenanceRoads:fetched', function() {
+                var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
+                models.selectedMaintenanceRoad.open(linearAsset, true);
+                applicationModel.setSelectedTool('Select');
+              });
+            }else if(result.source === 2){
+              eventbus.once('maintenanceRoads:fetched', function() {
+                eventbus.trigger('maintenanceRoadComplementaryCheckBox:check');
+                eventbus.trigger('complementaryLinks:show');
+                eventbus.once('maintenanceRoads:fetched', function(){
+                  var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
+                  if(linearAsset){
+                    models.selectedMaintenanceRoad.open(linearAsset, true);
+                    applicationModel.setSelectedTool('Select');
+                  }
+                });
+              });
+            }
+            mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
+          }
         });
       },
 
