@@ -393,11 +393,7 @@ class AssetDataImporter {
       else
         (address._15, address._16, address._13, address._14)
 
-      println(s"lrmid: $lrmId")
-      println(s"linkid: ${linkIdMapping.getOrElse(pos.linkId, pos.linkId)}")
-      println(s"sideCode: $sideCode")
-      println(s"startM: ${df.format(pos.startM).toDouble}")
-      println(s"endM: ${df.format(pos.endM).toDouble}")
+      println(s"insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values ($lrmId, ${linkIdMapping.getOrElse(pos.linkId, pos.linkId)}, $sideCode, ${df.format(pos.startM).toDouble}, ${df.format(pos.endM).toDouble});")
 
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
