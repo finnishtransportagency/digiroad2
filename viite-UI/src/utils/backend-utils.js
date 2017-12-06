@@ -6,9 +6,18 @@
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
-      return {
-        url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
-      };
+      var withHistory = params.withHistory;
+      var day = params.day;
+      var month = params.month;
+      var year = params.year;
+      if(!withHistory)
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+        };
+      else
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
+        };
     });
 
     this.abortLoadingProject=(function() {
@@ -264,6 +273,17 @@
       });
     };
 
+    this.getPreSplitedData = _.throttle(function(data, linkId, success, errorCallback){
+        $.ajax({
+          contentType: "application/json",
+          type: "PUT",
+          url: "api/viite/project/presplit/" + linkId,
+          data: JSON.stringify(data),
+          dataType: "json",
+          success: success,
+          error: errorCallback
+        });
+      }, 1000);
 
     this.saveProjectLinkSplit = _.throttle(function(data, linkId, success, errorCallback){
      $.ajax({
@@ -275,8 +295,7 @@
        success: success,
        error: errorCallback
      });
-    },
-      1000);
+    }, 1000);
 
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);

@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.viite.{ProjectService, RoadAddressLinkBuilder, RoadAddressService}
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
-import slick.jdbc.{StaticQuery => Q}
+import scala.language.postfixOps
 
 object DataFixture {
   val TestAssetId = 300000
