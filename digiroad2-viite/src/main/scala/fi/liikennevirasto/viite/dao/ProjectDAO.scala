@@ -449,9 +449,9 @@ object ProjectDAO {
   }
 
   def fetchReservedRoadParts(projectId: Long, filterNotStatus: Seq[Int] = Seq.empty[Int]): Seq[ReservedRoadPart] = {
-    val filter = if (filterNotStatus.nonEmpty) s""" And NOT EXISTS (
-           SELECT * FROM PROJECT_LINK pl WHERE pl.project_id = rp.PROJECT_ID AND
-           pl.ROAD_NUMBER = rp.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER AND STATUS IN (${filterNotStatus.mkString(" ,")}))
+    val filter = if (filterNotStatus.nonEmpty) s""" where NOT EXISTS (
+           SELECT * FROM PROJECT_LINK pl WHERE pl.project_id = gr.PROJECT_ID AND
+           pl.ROAD_NUMBER = gr.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER AND STATUS IN (${filterNotStatus.mkString(" ,")}))
       """
     else
       ""
@@ -465,7 +465,7 @@ object ProjectDAO {
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
           AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
           AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
-          AND END_ADDR_M = gr.length_new) as discontinuity_new,
+          AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl JOIN LRM_POSITION lrm ON (lrm.id = pl.LRM_POSITION_ID)
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
@@ -486,7 +486,7 @@ object ProjectDAO {
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
                 (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)))
               GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-              ) gr"""
+              ) gr $filter"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
       Option[Long], Option[Long])](sql).list.map {
       case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
@@ -506,7 +506,7 @@ object ProjectDAO {
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
           AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
           AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
-          AND END_ADDR_M = gr.length_new) as discontinuity_new,
+          AND END_ADDR_M = gr.length_new and ROWNUM < 2) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl JOIN LRM_POSITION lrm ON (lrm.id = pl.LRM_POSITION_ID)
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number

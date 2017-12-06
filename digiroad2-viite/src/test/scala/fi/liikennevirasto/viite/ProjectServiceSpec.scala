@@ -558,7 +558,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Validate road part dates with project date - startDate and endDate") {
     runWithRollback {
-      val projDate = DateTime.parse("2015-01-01")
+      val projDate = DateTime.parse("1990-01-01")
       val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val errorMsg = projectService.validateProjectDate(addresses, projDate)
       errorMsg should not be (None)
