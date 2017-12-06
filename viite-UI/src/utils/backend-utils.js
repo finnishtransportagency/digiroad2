@@ -6,9 +6,18 @@
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
-      return {
-        url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
-      };
+      var withHistory = params.withHistory;
+      var day = params.day;
+      var month = params.month;
+      var year = params.year;
+      if(!withHistory)
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+        };
+      else
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
+        };
     });
 
     this.abortLoadingProject=(function() {

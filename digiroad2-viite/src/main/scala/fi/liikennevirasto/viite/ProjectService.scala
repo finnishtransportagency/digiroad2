@@ -610,10 +610,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       addLinksToProject(roadAddressProject)
       val updatedProject = ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
       if (updatedProject.reservedParts.nonEmpty) {
-        ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = Some(ProjectDAO.getProjectLinks(roadAddressProject.id).head.ely)))
+        ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = ProjectDAO.getElyFromProjectLinks(roadAddressProject.id)))
       }
-      else
-        ProjectDAO.updateRoadAddressProject(roadAddressProject)
+      else //in empty case we release ely
+        ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = None))
       ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
     }
   }

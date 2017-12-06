@@ -104,6 +104,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val municipalities: Set[Int] = if (user.isViiteUser()) Set() else user.configuration.authorizedMunicipalities
 
     val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
+    val day = params.get("dd")
+    val month = params.get("mm")
+    val year = params.get("yyyy")
 
     params.get("bbox")
       .map(getRoadAddressLinks(municipalities, zoomLevel))
