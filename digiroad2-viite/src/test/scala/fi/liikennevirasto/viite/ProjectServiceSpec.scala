@@ -322,7 +322,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val project = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(project.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(roadAddressProject)))
-      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 5, 203, 0.0, 0L, Continuous, 8L, None, None, None, true))))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 5, 203, Some(100L), Some(Continuous), Some(8L), None, None, None, None))))
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
