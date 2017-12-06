@@ -600,7 +600,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val removed = storedProject.reservedParts.filterNot(part =>
         roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
           rp.roadNumber == part.roadNumber))
-      removed.foreach(p => releaseRoadPart(roadAddressProject.id, p.roadNumber, p.roadPartNumber, roadAddressProject.modifiedBy))
+      removed.foreach(p => ProjectDAO.removeReservedRoadPart(roadAddressProject.id, p))
       addLinksToProject(roadAddressProject)
       val updatedProject = ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
       if (updatedProject.reservedParts.nonEmpty) {
@@ -933,7 +933,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def releaseRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, userName: String) = {
-    if (ProjectDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber).nonEmpty) {
+    if (ProjectDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber).isEmpty) {
       val part = ProjectDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).get
       ProjectDAO.removeReservedRoadPart(projectId, part)
     } else {
