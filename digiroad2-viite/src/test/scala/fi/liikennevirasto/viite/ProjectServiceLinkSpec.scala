@@ -1369,7 +1369,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("Reserve road part, renumber it and revert it; reservation should be freed") {
+    sql"""delete from project_link"""
+    sql"""delete from project_reserved_road_part"""
+    sql"""delete from project"""
     runWithRollback {
+      reset(mockRoadLinkService)
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 201, false).sortBy(_.startAddrMValue)
       val reservedRoadPart = ReservedRoadPart(addresses.head.id, addresses.head.roadNumber, addresses.head.roadPartNumber,
         Some(addresses.last.endAddrMValue), Some(addresses.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
