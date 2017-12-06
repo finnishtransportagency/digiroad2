@@ -843,9 +843,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Check for new roadaddress reservation") {
     var count = 0
     runWithRollback {
-      sqlu"""delete from project_link""".execute
-      sqlu"""delete from project_reserved_road_part""".execute
-      sqlu"""delete from project""".execute
       reset(mockRoadLinkService)
       val roadlink = RoadLink(12345L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -864,7 +861,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       project.head.name should be("TestProject")
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects().size should be(count)
+      projectService.getRoadAddressAllProjects().size should be(count - 1)
     }
   }
 

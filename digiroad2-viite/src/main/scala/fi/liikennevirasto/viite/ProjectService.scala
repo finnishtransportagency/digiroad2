@@ -933,14 +933,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def releaseRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, userName: String) = {
-    if (ProjectDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber).isEmpty) {
+    if (ProjectDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber).nonEmpty) {
       val part = ProjectDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).get
       ProjectDAO.removeReservedRoadPart(projectId, part)
     } else {
       val links = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
       val part = ProjectDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).get
       revertLinks(links, userName)
-      ProjectDAO.removeReservedRoadPart(projectId, part)
     }
   }
 
