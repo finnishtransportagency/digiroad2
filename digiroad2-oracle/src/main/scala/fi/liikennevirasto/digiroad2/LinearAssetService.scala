@@ -164,15 +164,10 @@ trait LinearAssetOperations {
 
   protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
-    val timing = System.currentTimeMillis
     val linkIds = roadLinks.map(_.linkId)
-
-    val mappedChanges = (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
-      .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
+    val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
 
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-
-    logger.info("Finnish delete road links at %d ms after start".format(System.currentTimeMillis - timing))
 
     val existingAssets =
       withDynTransaction {
@@ -186,7 +181,7 @@ trait LinearAssetOperations {
         }
       }.filterNot(_.expired)
 
-    logger.info("Finnish fetch from database at %d ms after start".format(System.currentTimeMillis - timing))
+    val timing = System.currentTimeMillis
 
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
@@ -201,7 +196,7 @@ trait LinearAssetOperations {
     if (newAssets.nonEmpty) {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
-    val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
+    val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
 
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
@@ -212,8 +207,6 @@ trait LinearAssetOperations {
     //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "linearAssets:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
     eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
-
-    logger.info("Finnish get asset roadLinks at %d ms after start".format(System.currentTimeMillis - timing))
 
     filledTopology
   }
