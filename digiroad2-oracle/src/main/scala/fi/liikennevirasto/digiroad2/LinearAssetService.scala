@@ -156,6 +156,20 @@ trait LinearAssetOperations {
     (assetId, middePoint)
   }
 
+  def getLinearMiddlePointAndSourceById(typeId: Int, assetId: Long): (Long, Option[Point], Option[Int])  = {
+    val optLrmInfo = withDynTransaction {
+      dao.getAssetLrmPosition(typeId, assetId)
+    }
+    val roadLinks: Option[RoadLinkLike] = optLrmInfo.flatMap( x => roadLinkService.getRoadLinkAndComplementaryFromVVH(x._1))
+
+    val (middlePoint, source) = (optLrmInfo, roadLinks) match {
+      case (Some(lrmInfo), Some(road)) =>
+        (GeometryUtils.calculatePointFromLinearReference(road.geometry, lrmInfo._2 + (lrmInfo._3 - lrmInfo._2) / 2.0), Some(road.linkSource.value))
+      case _ => (None, None)
+    }
+    (assetId, middlePoint, source)
+  }
+
   protected def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String,List[Long]]]
 
   def getUnverifiedLinearAssets(assetTypeId: Int): Map[String, Map[String,List[Long]]] = {

@@ -36,18 +36,7 @@
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
         'trafficSigns/:id': 'trafficSigns',
         'maintenanceRoad/:linkId': 'maintenanceRoad',
-        ':totalWeightLimit/:id': 'linearCentering',
-        ':trailerTruckWeightLimit/:id': 'linearCentering',
-        ':axleWeightLimit/:id': 'linearCentering',
-        ':bogieWeightLimit/:id': 'linearCentering',
-        ':heightLimit/:id': 'linearCentering',
-        ':lengthLimit/:id': 'linearCentering',
-        ':widthLimit/:id': 'linearCentering',
-        ':width/:id': 'linearCentering',
-        ':numberOfLanes/:id': 'linearCentering',
-        ':massTransitLane/:id': 'linearCentering',
-        ':prohibition/:id': 'linearCentering',
-        ':hazardousMaterialTransportProhibition/:id': 'linearCentering',
+        ':layerName/verification/:assetId': 'linearCentering',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -56,7 +45,7 @@
         'work-list/obstacles': 'obstacleWorkList',
         'work-list/railwayCrossings': 'railwayCrossingWorkList',
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
-        'work-list/trafficSigns': 'trafficSigntWorkList',
+        'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'verification-list/:layerName/:typeId': 'unverifiedLinearAssetWorkList'
       },
@@ -72,12 +61,30 @@
           applicationModel.setSelectedTool('Select');
         }
         backend.getLinearAssetMidPoint(typeId, id).then(function (result) {
-          eventbus.once(multiElementEvent + ':fetched', function() {
-            var linearAsset = selectedLinearAsset.getLinearAsset(result.id);
-            selectedLinearAsset.open(linearAsset, true);
-            applicationModel.setSelectedTool('Select');
-          });
-          mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
+          if(result.success){
+            if(result.source === 1){
+              eventbus.once(multiElementEvent + ':fetched', function() {
+                var linearAsset = selectedLinearAsset.getLinearAsset(result.id);
+                if (linearAsset) {
+                  selectedLinearAsset.open(linearAsset, true);
+                  applicationModel.setSelectedTool('Select');
+                }
+              });
+            }else if(result.source === 2) {
+              eventbus.once(multiElementEvent + ':fetched', function () {
+                eventbus.trigger(layerName + ':checkComplementaryLinkCheckBox');
+                eventbus.trigger('complementaryLinks:show');
+                eventbus.once(multiElementEvent + ':fetched', function () {
+                  var linearAsset = selectedLinearAsset.getLinearAsset(result.id);
+                  if (linearAsset) {
+                    selectedLinearAsset.open(linearAsset, true);
+                    applicationModel.setSelectedTool('Select');
+                  }
+                });
+              });
+            }
+            mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
+          }
         });
       },
 

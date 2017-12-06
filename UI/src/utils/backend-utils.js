@@ -398,7 +398,7 @@
     };
 
     this.getUnverifiedLinearAssets = function(typeId) {
-      return $.getJSON('api/linearassets/unverified?assetType=' + typeId);
+      return $.getJSON('api/linearassets/unverified?typeId=' + typeId);
     };
 
     this.getLinearAssetMidPoint = latestResponseRequestor(function(typeId, id){

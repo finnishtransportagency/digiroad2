@@ -821,7 +821,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/linearassets/unverified"){
-    val assetTypeId = params.get("assetType")
+    val assetTypeId = params.get("typeId")
     //dummy
     val municipalitySet: Map[String, Map[String ,List[Long]]] =
       Map(
@@ -829,7 +829,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                                   "Private" -> List(622702)),
 
       "Municipality2" -> Map("Unknown" -> List(616073),
-                             "Private" -> List(622695),
+                             "Private" -> List(623367),
                              "State" -> List(622686)))
     municipalitySet
   }
@@ -837,10 +837,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/linearassets/midpoint"){
     val typeId = params("typeId").toInt
     val service = getLinearAssetService(typeId)
-    val (id, pointInfo) = service.getLinearMiddlePointById(typeId, params("id").toLong)
+    val (id, pointInfo, source) = service.getLinearMiddlePointAndSourceById(typeId, params("id").toLong)
     pointInfo.map {
-      case middlePoint => Map("success" -> true, "id" -> id, "middlePoint" -> middlePoint)
-    }.getOrElse(Map("success" -> false, "Reason" -> "Id not found or invalid input"))
+      case middlePoint => Map("success" -> true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source)}
+      .getOrElse(Map("success" -> false, "Reason" -> "Id not found or invalid input"))
   }
 
   delete("/linearassets") {
