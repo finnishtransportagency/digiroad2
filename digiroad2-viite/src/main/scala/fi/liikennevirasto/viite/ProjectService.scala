@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.LinkStatus.{Unknown => _, apply => _, _}
 import fi.liikennevirasto.viite.dao.ProjectState._
@@ -1482,6 +1483,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getProjectEly(projectId: Long): Option[Long] = {
     ProjectDAO.getProjectEly(projectId)
+  }
+
+  def validateProjectById(projectId: Long): Seq[ValidationErrorDetails] = {
+    withDynSession {
+      validator.validateProject(ProjectDAO.getRoadAddressProjectById(projectId).get, ProjectDAO.getProjectLinks(projectId))
+    }
   }
 
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])

@@ -445,7 +445,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong
-    projectService.getChangeProject(projectId).map(project =>
+    val changeTableData = projectService.getChangeProject(projectId).map(project =>
       Map(
         "id" -> project.id,
         "ely" -> project.ely,
@@ -457,6 +457,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
             "target" -> changeInfo.target, "reversed"-> changeInfo.reversed)))
     ).getOrElse(None)
+    Map("changeTable" -> changeTableData, "validationErrors" -> projectService.validateProjectById(projectId).map(issue => {
+      Map(
+       "id" -> issue.projectId,
+        "validationError" -> issue.validationError.value,
+        "affectedLinkIds" -> issue.affectedLinkIds.toArray,
+        "coordinates" -> issue.coordinates.map(coords => {
+          Map("linkId" -> coords._1, "ProjectCoordinates" -> Map("x" -> coords._2.x, "y" -> coords._2.y, "zoom" -> coords._2.zoom))
+        }),
+        "optionalInformation" -> issue.optionalInformation.getOrElse("")
+      )
+    }))
   }
 
 
