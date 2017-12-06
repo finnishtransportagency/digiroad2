@@ -1369,9 +1369,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("Reserve road part, renumber it and revert it; reservation should be freed") {
-    sql"""delete from project_link"""
-    sql"""delete from project_reserved_road_part"""
-    sql"""delete from project"""
     runWithRollback {
       reset(mockRoadLinkService)
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 201, false).sortBy(_.startAddrMValue)
