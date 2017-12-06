@@ -731,11 +731,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def reservedRoadPartToApi(reservedRoadPart: ReservedRoadPart): Map[String, Any] = {
     Map("roadNumber" -> reservedRoadPart.roadNumber,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
-      "roadPartId" -> reservedRoadPart.id,
-      "ely" -> reservedRoadPart.ely,
-      "roadLength" -> reservedRoadPart.roadLength,
-      "addressLength" -> reservedRoadPart.addressLength,
-      "discontinuity" -> reservedRoadPart.discontinuity.description,
+      "id" -> reservedRoadPart.id,
+      "currentEly" -> reservedRoadPart.ely,
+      "currentLength" -> reservedRoadPart.addressLength,
+      "currentDiscontinuity" -> reservedRoadPart.discontinuity.map(_.description),
+      "newEly" -> reservedRoadPart.newEly,
+      "newLength" -> reservedRoadPart.newLength,
+      "newDiscontinuity" -> reservedRoadPart.newDiscontinuity.map(_.description),
       "linkId" -> reservedRoadPart.startingLinkId,
       "isDirty" -> reservedRoadPart.isDirty
     )
@@ -856,6 +858,7 @@ object ProjectConverter {
 
   def toReservedRoadPart(rp: RoadPartExtractor): ReservedRoadPart = {
     ReservedRoadPart(0L, rp.roadNumber, rp.roadPartNumber,
-      0.0, 0L, Discontinuity.Continuous, rp.ely, None, None, None, false)
+      None, None, Some(rp.ely),
+      None, None, None, None, false)
   }
 }
