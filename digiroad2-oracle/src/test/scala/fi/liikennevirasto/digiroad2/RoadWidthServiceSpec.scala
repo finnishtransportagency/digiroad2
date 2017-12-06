@@ -285,8 +285,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       RoadLink(linkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))),
       RoadLink(linkId2, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
 
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
-
     OracleDatabase.withDynTransaction {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, Nil))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
@@ -298,7 +296,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
       unVerifiedAssets.flatMap(_._2).keys.head should be("235")
       unVerifiedAssets.flatMap(_._2).values.head should be(newAssets1)
-      unVerifiedAssets.flatMap(_._2).values.head should not be (newAssets2)
+      unVerifiedAssets.flatMap(_._2).values.head should not be newAssets2
       dynamicSession.rollback()
     }
   }

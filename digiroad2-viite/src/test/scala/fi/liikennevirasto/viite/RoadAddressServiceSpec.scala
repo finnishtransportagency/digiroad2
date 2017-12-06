@@ -103,7 +103,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     //TODO
   }
 
-  test("test getRoadLinkFromVVH should have specific fields (still to be defined) not empty"){
+  test("test getRoadLinkByLinkIdFromVVH should have specific fields (still to be defined) not empty"){
 
     OracleDatabase.withDynTransaction {
 

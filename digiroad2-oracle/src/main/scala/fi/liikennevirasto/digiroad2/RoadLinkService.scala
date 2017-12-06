@@ -67,24 +67,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  /**
-    * ATENTION Use this method always with transation not with session
-    * This method returns a road link by link id.
-    *
-    * @param linkId
-    * @param newTransaction
-    * @return Road link
-    */
-  def getRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
-    val vvhRoadLinks = fetchVVHRoadlinks(Set(linkId))
-    if (newTransaction)
-      withDynTransaction {
-        enrichRoadLinksFromVVH(vvhRoadLinks)
-      }.headOption
-    else
-      enrichRoadLinksFromVVH(vvhRoadLinks).headOption
-  }
-
   def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksAndComplementariesFromVVH(Set(linkId), newTransaction: Boolean).headOption
 
   def getRoadLinksAndComplementariesFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
@@ -95,16 +77,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     else
         enrichRoadLinksFromVVH(vvhRoadLinks)
-  }
-
-  def getComplementaryRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
-    val vvhRoadLinks = fetchVVHComplementaryRoadlinks(Set(linkId))
-    if (newTransaction)
-      withDynTransaction {
-        enrichRoadLinksFromVVH(vvhRoadLinks)
-      }.headOption
-    else
-      enrichRoadLinksFromVVH(vvhRoadLinks).headOption
   }
 
   /**
@@ -147,10 +119,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
-    *
     * @param linkIds
     * @return Road links
     */
+
   def getRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(linkIds)
     if (newTransaction)
@@ -160,6 +132,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else
       enrichRoadLinksFromVVH(vvhRoadLinks)
   }
+
+  def getRoadLinkByLinkIdFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksByLinkIdsFromVVH(Set(linkId), newTransaction: Boolean).headOption
 
   def getSuravageRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
     val vvhSuravageLinks = fetchSuravageLinksByLinkIdsFromVVH(linkIds)
@@ -181,22 +155,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  /**
-    * ATENTION Use this method always with transation not with session
-    * This method returns road links by link ids.
-    *
-    * @param linkIds
-    * @return Road links
-    */
-  def getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
-    val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(linkIds)
-    if (newTransaction)
-      withDynTransaction {
-        enrichRoadLinksFromVVH(vvhRoadLinks)
-      }
-    else
-      enrichRoadLinksFromVVH(vvhRoadLinks)
-  }
   /**
     * This method returns VVH road links that had changed between two dates.
     *

@@ -27,7 +27,7 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
         roadAddressDAO.getRoadAddress(roadAddressDAO.withBetweenDates(sinceDate, untilDate))
       }
 
-    val roadLinks = roadLinkServiceImplementation.getRoadLinksAndComplementaryByLinkIdsFromVVH(roadAddresses.map(_.linkId).toSet)
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksAndComplementariesFromVVH(roadAddresses.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
 
     roadAddresses.flatMap { roadAddress =>

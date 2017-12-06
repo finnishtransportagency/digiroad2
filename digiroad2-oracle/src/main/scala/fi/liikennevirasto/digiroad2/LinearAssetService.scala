@@ -165,7 +165,7 @@ trait LinearAssetOperations {
 
       val unVerifiedAssets = dao.getUnVerifiedLinearAsset(assetTypeId)
 
-       val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(unVerifiedAssets.map(_._2).toSet, false)
+       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unVerifiedAssets.map(_._2).toSet, false)
 
        unVerifiedAssets.map {
          case (id, linkId) => (id, roadLinks.find(_.linkId == linkId).getOrElse(throw new IllegalStateException("Road link no longer available")

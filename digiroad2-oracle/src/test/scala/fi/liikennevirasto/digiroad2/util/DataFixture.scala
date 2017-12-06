@@ -760,7 +760,7 @@ object DataFixture {
       persistedStop.foreach { stop =>
         val massTransitStopDirectionValue = stop.validityDirection
 
-        val roadLinkOfMassTransitStop = roadLinkService.getRoadLinkFromVVH(stop.linkId)
+        val roadLinkOfMassTransitStop = roadLinkService.getRoadLinkByLinkIdFromVVH(stop.linkId)
         val roadLinkDirectionValue = roadLinkOfMassTransitStop.map(rl => rl.trafficDirection).headOption
 
         roadLinkDirectionValue match {

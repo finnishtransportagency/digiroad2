@@ -73,7 +73,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     )).thenReturn((RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Right))
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
     vvhRoadLinks.foreach(rl =>
-      when(mockRoadLinkService.getRoadLinkFromVVH(rl.linkId, false))
+      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(rl.linkId, false))
         .thenReturn(Some(toRoadLink(rl))))
 //    when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
@@ -770,7 +770,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("vaikutussuunta", List(PropertyValue("2"))))
 
       val roadLink = RoadLink(123l, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
-      when(mockRoadLinkService.getRoadLinkFromVVH(123l)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(123l)).thenReturn(Some(roadLink))
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", roadLink)
 
       val newProperties = Set(
