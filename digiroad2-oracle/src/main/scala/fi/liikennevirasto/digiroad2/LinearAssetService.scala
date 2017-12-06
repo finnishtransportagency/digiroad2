@@ -165,7 +165,7 @@ trait LinearAssetOperations {
 
       val unVerifiedAssets = dao.getUnVerifiedLinearAsset(assetTypeId)
 
-       val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(unVerifiedAssets.map(_._2).toSet, false)
+       val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(unVerifiedAssets.map(_._2).toSet, false)
 
        unVerifiedAssets.map {
          case (id, linkId) => (id, roadLinks.find(_.linkId == linkId).getOrElse(throw new IllegalStateException("Road link no longer available")
@@ -180,7 +180,6 @@ trait LinearAssetOperations {
 
     if (!notVerifiedUser.contains(userName) && allowedAssetType.contains(assetType)) Some(userName) else None
   }
-
 
   protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
@@ -650,6 +649,7 @@ trait LinearAssetOperations {
     withDynTransaction {
       val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
       newLinearAssets.map { newAsset =>
+        val aaa = getVerifiedBy(username, typeId)
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }

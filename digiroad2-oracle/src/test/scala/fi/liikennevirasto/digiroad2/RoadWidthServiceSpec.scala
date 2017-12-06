@@ -54,8 +54,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   }
 
   private def createService() = {
-//    val mockVVHClient = MockitoSugar.mock[VVHClient]
-   // val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def vvhClient: VVHClient = mockVVHClient
@@ -241,18 +239,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val linkType = Freeway
     val service = createService()
 
-    //val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-//    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-//    val mockVVHClient = MockitoSugar.mock[VVHClient]
-//    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
-//    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-//    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-
-//    val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
-//      override def withDynTransaction[T](f: => T): T = f
-//      override def vvhClient: VVHClient = mockVVHClient
-//    }
-
     val roadLinks = Seq(
       RoadLink(linkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))),
       RoadLink(newLinkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
@@ -286,9 +272,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   }
 
   test("get unVerified road width assets") {
-    val oldLinkId1 = 5000
     val linkId1 = 5001
-    val newLinkId = 6000
+    val linkId2 = 5002
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -298,25 +283,23 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
     val roadLinks = Seq(
       RoadLink(linkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))),
-      RoadLink(newLinkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
+      RoadLink(linkId2, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
 
-    val changeInfo = Seq(
-      ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
-      ChangeInfo(Some(linkId1), Some(newLinkId), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
-    )
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
 
     OracleDatabase.withDynTransaction {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, Nil))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
-      val newAsset1 = NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)
-      val newAssets1 = service.create(Seq(newAsset1), RoadWidthAssetTypeId, "KX2")
-      val newAssets2 = service.create(Seq(NewLinearAsset(newLinkId, 40.0, 120, NumericValue(4779), 1, 234567, None)), 120, "KX2")
 
-      val unVerifiedAssets = service.getUnverifiedLinearAssets(120)
+      val newAssets1 = service.create(Seq(NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)), RoadWidthAssetTypeId, "dr1_conversion")
+      val newAssets2 = service.create(Seq(NewLinearAsset(linkId2, 40.0, 120, NumericValue(4779), 1, 234567, None)), RoadWidthAssetTypeId, "testuser")
+
+      val unVerifiedAssets = service.getUnverifiedLinearAssets(RoadWidthAssetTypeId)
+
       unVerifiedAssets.flatMap(_._2).keys.head should be("235")
       unVerifiedAssets.flatMap(_._2).values.head should be(newAssets1)
       unVerifiedAssets.flatMap(_._2).values.head should not be (newAssets2)
-
+      dynamicSession.rollback()
     }
   }
 
