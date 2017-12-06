@@ -396,8 +396,8 @@ class AssetDataImporter {
       println(s"lrmid: $lrmId")
       println(s"linkid: ${linkIdMapping.getOrElse(pos.linkId, pos.linkId)}")
       println(s"sideCode: $sideCode")
-      println(s"startM: ${df.format(pos.startM)}")
-      println(s"endM: ${df.format(pos.endM)}")
+      println(s"startM: ${df.format(pos.startM).toDouble}")
+      println(s"endM: ${df.format(pos.endM).toDouble}")
 
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
