@@ -35,8 +35,18 @@
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
     };
 
-    var titleWithProjectName = function (projectName) {
-      return '<span class ="edit-mode-title">' + projectName + '<button id="editProject_' + currentProject.id + '" ' +
+    var titleWithDeletingTool = function (projectName) {
+      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI  <button id="deleteProject_' + currentProject.id + '" ' +
+        'class="btn-delete-project" value="' + currentProject.id + '"></button></span>';
+      var toReturn = '<span class ="edit-mode-title">' + projectName + '</span>';
+      if(currentProject.statusCode === ProjectStatus.Incomplete.value)
+        return toReturn + deleteButtons;
+      else
+        return toReturn;
+    };
+
+    var titleWithEditingTool = function (projectName) {
+      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
@@ -87,7 +97,7 @@
     var openProjectTemplate = function (project, reservedRoads, newReservedRoads) {
       return _.template('' +
         '<header>' +
-        titleWithProjectName(project.name) +
+        titleWithDeletingTool(project.name) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -132,7 +142,7 @@
     var selectedProjectLinkTemplate = function (project) {
       return _.template('' +
         '<header>' +
-        titleWithProjectName(project.name) +
+        titleWithDeletingTool(project.name) +
         '</header>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
@@ -206,6 +216,9 @@
       };
 
       var toggleAditionalControls = function () {
+        rootElement.find('header').replaceWith('<header>' +
+        titleWithEditingTool(currentProject.name) +
+        '</header>');
         $('[id^=editProject]').css('visibility', 'visible');
         $('#closeProjectSpan').css('visibility', 'visible');
       };
@@ -216,6 +229,12 @@
           projectCollection.createProject(data, map.getView().getResolution());
         } else {
           projectCollection.saveProject(data, map.getView().getResolution());
+        }
+      };
+
+      var deleteProject = function() {
+        if(!_.isUndefined(currentProject) && currentProject.id !== 0){
+          projectCollection.deleteProject(currentProject.id);
         }
       };
 
@@ -544,6 +563,18 @@
         });
       };
 
+      var displayDeleteConfirmMessage= function (popupMessage) {
+        new GenericConfirmPopup(popupMessage, {
+          successCallback: function () {
+              deleteProject();
+              closeProjectMode(true);
+          },
+          closeCallback: function () {
+            closeProjectMode(true);
+          }
+        });
+      };
+
       var cancelChanges = function() {
           projectCollection.revertLinkStatus();
           projectCollection.setDirty([]);
@@ -593,6 +624,11 @@
       });
       rootElement.on('click', '#closeProjectSpan', function () {
         displayCloseConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true);
+      });
+
+      rootElement.on('click', '#deleteProjectSpan', function(){
+        //Insert the correct message for delete confirmation here!
+        displayDeleteConfirmMessage("Haluatko varmasti poistaa tämän projektin?", true);
       });
 
       rootElement.on('change', '.input-required', function () {

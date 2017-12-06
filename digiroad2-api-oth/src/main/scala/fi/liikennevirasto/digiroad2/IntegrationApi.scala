@@ -219,7 +219,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       typeId match {
         case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
         case LinearAssetTypes.PavingAssetTypeId => pavingService
-        case LinearAssetTypes.RoadWidthAssetTypeId => roadWidthService
+        case LinearAssetTypes.RoadWidthAssetTypeId => linearAssetService
         case _ => linearAssetService
       }
     }

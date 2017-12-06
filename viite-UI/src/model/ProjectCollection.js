@@ -294,7 +294,43 @@
       }
     };
 
-    this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
+    this.preSplitProjectLinks = function(suravage, nearestPoint){
+      applicationModel.addSpinner();
+      var form = $('#roadAddressProjectFormCut');
+      var linkId = suravage.linkId;
+      var projectId = projectinfo.id;
+      var coordinates = applicationModel.getUserGeoLocation();
+      var dataJson = {
+        splitPoint: {
+          x: nearestPoint.x,
+          y: nearestPoint.y
+        },
+        statusA: LinkStatus.Transfer.value,
+        statusB: LinkStatus.New.value,
+        roadNumber: suravage.roadNumber,
+        roadPartNumber: suravage.roadPartNumber,
+        trackCode: suravage.trackCode,
+        discontinuity: suravage.discontinuity,
+        ely: suravage.elyCode,
+        roadLinkSource: suravage.roadLinkSource,
+        roadType: suravage.roadTypeId,
+        projectId: projectId,
+        coordinates:coordinates
+      };
+      backend.getPreSplitedData(dataJson, linkId, function(successObject){
+        if (!successObject.success) {
+          new ModalConfirm(successObject.errorMessage);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('projectLink:preSplitSuccess', successObject.response);
+        }
+      }, function(failureObject){
+        eventbus.trigger('roadAddress:projectLinksUpdateFailed', INTERNAL_SERVER_ERROR_500);
+      });
+
+    };
+
+    this.saveCuttedProjectLinks = function(changedLinks, statusA, statusB){
       applicationModel.addSpinner();
       
       var linkId = Math.abs(changedLinks[0].linkId);
@@ -302,13 +338,19 @@
       var projectId = projectInfo.id;
       var form = $('#roadAddressProjectFormCut');
       var coordinates = applicationModel.getUserGeoLocation();
+      var objectA = _.find(LinkStatus, function(obj){
+        return obj.description === statusA;
+      });
+      var objectB = _.find(LinkStatus, function(obj){
+        return obj.description === statusB;
+      });
       var dataJson = {
         splitPoint: {
           x: Number(form.find('#splitx')[0].value),
           y: Number(form.find('#splity')[0].value)
         },
-        statusA: statusCodeA,
-        statusB: statusCodeB,
+        statusA: objectA.value,
+        statusB: objectB.value,
         roadNumber: Number(form.find('#tie')[0].value),
         roadPartNumber: Number(form.find('#osa')[0].value),
         trackCode: Number(form.find('#ajr')[0].value),
@@ -366,6 +408,20 @@
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
+        }
+      }, function () {
+        eventbus.trigger('roadAddress:projectFailed');
+      });
+    };
+
+    this.deleteProject = function(projectId){
+      backend.deleteRoadAddressProject(projectId, function (result) {
+        if (result.success) {
+          dirtyRoadPartList = [];
+          currentProject = [];
+        }
+        else {
+          eventbus.trigger('roadAddress:projectDeleteFailed', result.errorMessage);
         }
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');

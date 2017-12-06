@@ -315,6 +315,25 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
+  test("create and delete project") {
+    var count = 0
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
+      val project = projectService.createRoadLinkProject(roadAddressProject)
+      mockForProject(project.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(roadAddressProject)))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 5, 203, 0.0, 0L, Continuous, 8L, None, None, None, true))))
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be(count)
+      projectService.deleteProject(project.id)
+      val projectsAfterOperations = projectService.getRoadAddressAllProjects()
+      projectsAfterOperations.size should be(count)
+      projectsAfterOperations.exists(_.id == project.id) should be (true)
+      projectsAfterOperations.find(_.id == project.id).get.status should be (ProjectState.Deleted)
+    }
+  }
+
   test("Unchanged with termination test, repreats termination update, checks calibration points are cleared and moved to correct positions") {
     var count = 0
     val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
@@ -837,7 +856,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Project ELY -1 update when reserving roadpart") {
+  test("Project ELY -1 update when reserving roadpart and revert to -1 when all reserved roadparts are removed") {
     val projectIdNew = 0L
     val roadNumber = 1943845
     val roadPartNumber = 1
@@ -870,12 +889,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projupdated = projectService.saveProject(proj.copy(reservedParts = addresses))
       val updatedReturnProject = projectService.getRoadAddressSingleProject(proj.id).head
       updatedReturnProject.ely.getOrElse(-1) should be(8)
-      sqlu"""
-       update project set ely = null, modified_date = sysdate where id = ${proj.id}
-      """.execute
+      projectService.saveProject(proj.copy(ely = None)) //returns project to null
       val updatedReturnProject2 = projectService.getRoadAddressSingleProject(proj.id).head
-      projectService.saveProject(proj.copy(reservedParts = addresses))
       updatedReturnProject2.ely.getOrElse(-1) should be(-1)
+      projectService.saveProject(proj.copy(reservedParts = addresses))
       val updatedReturnProject3 = projectService.getRoadAddressSingleProject(proj.id).head
       updatedReturnProject3.ely.getOrElse(-1) should be(8)
     }
