@@ -104,6 +104,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val municipalities: Set[Int] = if (user.isViiteUser()) Set() else user.configuration.authorizedMunicipalities
 
     val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
+    val day = params.get("dd")
+    val month = params.get("mm")
+    val year = params.get("yyyy")
 
     params.get("bbox")
       .map(getRoadAddressLinks(municipalities, zoomLevel))
@@ -262,6 +265,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         BadRequest("Missing mandatory ProjectLink parameter")
       case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
       case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
+    }
+  }
+
+  delete("/roadlinks/roadaddress/project"){
+    val projectId = parsedBody.extract[Long]
+    try {
+        if (projectService.deleteProject(projectId)) {
+          Map("success" -> true)
+        }
+        else {
+          Map("success" -> false, "errorMessage" -> "Projekti ei ole vielä luotu")
+        }
+    }
+    catch {
+      case ex: Exception => Map("success" -> false, "errorMessage" -> ex.getMessage)
     }
   }
 

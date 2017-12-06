@@ -41,6 +41,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private val logger = LoggerFactory.getLogger(getClass)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
+  private def validator =  ProjectValidator
+
+
   private def withTiming[T](f: => T, s: String): T = {
     val startTime = System.currentTimeMillis()
     val t = f
@@ -615,6 +618,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Delete road link project, if it exists and the state is Incomplete
+    *
+    * @param projectId Id of the project to delete
+    * @return boolean that confirms if the project is deleted
+    */
+  def deleteProject(projectId : Long) = {
+    withDynTransaction {
+      val project = ProjectDAO.getRoadAddressProjectById(projectId)
+      val canBeDeleted = projectId != 0 && project.isDefined && project.get.status == ProjectState.Incomplete
+      if(canBeDeleted) {
+        ProjectDAO.removeProjectLinksByProject(projectId)
+        ProjectDAO.removeReservedRoadPartsByProject(projectId)
+        RoadAddressChangesDAO.clearRoadChangeTable(projectId)
+        ProjectDAO.updateProjectStatus(projectId, ProjectState.Deleted)
+        ProjectDAO.updateProjectStateInfo(ProjectState.Deleted.description, projectId)
+      }
+      canBeDeleted
+    }
+  }
+
   def createRoadLinkProject(roadAddressProject: RoadAddressProject): RoadAddressProject = {
     if (roadAddressProject.id != 0)
       throw new IllegalArgumentException(s"Road address project to create has an id ${roadAddressProject.id}")
@@ -872,7 +896,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) => ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = mod.geometry))
-        case None => ProjectDAO.updateProjectLinkValues(projectId, ra)
+        case None => ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
       })
     if (recalculate)
       recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
@@ -957,7 +981,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def resetLinkValues(toReset: Seq[ProjectLink]) = {
       RoadAddressDAO.queryById(toReset.map(_.roadAddressId).toSet).foreach(ra =>
-        ProjectDAO.updateProjectLinkValues(projectId, ra))
+        ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false))
     }
 
     try {
@@ -1491,6 +1515,70 @@ class ProjectValidationException(s: String) extends RuntimeException {
 
 class SplittingException(s: String) extends RuntimeException {
   override def getMessage: String = s
+}
+
+object ProjectValidator {
+
+  sealed trait ValidationError {
+    def value: Int
+    def message: String
+  }
+
+  object ValidationError {
+    val values = Set(minorDiscontinuityFound, majorDiscontinuityFound, insufficientTrackCoverage, discontinuousAddressScheme,
+      sharedLinkIdsExist, noContinuityCodesAtEnd, unsuccessfulRecalculation)
+    //There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
+    case object minorDiscontinuityFound extends ValidationError {def value = 0; def message = "<TO_BE_DETERMINED>"}
+    //There must be a major discontinuity if the jump is longer than 50 meters
+    case object majorDiscontinuityFound extends ValidationError {def value = 1;def message = "<TO_BE_DETERMINED>"}
+    //For every track 1 there must exist track 2 that covers the same address span and vice versa
+    case object insufficientTrackCoverage extends ValidationError {def value = 2;def message = "<TO_BE_DETERMINED>"}
+    //There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
+    case object discontinuousAddressScheme extends ValidationError {def value = 3;def message = "<TO_BE_DETERMINED>"}
+    //There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
+    case object sharedLinkIdsExist extends ValidationError {def value = 4;def message = "<TO_BE_DETERMINED>"}
+    //Continuity codes are given for end of road
+    case object noContinuityCodesAtEnd extends ValidationError {def value = 5;def message = "<TO_BE_DETERMINED>"}
+    //Recalculation of M values and delta calculation are both successful for every road part in project
+    case object unsuccessfulRecalculation extends ValidationError {def value = 6;def message = "<TO_BE_DETERMINED>"}
+    def apply(intValue: Int): ValidationError = {
+      values.find(_.value == intValue).get
+    }
+  }
+
+  case class ValidationErrorDetails(projectId: Long, validationError: ValidationError,
+                                    affectedLinkIds: Seq[Long], coordinates: Map[Long,ProjectCoordinates],
+                                    optionalInformation: Option[String])
+
+  def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation
+  }
+
+  private def checkProjectContinuity(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkProjectCoverage(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkProjectContinuousSchema(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkProjectSharedLinks(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkForContinuityCodes(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
+  private def checkForUnsuccessfulRecalculation(): Seq[ValidationErrorDetails] = {
+    Seq.empty[ValidationErrorDetails]
+  }
+
 }
 
 case class ProjectBoundingBoxResult(projectLinkResultF: Future[Map[Long, Seq[ProjectLink]]], roadLinkF: Future[Seq[RoadLink]],

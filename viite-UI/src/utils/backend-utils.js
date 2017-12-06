@@ -6,9 +6,18 @@
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
-      return {
-        url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
-      };
+      var withHistory = params.withHistory;
+      var day = params.day;
+      var month = params.month;
+      var year = params.year;
+      if(!withHistory)
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+        };
+      else
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
+        };
     });
 
     this.abortLoadingProject=(function() {
@@ -120,6 +129,18 @@
         error: failure
       });
     }, 1000);
+
+    this.deleteRoadAddressProject = _.throttle(function(projectId, success, failure){
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/viite/roadlinks/roadaddress/project",
+        data: JSON.stringify(projectId),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    });
 
     this.sendProjectToTR = _.throttle(function(projectID, success, failure) {
       var Json = {
