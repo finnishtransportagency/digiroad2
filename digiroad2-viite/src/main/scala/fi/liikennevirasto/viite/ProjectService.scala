@@ -1531,7 +1531,15 @@ object ProjectValidator {
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ mockUs574Errors
+  }
+
+  //TODO VIITE-574 once defined, remove this mocked UI response
+  private def mockUs574Errors(): Seq[ValidationErrorDetails] = {
+    Seq(
+//      ValidationErrorDetails()
+
+    )
   }
 
   private def checkProjectContinuity(): Seq[ValidationErrorDetails] = {
