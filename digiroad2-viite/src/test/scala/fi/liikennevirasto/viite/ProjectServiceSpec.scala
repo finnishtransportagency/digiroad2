@@ -315,25 +315,19 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("create and delete project") {
     var count = 0
     runWithRollback {
-      val roadlink = RoadLink(5175306, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-        InUse, NormalLinkInterface)
-      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadlink))
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
-      val id = 0
-      val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 203: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
-      val project = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
-      val roadAddressProject = projectService.createRoadLinkProject(project)
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
+      val project = projectService.createRoadLinkProject(roadAddressProject)
+      mockForProject(project.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(roadAddressProject)))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 5, 203, 0.0, 0L, Continuous, 8L, None, None, None, true))))
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
-      projectService.deleteProject(roadAddressProject.id)
+      projectService.deleteProject(project.id)
       val projectsAfterOperations = projectService.getRoadAddressAllProjects()
       projectsAfterOperations.size should be(count)
-      projectsAfterOperations.exists(_.id == roadAddressProject.id) should be (true)
-      projectsAfterOperations.find(_.id == roadAddressProject.id).get.status should be (ProjectState.Deleted)
-
+      projectsAfterOperations.exists(_.id == project.id) should be (true)
+      projectsAfterOperations.find(_.id == project.id).get.status should be (ProjectState.Deleted)
     }
   }
 
