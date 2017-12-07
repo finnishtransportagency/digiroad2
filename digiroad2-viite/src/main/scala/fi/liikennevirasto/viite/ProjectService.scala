@@ -1549,7 +1549,15 @@ object ProjectValidator {
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     checkProjectContinuity(projectLinks) ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ mockUs574Errors
+  }
+
+  //TODO VIITE-574 once defined, remove this mocked UI response
+  private def mockUs574Errors(): Seq[ValidationErrorDetails] = {
+    Seq(
+      ValidationErrorDetails(809783, ValidationError.minorDiscontinuityFound, Seq(5207535), Map[Long,ProjectCoordinates](999.toLong -> ProjectCoordinates(123456, 654321, 8)), Option[String]("")),
+      ValidationErrorDetails(809783, ValidationError.insufficientTrackCoverage, Seq(5207600), Map[Long,ProjectCoordinates](111.toLong -> ProjectCoordinates(123456, 654321, 8)), Option[String](""))
+    )
   }
 
 

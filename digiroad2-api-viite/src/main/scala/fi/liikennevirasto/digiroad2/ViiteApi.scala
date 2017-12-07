@@ -311,9 +311,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = projectService.getRoadAddressSingleProject(projectId, Seq(LinkStatus.Numbering)).get
     val projectMap = roadAddressProjectToApi(project)
     val parts = project.reservedParts.map(reservedRoadPartToApi)
+    //TODO get project.errorReservedParts
+    val errorParts = ProjectValidator.validateProject(project, Seq.empty[ProjectLink])
     val publishable = projectService.projectLinkPublishable(projectId)
     Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-      "projectLinks" -> parts, "publishable" -> publishable)
+      "projectLinks" -> parts, "publishable" -> publishable, "errorReservedParts" -> errorParts)
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/") {
