@@ -4,11 +4,11 @@
     var groupDiv = $('<div id="searchBox" class="panel-group search-box"/>');
     var coordinatesDiv = $('<div class="panel"/>');
     var coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" title="' + tooltip + '"/>');
-    var moveButton = $('<button class="btn btn-sm btn-primary">Hae</button>');
+    var moveButton = $('<button id="executeSearch" class="btn btn-sm btn-primary">Hae</button>');
     var panelHeader = $('<div class="panel-header"></div>').append(coordinatesText).append(moveButton);
     var searchResults = $('<ul id="search-results"></ul>');
     var resultsSection = $('<div class="panel-section"></div>').append(searchResults).hide();
-    var clearButton = $('<button class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
+    var clearButton = $('<button id="clearSearch" class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
     var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
 
     var setDateValue = function(date) {
