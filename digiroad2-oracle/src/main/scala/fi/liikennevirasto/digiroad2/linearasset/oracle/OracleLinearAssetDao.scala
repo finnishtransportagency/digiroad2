@@ -296,7 +296,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
             join lrm_position pos on al.position_id = pos.id
             join #$idTableName i on i.id = pos.link_id
             group by pos.link_id) asset_lk on asset_lk.link_id = pos.link_id and asset_lk.modified_date = a.modified_date
-        where asset_type_id = a.asset_type_id = $assetTypeId and a.floating = 0 and  a.valid_to is not null and a.valid_to < sysdate"""
+        where asset_type_id = $assetTypeId and a.floating = 0 and  a.valid_to is not null and a.valid_to < sysdate"""
         .as[(Long, Long, Option[DateTime], Option[String])].list
       assets.map { case(id, linkId, modifiedDate, modifiedBy) =>
         AssetLastModification(id, linkId, modifiedBy, modifiedDate)

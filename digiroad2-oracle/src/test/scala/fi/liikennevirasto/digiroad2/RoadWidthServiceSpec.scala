@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset, RoadLink}
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.linearasset.oracle.{AssetLastModification, OracleLinearAssetDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.mockito.ArgumentCaptor
@@ -25,6 +25,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   object ServiceWithDao extends RoadWidthService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OracleLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
@@ -76,7 +77,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4)
   }
 
-  test("Should be created only 1 new road with asset when get 3 roadlink change information from vvh and only 1 roadlink have MTKClass valid") {
+  test("Should be created only 1 new road width asset when get 3 roadlink change information from vvh and only 1 roadlink have MTKClass valid") {
 
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -128,13 +129,14 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = createService()
 
     val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface))
-
-    val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAssets) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)
-    expiredIds should have size 0
-    newAssets.filter(_.linkId == 5000) should have size 0
-    newAssets.filter(_.linkId == 5001) should have size 1
-    newAssets.filter(_.linkId == 5001).head.value should be (Some(NumericValue(650)))
+    runWithRollback {
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (expiredIds, newAssets) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => Seq())
+      expiredIds should have size 0
+      newAssets.filter(_.linkId == 5000) should have size 0
+      newAssets.filter(_.linkId == 5001) should have size 1
+      newAssets.filter(_.linkId == 5001).head.value should be(Some(NumericValue(650)))
+    }
   }
 
   test("Should not create any new asset (MTKClass not valid)") {
@@ -149,17 +151,19 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(120))
     val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(2))
 
-    val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
-    val newRoadLink1 = RoadLink(newLinkId1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass,
-      functionalClass, trafficDirection, linkType, None, None, attributes1)
-    val newRoadLink2 = newRoadLink1.copy(linkId=newLinkId2, attributes = attributes2)
-    val roadLinks = List(newRoadLink1, newRoadLink2)
-    val service = createService()
+    runWithRollback {
+      val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
+      val newRoadLink1 = RoadLink(newLinkId1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass,
+        functionalClass, trafficDirection, linkType, None, None, attributes1)
+      val newRoadLink2 = newRoadLink1.copy(linkId = newLinkId2, attributes = attributes2)
+      val roadLinks = List(newRoadLink1, newRoadLink2)
+      val service = createService()
 
-    val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo)
-    expiredIds should have size 0
-    newAsset should have size 0
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo, (_) => Seq())
+      expiredIds should have size 0
+      newAsset should have size 0
+    }
   }
 
   test("Should not create new road with if the road doesn't have MTKClass attribute") {
@@ -175,17 +179,19 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
     val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
-    val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
-    val newRoadLink1 = RoadLink(newLinkId1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass,
-      functionalClass, trafficDirection, linkType, None, None, attributes1)
-    val newRoadLink2 = newRoadLink1.copy(linkId=newLinkId2, attributes = attributes2)
-    val roadLinks = List(newRoadLink1, newRoadLink2)
-    val service = createService()
+    runWithRollback {
+      val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
+      val newRoadLink1 = RoadLink(newLinkId1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass,
+        functionalClass, trafficDirection, linkType, None, None, attributes1)
+      val newRoadLink2 = newRoadLink1.copy(linkId = newLinkId2, attributes = attributes2)
+      val roadLinks = List(newRoadLink1, newRoadLink2)
+      val service = createService()
 
-    val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo)
-    expiredIds should have size 0
-    newAsset should have size 0
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo, (_) => Seq())
+      expiredIds should have size 0
+      newAsset should have size 0
+    }
   }
 
   test("Only update road width assets auto generated ") {
@@ -195,16 +201,17 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
     val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(4000)), 0, 20,  Some("vvh_mtkclass_default"), None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface),
       PersistedLinearAsset(2, 5001, 1, Some(NumericValue(2000)), 0, 20, None, None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface))
-
-    val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)
-    expiredIds should have size 1
-    expiredIds should be (Set(1))
-    newAsset.forall(_.vvhTimeStamp == 11L) should be (true)
-    newAsset.forall(_.value.isDefined) should be (true)
-    newAsset should have size 1
-    newAsset.head.linkId should be (5000)
-    newAsset.head.value should be (Some(NumericValue(1100)))
+    runWithRollback {
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => Seq())
+      expiredIds should have size 1
+      expiredIds should be(Set(1))
+      newAsset.forall(_.vvhTimeStamp == 11L) should be(true)
+      newAsset.forall(_.value.isDefined) should be(true)
+      newAsset should have size 1
+      newAsset.head.linkId should be(5000)
+      newAsset.head.value should be(Some(NumericValue(1100)))
+    }
   }
 
   test("Do not updated asset created or expired by the user") {
@@ -213,12 +220,14 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = createService()
 
     val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(4000)), 0, 20,  Some("test"), None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface))
-    val expiredAssets = Seq(PersistedLinearAsset(2, 5001, 1, Some(NumericValue(2000)), 0, 20, Some("test"), None, Some("test2"), None, true, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface))
+    val expiredAssets = Seq(AssetLastModification(2, 5001, Some("test2"), None))
 
-    val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)
-    expiredIds should have size 0
-    newAsset should have size 0
+    runWithRollback {
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => expiredAssets)
+      expiredIds should have size 0
+      newAsset should have size 0
+    }
   }
 
   test("Create linear asset on a road link that has changed previously"){

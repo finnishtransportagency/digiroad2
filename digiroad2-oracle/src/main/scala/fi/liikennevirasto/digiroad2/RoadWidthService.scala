@@ -35,7 +35,9 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
-    val (expiredRoadWidthAssetIds, newRoadWidthAssets) = getRoadWidthAssetChanges(existingAssets, roadLinks, changes)
+    val (expiredRoadWidthAssetIds, newRoadWidthAssets) = getRoadWidthAssetChanges(existingAssets, roadLinks, changes, (newAssetIds) => withDynSession {
+      dao.fetchExpireAssetLastModificationsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, newAssetIds)
+    })
 
     val combinedAssets = assetsOnChangedLinks.filterNot(a => expiredRoadWidthAssetIds.contains(a.id)) ++ newRoadWidthAssets
 
@@ -62,7 +64,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     filledTopology
   }
 
-  def getRoadWidthAssetChanges(linearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo]): (Set[Long], Seq[PersistedLinearAsset]) = {
+  def getRoadWidthAssetChanges(linearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo], fetchModifications: (Seq[Long]) => Seq[AssetLastModification]): (Set[Long], Seq[PersistedLinearAsset]) = {
 
     val mappedLastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
     val mappedLinearAssets = linearAssets.groupBy(_.linkId)
@@ -87,9 +89,9 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }.toSet
 
     val newAssetIds = changedAssets.filter(_._3.isEmpty).map(_._2.newId.get)
-    val assetsLastModification = if(newAssetIds.isEmpty) Map[Long, AssetLastModification]() else withDynTransaction {
-      dao.fetchExpireAssetLastModificationsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, newAssetIds.toSeq)
-    }.groupBy(_.linkId)
+    val assetsLastModification = if(newAssetIds.isEmpty) Map[Long, AssetLastModification]() else {
+      fetchModifications(newAssetIds.toSeq).groupBy(_.linkId)
+    }
 
     val newAssets = changedAssets.flatMap{
       case (Some(roadLink), changeInfo, assets) if assets.isEmpty =>
