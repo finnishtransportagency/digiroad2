@@ -46,21 +46,23 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
     }
   }
 
-  test("test updateManoueuvre") {
+  test("test create Manoeuvre For Update") {
     runWithRollback {
       val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
-      val mano = NewManoeuvre(Set(), Seq(), None, Seq(4, 7))
+      val validityPeriod = Set(ValidityPeriod(12, 13, ValidityPeriodDayOfWeek("Sunday"), 30, 15), ValidityPeriod(8, 12, ValidityPeriodDayOfWeek("Saturday"), 0, 10))
+      val exceptions = List(4,5)
+      val mano = NewManoeuvre(validityPeriod, exceptions, None, Seq(4, 7))
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
       val persisted = dao.find(id).get
-      val validityPeriod = Set(ValidityPeriod(12, 13, ValidityPeriodDayOfWeek("Sunday"), 30, 15), ValidityPeriod(8, 12, ValidityPeriodDayOfWeek("Saturday"), 0, 10))
-      dao.updateManoueuvre("updater", id, ManoeuvreUpdates(Option(validityPeriod),
-        Option(Seq(2)), Option("Additional Info")))
-      val updated = dao.find(id).get
-      updated shouldNot be(persisted)
-      updated.additionalInfo should be("Additional Info")
-      updated.validityPeriods should be(validityPeriod)
-      updated.exceptions should be(Seq(2))
+          val manoeuvreRowOld = dao.fetchManoeuvreById(id).head
+      val newId = dao.createManoeuvreForUpdate("updater", manoeuvreRowOld, Option("Additional Info"))
+
+      val newManoeuvre = dao.find(newId).get
+      newManoeuvre shouldNot be(persisted)
+      newManoeuvre.additionalInfo should be("Additional Info")
+      newManoeuvre.validityPeriods should be(validityPeriod)
+      newManoeuvre.exceptions should be(exceptions)
     }
   }
 
