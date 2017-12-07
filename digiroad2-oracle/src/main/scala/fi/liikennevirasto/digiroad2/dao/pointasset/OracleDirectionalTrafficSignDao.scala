@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.pointasset.oracle
+package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}

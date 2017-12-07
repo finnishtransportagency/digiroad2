@@ -3,8 +3,9 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleTrafficSignDao, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.user.User
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset

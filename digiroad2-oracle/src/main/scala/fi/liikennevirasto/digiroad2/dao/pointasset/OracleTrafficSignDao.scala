@@ -1,16 +1,15 @@
-package fi.liikennevirasto.digiroad2.pointasset.oracle
+package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, PropertyValue, SimpleProperty}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
-import fi.liikennevirasto.digiroad2.{IncomingTrafficSign, Point, PersistedPointAsset}
-import fi.liikennevirasto.digiroad2.asset.{SimpleProperty, PropertyValue, Property, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.{IncomingTrafficSign, PersistedPointAsset, Point}
 import org.joda.time.DateTime
-import slick.jdbc.{StaticQuery, PositionedResult, GetResult}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,

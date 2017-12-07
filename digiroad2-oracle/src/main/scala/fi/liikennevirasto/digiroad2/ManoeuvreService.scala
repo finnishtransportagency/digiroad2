@@ -1,8 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod, ValidityPeriodDayOfWeek}
-import fi.liikennevirasto.digiroad2.manoeuvre.oracle.{ManoeuvreDao, PersistedManoeuvreRow}
+import fi.liikennevirasto.digiroad2.manoeuvre.oracle.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

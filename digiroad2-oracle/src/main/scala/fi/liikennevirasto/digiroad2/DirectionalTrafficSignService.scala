@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, OracleDirectionalTrafficSignDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 

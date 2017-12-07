@@ -1,14 +1,14 @@
-package fi.liikennevirasto.digiroad2.pointasset.oracle
+package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import fi.liikennevirasto.digiroad2.{Point, PersistedPointAsset}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 case class PedestrianCrossing(id: Long, linkId: Long,
                               lon: Double, lat: Double,

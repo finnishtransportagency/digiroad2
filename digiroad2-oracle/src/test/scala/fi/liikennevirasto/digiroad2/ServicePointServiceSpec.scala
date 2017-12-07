@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{IncomingService, IncomingServicePoint}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingService, IncomingServicePoint}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingService
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
 

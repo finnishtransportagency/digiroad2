@@ -7,9 +7,9 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.dao.pointasset.DirectionalTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.DirectionalTrafficSign
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
 import org.joda.time.DateTime
 import org.json4s._

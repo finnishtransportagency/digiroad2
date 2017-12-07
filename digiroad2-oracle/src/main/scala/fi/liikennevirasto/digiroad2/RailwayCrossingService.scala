@@ -3,9 +3,10 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleRailwayCrossingDao, RailwayCrossing}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleRailwayCrossingDao, RailwayCrossing}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleRailwayCrossingDao
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
