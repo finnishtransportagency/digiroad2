@@ -4,11 +4,12 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 import javax.naming.OperationNotSupportedException
 
-import fi.liikennevirasto.digiroad2.TRLaneArrangementType.MassTransitLane
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TRLaneArrangementType.MassTransitLane
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase

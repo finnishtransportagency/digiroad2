@@ -4,6 +4,7 @@ import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint

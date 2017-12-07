@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{TierekisteriLightingAssetClient, TierekisteriMassTransitLaneAssetClient, TierekisteriTrafficSignData, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{TextualValue, NumericValue}
+import fi.liikennevirasto.digiroad2.client.tierekisteri._
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import org.joda.time.DateTime

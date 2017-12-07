@@ -4,6 +4,7 @@ import java.net.ConnectException
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 
+import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util._

@@ -5,6 +5,7 @@ import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.{BusStopStrategy, MassTransitStopOperations, TierekisteriBusStopStrategy}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Sequences}
