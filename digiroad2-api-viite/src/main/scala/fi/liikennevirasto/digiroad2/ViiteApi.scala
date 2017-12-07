@@ -512,10 +512,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           } else if(splitLinks.isEmpty){
             Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
           } else {
+            val roadwithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
             val split: Map[String, Any] = Map(
-              "roadNumber" -> splitLinks.get.head.roadNumber,
-              "roadPartNumber" -> splitLinks.get.head.roadPartNumber,
-              "trackCode" -> splitLinks.get.head.track,
+              "roadNumber" -> roadwithInfo.roadNumber,
+              "roadPartNumber" -> roadwithInfo.roadPartNumber,
+              "trackCode" -> roadwithInfo.track,
               "split" -> Map(
                 "geometry" -> cutGeom
               )

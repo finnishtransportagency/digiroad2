@@ -558,12 +558,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def splitSuravageLinkInTX(linkId: Long, username: String,
                             splitOptions: SplitOptions): Option[String] = {
     val (splitLinks, errorMessage, vector) = preSplitSuravageLinkInTX(linkId, username, splitOptions)
-    if(errorMessage.nonEmpty) errorMessage
-    ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.get.map(_.linkId).toSet)
-    ProjectDAO.create(splitLinks.get.map(x => x.copy(modifiedBy = Some(username))))
-    ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
-    recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
-    errorMessage
+    if(errorMessage.nonEmpty){
+      errorMessage
+    } else {
+      ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.get.map(_.linkId).toSet)
+      ProjectDAO.create(splitLinks.get.map(x => x.copy(modifiedBy = Some(username))))
+      ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
+      recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
+      None
+    }
   }
 
   def getProjectLinksInBoundingBox(bbox: BoundingRectangle, projectId: Long): (Seq[ProjectLink]) = {
