@@ -279,7 +279,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
 
   }
 
-  test("Split shorter suravage link") {
+  test("Split by suravage border -> uniq suravage link -> (Newlink length -> 0, Unchangedlink length -> original suravage length)") {
     val sGeom = Seq(Point(480428.187, 7059183.911), Point(480441.534, 7059195.878), Point(480445.646, 7059199.566),
       Point(480451.056, 7059204.417), Point(480453.065, 7059206.218), Point(480456.611, 7059209.042),
       Point(480463.941, 7059214.747))
@@ -304,10 +304,43 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
     terminatedLink.endMValue should be (template.endMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry, unChangedLink.geometry) should be (true)
-    GeometryUtils.areAdjacent(unChangedLink.geometry.head, sGeom.head) should be (true)
-    GeometryUtils.areAdjacent(unChangedLink.geometry.last, sGeom.last) should be (true)
+    (GeometryUtils.areAdjacent(unChangedLink.geometry.head, sGeom.head) || GeometryUtils.areAdjacent(unChangedLink.geometry.last, sGeom.last)) should be (true)
+    GeometryUtils.geometryLength(unChangedLink.geometry) should be (0)
     unChangedLink.startAddrMValue should be (template.startAddrMValue)
     unChangedLink.endAddrMValue should be (terminatedLink.startAddrMValue)
+  }
+
+  test("Split by suravage border -> uniq suravage link ->  (Newlink length -> original suravage length, Unchangedlink length -> 0)") {
+    val sGeom = Seq(Point(480428.187, 7059183.911), Point(480441.534, 7059195.878), Point(480445.646, 7059199.566),
+      Point(480451.056, 7059204.417), Point(480453.065, 7059206.218), Point(480456.611, 7059209.042),
+      Point(480463.941, 7059214.747))
+    val tGeom = Seq(Point(480428.187,7059183.911),Point(480453.614, 7059206.710), Point(480478.813, 7059226.322),
+      Point(480503.826, 7059244.02),Point(480508.221, 7059247.010))
+    val sLen = GeometryUtils.geometryLength(sGeom)
+    val tLen = GeometryUtils.geometryLength(tGeom)
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+      SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
+      sLen, 0L, 9L, false, None, 85088L)
+    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 0L, 124L, 0.0, tLen,
+      SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
+      tLen, 0L, 9L, false, None, 85088L)
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(480428.187, 7059183.911), LinkStatus.UnChanged,
+      LinkStatus.New, 27L, 22L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    sl should have size (1)
+    tl should have size (1)
+    val terminatedLink = tl.head
+    val newLink = sl.head
+    terminatedLink.status should be (LinkStatus.Terminated)
+    terminatedLink.startAddrMValue should be (template.startAddrMValue)
+    terminatedLink.endAddrMValue should be (template.endAddrMValue)
+    terminatedLink.endMValue should be (template.endMValue)
+    newLink.startAddrMValue should be (template.startAddrMValue)
+    newLink.endAddrMValue should be (template.endAddrMValue)
+    GeometryUtils.areAdjacent(terminatedLink.geometry, newLink.geometry) should be (true)
+    GeometryUtils.areAdjacent(newLink.geometry.head, sGeom.head) should be (true)
+    GeometryUtils.areAdjacent(newLink.geometry.last, sGeom.last) should be (true)
+    GeometryUtils.geometryLength(newLink.geometry) should be (GeometryUtils.geometryLength(sGeom))
   }
 
   test("Geometry split") {
