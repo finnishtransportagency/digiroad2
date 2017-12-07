@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
@@ -13,6 +14,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import slick.jdbc.StaticQuery.interpolation

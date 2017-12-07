@@ -1,26 +1,32 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.ImportResult
-import fi.liikennevirasto.digiroad2.{VVHClient, RoadLinkService, MassTransitStopService, Digiroad2Context}
+import fi.liikennevirasto.digiroad2.{Digiroad2Context, MassTransitStopService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.scalatra._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import org.scalatra.servlet.{MultipartConfig, FileUploadSupport}
+import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import javax.servlet.ServletException
+
 import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import java.io.InputStreamReader
+
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s.{DefaultFormats, Formats}
 import org.slf4j.LoggerFactory
+
 import scala.io.Source
 import org.json4s.Extraction
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.BufferedWriter
 import java.io.FileWriter
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Private, Municipality, State}
+
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Municipality, Private, State}
 import javax.naming.OperationNotSupportedException
+
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.ImportLogService
 
 class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {

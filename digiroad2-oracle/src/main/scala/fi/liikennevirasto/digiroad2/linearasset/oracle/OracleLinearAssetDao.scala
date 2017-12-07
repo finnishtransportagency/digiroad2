@@ -10,6 +10,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}

@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion

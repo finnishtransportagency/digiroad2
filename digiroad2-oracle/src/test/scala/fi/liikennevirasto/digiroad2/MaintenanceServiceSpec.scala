@@ -2,7 +2,8 @@ package fi.liikennevirasto.digiroad2
 
 import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleMaintenanceDao, OracleLinearAssetDao}
+import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, OracleMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}

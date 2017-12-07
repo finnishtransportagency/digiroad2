@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.manoeuvre.oracle
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime

@@ -13,6 +13,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 

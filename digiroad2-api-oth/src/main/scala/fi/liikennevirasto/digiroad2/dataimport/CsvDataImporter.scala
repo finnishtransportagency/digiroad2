@@ -3,12 +3,12 @@ package fi.liikennevirasto.digiroad2.dataimport
 import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
-import fi.liikennevirasto.digiroad2.{VVHClient}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

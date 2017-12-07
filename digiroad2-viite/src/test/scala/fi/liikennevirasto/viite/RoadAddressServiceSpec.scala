@@ -2,14 +2,15 @@ package fi.liikennevirasto.viite
 
 import java.util.{Date, Properties}
 
-import fi.liikennevirasto.digiroad2.ChangeType.{Unknown => _, _}
-import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{Unknown => _, _}
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, NormalRoadLinkType}
 import fi.liikennevirasto.digiroad2.{ChangeType, _}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase

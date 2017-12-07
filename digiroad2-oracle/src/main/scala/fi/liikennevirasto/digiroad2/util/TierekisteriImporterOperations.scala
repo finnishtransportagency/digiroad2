@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase

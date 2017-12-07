@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import slick.jdbc.StaticQuery.interpolation
 
 object ServicePointImporter {

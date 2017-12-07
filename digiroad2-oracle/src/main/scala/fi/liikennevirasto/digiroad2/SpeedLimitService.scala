@@ -2,10 +2,11 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, LinearAssetUtils}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, VVHRoadLinkHistoryProcessor}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 

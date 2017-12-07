@@ -2,9 +2,10 @@ package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import com.vividsolutions.jts.geom.{MultiPolygon, Polygon}
-import fi.liikennevirasto.digiroad2.ChangeType._
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao

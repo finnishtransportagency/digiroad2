@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}

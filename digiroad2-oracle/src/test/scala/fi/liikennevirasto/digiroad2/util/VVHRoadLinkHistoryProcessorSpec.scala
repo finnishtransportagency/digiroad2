@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{FeatureClass, Point, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.{Point, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import org.scalatest.{FunSuite, Matchers}
 
 

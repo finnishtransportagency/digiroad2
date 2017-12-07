@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException}
@@ -17,6 +18,7 @@ import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
+
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
 

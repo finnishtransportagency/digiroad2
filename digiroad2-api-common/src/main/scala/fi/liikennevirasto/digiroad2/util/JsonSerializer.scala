@@ -4,8 +4,9 @@ import java.io.{File, FileReader, FileWriter}
 import java.nio.file.Paths
 import java.nio.file.Files.copy
 
-import fi.liikennevirasto.digiroad2.{ChangeInfo, NodeType, Point, VVHRoadNodes}
+import fi.liikennevirasto.digiroad2.{ChangeInfo, Point, VVHRoadNodes}
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, NodeType, VVHRoadNodes}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}

@@ -1,8 +1,9 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.ChangeType._
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.{ChangeInfo, ChangeType, Point}
+import fi.liikennevirasto.digiroad2.{ChangeType, Point}
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.slf4j.LoggerFactory
 

@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.PointAssetOperations._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.PointAssetFiller._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {

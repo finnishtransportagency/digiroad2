@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.MValueAdjustment
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, OracleMaintenanceDao}

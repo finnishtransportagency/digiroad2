@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
-import java.io.{InputStreamReader, InputStream}
+import java.io.{InputStream, InputStreamReader}
+
 import com.github.tototoshi.csv._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
@@ -9,6 +10,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 
 object CsvImporter {
   case class NonExistingAsset(externalId: Long, csvRow: String)

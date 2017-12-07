@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.RoadLinkType.{apply => _, _}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, _}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._

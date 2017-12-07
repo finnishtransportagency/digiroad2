@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficVolumeAssetClient
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import org.joda.time.DateTime
 

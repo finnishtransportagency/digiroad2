@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
@@ -17,6 +17,7 @@ import Matchers._
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import slick.jdbc.StaticQuery.interpolation
 
 class OracleLinearAssetDaoSpec extends FunSuite with Matchers {

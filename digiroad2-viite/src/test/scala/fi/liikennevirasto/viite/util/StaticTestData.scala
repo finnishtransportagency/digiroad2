@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, VVHHistoryRoadLink, VVHRoadNodes}
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.jackson.Serialization.read
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}

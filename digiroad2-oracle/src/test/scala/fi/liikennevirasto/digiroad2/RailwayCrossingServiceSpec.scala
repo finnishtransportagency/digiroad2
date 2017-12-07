@@ -12,6 +12,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 
 class RailwayCrossingServiceSpec extends FunSuite with Matchers {

@@ -3,9 +3,10 @@ package fi.liikennevirasto.digiroad2.dataimport
 import java.io.{ByteArrayInputStream, InputStream}
 import javax.sql.DataSource
 
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, Municipality, State}
+import fi.liikennevirasto.digiroad2.asset.{Municipality, State, TrafficDirection}
 import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter._
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHComplementaryClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
@@ -13,7 +14,6 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
-
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

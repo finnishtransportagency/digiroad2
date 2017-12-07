@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.roadaddress.oracle
 
-import fi.liikennevirasto.digiroad2.FeatureClass.TractorRoad
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.TractorRoad
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
