@@ -525,19 +525,19 @@ object NumericalLimitFiller {
     }
   }
 
-  def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection) = {
+  def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection, changeSet: ChangeSet) : (PersistedLinearAsset, ChangeSet)= {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {
       case to.linkId => asset.id
       case _ => 0
     }
     val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(asset, projection, to.length)
+    changeSet.copy(adjustedMValues =  changeSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)), adjustedSideCodes = changeSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode))))
 
-    PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,
+    (PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,
       value = asset.value, startMeasure = newStart, endMeasure = newEnd,
       createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
-      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource
-    )
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource), changeSet)
   }
 }
