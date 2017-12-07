@@ -54,8 +54,8 @@
         var unfinishedProjects = _.filter(projects, function(proj){
           return proj.statusCode < 6 && proj.statusCode > 0 ;
         });
+        var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
         if(!_.isEmpty(unfinishedProjects)){
-          var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
           _.each(unfinishedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
               html += '<tr class="project-item">' +
@@ -85,6 +85,10 @@
               openProjectSteps(event);
             }
           });
+        }
+        else{
+          html += '</table>';
+          $('#project-list').html($(html));
         }
       });
 
