@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2
 
 import java.util.NoSuchElementException
 
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import org.joda.time.DateTime
 
 

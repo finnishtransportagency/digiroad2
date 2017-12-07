@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.linearasset.oracle
+package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, PropertyTypes}
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, PersistedLinearAsset, Properties}
@@ -8,10 +8,10 @@ import fi.liikennevirasto.digiroad2.{Measures, RoadLinkService}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import slick.jdbc.{StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 

@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 import org.scalatra._

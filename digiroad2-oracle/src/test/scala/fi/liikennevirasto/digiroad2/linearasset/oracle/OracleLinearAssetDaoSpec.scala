@@ -18,6 +18,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import slick.jdbc.StaticQuery.interpolation
 
 class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
