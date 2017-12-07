@@ -298,7 +298,7 @@
       applicationModel.addSpinner();
       var form = $('#roadAddressProjectFormCut');
       var linkId = suravage.linkId;
-      var projectId = projectinfo.id;
+      var projectId = projectInfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
         splitPoint: {
