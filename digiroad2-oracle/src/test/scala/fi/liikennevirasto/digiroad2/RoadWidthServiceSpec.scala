@@ -130,7 +130,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface))
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAssets) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo)
+    val (expiredIds, newAssets) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)
     expiredIds should have size 0
     newAssets.filter(_.linkId == 5000) should have size 0
     newAssets.filter(_.linkId == 5001) should have size 1
@@ -157,7 +157,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = createService()
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), Seq(), roadLinks, changeInfo)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo)
     expiredIds should have size 0
     newAsset should have size 0
   }
@@ -183,7 +183,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = createService()
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), Seq(), roadLinks, changeInfo)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo)
     expiredIds should have size 0
     newAsset should have size 0
   }
@@ -197,7 +197,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       PersistedLinearAsset(2, 5001, 1, Some(NumericValue(2000)), 0, 20, None, None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface))
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)
     expiredIds should have size 1
     expiredIds should be (Set(1))
     newAsset.forall(_.vvhTimeStamp == 11L) should be (true)
@@ -216,7 +216,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val expiredAssets = Seq(PersistedLinearAsset(2, 5001, 1, Some(NumericValue(2000)), 0, 20, Some("test"), None, Some("test2"), None, true, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface))
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, expiredAssets, roadLinks, changeInfo)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)
     expiredIds should have size 0
     newAsset should have size 0
   }

@@ -301,6 +301,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       assets.map { case(id, linkId, modifiedDate, modifiedBy) =>
         AssetLastModification(id, linkId, modifiedBy, modifiedDate)
       }
+    }
   }
 
   /**
