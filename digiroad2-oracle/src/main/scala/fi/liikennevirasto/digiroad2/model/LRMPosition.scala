@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.masstransitstop.oracle
+package fi.liikennevirasto.digiroad2.model
 
 import fi.liikennevirasto.digiroad2.Point
 
