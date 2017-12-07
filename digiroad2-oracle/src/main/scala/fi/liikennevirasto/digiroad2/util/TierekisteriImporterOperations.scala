@@ -115,21 +115,21 @@ trait TierekisteriAssetImporterOperations {
 
   protected def getAllViiteRoadAddress(section: AddressSection) = {
     val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressSinglePart(section.roadNumber, section.roadPartNumber, section.track.value, section.startAddressMValue, section.endAddressMValue))
-    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(addresses.map(ra => ra.linkId).toSet).filter(_.administrativeClass == State).filter(filterCycleOrPedestrian)
+    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(addresses.map(ra => ra.linkId).toSet).filter(_.administrativeClass == State).filter(filterViiteRoadAddress)
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 
   protected def getAllViiteRoadAddress(roadNumber: Long, tracks: Seq[Track]) = {
     val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, tracks.map(_.value).toSet))
     val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
-    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State).filter(filterCycleOrPedestrian)
+    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State).filter(filterViiteRoadAddress)
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 
   protected def getAllViiteRoadAddress(roadNumber: Long, roadPart: Long) = {
     val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, roadPart))
     val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
-    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State).filter(filterCycleOrPedestrian)
+    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State).filter(filterViiteRoadAddress)
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 
@@ -185,7 +185,7 @@ trait TierekisteriAssetImporterOperations {
     true
   }
 
-  protected def filterCycleOrPedestrian(roadLink: VVHRoadlink): Boolean = {
+  protected def filterViiteRoadAddress(roadLink: VVHRoadlink): Boolean = {
     true
   }
 
@@ -364,7 +364,7 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
   private val endSpeedLimitSigns = Set(TrafficSignType.EndSpeedLimit, TrafficSignType.EndSpeedLimitZone, TrafficSignType.EndUrbanArea)
   private val outUrbanAreaValue = "9"
 
-  protected override def filterCycleOrPedestrian(roadLink: VVHRoadlink): Boolean = {
+  protected override def filterViiteRoadAddress(roadLink: VVHRoadlink): Boolean = {
     roadLink.featureClass != FeatureClass.CycleOrPedestrianPath
   }
 
