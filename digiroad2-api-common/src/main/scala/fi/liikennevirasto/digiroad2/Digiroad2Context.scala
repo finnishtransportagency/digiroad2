@@ -35,14 +35,7 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 
   def persistLinearAssetChanges(changeSet: ChangeSet) {
-    //TODO just for test propose
-    /*
-    linearAssetService.drop(changeSet.droppedAssetIds)
-    linearAssetService.persistMValueAdjustments(changeSet.adjustedMValues)
-    linearAssetService.persistSideCodeAdjustments(changeSet.adjustedSideCodes)
-    linearAssetService.expire(changeSet.expiredAssetIds.toSeq, LinearAssetTypes.VvhGenerated)
-    */
-    linearAssetService.updateChangeSet(changeSet);
+    linearAssetService.updateChangeSet(changeSet)
   }
 }
 
@@ -53,7 +46,7 @@ class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
   }
 
   def persistRoadWidthChanges(changeSet: ChangeSet) {
-    roadWidthService.updateChangeSet(changeSet);
+    roadWidthService.updateChangeSet(changeSet)
   }
 }
 
