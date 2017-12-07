@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, Queries}
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, Queries}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.oracle._

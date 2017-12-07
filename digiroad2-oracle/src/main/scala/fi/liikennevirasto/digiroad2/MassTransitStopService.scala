@@ -5,9 +5,10 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
+import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle._
 import fi.liikennevirasto.digiroad2.oracle.{GenericQueries, OracleDatabase}
 import fi.liikennevirasto.digiroad2.user.User

@@ -4,7 +4,7 @@ import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
 import fi.liikennevirasto.digiroad2.{PersistedMassTransitStop, TrafficSignType}
 import org.apache.http.HttpStatus

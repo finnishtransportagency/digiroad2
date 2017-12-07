@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.masstransitstop.oracle
+package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset.LocalizedString
 import fi.liikennevirasto.digiroad2.asset.LocalizedString._

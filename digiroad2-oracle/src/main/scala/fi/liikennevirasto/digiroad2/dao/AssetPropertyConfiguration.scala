@@ -1,6 +1,6 @@
-package fi.liikennevirasto.digiroad2.masstransitstop.oracle
+package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.{MassTransitStopRow}
+import fi.liikennevirasto.digiroad2.MassTransitStopRow
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.LocalizedString._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._

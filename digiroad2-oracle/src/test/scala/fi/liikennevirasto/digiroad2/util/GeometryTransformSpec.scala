@@ -5,7 +5,8 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import slick.jdbc.StaticQuery.interpolation
 
 

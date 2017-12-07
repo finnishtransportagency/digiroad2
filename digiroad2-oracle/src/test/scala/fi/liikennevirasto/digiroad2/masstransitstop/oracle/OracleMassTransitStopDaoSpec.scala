@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.PropertyRow
+import fi.liikennevirasto.digiroad2.dao.Queries.PropertyRow
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Modification}
+import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point}
 import org.scalatest.{FunSuite, MustMatchers}
-
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
