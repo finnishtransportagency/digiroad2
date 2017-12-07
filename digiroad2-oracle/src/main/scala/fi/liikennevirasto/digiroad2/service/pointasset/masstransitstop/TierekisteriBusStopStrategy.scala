@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.masstransitstop
+package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import java.util.{Date, NoSuchElementException}
 
@@ -7,8 +7,6 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{Equipment, TierekisteriBusStopMarshaller, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries, Sequences}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
 import scala.util.Try
