@@ -1,5 +1,5 @@
 CREATE OR REPLACE TRIGGER roadaddress_check
-   BEFORE INSERT OR UPDATE /** https://stackoverflow.com/questions/3646110/difference-before-and-after-trigger-in-oracle**/
+   AFTER INSERT OR UPDATE /** https://stackoverflow.com/questions/3646110/difference-before-and-after-trigger-in-oracle**/
    ON Road_Address
    FOR EACH ROW
 DECLARE
@@ -7,8 +7,8 @@ DECLARE
 	PRAGMA EXCEPTION_INIT(roadAddress_history_exception, -20011);
 	error_c NUMBER (1);
 	BEGIN
-	SELECT 1
-	INTO error_c
+	SELECT COUNT (*)
+		INTO error_c
     FROM road_address existing
 	WHERE
       existing.id != :NEW.id AND
