@@ -7,9 +7,8 @@ import fi.liikennevirasto.digiroad2.asset.{Municipality, State, TrafficDirection
 import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHComplementaryClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkServiceDAO
+import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, RoadLinkServiceDAO}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar

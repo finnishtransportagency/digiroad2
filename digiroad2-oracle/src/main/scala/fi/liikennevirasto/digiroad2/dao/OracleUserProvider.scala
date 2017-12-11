@@ -1,18 +1,15 @@
-package fi.liikennevirasto.digiroad2.user.oracle
+package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
-import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult}
 import Database.dynamicSession
-import Q.interpolation
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
-import fi.liikennevirasto.digiroad2.user.Configuration
-import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.{Point}
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class OracleUserProvider extends UserProvider {
   implicit val formats = Serialization.formats(NoTypeHints)

@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.user.oracle
 
-import org.scalatest.{Matchers, FunSuite}
+import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
+import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
 import fi.liikennevirasto.digiroad2.user.Configuration
 
