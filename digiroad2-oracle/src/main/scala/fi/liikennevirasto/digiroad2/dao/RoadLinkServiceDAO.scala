@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.roadlinkservice.oracle
+package fi.liikennevirasto.digiroad2.dao
 
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
