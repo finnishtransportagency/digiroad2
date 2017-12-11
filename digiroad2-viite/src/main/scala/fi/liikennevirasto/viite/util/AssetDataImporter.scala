@@ -439,7 +439,7 @@ class AssetDataImporter {
             NOT EXISTS (SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE LRM_POSITION_ID=LRM_POSITION.ID) AND
             NOT EXISTS (SELECT LRM_POSITION_ID FROM PROJECT_LINK_HISTORY WHERE LRM_POSITION_ID=LRM_POSITION.ID) AND
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute*/
-    }
+
 
     /*OracleDatabase.withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
@@ -451,6 +451,7 @@ class AssetDataImporter {
       println (s"${DateTime.now ()} - Old address data removed")
 */
     currentRoadsForEly.map(elyData => importRoadAddressHistoryData(conversionDatabase, elyData, importOptions))
+    }
       //roadMaintainerElys.foreach(ely => importRoadAddressHistoryData(conversionDatabase, currentRoads, importOptions, vvhClientProd))
       // If running in DEV environment then include some testing complementary links
       /*if (vvhClientProd.nonEmpty)
