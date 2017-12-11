@@ -418,42 +418,19 @@ class AssetDataImporter {
 
     val roadMaintainerElys = Seq(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
 
-    val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= '$importDate'" else ""
-    val conversionFilter = if (importDate != "") s" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate'" else ""
-
     //Delete all the previous road history
     OracleDatabase.withDynTransaction{
-      sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
-      print(sqlu"""DELETE FROM ROAD_ADDRESS WHERE END_DATE IS NOT NULL $roadAddressFilter""")
-      sqlu"""DELETE FROM ROAD_ADDRESS WHERE END_DATE IS NOT NULL $roadAddressFilter""".execute
-      sqlu"""DELETE FROM LRM_POSITION WHERE NOT EXISTS
-             (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE LRM_POSITION_ID = LRM_POSITION.ID AND END_DATE IS NOT NULL $roadAddressFilter)""".execute
 
+      val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= '$importDate'" else ""
+      val conversionFilter = if (importDate != "") s" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate'" else ""
+      val deleteAddress = s"DELETE FROM ROAD_ADDRESS WHERE END_DATE IS NOT NULL $roadAddressFilter"
+      val deleteLrm = s"DELETE FROM LRM_POSITION WHERE NOT EXISTS (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE LRM_POSITION_ID = LRM_POSITION.ID AND END_DATE IS NOT NULL $roadAddressFilter)"
+      sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
+      dynamicSession.prepareStatement(deleteAddress).executeUpdate()
+      dynamicSession.prepareStatement(deleteLrm).executeUpdate()
 
       roadMaintainerElys.map(ely => importRoadAddressHistoryData(conversionDatabase, ely, conversionFilter))
 
-      sqlu"""UPDATE ROAD_ADDRESS
-        SET CALIBRATION_POINTS = 1
-        WHERE NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
-        RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
-        RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
-        RA2.START_ADDR_M = ROAD_ADDRESS.END_ADDR_M AND
-        RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
-        (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
-        NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)))""".execute
-      sqlu"""UPDATE ROAD_ADDRESS
-        SET CALIBRATION_POINTS = CALIBRATION_POINTS + 2
-          WHERE
-            START_ADDR_M = 0 OR
-            NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
-              RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
-              RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
-              RA2.END_ADDR_M = ROAD_ADDRESS.START_ADDR_M AND
-              RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
-              (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
-                NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
-              )
-            )""".execute
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
     }
   }
