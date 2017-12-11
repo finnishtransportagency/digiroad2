@@ -280,19 +280,31 @@ class AssetDataImporter {
     addressPS.close()
   }
 
-  private def importRoadAddressHistoryData(conversionDatabase: DatabaseDef, ely: Long, conversionFilter: String): Unit = {
+  private def importRoadAddressHistoryData(conversionDatabase: DatabaseDef, ely: Long, importDate: String): Unit = {
 
     val roadHistory = conversionDatabase.withDynSession {
-      sql"""select linkid, alku, loppu,
+      if (importDate != "") {
+        sql"""select linkid, alku, loppu,
             tie, aosa, ajr,
             ely, tietyyppi,
             jatkuu, aet, let,
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
             alkux, alkuy, loppux, loppuy
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely $conversionFilter""".
-        as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate"""
+          .as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
+      } else {
+        sql"""select linkid, alku, loppu,
+            tie, aosa, ajr,
+            ely, tietyyppi,
+            jatkuu, aet, let,
+            TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
+            kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
+            alkux, alkuy, loppux, loppuy
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
+      }
     }
+
     print(s"\n${DateTime.now()} - ")
     println("Read %d rows from conversion database for ELY %d".format(roadHistory.size, ely))
 
@@ -420,16 +432,14 @@ class AssetDataImporter {
 
     //Delete all the previous road history
     OracleDatabase.withDynTransaction{
-
       val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= '$importDate'" else ""
-      val conversionFilter = if (importDate != "") s" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate'" else ""
       val deleteAddress = s"DELETE FROM ROAD_ADDRESS WHERE END_DATE IS NOT NULL $roadAddressFilter"
       val deleteLrm = s"DELETE FROM LRM_POSITION WHERE EXISTS (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE LRM_POSITION_ID = LRM_POSITION.ID AND END_DATE IS NOT NULL $roadAddressFilter)"
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
       dynamicSession.prepareStatement(deleteAddress).executeUpdate()
       dynamicSession.prepareStatement(deleteLrm).executeUpdate()
 
-      roadMaintainerElys.map(ely => importRoadAddressHistoryData(conversionDatabase, ely, conversionFilter))
+      roadMaintainerElys.map(ely => importRoadAddressHistoryData(conversionDatabase, ely, importDate))
 
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
     }
