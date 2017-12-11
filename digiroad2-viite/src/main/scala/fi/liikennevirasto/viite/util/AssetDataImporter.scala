@@ -424,7 +424,7 @@ class AssetDataImporter {
       val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= '$importDate'" else ""
       val conversionFilter = if (importDate != "") s" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate'" else ""
       val deleteAddress = s"DELETE FROM ROAD_ADDRESS WHERE END_DATE IS NOT NULL $roadAddressFilter"
-      val deleteLrm = s"DELETE FROM LRM_POSITION WHERE NOT EXISTS (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE LRM_POSITION_ID = LRM_POSITION.ID AND END_DATE IS NOT NULL $roadAddressFilter)"
+      val deleteLrm = s"DELETE FROM LRM_POSITION WHERE EXISTS (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE LRM_POSITION_ID = LRM_POSITION.ID AND END_DATE IS NOT NULL $roadAddressFilter)"
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
       dynamicSession.prepareStatement(deleteAddress).executeUpdate()
       dynamicSession.prepareStatement(deleteLrm).executeUpdate()
