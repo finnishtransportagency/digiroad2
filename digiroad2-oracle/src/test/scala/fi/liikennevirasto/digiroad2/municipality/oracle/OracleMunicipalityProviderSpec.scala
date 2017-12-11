@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.municipality.oracle
 
-import org.scalatest.{Tag, Matchers, FunSuite}
+import fi.liikennevirasto.digiroad2.dao.OracleMunicipalityProvider
+import org.scalatest.{FunSuite, Matchers, Tag}
 
 class OracleMunicipalityProviderSpec extends FunSuite with Matchers {
   val provider = new OracleMunicipalityProvider

@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.municipality.oracle
+package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
