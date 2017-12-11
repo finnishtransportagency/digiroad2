@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, OnOffLinearAssetService}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 import org.scalatra._

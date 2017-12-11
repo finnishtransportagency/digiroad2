@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, MaintenanceService, Measures}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.geotools.geometry.jts.GeometryBuilder
 import org.mockito.Matchers._

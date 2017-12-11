@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoad
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddressDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import org.joda.time.DateTime
 import org.mockito.Matchers.{any, _}
 import org.scalatest.mock.MockitoSugar

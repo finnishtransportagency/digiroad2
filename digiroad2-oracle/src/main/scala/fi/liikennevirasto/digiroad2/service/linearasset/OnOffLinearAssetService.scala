@@ -1,9 +1,10 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import org.joda.time.DateTime
 
 

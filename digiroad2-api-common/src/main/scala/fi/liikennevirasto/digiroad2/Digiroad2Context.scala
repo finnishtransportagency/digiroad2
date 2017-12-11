@@ -13,6 +13,8 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimi
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressesService
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, MaintenanceService, OnOffLinearAssetService, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.service.pointasset.DirectionalTrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender

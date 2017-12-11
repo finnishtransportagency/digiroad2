@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
