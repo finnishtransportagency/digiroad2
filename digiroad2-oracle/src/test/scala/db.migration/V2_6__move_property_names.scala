@@ -5,7 +5,6 @@ import java.sql.Connection
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import Q.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
