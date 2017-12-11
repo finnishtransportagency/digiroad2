@@ -414,7 +414,7 @@ class AssetDataImporter {
   def importRoadAddressHistory(conversionDatabase: DatabaseDef, importDate: String): Unit = {
 
     print(s"\n${DateTime.now()} - ")
-    println("Starting to import history data %d ".format(importDate))
+    println("Starting to import history data %s ".format(importDate))
 
     val roadMaintainerElys = Seq(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
 
