@@ -93,25 +93,10 @@ object DataFixture {
   }
 
   def importRoadAddressesHistory(isDevDatabase: Boolean): Unit = {
-    println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
-    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
-      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
-    } else {
-      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      val vvhClientProd = if (isDevDatabase) {
-        Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH_TEST/")))
-      } else {
-        None
-      }
-      val importOptions = ImportOptions(
-        onlyComplementaryLinks = false,
-        useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
-        geometryAdjustedTimeStamp.toLong)
-      dataImporter.importRoadAddressHistory(Conversion.database(), vvhClient, vvhClientProd, importOptions)
-    }
-    println(s"Road address import complete at time: ${DateTime.now()}")
+    println(s"\nCommencing road address history import from conversion at time: ${DateTime.now()}")
+    val importDate = dr2properties.getProperty("digiroad2.viite.historyImportDate", "")
+    dataImporter.importRoadAddressHistory(Conversion.database(), importDate)
+    println(s"Road address history import complete at time: ${DateTime.now()}")
     println()
   }
 
