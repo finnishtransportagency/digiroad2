@@ -1504,22 +1504,22 @@ object ProjectValidator {
   }
 
   object ValidationError {
-    val values = Set(minorDiscontinuityFound, majorDiscontinuityFound, insufficientTrackCoverage, discontinuousAddressScheme,
-      sharedLinkIdsExist, noContinuityCodesAtEnd, unsuccessfulRecalculation)
+    val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
+      SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation)
     //There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
-    case object minorDiscontinuityFound extends ValidationError {def value = 0; def message = "<TO_BE_DETERMINED>"}
+    case object MinorDiscontinuityFound extends ValidationError {def value = 0; def message = "<TO_BE_DETERMINED>"}
     //There must be a major discontinuity if the jump is longer than 50 meters
-    case object majorDiscontinuityFound extends ValidationError {def value = 1;def message = "<TO_BE_DETERMINED>"}
+    case object MajorDiscontinuityFound extends ValidationError {def value = 1;def message = "<TO_BE_DETERMINED>"}
     //For every track 1 there must exist track 2 that covers the same address span and vice versa
-    case object insufficientTrackCoverage extends ValidationError {def value = 2;def message = "<TO_BE_DETERMINED>"}
+    case object InsufficientTrackCoverage extends ValidationError {def value = 2;def message = "<TO_BE_DETERMINED>"}
     //There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
-    case object discontinuousAddressScheme extends ValidationError {def value = 3;def message = "<TO_BE_DETERMINED>"}
+    case object DiscontinuousAddressScheme extends ValidationError {def value = 3;def message = "<TO_BE_DETERMINED>"}
     //There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
-    case object sharedLinkIdsExist extends ValidationError {def value = 4;def message = "<TO_BE_DETERMINED>"}
+    case object SharedLinkIdsExist extends ValidationError {def value = 4;def message = "<TO_BE_DETERMINED>"}
     //Continuity codes are given for end of road
-    case object noContinuityCodesAtEnd extends ValidationError {def value = 5;def message = "<TO_BE_DETERMINED>"}
+    case object NoContinuityCodesAtEnd extends ValidationError {def value = 5;def message = "<TO_BE_DETERMINED>"}
     //Recalculation of M values and delta calculation are both successful for every road part in project
-    case object unsuccessfulRecalculation extends ValidationError {def value = 6;def message = "<TO_BE_DETERMINED>"}
+    case object UnsuccessfulRecalculation extends ValidationError {def value = 6;def message = "<TO_BE_DETERMINED>"}
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -1537,8 +1537,9 @@ object ProjectValidator {
   //TODO VIITE-574 once defined, remove this mocked UI response
   private def mockUs574Errors(): Seq[ValidationErrorDetails] = {
     Seq(
-      ValidationErrorDetails(809783, ValidationError.minorDiscontinuityFound, Seq(5207535), Map[Long,ProjectCoordinates](999.toLong -> ProjectCoordinates(123456, 654321, 8)), Option[String]("")),
-      ValidationErrorDetails(809783, ValidationError.insufficientTrackCoverage, Seq(5207600), Map[Long,ProjectCoordinates](111.toLong -> ProjectCoordinates(123456, 654321, 8)), Option[String](""))
+      ValidationErrorDetails(411342, ValidationError.MinorDiscontinuityFound, Seq(1820562, 1820563), Map[Long,ProjectCoordinates](1l -> ProjectCoordinates(7058862, 480895, 8)), Some("parte da estrada parte um")),
+      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(1820564, 1820722), Map[Long,ProjectCoordinates](1l -> ProjectCoordinates(7058781, 480954, 7)), Some("parte da estrada parte um")),
+      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(5171833), Map[Long,ProjectCoordinates](205l -> ProjectCoordinates(6991557, 533837, 7)), Some("parte da estrada duzentos e cinco"))
     )
   }
 

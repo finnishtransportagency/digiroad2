@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
@@ -311,11 +312,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = projectService.getRoadAddressSingleProject(projectId, Seq(LinkStatus.Numbering)).get
     val projectMap = roadAddressProjectToApi(project)
     val parts = project.reservedParts.map(reservedRoadPartToApi)
-    //TODO get project.errorReservedParts
     val errorParts = ProjectValidator.validateProject(project, Seq.empty[ProjectLink])
     val publishable = projectService.projectLinkPublishable(projectId)
     Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-      "projectLinks" -> parts, "publishable" -> publishable, "errorReservedParts" -> errorParts)
+      "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi))
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/") {
@@ -725,6 +725,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "discontinuity" -> reservedRoadPart.discontinuity.description,
       "linkId" -> reservedRoadPart.startingLinkId,
       "isDirty" -> reservedRoadPart.isDirty
+    )
+  }
+
+  def errorPartsToApi(errorParts: ValidationErrorDetails): Map[String, Any] = {
+    Map("linkIds" -> errorParts.affectedLinkIds,
+      "errorCode" -> errorParts.validationError.value,
+      "errorMessage" -> errorParts.validationError.message,
+      "info" -> errorParts.optionalInformation,
+      "coordinates" -> errorParts.coordinates.head._2
     )
   }
 

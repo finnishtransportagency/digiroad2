@@ -1,6 +1,7 @@
 (function(root) {
   root.ProjectCollection = function(backend) {
     var roadAddressProjects = [];
+    var projectErrors = [];
     var currentRoadPartList = [];
     var reservedDirtyRoadPartList = [];
     var dirtyRoadPartList = [];
@@ -89,7 +90,7 @@
       });
     };
 
-    this.getProjectsWithLinksById = function (projectId, openForm) {
+    this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.project;
         currentProject = result;
@@ -97,14 +98,9 @@
           id: result.project.id,
           publishable: result.publishable
         };
+        projectErrors = result.projectErrors;
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectinfo);
-        if(openForm){
-          eventbus.trigger('roadAddress:openProject', result);
-          if(applicationModel.isReadOnly()) {
-            $('.edit-mode-btn:visible').click();
-          }
-        }
       });
     };
 
@@ -502,6 +498,14 @@
       return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
+    this.getCoordButton = function (index, roadNumber, roadPartNumber, cooordinates) {
+      return coordButton(index, roadNumber, roadPartNumber, cooordinates);
+    };
+
+    var coordButton = function(index, roadNumber, roadPartNumber, cooordinates){
+      return '<button coordinates="'+cooordinates+'" roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'">XY</button>';
+    };
+
     var addToDirtyRoadPartList = function (queryresult) {
       var qRoadparts = [];
       _.each(queryresult.roadparts, function (row) {
@@ -552,6 +556,10 @@
 
     this.getCurrentRoadPartList = function(){
       return currentRoadPartList;
+    };
+
+    this.getProjectErrors = function(){
+      return projectErrors;
     };
 
     this.setTmpDirty = function(editRoadLinks){

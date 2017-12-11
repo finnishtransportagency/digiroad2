@@ -1,7 +1,8 @@
 (function (root) {
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
+    //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
     var currentProject = false;
-    var selectedProjectLink = false;
+    var projectErrors = false;
     var activeLayer = false;
     var hasReservedRoadParts = false;
     var ProjectStatus = LinkValues.ProjectStatus;
@@ -14,8 +15,6 @@
         '</div>';
       return field;
     };
-
-    var options = ['Valitse'];
 
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
@@ -44,7 +43,7 @@
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
-    var actionButtons = function (ready) {
+    var actionButtons = function () {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
         '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka Toimenpiteisiin</button>' +
         '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
@@ -84,7 +83,7 @@
         '<div id ="roadpartList">' +
         '</div></div>' +
         '</div> </div>' +
-        '<footer>' + actionButtons(false) + '</footer>');
+        '<footer>' + actionButtons() + '</footer>');
     };
 
     var openProjectTemplate = function (project, reservedRoads, newReservedRoads) {
@@ -129,14 +128,32 @@
         '<div id ="newReservedRoads">' +
         newReservedRoads +
         '</div></div></div></div>' +
-        '<footer>' + actionButtons(reservedRoads !== '') + '</footer>');
+        '<footer>' + actionButtons() + '</footer>');
     };
 
     var selectedProjectLinkTemplate = function (project) {
+      var errorLines = '';
+      var index = 0;
+      _.each(projectErrors, function (error) {
+        var button = projectCollection.getCoordButton(index++, error.roadNumber, error.roadPartNumber, project.coordinates);
+        errorLines += '<div class="form-project-errors-list">' +
+          addLabel('LINKIDS') + addLabelInfo(error.linkIds)+'</br>'+
+          addLabel('ERROR') + addLabelInfo(error.errorMessage) +'</br>'+
+          addLabel('INFO') + addLabelInfo(error.info) +'</br>'+
+          button +'</br>' + '<hr class="horizontal-line"/>'+
+          '</div>';
+      });
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
         '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<label>VIRHEILMOITUKSIA:</label>' +
+        '<div id ="projectErrors">' +
+        errorLines +
+        '</div></div></div></div></br></br>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
 
@@ -148,6 +165,14 @@
 
     var addSmallLabel = function (label) {
       return '<label class="control-label-small">' + label + '</label>';
+    };
+
+    var addLabel = function (label) {
+      return '<label>' + label+ ": " + '</label>';
+    };
+
+    var addLabelInfo = function (label) {
+      return '<label>' + label + '</label>';
     };
 
     var addSmallLabelWithIds = function (label, id) {
@@ -329,6 +354,7 @@
 
       eventbus.on('roadAddress:openProject', function (result) {
         currentProject = result.project;
+        projectErrors = result.projectErrors;
         currentProject.isDirty = false;
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
