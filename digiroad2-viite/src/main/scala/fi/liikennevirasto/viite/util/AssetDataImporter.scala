@@ -413,14 +413,18 @@ class AssetDataImporter {
 
   def importRoadAddressHistory(conversionDatabase: DatabaseDef, importDate: String): Unit = {
 
+    print(s"\n${DateTime.now()} - ")
+    println("Starting to import history data %d ".format(importDate))
+
     val roadMaintainerElys = Seq(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
 
-    val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= $importDate" else ""
-    val conversionFilter = if (importDate != "") s" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate" else ""
+    val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= '$importDate'" else ""
+    val conversionFilter = if (importDate != "") s" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate'" else ""
 
     //Delete all the previous road history
     OracleDatabase.withDynTransaction{
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
+      print(sqlu"""DELETE FROM ROAD_ADDRESS WHERE END_DATE IS NOT NULL $roadAddressFilter""")
       sqlu"""DELETE FROM ROAD_ADDRESS WHERE END_DATE IS NOT NULL $roadAddressFilter""".execute
       sqlu"""DELETE FROM LRM_POSITION WHERE NOT EXISTS
              (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE LRM_POSITION_ID = LRM_POSITION.ID AND END_DATE IS NOT NULL $roadAddressFilter)""".execute
