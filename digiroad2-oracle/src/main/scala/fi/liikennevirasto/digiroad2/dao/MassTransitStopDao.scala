@@ -1,20 +1,28 @@
 package fi.liikennevirasto.digiroad2.dao
 
+import java.sql.SQLException
+
+import _root_.oracle.spatial.geometry.JGeometry
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
+import fi.liikennevirasto.digiroad2.dao.Queries._
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.MassTransitStopRow
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
-import org.joda.time.format.ISODateTimeFormat
+import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
+import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
+
+import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
-import scala.language.reflectiveCalls
 
 class MassTransitStopDao {
   val logger = LoggerFactory.getLogger(getClass)
@@ -202,7 +210,7 @@ class MassTransitStopDao {
     else Option(assetRow.property.propertyDisplayValue)
   }
 
-  private[oracle] def getBearingDescription(validityDirection: Int, bearing: Option[Int]): String = {
+  private[dao] def getBearingDescription(validityDirection: Int, bearing: Option[Int]): String = {
     GeometryUtils.calculateActualBearing(validityDirection, bearing).getOrElse(0) match {
       case x if 46 to 135 contains x => "Itä"
       case x if 136 to 225 contains x => "Etelä"

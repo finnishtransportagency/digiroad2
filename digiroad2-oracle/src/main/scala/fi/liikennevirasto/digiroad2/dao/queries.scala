@@ -3,15 +3,20 @@ package fi.liikennevirasto.digiroad2.dao
 import java.sql.Connection
 
 import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-import _root_.oracle.spatial.geometry.JGeometry
-import _root_.oracle.sql.STRUCT
-import com.jolbox.bonecp.ConnectionHandle
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import org.joda.time.{DateTime, LocalDate}
-import slick.jdbc.StaticQuery._
-import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
+import Database.dynamicSession
+import _root_.oracle.spatial.geometry.JGeometry
+import java.sql.{Timestamp, Connection}
+import _root_.oracle.sql.STRUCT
+import com.jolbox.bonecp.ConnectionHandle
+import scala.math.BigDecimal.RoundingMode
+import java.text.{NumberFormat, DecimalFormat}
+import Q._
+import org.joda.time.{LocalDate, DateTime}
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import java.util.Locale
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection

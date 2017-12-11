@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimpleProperty, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.FloatingReason
-import PersistedMassTransitStop
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
