@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkChangeSet, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import org.joda.time.DateTime
 import org.mockito.Matchers._

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.ImportResult
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, MassTransitStopService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{Digiroad2Context, MassTransitStopService}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.scalatra._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadLinkType}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.viite.switchSideCode
 import fi.liikennevirasto.viite.dao.RoadAddress

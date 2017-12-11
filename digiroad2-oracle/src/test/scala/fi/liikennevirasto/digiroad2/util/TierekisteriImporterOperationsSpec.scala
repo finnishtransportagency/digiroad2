@@ -2,13 +2,15 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{TierekisteriLightingAssetClient, TierekisteriMassTransitLaneAssetClient, TierekisteriTrafficSignData, _}
+import fi.liikennevirasto.digiroad2.{TierekisteriLightingAssetClient, TierekisteriMassTransitLaneAssetClient, TierekisteriTrafficSignData, dao, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddressDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import org.joda.time.DateTime
 import org.mockito.Matchers.{any, _}
@@ -71,8 +73,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def getAllViiteRoadAddressTest(section: AddressSection) = super.getAllViiteRoadAddress(section)
     def getAllViiteRoadAddressTest(roadNumber: Long, roadPart: Long) = super.getAllViiteRoadAddress(roadNumber, roadPart)
     def expireAssetsTest(linkIds: Seq[Long]): Unit = super.expireAssets(linkIds)
-    def calculateStartLrmByAddressTest(startAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateStartLrmByAddress(startAddress, section)
-    def calculateEndLrmByAddressTest(endAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateEndLrmByAddress(endAddress, section)
+    def calculateStartLrmByAddressTest(startAddress: RoadAddress, section: AddressSection): Option[Double] = super.calculateStartLrmByAddress(startAddress, section)
+    def calculateEndLrmByAddressTest(endAddress: dao.RoadAddress, section: AddressSection): Option[Double] = super.calculateEndLrmByAddress(endAddress, section)
 
     def getAllTierekisteriAddressSectionsTest(roadNumber: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
     def getAllTierekisteriAddressSectionsTest(roadNumber: Long, roadPart: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
@@ -91,13 +93,13 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
 
-    def testSplitRoadAddressSectionBySigns(trAssets: Seq[TierekisteriAssetData], ra: ViiteRoadAddress, roadSide: RoadSide): Seq[(AddressSection, Option[TierekisteriAssetData])] = {
+    def testSplitRoadAddressSectionBySigns(trAssets: Seq[TierekisteriAssetData], ra: dao.RoadAddress, roadSide: RoadSide): Seq[(AddressSection, Option[TierekisteriAssetData])] = {
       super.splitRoadAddressSectionBySigns(trAssets, ra, roadSide)
     }
 
-    def calculateMeasuresTest(roadAddress: ViiteRoadAddress, section: AddressSection) = super.calculateMeasures(roadAddress, section)
+    def calculateMeasuresTest(roadAddress: dao.RoadAddress, section: AddressSection) = super.calculateMeasures(roadAddress, section)
 
-    def createSpeedLimitTest(roadAddress: ViiteRoadAddress, addressSection: AddressSection,
+    def createSpeedLimitTest(roadAddress: dao.RoadAddress, addressSection: AddressSection,
                              trAssetOption: Option[TierekisteriAssetData], roadLinkOption: Option[VVHRoadlink],
                              trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData], roadSide: RoadSide) = super.createSpeedLimit(roadAddress, addressSection, trAssetOption, roadLinkOption, trUrbanAreaAssets, roadSide)
   }

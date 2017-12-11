@@ -1,10 +1,11 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadLinkType}
-import fi.liikennevirasto.digiroad2.RoadLinkType._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.service.RoadLinkType._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource._
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, LinkType, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.service.RoadLinkType
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink}
 

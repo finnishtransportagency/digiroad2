@@ -1,14 +1,14 @@
-package fi.liikennevirasto.digiroad2.roadaddress.oracle
+package fi.liikennevirasto.digiroad2.dao
 
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.Point
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.Track
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,

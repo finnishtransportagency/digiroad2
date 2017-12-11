@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.roadaddress.oracle
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.util.Track
 import org.scalatest.{FunSuite, Matchers}
 

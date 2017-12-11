@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.{apply => _, _}
+import fi.liikennevirasto.digiroad2.service.RoadLinkType.{apply => _, _}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, _}

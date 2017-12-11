@@ -14,6 +14,8 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.RailwayCrossing
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.RailwayCrossingService
 
 class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   def toRoadLink(l: VVHRoadlink) = {

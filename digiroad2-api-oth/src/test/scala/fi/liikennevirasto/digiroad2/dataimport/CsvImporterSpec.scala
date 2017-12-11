@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitS
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.mockito.Matchers

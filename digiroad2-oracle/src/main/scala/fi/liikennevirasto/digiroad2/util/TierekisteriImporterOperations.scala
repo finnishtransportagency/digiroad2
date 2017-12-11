@@ -7,16 +7,18 @@ import javax.naming.OperationNotSupportedException
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRLaneArrangementType.MassTransitLane
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{dao, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddressDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType, TrafficSignTypeGroup}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -93,7 +95,7 @@ trait TierekisteriAssetImporterOperations {
     roadNumbers
   }
 
-  protected def calculateStartLrmByAddress(startAddress:  ViiteRoadAddress, section: AddressSection): Option[Double] = {
+  protected def calculateStartLrmByAddress(startAddress:  RoadAddress, section: AddressSection): Option[Double] = {
     if (startAddress.startAddrMValue >= section.startAddressMValue)
       startAddress.sideCode match {
         case TowardsDigitizing => Some(startAddress.startMValue)
@@ -105,7 +107,7 @@ trait TierekisteriAssetImporterOperations {
 
   }
 
-  protected def calculateEndLrmByAddress(endAddress: ViiteRoadAddress, section: AddressSection) = {
+  protected def calculateEndLrmByAddress(endAddress: dao.RoadAddress, section: AddressSection) = {
     if (endAddress.endAddrMValue <= section.endAddressMValue.getOrElse(endAddress.endAddrMValue))
       endAddress.sideCode match {
         case TowardsDigitizing => Some(endAddress.endMValue)
@@ -278,7 +280,7 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
 
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
 
-  protected def calculateMeasures(roadAddress: ViiteRoadAddress, section: AddressSection): Option[Measures] = {
+  protected def calculateMeasures(roadAddress: dao.RoadAddress, section: AddressSection): Option[Measures] = {
     val startAddrMValueCandidate = calculateStartLrmByAddress(roadAddress, section)
     val endAddrMValueCandidate = calculateEndLrmByAddress(roadAddress, section)
 
@@ -289,7 +291,7 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
     }
   }
 
-  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
+  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
 
   protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
@@ -322,7 +324,7 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
 
 trait PointAssetTierekisteriImporterOperations extends TierekisteriAssetImporterOperations{
 
-  protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData)
+  protected def createPointAsset(roadAddress: dao.RoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData)
 
   protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
@@ -390,14 +392,14 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     }
   }
 
-  private def filterSectionTrafficSigns(trafficSigns: Seq[TierekisteriAssetData], roadAddress: ViiteRoadAddress, roadSide: RoadSide): Seq[TierekisteriAssetData] ={
+  private def filterSectionTrafficSigns(trafficSigns: Seq[TierekisteriAssetData], roadAddress: dao.RoadAddress, roadSide: RoadSide): Seq[TierekisteriAssetData] ={
     trafficSigns.filter(trSign => trSign.assetType.trafficSignType.group == TrafficSignTypeGroup.SpeedLimits &&
       trSign.endRoadPartNumber == roadAddress.roadPartNumber && trSign.startAddressMValue >= roadAddress.startAddrMValue &&
       trSign.startAddressMValue <= roadAddress.endAddrMValue && roadSide == trSign.roadSide)
   }
 
   protected def getSpeedLimitByUrbanArea(measures: Measures, roadLink: VVHRoadlink, trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData],
-                                         addressSection: AddressSection, roadAddress: ViiteRoadAddress,
+                                         addressSection: AddressSection, roadAddress: dao.RoadAddress,
                                          roadSide: RoadSide): Option[TierekisteriAssetData] = {
     def createSpeedLimitByUrbanArea(trUAValue: String, addressSection: AddressSection): Option[TierekisteriAssetData] = {
       if (trUAValue == outUrbanAreaValue) {
@@ -420,14 +422,14 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
   }
 
   protected def createMultiSpeedLimitInAddressSection(trUAAsset: TierekisteriUrbanAreaData, roadLink: VVHRoadlink,
-                                                      addressSection: AddressSection, roadAddress: ViiteRoadAddress,
+                                                      addressSection: AddressSection, roadAddress: dao.RoadAddress,
                                                       roadSide: RoadSide) = {
     def verifyDefaultTolerance(urbanAreaAddressMValue: Double, addressSectionAddressMValue: Double): Boolean ={
       val defaultTolerance = 2
       ((urbanAreaAddressMValue - addressSectionAddressMValue).abs) > defaultTolerance
     }
 
-    def createSectionPart(roadAddress: ViiteRoadAddress, section: AddressSection, assetType: TRTrafficSignType, assetValue: String) = {
+    def createSectionPart(roadAddress: dao.RoadAddress, section: AddressSection, assetType: TRTrafficSignType, assetValue: String) = {
       calculateMeasures(roadAddress, section) match {
         case Some(measure) =>
           val newTrAsset = TierekisteriTrafficSignData(section.roadNumber, section.roadPartNumber, section.roadPartNumber, section.track, section.startAddressMValue, section.startAddressMValue, roadSide, assetType, assetValue)
@@ -455,7 +457,7 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     }
   }
 
-  protected def createSpeedLimit(roadAddress: ViiteRoadAddress, addressSection: AddressSection, trAssetOption: Option[TierekisteriAssetData],
+  protected def createSpeedLimit(roadAddress: dao.RoadAddress, addressSection: AddressSection, trAssetOption: Option[TierekisteriAssetData],
                                  roadLinkOption: Option[VVHRoadlink], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData],
                                  roadSide: RoadSide): Unit = {
     roadLinkOption.map {
@@ -486,7 +488,7 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     }
 
     getViiteRoadAddress(roadSide).foldLeft[Option[tierekisteriClient.TierekisteriType]](None){
-      case (trAsset, (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink])) =>
+      case (trAsset, (roadAddress: dao.RoadAddress, roadLink: Option[VVHRoadlink])) =>
         splitRoadAddressSectionBySigns(trAssets, roadAddress, roadSide).foldLeft(trAsset){
           case (previousTrAsset, (addressSection: AddressSection, beginTrAsset)) =>
             val currentTrAssetSign = beginTrAsset.orElse(previousTrAsset)
@@ -496,7 +498,7 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     }
   }
 
-  protected def splitRoadAddressSectionBySigns(trAssets: Seq[TierekisteriAssetData], ra: ViiteRoadAddress, roadSide: RoadSide): Seq[(AddressSection, Option[TierekisteriAssetData])] = {
+  protected def splitRoadAddressSectionBySigns(trAssets: Seq[TierekisteriAssetData], ra: dao.RoadAddress, roadSide: RoadSide): Seq[(AddressSection, Option[TierekisteriAssetData])] = {
     val sectionAssets = filterSectionTrafficSigns(trAssets, ra, roadSide)
     if(sectionAssets.isEmpty) {
       Seq((AddressSection(ra.roadNumber, ra.roadPartNumber, ra.track, ra.startAddrMValue, Some(ra.endAddrMValue)), None))
@@ -550,7 +552,7 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     }
   }
 
-  override protected def createLinearAsset(roadLink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData) = {
+  override protected def createLinearAsset(roadLink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData) = {
     val speedLimit = getSpeedLimitValue(trAssetData)
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, roadLink.linkId, false, getSideCode(roadAddress.sideCode, trAssetData.roadSide).value,
@@ -681,7 +683,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
   }
 
-  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+  protected override def createPointAsset(roadAddress: dao.RoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     if(supportedTrafficSigns.contains(trAssetData.assetType))
       GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
         point =>
@@ -704,7 +706,7 @@ class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperati
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), verifiedBy = Some("batch_process_" + assetName))
@@ -727,7 +729,7 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), verifiedBy = Some("batch_process_" + assetName))
@@ -753,7 +755,7 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
     tierekisteriAssetData.pavementType != TRPavedRoadType.Unknown
   }
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (trAssetData.pavementType != TRPavedRoadType.Unknown) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
@@ -776,7 +778,7 @@ class DamagedByThawTierekisteriImporter extends LinearAssetTierekisteriImporterO
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
       measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
@@ -801,7 +803,7 @@ class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporte
     tierekisteriAssetData.laneType != TRLaneArrangementType.Unknown
   }
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
 
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, roadAddress.sideCode.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), verifiedBy = Some("batch_process_" + assetName))
@@ -829,7 +831,7 @@ class EuropeanRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOp
     tierekisteriAssetData.assetValue != null && tierekisteriAssetData.assetValue.trim.nonEmpty
   }
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
       measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
@@ -852,7 +854,7 @@ class SpeedLimitAssetTierekisteriImporter extends LinearAssetTierekisteriImporte
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: dao.RoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = speedLimitService.dao.createSpeedLimit("batch_process_speedlimit", vvhRoadlink.linkId, measures, getSideCode(roadAddress.sideCode, trAssetData.roadSide),
         trAssetData.assetValue, Some(vvhClient.roadLinkData.createVVHTimeStamp()), None, None, None, vvhRoadlink.linkSource)

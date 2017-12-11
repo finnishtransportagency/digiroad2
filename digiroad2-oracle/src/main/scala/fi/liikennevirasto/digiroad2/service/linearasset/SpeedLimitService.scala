@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClien
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory

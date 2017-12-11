@@ -21,7 +21,9 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import org.joda.time._
 import org.slf4j.LoggerFactory

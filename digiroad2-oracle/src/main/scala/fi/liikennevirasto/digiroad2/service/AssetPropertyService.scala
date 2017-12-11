@@ -1,12 +1,10 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2.service
 
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, Queries}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{OracleDatabase, _}
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.oracle._
-import slick.jdbc.StaticQuery
 
 trait DatabaseTransaction {
   def withDynTransaction[T](f: => T): T

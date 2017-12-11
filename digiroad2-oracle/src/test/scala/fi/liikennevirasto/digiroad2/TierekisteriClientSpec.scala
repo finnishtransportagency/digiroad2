@@ -5,8 +5,8 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
+import fi.liikennevirasto.digiroad2.dao.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util._
 import org.apache.http.{ProtocolVersion, StatusLine}
 import org.apache.http.client.config.RequestConfig
