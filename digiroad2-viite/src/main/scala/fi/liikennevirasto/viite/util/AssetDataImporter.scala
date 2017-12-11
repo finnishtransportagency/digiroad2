@@ -428,7 +428,7 @@ class AssetDataImporter {
     val currentRoadsForEly = OracleDatabase.withDynTransaction {
       sql"""SELECT ROAD_NUMBER, ROAD_PART_NUMBER, ELY FROM ROAD_ADDRESS WHERE END_DATE IS NULL""".as[(Long, Long, Long)].list.map{
         case (roadNumber, roadPart, ely) => RoadPart(roadNumber, roadPart, ely)
-      }.groupBy(_.ely)
+      }.sortBy(_.ely).groupBy(_.ely)
     }
 
     //Delete all the previous road history
@@ -451,7 +451,7 @@ class AssetDataImporter {
       println (s"${DateTime.now ()} - Old address data removed")
 */
     currentRoadsForEly.map(elyData => importRoadAddressHistoryData(conversionDatabase, elyData, importOptions))
-    }
+
       //roadMaintainerElys.foreach(ely => importRoadAddressHistoryData(conversionDatabase, currentRoads, importOptions, vvhClientProd))
       // If running in DEV environment then include some testing complementary links
       /*if (vvhClientProd.nonEmpty)
@@ -486,6 +486,7 @@ class AssetDataImporter {
               )
             )""".execute
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
+    }
   }
 
   def updateRoadAddressesValues(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
