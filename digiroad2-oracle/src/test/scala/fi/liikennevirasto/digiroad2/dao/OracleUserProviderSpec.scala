@@ -1,9 +1,8 @@
-package fi.liikennevirasto.digiroad2.user.oracle
+package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
-import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
 import fi.liikennevirasto.digiroad2.user.Configuration
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
+import org.scalatest.{FunSuite, Matchers}
 
 class OracleUserProviderSpec extends FunSuite with Matchers {
   val TestUserName = "Oracleuserprovidertest"

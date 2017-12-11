@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.dao
+package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -12,7 +12,6 @@ import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.StaticQuery.interpolation

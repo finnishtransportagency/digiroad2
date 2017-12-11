@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2.service
 
 import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
 import fi.liikennevirasto.digiroad2.asset._
@@ -6,9 +6,9 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, MaintenanceService, Measures}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.geotools.geometry.jts.GeometryBuilder
 import org.mockito.Matchers._
 import org.mockito.Mockito._

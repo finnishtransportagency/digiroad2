@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.dao
+package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
