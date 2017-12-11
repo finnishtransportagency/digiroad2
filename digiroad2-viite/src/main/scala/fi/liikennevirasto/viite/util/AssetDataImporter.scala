@@ -415,8 +415,8 @@ class AssetDataImporter {
 
     val roadMaintainerElys = Seq(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
 
-    val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= '$importDate'" else ""
-    val conversionFilter = if (importDate != "") s" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate'" else ""
+    val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= $importDate" else ""
+    val conversionFilter = if (importDate != "") s" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate" else ""
 
     //Delete all the previous road history
     OracleDatabase.withDynTransaction{
