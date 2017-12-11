@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReserved
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.LinkStatus.{Unknown => _, apply => _, _}
 import fi.liikennevirasto.viite.dao.ProjectState._
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process._
@@ -1351,40 +1352,39 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     split.flatMap(pl =>
       pl.status match {
         case UnChanged =>
-          Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue,
-            endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue,
-            linkId = pl.linkId, modifiedBy = Some(project.createdBy),
-            geometry = pl.geometry, adjustedTimestamp = pl.linkGeometryTimeStamp))
+          Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
+            modifiedBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue, endMValue = pl.endMValue,
+            adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry))
         case New =>
-          Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track,
-            pl.discontinuity, pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy),
-            0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.calibrationPoints,
-            floating = false, pl.geometry, pl.linkGeomSource, pl.ely, terminated = false))
+          Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
+            pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), 0L, pl.linkId,
+            pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false,
+            pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination))
         case Transfer =>
           val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
           Seq(
             // Transferred part, original values
-            roadAddress.copy(id = NewRoadAddress, endDate = Some(project.startDate),
-              modifiedBy = Some(project.createdBy), startAddrMValue = startAddr,
-              startMValue = startM, endMValue = endM,
-              endAddrMValue = endAddr),
+            roadAddress.copy(id = NewRoadAddress, startAddrMValue = startAddr, endAddrMValue = endAddr,
+              endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), startMValue = startM, endMValue = endM),
             // Transferred part, new values
-            roadAddress.copy(id = NewRoadAddress, startDate = Some(project.startDate),
-              startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
-              startMValue = pl.startMValue, endMValue = pl.endMValue,
-              linkId = pl.linkId, modifiedBy = Some(project.createdBy), geometry = pl.geometry,
-              adjustedTimestamp = pl.linkGeometryTimeStamp)
+            roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
+              startDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId,
+              startMValue = pl.startMValue, endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp,
+              geometry = pl.geometry)
           )
         case Terminated =>
-          Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue,
-            endAddrMValue = pl.endAddrMValue, endDate = Some(project.startDate), startMValue = pl.startMValue, endMValue = pl.endMValue,
-            linkId = pl.linkId, terminated = true, modifiedBy = Some(project.createdBy),
-            geometry = pl.geometry, adjustedTimestamp = pl.linkGeometryTimeStamp))
+          Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
+            endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue,
+            endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, terminated = Termination))
         case _ =>
           logger.error(s"Invalid status for split project link: ${pl.status} in project ${pl.projectId}")
           throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
       }
     )
+  }
+
+  def updateTerminationForHistory(terminatedLinkIds: Seq[Long], splitReplacements: Seq[ProjectLink]): Unit = {
+    // TODO
   }
 
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Seq[Long] = {
@@ -1407,6 +1407,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       expiringRoadAddresses, project).partition(_.floating)
     //Expiring all old addresses by their ID
     roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
+    val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId)
+    updateTerminationForHistory(terminatedLinkIds, splitReplacements)
     //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
     RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
   }
@@ -1433,10 +1435,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } else {
       Seq()
     }
-    val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track,
-      pl.discontinuity, pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId,
-      pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp,
-      pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = false)
+    val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
+      pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
+      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination)
     pl.status match {
       case UnChanged =>
         roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)
@@ -1445,7 +1446,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case New =>
         roadAddress.copy(startDate = Some(project.startDate))
       case Terminated =>
-        roadAddress.copy(terminated = true, startDate = source.get.startDate, endDate = Some(project.startDate))
+        roadAddress.copy(startDate = source.get.startDate, endDate = Some(project.startDate), terminated = Termination)
       case _ =>
         logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
         throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")

@@ -11,7 +11,8 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointMValues}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
@@ -84,6 +85,22 @@ object CalibrationCode {
 }
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
 
+sealed trait TerminationCode {
+  def value: Int
+}
+
+object TerminationCode {
+  val values = Set(NoTermination, Termination, Subsequent)
+
+  def apply(intValue: Int): TerminationCode = {
+    values.find(_.value == intValue).getOrElse(NoTermination)
+  }
+
+  case object NoTermination extends TerminationCode { def value = 0 }
+  case object Termination extends TerminationCode { def value = 1 }
+  case object Subsequent extends TerminationCode { def value = 2 }
+}
+
 trait BaseRoadAddress {
   def id: Long
   def roadNumber: Long
@@ -114,10 +131,12 @@ trait BaseRoadAddress {
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
-                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: Boolean = false) extends BaseRoadAddress {
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
+                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, modifiedBy: Option[String] = None,
+                       lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
+                       floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
+                       terminated: TerminationCode = NoTermination) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -168,7 +187,7 @@ object RoadAddressDAO {
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
     val floatingFilter = fetchOnlyFloating match {
-      case true => " and ra.floating = 1"
+      case true => " and ra.floating != '0'"
       case false => ""
     }
 
@@ -272,11 +291,12 @@ object RoadAddressDAO {
       val y2 = r.nextDouble()
       val geomSource = LinkGeomSource.apply(r.nextInt)
       val ely = r.nextLong()
-      val terminated = r.nextBoolean()
+      val terminated = TerminationCode.apply(r.nextInt())
       RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
-        SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
-          endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)), geomSource, ely, terminated)
+        SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode),
+          linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)), floating,
+        Seq(Point(x,y), Point(x2,y2)), geomSource, ely, terminated)
     }
   }
 
@@ -1006,7 +1026,7 @@ object RoadAddressDAO {
       addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
       addressPS.setLong(20, address.ely)
       addressPS.setInt(21, address.roadType.value)
-      addressPS.setInt(22, if (address.terminated) 1 else 0)
+      addressPS.setInt(22, address.terminated.value)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()

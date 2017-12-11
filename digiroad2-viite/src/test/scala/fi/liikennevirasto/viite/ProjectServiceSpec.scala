@@ -1064,7 +1064,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
     val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
       None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-      LinkGeomSource.NormalLinkInterface, 8L, false)
+      LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination)
     val unchangedAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, origStartM, origStartM+100L, Some(DateTime.now()), None, user,
       2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
       -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId), 85088L),
@@ -1076,7 +1076,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId), 85088L))
     val result = projectService.createSplitRoadAddress(roadAddress, unchangedAndNew, project)
     result should have size(3)
-    result.count(_.terminated) should be (1)
+    result.count(_.terminated == TerminationCode.Termination) should be (1)
     result.count(_.startDate == roadAddress.startDate) should be (2)
     result.count(_.startDate.get == project.startDate) should be (1)
     result.count(_.endDate.isEmpty) should be (2)
