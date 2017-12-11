@@ -9,7 +9,7 @@
       map = params.map;
 
     var me = this;
-    me.minZoomForContent = zoomlevels.minZoomForAssets;
+    var minZoomForContent = zoomlevels.minZoomForAssets;
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
       source: vectorSource,
@@ -55,10 +55,16 @@
       vectorLayer.setOpacity(1);
     };
 
+    var mapMovedHandler = function(mapState) {
+      if(mapState.selectedLayer === parentLayerName && mapState.zoom < minZoomForContent)
+        me.removeLayerFeatures();
+    };
+
     eventbus.on(parentLayerName + ':hideSpeedLimitsSigns', hideSpeedLimitSigns);
     eventbus.on(parentLayerName + ':showSpeedLimitsSigns', showSpeedLimitSigns);
+    eventbus.on('map:moved', mapMovedHandler, this);
     eventbus.on('readOnlyLayer:' + parentLayerName + ':shown', function (layerName) {
-       showLayer(layerName);
+      showLayer(layerName);
     }, this);
 
     var showLayer = function(layer){
@@ -70,10 +76,11 @@
 
     this.refreshView = function () {
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function (assets) {
-          var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
-          vectorLayer.getSource().addFeatures(features);
-          vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
-        });
+        var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
+        me.removeLayerFeatures();
+        vectorLayer.getSource().addFeatures(features);
+        vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
+      });
     };
 
     this.removeLayerFeatures = function() {
