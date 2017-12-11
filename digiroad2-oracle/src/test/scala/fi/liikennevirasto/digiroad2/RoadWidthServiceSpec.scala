@@ -2,10 +2,11 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, RoadWidthService}
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.RoadWidthService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._

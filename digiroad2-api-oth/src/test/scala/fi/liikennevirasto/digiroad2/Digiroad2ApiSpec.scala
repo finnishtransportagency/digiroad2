@@ -7,12 +7,11 @@ import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
-import fi.liikennevirasto.digiroad2.dao.linearasset.RoadWidthService
 import fi.liikennevirasto.digiroad2.dao.pointasset.DirectionalTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, MaintenanceService, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, MaintenanceService, RoadWidthService, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStop, MassTransitStopService, MassTransitStopWithProperties}
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}

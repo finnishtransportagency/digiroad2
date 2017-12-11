@@ -6,13 +6,13 @@ import java.text.SimpleDateFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, RoadWidthService}
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetService, LinearAssetTypes}
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetService, LinearAssetTypes, RoadWidthService}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
