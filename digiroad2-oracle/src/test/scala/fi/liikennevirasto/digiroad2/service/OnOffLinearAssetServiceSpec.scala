@@ -1,11 +1,11 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2.service
 
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset, Value}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, OnOffLinearAssetService}
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when

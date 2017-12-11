@@ -1,7 +1,7 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2.service
 
+import fi.liikennevirasto.digiroad2.DummyEventBus
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
-import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, DatabaseTransaction}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest._
