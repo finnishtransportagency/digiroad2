@@ -6,7 +6,8 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopOperations
+import fi.liikennevirasto.digiroad2.service.pointasset.MassTransitStopRow
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
 import org.slf4j.LoggerFactory

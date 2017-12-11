@@ -6,8 +6,8 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
-import fi.liikennevirasto.digiroad2.PersistedMassTransitStop
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpRequestBase, _}
 import org.apache.http.entity.{ContentType, StringEntity}

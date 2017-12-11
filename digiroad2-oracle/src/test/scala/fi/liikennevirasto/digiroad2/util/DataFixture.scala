@@ -16,10 +16,10 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, TierekisteriBusStopStrategyOperations}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.digiroad2.{MassTransitStopService, asset, _}
+import fi.liikennevirasto.digiroad2.asset
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat

@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, MaintenanceService, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.service.pointasset._
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStop, MassTransitStopService, MassTransitStopWithProperties}
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
 import org.joda.time.DateTime
 import org.json4s._

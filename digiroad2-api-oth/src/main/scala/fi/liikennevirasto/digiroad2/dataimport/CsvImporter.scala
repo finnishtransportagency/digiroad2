@@ -11,6 +11,8 @@ import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.{MassTransitStopWithProperties, PersistedMassTransitStop}
 
 object CsvImporter {
   case class NonExistingAsset(externalId: Long, csvRow: String)

@@ -1,10 +1,10 @@
 package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.MassTransitStopRow
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.LocalizedString._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{EnumeratedPropertyValue, Property, PropertyValue}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopRow
 import org.joda.time.DateTime
 
 case class CommonAssetProperty(publicId: String, column: String, propertyType: String, propertyDescriptor: Property, lrmPositionProperty: Boolean = false)

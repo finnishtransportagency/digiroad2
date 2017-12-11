@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, MaintenanceService, OnOffLinearAssetService, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.service.pointasset._
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender

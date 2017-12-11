@@ -9,7 +9,8 @@ import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturda
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, LinearAssetTypes}
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopOperations
+import fi.liikennevirasto.digiroad2.service.pointasset.PersistedMassTransitStop
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport

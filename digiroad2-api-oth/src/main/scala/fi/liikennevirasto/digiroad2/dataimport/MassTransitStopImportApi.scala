@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.ImportResult
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, MassTransitStopService}
+import fi.liikennevirasto.digiroad2.Digiroad2Context
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.scalatra._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
@@ -28,6 +28,7 @@ import javax.naming.OperationNotSupportedException
 
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.ImportLogService
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
 
 class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats

@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{Equipment, Tierekisteri
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.PersistedMassTransitStop
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
 import scala.util.Try
