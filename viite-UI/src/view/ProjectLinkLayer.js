@@ -855,13 +855,13 @@
         features.push(feature);
       });
 
-      directionMarkerLayer.getSource().clear();
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var directionRoadMarker = _.filter(projectLinks, function (projectLink) {
         return projectLink.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
       });
 
       var featuresToRemove = [];
+      directionMarkerLayer.getSource().clear();
       _.each(selectSingleClick.getFeatures().getArray(), function (feature) {
         if (feature.getProperties().type && feature.getProperties().type === "marker")
           featuresToRemove.push(feature);
