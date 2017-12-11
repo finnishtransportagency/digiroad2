@@ -201,7 +201,6 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         checkInputs('.project-');
-        //formCommon.toggleAdditionalControls();
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
@@ -466,7 +465,7 @@
       rootElement.on('click', '.project-form button.send', function(){
         new GenericConfirmPopup("Haluatko varmasti poistaa tämän projektin?", {
           successCallback: function () {
-            //projectCollection.publishProject();
+            projectCollection.publishProject();
             closeProjectMode(true, true);
           },
           closeCallback: function () {
