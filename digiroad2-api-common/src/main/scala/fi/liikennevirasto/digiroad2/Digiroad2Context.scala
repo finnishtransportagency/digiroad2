@@ -22,21 +22,30 @@ import org.apache.http.impl.client.HttpClientBuilder
 
 import scala.concurrent.duration.FiniteDuration
 
-class ValluActor extends Actor {
+class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
+  def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
-    case (massTransitStop: EventBusMassTransitStop) => ValluSender.postToVallu(massTransitStop)
+    case (massTransitStop: PersistedMassTransitStop) => persistedAssetChanges(massTransitStop)
     case _                                          => println("received unknown message")
+  }
+
+  def persistedAssetChanges(busStop: PersistedMassTransitStop) = {
+    withDynSession {
+      val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
+      ValluSender.postToVallu(massTransitStop)
+    }
   }
 }
 
 class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends Actor {
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
-    case x: AbstractPublishInfo => persistedStopChanges(x.asInstanceOf[TerminalPublishInfo])
+    case x: AbstractPublishInfo => persistedAssetChanges(x.asInstanceOf[TerminalPublishInfo])
     case x                                          => println("received unknown message" + x)
   }
 
-  def persistedStopChanges(terminalPublishInfo: TerminalPublishInfo) = {
+  def persistedAssetChanges(terminalPublishInfo: TerminalPublishInfo) = {
     withDynSession {
     val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset++terminalPublishInfo.detachAsset).toSet)
 
@@ -172,7 +181,7 @@ object Digiroad2Context {
     }
   }
 
-  val vallu = system.actorOf(Props[ValluActor], name = "vallu")
+  val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
 
   val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")

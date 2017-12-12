@@ -195,7 +195,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
         updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 
-        val persistedAsset = fetchAsset(asset.id)
+        val persistedAsset = enrichBusStop(fetchAsset(asset.id))._1
 
         updateTierekisteriBusStop(persistedAsset, roadLink, liviId)
 
@@ -209,7 +209,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, newLiviId)
       updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 
-      val persistedAsset = fetchAsset(asset.id)
+      val persistedAsset = enrichBusStop(fetchAsset(asset.id))._1
 
       createTierekisteriBusStop(persistedAsset, roadLink, newLiviId)
 

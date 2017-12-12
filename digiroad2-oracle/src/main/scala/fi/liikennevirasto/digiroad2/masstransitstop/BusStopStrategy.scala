@@ -9,8 +9,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     publishInfo.asset match {
-      case Some(asset) => val municipalityName = massTransitStopDao.getMunicipalityNameByCode(asset.municipalityCode)
-                          eventbus.publish("asset:saved", MassTransitStopOperations.eventBusMassTransitStop(asset, municipalityName))
+      case Some(asset) => eventbus.publish("asset:saved", asset)
       case _ => None
     }
   }
@@ -87,7 +86,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     val props = MassTransitStopOperations.setPropertiesDefaultValues(properties.toSeq, roadLink)
     updatePropertiesForAsset(asset.id, props, roadLink.administrativeClass, asset.nationalId)
 
-    val resultAsset = fetchAsset(asset.id)
+    val resultAsset = enrichBusStop(fetchAsset(asset.id))._1
     (resultAsset, PublishInfo(Some(resultAsset)))
   }
 

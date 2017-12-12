@@ -228,10 +228,8 @@ trait MassTransitStopService extends PointAssetOperations {
 
       (persistedAsset, publishInfo, strategy)
     }
-    withDynSession {
       strategy.publishSaveEvent(publishInfo)
       persistedAsset.id
-    }
   }
 
   protected override def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[RoadLinkLike]) : String = {
@@ -293,9 +291,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val (enrichPersistedAsset, error) = currentStrategy.enrichBusStop(persistedAsset)
       (currentStrategy, publishInfo, withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(enrichPersistedAsset))
     }
-    withDynSession {
-      currentStrategy.publishSaveEvent(publishInfo)
-    }
+    currentStrategy.publishSaveEvent(publishInfo)
     persistedAsset
   }
 
@@ -426,11 +422,9 @@ trait MassTransitStopService extends PointAssetOperations {
 
       (strategy, strategy.delete(persistedStop))
     }
-    withDynTransaction {
-      (strategy, publishInfo) match {
-        case (strategy, Some(info)) => strategy.publishSaveEvent(info)
-        case _ =>
-      }
+    (strategy, publishInfo) match {
+      case (strategy, Some(info)) => strategy.publishSaveEvent(info)
+      case _ =>
     }
   }
 
