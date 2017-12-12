@@ -515,6 +515,13 @@ class MassTransitStopDao {
            """.execute
   }
 
+  def getAllChildren(terminalAssetId: Long): Seq[Long] = {
+    sql"""
+          SELECT BUS_STOP_ASSET_ID from TERMINAL_BUS_STOP_LINK
+           where TERMINAL_ASSET_ID = $terminalAssetId
+      """.as[Long].list
+  }
+
   def insertTerminal(assetId: Long): Unit = {
     sqlu"""INSERT INTO TERMINAL_BUS_STOP_LINK (TERMINAL_ASSET_ID) VALUES ($assetId)""".execute
   }

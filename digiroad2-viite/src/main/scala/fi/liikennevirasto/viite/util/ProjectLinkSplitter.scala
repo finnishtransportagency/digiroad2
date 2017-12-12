@@ -24,7 +24,17 @@ object ProjectLinkSplitter {
 
   private def suravageWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
                                   splitAddressM: Long) = {
-    //TODO: ely code for split Suravage when ProjectLinks has that column
+    def splitedGeometries = {
+      val geometry1 = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength)
+      val geometry2 = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM)
+      if(GeometryUtils.areAdjacent(geometry1, templateLink.geometry)){
+        (geometry1, geometry2)
+      } else if (GeometryUtils.areAdjacent(geometry2, templateLink.geometry)){
+        (geometry2, geometry1)
+      } else {
+        throw new SplittingException("At least one of the geometries do not overlaps the link properly.")
+      }
+    }
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
@@ -39,8 +49,8 @@ object ProjectLinkSplitter {
         sideCode = templateLink.sideCode,
         roadAddressId = templateLink.roadAddressId,
         connectedLinkId = Some(templateLink.linkId),
-        geometry = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength),
-        geometryLength = suravage.geometryLength - suravageM,
+        geometry = splitedGeometries._1,
+        geometryLength = GeometryUtils.geometryLength(splitedGeometries._1),
         ely = templateLink.ely
       ),
       suravage.copy(roadNumber = split.roadNumber,
@@ -56,8 +66,8 @@ object ProjectLinkSplitter {
         sideCode = templateLink.sideCode,
         roadAddressId = templateLink.roadAddressId,
         connectedLinkId = Some(templateLink.linkId),
-        geometry = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM),
-        geometryLength = suravageM,
+        geometry = splitedGeometries._2,
+        geometryLength = GeometryUtils.geometryLength(splitedGeometries._2),
         ely = templateLink.ely
         )
       )
@@ -112,7 +122,7 @@ object ProjectLinkSplitter {
         movedFromStart(suravageM, templateM, splitAddressM)
       else
         movedFromEnd(suravageM, templateM, splitAddressM)
-    if (isDirectionReversed(suravage, templateLink))
+    if (isReversed)
       toSeq(switchDigitization(splits))
     else
       toSeq(splits)

@@ -77,7 +77,7 @@
           terminatedC.splitPoint = nearestPoint;
           applicationModel.removeSpinner();
           eventbus.trigger('split:projectLinks', [suravageA, suravageB, terminatedC]);
-          eventbus.trigger('split:cutPointFeature', data.split);
+          eventbus.trigger('split:cutPointFeature', data.split, terminatedC);
         });
     };
 
