@@ -185,6 +185,13 @@
     var setCurrent = function(newSelection) {
       current = newSelection;
     };
+
+    var getCurrent = function () {
+      return _.map(current, function(curr) {
+        return curr.getData();
+      });
+    };
+
     var isSelected = function(linkId) {
       return _.contains(ids, linkId);
     };
@@ -216,6 +223,7 @@
       close: close,
       isSelected: isSelected,
       setCurrent: setCurrent,
+      getCurrent: getCurrent,
       isDirty: isDirty,
       setDirty: setDirty,
       preSplitSuravageLink: preSplitSuravageLink,

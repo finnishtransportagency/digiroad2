@@ -310,6 +310,7 @@
     };
     clearLayers();
     vectorLayer.getSource().clear();
+
     var highlightFeatures = function () {
       clearHighlights();
       var featuresToHighlight = [];
