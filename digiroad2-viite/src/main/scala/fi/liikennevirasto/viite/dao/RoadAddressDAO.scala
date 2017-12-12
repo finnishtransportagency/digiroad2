@@ -12,12 +12,12 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
+import fi.liikennevirasto.viite.{NewRoadAddress, ReservedRoadPart, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.format.DateTimeFormat
@@ -987,7 +987,7 @@ object RoadAddressDAO {
       "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,?,?,?,0.0,?)), ?, ?, ? ,?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
-    val (ready, idLess) = roadAddresses.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
+    val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
     val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
     val createAddresses = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
@@ -995,7 +995,7 @@ object RoadAddressDAO {
     val savedIds = createAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue,
         address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
-      val nextId = if (address.id == fi.liikennevirasto.viite.NewRoadAddress)
+      val nextId = if (address.id == NewRoadAddress)
         Sequences.nextViitePrimaryKeySeqValue
       else address.id
       addressPS.setLong(1, nextId)
@@ -1097,4 +1097,11 @@ object RoadAddressDAO {
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
     Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
+
+  def setSubsequentTermination(linkIds: Set[Long]): Unit = {
+    val roadAddresses = fetchByLinkId(linkIds, true, true).filter(_.terminated == NoTermination)
+    expireById(roadAddresses.map(_.id).toSet)
+    create(roadAddresses.map(ra => ra.copy(id = NewRoadAddress, terminated = Subsequent)))
+  }
+
 }

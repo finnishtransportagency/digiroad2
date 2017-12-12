@@ -18,7 +18,9 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
@@ -1032,7 +1034,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
     val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
       None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-      LinkGeomSource.NormalLinkInterface, 8L, false)
+      LinkGeomSource.NormalLinkInterface, 8L, NoTermination)
     val transferAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, 1028, 1128, Some(DateTime.now()), None, user,
       2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
       -1L, LinkStatus.Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId), 748800L),
@@ -1044,7 +1046,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId), 748800L))
     val result = projectService.createSplitRoadAddress(roadAddress, transferAndNew, project)
     result should have size(4)
-    result.count(_.terminated) should be (1)
+    result.count(_.terminated == Termination) should be (1)
     result.count(_.startDate == roadAddress.startDate) should be (2)
     result.count(_.startDate.get == project.startDate) should be (2)
     result.count(_.endDate.isEmpty) should be (2)

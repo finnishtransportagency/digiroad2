@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReserved
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.LinkStatus.{Unknown => _, apply => _, _}
 import fi.liikennevirasto.viite.dao.ProjectState._
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process._
@@ -1383,8 +1383,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     )
   }
 
-  def updateTerminationForHistory(terminatedLinkIds: Seq[Long], splitReplacements: Seq[ProjectLink]): Unit = {
-    // TODO
+  def updateTerminationForHistory(terminatedLinkIds: Set[Long], splitReplacements: Seq[ProjectLink]): Unit = {
+    RoadAddressDAO.setSubsequentTermination(terminatedLinkIds)
+    val mapping = RoadAddressSplitMapper.createAddressMap(splitReplacements)
+    val splitTerminationLinkIds = mapping.map(_.sourceLinkId).toSet
+    val addresses = RoadAddressDAO.fetchByLinkId(splitTerminationLinkIds, includeFloating = true, includeHistory = true)
+    val splitAddresses = addresses.flatMap(RoadAddressSplitMapper.mapRoadAddresses(mapping)).map(ra =>
+      ra.copy(terminated = if (splitTerminationLinkIds.contains(ra.linkId)) Subsequent else NoTermination))
+    roadAddressService.expireRoadAddresses(addresses.map(_.id).toSet)
+    RoadAddressDAO.create(splitAddresses)
   }
 
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Seq[Long] = {
@@ -1407,7 +1414,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       expiringRoadAddresses, project).partition(_.floating)
     //Expiring all old addresses by their ID
     roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
-    val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId)
+    val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
     updateTerminationForHistory(terminatedLinkIds, splitReplacements)
     //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
     RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
