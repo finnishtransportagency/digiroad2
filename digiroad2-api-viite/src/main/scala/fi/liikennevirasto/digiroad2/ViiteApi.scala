@@ -269,6 +269,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  delete("/roadlinks/roadaddress/project"){
+    val projectId = parsedBody.extract[Long]
+    try {
+        if (projectService.deleteProject(projectId)) {
+          Map("success" -> true)
+        }
+        else {
+          Map("success" -> false, "errorMessage" -> "Projekti ei ole vielä luotu")
+        }
+    }
+    catch {
+      case ex: Exception => Map("success" -> false, "errorMessage" -> ex.getMessage)
+    }
+  }
+
   post("/roadlinks/roadaddress/project/sendToTR") {
     val projectId = (parsedBody \ "projectID").extract[Long]
 
@@ -309,7 +324,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
-    val project = projectService.getRoadAddressSingleProject(projectId, Seq(LinkStatus.Numbering)).get
+    val project = projectService.getRoadAddressSingleProject(projectId).get
     val projectMap = roadAddressProjectToApi(project)
     val parts = project.reservedParts.map(reservedRoadPartToApi)
     val errorParts = ProjectValidator.validateProject(project, Seq.empty[ProjectLink])
@@ -499,10 +514,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           } else if(splitLinks.isEmpty){
             Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
           } else {
+            val roadwithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
             val split: Map[String, Any] = Map(
-              "roadNumber" -> splitLinks.get.head.roadNumber,
-              "roadPartNumber" -> splitLinks.get.head.roadPartNumber,
-              "trackCode" -> splitLinks.get.head.track,
+              "roadNumber" -> roadwithInfo.roadNumber,
+              "roadPartNumber" -> roadwithInfo.roadPartNumber,
+              "trackCode" -> roadwithInfo.track,
               "split" -> Map(
                 "geometry" -> cutGeom
               )
@@ -718,11 +734,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def reservedRoadPartToApi(reservedRoadPart: ReservedRoadPart): Map[String, Any] = {
     Map("roadNumber" -> reservedRoadPart.roadNumber,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
-      "roadPartId" -> reservedRoadPart.id,
-      "ely" -> reservedRoadPart.ely,
-      "roadLength" -> reservedRoadPart.roadLength,
-      "addressLength" -> reservedRoadPart.addressLength,
-      "discontinuity" -> reservedRoadPart.discontinuity.description,
+      "id" -> reservedRoadPart.id,
+      "currentEly" -> reservedRoadPart.ely,
+      "currentLength" -> reservedRoadPart.addressLength,
+      "currentDiscontinuity" -> reservedRoadPart.discontinuity.map(_.description),
+      "newEly" -> reservedRoadPart.newEly,
+      "newLength" -> reservedRoadPart.newLength,
+      "newDiscontinuity" -> reservedRoadPart.newDiscontinuity.map(_.description),
       "linkId" -> reservedRoadPart.startingLinkId,
       "isDirty" -> reservedRoadPart.isDirty
     )
@@ -852,6 +870,7 @@ object ProjectConverter {
 
   def toReservedRoadPart(rp: RoadPartExtractor): ReservedRoadPart = {
     ReservedRoadPart(0L, rp.roadNumber, rp.roadPartNumber,
-      0.0, 0L, Discontinuity.Continuous, rp.ely, None, None, None, false)
+      None, None, Some(rp.ely),
+      None, None, None, None, false)
   }
 }

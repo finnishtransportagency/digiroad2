@@ -130,6 +130,18 @@
       });
     }, 1000);
 
+    this.deleteRoadAddressProject = _.throttle(function(projectId, success, failure){
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/viite/roadlinks/roadaddress/project",
+        data: JSON.stringify(projectId),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    });
+
     this.sendProjectToTR = _.throttle(function(projectID, success, failure) {
       var Json = {
         projectID: projectID
