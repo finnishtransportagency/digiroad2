@@ -157,44 +157,47 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  override protected def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
-    // Filter high functional classes from maintenance roads
-    val roadLinks: Seq[RoadLink] = roadLinksExist.filter(_.functionalClass > 4)
-    val linkIds = roadLinks.map(_.linkId)
-    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
-    val existingAssets =
-      withDynTransaction {
-        maintenanceDAO.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, linkIds ++ removedLinkIds, includeFloating = false).filterNot(_.expired)
-      }
+//    // Filter high functional classes from maintenance roads
+//    val roadLinks: Seq[RoadLink] = roadLinksExist.filter(_.functionalClass > 4)
+//    val linkIds = roadLinks.map(_.linkId)
+//    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
+//    val existingAssets =
+//      withDynTransaction {
+//        maintenanceDAO.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, linkIds ++ removedLinkIds, includeFloating = false).filterNot(_.expired)
+//      }
+//
+//    val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
+//
+//    val projectableTargetRoadLinks = roadLinks.filter(
+//      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+//
+//    val timing = System.currentTimeMillis
+//    val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
+//
+//    val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+//      combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
+//
+//    if (newAssets.nonEmpty) {
+//      logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
+//    }
+//    val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
+//    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, maintenanceRoadAssetTypeId)
+//
+//    val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
+//      changeSet.expiredAssetIds
+//
+//    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
+//
+//    //Remove the asset ids ajusted in the "maintenanceRoads:update" otherwise if the "maintenanceRoads:saveProjectedLinearAssets" is executed after the "maintenanceRoads:update"
+//    //it will update the mValues to the previous ones
+//    eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
+//
+//    filledTopology
 
-    val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
+    super.getByRoadLinks(typeId, roadLinks, changes)
 
-    val projectableTargetRoadLinks = roadLinks.filter(
-      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-
-    val timing = System.currentTimeMillis
-    val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
-
-    val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
-
-    if (newAssets.nonEmpty) {
-      logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
-    }
-    val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, maintenanceRoadAssetTypeId)
-
-    val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
-      changeSet.expiredAssetIds
-
-    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
-
-    //Remove the asset ids ajusted in the "maintenanceRoads:update" otherwise if the "maintenanceRoads:saveProjectedLinearAssets" is executed after the "maintenanceRoads:update"
-    //it will update the mValues to the previous ones
-    eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
-
-    filledTopology
   }
 
   /**

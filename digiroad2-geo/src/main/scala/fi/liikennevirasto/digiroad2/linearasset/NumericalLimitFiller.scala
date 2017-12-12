@@ -392,7 +392,7 @@ object NumericalLimitFiller {
       val mValueChanges = alteredSegments.filter(isChanged).
         map(s => MValueAdjustment(s.id, s.linkId, s.startMeasure, s.endMeasure))
 
-      val expiredIds = segments.map(_.id).toSet -- alteredSegments.map(_.id) ++ changeSet.expiredAssetIds
+      val expiredIds = segments.map(_.id).filterNot(_ == 0).toSet -- alteredSegments.map(_.id) ++ changeSet.expiredAssetIds
       (sortedSegments,
         changeSet.copy(adjustedMValues = (changeSet.adjustedMValues ++ mValueChanges).filterNot(mvc => expiredIds.contains(mvc.assetId)),
           expiredAssetIds = expiredIds))
@@ -468,7 +468,7 @@ object NumericalLimitFiller {
     }
   }
 
-  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       dropShortSegments,
@@ -483,15 +483,14 @@ object NumericalLimitFiller {
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
     )
 
-    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil, Set.empty)) { case (acc, roadLink) =>
+    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-
-      (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
+      (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments/*.copy(expiredAssetIds = assetAdjustments.expiredAssetIds.filterNot(_ == 0L))*/)
     }
   }
 

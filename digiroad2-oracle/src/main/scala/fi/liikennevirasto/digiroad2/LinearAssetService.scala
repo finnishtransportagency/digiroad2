@@ -190,32 +190,25 @@ trait LinearAssetOperations {
 
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
-    val projectableTargetRoadLinks = roadLinks.filter(
-      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+    val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
-    val changedSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-                               expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet,
+    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
+                               expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                adjustedMValues = Seq.empty[MValueAdjustment],
                                adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val (projectedAssets, changedSet)= fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      assetsOnChangedLinks, assetsOnChangedLinks, changes, changedSet) ++ assetsWithoutChangedLinks
+      assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
 
     val newAssets = projectedAssets ++ assetsWithoutChangedLinks
 
     if (newAssets.nonEmpty) {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
-    val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
+    val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, changedSet)
 
-//    val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
-//      changeSet.expiredAssetIds
-
-    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
-
-    //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "linearAssets:saveProjectedLinearAssets" is executed after the "linearAssets:update"
-    //it will update the mValues to the previous ones
+    eventBus.publish("linearAssets:update", changeSet)
     eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
 
     logger.info("Finnish get asset roadLinks at %d ms after start".format(System.currentTimeMillis - timing))
@@ -567,14 +560,6 @@ trait LinearAssetOperations {
     def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
       !persistedLinearAsset.exists(_.value == assetToPersist.value)
     }
-//    def mValueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-//      !persistedLinearAsset.exists(pl => pl.startMeasure == assetToPersist.startMeasure &&
-//        pl.endMeasure == assetToPersist.endMeasure &&
-//        pl.vvhTimeStamp == assetToPersist.vvhTimeStamp)
-//    }
-//    def sideCodeChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-//      !persistedLinearAsset.exists(_.sideCode == assetToPersist.sideCode)
-//    }
     toUpdate.foreach { linearAsset =>
       val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
       val id = linearAsset.id
@@ -589,8 +574,6 @@ trait LinearAssetOperations {
           case _ => None
         }
       }
-//      if (mValueChanged(linearAsset, persistedLinearAsset)) dao.updateMValues(linearAsset.id, (linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.vvhTimeStamp)
-//      if (sideCodeChanged(linearAsset, persistedLinearAsset)) dao.updateSideCode(linearAsset.id, SideCode(linearAsset.sideCode))
     }
   }
 

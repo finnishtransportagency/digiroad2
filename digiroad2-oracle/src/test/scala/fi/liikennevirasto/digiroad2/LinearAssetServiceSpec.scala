@@ -2,7 +2,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
@@ -988,14 +988,18 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedLinearAssets = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
-      service.persistProjectedLinearAssets(projectedLinearAssets)
+      val changeSet = projectedLinearAssets.foldLeft(ChangeSet(Set.empty, Nil, Nil, Set.empty)) {
+        case (acc, proj) =>
+          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode))))
+      }
+
+      service.updateChangeSet(changeSet)
       val all = service.dao.fetchLinearAssetsByLinkIds(assetTypeId, Seq(oldLinkId1, oldLinkId2), "mittarajoitus")
       all.size should be (3)
       val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
       persisted.size should be (1)
       val head = persisted.head
       head.id should be (original.id)
-      head.vvhTimeStamp should be (vvhTimeStamp)
       head.startMeasure should be (0.1)
       head.endMeasure should be (10.1)
       head.expired should be (false)
@@ -1047,14 +1051,18 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedProhibitions = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
-      service.persistProjectedLinearAssets(projectedProhibitions)
+      val changeSet = projectedProhibitions.foldLeft(ChangeSet(Set.empty, Nil, Nil, Set.empty)) {
+        case (acc, proj) =>
+          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode))))
+      }
+
+      service.updateChangeSet(changeSet)
       val all = service.dao.fetchProhibitionsByIds(assetTypeId, Set(asset1,asset2,asset3), false)
       all.size should be (3)
       val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
       persisted.size should be (1)
       val head = persisted.head
       head.id should be (original.id)
-      head.vvhTimeStamp should be (vvhTimeStamp)
       head.startMeasure should be (0.1)
       head.endMeasure should be (10.1)
       head.expired should be (false)
