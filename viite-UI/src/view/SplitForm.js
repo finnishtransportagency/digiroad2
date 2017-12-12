@@ -92,8 +92,7 @@
         suravagePartForm(selection[0], selected, 0) +
         suravagePartForm(selection[1], selected, 1) +
         formCommon.newRoadAddressInfo(selected, selectedProjectLink, road) +
-        (isReSplitMode ? '' :
-          terminatedPartForm(selection[2], selected[2])) +
+        terminatedPartForm(selection[2], selected[2]) +
         '</form>';
     };
 
