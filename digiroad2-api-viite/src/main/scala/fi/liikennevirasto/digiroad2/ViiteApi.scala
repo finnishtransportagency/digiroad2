@@ -751,7 +751,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "errorCode" -> errorParts.validationError.value,
       "errorMessage" -> errorParts.validationError.message,
       "info" -> errorParts.optionalInformation,
-      "coordinates" -> errorParts.coordinates.head._2
+      "coordinates" -> errorParts.coordinates.getOrElse(None)
     )
   }
 

@@ -141,11 +141,27 @@
         '<footer>' + actionButtons() + '</footer>');
     };
 
+    var getErrorCoordinates = function(error){
+      if (!_.isUndefined(error.coordinates)){
+        return error.coordinates;
+      }
+      var linkCoords = _.find(projectCollection.getAll(), function (link) {
+        return link.linkId == error.linkIds[0];
+      });
+      if (!_.isUndefined(linkCoords)){
+        return linkCoords.points[0];
+      }
+      return false;
+    };
+
     var selectedProjectLinkTemplate = function (project) {
       var errorLines = '';
-      var index = 0;
       _.each(projectErrors, function (error) {
-        var button = projectCollection.getCoordButton(index++, error.roadNumber, error.roadPartNumber, project.coordinates);
+        var button = '';
+        var coordinates = getErrorCoordinates(error);
+        if (coordinates) {
+          button = projectCollection.getCoordButton(error.coordinates.x, error.coordinates.y);
+        }
         errorLines += '<div class="form-project-errors-list">' +
           addLabel('LINKIDS') + addLabelInfo(error.linkIds)+'</br>'+
           addLabel('ERROR') + addLabelInfo(error.errorMessage) +'</br>'+
@@ -666,6 +682,12 @@
         rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
       });
 
+      rootElement.on('click', '#projectErrorButton', function () {
+        var x = $('#projectErrorButton').attr('x');
+        var y = $('#projectErrorButton').attr('y');
+        map.getView().setCenter([x, y]);
+        map.getView().setZoom(13);
+      });
     };
     bindEvents();
   };

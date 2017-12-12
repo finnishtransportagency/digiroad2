@@ -96,12 +96,6 @@
         projectErrors = result.projectErrors;
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
-        if(openForm){
-          eventbus.trigger('roadAddress:openProject', result);
-          if(applicationModel.isReadOnly()) {
-            $('.edit-mode-btn:visible').click();
-          }
-        }
       });
     };
 
@@ -517,12 +511,12 @@
       return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
-    this.getCoordButton = function (index, roadNumber, roadPartNumber, cooordinates) {
-      return coordButton(index, roadNumber, roadPartNumber, cooordinates);
+    this.getCoordButton = function (x,y) {
+      return coordButton(x,y);
     };
 
-    var coordButton = function(index, roadNumber, roadPartNumber, cooordinates){
-      return '<button coordinates="'+cooordinates+'" roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'">XY</button>';
+    var coordButton = function(x, y){
+      return '<button id="projectErrorButton" class="btn btn-primary" x="'+x+'" y="'+y+'">XY</button>';
     };
 
     var addToDirtyRoadPartList = function (queryResult) {

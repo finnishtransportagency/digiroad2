@@ -1550,7 +1550,7 @@ object ProjectValidator {
   }
 
   case class ValidationErrorDetails(projectId: Long, validationError: ValidationError,
-                                    affectedLinkIds: Seq[Long], coordinates: Map[Long,ProjectCoordinates],
+                                    affectedLinkIds: Seq[Long], coordinates: Option[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
@@ -1561,9 +1561,9 @@ object ProjectValidator {
   //TODO VIITE-574 once defined, remove this mocked UI response
   private def mockUs574Errors(): Seq[ValidationErrorDetails] = {
     Seq(
-      ValidationErrorDetails(411342, ValidationError.MinorDiscontinuityFound, Seq(1820562, 1820563), Map[Long,ProjectCoordinates](1l -> ProjectCoordinates(7058862, 480895, 8)), Some("parte da estrada parte um")),
-      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(1820564, 1820722), Map[Long,ProjectCoordinates](1l -> ProjectCoordinates(7058781, 480954, 7)), Some("parte da estrada parte um")),
-      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(5171833), Map[Long,ProjectCoordinates](205l -> ProjectCoordinates(6991557, 533837, 7)), Some("parte da estrada duzentos e cinco"))
+      ValidationErrorDetails(411342, ValidationError.MinorDiscontinuityFound, Seq(531510, 1820563), Some(ProjectCoordinates(6992008,531509, 8)), Some("parte da estrada parte um")),
+      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(531510, 6992008), Some(ProjectCoordinates(531510,6992008, 7)), Some("parte da estrada parte um")),
+      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(6117732), None, Some("parte da estrada duzentos e cinco"))
     )
   }
 
