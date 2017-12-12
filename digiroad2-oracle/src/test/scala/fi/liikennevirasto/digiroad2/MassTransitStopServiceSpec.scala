@@ -75,12 +75,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     vvhRoadLinks.foreach(rl =>
       when(mockRoadLinkService.getRoadLinkFromVVH(rl.linkId, false))
         .thenReturn(Some(toRoadLink(rl))))
-//    when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(toRoadLink(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
   }
-
-  object RollbackBusStopStrategy extends BusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService)
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  object RollbackBusStopStrategy extends BusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockEventBus)
   {
     def updateAdministrativeClassValueTest(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
       super.updateAdministrativeClassValue(assetId, administrativeClass)
@@ -1203,7 +1202,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("getByMunicipality gets Tierekisteri Equipment") {
-    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, new GeometryTransform)
+    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, new GeometryTransform, mockEventBus )
     val combinations: List[(Existence, String)] = List(Existence.No, Existence.Yes, Existence.Unknown).zip(List("1", "2", "99"))
     combinations.foreach { case (e, v) =>
       reset(mockTierekisteriClient, mockRoadLinkService)
