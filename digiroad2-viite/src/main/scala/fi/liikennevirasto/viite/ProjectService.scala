@@ -1387,7 +1387,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     )
   }
 
-  def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Seq[Long] = {
+  def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
@@ -1413,11 +1413,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       //Expiring all old addresses by their ID
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
       //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-      RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
+      val created = RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
+      Some(s"${created.size} road addresses created")
     }
     catch {
-      case e: Exception => logger.error(e.toString)
-        Seq[Long]()
+      case e: ProjectValidationException => {
+        logger.info(e.getMessage)
+        Some(e.getMessage)
+      }
     }
 
   }
