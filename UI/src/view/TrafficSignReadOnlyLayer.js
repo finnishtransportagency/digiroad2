@@ -34,14 +34,14 @@
     vectorLayer.setZIndex(map.getLayers().getArray().length);
     map.addLayer(vectorLayer);
 
-    var showSpeedLimitSigns = function(){
+    var showReadOnlyTrafficSigns = function(){
       setLayerToShow(parentLayerName, true);
       collection.setTrafficSigns('speedLimits', true);
       me.show();
       me.refreshView();
     };
 
-    var hideSpeedLimitSigns = function(){
+    var hideReadOnlyTrafficSigns = function(){
       setLayerToShow(parentLayerName, false);
       collection.setTrafficSigns('speedLimits', false);
       me.hide();
@@ -60,8 +60,8 @@
         me.removeLayerFeatures();
     };
 
-    eventbus.on(parentLayerName + ':hideReadOnlyTrafficSigns', hideSpeedLimitSigns);
-    eventbus.on(parentLayerName + ':showReadOnlyTrafficSigns', showSpeedLimitSigns);
+    eventbus.on(parentLayerName + ':hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
+    eventbus.on(parentLayerName + ':showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
     eventbus.on('readOnlyLayer:' + parentLayerName + ':shown', function (layerName) {
       showLayer(layerName);
     }, this);
