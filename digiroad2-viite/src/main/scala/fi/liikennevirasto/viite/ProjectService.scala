@@ -1302,7 +1302,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         ProjectDAO.getProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState")
           val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
-          val newState = ProjectState.Saved2TR
+          val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
           val errorMessage = getTRErrorMessage(trProjectState)
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
