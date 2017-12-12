@@ -35,6 +35,9 @@ object ProjectLinkSplitter {
         throw new SplittingException("At least one of the geometries do not overlaps the link properly.")
       }
     }
+
+    //check if Unchanged/Transfer link (splited A) is at end of Template link (Project link)
+    if(GeometryUtils.areAdjacent(splitedGeometries._1, templateLink.geometry.last))
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
@@ -71,16 +74,53 @@ object ProjectLinkSplitter {
         ely = templateLink.ely
         )
       )
+    else
+      (
+        suravage.copy(roadNumber = split.roadNumber,
+          roadPartNumber = split.roadPartNumber,
+          track = split.trackCode,
+          discontinuity = split.discontinuity,
+          roadType = split.roadType,
+          startMValue = 0.0,
+          endMValue = suravageM,
+          startAddrMValue = templateLink.startAddrMValue,
+          endAddrMValue = splitAddressM,
+          status = split.statusA,
+          sideCode = templateLink.sideCode,
+          roadAddressId = templateLink.roadAddressId,
+          connectedLinkId = Some(templateLink.linkId),
+          geometry = splitedGeometries._1,
+          geometryLength = GeometryUtils.geometryLength(splitedGeometries._1),
+          ely = templateLink.ely
+        ),
+        suravage.copy(roadNumber = split.roadNumber,
+          roadPartNumber = split.roadPartNumber,
+          track = split.trackCode,
+          discontinuity = split.discontinuity,
+          roadType = split.roadType,
+          startMValue = suravageM,
+          endMValue = suravage.geometryLength,
+          startAddrMValue = splitAddressM,
+          endAddrMValue = templateLink.endAddrMValue,
+          status = split.statusB,
+          sideCode = templateLink.sideCode,
+          roadAddressId = templateLink.roadAddressId,
+          connectedLinkId = Some(templateLink.linkId),
+          geometry = splitedGeometries._2,
+          geometryLength = GeometryUtils.geometryLength(splitedGeometries._2),
+          ely = templateLink.ely
+        )
+      )
   }
 
   def split(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions): Seq[ProjectLink] = {
     def movedFromStart(suravageM: Double, templateM: Double, splitAddressM: Long) = {
       val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
       val splitT = templateLink.copy(
-        startMValue = templateM,
-        endMValue = templateLink.geometryLength,
-        geometryLength = templateLink.geometryLength - templateM,
-        startAddrMValue = splitAddressM,
+        startMValue = 0.0,
+        endMValue = templateM,
+        geometryLength = templateM,
+        endAddrMValue = splitAddressM,
         status = LinkStatus.Terminated,
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength),
         connectedLinkId = Some(suravage.linkId)
@@ -90,10 +130,10 @@ object ProjectLinkSplitter {
     def movedFromEnd(suravageM: Double, templateM: Double, splitAddressM: Long) = {
       val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
       val splitT = templateLink.copy(
-        startMValue = 0.0,
-        endMValue = templateM,
-        geometryLength = templateM,
-        endAddrMValue = splitAddressM,
+        startMValue = templateM,
+        endMValue = templateLink.geometryLength,
+        geometryLength = templateLink.geometryLength - templateM,
+        startAddrMValue = splitAddressM,
         status = LinkStatus.Terminated,
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM),
         connectedLinkId = Some(suravage.linkId))
