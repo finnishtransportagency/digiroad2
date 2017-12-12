@@ -992,6 +992,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(None)
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
       val props = stop.propertyData
@@ -1025,6 +1026,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(None)
+
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
       val props = stop.propertyData
