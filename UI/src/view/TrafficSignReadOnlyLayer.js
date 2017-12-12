@@ -60,12 +60,12 @@
         me.removeLayerFeatures();
     };
 
-    eventbus.on(parentLayerName + ':hideSpeedLimitsSigns', hideSpeedLimitSigns);
-    eventbus.on(parentLayerName + ':showSpeedLimitsSigns', showSpeedLimitSigns);
-    eventbus.on('map:moved', mapMovedHandler, this);
+    eventbus.on(parentLayerName + ':hideReadOnlyTrafficSigns', hideSpeedLimitSigns);
+    eventbus.on(parentLayerName + ':showReadOnlyTrafficSigns', showSpeedLimitSigns);
     eventbus.on('readOnlyLayer:' + parentLayerName + ':shown', function (layerName) {
       showLayer(layerName);
     }, this);
+    eventbus.on('map:moved', mapMovedHandler, this);
 
     var showLayer = function(layer){
       if(layer == parentLayerName && isShowingForLayer[parentLayerName]){
