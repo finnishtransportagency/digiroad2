@@ -119,8 +119,8 @@ object ProjectLinkSplitter {
       val splitT = templateLink.copy(
         startMValue = 0.0,
         endMValue = templateM,
-        geometryLength = templateM,
-        endAddrMValue = splitAddressM,
+        geometryLength = templateLink.geometryLength - templateM,
+        startAddrMValue = splitAddressM,
         status = LinkStatus.Terminated,
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength),
         connectedLinkId = Some(suravage.linkId)
@@ -132,8 +132,8 @@ object ProjectLinkSplitter {
       val splitT = templateLink.copy(
         startMValue = templateM,
         endMValue = templateLink.geometryLength,
-        geometryLength = templateLink.geometryLength - templateM,
-        startAddrMValue = splitAddressM,
+        geometryLength = templateM,
+        endAddrMValue = splitAddressM,
         status = LinkStatus.Terminated,
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM),
         connectedLinkId = Some(suravage.linkId))
