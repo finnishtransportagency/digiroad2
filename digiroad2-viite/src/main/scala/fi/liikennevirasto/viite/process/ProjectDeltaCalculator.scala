@@ -48,7 +48,9 @@ object ProjectDeltaCalculator {
             termAddress.map{ case (st, en) =>
               address.copy(startAddrMValue = if (st == address.startAddrMValue) en else address.startAddrMValue, endAddrMValue = if (en == address.endAddrMValue) st else address.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue, geometry = geom)
             }.getOrElse(address)
-          case UnChanged | Terminated =>
+          case Terminated =>
+            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue, geometry = geom)
+          case UnChanged =>
             address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue, geometry = geom)
           case _ =>
             address

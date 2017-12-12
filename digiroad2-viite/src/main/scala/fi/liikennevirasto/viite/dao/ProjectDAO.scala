@@ -103,6 +103,17 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       calibrationPoints, floating, Seq(GeometryUtils.geometryEndpoints(geometry)._1, GeometryUtils.geometryEndpoints(geometry)._2),
       linkGeomSource, ely, if (LinkStatus.Terminated == status) TerminationCode.Termination else TerminationCode.NoTermination)
   }
+
+  def addrAt(a: Double) = {
+    val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
+    sideCode match {
+      case SideCode.AgainstDigitizing =>
+        endAddrMValue - Math.round((a-startMValue) * coefficient)
+      case SideCode.TowardsDigitizing =>
+        startAddrMValue + Math.round((a-startMValue) * coefficient)
+      case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
+    }
+  }
 }
 
 object ProjectDAO {

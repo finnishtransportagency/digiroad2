@@ -22,6 +22,7 @@ import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, Project
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -505,8 +506,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Option[String], Option[(Point, Vector3d)]) = {
-    withDynSession {
-      preSplitSuravageLinkInTX(linkId, userName, splitOptions)
+    withDynTransaction {
+      val r = preSplitSuravageLinkInTX(linkId, userName, splitOptions)
+      dynamicSession.rollback()
+      r
     }
   }
 
@@ -539,7 +542,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val rightTop = Point(x._2, endPoints._2.y)
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
-      val suravageProjectLink = suravageLink
       val projectLinksConnected = projectLinks.filter(l =>
         GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
       //we rank template links near suravage link by how much they overlap with suravage geometry
@@ -897,7 +899,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       })
     if (recalculate)
       recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
-    val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(projectId, roadNumber, roadPartNumber)
+    val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
     if (afterUpdateLinks.isEmpty){
       releaseRoadPart(projectId, roadNumber, roadPartNumber, userName)
     }
