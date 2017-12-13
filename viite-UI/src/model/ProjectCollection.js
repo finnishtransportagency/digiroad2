@@ -333,10 +333,10 @@
     this.saveCuttedProjectLinks = function(changedLinks, statusA, statusB){
       applicationModel.addSpinner();
       if (_.isUndefined(statusB)) {
-        statusB = LinkStatus.New.description
+        statusB = LinkStatus.New.description;
       }
       if (_.isUndefined(statusA)) {
-        statusA = LinkStatus.Transfer.description
+        statusA = LinkStatus.Transfer.description;
       }
       var linkId = Math.abs(changedLinks[0].linkId);
 
