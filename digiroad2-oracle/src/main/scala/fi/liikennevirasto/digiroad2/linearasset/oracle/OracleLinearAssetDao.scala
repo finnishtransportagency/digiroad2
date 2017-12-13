@@ -18,6 +18,8 @@ case class PersistedSpeedLimit(id: Long, linkId: Long, sideCode: SideCode, value
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource)
 
+case class AssetLastModification(id: Long, linkId: Long, modifiedBy: Option[String], modifiedDate: Option[DateTime])
+
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
 
   def MassQueryThreshold = 500
@@ -276,6 +278,28 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int)].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource) =>
         PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
+      }
+    }
+  }
+
+  def fetchExpireAssetLastModificationsByLinkIds(assetTypeId: Int, linkIds: Seq[Long]) : Seq[AssetLastModification] = {
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      val assets = sql"""
+        select a.id, pos.link_id, a.modified_date, a.modified_by
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join #$idTableName i on i.id = pos.link_id
+          join (select pos.link_id, max(a.modified_date) as modified_date
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            join #$idTableName i on i.id = pos.link_id
+            group by pos.link_id) asset_lk on asset_lk.link_id = pos.link_id and asset_lk.modified_date = a.modified_date
+        where asset_type_id = $assetTypeId and a.floating = 0 and  a.valid_to is not null and a.valid_to < sysdate"""
+        .as[(Long, Long, Option[DateTime], Option[String])].list
+      assets.map { case(id, linkId, modifiedDate, modifiedBy) =>
+        AssetLastModification(id, linkId, modifiedBy, modifiedDate)
       }
     }
   }
