@@ -39,7 +39,7 @@ object ProjectLinkSplitter {
         (if (isReversed) addr.swap else addr,
         (geometry2, geometry1))
       } else {
-        throw new SplittingException("At least one of the geometries do not overlaps the link properly.")
+        throw new SplittingException("At least one of the geometries does not overlap the link properly.")
       }
     }
 
@@ -91,7 +91,8 @@ object ProjectLinkSplitter {
         startMValue = templateM,
         endMValue = templateLink.geometryLength,
         geometryLength = templateLink.geometryLength - templateM,
-        startAddrMValue = templateLink.addrAt(templateM),
+        startAddrMValue = Math.min(splitAddressM, templateLink.addrAt(templateLink.geometryLength)),
+        endAddrMValue = Math.max(splitAddressM, templateLink.addrAt(templateLink.geometryLength)),
         status = LinkStatus.Terminated,
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength),
         connectedLinkId = Some(suravage.linkId)
@@ -104,7 +105,8 @@ object ProjectLinkSplitter {
         startMValue = 0.0,
         endMValue = templateM,
         geometryLength = templateM,
-        endAddrMValue = splitAddressM,
+        startAddrMValue = Math.min(splitAddressM, templateLink.addrAt(0.0)),
+        endAddrMValue = Math.max(splitAddressM, templateLink.addrAt(0.0)),
         status = LinkStatus.Terminated,
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM),
         connectedLinkId = Some(suravage.linkId))
@@ -125,18 +127,13 @@ object ProjectLinkSplitter {
     }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
-    val splitAddressM = templateLink.startAddrMValue + Math.round(templateM / templateLink.geometryLength *
-      (templateLink.endAddrMValue - templateLink.startAddrMValue))
+    val splitAddressM = templateLink.addrAt(templateM)
     val isReversed = isDirectionReversed(suravage, templateLink)
     val splits =
       if (isTailConnected(suravage, templateLink))
         movedFromEnd(suravageM, templateM, splitAddressM, isReversed)
       else
         movedFromStart(suravageM, templateM, splitAddressM, isReversed)
-    println(suravageM)
-    println(templateM)
-    println(splitAddressM)
-    println(s"reversed = $isReversed, tail conn = ${isTailConnected(suravage, templateLink)}")
     if (isReversed)
       toSeq(switchDigitization(splits))
     else

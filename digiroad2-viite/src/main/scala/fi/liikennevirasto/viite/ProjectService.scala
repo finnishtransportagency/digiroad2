@@ -894,11 +894,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
     RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
-        case Some(mod) => ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = mod.geometry))
-        case None => ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
+        case Some(mod) if mod.geometry.nonEmpty =>
+          val geom = GeometryUtils.truncateGeometry3D(mod.geometry, ra.startMValue, ra.endMValue)
+          ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+        case _ => ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
       })
     if (recalculate)
-      recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
+      try {
+        recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
+      } catch {
+        case ex: Exception => logger.info("Couldn't recalculate after reverting a link (this may happen)")
+      }
     val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
     if (afterUpdateLinks.isEmpty){
       releaseRoadPart(projectId, roadNumber, roadPartNumber, userName)
@@ -1079,7 +1085,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map( rpl =>
           setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadAddressId != 0L))
         )
-        ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
+        ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks.filterNot(_.status == NotHandled), userName)
     }, "recalculated links in %.3f sec")
   }
 
