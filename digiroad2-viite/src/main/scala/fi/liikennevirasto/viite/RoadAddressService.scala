@@ -410,6 +410,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getFloatingAdresses(includesHistory: Boolean = true) = {
+    withDynSession{
+      RoadAddressDAO.fetchAllFloatingRoadAddresses(includesHistory)
+    }
+  }
+
   def getTargetRoadLink(linkId: Long): RoadAddressLink = {
     val (roadLinks, _) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(linkId),frozenTimeVVHAPIServiceEnabled)
     if (roadLinks.isEmpty) {

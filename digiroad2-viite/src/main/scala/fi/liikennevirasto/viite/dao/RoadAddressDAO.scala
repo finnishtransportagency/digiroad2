@@ -512,6 +512,27 @@ object RoadAddressDAO {
     queryList(query)
   }
 
+  def fetchAllFloatingRoadAddresses(includesHistory: Boolean = true) = {
+
+    val history = if(includesHistory) s" AND ra.END_DATE is null " else ""
+    val query =
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+          pos.side_code, pos.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated
+          from road_address ra cross join
+          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+          join lrm_position pos on ra.lrm_position_id = pos.id
+          where t.id < t2.id and ra.floating = 1 $history and
+            (valid_from is null or valid_from <= sysdate) and
+            (valid_to is null or valid_to > sysdate)
+          order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
+      """
+    queryList(query)
+  }
+
   def fetchMultiSegmentLinkIds(roadNumber: Long) = {
     val query =
       s"""
