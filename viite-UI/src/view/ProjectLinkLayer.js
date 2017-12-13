@@ -167,6 +167,8 @@
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         $('.wrapper').remove();
+        $('[id^=editProject]').css('visibility', 'visible');
+        $('#closeProjectSpan').css('visibility', 'visible');
         $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
         if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
           if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
@@ -824,9 +826,10 @@
 
       _.each(suravageDirectionRoadMarker, function (directionLink) {
         var marker = cachedMarker.createMarker(directionLink);
-        if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
+        if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
           suravageProjectDirectionMarkerLayer.getSource().addFeature(marker);
-        selectSingleClick.getFeatures().push(marker);
+          selectSingleClick.getFeatures().push(marker);
+        }
       });
 
       var actualCalibrationPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, suravageProjectRoads);
@@ -851,13 +854,13 @@
         features.push(feature);
       });
 
-      directionMarkerLayer.getSource().clear();
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var directionRoadMarker = _.filter(projectLinks, function (projectLink) {
         return projectLink.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
       });
 
       var featuresToRemove = [];
+      directionMarkerLayer.getSource().clear();
       _.each(selectSingleClick.getFeatures().getArray(), function (feature) {
         if (feature.getProperties().type && feature.getProperties().type === "marker")
           featuresToRemove.push(feature);
@@ -867,9 +870,10 @@
       });
       _.each(directionRoadMarker, function (directionLink) {
         var marker = cachedMarker.createMarker(directionLink);
-        if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
+        if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
           directionMarkerLayer.getSource().addFeature(marker);
-        selectSingleClick.getFeatures().push(marker);
+          selectSingleClick.getFeatures().push(marker);
+        }
       });
 
       var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);

@@ -68,6 +68,8 @@
     }
 
     function hide() {
+      $('#information-content').empty();
+      $('#send-button').attr('disabled', true);
       changeTable.hide();
     }
 
@@ -218,6 +220,10 @@
     eventbus.on('projectChangeTable:refresh', function() {
       bindEvents();
       getChanges();
+    });
+
+    eventbus.on('projectChangeTable:hide', function() {
+      hide();
     });
 
     return{
