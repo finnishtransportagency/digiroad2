@@ -304,7 +304,6 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     terminatedLink.endMValue should be (template.endMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry, unChangedLink.geometry) should be (true)
     (GeometryUtils.areAdjacent(unChangedLink.geometry.head, sGeom.head) || GeometryUtils.areAdjacent(unChangedLink.geometry.last, sGeom.last)) should be (true)
-    GeometryUtils.geometryLength(unChangedLink.geometry) should be (0)
     unChangedLink.startAddrMValue should be (template.startAddrMValue)
     unChangedLink.endAddrMValue should be (terminatedLink.startAddrMValue)
   }
