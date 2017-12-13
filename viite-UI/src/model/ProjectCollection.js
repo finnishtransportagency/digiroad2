@@ -511,12 +511,13 @@
       return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
-    this.getCoordButton = function (x,y) {
-      return coordButton(x,y);
+    this.getCoordButton = function (index, coordinates) {
+      return coordButton(index, coordinates);
     };
 
-    var coordButton = function(x, y){
-      return '<button id="projectErrorButton" class="btn btn-primary" x="'+x+'" y="'+y+'">XY</button>';
+    var coordButton = function(index, coordinates){
+      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
+      return {index:index, html:html, coordinates:coordinates};
     };
 
     var addToDirtyRoadPartList = function (queryResult) {

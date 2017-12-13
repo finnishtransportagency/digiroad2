@@ -1534,7 +1534,6 @@ object ProjectValidator {
     def message: String
   }
 
-  //TODO: Not really a todo but a quick note, beware that the ValidationErrors introduced by task 453 are mostly outdated, these will be tagged with the 453 number,
   object ValidationError {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad)
@@ -1580,18 +1579,8 @@ object ProjectValidator {
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     checkProjectContinuity(projectLinks) ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ mockUs574Errors
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation
   }
-
-  //TODO VIITE-574 once defined, remove this mocked UI response
-  private def mockUs574Errors(): Seq[ValidationErrorDetails] = {
-    Seq(
-      ValidationErrorDetails(411342, ValidationError.MinorDiscontinuityFound, Seq(531510, 1820563), Seq(ProjectCoordinates(6992008,531509, 8)), Some("parte da estrada parte um")),
-      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(531510, 6992008), Seq(ProjectCoordinates(531510,6992008, 7), ProjectCoordinates(6994667,532923, 7)), Some("parte da estrada parte um")),
-      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(6117732), Seq(), Some("parte da estrada duzentos e cinco"))
-    )
-  }
-
 
   private def checkProjectContinuity(projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     def checkCorrectEndCode(projectLinks: Seq[ProjectLink]): Boolean = {

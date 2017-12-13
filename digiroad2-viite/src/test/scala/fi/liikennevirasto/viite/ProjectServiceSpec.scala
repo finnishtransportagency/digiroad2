@@ -1113,7 +1113,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = projectService.createRoadLinkProject(rap)
       val id = project.id
       mockForProject(id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project)))
-      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 5, 207, 0.0, 0L, Continuous, 8L, None, None, None, true))))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))))
       val projectLinks = ProjectDAO.getProjectLinks(id)
 
       val validationErrors = projectValidator.validateProject(project, projectLinks)

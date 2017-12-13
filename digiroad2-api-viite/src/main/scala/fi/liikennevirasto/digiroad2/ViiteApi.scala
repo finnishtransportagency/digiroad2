@@ -479,9 +479,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
        "id" -> issue.projectId,
         "validationError" -> issue.validationError.value,
         "affectedLinkIds" -> issue.affectedLinkIds.toArray,
-        "coordinates" -> issue.coordinates.map(coords => {
-          Map("linkId" -> coords._1, "ProjectCoordinates" -> Map("x" -> coords._2.x, "y" -> coords._2.y, "zoom" -> coords._2.zoom))
-        }),
+        "coordinates" -> issue.coordinates,
         "optionalInformation" -> issue.optionalInformation.getOrElse("")
       )
     }))
@@ -762,7 +760,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "errorCode" -> errorParts.validationError.value,
       "errorMessage" -> errorParts.validationError.message,
       "info" -> errorParts.optionalInformation,
-      "coordinates" -> errorParts.coordinates.getOrElse(None)
+      "coordinates" -> errorParts.coordinates
     )
   }
 
