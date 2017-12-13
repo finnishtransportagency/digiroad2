@@ -274,9 +274,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
           r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
             r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
-
-       val savedIds=savedRoadAddresses.map(x=>x.id)
-        val removedIds = addresses.values.flatten.map(_.id).toSet -- savedIds
+        val removedIds = addresses.values.flatten.map(_.id).toSet -- (savedRoadAddresses++unchanged).map(x=>x.id)
         removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
           logger.debug("Expired: "+s.mkString(","))
         })
