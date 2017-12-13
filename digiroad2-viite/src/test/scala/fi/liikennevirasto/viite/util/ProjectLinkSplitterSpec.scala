@@ -189,7 +189,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 5, false, None, 85088L)
-    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
@@ -222,7 +222,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 5, false, None, 85088L)
-    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
@@ -303,7 +303,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     terminatedLink.endMValue should be (template.endMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry, unChangedLink.geometry) should be (true)
     (GeometryUtils.areAdjacent(unChangedLink.geometry.head, sGeom.head) || GeometryUtils.areAdjacent(unChangedLink.geometry.last, sGeom.last)) should be (true)
-    GeometryUtils.geometryLength(unChangedLink.geometry) should be (0)
+    GeometryUtils.geometryLength(unChangedLink.geometry) should be (sLen)
     unChangedLink.startAddrMValue should be (template.startAddrMValue)
     unChangedLink.endAddrMValue should be (terminatedLink.startAddrMValue)
   }
@@ -390,7 +390,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
         InUse, NormalLinkInterface)
       val suravageAddressLink = RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
         AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.UnknownRoadLinkType, ConstructionType.Planned, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, "testRoad",
-        8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.AgainstDigitizing, None, None, Anomaly.None, 1)
+        8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.Unknown, None, None, Anomaly.None, 1)
 
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink))
@@ -414,7 +414,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       splitA.size should be (1)
       splitB.size should be (1)
       tl.size should be (1)
-      splitB.head.startAddrMValue should be (tl.head.startAddrMValue)
+      splitA.head.endAddrMValue should be (tl.head.startAddrMValue)
       splitB.head.startAddrMValue should be (splitA.head.endAddrMValue)
     }
   }

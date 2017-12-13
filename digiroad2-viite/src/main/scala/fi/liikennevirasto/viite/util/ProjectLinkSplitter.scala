@@ -16,24 +16,30 @@ object ProjectLinkSplitter {
       GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.head, MaxDistanceForConnectedLinks)
   }
 
-  private def isTailConnected(link1: PolyLine, link2: PolyLine) = {
-    GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.last, MaxDistanceForConnectedLinks) ||
-      isDirectionReversed(link1, link2) &&
-        GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks)
+  // Test if connected from template geometry end (towards digitization end)
+  private def isTailConnected(suravage: PolyLine, template: PolyLine) = {
+    GeometryUtils.areAdjacent(suravage.geometry.last, template.geometry.last, MaxDistanceForConnectedLinks) ||
+      isDirectionReversed(suravage, template) &&
+        GeometryUtils.areAdjacent(suravage.geometry.head, template.geometry.last, MaxDistanceForConnectedLinks)
   }
 
   private def suravageWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
-                                  splitAddressM: Long, templateM: Double, isReversed: Boolean) = {
+                                  splitAddressM: Long, templateM: Double, isReversed: Boolean, keptGeom: Seq[Point]) = {
+    def equals(geom1: Seq[Point], geom2: Seq[Point]) = {
+      GeometryUtils.withinTolerance(if (isReversed) GeometryUtils.geometryEndpoints(geom1).swap else GeometryUtils.geometryEndpoints(geom1),
+        GeometryUtils.geometryEndpoints(geom2), MaxDistanceDiffAllowed)
+    }
     val (splitAddresses, splitGeometries) = {
-      val geometry1 = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength)
-      val geometry2 = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM)
+      val endingGeom = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength)
+      val startingGeom = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM)
       val addr = ((templateLink.addrAt(templateM), templateLink.endAddrMValue), (templateLink.startAddrMValue, templateLink.addrAt(templateM)))
-      if(GeometryUtils.areAdjacent(geometry1, templateLink.geometry)){
+
+      if (equals(endingGeom, keptGeom)){
         (if (isReversed) addr.swap else addr,
-          (geometry1, geometry2))
-      } else if (GeometryUtils.areAdjacent(geometry2, templateLink.geometry)){
-        (if (isReversed) addr.swap else addr,
-        (geometry2, geometry1))
+          (endingGeom, startingGeom))
+      } else if (equals(startingGeom, keptGeom)){
+        (if (!isReversed) addr.swap else addr,
+        (startingGeom, endingGeom))
       } else {
         throw new SplittingException("At least one of the geometries does not overlap the link properly.")
       }
@@ -44,8 +50,8 @@ object ProjectLinkSplitter {
         track = split.trackCode,
         discontinuity = split.discontinuity,
         roadType = split.roadType,
-        startMValue = suravageM,
-        endMValue = suravage.geometryLength,
+        startMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.head, suravage.geometry),
+        endMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.last, suravage.geometry),
         startAddrMValue = splitAddresses._1._1,
         endAddrMValue = splitAddresses._1._2,
         status = split.statusA,
@@ -61,8 +67,8 @@ object ProjectLinkSplitter {
         track = split.trackCode,
         discontinuity = split.discontinuity,
         roadType = split.roadType,
-        startMValue = 0.0,
-        endMValue = suravageM,
+        startMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.head, suravage.geometry),
+        endMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.last, suravage.geometry),
         startAddrMValue = splitAddresses._2._1,
         endAddrMValue = splitAddresses._2._2,
         status = split.statusB,
@@ -78,7 +84,9 @@ object ProjectLinkSplitter {
 
   def split(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions): Seq[ProjectLink] = {
     def movedFromStart(suravageM: Double, templateM: Double, splitAddressM: Long, isReversed: Boolean) = {
-      val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM, templateM, isReversed)
+      val keptGeom = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM)
+      val termGeom = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength)
+      val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM, templateM, isReversed, keptGeom)
       val splitT = templateLink.copy(
         startMValue = templateM,
         endMValue = templateLink.geometryLength,
@@ -86,13 +94,15 @@ object ProjectLinkSplitter {
         startAddrMValue = Math.min(splitAddressM, templateLink.addrAt(templateLink.geometryLength)),
         endAddrMValue = Math.max(splitAddressM, templateLink.addrAt(templateLink.geometryLength)),
         status = LinkStatus.Terminated,
-        geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength),
+        geometry = termGeom,
         connectedLinkId = Some(suravage.linkId)
       )
       (splitA, splitB, splitT)
     }
     def movedFromEnd(suravageM: Double, templateM: Double, splitAddressM: Long, isReversed: Boolean) = {
-      val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM, templateM, isReversed)
+      val termGeom = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM)
+      val keptGeom = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength)
+      val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM, templateM, isReversed, keptGeom)
       val splitT = templateLink.copy(
         startMValue = 0.0,
         endMValue = templateM,
@@ -100,7 +110,7 @@ object ProjectLinkSplitter {
         startAddrMValue = Math.min(splitAddressM, templateLink.addrAt(0.0)),
         endAddrMValue = Math.max(splitAddressM, templateLink.addrAt(0.0)),
         status = LinkStatus.Terminated,
-        geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM),
+        geometry = termGeom,
         connectedLinkId = Some(suravage.linkId))
       (splitA, splitB, splitT)
     }
