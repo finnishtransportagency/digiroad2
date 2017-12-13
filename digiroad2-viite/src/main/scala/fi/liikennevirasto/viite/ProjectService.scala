@@ -35,18 +35,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  def withDynSession[T](f: => T): T = {
-    OracleDatabase.withDynSession({
-      val r = f
-      roadaddressCheck()
-      f
-    })
-  }
-
-def roadaddressCheck(): Unit =
-  {
-
-  }
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   private val guessGeom = new GuestimateGeometryForMissingLinks
   private val logger = LoggerFactory.getLogger(getClass)

@@ -489,6 +489,32 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption.nonEmpty
   }
 
+  /**
+    *
+    * @param roadNumber roadNumber for roadparts we want to check
+    * @param roadPartNumbers roadparts needed to be checked
+    * @return returns roadnumber, roadpartnumber and startaddressM for links that are overlapping either by date or m values
+    */
+  def historySanityCheck(roadNumber:Long, roadPartNumbers:Seq[Long]): List[Long,Long,Long] = {
+   val query= s"""
+    SELECT r.ROAD_NUMBER, r.ROAD_PART_NUMBER, r.START_ADDR_M FROM ROAD_ADDRESS r
+      WHERE  EXISTS(
+      SELECT 1 FROM ROAD_ADDRESS r2 WHERE
+    r2.id != r.id AND r.ROAD_NUMBER =$roadNumber AND r.ROAD_PART_NUMBER in ( ${roadPartNumbers.mkString(",")}) AND
+      ((r2.valid_to is null AND (r.valid_to is null OR r2.valid_from < r.valid_to)) OR
+        (r2.valid_to is not null AND NOT (r.valid_to <= r2.valid_from OR r.valid_from >= r2.valid_to))) AND
+    ((r2.END_DATE is null AND (r.end_date is null OR r2.start_date < r.end_date)) OR
+      (r2.END_DATE is not null AND NOT (r.END_DATE <= r2.START_DATE OR r.START_DATE >= r2.END_DATE))) AND
+    r2.ROAD_NUMBER = r.ROAD_NUMBER AND
+      r2.ROAD_PART_NUMBER = r.ROAD_PART_NUMBER AND
+      (r2.TRACK_CODE = r.TRACK_CODE OR r.TRACK_CODE = 0 OR r2.TRACK_CODE = 0) AND
+      NOT (r2.END_ADDR_M <= r.START_ADDR_M OR r2.START_ADDR_M >= r.END_ADDR_M)
+    )"""
+    Q.queryNA[(Long,Long,Long)](query).list.flatten
+  }
+
+
+
   def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false) = {
     val floating = if (!includeFloating)
       "floating='0' AND"

@@ -1,1 +1,1 @@
-CREATE Unique INDEX ROAD_ADDRESS ON ROAD_ADDRESS  (road_number,road_part_number,track_code,start_date,start_addr_m,valid_from);
+CREATE Unique INDEX ROAD_ADDRESS_duplicate_check ON ROAD_ADDRESS  (road_number,road_part_number,track_code,start_date,start_addr_m,valid_from);
