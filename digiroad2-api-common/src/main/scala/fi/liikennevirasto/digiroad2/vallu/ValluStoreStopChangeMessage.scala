@@ -10,7 +10,7 @@ import scala.language.reflectiveCalls
 object ValluStoreStopChangeMessage extends AssetPropertiesReader {
   def create(stop: EventBusMassTransitStop): String = {
     """<?xml version="1.0" encoding="UTF-8"?>""" +
-    (<Stops xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Stops xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <Stop>
         <StopId>{stop.nationalId}</StopId>
         <AdminStopId>{if (propertyIsDefined(stop, "yllapitajan_tunnus")) extractPropertyValue(stop, "yllapitajan_tunnus") }</AdminStopId>
@@ -56,12 +56,12 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
         <MunicipalityName>{stop.municipalityName}</MunicipalityName>
         <Comments>{if (propertyIsDefined(stop, "lisatiedot")) extractPropertyValue(stop, "lisatiedot") }</Comments>
         <PlatformCode>{if (propertyIsDefined(stop, "laiturinumero")) extractPropertyValue(stop, "laiturinumero")}</PlatformCode>
-        <ConnectedToTerminal>{extractPropertyValueOption(stop, "liitetty_terminaaliin").getOrElse("")}</ConnectedToTerminal>
+        <ConnectedToTerminal>{extractPropertyValueOption(stop, "liitetty_terminaaliin_ulkoinen_tunnus").getOrElse("")}</ConnectedToTerminal>
         <ContactEmails>
           <Contact>pysakit@digiroad.fi</Contact>
         </ContactEmails>
       </Stop>
-    </Stops>).toString
+    </Stops>.toString
   }
 
   def getBusstopBlock(asset: {val propertyData: Seq[Property]}) = {
