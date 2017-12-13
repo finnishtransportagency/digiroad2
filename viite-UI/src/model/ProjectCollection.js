@@ -1,9 +1,9 @@
 (function(root) {
   root.ProjectCollection = function(backend) {
     var roadAddressProjects = [];
+    var projectErrors = [];
     var currentReservedParts = [];
     var newReservedParts = [];
-    var reservedDirtyRoadPartList = [];
     var projectInfo;
     var currentProject;
     var fetchedProjectLinks = [];
@@ -85,7 +85,7 @@
       });
     };
 
-    this.getProjectsWithLinksById = function (projectId, openForm) {
+    this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.project;
         currentProject = result;
@@ -93,14 +93,9 @@
           id: result.project.id,
           publishable: result.publishable
         };
+        projectErrors = result.projectErrors;
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
-        if(openForm){
-          eventbus.trigger('roadAddress:openProject', result);
-          if(applicationModel.isReadOnly()) {
-            $('.edit-mode-btn:visible').click();
-          }
-        }
       });
     };
 
@@ -522,6 +517,15 @@
       return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
+    this.getCoordButton = function (index, coordinates) {
+      return coordButton(index, coordinates);
+    };
+
+    var coordButton = function(index, coordinates){
+      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
+      return {index:index, html:html, coordinates:coordinates};
+    };
+
     var addToDirtyRoadPartList = function (queryResult) {
       var qRoadParts = [];
       _.each(queryResult.roadparts, function (row) {
@@ -576,6 +580,10 @@
 
     this.getAllReservedParts = function () {
       return self.getCurrentReservedParts().concat(self.getNewReservedParts());
+    };
+
+    this.getProjectErrors = function(){
+      return projectErrors;
     };
 
     this.setTmpDirty = function(editRoadLinks){
