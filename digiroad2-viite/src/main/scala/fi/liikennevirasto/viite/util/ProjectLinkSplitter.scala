@@ -12,8 +12,6 @@ import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageTolera
   */
 object ProjectLinkSplitter {
   private def isDirectionReversed(link1: PolyLine, link2: PolyLine) = {
-    println(GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks))
-    println(GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.head, MaxDistanceForConnectedLinks))
     GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks) ||
       GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.head, MaxDistanceForConnectedLinks)
   }
@@ -31,21 +29,15 @@ object ProjectLinkSplitter {
       val geometry2 = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM)
       val addr = ((templateLink.addrAt(templateM), templateLink.endAddrMValue), (templateLink.startAddrMValue, templateLink.addrAt(templateM)))
       if(GeometryUtils.areAdjacent(geometry1, templateLink.geometry)){
-        println("Part end match")
         (if (isReversed) addr.swap else addr,
           (geometry1, geometry2))
       } else if (GeometryUtils.areAdjacent(geometry2, templateLink.geometry)){
-        println("Part start match")
         (if (isReversed) addr.swap else addr,
         (geometry2, geometry1))
       } else {
         throw new SplittingException("At least one of the geometries does not overlap the link properly.")
       }
     }
-
-    println(suravage.geometry)
-    println(templateLink.geometry)
-    println(s"transfer section $splitAddresses")
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
