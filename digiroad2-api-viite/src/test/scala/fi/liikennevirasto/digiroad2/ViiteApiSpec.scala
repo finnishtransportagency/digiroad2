@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, Track}
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates}
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -16,13 +16,13 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
   test("Conversion from JSON to Road Address Project") {
-    val str = "{\"id\":0,\"status\":1,\"name\":\"erwgerg\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"projectEly\":5,\"roadPartList\":[{\"roadPartNumber\":205,\"roadNumber\":5,\"ely\":5,\"roadLength\":6730,\"roadPartId\":30,\"discontinuity\":\"Jatkuva\"}]}"
+    val str = "{\"id\":0,\"status\":1,\"name\":\"erwgerg\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"projectEly\":5,\"roadPartList\":[{\"roadPartNumber\":205,\"roadNumber\":5,\"ely\":5,\"roadLength\":6730,\"roadPartId\":30,\"discontinuity\":\"Jatkuva\"}],\"resolution\":8}"
     val json = parse(str)
     json.extract[RoadAddressProjectExtractor].roadPartList should have size(1)
   }
 
   test("Conversion from extracted project with too long name is successful") {
-    val str = "{\"id\":0,\"projectEly\":5,\"status\":1,\"name\":\"ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"roadPartList\":[]}"
+    val str = "{\"id\":0,\"projectEly\":5,\"status\":1,\"name\":\"ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"roadPartList\":[],\"resolution\":8}"
     val json = parse(str)
     val extracted = json.extract[RoadAddressProjectExtractor]
     extracted.name should have length(37)
@@ -32,7 +32,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
 
   test("Conversion of SplitOptions objects") {
     val options = SplitOptions(Point(123,456,789), LinkStatus.New, LinkStatus.Terminated, 4L, 5L, Track.Combined,
-      Discontinuity.MinorDiscontinuity, 9L, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, 4L)
+      Discontinuity.MinorDiscontinuity, 9L, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, 4L, ProjectCoordinates(0, 1, 1))
     val s = Serialization.write(options)
     val json=parse(s)
     val read = json.extract[SplitOptions]

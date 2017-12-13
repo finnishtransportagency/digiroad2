@@ -85,7 +85,7 @@ sealed trait ChangeType {
   def value: Int
 }
 object ChangeType {
-  val values = Set(Unknown, CombinedModifiedPart, CombinedRemovedPart, LenghtenedCommonPart, LengthenedNewPart, DividedModifiedPart, DividedNewPart, ShortenedCommonPart, ShortenedRemovedPart, Removed, New, ReplacedCommonPart, ReplacedNewPart, ReplacedRemovedPart)
+  val values = Set(Unknown, CombinedModifiedPart, CombinedRemovedPart, LengthenedCommonPart, LengthenedNewPart, DividedModifiedPart, DividedNewPart, ShortenedCommonPart, ShortenedRemovedPart, Removed, New, ReplacedCommonPart, ReplacedNewPart, ReplacedRemovedPart)
 
   def apply(intValue: Int): ChangeType = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -94,7 +94,7 @@ object ChangeType {
   case object Unknown extends ChangeType { def value = 0 }
   case object CombinedModifiedPart extends ChangeType { def value = 1 }
   case object CombinedRemovedPart extends ChangeType { def value = 2 }
-  case object LenghtenedCommonPart extends ChangeType { def value = 3 }
+  case object LengthenedCommonPart extends ChangeType { def value = 3 }
   case object LengthenedNewPart extends ChangeType { def value = 4 }
   case object DividedModifiedPart extends ChangeType { def value = 5 }
   case object DividedNewPart extends ChangeType { def value = 6 }
@@ -117,7 +117,7 @@ object ChangeType {
     ChangeType.apply(changeInfo.changeType) match {
       case CombinedModifiedPart => true
       case CombinedRemovedPart => true
-      case LenghtenedCommonPart => true
+      case LengthenedCommonPart => true
       case DividedModifiedPart => true
       case DividedNewPart => true
       case ShortenedCommonPart => true
@@ -488,12 +488,10 @@ trait VVHClientOperations {
 
 }
 
-
 class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
   protected override val serviceName = "Roadlink_temp"
   protected override val disableGeometry = false
 }
-
 
 class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 

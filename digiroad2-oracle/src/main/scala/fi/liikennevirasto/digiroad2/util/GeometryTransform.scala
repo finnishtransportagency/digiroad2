@@ -32,6 +32,19 @@ object Track {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  /**
+    * Switch left to right and vice versa
+    * @param track Track value to switch
+    * @return
+    */
+  def switch(track: Track) = {
+    track match {
+      case RightSide => LeftSide
+      case LeftSide => RightSide
+      case _ => track
+    }
+  }
+
   case object Combined extends Track { def value = 0 }
   case object RightSide extends Track { def value = 1 }
   case object LeftSide extends Track { def value = 2 }

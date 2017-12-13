@@ -6,9 +6,18 @@
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
-      return {
-        url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
-      };
+      var withHistory = params.withHistory;
+      var day = params.day;
+      var month = params.month;
+      var year = params.year;
+      if(!withHistory)
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+        };
+      else
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
+        };
     });
 
     this.abortLoadingProject=(function() {
@@ -121,6 +130,18 @@
       });
     }, 1000);
 
+    this.deleteRoadAddressProject = _.throttle(function(projectId, success, failure){
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/viite/roadlinks/roadaddress/project",
+        data: JSON.stringify(projectId),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    });
+
     this.sendProjectToTR = _.throttle(function(projectID, success, failure) {
       var Json = {
         projectID: projectID
@@ -231,10 +252,13 @@
         .then(function(x) { return JSON.parse(x); });
     };
 
-    this.removeProjectLinkSplit = function(projectId, linkId, success, errorCallback) {
+    this.removeProjectLinkSplit = function(data, success, errorCallback) {
       $.ajax({
+        contentType: "application/json",
         type: "DELETE",
-        url: "api/viite/project/split/" + projectId + "/" + linkId,
+        url: "api/viite/project/split",
+        data: JSON.stringify(data),
+        dataType: "json",
         success: success,
         error: errorCallback
       });
@@ -249,6 +273,17 @@
       });
     };
 
+    this.getPreSplitedData = _.throttle(function(data, linkId, success, errorCallback){
+        $.ajax({
+          contentType: "application/json",
+          type: "PUT",
+          url: "api/viite/project/presplit/" + linkId,
+          data: JSON.stringify(data),
+          dataType: "json",
+          success: success,
+          error: errorCallback
+        });
+      }, 1000);
 
     this.saveProjectLinkSplit = _.throttle(function(data, linkId, success, errorCallback){
      $.ajax({
@@ -260,8 +295,7 @@
        success: success,
        error: errorCallback
      });
-    },
-      1000);
+    }, 1000);
 
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);

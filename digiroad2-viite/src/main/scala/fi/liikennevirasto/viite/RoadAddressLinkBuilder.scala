@@ -24,8 +24,12 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val length = GeometryUtils.geometryLength(geom)
     val roadName = roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
     val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE",0).asInstanceOf[Number].intValue()
+    val roadType = roadAddress.roadType match {
+      case RoadType.Unknown => getRoadType(roadLink.administrativeClass, roadLink.linkType)
+      case _ => roadAddress.roadType
+    }
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, roadType, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
@@ -48,8 +52,12 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     val roadName = roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
     val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode,0).asInstanceOf[Number].intValue()
+    val roadType = missingAddress.roadType match {
+      case RoadType.Unknown => getRoadType(roadLink.administrativeClass, roadLink.linkType)
+      case _ => missingAddress.roadType
+    }
     RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, UnknownRoadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType),
+      length, roadLink.administrativeClass, roadLink.linkType, UnknownRoadLinkType, roadLink.constructionType, roadLink.linkSource, roadType,
       roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
@@ -81,8 +89,12 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val length = GeometryUtils.geometryLength(geom)
     val roadName = historyRoadLink.attributes.getOrElse(FinnishRoadName, historyRoadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
     val municipalityCode = historyRoadLink.attributes.getOrElse(MunicipalityCode,0).asInstanceOf[Number].intValue()
+    val roadType = roadAddress.roadType match {
+      case RoadType.Unknown => getRoadType(historyRoadLink.administrativeClass, UnknownLinkType)
+      case _ => roadAddress.roadType
+    }
     RoadAddressLink(roadAddress.id, historyRoadLink.linkId, geom,
-      length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, getRoadType(historyRoadLink.administrativeClass, UnknownLinkType), roadName, municipalityCode, extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
+      length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, roadType, roadName, municipalityCode, extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
       historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(historyRoadLink.municipalityCode, -1), roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,

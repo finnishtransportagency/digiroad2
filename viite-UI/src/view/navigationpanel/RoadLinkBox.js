@@ -30,7 +30,7 @@
         '</div>' +
       '</div>');
 
-    var roadClassLegend = $('<div class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
+    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
 
     var floatingLegend = $('' +
       '<div class="legend-entry">' +
@@ -77,6 +77,34 @@
         '<div class="symbol linear linear-asset-' + roadClass[0] + '" />' +
         '</div>';
     }).join('');
+
+    var roadProjectOperations = function () {
+      return '<div class="legend-entry">' +
+        '<div class="label">Ennallaan</div>' +
+        '<div class="symbol linear operation-type-unchanged" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Uusi</div>' +
+        '<div class="symbol linear operation-type-new" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Siirto</div>' +
+        '<div class="symbol linear operation-type-transfer" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Lakkautus</div>' +
+        '<div class="symbol linear operation-type-terminated" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Numerointi</div>' +
+        '<div class="symbol linear operation-type-renumbered" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Käsittelemätön</div>' +
+        '<div class="symbol linear operation-type-unhandeled" />' +
+        '</div>';
+    };
+
     roadClassLegend.append(roadClassLegendEntries);
     roadClassLegend.append(constructionTypeLegendEntries);
     roadClassLegend.append(floatingLegend);
@@ -193,6 +221,8 @@
       toolSelection.hide();
     });
 
+    eventbus.on('layer:selected roadAddressProject', toggleProjectLegends);
+
     bindExternalEventHandlers();
 
     elements.expanded.find('.legend-container').append(roadClassLegend);
@@ -205,6 +235,21 @@
 
     function hide() {
       element.hide();
+    }
+
+    function toggleProjectLegends() {
+      var container = $('#legendDiv');
+      if(applicationModel.getSelectedLayer() !== "linkProperty") {
+        container.empty();
+        container.append(roadProjectOperations());
+        container.append(calibrationPointPicture);
+      } else {
+        container.empty();
+        roadClassLegend.append(roadClassLegendEntries);
+        roadClassLegend.append(constructionTypeLegendEntries);
+        roadClassLegend.append(floatingLegend);
+        roadClassLegend.append(calibrationPointPicture);
+      }
     }
 
     return {

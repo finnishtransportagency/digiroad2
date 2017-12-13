@@ -105,7 +105,7 @@ object ProjectDeltaCalculator {
       (!pl1.reversed && pl1.discontinuity == Discontinuity.Continuous)
     if (matchAddr && matchContinuity &&
       ra1.endAddrMValue == ra2.startAddrMValue && ra1.discontinuity == Discontinuity.Continuous &&
-    pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
+      ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
           case x: RoadAddress => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
@@ -226,26 +226,30 @@ object ProjectDeltaCalculator {
   /**
     * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
     * It is impossible to tell afterwards the exact mapping unless done at this point
+    * Deprecated: Use partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection]
+    * instead! To be removed in December
+    *
     * @param roadAddresses Road Addresses that were the source
     * @param projectLinks Project Links that have the transfer address values
     * @return Map between the sections old -> new
     */
   @Deprecated
+  //TODO: Remove method
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
-    partition(pair(roadAddresses, projectLinks.groupBy(_.roadAddressId)))
+    throw new RuntimeException("This method does not work properly and is not used - remove from all test use as well")
   }
 
   def partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection] = {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
-      o.sortBy(_.startAddrMValue).map(ra =>
+      o.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed))
     }
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue)))
       .mapValues(v => {
-        val x = v.unzip
-        toRoadAddressSection(x._1) -> toRoadAddressSection(x._2)
+        val (from, to) = v.unzip
+        toRoadAddressSection(from) -> toRoadAddressSection(to)
       })
     sectioned.flatMap { case (key, (src, target)) =>
       val matches = matchingTracks(sectioned, key)

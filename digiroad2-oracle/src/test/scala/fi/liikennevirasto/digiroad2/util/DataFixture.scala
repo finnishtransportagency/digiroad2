@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.digiroad2.{MassTransitStopService, _}
+import fi.liikennevirasto.digiroad2.{MassTransitStopService, asset, _}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -922,45 +922,66 @@ object DataFixture {
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
-      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
+      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
       //filter roadLink by administrative class and roadLink with MTKClass valid
       val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
       val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
+      println("Road links with MTKClass valid -> " + roadWithMTKClass.size)
 
       OracleDatabase.withDynTransaction {
-        val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadWithMTKClass.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        println("Existing assets -> " + existingAssets.size)
 
         val lastChanges = changes.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
+        println("Change info -> " + lastChanges.size)
 
         //Map all existing assets by roadLink and changeInfo
-        val changedAssets = lastChanges.map{
+        val changedAssets = lastChanges.flatMap{
           case (linkId, changeInfo) =>
-            (roadWithMTKClass.find(road => road.linkId == linkId ), changeInfo, existingAssets.filter(_.linkId == linkId))
+            roadWithMTKClass.find(road => road.linkId == linkId ).map {
+              roadLink =>
+                (roadLink, changeInfo, existingAssets.filter(_.linkId == linkId))
+            }
         }
 
-        val expiredAssetsIds = changedAssets.flatMap {
-          case (Some(roadLink), changeInfo, assets) if assets.nonEmpty =>
-            assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
-          case _ =>
-            List()
-        }.toSet[Long]
+        println("Changed assets -> " + changedAssets.size)
 
-        val newAssets = changedAssets.flatMap{
-          case (Some(roadLink), changeInfo, assets) =>
-            val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(minOfLength, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
+        val expiredAssetsIds = changedAssets.flatMap {
+          case (_, changeInfo, assets) =>
+              assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
+                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default")
+            ).map(_.id)
+        }.toSet
+
+        println("Expired assets -> " + expiredAssetsIds.size)
+
+        val newAssets = changedAssets.flatMap {
+          case (roadLink, changeInfo, allAssets) =>
+            val assets = allAssets.filterNot(asset => expiredAssetsIds.contains(asset.id))
+            val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+            val measures = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(minOfLength)).distinct.sorted
+
+            val pointsOfInterest = if(roadLinkLength - measures.last > maxAllowedError)
+              measures ++ Seq(roadLinkLength)
+            else
+              measures
 
             //Not create asset with the length less MinAllowedLength
             val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < minAllowedLength}
             pieces.flatMap { measures =>
               Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
                 measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
-            }.filterNot(a => assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError))
-          case _ =>
-            None
-        }.toSeq
+            }.filterNot(a =>
+              assets.
+              exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)
+            )
+        }
+
+        println("New assets assets -> " + newAssets.size)
 
         if (expiredAssetsIds.nonEmpty)
           println("\nExpiring ids " + expiredAssetsIds.mkString(", "))
+
         expiredAssetsIds.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
 
         newAssets.foreach { linearAsset =>
@@ -1165,6 +1186,17 @@ object DataFixture {
     }
 
     println("\nEnd Update areas on Asset at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def updateSpeedLimitDataFromTR(): Unit = {
+    println("\nStart Speed Limits update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateSpeedLimits()
+
+    println("Speed Limits update complete at time: ")
     println(DateTime.now())
     println("\n")
   }
@@ -1447,6 +1479,8 @@ object DataFixture {
         updateDamagedByThawAssetDataFromTR()
       case Some("import_all_speedLimits_from_TR_to_OTH") =>
         importAllSpeedLimitDataFromTR()
+      case Some("update_speedLimits_from_TR_to_OTH") =>
+        updateSpeedLimitDataFromTR()
       case Some("update_europeanRoad_from_TR_to_OTH") =>
         updateEuropeanRoadDataFromTR()
       case Some("update_areas_on_asset") =>
@@ -1467,7 +1501,8 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
         " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_massTransitLane_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
         " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH" +
-        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
+        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_speedLimits_from_TR_to_OTH | " +
+        " update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
     }
   }
 }
