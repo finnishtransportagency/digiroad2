@@ -44,7 +44,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
 
-    val newAssets = newRoadWidthAssets.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId)) ++ filledNewAssets
+    val newAssets = newRoadWidthAssets.filterNot(a => filledNewAssets.contains(a)) ++ filledNewAssets
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
@@ -81,8 +81,8 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val expiredAssetsIds = changedAssets.flatMap {
       case (_, changeInfo, assets) =>
-        assets.filter(asset =>
-          asset.createdBy.contains("dr1_conversion") || (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default"))
+        assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
+          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default")
         ).map(_.id)
       case _ =>
         List()
@@ -106,7 +106,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         //if the asset was created by changeInfo and there is a new changeInfo, expire and crete a new asset
         assets.filter(asset => expiredAssetsIds.contains(asset.id)).map { asset =>
         PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-          asset.startMeasure, asset.endMeasure, Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource)}
+          asset.startMeasure, asset.endMeasure, asset.createdBy, None, Some("vvh_mtkclass_default"), None, false, LinearAssetTypes.RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource)}
       case _ =>
         None
     }.toSeq
