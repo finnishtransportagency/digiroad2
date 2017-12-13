@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.LinkStatus.{Unknown => _, apply => _, _}
 import fi.liikennevirasto.viite.dao.ProjectState._
@@ -1504,6 +1505,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectDAO.getProjectEly(projectId)
   }
 
+  def validateProjectById(projectId: Long): Seq[ValidationErrorDetails] = {
+    withDynSession {
+      validator.validateProject(ProjectDAO.getRoadAddressProjectById(projectId).get, ProjectDAO.getProjectLinks(projectId))
+    }
+  }
+
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
 
 }
@@ -1527,48 +1534,103 @@ object ProjectValidator {
     def message: String
   }
 
+  //TODO: Not really a todo but a quick note, beware that the ValidationErrors introduced by task 453 are mostly outdated, these will be tagged with the 453 number,
   object ValidationError {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
-      SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation)
+      SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad)
+    //Viite-942
+    case object MissingEndOfRoad extends ValidationError {def value = 0;
+      def message = "Tieosalle ei ole määritelty jatkuvuuskoodia, 1 - Tien loppu, tieosan viimeiselle linkille."}
+    //Viite-453
     //There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
-    case object MinorDiscontinuityFound extends ValidationError {def value = 0; def message = "<TO_BE_DETERMINED>"}
+    case object MinorDiscontinuityFound extends ValidationError {def value = 1;
+      def message = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."}
+    //Viite-453
     //There must be a major discontinuity if the jump is longer than 50 meters
-    case object MajorDiscontinuityFound extends ValidationError {def value = 1;def message = "<TO_BE_DETERMINED>"}
+    case object MajorDiscontinuityFound extends ValidationError {def value = 2;
+      def message = "Tieosalla on epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."}
+    //Viite-453
     //For every track 1 there must exist track 2 that covers the same address span and vice versa
-    case object InsufficientTrackCoverage extends ValidationError {def value = 2;def message = "<TO_BE_DETERMINED>"}
+    case object InsufficientTrackCoverage extends ValidationError {def value = 3;
+      def message = "Tieosalta puuttuu toinen ajorata. Numeroi molemmat ajoradat."}
+    //Viite-453
     //There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
-    case object DiscontinuousAddressScheme extends ValidationError {def value = 3;def message = "<TO_BE_DETERMINED>"}
+    case object DiscontinuousAddressScheme extends ValidationError {def value = 4;
+      def message = "Tieosoitteessa ei voi olla puuttuvia etäisyyksiä alku- ja loppuetäisyyden välillä."}
+    //Viite-453
     //There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
-    case object SharedLinkIdsExist extends ValidationError {def value = 4;def message = "<TO_BE_DETERMINED>"}
+    case object SharedLinkIdsExist extends ValidationError {def value = 5;
+      def message = "Linkillä on voimassa oleva tieosoite tämän projektin alkupäivämäärällä."}
+    //Viite-453
     //Continuity codes are given for end of road
-    case object NoContinuityCodesAtEnd extends ValidationError {def value = 5;def message = "<TO_BE_DETERMINED>"}
+    case object NoContinuityCodesAtEnd extends ValidationError {def value = 6;
+      def message = "Tieosan lopusta puuttuu jatkuvuuskoodi."}
+    //Viite-453
     //Recalculation of M values and delta calculation are both successful for every road part in project
-    case object UnsuccessfulRecalculation extends ValidationError {def value = 6;def message = "<TO_BE_DETERMINED>"}
+    case object UnsuccessfulRecalculation extends ValidationError {def value = 7;
+      def message = "Etäisyysarvojen laskenta epäonnistui."}
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
   }
 
   case class ValidationErrorDetails(projectId: Long, validationError: ValidationError,
-                                    affectedLinkIds: Seq[Long], coordinates: Option[ProjectCoordinates],
+                                    affectedLinkIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
+    checkProjectContinuity(projectLinks) ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
       checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ mockUs574Errors
   }
 
   //TODO VIITE-574 once defined, remove this mocked UI response
   private def mockUs574Errors(): Seq[ValidationErrorDetails] = {
     Seq(
-      ValidationErrorDetails(411342, ValidationError.MinorDiscontinuityFound, Seq(531510, 1820563), Some(ProjectCoordinates(6992008,531509, 8)), Some("parte da estrada parte um")),
-      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(531510, 6992008), Some(ProjectCoordinates(531510,6992008, 7)), Some("parte da estrada parte um")),
-      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(6117732), None, Some("parte da estrada duzentos e cinco"))
+      ValidationErrorDetails(411342, ValidationError.MinorDiscontinuityFound, Seq(531510, 1820563), Seq(ProjectCoordinates(6992008,531509, 8)), Some("parte da estrada parte um")),
+      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(531510, 6992008), Seq(ProjectCoordinates(531510,6992008, 7), ProjectCoordinates(6994667,532923, 7)), Some("parte da estrada parte um")),
+      ValidationErrorDetails(411342, ValidationError.InsufficientTrackCoverage, Seq(6117732), Seq(), Some("parte da estrada duzentos e cinco"))
     )
   }
 
-  private def checkProjectContinuity(): Seq[ValidationErrorDetails] = {
-    Seq.empty[ValidationErrorDetails]
+
+  private def checkProjectContinuity(projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    def checkCorrectEndCode(projectLinks: Seq[ProjectLink]): Boolean = {
+      return projectLinks.filter(_.discontinuity.value == 1).size == projectLinks.size
+    }
+
+    def determineValidationError (projectEndRoads: Seq[ProjectLink] ):Seq[ValidationErrorDetails] = {
+      val anomalous = projectEndRoads.filter(_.discontinuity.value != 1)
+      val mappedCoords = anomalous.map(link => {
+        val middle = GeometryUtils.midPointGeometry(link.geometry)
+        ProjectCoordinates(middle.x, middle.y, 8)
+      })
+      Seq(ValidationErrorDetails(anomalous.head.projectId, ValidationError.MissingEndOfRoad, anomalous.map(_.linkId), mappedCoords, None))
+    }
+    def calcEndRoadsAndAddrMValue (groupedProjectLinks: Seq[ProjectLink]): (Long, Seq[ProjectLink]) = {
+      val maxEndAddrMValue = groupedProjectLinks.maxBy(_.endAddrMValue).endAddrMValue
+      (maxEndAddrMValue, groupedProjectLinks.filter(_.endAddrMValue == maxEndAddrMValue))
+    }
+
+    projectLinks.groupBy(_.roadNumber).flatMap(grouped => {
+      val existingAddresses = RoadAddressDAO.fetchByRoad(grouped._1)
+      if(existingAddresses.size > 0){
+        val existingEnd = existingAddresses.maxBy(_.endAddrMValue)
+        val (maxEndAddrMValue, projectEndRoads) = calcEndRoadsAndAddrMValue(grouped._2)
+        if((maxEndAddrMValue > existingEnd.endAddrMValue) && !checkCorrectEndCode(projectEndRoads)) {
+          determineValidationError(projectEndRoads)
+        } else {
+          Seq.empty[ValidationErrorDetails]
+        }
+      } else {
+        val (_, projectEndRoads) = calcEndRoadsAndAddrMValue(grouped._2)
+
+        if(!checkCorrectEndCode(projectEndRoads)){
+          determineValidationError(projectEndRoads)
+        } else {
+          Seq.empty[ValidationErrorDetails]
+        }
+      }
+    }).toSeq
   }
 
   private def checkProjectCoverage(): Seq[ValidationErrorDetails] = {
