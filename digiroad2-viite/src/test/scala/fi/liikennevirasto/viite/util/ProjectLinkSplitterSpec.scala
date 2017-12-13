@@ -211,7 +211,37 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       l.roadPartNumber should be (template.roadPartNumber)
       l.sideCode should be (SideCode.TowardsDigitizing)
     }
+  }
 
+  test("Incorrect digitization of link should not affect calculation") {
+    val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, -0.5), Point(20.0, -0.8))
+    val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, -1.5), Point(20.0, -4.8)).reverse
+    val sLen = GeometryUtils.geometryLength(sGeom)
+    val tLen = GeometryUtils.geometryLength(tGeom)
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+      SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
+      sLen, 0L, 5, false, None, 85088L)
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
+      SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
+      tLen, 0L, 5, false, None, 85088L)
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, -0.75), LinkStatus.UnChanged,
+      LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    val (splitA, splitB) = sl.partition(_.status != LinkStatus.New)
+    sl should have size (2)
+    tl should have size (1)
+    val terminatedLink = tl.head
+    terminatedLink.status should be (LinkStatus.Terminated)
+    splitB.head.endAddrMValue should be (splitA.head.startAddrMValue)
+    splitA.head.geometry.head should be (template.geometry.last)
+    sl.foreach { l =>
+      l.startAddrMValue == terminatedLink.endAddrMValue || l.status == New should be(true)
+      l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
+      l.status == LinkStatus.New || l.status == LinkStatus.UnChanged || l.status == LinkStatus.Transfer should be (true)
+      l.roadNumber should be (template.roadNumber)
+      l.roadPartNumber should be (template.roadPartNumber)
+      l.sideCode should be (SideCode.AgainstDigitizing)
+    }
   }
 
   test("Split opposing project links") {
@@ -237,7 +267,6 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
     sl.foreach { l =>
       l.sideCode should be (SideCode.AgainstDigitizing)
-      l.endAddrMValue == template.endAddrMValue || l.startMValue > 0.0 should be (true)
       l.startAddrMValue == template.startAddrMValue || l.startMValue == 0.0 should be (true)
     }
   }
@@ -334,7 +363,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
     terminatedLink.endMValue should be (template.endMValue)
     newLink.startAddrMValue should be (template.startAddrMValue)
-    newLink.endAddrMValue should be (template.endAddrMValue)
+    newLink.endAddrMValue should be <= template.endAddrMValue
     GeometryUtils.areAdjacent(terminatedLink.geometry, newLink.geometry) should be (true)
     GeometryUtils.areAdjacent(newLink.geometry.head, sGeom.head) should be (true)
     GeometryUtils.areAdjacent(newLink.geometry.last, sGeom.last) should be (true)

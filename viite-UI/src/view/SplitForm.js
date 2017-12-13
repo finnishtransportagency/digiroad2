@@ -99,7 +99,7 @@
 
     var suravagePartForm = function (selection, selected, index) {
       if (selected[index].endAddressM !== selected[index].startAddressM) {
-        return '<label>SUUMMITELMALINKKI</label>' + '<span class="marker">' + selected[index].marker + '</span>' +
+        return '<label>SUUNNITELMALINKKI</label>' + '<span class="marker">' + selected[index].marker + '</span>' +
           '<br>' + '<label>Toimenpiteet,' + selection + '</label>' +
           dropdownOption(index) + '<hr class="horizontal-line"/>';
       } else return '';
@@ -119,7 +119,7 @@
         '<option id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value="' + LinkStatus.Unchanged.description + '"  hidden>Ennallaan</option>' +
         '<option id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value="' + LinkStatus.Transfer.description + '" hidden>Siirto</option>' +
         '<option id="drop_' + index + '_' + LinkStatus.New.description + '" value="' + LinkStatus.New.description + '" hidden>Uusi</option>' +
-        '<option id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value="' + LinkStatus.Terminated.description + '" hidden> Lakkautus</option>' +
+        '<option id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value="' + LinkStatus.Terminated.description + '" hidden>Lakkautus</option>' +
         '</select>' +
         '</div>';
     };

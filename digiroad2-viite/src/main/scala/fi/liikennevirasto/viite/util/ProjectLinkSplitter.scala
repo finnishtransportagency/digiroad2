@@ -26,24 +26,27 @@ object ProjectLinkSplitter {
   private def suravageWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
                                   splitAddressM: Long, templateM: Double, isReversed: Boolean, keptGeom: Seq[Point]) = {
     def equals(geom1: Seq[Point], geom2: Seq[Point]) = {
-      GeometryUtils.withinTolerance(if (isReversed) GeometryUtils.geometryEndpoints(geom1).swap else GeometryUtils.geometryEndpoints(geom1),
-        GeometryUtils.geometryEndpoints(geom2), MaxDistanceDiffAllowed)
+      GeometryUtils.withinTolerance(GeometryUtils.geometryEndpoints(geom1), GeometryUtils.geometryEndpoints(geom2), MaxDistanceDiffAllowed) ||
+        GeometryUtils.withinTolerance(GeometryUtils.geometryEndpoints(geom1).swap, GeometryUtils.geometryEndpoints(geom2), MaxDistanceDiffAllowed)
     }
-    val (splitAddresses, splitGeometries) = {
+    val splitGeometries = {
       val endingGeom = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength)
       val startingGeom = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM)
       val addr = ((templateLink.addrAt(templateM), templateLink.endAddrMValue), (templateLink.startAddrMValue, templateLink.addrAt(templateM)))
 
       if (equals(endingGeom, keptGeom)){
-        (if (isReversed) addr.swap else addr,
-          (endingGeom, startingGeom))
+        (endingGeom, startingGeom)
       } else if (equals(startingGeom, keptGeom)){
-        (if (!isReversed) addr.swap else addr,
-        (startingGeom, endingGeom))
+        (startingGeom, endingGeom)
       } else {
         throw new SplittingException("Suunnitelmalinkin katkaisukohta ei kohtaa olemassaolevan tieosoitteen kanssa.")
       }
     }
+    val splitAddresses =
+      (Seq(templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.head, templateLink.geometry)),
+        templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.last, templateLink.geometry))),
+        Seq(templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.head, templateLink.geometry)),
+          templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.last, templateLink.geometry))))
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
@@ -52,8 +55,8 @@ object ProjectLinkSplitter {
         roadType = split.roadType,
         startMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.head, suravage.geometry),
         endMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.last, suravage.geometry),
-        startAddrMValue = splitAddresses._1._1,
-        endAddrMValue = splitAddresses._1._2,
+        startAddrMValue = splitAddresses._1.min,
+        endAddrMValue = splitAddresses._1.max,
         status = split.statusA,
         sideCode = templateLink.sideCode,
         roadAddressId = templateLink.roadAddressId,
@@ -69,8 +72,8 @@ object ProjectLinkSplitter {
         roadType = split.roadType,
         startMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.head, suravage.geometry),
         endMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.last, suravage.geometry),
-        startAddrMValue = splitAddresses._2._1,
-        endAddrMValue = splitAddresses._2._2,
+        startAddrMValue = splitAddresses._2.min,
+        endAddrMValue = splitAddresses._2.max,
         status = split.statusB,
         sideCode = templateLink.sideCode,
         roadAddressId = templateLink.roadAddressId,
@@ -78,8 +81,8 @@ object ProjectLinkSplitter {
         geometry = splitGeometries._2,
         geometryLength = GeometryUtils.geometryLength(splitGeometries._2),
         ely = templateLink.ely
-        )
       )
+    )
   }
 
   def split(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions): Seq[ProjectLink] = {
