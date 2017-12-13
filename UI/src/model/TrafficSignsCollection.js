@@ -5,19 +5,34 @@
     var me = this;
 
     var trafficSignsShowing = {
-      speedLimits: false, //[1, 2, 3, 4, 5, 6]
-      pedestrianCrossings: false, //[7]
-      maximumLengths: false, //[8]
-      generalWarnings: false, //[9]
-      turningRestrictions: false //[10, 11, 12]
+      speedLimits: false,
+      pedestrianCrossings: false,
+      maximumRestrictions: false,
+      generalWarningSigns: false,
+      prohibitionsAndRestrictions: false
     };
 
     var trafficSignValues = {
-      speedLimits: [1, 2, 3, 4, 5, 6],
-      pedestrianCrossings: [7],
-      maximumLengths: [8],
-      generalWarnings: [9],
-      turningRestrictions: [10, 11, 12]
+      speedLimits: { values : [1, 2, 3, 4, 5, 6], groupName: 'Nopeusrajoitukset' },
+      pedestrianCrossings: { values : [7], groupName: 'Suojatiet'},
+      maximumRestrictions: { values : [8, 30, 31, 32, 33, 34, 35], groupName: 'Suurin sallittu - rajoitukset'},
+      generalWarningSigns: { values : [9, 36, 37, 38, 39, 40, 41, 42, 43], groupName: 'Varoitukset'},
+      prohibitionsAndRestrictions: { values : [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], groupName: 'Kiellot ja rajoitukset'}
+    };
+
+    this.getGroup = function(signTypes){
+      return  _.groupBy(
+        _.map(signTypes[0], function(signType) {
+          return _.find(_.map(trafficSignValues, function(trafficSignGroup, trafficSignGroupName){
+            return {
+              label: trafficSignGroup.groupName,
+              types: trafficSignGroup.values,
+              groupName: trafficSignGroupName,
+              propertyValue: signType.propertyValue,
+              propertyDisplayValue: signType.propertyDisplayValue };
+          }), function(groups) {
+            return _.some(groups.types, function(group){ return group == signType.propertyValue;  }); }); }), function(groups) {
+          return groups.label;  });
     };
 
     var filterTrafficSigns = function (asset) {
@@ -40,7 +55,7 @@
       var signsToShow = [];
       _.forEach(trafficSignsShowing, function (isShowing, trafficSign) {
         if(isShowing)
-          signsToShow = signsToShow.concat(trafficSignValues[trafficSign]);
+          signsToShow = signsToShow.concat(trafficSignValues[trafficSign].values);
       });
       return signsToShow;
     };

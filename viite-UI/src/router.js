@@ -20,7 +20,8 @@
       routes: {
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
-        'roadAddressProject/:projectId' : 'roadAddressProject'
+        'roadAddressProject/:projectId': 'roadAddressProject',
+        'historyLayer/:date': 'historyLayer'
       },
 
       linkProperty: function (linkId) {
@@ -47,8 +48,20 @@
       },
 
       roadAddressProject: function (projectId) {
-        eventbus.trigger('roadAddressProject:openProject', {id: projectId});
         applicationModel.selectLayer('roadAddressProject');
+        var parsedProjectId = parseInt(projectId);
+        eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
+      },
+
+      historyLayer: function (date) {
+        applicationModel.selectLayer('linkProperty');
+        var dateSeparated = date.split('-');
+        eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
+        eventbus.trigger('suravageRoads:toggleVisibility', false);
+        $('.suravage-visible-wrapper').hide();
+        $('#toggleEditMode').hide();
+        $('#emptyFormDiv,#projectListButton').hide();
+        eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
       }
     });
 
@@ -77,13 +90,22 @@
       }
     });
 
-    eventbus.on('linkProperties:selectedProject', function (linkId) {
-      if (typeof linkId !== 'undefined') {
-        router.navigate('linkProperty/' + linkId);
-        applicationModel.selectLayer('linkProperty', false);
-        backend.getRoadLinkByLinkId(linkId, function (response) {
-          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-        });
+    eventbus.on('linkProperties:selectedProject', function (linkId, project) {
+      if(typeof project.id !== 'undefined') {
+        var baseUrl = 'roadAddressProject/' + project.id;
+        var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
+        router.navigate(baseUrl + linkIdUrl);
+        if(project.coordX !== 0 && project.coordY !== 0 && project.zoomLevel !== 0){
+          applicationModel.selectLayer('linkProperty', false);
+          map.getView().setCenter([project.coordX, project.coordY]);
+          map.getView().setZoom(project.zoomLevel);
+        }
+        else if (typeof linkId !== 'undefined') {
+          applicationModel.selectLayer('linkProperty', false);
+          backend.getRoadLinkByLinkId(linkId, function (response) {
+            map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+          });
+        }
       }
     });
 

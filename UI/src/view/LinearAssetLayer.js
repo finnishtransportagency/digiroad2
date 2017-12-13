@@ -104,7 +104,9 @@ root.LinearAssetLayer  = function(params) {
       assetLabel = params.assetLabel,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       editConstrains = params.editConstrains,
-      massLimitation = params.massLimitation;
+      massLimitation = params.massLimitation,
+      hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
+      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
@@ -275,6 +277,9 @@ root.LinearAssetLayer  = function(params) {
       if (selectedLinearAsset.exists()) {
          selectedLinearAsset.close();
          readOnlyLayer.showLayer();
+        if(hasTrafficSignReadOnlyLayer){
+          trafficSignReadOnlyLayer.highLightLayer();
+        }
       }
     }
   };
@@ -292,6 +297,7 @@ root.LinearAssetLayer  = function(params) {
         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
     selectToolControl.addSelectionFeatures(features);
     readOnlyLayer.hideLayer();
+    unHighLightReadOnlyLayer();
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
@@ -450,6 +456,9 @@ root.LinearAssetLayer  = function(params) {
         eventbus.trigger('layer:linearAsset');
       });
     }
+    if(hasTrafficSignReadOnlyLayer){
+      trafficSignReadOnlyLayer.refreshView();
+    }
   };
 
   this.activateSelection = function() {
@@ -472,6 +481,7 @@ root.LinearAssetLayer  = function(params) {
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
     readOnlyLayer.hideLayer();
+    unHighLightReadOnlyLayer();
   };
 
   var drawIndicators = function(links) {
@@ -569,7 +579,6 @@ root.LinearAssetLayer  = function(params) {
       }
     }
   };
-
   var reset = function() {
     linearAssetCutter.deactivate();
   };
@@ -584,12 +593,16 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var showWithComplementary = function() {
+    if(hasTrafficSignReadOnlyLayer)
+      trafficSignReadOnlyLayer.showTrafficSignsComplementary();
     isComplementaryChecked = true;
     readOnlyLayer.showWithComplementary();
     me.refreshView();
   };
 
   var hideComplementary = function() {
+    if(hasTrafficSignReadOnlyLayer)
+      trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
     selectToolControl.clear();
     selectedLinearAsset.close();
     isComplementaryChecked = false;
@@ -598,8 +611,22 @@ root.LinearAssetLayer  = function(params) {
     me.refreshView();
   };
 
+  var hideReadOnlyLayer = function(){
+    if(hasTrafficSignReadOnlyLayer){
+      trafficSignReadOnlyLayer.hide();
+      trafficSignReadOnlyLayer.removeLayerFeatures();
+  }
+  };
+
+  var unHighLightReadOnlyLayer = function(){
+    if(hasTrafficSignReadOnlyLayer){
+      trafficSignReadOnlyLayer.unHighLightLayer();
+    }
+  };
+
   var hideLayer = function() {
     reset();
+    hideReadOnlyLayer();
     vectorLayer.setVisible(false);
     indicatorLayer.setVisible(false);
     readOnlyLayer.hideLayer();

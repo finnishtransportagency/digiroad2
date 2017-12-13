@@ -1300,7 +1300,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
 
     sqlu"""
          insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
-         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, SYSDATE)
       """.execute
 
     sqlu"""

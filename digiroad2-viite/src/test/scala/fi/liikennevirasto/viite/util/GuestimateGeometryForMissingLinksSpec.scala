@@ -23,16 +23,16 @@ class GuestimateGeometryForMissingLinksSpec extends FunSuite with Matchers {
     }
   }
   private val guessGeom= new GuestimateGeometryForMissingLinks
-  private val roadA1= RoadAddress(1, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-    Seq(Point(0,0),Point(0,10)), LinkGeomSource.NormalLinkInterface)
-  private val roadA2 = RoadAddress(2, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-    Seq(Point(0,10),Point(0,20)), LinkGeomSource.NormalLinkInterface)
-  private val roadA3=RoadAddress(3, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-    Seq(Point(0,20),Point(0,30)), LinkGeomSource.NormalLinkInterface)
-  private val roadA4=RoadAddress(4, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-    Seq(Point(0,30),Point(0,40)), LinkGeomSource.NormalLinkInterface)
-  private val roadA5=RoadAddress(5, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 40L, 50L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-    Seq(Point(0,40),Point(0,50)), LinkGeomSource.NormalLinkInterface)
+  private val roadA1= RoadAddress(1, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")),
+    None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0,0),Point(0,10)), LinkGeomSource.NormalLinkInterface, 8)
+  private val roadA2 = RoadAddress(2, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 10L, 20L, Some(DateTime.parse("1901-01-01")),
+    None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0,10),Point(0,20)), LinkGeomSource.NormalLinkInterface, 8)
+  private val roadA3=RoadAddress(3, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 20L, 30L, Some(DateTime.parse("1901-01-01")),
+    None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0,20),Point(0,30)), LinkGeomSource.NormalLinkInterface, 8)
+  private val roadA4=RoadAddress(4, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 30L, 40L, Some(DateTime.parse("1901-01-01")),
+    None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0,30),Point(0,40)), LinkGeomSource.NormalLinkInterface, 8)
+  private val roadA5=RoadAddress(5, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 40L, 50L, Some(DateTime.parse("1901-01-01")),
+    None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0,40),Point(0,50)), LinkGeomSource.NormalLinkInterface, 8)
 
 
   test("Missing one link midle") {

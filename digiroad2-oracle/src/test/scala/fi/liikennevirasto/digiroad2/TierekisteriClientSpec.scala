@@ -83,6 +83,12 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val tierekisteriSpeedLimitAsset: TierekisteriSpeedLimitAssetClient = {
+    new TierekisteriSpeedLimitAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
   lazy val connectedToTierekisteri = testConnection
 
   private def testConnection: Boolean = {
@@ -600,5 +606,33 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val assets = tierekisteriEuropeanRoadAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
 
     assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Speed limit asset data with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45)
+
+    assets.size should not be (0)
+  }
+
+  test("fetch from tierekisteri active Speed limit asset data with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45, 1)
+
+    assets.size should not be (0)
+  }
+
+  test("fetch from tierekisteri active Speed limit asset datad with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45, 1, 3709)
+
+    assets.size should not be (0)
+  }
+
+  test("fetch from tierekisteri active Speed limit asset data with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45, 1, 3709, 2, 3301)
+
+    assets.size should not be (0)
   }
 }

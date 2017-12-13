@@ -38,7 +38,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
@@ -76,7 +76,8 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   test("Create new") {
     runWithRollback {
       val now = DateTime.now()
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)

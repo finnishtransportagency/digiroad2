@@ -90,6 +90,7 @@
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
+      rootElement.find('.editable .form-control').prop('disabled', readOnly);
     };
     eventbus.on('speedLimit:selected speedLimit:cancelled', function() {
       rootElement.html(template(selectedSpeedLimit));
@@ -109,12 +110,14 @@
       rootElement.find('#separate-limit').on('click', function() { selectedSpeedLimit.separate(); });
       rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedSpeedLimit.save(); });
       rootElement.find('.form-controls.speed-limit button.cancel').on('click', function() { selectedSpeedLimit.cancel(); });
-      toggleMode(applicationModel.isReadOnly());
+      toggleMode(validateAdministrativeClass(selectedSpeedLimit) || applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselect', function() {
       rootElement.empty();
     });
-    eventbus.on('application:readOnly', toggleMode);
+    eventbus.on('application:readOnly', function(readOnly){
+      toggleMode(validateAdministrativeClass(selectedSpeedLimit) || readOnly);
+    });
     eventbus.on('speedLimit:valueChanged', function(selectedSpeedLimit) {
       rootElement.find('.form-controls.speed-limit button.save').attr('disabled', !selectedSpeedLimit.isSaveable());
       rootElement.find('.form-controls.speed-limit button.cancel').attr('disabled', false);
@@ -127,6 +130,19 @@
         $('#work-list-link').parent().remove();
       }
     });
+  };
+
+  function validateAdministrativeClass(selectedSpeedLimit){
+    var selectedSpeedLimits = _.filter(selectedSpeedLimit.get(), function (selected) {
+      return editConstrains(selected);
+    });
+    return !_.isEmpty(selectedSpeedLimits);
+  }
+
+  var editConstrains = function(selectedAsset) {
+    return false;
+    //TODO revert this when DROTH-909
+    //return selectedAsset.administrativeClass === 'State';
   };
 
   root.SpeedLimitForm = {

@@ -10,6 +10,15 @@
         });
     };
 
+      this.getAssetEnumeratedPropertyValues = function(assetType) {
+          $.getJSON('api/enumeratedPropertyValues/'+assetType, function (enumeratedPropertyValues) {
+              eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValues});
+          })
+              .fail(function () {
+                  console.log("error");
+              });
+      };
+
     this.getAssetTypeMetadata = function(assetTypeId) {
       $.getJSON('api/getAssetTypeMetadata/'+ assetTypeId, function (getAssetTypeMetadata) {
         eventbus.trigger('getAssetTypeMetadata:fetched', getAssetTypeMetadata);
@@ -325,10 +334,6 @@
       $.get('api/massTransitStops/' + nationalId, callback);
     };
 
-    this.getAssetTypeProperties = function(callback) {
-      $.get('api/assetTypeProperties/10', callback);
-    };
-
     this.getUserRoles = function () {
       $.get('api/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);
@@ -346,6 +351,14 @@
 
     this.getFloatingMassTransitStops = function() {
       return $.getJSON('api/massTransitStops/floating');
+    };
+
+    this.getAssetTypeProperties = function (position, callback) {
+      if (position) {
+        $.get('api/massTransitStops/metadata?position=' + position.lon + ',' + position.lat, callback);
+      } else {
+        $.get('api/massTransitStops/metadata', callback);
+      }
     };
 
     this.getIncompleteLinks = function() {
@@ -507,7 +520,14 @@
 
     this.withEnumeratedPropertyValues = function(enumeratedPropertyValuesData) {
       self.getEnumeratedPropertyValues = function () {
-        eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+          eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+      };
+      return self;
+    };
+
+    this.withAssetEnumeratedPropertyValues = function(enumeratedPropertyValuesData, typeId) {
+      self.getAssetEnumeratedPropertyValues = function (typeId) {
+          eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValuesData});
       };
       return self;
     };
@@ -574,7 +594,7 @@
     };
 
     this.withAssetTypePropertiesData = function(assetTypePropertiesData) {
-      self.getAssetTypeProperties = function(callback) {
+      self.getAssetTypeProperties = function(position, callback) {
         callback(assetTypePropertiesData);
       };
       return self;

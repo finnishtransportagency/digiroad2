@@ -39,15 +39,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       .getOrElse(massTransitStop.created.modifier
         .getOrElse(""))
   }
-
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
-    def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
+    def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any), mapName: Option[String] = None): (String, Any) = {
       val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
         property.values.map { value =>
           value.propertyValue
         }
       }
-      key -> transformation(values)
+      mapName.getOrElse(key) -> transformation(values)
     }
     def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
     def propertyValuesToString(values: Seq[String]): String = { values.mkString }
@@ -111,8 +110,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("palauteosoite", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString))
-       )
+            extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin"))))
       })
   }
 
@@ -216,7 +215,16 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
-    val linearAssets: Seq[PieceWiseLinearAsset] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+    def getLinearAssetService(typeId: Int): LinearAssetOperations = {
+      typeId match {
+        case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
+        case LinearAssetTypes.PavingAssetTypeId => pavingService
+        case LinearAssetTypes.RoadWidthAssetTypeId => linearAssetService
+        case _ => linearAssetService
+      }
+    }
+
+    val linearAssets: Seq[PieceWiseLinearAsset] = getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
 
     linearAssets.map { asset =>
       Map("id" -> asset.id,

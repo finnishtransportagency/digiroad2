@@ -3,25 +3,42 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedAsset, layerName, localizedTexts, editConstrains, roadCollection, applicationModel) {
+  var enumeratedPropertyValues = null;
+
+  function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
     var rootElement = $('#feature-attributes');
 
+    backend.getAssetEnumeratedPropertyValues(typeId);
+
     eventbus.on('application:readOnly', function(readOnly) {
-      if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())))
+      if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
         toggleMode(rootElement, (editConstrains && editConstrains(selectedAsset)) || readOnly);
+        //TODO: add form configurations to asset-type-layer-specifications.js to avoid if-clauses
+        if (layerName == 'servicePoints' && isSingleService(selectedAsset)){
+          rootElement.find('button.delete').hide();
+        }
+      }
     });
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
       if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-        renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
+        renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection, collection);
         toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
         if (layerName == 'servicePoints') {
           rootElement.find('button#save-button').prop('disabled', true);
           rootElement.find('button#cancel-button').prop('disabled', false);
+          if(isSingleService(selectedAsset)){
+            rootElement.find('button.delete').hide();
+          }
         } else {
           rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
         }
       }
+    });
+
+    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
+        if(event.assetType == typeId)
+            enumeratedPropertyValues = event.enumeratedPropertyValues;
     });
 
     eventbus.on(layerName + ':changed', function() {
@@ -41,65 +58,73 @@
     });
   }
 
-  function renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection) {
+  function renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection, collection) {
     var id = selectedAsset.getId();
 
-  var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-  var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
-  var form = renderAssetFormElements(selectedAsset, localizedTexts);
-  var footer = '<footer>' + renderButtons() + '</footer>';
+    var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
+    var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
+    var form = renderAssetFormElements(selectedAsset, localizedTexts, collection);
+    var footer = '<footer>' + renderButtons() + '</footer>';
 
-  rootElement.html(header + form + footer);
+    rootElement.html(header + form + footer);
 
-  rootElement.find('input[type="checkbox"]').on('change', function (event) {
-    var eventTarget = $(event.currentTarget);
-    selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
-  });
+    rootElement.find('input[type="checkbox"]').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
+    });
 
-  rootElement.find('input[type="text"]').on('input change', function (event) {
-    var eventTarget = $(event.currentTarget);
-    selectedAsset.set({name: eventTarget.val()});
-  });
+    rootElement.find('input[type="text"]').on('input change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({name: eventTarget.val()});
+    });
 
-  rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
+    rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
       var eventTarget = $(event.currentTarget);
       selectedAsset.set({text: eventTarget.val()});
-  });
+    });
 
-  rootElement.find('.form-service textarea').on('input change', function (event) {
-    var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-    selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {additionalInfo: $(event.currentTarget).val()})});
-  });
+    rootElement.find('.form-service textarea').on('input change', function (event) {
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {additionalInfo: $(event.currentTarget).val()})});
+    });
 
-  rootElement.find('.service-name').on('input change', function (event) {
-    var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-    selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {name: $(event.currentTarget).val()})});
-  });
+    rootElement.find('.service-name').on('input change', function (event) {
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {name: $(event.currentTarget).val()})});
+    });
 
-  rootElement.find('.service-parking-place-count').on('input change', function (event) {
-    var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-    selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {parkingPlaceCount: parseInt($(event.currentTarget).val(), 10)})});
-  });
+    rootElement.find('.service-parking-place-count').on('input change', function (event) {
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {parkingPlaceCount: parseInt($(event.currentTarget).val(), 10)})});
+    });
 
-  rootElement.find('.form-service').on('change', '.select-service-type', function (event) {
-    var newServiceType = parseInt($(event.currentTarget).val(), 10);
-    var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-    var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType});
-    selectedAsset.set({services: services});
-    renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
-    toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
-    rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
-  });
+    rootElement.find('.form-service').on('change', '.select-service-type', function (event) {
+      var newServiceType = parseInt($(event.currentTarget).val(), 10);
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType});
+      selectedAsset.set({services: services});
+      renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
+      toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
+      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+      if(services.length < 2){
+        rootElement.find('button.delete').hide();
+      }
+    });
 
     function modifyService(services, id, modifications) {
       return _.map(services, function(service) {
         if (service.id === id) {
-          delete service.typeExtension;
+          checkTypeExtension(service, modifications);
           return _.merge({}, service, modifications);
-        } else {
-          return service;
         }
+        return service;
       });
+    }
+
+    function checkTypeExtension(service, modifications)  {
+        var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
+          if(!serviceTypeExtensions[serviceType])
+            delete service.typeExtension;
     }
 
     rootElement.find('.form-service').on('change', '.new-service select', function (event) {
@@ -112,6 +137,9 @@
       renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
       toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+      if(newServices.length < 2){
+        rootElement.find('button.delete').hide();
+      }
     });
 
     rootElement.on('click', 'button.delete', function (evt) {
@@ -120,10 +148,13 @@
       var serviceId =  parseInt(existingService.find('input[type="text"]').attr('data-service-id'), 10);
       var services = selectedAsset.get().services;
       var newServices = _.reject(services, { id: serviceId });
+      if(newServices.length < 2){
+        rootElement.find('button.delete').hide();
+      }
       selectedAsset.set({ services: newServices });
     });
 
-    rootElement.find('.form-traffic-sign input[type=text],select').on('change', function (event) {
+    rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
       var propertyPublicId = eventTarget.attr('id');
       var propertyValue = $(event.currentTarget).val();
@@ -160,28 +191,28 @@
     });
   }
 
-  function renderAssetFormElements(selectedAsset, localizedTexts) {
+  function renderAssetFormElements(selectedAsset, localizedTexts, collection) {
     var asset = selectedAsset.get();
 
     if (selectedAsset.isNew()) {
       return '' +
         '<div class="wrapper">' +
         '  <div class="form form-horizontal form-dark form-pointasset">' +
-             renderValueElement(asset) +
+        renderValueElement(asset, collection) +
         '  </div>' +
         '</div>';
     } else {
       return '' +
         '<div class="wrapper">' +
         '  <div class="form form-horizontal form-dark form-pointasset">' +
-             renderFloatingNotification(asset.floating, localizedTexts) +
+        renderFloatingNotification(asset.floating, localizedTexts) +
         '    <div class="form-group">' +
         '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
         '    </div>' +
         '    <div class="form-group">' +
         '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
         '    </div>' +
-             renderValueElement(asset) +
+        renderValueElement(asset, collection) +
         '    <div class="form-group form-group delete">' +
         '      <div class="checkbox" >' +
         '        <input type="checkbox">' +
@@ -239,21 +270,6 @@
     ]
   };
 
-  var signTypes = [
-    {value: 1, label:'Nopeusrajoitus'},
-    {value: 2,  label: 'Nopeusrajoitus Päättyy'},
-    {value: 3, label:'Nopeusrajoitusalue'},
-    {value: 4, label:'Nopeusrajoitusalue Päättyy'},
-    {value: 5, label:'Taajama'},
-    {value: 6, label:'Taajama Päättyy'},
-    {value: 7, label:'Suojatie'},
-    {value: 8, label:'Suurin Sallittu Pituus'},
-    {value: 9, label:'Varoitus'},
-    {value: 10, label:'Vasemmalle Kääntyminen Kielletty'},
-    {value: 11, label:'Oikealle Kääntyminen Kielletty'},
-    {value: 12, label:'U-Käännös Kielletty'}
-  ];
-
   var sortAndFilterTrafficSignProperties = function(properties) {
     var propertyOrdering = [
       'trafficSigns_type',
@@ -270,30 +286,43 @@
   var textHandler = function (property) {
     var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
     return '' +
-        '    <div class="form-group editable form-traffic-sign">' +
-        '        <label class="control-label">' + property.localizedName + '</label>' +
-        '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-        '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
-        '    </div>';
+      '    <div class="form-group editable form-traffic-sign">' +
+      '        <label class="control-label">' + property.localizedName + '</label>' +
+      '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
+      '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
+      '    </div>';
   };
 
-  var singleChoiceHandler = function (property) {
+  var singleChoiceHandler = function (property, collection) {
     var propertyValue = (property.values.length === 0) ? '' : _.first(property.values).propertyValue;
     var propertyDisplayValue = (property.values.length === 0) ? '' : _.first(property.values).propertyDisplayValue;
-    var trafficSignOptions = _.map(signTypes, function(signType) {
-      return $('<option>', {value: signType.value, selected: propertyValue == signType.value, text: signType.label})[0].outerHTML;
-    }).join('');
+    var signTypes = _.map(_.filter(enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
+
+    var groups =  collection.getGroup(signTypes);
+    var groupKeys = Object.keys(groups);
+    var trafficSigns = _.map(groupKeys, function (label) {
+      return $('<optgroup label =  "'+ label +'" >'.concat(
+
+        _.map(groups[label], function(group){
+          return $('<option>',
+            { value: group.propertyValue,
+              selected: propertyValue == group.propertyValue,
+              text: group.propertyDisplayValue}
+              )[0].outerHTML; }))
+
+      )[0].outerHTML;}).join('');
+
     return '' +
-        '    <div class="form-group editable form-traffic-sign">' +
-        '      <label class="control-label">' + property.localizedName + '</label>' +
-        '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id="' + property.publicId + '">  ' +
-        trafficSignOptions +
-        '      </select>' +
-        '    </div>';
+      '    <div class="form-group editable form-traffic-sign">' +
+      '      <label class="control-label">' + property.localizedName + '</label>' +
+      '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
+      '      <select class="form-control" style="display:none" id="' + property.publicId + '">  ' +
+      trafficSigns +
+      '      </select>' +
+      '    </div>';
   };
 
-  function renderValueElement(asset) {
+  function renderValueElement(asset, collection) {
     if (asset.obstacleType) {
       return '' +
         '    <div class="form-group editable form-obstacle">' +
@@ -306,33 +335,33 @@
         '    </div>';
     } else if (asset.safetyEquipment) {
       return '' +
-          '    <div class="form-group editable form-railway-crossing">' +
-          '      <label class="control-label">Turvavarustus</label>' +
-          '      <p class="form-control-static">' + safetyEquipments[asset.safetyEquipment] + '</p>' +
-          '      <select class="form-control" style="display:none">  ' +
-          '        <option value="1" '+ (asset.safetyEquipment === 1 ? 'selected' : '') +'>Rautatie ei käytössä</option>' +
-          '        <option value="2" '+ (asset.safetyEquipment === 2 ? 'selected' : '') +'>Ei turvalaitetta</option>' +
-          '        <option value="3" '+ (asset.safetyEquipment === 3 ? 'selected' : '') +'>Valo/äänimerkki</option>' +
-          '        <option value="4" '+ (asset.safetyEquipment === 4 ? 'selected' : '') +'>Puolipuomi</option>' +
-          '        <option value="5" '+ (asset.safetyEquipment === 5 ? 'selected' : '') +'>Kokopuomi</option>' +
-          '      </select>' +
-          '    </div>' +
-          '    <div class="form-group editable form-railway-crossing">' +
-          '        <label class="control-label">' + 'Nimi' + '</label>' +
-          '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
-          '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
-          '    </div>';
-      } else if (asset.validityDirection && !asset.propertyData) {
-        return '' +
-            '  <div class="form-group editable form-directional-traffic-sign">' +
-            '      <label class="control-label">Teksti</label>' +
-            '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
-            '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
-            '  </div>' +
-          '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
-          '      <label class="control-label">Vaikutussuunta</label>' +
-          '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-          '    </div>';
+        '    <div class="form-group editable form-railway-crossing">' +
+        '      <label class="control-label">Turvavarustus</label>' +
+        '      <p class="form-control-static">' + safetyEquipments[asset.safetyEquipment] + '</p>' +
+        '      <select class="form-control" style="display:none">  ' +
+        '        <option value="1" '+ (asset.safetyEquipment === 1 ? 'selected' : '') +'>Rautatie ei käytössä</option>' +
+        '        <option value="2" '+ (asset.safetyEquipment === 2 ? 'selected' : '') +'>Ei turvalaitetta</option>' +
+        '        <option value="3" '+ (asset.safetyEquipment === 3 ? 'selected' : '') +'>Valo/äänimerkki</option>' +
+        '        <option value="4" '+ (asset.safetyEquipment === 4 ? 'selected' : '') +'>Puolipuomi</option>' +
+        '        <option value="5" '+ (asset.safetyEquipment === 5 ? 'selected' : '') +'>Kokopuomi</option>' +
+        '      </select>' +
+        '    </div>' +
+        '    <div class="form-group editable form-railway-crossing">' +
+        '        <label class="control-label">' + 'Nimi' + '</label>' +
+        '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
+        '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
+        '    </div>';
+    } else if (asset.validityDirection && !asset.propertyData) {
+      return '' +
+        '  <div class="form-group editable form-directional-traffic-sign">' +
+        '      <label class="control-label">Teksti</label>' +
+        '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
+        '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
+        '  </div>' +
+        '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+        '      <label class="control-label">Vaikutussuunta</label>' +
+        '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+        '    </div>';
     } else if (asset.services) {
       var services = _(asset.services)
         .sortByAll('serviceType', 'id')
@@ -340,12 +369,12 @@
         .join('');
 
       return '' +
-          '    <div class="form-group editable form-service">' +
-          '      <ul>' +
-          services +
-          renderNewServiceElement() +
-          '      </ul>' +
-          '    </div>';
+        '    <div class="form-group editable form-service">' +
+        '      <ul>' +
+        services +
+        renderNewServiceElement() +
+        '      </ul>' +
+        '    </div>';
     } else if (asset.propertyData) {
       var allTrafficSignProperties = asset.propertyData;
       var trafficSignSortedProperties = sortAndFilterTrafficSignProperties(allTrafficSignProperties);
@@ -358,16 +387,16 @@
           return textHandler(feature);
 
         if (propertyType === "single_choice")
-          return singleChoiceHandler(feature);
+          return singleChoiceHandler(feature, collection);
 
       }), function(prev, curr) { return prev + curr; }, '');
 
       if(asset.validityDirection)
         return components +
-            '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
-            '      <label class="control-label">Vaikutussuunta</label>' +
-            '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-            '    </div>';
+          '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+          '      <label class="control-label">Vaikutussuunta</label>' +
+          '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+          '    </div>';
 
       return components;
 
@@ -389,22 +418,22 @@
 
     return '<li>' +
       '  <div class="form-group service-point editable">' +
-        '  <div class="form-group">' +
+      '  <div class="form-group">' +
       '      <button class="delete btn-delete">x</button>' +
       '      <h4 class="form-control-static"> ' + (selectedServiceType ? selectedServiceType.label : '') + '</h4>' +
       '      <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
       '        <option disabled selected>Lisää tyyppi</option>' +
-             serviceTypeLabelOptions +
+      serviceTypeLabelOptions +
       '      </select>' +
       '    </div>' +
-           serviceTypeExtensionElements(service, serviceTypeExtensions) +
+      serviceTypeExtensionElements(service, serviceTypeExtensions) +
       '    <label class="control-label">Palvelun nimi</label>' +
       '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
       '    <input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
-           (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
+      (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
       '  </div>' +
       '</li>';
   }
@@ -439,7 +468,7 @@
         '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '–') + '</p>' +
         '<select class="form-control select-service-type-extension" style="display:none" data-service-id="' + service.id + '">  ' +
         '  <option disabled selected>Lisää tarkenne</option>' +
-           extensionOptions +
+        extensionOptions +
         '</select>';
     } else {
       return '';
@@ -470,6 +499,10 @@
       '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
       '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
       '</div>');
+  }
+
+  function isSingleService(selectedAsset){
+    return selectedAsset.get().services.length < 2;
   }
 
   function toggleMode(rootElement, readOnly) {

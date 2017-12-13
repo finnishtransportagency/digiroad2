@@ -1,6 +1,6 @@
 (function(root) {
 
-  root.MassTransitMarkerStyle = function(data, map){
+  root.MassTransitMarkerStyle = function(data, collection, map){
     var IMAGE_HEIGHT = 17;
     var IMAGE_WIDTH = 28;
     var IMAGE_MARGIN = 2;
@@ -213,7 +213,10 @@
     };
 
     var createDirectionArrowStyle = function() {
-      var directionArrowSrc = data.floating ? 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg' : 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg';
+      var basePath = 'src/resources/digiroad2/bundle/assetlayer/images/';
+      var directionArrowSrc = basePath + (data.floating ? 'direction-arrow-warning.svg' : 'direction-arrow.svg');
+      if(data.stopTypes[0] == 6)
+          directionArrowSrc = basePath + (data.floating ? 'no-direction-warning.svg' : 'no-direction.svg');
       var rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
       return new ol.style.Style({
         image: new ol.style.Icon(({
@@ -270,8 +273,16 @@
       var nationalId = data.nationalId ? data.nationalId : '';
       var validityPeriod = !_.isUndefined(data.validityPeriod) ? data.validityPeriod : '';
       if(selectedMassTransitStopModel.exists()){
-        name = selectedMassTransitStopModel.getName();
-        direction = selectedMassTransitStopModel.getDirection();
+        if(selectedMassTransitStopModel.getId() == data.id){
+            name = selectedMassTransitStopModel.getName();
+            direction = selectedMassTransitStopModel.getDirection();
+        }
+        else
+        {
+          var asset = collection.getAsset(data.id);
+          if(asset)
+            name = (asset.data && asset.data.name) ? asset.data.name : getPropertyValue({ propertyData: asset.data.propertyData }, 'nimi_suomeksi');
+        }
       }else
       {
         if(data.propertyData){
@@ -279,6 +290,9 @@
           direction = selectedMassTransitStopModel.getDirection(data.propertyData);
         }
       }
+
+      if(data.stopTypes[0] == 6)
+        direction = '';
 
       var styles = [];
       styles = styles.concat(createDirectionArrowStyle());
@@ -314,6 +328,25 @@
       });
       return height;
     };
+
+    function getPropertyValue(asset, propertyName) {
+      return _.chain(asset.propertyData)
+        .find(function (property) { return property.publicId === propertyName; })
+        .pick('values')
+        .values()
+        .flatten()
+        .map(extractDisplayValue)
+        .value()
+        .join(', ');
+    }
+
+    function extractDisplayValue(value) {
+        if(_.has(value, 'propertyDisplayValue')) {
+            return value.propertyDisplayValue;
+        } else {
+            return value.propertyValue;
+        }
+    }
 
     return {
       createSelectionMarkerStyles: createSelectionMarkerStyles,

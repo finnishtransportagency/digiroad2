@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates, ProjectLink}
 import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType, _}
 
 /**
@@ -15,31 +15,27 @@ object ProjectLinkSplitter {
     GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks) ||
       GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.head, MaxDistanceForConnectedLinks)
   }
+
   private def isTailConnected(link1: PolyLine, link2: PolyLine) = {
     GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.last, MaxDistanceForConnectedLinks) ||
       isDirectionReversed(link1, link2) &&
         GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks)
   }
+
   private def suravageWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
-                              splitAddressM: Long) = {
-    //TODO: ely code for split Suravage when ProjectLinks has that column
+                                  splitAddressM: Long) = {
+    def splitedGeometries = {
+      val geometry1 = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength)
+      val geometry2 = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM)
+      if(GeometryUtils.areAdjacent(geometry1, templateLink.geometry)){
+        (geometry1, geometry2)
+      } else if (GeometryUtils.areAdjacent(geometry2, templateLink.geometry)){
+        (geometry2, geometry1)
+      } else {
+        throw new SplittingException("At least one of the geometries do not overlaps the link properly.")
+      }
+    }
     (
-      suravage.copy(roadNumber = split.roadNumber,
-        roadPartNumber = split.roadPartNumber,
-        track = split.trackCode,
-        discontinuity = split.discontinuity,
-        roadType = split.roadType,
-        startMValue = 0.0,
-        endMValue = suravageM,
-        startAddrMValue = templateLink.startAddrMValue,
-        endAddrMValue = splitAddressM,
-        status = split.statusA,
-        sideCode = templateLink.sideCode,
-        roadAddressId = templateLink.roadAddressId,
-        connectedLinkId = Some(templateLink.linkId),
-        geometry = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM),
-        geometryLength = suravageM
-      ),
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
         track = split.trackCode,
@@ -49,14 +45,34 @@ object ProjectLinkSplitter {
         endMValue = suravage.geometryLength,
         startAddrMValue = splitAddressM,
         endAddrMValue = templateLink.endAddrMValue,
+        status = split.statusA,
+        sideCode = templateLink.sideCode,
+        roadAddressId = templateLink.roadAddressId,
+        connectedLinkId = Some(templateLink.linkId),
+        geometry = splitedGeometries._1,
+        geometryLength = GeometryUtils.geometryLength(splitedGeometries._1),
+        ely = templateLink.ely
+      ),
+      suravage.copy(roadNumber = split.roadNumber,
+        roadPartNumber = split.roadPartNumber,
+        track = split.trackCode,
+        discontinuity = split.discontinuity,
+        roadType = split.roadType,
+        startMValue = 0.0,
+        endMValue = suravageM,
+        startAddrMValue = templateLink.startAddrMValue,
+        endAddrMValue = splitAddressM,
         status = split.statusB,
         sideCode = templateLink.sideCode,
         roadAddressId = templateLink.roadAddressId,
         connectedLinkId = Some(templateLink.linkId),
-        geometry = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength),
-        geometryLength = suravage.geometryLength - suravageM)
-    )
+        geometry = splitedGeometries._2,
+        geometryLength = GeometryUtils.geometryLength(splitedGeometries._2),
+        ely = templateLink.ely
+        )
+      )
   }
+
   def split(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions): Seq[ProjectLink] = {
     def movedFromStart(suravageM: Double, templateM: Double, splitAddressM: Long) = {
       val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
@@ -69,7 +85,7 @@ object ProjectLinkSplitter {
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength),
         connectedLinkId = Some(suravage.linkId)
       )
-      (splitA,splitB,splitT)
+      (splitA, splitB, splitT)
     }
     def movedFromEnd(suravageM: Double, templateM: Double, splitAddressM: Long) = {
       val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
@@ -81,40 +97,35 @@ object ProjectLinkSplitter {
         status = LinkStatus.Terminated,
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM),
         connectedLinkId = Some(suravage.linkId))
-      (splitA,splitB,splitT)
+      (splitA, splitB, splitT)
     }
     def switchDigitization(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
       val (splitA, splitB, splitT) = splits
       (
         splitB.copy(
-          sideCode = SideCode.switch(splitA.sideCode),
-          startMValue = 0.0,
-          endMValue = splitB.startMValue),
+          sideCode = SideCode.switch(splitA.sideCode)),
         splitA.copy(
-          sideCode = SideCode.switch(splitA.sideCode),
-          startMValue = splitB.startMValue,
-          endMValue = splitB.endMValue
+          sideCode = SideCode.switch(splitA.sideCode)
         ),
         splitT)
     }
     def toSeq(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
-      Seq(splits._1, splits._2, splits._3)
+      Seq(splits._1, splits._2, splits._3).filter(pl => Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength)
     }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
     val splitAddressM = templateLink.startAddrMValue + Math.round(templateM / templateLink.geometryLength *
       (templateLink.endAddrMValue - templateLink.startAddrMValue))
-    val isReversed = (split.statusB == LinkStatus.New) ^ isDirectionReversed(suravage, templateLink)// isTailConnected(suravage, templateLink)
+    val isReversed = isDirectionReversed(suravage, templateLink)
     val splits =
-      if (isReversed)
+      if (isReversed || !isTailConnected(suravage, templateLink))
         movedFromStart(suravageM, templateM, splitAddressM)
       else
         movedFromEnd(suravageM, templateM, splitAddressM)
-    if (isDirectionReversed(suravage, templateLink))
+    if (isReversed)
       toSeq(switchDigitization(splits))
     else
       toSeq(splits)
-
   }
 
   def findMatchingGeometrySegment(suravage: PolyLine, template: PolyLine): Option[Seq[Point]] = {
@@ -131,9 +142,12 @@ object ProjectLinkSplitter {
           exitPoint.map(ep => GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
             GeometryUtils.calculateLinearReferenceFromPoint(ep, templateGeom)))
         } else {
-          val length = GeometryUtils.geometryLength(suravage.geometry)
-          Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
-            Math.max(GeometryUtils.geometryLength(template.geometry), length)))
+          if (suravageGeom.forall(p => GeometryUtils.minimumDistance(p, templateGeom) <= MaxSuravageToleranceToGeometry) ||
+            templateGeom.forall(p => GeometryUtils.minimumDistance(p, suravageGeom) <= MaxSuravageToleranceToGeometry))
+            Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
+              Math.max(GeometryUtils.geometryLength(template.geometry), GeometryUtils.geometryLength(suravage.geometry))))
+          else
+            None
         }
       } else if (GeometryUtils.areAdjacent(suravageGeom.last, templateGeom.head, MaxDistanceForConnectedLinks)) {
         findMatchingSegment(suravageGeom.reverse, templateGeom)
@@ -148,10 +162,11 @@ object ProjectLinkSplitter {
                        maxDistance2: Option[Double] = None): Option[Point] = {
     val segments1 = geometry1.zip(geometry1.tail)
     val segments2 = geometry2.zip(geometry2.tail)
-    val s = segments1.flatMap( s1 => segments2.flatMap{ s2 =>
+    val s = segments1.flatMap(s1 => segments2.flatMap { s2 =>
       intersectionPoint(s1, s2).filter(p =>
         maxDistance1.forall(d => GeometryUtils.minimumDistance(p, s1) < d) &&
-          maxDistance2.forall(d => GeometryUtils.minimumDistance(p, s2) < d))})
+          maxDistance2.forall(d => GeometryUtils.minimumDistance(p, s2) < d))
+    })
     s.headOption
   }
 
@@ -160,28 +175,28 @@ object ProjectLinkSplitter {
     def switchXY(p: Point) = {
       Point(p.y, p.x, p.z)
     }
-    val ((segment1Start,segment1End),(segment2Start,segment2End)) = (segment1, segment2)
-    val vector1 = segment1End-segment1Start
-    val vector2 = segment2End-segment2Start
+    val ((segment1Start, segment1End), (segment2Start, segment2End)) = (segment1, segment2)
+    val vector1 = segment1End - segment1Start
+    val vector2 = segment2End - segment2Start
     if (Math.abs(vector1.x) < 0.001) {
       if (Math.abs(vector2.x) < 0.001) {
         // Both are vertical or near vertical -> swap x and y and recalculate
-        return intersectionPoint((switchXY(segment1Start),switchXY(segment1End)), (switchXY(segment2Start), switchXY(segment2End))).map(switchXY)
+        return intersectionPoint((switchXY(segment1Start), switchXY(segment1End)), (switchXY(segment2Start), switchXY(segment2End))).map(switchXY)
       } else {
         val dx = (segment1Start - segment2Start).x
         val normV2 = vector2.normalize2D()
-        return Some(segment2Start + normV2.scale(dx/normV2.x))
+        return Some(segment2Start + normV2.scale(dx / normV2.x))
       }
     } else if (Math.abs(vector2.x) < 0.001) {
       // second parameter is near vertical, switch places and rerun
-      return intersectionPoint((switchXY(segment2Start), switchXY(segment2End)), (switchXY(segment1Start),switchXY(segment1End))).map(switchXY)
+      return intersectionPoint((switchXY(segment2Start), switchXY(segment2End)), (switchXY(segment1Start), switchXY(segment1End))).map(switchXY)
     }
     // calculate lines as y = ax + b and y = cx + d
     val a = vector1.y / vector1.x
     val b = segment1Start.y - a * segment1Start.x
     val c = vector2.y / vector2.x
     val d = segment2Start.y - c * segment2Start.x
-    if (Math.abs(a-c) < 1E-4 && Math.abs(d-b) > 1E-4) {
+    if (Math.abs(a - c) < 1E-4 && Math.abs(d - b) > 1E-4) {
       // Differing y is great but coefficients a and c are almost same -> Towards infinities
       None
     } else {
@@ -196,13 +211,13 @@ object ProjectLinkSplitter {
 
   def geometryToBoundaries(suravageGeometry: Seq[Point]): (Seq[Point], Seq[Point]) = {
     def connectSegments(unConnected: Seq[(Point, Point)]): Seq[Point] = {
-      unConnected.scanLeft(unConnected.head){ case (previous, current) =>
+      unConnected.scanLeft(unConnected.head) { case (previous, current) =>
         val intersection = intersectionPoint(previous, current)
         (intersection.getOrElse(current._1), current._2)
       }.map(_._1) ++ Seq(unConnected.last._2)
     }
-    val (leftUnConnected, rightUnConnected) = suravageGeometry.zip(suravageGeometry.tail).map{ case (p1, p2) =>
-      val vecL = (p2-p1).normalize2D().rotateLeft().scale(MaxSuravageToleranceToGeometry)
+    val (leftUnConnected, rightUnConnected) = suravageGeometry.zip(suravageGeometry.tail).map { case (p1, p2) =>
+      val vecL = (p2 - p1).normalize2D().rotateLeft().scale(MaxSuravageToleranceToGeometry)
       ((p1 + vecL, p2 + vecL), (p1 - vecL, p2 - vecL))
     }.unzip
     (connectSegments(leftUnConnected).tail, connectSegments(rightUnConnected).tail)
@@ -211,5 +226,5 @@ object ProjectLinkSplitter {
 
 case class SplitOptions(splitPoint: Point, statusA: LinkStatus, statusB: LinkStatus,
                         roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, ely: Long,
-                        roadLinkSource: LinkGeomSource, roadType: RoadType, projectId: Long)
+                        roadLinkSource: LinkGeomSource, roadType: RoadType, projectId: Long, coordinates: ProjectCoordinates)
 

@@ -4,6 +4,7 @@
   var addToolIcon = '<img src="images/add-tool.svg"/>';
   var rectangleToolIcon = '<img src="images/rectangle-tool.svg"/>';
   var polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
+  var terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();
@@ -74,6 +75,7 @@
   ActionPanelBoxes.ToolSelection = ToolSelection;
   ActionPanelBoxes.rectangleToolIcon = rectangleToolIcon;
   ActionPanelBoxes.polygonToolIcon = polygonToolIcon;
+  ActionPanelBoxes.terminalToolIcon = terminalToolIcon;
 
   ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
     var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
@@ -91,6 +93,12 @@
     var speedLimitComplementaryCheckBox = [
       '<div class="check-box-container">' +
         '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+      '</div>'
+    ].join('');
+
+    var speedLimitSignsCheckBox = [
+      '<div class="check-box-container">' +
+      '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
       '</div>' +
       '</div>'
     ].join('');
@@ -104,6 +112,7 @@
             speedLimitLegendTemplate,
             speedLimitHistoryCheckBox,
             speedLimitComplementaryCheckBox,
+            speedLimitSignsCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -170,6 +179,14 @@
         } else {
           eventbus.trigger('speedLimits:hideSpeedLimitsComplementary');
         }
+      }
+    });
+
+    elements.expanded.find('#signsCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('speedLimit:showReadOnlyTrafficSigns');
+      } else {
+        eventbus.trigger('speedLimit:hideReadOnlyTrafficSigns');
       }
     });
 
@@ -393,7 +410,8 @@
   ActionPanelBoxes.AssetBox = function(selectedMassTransitStopModel) {
     var toolSelection = new ToolSelection([
       new Tool('Select', selectToolIcon, selectedMassTransitStopModel),
-      new Tool('Add', addToolIcon, selectedMassTransitStopModel)
+      new Tool('Add', setTitleTool(addToolIcon, 'Lisää pysäkki'), selectedMassTransitStopModel),
+      new Tool('AddTerminal', setTitleTool(terminalToolIcon, 'Lisää terminaalipysäkki'), selectedMassTransitStopModel)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
@@ -566,6 +584,10 @@
 
     function hide() {
       element.hide();
+    }
+
+    function setTitleTool(icon, title) {
+      return icon.replace('/>', ' title="'+title+'"/>');
     }
 
     return {
