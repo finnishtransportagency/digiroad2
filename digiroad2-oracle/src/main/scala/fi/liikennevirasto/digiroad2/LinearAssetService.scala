@@ -22,6 +22,10 @@ import scala.collection.mutable.ListBuffer
 import scala.slick.jdbc.{StaticQuery => Q}
 
 object LinearAssetTypes {
+  val TotalWeightLimits = 30
+  val TrailerTruckWeightLimits = 40
+  val AxleWeightLimits = 50
+  val BogieWeightLimits = 60
   val ProhibitionAssetTypeId = 190
   val PavingAssetTypeId = 110
   val RoadWidthAssetTypeId = 120

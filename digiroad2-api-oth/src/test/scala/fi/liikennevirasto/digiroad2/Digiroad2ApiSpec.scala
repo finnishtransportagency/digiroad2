@@ -5,7 +5,8 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{AssetTypes, RoadLink, Value}
+import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.DirectionalTrafficSign
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
@@ -24,6 +25,7 @@ case class LinearAssetFromApi(id: Option[Long], linkId: Long, sideCode: Int, val
 case class DirectionalTrafficSignFromApi(id: Long, linkId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean, vvhTimeStamp: Long, municipalityCode: Int,
                                          validityDirection: Int, text: Option[String], bearing: Option[Int], createdBy: Option[String] = None, createdAt: Option[DateTime] = None,
                                          modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, geometry: Seq[Point] = Nil)
+case class MassLinearAssetFromApi(geometry: Seq[Point], sideCode: Int, value: Option[Value])
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -87,6 +89,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Some(toRoadLink(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean]))
     .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
+  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]]))
+    .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]]))
     .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean]))
@@ -143,10 +147,11 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testLinearAssetService = new LinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
   val testMaintenanceRoadServiceService = new MaintenanceService(mockRoadLinkService, new DummyEventBus)
+  val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new OracleMassLimitationDao)
   val testPavingService = new PavingService(mockRoadLinkService, new DummyEventBus)
   val testRoadWidthService = new RoadWidthService(mockRoadLinkService, new DummyEventBus)
 
-  addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testMaintenanceRoadServiceService,
+  addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
     testPavingService, testRoadWidthService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
@@ -332,6 +337,20 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       parsedBody.size should be(3)
       parsedBody.count(_.id.isEmpty) should be(1)
       parsedBody.count(_.id.isDefined) should be(2)
+    }
+  }
+
+  test("get mass Limitations Assets with bounding box should return bad request if typeId missing", Tag("db")) {
+    getWithUserAuth("/linearassets/massLimitation?bbox=374037,6677013,374540,6677675") {
+      status should equal(400)
+    }
+  }
+
+  test("get mass Limitations Assets with bounding box", Tag("db")) {
+    getWithUserAuth("/linearassets/massLimitation?typeId=60&bbox=374037,6677013,374540,6677675") {
+      status should equal(200)
+      val parsedBody = parse(body).extract[Seq[MassLinearAssetFromApi]]
+      parsedBody.size should be(1)
     }
   }
 

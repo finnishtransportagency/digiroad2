@@ -255,7 +255,9 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        editConstrains : asset.editConstrains || function() {return false;},
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName)
+       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
+       massLimitation : asset.editControlLabels.massLimitations,
+       typeId : asset.typeId
      });
      return acc;
     }, {});
@@ -379,7 +381,7 @@
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
-        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
+        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled, asset.editControlLabels.massLimitations];
         return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks, asset.hasTrafficSignReadOnlyLayer)];
       }
       return [];
