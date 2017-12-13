@@ -3,6 +3,7 @@
     var roadAddressProjects = [];
     var projectErrors = [];
     var currentReservedParts = [];
+    var coordinateButtons = [];
     var newReservedParts = [];
     var projectInfo;
     var currentProject;
@@ -511,14 +512,6 @@
       return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
-    this.getCoordButton = function (index, coordinates) {
-      return coordButton(index, coordinates);
-    };
-
-    var coordButton = function(index, coordinates){
-      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
-      return {index:index, html:html, coordinates:coordinates};
-    };
 
     var addToDirtyRoadPartList = function (queryResult) {
       var qRoadParts = [];
@@ -576,8 +569,16 @@
       return self.getCurrentReservedParts().concat(self.getNewReservedParts());
     };
 
+    this.setProjectErrors = function(errors) {
+      projectErrors = errors;
+    };
+
     this.getProjectErrors = function(){
       return projectErrors;
+    };
+
+    this.pushCoordinates = function(button) {
+      coordinateButtons.push(button);
     };
 
     this.setTmpDirty = function(editRoadLinks){
@@ -614,6 +615,24 @@
 
     eventbus.on('clearproject', function() {
       this.clearRoadAddressProjects();
+    });
+
+    eventbus.on('projectCollection:clickCoordinates',function (event, map) {
+      var currentCoordinates =  map.getView().getCenter();
+      var errorIndex = event.currentTarget.id;
+      var errorCoordinates = _.find(coordinateButtons, function (b) {
+        return b.index == errorIndex;
+      }).coordinates;
+      var index = _.findIndex(errorCoordinates, function (coordinates) {
+        return coordinates.x == currentCoordinates[0] && coordinates.y == currentCoordinates[1];
+      });
+      if (index >= 0 && index + 1 < errorCoordinates.length) {
+        map.getView().setCenter([errorCoordinates[index + 1].x, errorCoordinates[index + 1].y]);
+        map.getView().setZoom(errorCoordinates[index + 1].zoom);
+      } else {
+        map.getView().setCenter([errorCoordinates[0].x, errorCoordinates[0].y]);
+        map.getView().setZoom(errorCoordinates[0].zoom);
+      }
     });
 
     this.getCurrentProject = function(){

@@ -2,8 +2,7 @@
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
     //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
     var currentProject = false;
-    var projectErrors = false;
-    var coordinateButtons = [];
+    var formCommon = new FormCommon('');
     var activeLayer = false;
     var hasReservedRoadParts = false;
     var ProjectStatus = LinkValues.ProjectStatus;
@@ -142,37 +141,7 @@
         '<footer>' + actionButtons() + '</footer>');
     };
 
-    var getErrorCoordinates = function(error){
-      if (error.coordinates.length  > 0){
-        return error.coordinates;
-      }
-      var linkCoords = _.find(projectCollection.getAll(), function (link) {
-        return link.linkId == error.linkIds[0];
-      });
-      if (!_.isUndefined(linkCoords)){
-        return linkCoords.points[0];
-      }
-      return false;
-    };
-
     var selectedProjectLinkTemplate = function (project) {
-      var errorLines = '';
-      var buttonIndex = 0;
-      _.each(projectErrors, function (error) {
-        var button = '';
-        var coordinates = getErrorCoordinates(error);
-        if (coordinates) {
-          button = projectCollection.getCoordButton(buttonIndex,error.coordinates);
-          coordinateButtons.push(button);
-          buttonIndex++;
-        }
-        errorLines += '<div class="form-project-errors-list">' +
-          addLabel('LINKIDS') +' '+ addLabelInfo(error.linkIds)+'</br>'+
-          addLabel('ERROR') +' '+ addLabelInfo(error.errorMessage) +'</br>'+
-          addLabel('INFO') +' '+ addLabelInfo(error.info) +'</br>'+
-          (button.html ? button.html : '') +'</br>' +' '+ '<hr class="horizontal-line"/>'+
-          '</div>';
-      });
       return _.template('' +
         '<header>' +
         titleWithDeletingTool(project.name) +
@@ -182,7 +151,7 @@
         '<div class="form-group">' +
         '<label>VIRHEILMOITUKSIA:</label>' +
         '<div id ="projectErrors">' +
-        errorLines +
+        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
         '</div></div></div></div></br></br>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
@@ -396,7 +365,7 @@
 
       eventbus.on('roadAddress:openProject', function (result) {
         currentProject = result.project;
-        projectErrors = result.projectErrors;
+        projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
@@ -687,21 +656,7 @@
       });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
-        var currentCoordinates =  map.getView().getCenter();
-        var errorIndex = event.currentTarget.id;
-        var errorCoordinates = _.find(coordinateButtons, function (b) {
-          return b.index == errorIndex;
-        }).coordinates;
-        var index = _.findIndex(errorCoordinates, function (coordinates) {
-          return coordinates.x == currentCoordinates[0] && coordinates.y == currentCoordinates[1];
-        });
-        if (index >= 0 && index + 1 < errorCoordinates.length) {
-          map.getView().setCenter([errorCoordinates[index + 1].x, errorCoordinates[index + 1].y]);
-          map.getView().setZoom(errorCoordinates[index + 1].zoom);
-          } else {
-          map.getView().setCenter([errorCoordinates[0].x, errorCoordinates[0].y]);
-          map.getView().setZoom(errorCoordinates[0].zoom);
-        }
+        eventbus.trigger('projectCollection:clickCoordinates', event, map);
       });
     };
     bindEvents();

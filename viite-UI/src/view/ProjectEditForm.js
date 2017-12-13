@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
+  root.ProjectEditForm = function(map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErroredInTR.value, LinkValues.ProjectStatus.Unknown.value];
@@ -106,6 +106,13 @@
         '<header>' +
         formCommon.titleWithProjectName(project.name, currentProject) +
         '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<label>VIRHEILMOITUKSIA:</label>' +
+        '<div id ="projectErrors">' +
+        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
+        '</div></div></div></div></br></br>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
     };
 
@@ -480,6 +487,14 @@
       rootElement.on('keyup','.form-control.small-input', function () {
         checkInputs('.project-');
         setFormDirty();
+      });
+
+      eventbus.on('projectLink:mapClicked', function () {
+        rootElement.html(emptyTemplate(currentProject.project));
+      });
+
+      rootElement.on('click', '.projectErrorButton', function (event) {
+        eventbus.trigger('projectCollection:clickCoordinates', event, map);
       });
 
     };
