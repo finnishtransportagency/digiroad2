@@ -282,6 +282,17 @@ class AssetDataImporter {
 
   private def importRoadAddressHistoryData(conversionDatabase: DatabaseDef, ely: Long, importDate: String): Unit = {
 
+    //Get current roadHistory
+    val currentHistory =
+      sql"""SELECT RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.DISCONTINUITY, RA.START_ADDR_M, RA.END_ADDR_M,
+         TO_CHAR(RA.START_DATE,'YYYY-MM-DD'), TO_CHAR(RA.END_DATE,'YYYY-MM-DD'), TO_CHAR(RA.VALID_FROM,'YYYY-MM-DD'),
+         TO_CHAR(RA.VALID_TO,'YYYY-MM-DD'), RA.ELY, RA.ROAD_TYPE, LR.LINK_ID FROM ROAD_ADDRESS RA, LRM_POSITION LR
+         WHERE RA.END_DATE IS NOT NULL AND RA.LRM_POSITION_ID = LR.ID AND RA.ELY = $ely""".
+        as[(Long, Long, Long, Long, Long, Long, String, Option[String], String, Option[String], Long, Long, Long)].list
+
+    print(s"\n${DateTime.now()} - ")
+    println("Got %d current road addresses history".format(currentHistory.size))
+
     val roadHistory = conversionDatabase.withDynSession {
       if (importDate != "") {
         sql"""select linkid, alku, loppu,
@@ -301,7 +312,8 @@ class AssetDataImporter {
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
             alkux, alkuy, loppux, loppuy
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely"""
+          .as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
       }
     }
 
@@ -309,7 +321,21 @@ class AssetDataImporter {
     println("Read %d rows from conversion database for ELY %d".format(roadHistory.size, ely))
 
     val lrmList = roadHistory.map(r => LRMPos(r._16, r._1, r._2.toDouble, r._3.toDouble)) // linkId -> (id, linkId, startM, endM)
-    val addressList = roadHistory.map(r => r._16 -> (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15, r._17, r._18, r._19, r._20)).toMap
+    val addressList = roadHistory.map(r => r._16 -> (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15, r._17, r._18, r._19, r._20)).filterNot(rh => {
+      currentHistory.exists(ch => {
+          rh._2._2 == ch._5 &&    //startAddressM
+          rh._2._3 == ch._6 &&    //endAddressM
+          rh._2._4 == ch._1 &&    //roadNumber
+          rh._2._5 == ch._2 &&    //roadPartNumber
+          rh._2._12 == ch._7 &&   //startDate
+          rh._2._13 == ch._8 &&   //endDate
+          rh._2._16 == ch._13 &&  //linkId
+          rh._2._8 == ch._12 &&   //roadType
+          rh._2._9 == ch._4 &&    //discontinuity
+          rh._2._6 == ch._3 &&    //trackCode
+          rh._2._7 == ch._11      //ely
+      })
+    }).toMap
 
     val lrmAddresses = lrmList.filterNot(_.linkId == 0)
     print(s"${DateTime.now()} - ")
@@ -430,17 +456,9 @@ class AssetDataImporter {
 
     val roadMaintainerElys = Seq(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
 
-    //Delete all the previous road history
     OracleDatabase.withDynTransaction{
-      val roadAddressFilter = if (importDate != "") s" AND TO_CHAR(END_DATE, 'YYYY-MM-DD') <= '$importDate'" else ""
-      val deleteAddress = s"DELETE FROM ROAD_ADDRESS WHERE END_DATE IS NOT NULL $roadAddressFilter"
-      val deleteLrm = s"DELETE FROM LRM_POSITION WHERE EXISTS (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE LRM_POSITION_ID = LRM_POSITION.ID AND END_DATE IS NOT NULL $roadAddressFilter)"
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
-      dynamicSession.prepareStatement(deleteAddress).executeUpdate()
-      dynamicSession.prepareStatement(deleteLrm).executeUpdate()
-
       roadMaintainerElys.map(ely => importRoadAddressHistoryData(conversionDatabase, ely, importDate))
-
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
     }
   }
