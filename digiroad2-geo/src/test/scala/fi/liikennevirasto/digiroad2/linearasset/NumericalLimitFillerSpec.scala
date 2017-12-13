@@ -210,18 +210,19 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
     )
 
-//    val output = changes flatMap { change =>
-//      assets.map(
-//        NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
-//          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
-//
-//    output.head.sideCode should be (SideCode.TowardsDigitizing.value)
-//    output.last.sideCode should be (SideCode.AgainstDigitizing.value)
-//    output.head.startMeasure should be(0.0)
-//    output.head.endMeasure should be(3.0)
-//    output.last.startMeasure should be(1.0)
-//    output.last.endMeasure should be(3.0)
-//    output.length should be (3)
+    val output = changes flatMap { change =>
+      assets.map(
+        NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty) )._1) } filter(sl => sl.startMeasure != sl.endMeasure)
+
+    output.head.sideCode should be (SideCode.TowardsDigitizing.value)
+    output.last.sideCode should be (SideCode.AgainstDigitizing.value)
+    output.head.startMeasure should be(0.0)
+    output.head.endMeasure should be(3.0)
+    output.last.startMeasure should be(1.0)
+    output.last.endMeasure should be(3.0)
+    output.length should be (3)
   }
 
   test("drop segments less than 2 meters"){
@@ -273,20 +274,21 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
     )
 
-//    val output = changes flatMap { change =>
-//      assets.map(
-//        NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
-//          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
-//
-//    output.filter(o => o.linkId == 1 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
-//    output.filter(o => o.linkId == 1 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.startMeasure == 0.0) should be (true)
-//    output.filter(o => o.linkId == 1 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
-//    output.filter(o => o.linkId == 1 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
-//    output.filter(o => o.linkId == 3 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.startMeasure == 0.0) should be (true)
-//    output.filter(o => o.linkId == 3 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
-//    output.filter(o => o.linkId == 3 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
-//    output.filter(o => o.linkId == 3 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
-//    output.length should be (6)
+    val output = changes flatMap { change =>
+      assets.map(
+        NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
+
+    output.filter(o => o.linkId == 1 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
+    output.filter(o => o.linkId == 1 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.startMeasure == 0.0) should be (true)
+    output.filter(o => o.linkId == 1 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
+    output.filter(o => o.linkId == 1 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
+    output.filter(o => o.linkId == 3 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.startMeasure == 0.0) should be (true)
+    output.filter(o => o.linkId == 3 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
+    output.filter(o => o.linkId == 3 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
+    output.filter(o => o.linkId == 3 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
+    output.length should be (6)
   }
 
   test("combine two segments with same value in same RoadLink") {

@@ -209,7 +209,7 @@ trait LinearAssetOperations {
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, changedSet)
 
     eventBus.publish("linearAssets:update", changeSet)
-    eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
+    eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filter(_.id == 0L))
 
     logger.info("Finnish get asset roadLinks at %d ms after start".format(System.currentTimeMillis - timing))
 
@@ -242,12 +242,10 @@ trait LinearAssetOperations {
 
     val fullChanges = extensionChanges ++ replacementChanges
 
-
     val linearAssets = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLinearAsset], changeSet)) {
-      case ((persistedAsset, changeSet), (asset, (Some(roadLink), Some(projection)))) =>
-        val (linearAsset, changes) = NumericalLimitFiller.projectLinearAsset(asset, roadLink, projection, changeSet)
+      case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
+        val (linearAsset, changes) = NumericalLimitFiller.projectLinearAsset(asset, roadLink, projection, cs)
         (persistedAsset ++ Seq(linearAsset), changes)
-      case _ => (Seq.empty[PersistedLinearAsset], changeSet)
     }
       /*.flatMap(
       limit =>
@@ -518,14 +516,19 @@ trait LinearAssetOperations {
 
       val prohibitions = toUpdate.filter(a =>
         Set(LinearAssetTypes.ProhibitionAssetTypeId, LinearAssetTypes.HazmatTransportProhibitionAssetTypeId).contains(a.typeId))
-      val toUpdateText = toUpdate.filter(a =>
+
+      val textAssets = toUpdate.filter(a =>
         Set(LinearAssetTypes.EuropeanRoadAssetTypeId, LinearAssetTypes.ExitNumberAssetTypeId).contains(a.typeId))
-      val groupedNum = toUpdate.filterNot(a => toUpdateText.contains(a)).groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
-      val groupedText= toUpdateText.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+
+      val groupedNum = toUpdate.filterNot(a => textAssets.contains(a)).groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+      val groupedText= textAssets.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+
       val persisted = (groupedNum.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
         groupedText.flatMap(group => dao.fetchAssetsWithTextualValuesByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
         dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet) ++
         dao.fetchProhibitionsByIds(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId, prohibitions.map(_.id).toSet)).groupBy(_.id)
+
+
       updateProjected(toUpdate, persisted)
       if (newLinearAssets.nonEmpty)
         logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
