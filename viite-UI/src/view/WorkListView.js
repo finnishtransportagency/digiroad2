@@ -1,47 +1,43 @@
 (function (root) {
-  var unknownLimitsTable = function(layerName, workListItems, municipalityName) {
-    var municipalityHeader = function(municipalityName, totalCount) {
-      var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
-      return $('<h2/>').html(municipalityName + countString);
+  var floatingLinksTable = function(layerName, floatingLinks, elyCode) {
+    var elyHeader = function(elyCode) {
+      return $('<h2/>').html("ELY " + elyCode );
     };
-    var tableHeaderRow = function(administrativeClass) {
-      return $('<caption/>').html(administrativeClass);
-    };
-    var tableContentRows = function(linkIds) {
-      return _.map(linkIds, function(id) {
-        return $('<tr/>').append($('<td/>').append(assetLink(id)));
+
+    var tableContentRows = function(links) {
+      return _.map(links, function(link) {
+        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>')
+          .append(floatingDescription('TIE', link.roadNumber))
+          .append(floatingDescription('OSA', link.roadPartNumber))
+          .append(floatingDescription('AJR', link.trackCode))
+          .append(floatingDescription('AET', link.startAddressM))
+          .append(floatingDescription('LET', link.endAddressM)))
+          .append($('<td align=right />').append(floatingLink(link)));
       });
     };
-    var assetLink = function(id) {
-      var link = '#' + layerName + '/' + id;
-      return $('<a class="work-list-item"/>').attr('href', link).html(link);
+    var floatingLink = function(floating) {
+      var link = '#' + layerName + '/' + floating.linkId;
+      return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
     };
-    var tableForAdministrativeClass = function(administrativeClass, linkIds, count) {
-      if (!linkIds || linkIds.length === 0) return '';
-      var countString = count ? ' (' + count + ' kpl)' : '';
+
+    var floatingDescription = function(desc, value){
+      return $('<td align=left style="width: 100px;"> '+desc +': '+value + '</td>');
+    };
+
+    var tableToDisplayFloatings = function(floatingLinks) {
+      if (!floatingLinks || floatingLinks.length === 0) return '';
       return $('<table/>').addClass('table')
-        .append(tableHeaderRow(administrativeClass + countString))
-        .append(tableContentRows(linkIds));
+        .append(tableContentRows(floatingLinks));
     };
-    return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
-      .append(tableForAdministrativeClass('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
-      .append(tableForAdministrativeClass('Valtion omistama', workListItems.State, workListItems.stateCount))
-      .append(tableForAdministrativeClass('Yksityisen omistama', workListItems.Private, workListItems.privateCount))
-      .append(tableForAdministrativeClass('Ei tiedossa', workListItems.Unknown, 0));
+    return $('<div/>').append(elyHeader(elyCode, floatingLinks.length))
+      .append(tableToDisplayFloatings(floatingLinks));
   };
 
   var generateWorkList = function(layerName, listP) {
     var title = {
-      speedLimit: 'Tuntemattomien nopeusrajoitusten lista',
-      linkProperty: 'Korjattavien linkkien lista',
-      massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
-      pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',
-      trafficLights: 'Geometrian ulkopuolelle jääneet liikennevalot',
-      obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat',
-      railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
-      directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut'
+      linkProperty: 'Korjattavien linkkien lista'
     };
-    $('#work-list').html('' +
+    $('#work-list').append('' +
       '<div style="overflow: auto;">' +
         '<div class="page">' +
           '<div class="content-box">' +
@@ -60,14 +56,25 @@
       $(window).off('hashchange', showApp);
     };
     $(window).on('hashchange', showApp);
-    listP.then(function(limits) {
-      var unknownLimits = _.map(limits, _.partial(unknownLimitsTable, layerName));
-      $('#work-list .work-list').html(unknownLimits);
+
+    listP.then(function(floatings) {
+      var floatingLinks = _.map(floatings, _.partial(floatingLinksTable, layerName));
+      $('#work-list .work-list').html(floatingLinks);
+      removeSpinner();
     });
+  };
+
+  var addSpinner = function () {
+    $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+  };
+
+  var removeSpinner = function(){
+    jQuery('.spinner-overlay').remove();
   };
 
   var bindEvents = function() {
     eventbus.on('workList:select', function(layerName, listP) {
+      addSpinner();
       $('.container').hide();
       $('#work-list').show();
       $('body').addClass('scrollable');

@@ -21,7 +21,8 @@
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'roadAddressProject/:projectId': 'roadAddressProject',
-        'historyLayer/:date': 'historyLayer'
+        'historyLayer/:date': 'historyLayer',
+        'work-list/floatingRoadAddress' : 'floatingAddressesList'
       },
 
       linkProperty: function (linkId) {
@@ -62,8 +63,14 @@
         $('#toggleEditMode').hide();
         $('#emptyFormDiv,#projectListButton').hide();
         eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
+      },
+
+      floatingAddressesList: function () {
+        eventbus.trigger('workList:select', 'linkProperty', backend.getFloatingRoadAddresses());
       }
     });
+
+
 
     var router = new Router();
 

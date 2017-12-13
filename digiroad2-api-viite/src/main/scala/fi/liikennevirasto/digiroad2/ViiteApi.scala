@@ -115,7 +115,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/floatingRoadAddresses") {
     response.setHeader("Access-Control-Allow-Headers", "*")
-    roadAddressService.getFloatingAdresses().map(floatingRoadAddressToApi)
+    roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
+      g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.startAddrMValue))
+        .map(floatingRoadAddressToApi))
   }
 
   get("/roadlinks/:linkId") {
@@ -697,7 +699,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startAddressM" -> roadAddress.startAddrMValue,
       "endAddressM" -> roadAddress.endAddrMValue,
       "startMValue" -> roadAddress.startMValue,
-      "endMValue" -> roadAddress.endMValue
+      "endMValue" -> roadAddress.endMValue,
+      "ely" -> roadAddress.ely
     )
   }
 
