@@ -41,7 +41,7 @@ object ProjectLinkSplitter {
         (if (!isReversed) addr.swap else addr,
         (startingGeom, endingGeom))
       } else {
-        throw new SplittingException("At least one of the geometries does not overlap the link properly.")
+        throw new SplittingException("Suunnitelmalinkin katkaisukohta ei kohtaa olemassaolevan tieosoitteen kanssa.")
       }
     }
     (
