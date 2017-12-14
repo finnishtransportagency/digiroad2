@@ -1085,7 +1085,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map( rpl =>
           setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadAddressId != 0L))
         )
-        ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks.filterNot(_.status == NotHandled), userName)
+        ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
     }, "recalculated links in %.3f sec")
   }
 
