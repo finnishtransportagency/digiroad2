@@ -1046,7 +1046,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId), 748800L))
     val result = projectService.createSplitRoadAddress(roadAddress, transferAndNew, project)
     result should have size(4)
-    result.count(_.terminated == Termination) should be (1)
+    result.count(_.terminated == TerminationCode.Termination) should be (1)
     result.count(_.startDate == roadAddress.startDate) should be (2)
     result.count(_.startDate.get == project.startDate) should be (2)
     result.count(_.endDate.isEmpty) should be (2)
