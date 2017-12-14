@@ -22,13 +22,16 @@ import scala.collection.mutable.ListBuffer
 import scala.slick.jdbc.{StaticQuery => Q}
 
 object LinearAssetTypes {
+  val TotalWeightLimits = 30
+  val TrailerTruckWeightLimits = 40
+  val AxleWeightLimits = 50
+  val BogieWeightLimits = 60
   val ProhibitionAssetTypeId = 190
   val PavingAssetTypeId = 110
   val RoadWidthAssetTypeId = 120
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
   val ExitNumberAssetTypeId = 270
-  val MaintenanceRoadAssetTypeId = 290
   val numericValuePropertyId: String = "mittarajoitus"
   val europeanRoadPropertyId: String = "eurooppatienumero"
   val exitNumberPropertyId: String = "liittymänumero"
@@ -46,6 +49,7 @@ case class Measures(startMeasure: Double, endMeasure: Double)
 
 trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
@@ -58,7 +62,6 @@ trait LinearAssetOperations {
   }
 
   val logger = LoggerFactory.getLogger(getClass)
-
 
   def getMunicipalityCodeByAssetId(assetId: Int): Int = {
     var municipalityCode = -1
@@ -113,27 +116,6 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
-
-  def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
-    val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    val roadLink: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4 || typeId != LinearAssetTypes.MaintenanceRoadAssetTypeId)
-    val linkIds = roadLink.map(_.linkId)
-    val mappedChanges = (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
-      .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
-
-    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-    withDynTransaction {
-      typeId match {
-        case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
-          dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
-        case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
-          dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
-        case _ =>
-          dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
-      }
-    }.filterNot(_.expired)
-  }
-
   /**
     * Returns linear assets by municipality. Used by all IntegrationApi linear asset endpoints (except speed limits).
     *
@@ -144,6 +126,12 @@ trait LinearAssetOperations {
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     getByRoadLinks(typeId, roadLinks, change)
+  }
+
+  def getByMunicipalityAndRoadLinks(typeId: Int, municipality: Int): Seq[(PieceWiseLinearAsset, RoadLink)] = {
+    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    linearAssets.map{ asset => (asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new NoSuchElementException))}
   }
 
   def getLinearMiddlePointById(typeId: Int, assetId: Long): (Long, Option[Point])  = {
@@ -164,15 +152,10 @@ trait LinearAssetOperations {
 
   protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
-    val timing = System.currentTimeMillis
     val linkIds = roadLinks.map(_.linkId)
-
-    val mappedChanges = (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
-      .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
+    val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
 
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-
-    logger.info("Finnish delete road links at %d ms after start".format(System.currentTimeMillis - timing))
 
     val existingAssets =
       withDynTransaction {
@@ -186,7 +169,7 @@ trait LinearAssetOperations {
         }
       }.filterNot(_.expired)
 
-    logger.info("Finnish fetch from database at %d ms after start".format(System.currentTimeMillis - timing))
+    val timing = System.currentTimeMillis
 
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
@@ -210,8 +193,6 @@ trait LinearAssetOperations {
 
     eventBus.publish("linearAssets:update", changeSet)
     eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filter(_.id == 0L))
-
-    logger.info("Finnish get asset roadLinks at %d ms after start".format(System.currentTimeMillis - timing))
 
     filledTopology
   }

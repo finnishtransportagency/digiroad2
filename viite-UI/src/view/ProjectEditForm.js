@@ -102,6 +102,7 @@
     };
 
     var emptyTemplate = function(project) {
+      formCommon.toggleAdditionalControls();
       return _.template('' +
         '<header>' +
         formCommon.titleWithProjectName(project.name, currentProject) +
@@ -200,7 +201,6 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         checkInputs('.project-');
-        formCommon.toggleAdditionalControls();
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
@@ -358,6 +358,7 @@
           projectCollection.setTmpDirty([]);
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
+          formCommon.toggleAdditionalControls();
           eventbus.trigger('roadAddress:projectLinksEdited');
           eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
           eventbus.trigger('roadAddressProject:reOpenCurrent');
@@ -462,8 +463,31 @@
       });
 
       rootElement.on('click', '.project-form button.send', function(){
-        projectCollection.publishProject();
+        new GenericConfirmPopup("Haluatko varmasti poistaa tämän projektin?", {
+          successCallback: function () {
+            projectCollection.publishProject();
+            closeProjectMode(true, true);
+          },
+          closeCallback: function () {
+          }
+        });
+
       });
+
+      var closeProjectMode = function (changeLayerMode, noSave) {
+        eventbus.trigger("roadAddressProject:startAllInteractions");
+        eventbus.trigger('projectChangeTable:hide');
+        applicationModel.setOpenProject(false);
+        rootElement.find('header').toggle();
+        rootElement.find('.wrapper').toggle();
+        rootElement.find('footer').toggle();
+        projectCollection.clearRoadAddressProjects();
+        eventbus.trigger('layer:enableButtons', true);
+        if (changeLayerMode) {
+          eventbus.trigger('roadAddressProject:clearOnClose');
+          applicationModel.selectLayer('linkProperty', true, noSave);
+        }
+      };
 
       rootElement.on('click', '.project-form button.show-changes', function(){
         $(this).empty();

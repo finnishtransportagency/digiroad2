@@ -7,12 +7,16 @@ import fi.liikennevirasto.viite.MaxMoveDistanceBeforeFloating
 
 
 class FloatingChecker(roadLinkService: RoadLinkService) {
-
+  private def pretty(ra: RoadAddress): String = {
+    val (startM, endM) = (BigDecimal(ra.startMValue).setScale(3), BigDecimal(ra.endMValue).setScale(3))
+    s"${ra.roadNumber}/${ra.roadPartNumber}/${ra.track.value}/${ra.startAddrMValue}-${ra.endAddrMValue} " +
+      s"($startM - $endM, ${ra.sideCode})"
+  }
   def checkRoadPart(roadNumber: Long)(roadPartNumber: Long): List[RoadAddress] = {
     def outsideOfGeometry(ra: RoadAddress, roadLinks: Seq[RoadLinkLike]): Boolean = {
       !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue) ||
         !roadLinks.exists(rl => GeometryUtils.areAdjacent(
-          GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
+          GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue),
           ra.geometry))
     }
 
@@ -20,12 +24,20 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
     val roadLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(roadAddressList.map(_.linkId).toSet).groupBy(_.linkId)
     val floatingSegments = roadAddressList.filter(ra => roadLinks.get(ra.linkId).isEmpty || outsideOfGeometry(ra, roadLinks.getOrElse(ra.linkId, Seq())))
+    floatingSegments.foreach(ra =>
+      if (roadLinks.get(ra.linkId).isEmpty)
+        println(s"${pretty(ra)} moved to floating, road link no longer exists")
+      else {
+        val rl = roadLinks(ra.linkId).head
+        val len = GeometryUtils.geometryLength(rl.geometry)
+        println(s"${pretty(ra)} moved to floating, outside of road link geometry (link is $len m)")
+      }
+    )
     val floatings = checkGeometryChangeOfSegments(roadAddressList, roadLinks)
     (floatingSegments ++ floatings).distinct
   }
 
   def checkRoad(roadNumber: Long): List[RoadAddress] = {
-    println(s"Checking road: $roadNumber")
     try {
       val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
       roadPartNumbers.flatMap(checkRoadPart(roadNumber))
@@ -57,10 +69,10 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   def isGeometryChange(roadLink : RoadLinkLike, roadAddresses: Seq[RoadAddress]) : Boolean = {
     roadAddresses.exists(ra => {
       GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
-        GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue), // 2D = don't care about changing height values
+        GeometryUtils.truncateGeometry3D(roadLink.geometry, ra.startMValue, ra.endMValue),
         ra.geometry) &&
         GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
-          GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
+          GeometryUtils.truncateGeometry3D(roadLink.geometry, ra.startMValue, ra.endMValue),
           ra.geometry.reverse) // Road Address geometry isn't necessarily directed: start and end may not be aligned by side code
     }
     ) || Math.abs(roadAddresses.maxBy(_.endMValue).endMValue - GeometryUtils.geometryLength(roadLink.geometry)) > MaxMoveDistanceBeforeFloating
@@ -68,7 +80,11 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
 
   private def checkGeometryChangeOfSegments(roadAddressList: Seq[RoadAddress], roadLinks : Map[Long, Seq[RoadLinkLike]]): Seq[RoadAddress] = {
     val sortedRoadAddresses = roadAddressList.groupBy(ra=> ra.linkId)
-    val movedRoadAddresses = sortedRoadAddresses.filter(ra => roadLinks.getOrElse(ra._1, Seq()).isEmpty || isGeometryChange(roadLinks.getOrElse(ra._1, Seq()).head, ra._2)).flatMap(_._2).toSeq
+    val movedRoadAddresses = sortedRoadAddresses.filter(ra =>
+      roadLinks.getOrElse(ra._1, Seq()).isEmpty || isGeometryChange(roadLinks.getOrElse(ra._1, Seq()).head, ra._2)).flatMap(_._2).toSeq
+    movedRoadAddresses.foreach{ ra =>
+      println(s"${pretty(ra)} moved to floating, geometry has changed")
+    }
     movedRoadAddresses
   }
 

@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 
 case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
+case class IncomingTrafficLightAsset(linkId: Long, mValue: Long) extends IncomePointAsset
 
 class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficLight
@@ -68,5 +69,11 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
+  }
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingTrafficLight] = {
+    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
+      point =>  IncomingTrafficLight(point.x, point.y, link.linkId)
+    }
   }
 }
