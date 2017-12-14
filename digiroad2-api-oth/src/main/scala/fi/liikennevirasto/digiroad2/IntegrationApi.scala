@@ -219,9 +219,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
     def getLinearAssetService(typeId: Int): LinearAssetOperations = {
       typeId match {
-        case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
-        case LinearAssetTypes.PavingAssetTypeId => pavingService
-        case LinearAssetTypes.RoadWidthAssetTypeId => linearAssetService
+        case MaintenanceRoadAsset.typeId => maintenanceRoadService
+        case PavedRoad.typeId => pavingService
+        case RoadWidth.typeId => roadWidthService
         case _ => linearAssetService
       }
     }

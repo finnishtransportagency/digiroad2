@@ -55,7 +55,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       val persisted = dao.find(id).get
       val validityPeriod = Set(ValidityPeriod(12, 13, ValidityPeriodDayOfWeek("Sunday"), 30, 15), ValidityPeriod(8, 12, ValidityPeriodDayOfWeek("Saturday"), 0, 10))
       dao.updateManoueuvre("updater", id, ManoeuvreUpdates(Option(validityPeriod),
-        Option(Seq(2)), Option("Additional Info")))
+        Option(Seq(2)), Option("Additional Info")), None)
       val updated = dao.find(id).get
       updated shouldNot be(persisted)
       updated.additionalInfo should be("Additional Info")

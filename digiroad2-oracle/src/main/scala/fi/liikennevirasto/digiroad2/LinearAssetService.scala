@@ -32,7 +32,6 @@ object LinearAssetTypes {
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
   val ExitNumberAssetTypeId = 270
-  val MaintenanceRoadAssetTypeId = 290
   val numericValuePropertyId: String = "mittarajoitus"
   val europeanRoadPropertyId: String = "eurooppatienumero"
   val exitNumberPropertyId: String = "liittymänumero"
@@ -63,7 +62,6 @@ trait LinearAssetOperations {
   }
 
   val logger = LoggerFactory.getLogger(getClass)
-
 
   def getMunicipalityCodeByAssetId(assetId: Int): Int = {
     var municipalityCode = -1
@@ -118,27 +116,6 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
-
-  def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
-    val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    val roadLink: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4 || typeId != LinearAssetTypes.MaintenanceRoadAssetTypeId)
-    val linkIds = roadLink.map(_.linkId)
-    val mappedChanges = (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
-      .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
-
-    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-    withDynTransaction {
-      typeId match {
-        case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
-          dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
-        case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
-          dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
-        case _ =>
-          dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
-      }
-    }.filterNot(_.expired)
-  }
-
   /**
     * Returns linear assets by municipality. Used by all IntegrationApi linear asset endpoints (except speed limits).
     *
@@ -149,6 +126,12 @@ trait LinearAssetOperations {
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     getByRoadLinks(typeId, roadLinks, change)
+  }
+
+  def getByMunicipalityAndRoadLinks(typeId: Int, municipality: Int): Seq[(PieceWiseLinearAsset, RoadLink)] = {
+    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    linearAssets.map{ asset => (asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new NoSuchElementException))}
   }
 
   def getLinearMiddlePointById(typeId: Int, assetId: Long): (Long, Option[Point])  = {

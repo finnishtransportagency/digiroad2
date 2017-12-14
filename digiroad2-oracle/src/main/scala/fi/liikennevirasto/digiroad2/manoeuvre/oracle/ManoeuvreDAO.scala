@@ -207,12 +207,23 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     addManoeuvreValidityPeriods(manoeuvreId, validityPeriods)
   }
 
-  private def updateModifiedData(username: String, manoeuvreId: Long) {
-    sqlu"""
+  private def updateModifiedData(username: String, manoeuvreId: Long, modifiedDate: Option[DateTime]) {
+    modifiedDate match {
+      case Some(date) =>
+        sqlu"""
            update manoeuvre
-           set modified_date = sysdate, modified_by = $username
+           set modified_date = $date
+           , modified_by = $username
            where id = $manoeuvreId
         """.execute
+      case _ =>
+        sqlu"""
+           update manoeuvre
+           set modified_date = sysdate
+           , modified_by = $username
+           where id = $manoeuvreId
+        """.execute
+    }
   }
 
   def setManoeuvreAdditionalInfo(manoeuvreId: Long)(additionalInfo: String) = {
@@ -223,11 +234,11 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
         """.execute
   }
 
-  def updateManoueuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
+  def updateManoueuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates, modifiedDate: Option[DateTime]) = {
     manoeuvreUpdates.additionalInfo.foreach(setManoeuvreAdditionalInfo(manoeuvreId))
     manoeuvreUpdates.exceptions.foreach(setManoeuvreExceptions(manoeuvreId))
     manoeuvreUpdates.validityPeriods.foreach(setManoeuvreValidityPeriods(manoeuvreId))
-    updateModifiedData(userName, manoeuvreId)
+    updateModifiedData(userName, manoeuvreId, modifiedDate)
   }
 
   def getByRoadLinks(roadLinkIds: Seq[Long]): Seq[Manoeuvre] = {

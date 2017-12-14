@@ -81,6 +81,17 @@ class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
   }
 }
 
+class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
+  def receive = {
+    case x: ChangeSet => persistRoadWidthChanges(x)
+    case _            => println("RoadWidthUpdater: Received unknown message")
+  }
+
+  def persistRoadWidthChanges(changeSet: ChangeSet) {
+    roadWidthService.updateChangeSet(changeSet);
+  }
+}
+
 class LinearAssetSaveProjected[T](linearAssetProvider: LinearAssetService) extends Actor {
   def receive = {
     case x: Seq[T] => linearAssetProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
@@ -284,6 +295,10 @@ object Digiroad2Context {
 
   lazy val roadAddressesService: RoadAddressesService = {
     new RoadAddressesService(eventbus, roadLinkService)
+  }
+
+  lazy val assetService: AssetService = {
+    new AssetService(eventbus)
   }
 
   lazy val revision: String = {
