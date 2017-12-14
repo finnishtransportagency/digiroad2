@@ -1395,9 +1395,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.setSubsequentTermination(terminatedLinkIds)
     val mapping = RoadAddressSplitMapper.createAddressMap(splitReplacements)
     val splitTerminationLinkIds = mapping.map(_.sourceLinkId).toSet
-    val addresses = RoadAddressDAO.fetchByLinkId(splitTerminationLinkIds, includeFloating = true, includeHistory = true)
+    val splitCurrentRoadAddressIds = splitReplacements.map(_.roadAddressId).toSet
+    val linkGeomSources = splitReplacements.map(pl => pl.linkId -> pl.linkGeomSource).toMap
+    val addresses = RoadAddressDAO.fetchByLinkId(splitTerminationLinkIds, includeFloating = true, includeHistory = true,
+      splitCurrentRoadAddressIds) // Do not include current ones as they're created separately with other project links
     val splitAddresses = addresses.flatMap(RoadAddressSplitMapper.mapRoadAddresses(mapping)).map(ra =>
-      ra.copy(terminated = if (splitTerminationLinkIds.contains(ra.linkId)) Subsequent else NoTermination))
+      ra.copy(terminated = if (splitTerminationLinkIds.contains(ra.linkId)) Subsequent else NoTermination,
+        linkGeomSource = linkGeomSources(ra.linkId)))
     roadAddressService.expireRoadAddresses(addresses.map(_.id).toSet)
     RoadAddressDAO.create(splitAddresses)
   }

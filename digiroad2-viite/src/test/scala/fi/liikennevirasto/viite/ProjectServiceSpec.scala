@@ -5,7 +5,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
@@ -17,10 +17,10 @@ import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
@@ -1098,6 +1098,63 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectDAO.getProjectEly(project.id).isEmpty should be (true)
       projectService.correctNullProjectEly()
       ProjectDAO.getProjectEly(project.id).isEmpty should be (false)
+    }
+  }
+
+  test("split road address is splitting historic versions") {
+    runWithRollback {
+      val road = 19999L
+      val roadPart = 205L
+      val origStartM = 0L
+      val origEndM = 102L
+      val origStartD = Some(DateTime.now().minusYears(10))
+      val linkId = 1049L
+      val endM = 102.04
+      val suravageLinkId = 5774839L
+      val user = Some("user")
+      val roadAddress = RoadAddress(NewRoadAddress, road, roadPart, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM, origStartD,
+        None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L,
+        (Some(CalibrationPoint(linkId, 0.0, origStartM)), Some(CalibrationPoint(linkId, endM, origEndM))),
+        false, Seq(Point(1024.0, 0.0), Point(1024.0, 102.04)),
+        LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination)
+      val roadAddressHistory = RoadAddress(NewRoadAddress, road, roadPart + 1, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM,
+        origStartD.map(_.minusYears(5)), origStartD.map(_.minusYears(15)),
+        None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+        LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination)
+      val roadAddressHistory2 = RoadAddress(NewRoadAddress, road, roadPart + 2, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM,
+        origStartD.map(_.minusYears(15)), origStartD.map(_.minusYears(20)),
+        None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+        LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination)
+      val id = RoadAddressDAO.create(Seq(roadAddress)).head
+      RoadAddressDAO.create(Seq(roadAddressHistory, roadAddressHistory2))
+      val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+        DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
+      val unchangedAndNew = Seq(ProjectLink(2L, road, roadPart, Track.Combined, Continuous, origStartM, origStartM + 52L, Some(DateTime.now()), None, user,
+        2L, suravageLinkId, 0.0, 51.984, SideCode.TowardsDigitizing, (Some(CalibrationPoint(linkId, 0.0, origStartM)), None),
+        false, Seq(Point(1024.0, 0.0), Point(1024.0, 51.984)),
+        -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 51.984, id, 8L, false, Some(linkId), 85088L),
+        ProjectLink(3L, road, roadPart, Track.Combined, EndOfRoad, origStartM + 52L, origStartM + 177L, Some(DateTime.now()), None, user,
+          3L, suravageLinkId, 51.984, 176.695, SideCode.TowardsDigitizing, (None, Some(CalibrationPoint(suravageLinkId, 176.695, origStartM + 177L))),
+          false, Seq(Point(1024.0, 99.384), Point(1148.711, 99.4)),
+          -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 124.711, id, 8L, false, Some(linkId), 85088L),
+        ProjectLink(4L, 5, 205, Track.Combined, EndOfRoad, origStartM + 52L, origEndM, Some(DateTime.now()), None, user,
+          4L, linkId, 50.056, endM, SideCode.TowardsDigitizing, (None, Some(CalibrationPoint(linkId, endM, origEndM))), false,
+          Seq(Point(1024.0, 51.984), Point(1024.0, 102.04)),
+          -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 50.056, id, 8L, false, Some(suravageLinkId), 85088L))
+      projectService.updateTerminationForHistory(Set(), unchangedAndNew)
+      val suravageAddresses = RoadAddressDAO.fetchByLinkId(Set(suravageLinkId), true, true)
+      // Remove the current road address from list because it is not terminated by this procedure
+      val oldLinkAddresses = RoadAddressDAO.fetchByLinkId(Set(linkId), true, true, Set(id))
+      suravageAddresses.foreach { a =>
+        a.terminated should be(NoTermination)
+        a.endDate.nonEmpty || a.endAddrMValue == origStartM + 177L should be (true)
+        a.linkGeomSource should be (SuravageLinkInterface)
+      }
+      oldLinkAddresses.foreach { a =>
+        a.terminated should be(Subsequent)
+        a.endDate.nonEmpty should be (true)
+        a.linkGeomSource should be (NormalLinkInterface)
+      }
     }
   }
 }
