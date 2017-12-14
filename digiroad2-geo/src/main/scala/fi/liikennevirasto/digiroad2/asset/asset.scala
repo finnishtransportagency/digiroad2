@@ -251,4 +251,5 @@ case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometry
 case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = "" }
 case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""}
 case object Manoeuvres extends AssetTypeInfo { val typeId = 999; def geometryType = "linear"; val label = "Manoeuvre" }
+case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit" }
 case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""}

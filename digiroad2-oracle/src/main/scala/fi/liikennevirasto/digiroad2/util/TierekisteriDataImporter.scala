@@ -148,7 +148,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateSpeedLimits(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(speedLimitTierekisteriImporter.assetName, speedLimitStateAssetId)
+    val lastUpdate = obtainLastExecutionDate(speedLimitTierekisteriImporter.assetName, StateSpeedLimit.typeId)
     speedLimitTierekisteriImporter.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 

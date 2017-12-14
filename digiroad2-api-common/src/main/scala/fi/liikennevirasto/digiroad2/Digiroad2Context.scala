@@ -81,17 +81,6 @@ class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
   }
 }
 
-class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
-  def receive = {
-    case x: ChangeSet => persistRoadWidthChanges(x)
-    case _            => println("RoadWidthUpdater: Received unknown message")
-  }
-
-  def persistRoadWidthChanges(changeSet: ChangeSet) {
-    roadWidthService.updateChangeSet(changeSet);
-  }
-}
-
 class LinearAssetSaveProjected[T](linearAssetProvider: LinearAssetService) extends Actor {
   def receive = {
     case x: Seq[T] => linearAssetProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])

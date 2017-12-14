@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.{PavedRoad, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.MValueAdjustment
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
