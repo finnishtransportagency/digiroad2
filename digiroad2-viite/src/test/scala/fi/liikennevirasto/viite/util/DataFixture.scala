@@ -178,12 +178,6 @@ object DataFixture {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
 
-    def validRoadAddress(roadAddress: RoadAddress): Boolean = {
-      val dt = new DateTime()
-      val validEndDate = roadAddress.endDate.isEmpty || roadAddress.endDate.get.isAfter(dt.getMillis)
-      return !roadAddress.terminated && validEndDate
-    }
-
     //Get All Municipalities
     val municipalities: Seq[Long] =
       OracleDatabase.withDynTransaction {
@@ -201,10 +195,10 @@ object DataFixture {
       if(roadLinks.nonEmpty) {
         //  Get road address from viite DB from the roadLinks ids
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
+          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet, false, true, true)
         }
         try {
-          val groupedAddresses = roadAddresses.filter(ra => validRoadAddress(ra)).groupBy(_.linkId)
+          val groupedAddresses = roadAddresses.groupBy(_.linkId)
           val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
           val affectingChanges = changedRoadLinks.filter(ci =>
             ci.oldId.nonEmpty && timestamps.get(ci.oldId.get).nonEmpty &&
