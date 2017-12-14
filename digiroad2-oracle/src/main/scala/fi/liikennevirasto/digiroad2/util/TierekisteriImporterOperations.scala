@@ -34,7 +34,7 @@ trait TierekisteriAssetImporterOperations {
 
   lazy val assetDao: OracleAssetDao = new OracleAssetDao
   lazy val roadAddressDao : RoadAddressDAO = new RoadAddressDAO
-  lazy val municiapalityDao: MunicipalityDao = new MunicipalityDao
+  lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
 
   def typeId: Int
 
@@ -77,7 +77,7 @@ trait TierekisteriAssetImporterOperations {
 
   protected def getAllMunicipalities(): Seq[Int] = {
     withDynSession {
-      municiapalityDao.getMunicipalities
+      municipalityDao.getMunicipalities
     }
   }
 

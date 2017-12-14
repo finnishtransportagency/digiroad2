@@ -62,6 +62,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def assetName: String = "assetTest"
     override type TierekisteriClientType = TierekisteriAssetDataClient
     override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriLightingAssetClient = mockTRClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -86,6 +87,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   class TestSpeedLimitsTierekisteriImporter extends SpeedLimitsTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient = mockTRTrafficSignsLimitClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -105,6 +107,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   class TestLitRoadOperations extends LitRoadTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriLightingAssetClient = mockTRClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -114,6 +117,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   class TestPavedRoadOperations extends PavedRoadTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriPavedRoadAssetClient = mockTRPavedRoadClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -132,6 +136,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   class TestMassTransitLaneOperations extends MassTransitLaneTierekisteriImporter {
 
     override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriMassTransitLaneAssetClient = mockMassTransitLaneClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -143,6 +148,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   class TestDamageByThawOperations extends DamagedByThawTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriDamagedByThawAssetClient = mockTRDamageByThawClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -152,6 +158,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   class TestEuropeanRoadOperations extends EuropeanRoadTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriEuropeanRoadAssetClient = mockTREuropeanRoadClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -161,6 +168,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   class TestSpeedLimitAssetOperations extends SpeedLimitAssetTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriSpeedLimitAssetClient = mockTRSpeedLimitAssetClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
