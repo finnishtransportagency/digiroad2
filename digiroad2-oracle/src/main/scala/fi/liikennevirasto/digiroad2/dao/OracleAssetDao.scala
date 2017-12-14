@@ -10,12 +10,6 @@ import slick.jdbc.{StaticQuery => Q}
 
 class OracleAssetDao {
 
-  def getMunicipalities: Seq[Int] = {
-    sql"""
-      select id from municipality
-    """.as[Int].list
-  }
-
   def getLastExecutionDate(typeId: Int, createdBy: String): Option[DateTime] = {
 
     sql""" select MAX( case when a.modified_date is null then MAX(a.created_date) else MAX(a.modified_date) end ) as lastExecution

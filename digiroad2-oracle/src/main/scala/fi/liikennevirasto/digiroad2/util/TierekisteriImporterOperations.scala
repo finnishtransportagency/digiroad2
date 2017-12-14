@@ -9,11 +9,10 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirec
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, RoadAddressDAO}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType, TrafficSignTypeGroup}
@@ -35,6 +34,7 @@ trait TierekisteriAssetImporterOperations {
 
   lazy val assetDao: OracleAssetDao = new OracleAssetDao
   lazy val roadAddressDao : RoadAddressDAO = new RoadAddressDAO
+  lazy val municiapalityDao: MunicipalityDao = new MunicipalityDao
 
   def typeId: Int
 
@@ -77,7 +77,7 @@ trait TierekisteriAssetImporterOperations {
 
   protected def getAllMunicipalities(): Seq[Int] = {
     withDynSession {
-      assetDao.getMunicipalities
+      municiapalityDao.getMunicipalities
     }
   }
 

@@ -267,7 +267,7 @@
       },
 
       maintenanceRoadWorkList: function () {
-        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getLinearAssetUnchecked(290));
+        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedLinearAsset(290));
       },
 
       unverifiedLinearAssetWorkList: function(layerName, typeId) {

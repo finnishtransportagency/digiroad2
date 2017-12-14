@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
@@ -46,6 +46,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
@@ -54,6 +55,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
+    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -65,6 +67,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
+    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -157,21 +160,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Update prohibition and verify asset") {
-    when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-
-    runWithRollback {
-      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "testeUser")
-      val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
-
-      limit.verifiedBy should be (Some("TestsUser"))
-      limit.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))))
-      limit.expired should be (false)
-    }
-    //TODO merge with branch 365 DROTH-365 Saving of light history: manoeuvres, hazmat prohibitions, vehicle prohibitions, this test should be OK
-  }
-
   test("Create new linear asset") {
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
@@ -184,18 +172,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Create new linear asset with verified info") {
-    runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
-      newAssets.length should be(1)
-      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
-      asset.value should be (Some(NumericValue(1000)))
-      asset.expired should be (false)
-      asset.verifiedBy.get should be ("testuser")
-      asset.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-    }
-  }
-
-  test("Create new prohibition with verified info") {
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
@@ -771,181 +747,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map hazmat prohibitions of two old links to one new link") {
-
-    // Combined road link (change types 1 and 2)
-
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    val oldLinkId1 = 5001
-    val oldLinkId2 = 5002
-    val newLinkId = 6000
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val assetTypeId = 210
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-
-    val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(oldLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
-
-    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
-
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000))
-
-    OracleDatabase.withDynTransaction {
-      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
-      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset2,$asset2,25)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset2,$asset2,2,12,13)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset3,$asset3,24)""".execute
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
-      val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
-      before.length should be (4)
-      before.count(_.value.nonEmpty) should be (3)
-
-      val beforeByLinkId = before.groupBy(_.linkId)
-      val linearAssets1 = beforeByLinkId(oldLinkId1)
-      linearAssets1.length should be (2)
-      linearAssets1.head.startMeasure should be (0)
-      linearAssets1.head.endMeasure should be (10)
-      val linearAssets2 = beforeByLinkId(oldLinkId2)
-      linearAssets2.length should be (2)
-      linearAssets2.filter(l => l.id > 0).head.startMeasure should be (0)
-      linearAssets2.filter(l => l.id > 0).head.endMeasure should be (5)
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
-      val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
-//      after.foreach(println)
-      after.length should be(4)
-      after.count(_.value.nonEmpty) should be (3)
-
-      val linearAssetBothDirections = after.filter(p => (p.sideCode == SideCode.BothDirections) && p.value.nonEmpty).head
-      val prohibitionBothDirections = Prohibitions(Seq(ProhibitionValue(24, Set.empty, Set.empty, null)))
-      val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set.empty, null)))
-      val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null)))
-
-      linearAssetBothDirections.value should be (Some(prohibitionBothDirections))
-      linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
-      linearAssetAgainstDigitizing.value should be (Some(prohibitionAgainstDigitizing))
-
-      dynamicSession.rollback()
-    }
-  }
-  test("Should map vehicle prohibition of two old links to one new link") {
-
-    // Combined road link (change types 1 and 2)
-
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    val oldLinkId1 = 5001
-    val oldLinkId2 = 5002
-    val newLinkId = 6000
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val assetTypeId = 190
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-
-    val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(oldLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
-
-    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
-
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000))
-
-    OracleDatabase.withDynTransaction {
-      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
-      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
-
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset2,$asset2,25)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset2,$asset2,2,12,13)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, $asset2, 10)""".execute
-
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset3,$asset3,24)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600012, $asset3, 10)""".execute
-
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
-      val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
-      before.length should be (4)
-      before.count(_.value.nonEmpty) should be (3)
-
-      val beforeByLinkId = before.groupBy(_.linkId)
-      val linearAssets1 = beforeByLinkId(oldLinkId1)
-      linearAssets1.length should be (2)
-      linearAssets1.head.startMeasure should be (0)
-      linearAssets1.head.endMeasure should be (10)
-
-      val linearAssets2 = beforeByLinkId(oldLinkId2)
-      linearAssets2.length should be (2)
-      linearAssets2.filter(l => l.id > 0).head.startMeasure should be (0)
-      linearAssets2.filter(l => l.id > 0).head.endMeasure should be (5)
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
-      val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
-      after.length should be(4)
-      after.count(_.value.nonEmpty) should be (3)
-
-      val linearAssetBothDirections = after.filter(p => (p.sideCode == SideCode.BothDirections) && p.value.nonEmpty).head
-      val prohibitionBothDirections = Prohibitions(Seq(ProhibitionValue(24, Set.empty, Set(10), null)))
-      val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10), null)))
-      val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10), null)))
-
-      linearAssetBothDirections.value should be (Some(prohibitionBothDirections))
-      linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
-      linearAssetAgainstDigitizing.value should be (Some(prohibitionAgainstDigitizing))
-
-      dynamicSession.rollback()
-    }
-  }
-
   test("Should not create new assets on update") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -1015,172 +816,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       persisted.verifiedDate.get.toString("yyyy-MM-dd") should be ("2017-11-30")
       persisted.verifiedBy.get should be ("testeUser")
-      dynamicSession.rollback()
-    }
-  }
-
-  test("Should not create prohibitions on actor update") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    val oldLinkId1 = 1234
-    val oldLinkId2 = 1235
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val assetTypeId = 190
-    val vvhTimeStamp = 14440000
-
-    OracleDatabase.withDynTransaction {
-      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
-      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
-
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset2,$asset2,25)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset2,$asset2,2,12,13)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, $asset2, 10)""".execute
-
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset3,$asset3,24)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600012, $asset3, 10)""".execute
-
-
-      val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
-      val projectedProhibitions = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
-
-      service.persistProjectedLinearAssets(projectedProhibitions)
-      val all = service.dao.fetchProhibitionsByIds(assetTypeId, Set(asset1,asset2,asset3), false)
-      all.size should be (3)
-      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
-      persisted.size should be (1)
-      val head = persisted.head
-      head.id should be (original.id)
-      head.vvhTimeStamp should be (vvhTimeStamp)
-      head.startMeasure should be (0.1)
-      head.endMeasure should be (10.1)
-      head.expired should be (false)
-
-      dynamicSession.rollback()
-    }
-  }
-
-  test("when update on actor shouldn't override the verified by or date") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    val oldLinkId1 = 1234
-    val assetTypeId = 190
-    val vvhTimeStamp = 14440000
-
-    OracleDatabase.withDynTransaction {
-      val lrm1 = Sequences.nextLrmPositionPrimaryKeySeqValue
-      val asset1 = Sequences.nextPrimaryKeySeqValue
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by, verified_date, verified_by)
-             values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1', TO_TIMESTAMP('2017-11-30 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6') ,'testeUser')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
-
-      val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
-      val projectedProhibitions = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
-
-      service.persistProjectedLinearAssets(projectedProhibitions)
-      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
-      persisted.verifiedDate.get.toString("yyyy-MM-dd") should be ("2017-11-30")
-      persisted.verifiedBy.get should be ("testeUser")
-      dynamicSession.rollback()
-    }
-  }
-
-  test("Should extend vehicle prohibition on road extension") {
-
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    val oldLinkId1 = 6000
-    val newLinkId = 6000
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val assetTypeId = 190
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-
-    val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
-
-    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
-
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 3, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(None, Some(newLinkId), 12345, 4, None, None, Some(10), Some(20), 144000000))
-
-    OracleDatabase.withDynTransaction {
-      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
-      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
-
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 9.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset2,$asset2,25)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset2,$asset2,2,12,13)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, $asset2, 10)""".execute
-
-
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
-      val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
-      val beforeByLinkId = before.groupBy(_.linkId)
-      val linearAssets1 = beforeByLinkId(oldLinkId1)
-      linearAssets1.length should be (3)
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
-      val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
-      after.length should be(3)
-      after.count(_.value.nonEmpty) should be (2)
-
-      val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10), null)))
-      val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10), null)))
-
-      linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
-      linearAssetAgainstDigitizing.value should be (Some(prohibitionAgainstDigitizing))
-      linearAssetAgainstDigitizing.startMeasure should be (0.0)
-      linearAssetAgainstDigitizing.endMeasure should be (20.0)
-
-      linearAssetTowardsDigitizing.startMeasure should be (0.0)
-      linearAssetTowardsDigitizing.endMeasure should be (9.0)
-
       dynamicSession.rollback()
     }
   }
@@ -1350,27 +985,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Update verified info prohibitions") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    OracleDatabase.withDynTransaction {
-      val assetNotVerified = service.dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(600020, 600024), false)
-      service.updateVerifiedInfo(Set(600020, 600024), "test", LinearAssetTypes.ProhibitionAssetTypeId)
-      val verifiedAsset = service.dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(600020, 600024), false)
-      assetNotVerified.find(_.id == 600020).flatMap(_.verifiedBy) should  be (None)
-      assetNotVerified.find(_.id == 600024).flatMap(_.verifiedBy) should be (None)
-      verifiedAsset.find(_.id == 600020).flatMap(_.verifiedBy) should be (Some("test"))
-      verifiedAsset.find(_.id == 600024).flatMap(_.verifiedBy) should be (Some("test"))
-      verifiedAsset.find(_.id == 600020).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-      verifiedAsset.find(_.id == 600024).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-
-      dynamicSession.rollback()
-    }
-  }
-
   test("Update verified info") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
@@ -1390,25 +1004,16 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("get unVerified linear assets") {
+    when(mockMunicipalityDao.getMunicipalityNameByCode(235)).thenReturn("Kauniainen")
       runWithRollback {
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
       val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, NumericValue(800), 1, 0, None)), 40, "testuser")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40)
-      unVerifiedAssets.flatMap(_._2).keys.head should be ("235")
+      unVerifiedAssets.keys.head should be ("Kauniainen")
+      unVerifiedAssets.flatMap(_._2).keys.head should be ("Municipality")
       unVerifiedAssets.flatMap(_._2).values.head should be (newAssets1)
     }
   }
 
-  test("get unVerified prohibition assets") {
-    runWithRollback {
-      val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 20, prohibition, 1, 0, None)), 190, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 20, 60, prohibition, 1, 0, None)), 190, "testuser")
-
-      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(190)
-      unVerifiedAssets.flatMap(_._2).keys.head should be ("235")
-      unVerifiedAssets.flatMap(_._2).values.head should be (newAssets1)
-    }
-  }
 }

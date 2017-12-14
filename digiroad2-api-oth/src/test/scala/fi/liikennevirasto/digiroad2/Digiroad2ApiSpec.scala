@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
+import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.DirectionalTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -127,13 +127,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1l))
     .thenReturn(Some(RoadLink(1l, Nil, 0, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
 
-//  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(Set(1611071l, 1611070l, 1611069l))).thenReturn(Seq(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))),
-//    RoadLink(1611070l,  List(Point(117.318, 0.0), Point(127.239, 0.0)), 127.239, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))),
-//    RoadLink(1611069l, List(Point(127.239, 0.0), Point(146.9, 0.0)), 146.9, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611071l)).thenReturn(Some(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
-
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH((1611071l))).thenReturn(Some(RoadLink(1611071l,  List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
-
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)
   val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockRoadLinkService)
@@ -143,6 +137,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val roadLinkService: RoadLinkService = mockRoadLinkService
   }

@@ -1114,10 +1114,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     lrmInfo
   }
 
-  def getMunicipalityById(id: Long): Seq[Long] = {
-    sql"""select id from municipality where id = $id """.as[Long].list
-  }
-
   def updateVerifiedInfo(ids: Set[Long], verifiedBy: String): Unit = {
       sqlu"update asset set verified_by = $verifiedBy, verified_date = sysdate where id in (#${ids.mkString(",")})".execute
   }
@@ -1133,8 +1129,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           and a.created_by = 'dr1_conversion' AND a.modified_date is NULL AND a.verified_date is NULL
       """.as[(Long, Long)].list
   }
-
-
 
 }
 

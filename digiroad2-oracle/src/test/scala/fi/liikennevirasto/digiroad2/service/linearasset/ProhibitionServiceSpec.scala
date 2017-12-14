@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{Municipality, _}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, Point}
+import org.joda.time.DateTime
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
@@ -36,21 +37,11 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
-
-  object PassThroughService extends LinearAssetOperations {
-    override def withDynTransaction[T](f: => T): T = f
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = mockLinearAssetDao
-    override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
-    override def polygonTools: PolygonTools = mockPolygonTools
-
-    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-  }
 
   object ServiceWithDao extends ProhibitionService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -59,6 +50,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
+    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -474,6 +466,56 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
     val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
     prohibition1 == prohibition2 should be (false)
+  }
+
+  test("get unVerified prohibition assets") {
+    when(mockMunicipalityDao.getMunicipalityNameByCode(235)).thenReturn("Kauniainen")
+    runWithRollback {
+
+      val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 20, prohibition, 1, 0, None)), 190, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 20, 60, prohibition, 1, 0, None)), 190, "testuser")
+
+      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(190)
+      unVerifiedAssets.keys.head should be ("Kauniainen")
+      unVerifiedAssets.flatMap(_._2).keys.head should be ("Municipality")
+      unVerifiedAssets.flatMap(_._2).values.head should be (newAssets1)
+    }
+  }
+
+  test("Update prohibition and verify asset") {
+    when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+    runWithRollback {
+      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "testUser")
+      val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
+
+      limit.verifiedBy should be (Some("testUser"))
+      limit.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))))
+      limit.expired should be (false)
+    }
+  }
+
+  test("Update verified info prohibitions") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    OracleDatabase.withDynTransaction {
+      val assetNotVerified = service.dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(600020, 600024), false)
+      service.updateVerifiedInfo(Set(600020, 600024), "test", LinearAssetTypes.ProhibitionAssetTypeId)
+      val verifiedAsset = service.dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(600020, 600024), false)
+      assetNotVerified.find(_.id == 600020).flatMap(_.verifiedBy) should  be (None)
+      assetNotVerified.find(_.id == 600024).flatMap(_.verifiedBy) should be (None)
+      verifiedAsset.find(_.id == 600020).flatMap(_.verifiedBy) should be (Some("test"))
+      verifiedAsset.find(_.id == 600024).flatMap(_.verifiedBy) should be (Some("test"))
+      verifiedAsset.find(_.id == 600020).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+      verifiedAsset.find(_.id == 600024).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+
+      dynamicSession.rollback()
+    }
   }
 
 }

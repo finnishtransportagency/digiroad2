@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -49,6 +49,7 @@ trait LinearAssetOperations {
   def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
+  def municipalityDao: MunicipalityDao
   def eventBus: DigiroadEventBus
   def polygonTools : PolygonTools
 
@@ -170,20 +171,32 @@ trait LinearAssetOperations {
 
   protected def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String,List[Long]]]
 
-  def getUnverifiedLinearAssets(assetTypeId: Int): Map[String, Map[String,List[Long]]] = {
-     val unVerified = withDynTransaction {
+  def getUnverifiedLinearAssets(typeId: Int, municipalityCodes: Option[Set[Int]] = None): Map[String, Map[String,List[Long]]] = {
+    withDynTransaction {
       val allowedAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
-       if (!allowedAssetType.contains(assetTypeId)) throw new IllegalStateException("Asset type not allowed")
+      if (!allowedAssetType.contains(typeId)) throw new IllegalStateException("Asset type not allowed")
 
-      val unVerifiedAssets = dao.getUnVerifiedLinearAsset(assetTypeId)
+      val unVerifiedAssets = dao.getUnVerifiedLinearAsset(typeId)
+      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unVerifiedAssets.map(_._2).toSet, false)
 
-       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unVerifiedAssets.map(_._2).toSet, false)
+      val unVerified =  unVerifiedAssets.map {
+        case (id, linkId) =>
+          val roadLink = roadLinks.find(_.linkId == linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
-       unVerifiedAssets.map {
-         case (id, linkId) => (id, roadLinks.find(_.linkId == linkId).getOrElse(throw new IllegalStateException("Road link no longer available")
-         ))}.groupBy(_._2.municipalityCode.toString).mapValues(x => x.map(_._1))
-     }
-    Map("UnVerified" -> unVerified)
+          municipalityCodes match {
+            case Some(municipality) if municipality.contains(roadLink.municipalityCode) =>
+                (roadLink.municipalityCode, id, roadLink.administrativeClass)
+            case None =>
+              (roadLink.municipalityCode, id, roadLink.administrativeClass)
+          }
+      }
+
+      unVerified.groupBy(_._1).map{
+        case (municipalityCode, grouped) => (municipalityDao.getMunicipalityNameByCode(municipalityCode), grouped)}
+        .mapValues(municipalityAssets => municipalityAssets
+          .groupBy(_._3.toString)
+          .mapValues(_.map(_._2)))
+    }
   }
 
   protected def getVerifiedBy(userName: String, assetType: Int): Option[String] = {
@@ -809,15 +822,9 @@ trait LinearAssetOperations {
     }
   }
 
-//  def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
-//    val polygon= polygonTools.getPolygonByArea(areaId)
-//    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
-//    getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
-//  }
-
   def getMunicipalityById (id: Long): Seq[Long]={
     withDynTransaction {
-      dao.getMunicipalityById(id)
+      municipalityDao.getMunicipalityById(id)
     }
   }
 
@@ -829,12 +836,12 @@ trait LinearAssetOperations {
       }
     }
   }
-
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools : PolygonTools = new PolygonTools()

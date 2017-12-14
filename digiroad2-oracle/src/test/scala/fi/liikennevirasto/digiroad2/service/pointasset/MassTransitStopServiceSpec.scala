@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -94,6 +94,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override def withDynTransaction[T](f: => T): T = f
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
@@ -102,6 +103,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override def withDynTransaction[T](f: => T): T = f
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
@@ -114,12 +116,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
   class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 

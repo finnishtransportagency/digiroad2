@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, OracleUserProvider}
+import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
@@ -285,6 +285,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
+    val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
     when(mockMassTransitStopDao.getAssetAdministrationClass(any[Long])).thenReturn(None)
 
     class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
@@ -292,6 +293,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       override def withDynTransaction[T](f: => T): T = f
       override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
+      override val municipalityDao: MunicipalityDao = mockMunicipalityDao
     }
 
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]

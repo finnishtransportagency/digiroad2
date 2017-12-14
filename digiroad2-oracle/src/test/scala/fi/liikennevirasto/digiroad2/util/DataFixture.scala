@@ -6,7 +6,7 @@ import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, OracleAssetDao, Queries, RoadAddressDAO}
+import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
@@ -78,6 +78,7 @@ object DataFixture {
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+      override val municipalityDao: MunicipalityDao = new MunicipalityDao
     }
     new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
   }

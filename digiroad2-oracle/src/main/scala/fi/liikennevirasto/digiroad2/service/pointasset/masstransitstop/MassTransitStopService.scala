@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries}
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -96,6 +96,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
   val massTransitStopDao: MassTransitStopDao
+  val municipalityDao: MunicipalityDao
   val roadLinkService: RoadLinkService
 
   val geometryTransform = new GeometryTransform
@@ -492,7 +493,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def publishSaveEvent(persistedStop: PersistedAsset, roadLinkByLinkId: Long => Option[RoadLinkLike]): MassTransitStopWithProperties = {
-    val municipalityName = massTransitStopDao.getMunicipalityNameByCode(persistedStop.municipalityCode)
+    val municipalityName = municipalityDao.getMunicipalityNameByCode(persistedStop.municipalityCode)
     eventbus.publish("asset:saved", eventBusMassTransitStop(persistedStop, municipalityName))
     withFloatingUpdate(persistedStopToMassTransitStopWithProperties(roadLinkByLinkId))(persistedStop)
   }

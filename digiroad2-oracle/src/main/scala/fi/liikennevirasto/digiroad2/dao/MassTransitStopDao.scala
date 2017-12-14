@@ -366,12 +366,6 @@ class MassTransitStopDao {
     }
   }
 
-  def getMunicipalityNameByCode(code: Int): String = {
-    sql"""
-      select name_fi from municipality where id = $code
-    """.as[String].first
-  }
-
   def propertyDefaultValues(assetTypeId: Long): List[SimpleProperty] = {
     implicit val getDefaultValue = new GetResult[SimpleProperty] {
       def apply(r: PositionedResult) = {

@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -24,6 +25,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
   val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
   when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
@@ -41,6 +43,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
+    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -288,6 +291,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       RoadLink(linkId2, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
 
     OracleDatabase.withDynTransaction {
+      when(mockMunicipalityDao.getMunicipalityNameByCode(235)).thenReturn("Kauniainen")
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, Nil))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
 
@@ -295,8 +299,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val newAssets2 = service.create(Seq(NewLinearAsset(linkId2, 40.0, 120, NumericValue(4779), 1, 234567, None)), RoadWidthAssetTypeId, "testuser")
 
       val unVerifiedAssets = service.getUnverifiedLinearAssets(RoadWidthAssetTypeId)
-
-      unVerifiedAssets.flatMap(_._2).keys.head should be("235")
+      unVerifiedAssets.keys.head should be ("Kauniainen")
+      unVerifiedAssets.flatMap(_._2).keys.head should be("Municipality")
       unVerifiedAssets.flatMap(_._2).values.head should be(newAssets1)
       unVerifiedAssets.flatMap(_._2).values.head should not be newAssets2
       dynamicSession.rollback()

@@ -827,17 +827,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/linearassets/unverified"){
-    val assetTypeId = params.get("typeId")
-    //dummy
-    val municipalitySet: Map[String, Map[String ,List[Long]]] =
-      Map(
-        "Testmunicipality" -> Map("Unknown" -> List(622700, 622698),
-                                  "Private" -> List(622702)),
-
-      "Municipality2" -> Map("Unknown" -> List(616073),
-                             "Private" -> List(623367),
-                             "State" -> List(622686)))
-    municipalitySet
+      val user = userProvider.getCurrentUser()
+      val includedMunicipalities = user.isOperator() match {
+        case true => None
+        case false => Some(user.configuration.authorizedMunicipalities)
+      }
+      val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    val usedService = getLinearAssetService(typeId)
+    usedService.getUnverifiedLinearAssets(typeId, includedMunicipalities)
   }
 
   get("/linearassets/midpoint"){
@@ -1242,15 +1239,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
 
-//    for (link <- roadLinkService.fetchVVHRoadlinkAndComplementary(asset.linkId)) {
     for (link <- roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       optTypeID match {
         case Some(typeId) => validateAdministrativeClass(typeId)(link.administrativeClass)
         case _ => None
       }
-//      service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
-      service.create(asset, user.username, link)
+     service.create(asset, user.username, link)
     }
   }
 

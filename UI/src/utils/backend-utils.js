@@ -393,7 +393,7 @@
       return $.getJSON('api/trafficSigns/floating');
     };
 
-    this.getLinearAssetUnchecked = function(typeId) {
+    this.getUncheckedLinearAsset = function(typeId) {
       return $.getJSON('api/linearAsset/unchecked?typeId=' + typeId);
     };
 
