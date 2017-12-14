@@ -9,10 +9,10 @@ trait RoadAddressMapper {
 
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
     def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
-      val startM = Math.max(Math.min(d1, d2), 0.0)
+      // When operating with fake geometries (automatic change tables) the geometry may not have correct length
+      val startM = Math.min(Math.max(Math.min(d1, d2), 0.0), GeometryUtils.geometryLength(geometry))
       val endM = Math.min(Math.max(d1, d2), GeometryUtils.geometryLength(geometry))
-      GeometryUtils.truncateGeometry3D(geometry,
-        startM, endM)
+      GeometryUtils.truncateGeometry3D(geometry, startM, endM)
     }
 
     // When mapping contains a larger span (sourceStart, sourceEnd) than the road address then split the mapping
@@ -232,7 +232,7 @@ trait RoadAddressMapper {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown, ra.ely)
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown, ra.ely, ra.reversed)
     ).toSeq
   }
 

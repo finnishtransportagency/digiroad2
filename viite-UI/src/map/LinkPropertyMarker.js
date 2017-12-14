@@ -74,7 +74,7 @@
         });
       };
 
-      if(roadlink.roadLinkType==-1){
+      if(roadlink.roadLinkType===-1){
         box.setStyle(boxStyleFloat);
       } else if(roadlink.roadLinkSource===3){
         box.setStyle(boxStyleDirectional(roadlink));

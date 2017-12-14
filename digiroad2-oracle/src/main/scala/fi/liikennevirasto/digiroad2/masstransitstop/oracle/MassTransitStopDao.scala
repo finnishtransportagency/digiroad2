@@ -53,13 +53,13 @@ class MassTransitStopDao {
         from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
-        join property p on a.asset_type_id = p.asset_type_id
+          join property p on a.asset_type_id = p.asset_type_id
+          left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
       """
     queryToPersistedMassTransitStops(queryFilter(query))
   }
@@ -68,16 +68,16 @@ class MassTransitStopDao {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
+    val nearestStops = fetchPointAssets(withFilter(filter)).
+      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
 
     terminalIdOption match {
       case Some(terminalId) =>
-        val filter = s"where a.asset_type_id = $typeId and (a.valid_to is null or a.valid_to > sysdate) and (($boundingBoxFilter ) or tbs.terminal_asset_id = $terminalId)"
-        fetchPointAssets(withFilter(filter))
-          .filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters || r.terminalId.contains(terminalId))
+        val terminalStops = fetchPointAssets(withTerminalId(terminalId))
+        nearestStops.filterNot(ns => terminalStops.exists(t => t.id == ns.id)) ++ terminalStops
       case _ =>
-        val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
-        fetchPointAssets(withFilter(filter)).
-          filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+        nearestStops
     }
   }
 
@@ -515,6 +515,13 @@ class MassTransitStopDao {
            """.execute
   }
 
+  def getAllChildren(terminalAssetId: Long): Seq[Long] = {
+    sql"""
+          SELECT BUS_STOP_ASSET_ID from TERMINAL_BUS_STOP_LINK
+           where TERMINAL_ASSET_ID = $terminalAssetId
+      """.as[Long].list
+  }
+
   def insertTerminal(assetId: Long): Unit = {
     sqlu"""INSERT INTO TERMINAL_BUS_STOP_LINK (TERMINAL_ASSET_ID) VALUES ($assetId)""".execute
   }
@@ -569,6 +576,10 @@ class MassTransitStopDao {
 
   def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
+  }
+
+  def withTerminalId(terminalId: Long)(query: String): String = {
+    query + s" where terminal_asset_id = $terminalId and (a.valid_to is null or a.valid_to > sysdate)"
   }
 
   def withNationalId(nationalId: Long)(query: String): String = {

@@ -93,6 +93,12 @@
     var speedLimitComplementaryCheckBox = [
       '<div class="check-box-container">' +
         '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+      '</div>'
+    ].join('');
+
+    var speedLimitSignsCheckBox = [
+      '<div class="check-box-container">' +
+      '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
       '</div>' +
       '</div>'
     ].join('');
@@ -106,6 +112,7 @@
             speedLimitLegendTemplate,
             speedLimitHistoryCheckBox,
             speedLimitComplementaryCheckBox,
+            speedLimitSignsCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -172,6 +179,14 @@
         } else {
           eventbus.trigger('speedLimits:hideSpeedLimitsComplementary');
         }
+      }
+    });
+
+    elements.expanded.find('#signsCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('speedLimit:showReadOnlyTrafficSigns');
+      } else {
+        eventbus.trigger('speedLimit:hideReadOnlyTrafficSigns');
       }
     });
 
@@ -395,8 +410,8 @@
   ActionPanelBoxes.AssetBox = function(selectedMassTransitStopModel) {
     var toolSelection = new ToolSelection([
       new Tool('Select', selectToolIcon, selectedMassTransitStopModel),
-      new Tool('Add', addToolIcon, selectedMassTransitStopModel),
-      new Tool('AddTerminal', terminalToolIcon, selectedMassTransitStopModel)
+      new Tool('Add', setTitleTool(addToolIcon, 'Lisää pysäkki'), selectedMassTransitStopModel),
+      new Tool('AddTerminal', setTitleTool(terminalToolIcon, 'Lisää terminaalipysäkki'), selectedMassTransitStopModel)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
@@ -569,6 +584,10 @@
 
     function hide() {
       element.hide();
+    }
+
+    function setTitleTool(icon, title) {
+      return icon.replace('/>', ' title="'+title+'"/>');
     }
 
     return {

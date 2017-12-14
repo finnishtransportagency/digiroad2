@@ -129,7 +129,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
-            WHERE (valid_to is null OR valid_to > CURRENT_TIMESTAMP) AND
+            WHERE (valid_to is null OR valid_to > SYSDATE) AND
                 EXISTS (SELECT k.manoeuvre_id
                                FROM MANOEUVRE_ELEMENT k
                                join #$idTableName i on i.id = k.link_id
@@ -146,7 +146,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
-            WHERE (valid_to is null OR valid_to > CURRENT_TIMESTAMP) AND
+            WHERE (valid_to is null OR valid_to > SYSDATE) AND
                 EXISTS (SELECT k.manoeuvre_id
                                FROM MANOEUVRE_ELEMENT k
                                join #$idTableName i on i.id = k.link_id
@@ -163,7 +163,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
-            WHERE m.id = $id and (valid_to > CURRENT_TIMESTAMP OR valid_to is null)""".as[(Long, Long, Long, Int, DateTime, String, String)].list
+            WHERE m.id = $id and (valid_to > SYSDATE OR valid_to is null)""".as[(Long, Long, Long, Int, DateTime, String, String)].list
     manoeuvre.map(row =>
       PersistedManoeuvreRow(row._1, row._2, row._3, row._4, row._5, row._6, row._7))
   }

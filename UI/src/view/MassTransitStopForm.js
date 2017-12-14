@@ -355,7 +355,7 @@
 
       var directionChoiceHandler = function(property){
         if (!readOnly) {
-          return createWrapper(property).append(createDirectionChoiceElement(readOnly, property));
+          return createWrapper(property).append(createDirectionChoiceElement(property));
         }
       };
 
@@ -566,6 +566,7 @@
           'yllapitajan_koodi',
           'matkustajatunnus',
           'laiturinumero', //Platform Number
+          'alternative_link_id',
           'liitetty_terminaaliin',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',

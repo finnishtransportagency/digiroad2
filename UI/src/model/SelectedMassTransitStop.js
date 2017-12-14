@@ -273,23 +273,20 @@
     var validateDirectionsForSave = function () {
       if(roadCollection){
         var roadLinkDirection = getRoadLinkDirection();
-        var massTransitStopDirection =  currentAsset.payload.validityDirection;
+        var massTransitStopDirection = currentAsset.payload.validityDirection;
         return isTerminalBusStop(currentAsset.payload.properties) || roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
-      }else{
-        return false;
       }
+      return false;
     };
 
     var validateDirectionsForCreation = function () {
-      if(roadCollection){
+      if(roadCollection && !currentAsset.id){
         var roadLinkDirection = getRoadLinkDirection();
         var massTransitStopDirection = currentAsset.payload.validityDirection;
         if(roadLinkDirection != 1)
           return massTransitStopDirection != roadLinkDirection;
-        return true;
-      }else{
-        return false;
       }
+      return true;
     };
 
     var getRoadLinkDirection = function(){

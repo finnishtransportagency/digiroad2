@@ -7,6 +7,8 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
+import fi.liikennevirasto.digiroad2.masstransitstop.{MassTransitStopOperations, TerminalPublishInfo}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -21,10 +23,39 @@ import org.apache.http.impl.client.HttpClientBuilder
 
 import scala.concurrent.duration.FiniteDuration
 
-class ValluActor extends Actor {
+class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
+  def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
-    case (massTransitStop: EventBusMassTransitStop) => ValluSender.postToVallu(massTransitStop)
+    case (massTransitStop: PersistedMassTransitStop) => persistedAssetChanges(massTransitStop)
     case _                                          => println("received unknown message")
+  }
+
+  def persistedAssetChanges(busStop: PersistedMassTransitStop) = {
+    withDynSession {
+      val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
+      ValluSender.postToVallu(massTransitStop)
+    }
+  }
+}
+
+class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends Actor {
+  def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
+  def receive = {
+    case x: AbstractPublishInfo => persistedAssetChanges(x.asInstanceOf[TerminalPublishInfo])
+    case x                                          => println("received unknown message" + x)
+  }
+
+  def persistedAssetChanges(terminalPublishInfo: TerminalPublishInfo) = {
+    withDynSession {
+    val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset++terminalPublishInfo.detachAsset).toSet)
+
+    persistedStop.foreach { busStop =>
+        val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+        val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
+        ValluSender.postToVallu(massTransitStop)
+      }
+    }
   }
 }
 
@@ -35,14 +66,18 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 
   def persistLinearAssetChanges(changeSet: ChangeSet) {
-    //TODO just for test propose
-    /*
-    linearAssetService.drop(changeSet.droppedAssetIds)
-    linearAssetService.persistMValueAdjustments(changeSet.adjustedMValues)
-    linearAssetService.persistSideCodeAdjustments(changeSet.adjustedSideCodes)
-    linearAssetService.expire(changeSet.expiredAssetIds.toSeq, LinearAssetTypes.VvhGenerated)
-    */
-    linearAssetService.updateChangeSet(changeSet);
+    linearAssetService.updateChangeSet(changeSet)
+  }
+}
+
+class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
+  def receive = {
+    case x: ChangeSet => persistRoadWidthChanges(x)
+    case _            => println("RoadWidthUpdater: Received unknown message")
+  }
+
+  def persistRoadWidthChanges(changeSet: ChangeSet) {
+    roadWidthService.updateChangeSet(changeSet)
   }
 }
 
@@ -158,8 +193,11 @@ object Digiroad2Context {
     }
   }
 
-  val vallu = system.actorOf(Props[ValluActor], name = "vallu")
+  val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
+
+  val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")
+  eventbus.subscribe(valluTerminal, "terminal:saved")
 
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
@@ -215,6 +253,10 @@ object Digiroad2Context {
 
   lazy val assetPropertyService: AssetPropertyService = {
     new AssetPropertyService(eventbus, userProvider, DefaultDatabaseTransaction)
+  }
+
+  lazy val linearMassLimitationService: LinearMassLimitationService = {
+    new LinearMassLimitationService(roadLinkService, new OracleMassLimitationDao)
   }
 
   lazy val speedLimitService: SpeedLimitService = {

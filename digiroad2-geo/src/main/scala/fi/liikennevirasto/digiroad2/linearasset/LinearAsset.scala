@@ -22,18 +22,21 @@ case class NumericValue(value: Int) extends Value {
 case class TextualValue(value: String) extends Value {
   override def toJson: Any = value
 }
-case class MaintenanceRoad(maintenanceRoad: Seq[Properties]) extends Value{
-  override def toJson: Any = maintenanceRoad
+case class MaintenanceRoad(properties: Seq[Properties]) extends Value{
+  override def toJson: Any = properties
 }
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
+case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
+  override def toJson: Any = massLimitation
+}
 
+case class AssetTypes(typeId: Int, value: String)
 case class AssetProperties(name: String, value: String)
 case class ManoeuvreProperties(name: String, value: Any)
 
 case class Properties(publicId: String, propertyType: String, value: String)
-
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {
@@ -136,3 +139,4 @@ case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Op
 
 case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
+

@@ -29,11 +29,10 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   val defaultChangeInfo=RoadAddressChangeInfo(AddressChangeType.apply(2),
     RoadAddressChangeSection(None, None, None, None, None, None, None, None, None),
     RoadAddressChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
-      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1))
+      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), false)
 
   def getRestEndPoint: String = {
     val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-    println("viite-endpoint = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
     loadedKeyString
@@ -137,7 +136,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       "\n\t\t\"target\": {\n\t\t\t\"tie\": 11007,\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 1,\n\t\t\t\"aet\": 3616," +
       "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"road_type\": 821\n\t}]\n}"
     val parsedProject = parse(StringInput(string)).extract[ChangeProject]
-    val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonmessage(parsedProject).getContent)).extract[ChangeProject]
+    val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent)).extract[ChangeProject]
     parsedProject should be (reparsed)
     reparsed.id should be (8914)
     reparsed.changeDate should be ("2017-06-01")
@@ -157,7 +156,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5606\n\t\t},\n\t\t\"continuity\": 1,\n\t\t\"road_type\": 821\n\t}"+
       "]\n}"
     val parsedProject = parse(StringInput(string)).extract[ChangeProject]
-    val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonmessage(parsedProject).getContent)).extract[ChangeProject]
+    val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent)).extract[ChangeProject]
     parsedProject should be (reparsed)
     reparsed.changeInfoSeq should have size (2)
     val part2 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 2)
