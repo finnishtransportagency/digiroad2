@@ -300,7 +300,7 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true,
+  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true,
                     filterIds: Set[Long] = Set()): List[RoadAddress] = {
     if (linkIds.size > 1000 || filterIds.size > 1000) {
       return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
@@ -323,6 +323,12 @@ object RoadAddressDAO {
     else
       ""
 
+    val valid = if(!includeTerminated) {
+      "AND ra.terminated = 0"
+    } else {
+      ""
+    }
+
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
@@ -333,7 +339,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $floating $history $idFilter and t.id < t2.id and
+        $where $floating $history $valid $idFilter and t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
