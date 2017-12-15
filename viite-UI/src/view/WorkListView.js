@@ -1,5 +1,7 @@
 (function (root) {
+  var counter = 0;
   var floatingLinksTable = function(layerName, floatingLinks, elyCode) {
+    counter += floatingLinks.length;
     var elyHeader = function(elyCode) {
       return $('<h2/>').html("ELY " + elyCode );
     };
@@ -58,8 +60,10 @@
     $(window).on('hashchange', showApp);
 
     listP.then(function(floatings) {
+      counter = 0;
+      $('#work-list .work-list').html("");
       var floatingLinks = _.map(floatings, _.partial(floatingLinksTable, layerName));
-      $('#work-list .work-list').html(floatingLinks);
+      $('#work-list .work-list').append($('<h3 style="padding-left: 10px;"/>').html( " " + counter + " tieosoitetta on irti geometriasta")).append(floatingLinks);
       removeSpinner();
     });
   };
