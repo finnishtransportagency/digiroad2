@@ -73,6 +73,11 @@ object LinearAssetUtils {
     ).keys.toSeq
   }
 
+  def getMappedChanges(changes: Seq[ChangeInfo]): Map[Long, Seq[ChangeInfo]] = {
+    (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
+      .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
+  }
+
   private def persistedLinearAssetToLinearAsset(persisted: PersistedLinearAsset) = {
     PieceWiseLinearAsset(id = persisted.id, linkId = persisted.linkId, sideCode = SideCode.apply(persisted.sideCode),
       value = persisted.value,

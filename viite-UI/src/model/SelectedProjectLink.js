@@ -22,9 +22,15 @@
 
     var orderSplitParts = function(links) {
       var splitLinks =  _.partition(links, function(link){
-        return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && !_.isUndefined(link.connectedLinkId);
+        return !_.isUndefined(link.connectedLinkId);
       });
       return _.sortBy(splitLinks[0], function (s) {return s.status == LinkStatus.Transfer.value ? 1 : s.status;});
+    };
+
+    var getLinkMarker = function(linkList, statusList){
+      return _.find(linkList, function (link) {
+        return _.contains(statusList,link.status);
+      });
     };
 
     var openSplit = function (linkid, multiSelect) {
@@ -36,15 +42,19 @@
         current = projectLinkCollection.getByLinkId(ids);
       }
       var orderedSplitParts = orderSplitParts(get());
-      var suravageA = orderedSplitParts[0];
-      var suravageB = orderedSplitParts[1];
+      var suravageA = getLinkMarker(orderedSplitParts, [LinkStatus.Transfer.value, LinkStatus.Unchanged.value]);
+      var suravageB = getLinkMarker(orderedSplitParts, [LinkStatus.New.value]);
+      var terminatedC = getLinkMarker(orderedSplitParts, [LinkStatus.Terminated.value]);
       suravageA.marker = "A";
       if (!suravageB){
         suravageB = zeroLengthSplit(suravageA);
         suravageA.points = suravageA.originalGeometry;
       }
       suravageB.marker = "B";
-      eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
+      if (terminatedC) {
+        terminatedC.marker = "C";
+      }
+      eventbus.trigger('split:projectLinks',  [suravageA, suravageB, terminatedC]);
     };
 
     var preSplitSuravageLink = function(suravage, nearestPoint) {

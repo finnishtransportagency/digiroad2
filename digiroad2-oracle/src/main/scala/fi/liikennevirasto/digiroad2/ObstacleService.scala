@@ -8,6 +8,8 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 
 case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
+case class IncomingObstacleAsset(linkId: Long, mValue: Long, obstacleType: Int)  extends IncomePointAsset
+
 
 class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingObstacle
@@ -79,6 +81,12 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   def updateFloatingAsset(obstacleUpdated: Obstacle) = {
     OracleObstacleDao.updateFloatingAsset(obstacleUpdated)
+  }
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingObstacle] = {
+     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
+       point =>  IncomingObstacle(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingObstacleAsset].obstacleType)
+     }
   }
 }
 

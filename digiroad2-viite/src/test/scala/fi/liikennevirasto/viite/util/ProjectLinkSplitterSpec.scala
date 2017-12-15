@@ -17,6 +17,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.MaxSuravageToleranceToGeometry
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import org.joda.time.DateTime
 import org.mockito.Matchers.any
@@ -260,11 +261,14 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
+    val (splitA, splitB) = sl.partition(_.status != LinkStatus.New)
     val terminatedLink = tl.head
     terminatedLink.status should be (LinkStatus.Terminated)
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
-    GeometryUtils.areAdjacent(terminatedLink.geometry,
-      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
+    terminatedLink.startAddrMValue should be (splitA.head.endAddrMValue)
+    terminatedLink.startAddrMValue should be (splitB.head.startAddrMValue)
+    GeometryUtils.minimumDistance(terminatedLink.geometry.head, splitA.head.geometry) should be < MaxSuravageToleranceToGeometry
+    GeometryUtils.areAdjacent(terminatedLink.geometry, template.geometry) should be (true)
     sl.foreach { l =>
       l.sideCode should be (SideCode.AgainstDigitizing)
       l.startAddrMValue == template.startAddrMValue || l.startMValue == 0.0 should be (true)

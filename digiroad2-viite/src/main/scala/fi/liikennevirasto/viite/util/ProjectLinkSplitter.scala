@@ -32,8 +32,6 @@ object ProjectLinkSplitter {
     val splitGeometries = {
       val endingGeom = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength)
       val startingGeom = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM)
-      val addr = ((templateLink.addrAt(templateM), templateLink.endAddrMValue), (templateLink.startAddrMValue, templateLink.addrAt(templateM)))
-
       if (equals(endingGeom, keptGeom)){
         (endingGeom, startingGeom)
       } else if (equals(startingGeom, keptGeom)){
@@ -42,11 +40,17 @@ object ProjectLinkSplitter {
         throw new SplittingException("Suunnitelmalinkin katkaisukohta ei kohtaa olemassaolevan tieosoitteen kanssa.")
       }
     }
+    val (startMA, endMA, startMB, endMB) = (GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.head, suravage.geometry),
+      GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.last, suravage.geometry),
+      GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.head, suravage.geometry),
+      GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.last, suravage.geometry))
     val splitAddresses =
       (Seq(templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.head, templateLink.geometry)),
         templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.last, templateLink.geometry))),
         Seq(templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.head, templateLink.geometry)),
           templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.last, templateLink.geometry))))
+    println(startMA, endMA, startMB, endMB)
+
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,

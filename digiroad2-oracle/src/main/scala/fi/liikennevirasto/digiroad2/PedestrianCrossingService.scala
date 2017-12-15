@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 
 case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
+case class IncomingPedestrianCrossingAsset(linkId: Long, mValue: Long) extends IncomePointAsset
 
 class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingPedestrianCrossing
@@ -65,6 +66,12 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
+  }
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingPedestrianCrossing] = {
+    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
+      point =>  IncomingPedestrianCrossing(point.x, point.y, link.linkId)
+    }
   }
 }
 
