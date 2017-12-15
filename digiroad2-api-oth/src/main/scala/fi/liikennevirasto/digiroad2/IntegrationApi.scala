@@ -40,13 +40,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .getOrElse(""))
   }
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
-    def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
+    def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any), mapName: Option[String] = None): (String, Any) = {
       val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
         property.values.map { value =>
           value.propertyValue
         }
       }
-      key -> transformation(values)
+      mapName.getOrElse(key) -> transformation(values)
     }
     def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
     def propertyValuesToString(values: Seq[String]): String = { values.mkString }
@@ -111,7 +111,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
             extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liitetty_terminaaliin", massTransitStop.propertyData, propertyValuesToString)))
+            extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
+            extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString)
+          ))
       })
   }
 
@@ -217,9 +219,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
     def getLinearAssetService(typeId: Int): LinearAssetOperations = {
       typeId match {
-        case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
-        case LinearAssetTypes.PavingAssetTypeId => pavingService
-        case LinearAssetTypes.RoadWidthAssetTypeId => roadWidthService
+        case MaintenanceRoadAsset.typeId => maintenanceRoadService
+        case PavedRoad.typeId => pavingService
+        case RoadWidth.typeId => roadWidthService
         case _ => linearAssetService
       }
     }

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.masstransitstop
 
 import java.util.{Date, NoSuchElementException}
 
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{AbstractPublishInfo, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
@@ -60,7 +60,7 @@ object TierekisteriBusStopStrategyOperations{
   }
 }
 
-class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService)
+class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, geometryTransform: GeometryTransform, eventbus: DigiroadEventBus) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus)
 {
   val toLiviId = "OTHJ%d"
   val MaxMovementDistanceMeters = 50
@@ -113,7 +113,11 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     }
   }
 
-  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
+  override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
+    super.publishSaveEvent(publishInfo)
+  }
+
+  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, PublishInfo) = {
 
     validateBusStopDirections(asset.properties, roadLink)
 
@@ -142,12 +146,11 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     val persistedAsset = fetchAsset(assetId)
 
     createTierekisteriBusStop(persistedAsset, roadLink, liviId)
-
-    persistedAsset
+    (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
 
   //TODO this can be improved for sure
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(props.toSeq, roadLink)
@@ -192,11 +195,11 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
         updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 
-        val persistedAsset = fetchAsset(asset.id)
+        val persistedAsset = enrichBusStop(fetchAsset(asset.id))._1
 
         updateTierekisteriBusStop(persistedAsset, roadLink, liviId)
 
-        persistedAsset
+        (persistedAsset, PublishInfo(Some(persistedAsset)))
       }
     }else{
       val newLiviId = toLiviId.format(asset.nationalId)
@@ -206,19 +209,20 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, newLiviId)
       updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 
-      val persistedAsset = fetchAsset(asset.id)
+      val persistedAsset = enrichBusStop(fetchAsset(asset.id))._1
 
       createTierekisteriBusStop(persistedAsset, roadLink, newLiviId)
 
-      persistedAsset
+      (persistedAsset, PublishInfo(Some(persistedAsset)))
     }
   }
 
-  override def delete(asset: PersistedMassTransitStop): Unit = {
+  override def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo] = {
     super.delete(asset)
 
     val liviId = getLiviIdValue(asset.propertyData).getOrElse(throw new NoSuchElementException)
     deleteTierekisteriBusStop(liviId)
+    None
   }
 
   private def getLiviIdValue(properties: Seq[AbstractProperty]) = {

@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -263,8 +263,8 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
       val project = RoadAddressProject(Sequences.nextViitePrimaryKeySeqValue, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(), None , None)
       ProjectDAO.createRoadAddressProject(project)
-      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by, first_link_id, road_length, address_length, discontinuity, ely)
-            values ($reservationId, 6591, 1, ${project.id}, '-', 6550673, 85, 85, 5, 9)
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
+            values ($reservationId, 6591, 1, ${project.id}, '-')
           """.execute
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
             MODIFIED_DATE,LINK_SOURCE) values (${lrms(0)},null,'3','0',86.818,null,'6550673','1476392565000',
@@ -348,5 +348,22 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
         to.discontinuity should be (Discontinuity.Continuous)
       }
     })
+  }
+
+  test("Multiple transfers with reversal and discontinuity") {
+    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = MinorDiscontinuity),
+      createTransferProjectLink(1524, 502).copy(reversed = true)),
+      (createRoadAddress(502, 1524),
+        createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
+    val mapping =
+      ProjectDeltaCalculator.partition(transfer)
+    mapping should have size (2)
+    mapping.foreach{case (from, to) =>
+      from.endMAddr - from.startMAddr should be (to.endMAddr - to.startMAddr)
+      if (from.discontinuity != Continuous)
+        to.discontinuity should be (Continuous)
+      else
+        to.discontinuity should be (MinorDiscontinuity)
+    }
   }
 }

@@ -948,9 +948,8 @@ object DataFixture {
 
         val expiredAssetsIds = changedAssets.flatMap {
           case (_, changeInfo, assets) =>
-            assets.filter(asset =>
-              asset.createdBy.contains("dr1_conversion") ||
-              (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default"))
+              assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
+                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default")
             ).map(_.id)
         }.toSet
 

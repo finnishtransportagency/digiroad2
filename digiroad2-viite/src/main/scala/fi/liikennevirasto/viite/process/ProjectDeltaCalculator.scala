@@ -241,15 +241,15 @@ object ProjectDeltaCalculator {
 
   def partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection] = {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
-      o.sortBy(_.startAddrMValue).map(ra =>
+      o.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed))
     }
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue)))
       .mapValues(v => {
-        val x = v.unzip
-        toRoadAddressSection(x._1) -> toRoadAddressSection(x._2)
+        val (from, to) = v.unzip
+        toRoadAddressSection(from) -> toRoadAddressSection(to)
       })
     sectioned.flatMap { case (key, (src, target)) =>
       val matches = matchingTracks(sectioned, key)

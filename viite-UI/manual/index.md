@@ -52,7 +52,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu 
 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
 - Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; emmi.sallinen@karttakeskus.fi
+- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; janne.grekula@karttakeskus.fi
 
 
 2. Perustietoja Viite-sovelluksesta
@@ -419,7 +419,7 @@ K&auml;ytt&auml;j&auml; voi poistaa varattuja tieosia klikkaamalla ruksia tieosa
 
 ![Uusi tieosoiteprojekti](k20.JPG)
 
-_Kun tieosa on varattu projektiin Viite zoomaa varatun tieosan alkuun mittakaavalle 1000m. Varattu tieosa alkaa kohdistimen n&auml;ytt&auml;m&auml;st&auml; kohdasta, ja jatkuu tieosan p&auml;&auml;h&auml;n et&auml;isyyslukema-symboliin asti._ 
+_Kun tieosa on varattu projektiin Viite zoomaa kartan siten ett&auml; tieosa n&auml;kyy kartalla kokonaisuudessaan.  
 
 Varauksen yhteydess&auml; j&auml;rjestelm&auml; tekee varattaville tieosille tarkistukset:
 
@@ -452,9 +452,9 @@ _Ilmoitus, jos varattava tieosa ei ole voimassa p&auml;iv&auml;n&auml;, jolloin 
 10.1 Olemassa olevan tieosoiteprojektin avaaminen Tieosoiteprojektit -listalta
 --------------------------
 
-Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit -listalta painamalla Avaa -painiketta. Avaamisen yhteydess&auml; sovellus zoomaa varatun tieosan alkuun, jotta k&auml;ytt&auml;j&auml; p&auml;&auml;see projektin alueelle.
+Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit -listalta painamalla Avaa -painiketta. Avaamisen yhteydess&auml; sovellus zoomaa kartan paikkaan, jossa k&auml;ytt&auml;j&auml; on viimeimm&auml;ksi tallentanut toimenpiteen. Mik&auml;li toimenpiteit&auml; ei ole tehty, karttan&auml;kym&auml; rajautuu siten, ett&auml; kaikki varatut aihiot n&auml;kyv&auml;t karttan&auml;kym&auml;ss&auml;
 
-Tieosoiteprojektit -listalla n&auml;kyv&auml;t kaikkien k&auml;ytt&auml;jien projektit. Projektit ovat projektin nimen mukaisessa aakkosj&auml;rjestyksess&auml;.
+Tieosoiteprojektit -listalla n&auml;kyv&auml;t kaikkien k&auml;ytt&auml;jien projektit. Projektit on j&auml;rjestetty ELY-koodien mukaiseen j&auml;rjestykseen ja niiden sis&auml;ll&auml; projektin nimen ja k&auml;ytt&auml;j&auml;tunnuksen mukaiseen j&auml;rjestykseen. Projektin tekij&auml;n k&auml;ytt&auml;j&auml;tunnus n&auml;kyy my&ouml;s projektilistauksessa.
 
 ![Uusi tieosoiteprojekti](k26.JPG)
 
@@ -474,6 +474,7 @@ Tieosoiteprojektissa on mahdollista tehd&auml; seuraavia muutosilmoituksia:
 - numeroinnin muutos (kokonaisen tieosan tienumeron ja/tai tieosanumeron voi muuttaa manuaalisesti) 
 - k&auml;&auml;nt&ouml; (tieosoitteen kasvusuunnan k&auml;&auml;nt&ouml;)
 - et&auml;isyyslukeman muutos (et&auml;isyyslukeman loppuarvon voi sy&ouml;tt&auml;&auml; tieosalle manuaalisesti)
+- ELY koodin, jatkuvuuden ja tietyypin muutos
 
 T&auml;ss&auml; sek&auml; seuraavissa kappaleissa kuvataan muutosilmoitusten teko Viitteess&auml;.
 
@@ -553,10 +554,10 @@ Tieosoitteen voi antaa Viitteess&auml; my&ouml;s ns. Suravage-linkeille (SuRavaG
 --------------------------
 Tieosan linkkien tieosoitteen voi s&auml;ilytt&auml;&auml; ennallaan esimerkiksi silloin, kun osalle tieosaa halutaan tehd&auml; tieosoitemuutoksia ja osan s&auml;ilyv&auml;n ennallaan. T&auml;ll&ouml;in tieosa k&auml;sitell&auml;&auml;n toimenpiteell&auml; Ennallaan. Toimenpide tehd&auml;&auml;n varaamalla ensin projektitietojen formilla projektiin muokattava tieosa tai -osat. Seuraavaksi siirryt&auml;&auml;n toimenpiden&auml;yt&ouml;lle Jatka toimenpiteisiin - painikkeella. Valittu tieosa tai sen tietyt linkit valitaan kartalta, jolloin ne muuttuvat vihreiksi, ja lomakkeelle ilmestyy alasvetovalikko. Valikosta valitaan toimenpide "Ennallaan" ja tallennetaan muutokset.   
 
-11.1.4 Siirtofile:///C:/Users/lehtirii/Documents/GitHub/digiroad2/viite-UI/manual/k48.JPG
+11.1.4 Siirto
 --------------------------
 Siirto-toimenpide tehd&auml;&auml;n tieosalle uusien m-arvojen laskemiseksi. Siirtoa k&auml;ytet&auml;&auml;n, kun osa tieosan linkeist&auml; k&auml;sitell&auml;&auml;n jollain muulla toimenpiteell&auml; ja loppujen linkkien m-arvot t&auml;ytyy laskea uudelleen. Esimerkkin&auml; osalle tieosan linkeist&auml; voidaan tehd&auml; lakkautus, lis&auml;t&auml; uusia linkkej&auml; ja pit&auml;&auml; osa linkeist&auml; ennallaan. Siirto tehd&auml;&auml;n tieosoiteprojektiin varatulle tieosalle (varaaminen kuvattu kpl:ssa 10) siten, ett&auml; tieosalle on ensin tehty muita toimenpiteit&auml;, kuten lakkautus, uusi tai numerointi. Linkit, joille siirto tehd&auml;&auml;n, valitaan tuplaklikkaamalla ensimm&auml;inen haluttu linkki ja lis&auml;&auml;m&auml;ll&auml; valintaan shift+tuplaklikkaamalla linkkej&auml;. Sitten valitaan toimenpidevalikosta siirto ja tallennetaan. Siirretyt linkit muuttuvat toimenpiteen tallennuksen j&auml;lkeen punaiseksi. Muutokset n&auml;kyv&auml;t projektin yhteenvetotaulukossa.   
-   
+
 
 11.1.5 Numeroinnnin muutos
 --------------------------
@@ -608,6 +609,10 @@ Kun osioiden toimenpiteet on tallennettu, suunnitelmalinkin alla sijaitseva nyky
 11.1.9 Useiden muutosten tekeminen samalle tieosalle
 --------------------------
 
+11.1.10 ELY koodin, jatkuvuuden ja tietyypin muutos
+--------------------------
+Viitteess&auml; voi muokata ELY koodia [ELYn muokkaamista ei ole viel&auml; toteutettu, Viite antaa arvon automaattisesti VVH:sta], jatkuvuutta ja tietyyppi&auml;. N&auml;it&auml; muutoksia voi tehd&auml; esimerkiksi Ennallaan muutosilmoituksella, jolloin lomakkeelle tulee alasvetovalikot ELYlle, jatkuvuudelle ja tietyypille. Uudet arvot annetaan valitulle aihiolle ja tallennetaan. Jatkuvuus koodi n&auml;ytet&auml;&auml;n valinnan viimeiselt&auml; linkilt&auml; ja muutokset kohdistuvat my&ouml;s viimeiseen linkkiin. Tietyypin ja ja ELY koodin muutos kohdistuu kaikille valituille linkeille. Ennallaan toimenpiteen lis&auml;ksi n&auml;it&auml; arvoja voi muokata aina, kun ne ovat eri muutosilmoituksen yhteydess&auml; lomakkeella muokattavissa. 
+
 
 11.2 Muutosilmoitusten tarkastelu taulukkon&auml;kym&auml;ss&auml;
 --------------------------
@@ -632,7 +637,9 @@ Muutosilmoitus vied&auml;&auml;n Tierekisteriin klikkaamalla oikean alakulman vi
 
 _Muutosilmoituspainike oikeassa alakulmassa._
 
-Kun muutosilmoitus on l&auml;hetetty, muuttuu projektilistauksessa ko. projektin Tila-tieto statukselle "L&auml;hetetty tierekisteriin" (1). Viite-sovellus tarkistaa 10 minuutin v&auml;lein Tierekisterist&auml;, onko muutos viety Tierekisteriss&auml; loppuun asti. Kun t&auml;m&auml; on tehty, muuttuu Tila-tieto statukselle "Viety tierekisteriin" (2). T&auml;ll&ouml;in tieosoiteprojekti on viety onnistuneesti Tierekisteriin, ja se on valmis. Mik&auml;li muutosilmoitus ei ole mennyt l&auml;pi tierekisteriin, lukee tilana "Virhe tierekisteriss&auml;". Tarkemmin virheen tiedot p&auml;&auml;see tarkistamaan viem&auml;ll&auml; hiiren "Virhe tierekisteriss&auml;" -tekstin p&auml;&auml;lle, jolloin infolaatikko virheest&auml; tulee n&auml;kyviin. 
+Kun muutosilmoitus on l&auml;hetetty, muuttuu projektilistauksessa ko. projektin Tila-tieto statukselle "L&auml;hetetty tierekisteriin". Viite-sovellus tarkistaa 10 minuutin v&auml;lein Tierekisterist&auml;, onko muutos k&auml;sitelty Tierekisteriss&auml; loppuun asti. Kun t&auml;m&auml; on tehty onnistuneesti, muuttuu Tila-tieto statukselle "Viety tierekisteriin". T&auml;ll&ouml;in tieosoiteprojekti on viety onnistuneesti Tierekisteriin, ja se on valmis. Mik&auml;li muutosilmoitus ei ole mennyt l&auml;pi tierekisteriin, lukee tilana "Virhe tierekisteriss&auml;" ja listalla on oranssi painike "Avaa uudelleen". Tarkemmin virheen tiedot p&auml;&auml;see tarkistamaan viem&auml;ll&auml; hiiren "Virhe tierekisteriss&auml;" -tekstin p&auml;&auml;lle, jolloin infolaatikko virheest&auml; tulee n&auml;kyviin. Virhe korjataan avaamalla projekti oranssista painikkeesta ja tekem&auml;ll&auml; tarvittavat muokkaukset sek&auml; l&auml;hett&auml;m&auml;ll&auml; ilmoitukset uudelleen tierekisteriin.  
+
+Projektia ei voi muokata, kun sen tila on joko L&auml;hetetty tierekisteriin, Tierekisteriss&auml; k&auml;sittelyss&auml; tai Viety tiereksiteriin.
 
 ![Tila-statuksia](k39.JPG)
 

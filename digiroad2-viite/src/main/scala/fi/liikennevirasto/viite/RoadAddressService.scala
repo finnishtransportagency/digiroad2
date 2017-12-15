@@ -155,8 +155,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       )
     val (historyLinkAddresses, addresses, floating) = (roadAddressResults.historyLinkAddresses, roadAddressResults.current, roadAddressResults.floating)
     val (roadsWithEndDate, roadsWithoutEndDate) = addresses.values.flatten.partition(a => a.endDate.isDefined)
+    val filteredRoadsWithEndDate = roadsWithEndDate.filterNot(r => roadsWithoutEndDate.exists(_.linkId == r.linkId))
     val complementaryLinkIds = complementaryLinks.map(_.linkId)
-    val roadsWithEndDateLinkIds = roadsWithEndDate.map(_.linkId).toSet
+    val roadsWithEndDateLinkIds = filteredRoadsWithEndDate.map(_.linkId).toSet
     val normalRoadLinkIds = roadLinks.filterNot(rl => roadsWithEndDateLinkIds.contains(rl.linkId)).map(_.linkId)
     val allRoadLinks = roadLinks.filterNot(rl => roadsWithEndDateLinkIds.contains(rl.linkId))++complementaryLinks
     val linkIds = (complementaryLinkIds ++ normalRoadLinkIds).toSet
@@ -728,9 +729,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
-case class ReservedRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Double, addressLength: Long,
-                            discontinuity: Discontinuity, ely: Long = -1, startDate: Option[DateTime], endDate: Option[DateTime],
-                            startingLinkId: Option[Long] = None, isDirty: Boolean = false) {
+case class ReservedRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, addressLength: Option[Long] = None,
+                            discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None,
+                            newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None,
+                            newEly: Option[Long] = None, startingLinkId: Option[Long] = None, isDirty: Boolean = false) {
   def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
     roadNumber == baseRoadAddress.roadNumber && roadPartNumber == baseRoadAddress.roadPartNumber
   }
