@@ -26,5 +26,4 @@ class LinearAssetUtilsSpec extends FunSuite with Matchers {
     LinearAssetUtils.newChangeInfoDetected(speedlimit2, changeinfo) should be (false)
     LinearAssetUtils.newChangeInfoDetected(speedlimit3, changeinfo) should be (false)
   }
-
 }
