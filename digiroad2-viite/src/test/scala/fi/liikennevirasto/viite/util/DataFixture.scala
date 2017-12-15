@@ -195,7 +195,7 @@ object DataFixture {
       if(roadLinks.nonEmpty) {
         //  Get road address from viite DB from the roadLinks ids
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
+          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet, false, true, false)
         }
         try {
           val groupedAddresses = roadAddresses.groupBy(_.linkId)
