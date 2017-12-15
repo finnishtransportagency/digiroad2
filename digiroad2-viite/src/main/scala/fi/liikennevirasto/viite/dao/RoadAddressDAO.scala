@@ -280,7 +280,7 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeValid: Boolean = false): List[RoadAddress] = {
+  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true): List[RoadAddress] = {
     if (linkIds.size > 1000) {
       return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory)
     }
@@ -298,8 +298,8 @@ object RoadAddressDAO {
     else
       ""
 
-    val valid = if(includeValid) {
-      "AND (ra.end_date is null OR ra.end_data >= sysdate) AND ra.terminated = 0 "
+    val valid = if(!includeTerminated) {
+      "AND ra.terminated = 0"
     } else {
       ""
     }
