@@ -1144,7 +1144,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateTerminationForHistory(Set(), unchangedAndNew)
       val suravageAddresses = RoadAddressDAO.fetchByLinkId(Set(suravageLinkId), true, true)
       // Remove the current road address from list because it is not terminated by this procedure
-      val oldLinkAddresses = RoadAddressDAO.fetchByLinkId(Set(linkId), true, true, Set(id))
+      val oldLinkAddresses = RoadAddressDAO.fetchByLinkId(Set(linkId), true, true, true, Set(id))
       suravageAddresses.foreach { a =>
         a.terminated should be(NoTermination)
         a.endDate.nonEmpty || a.endAddrMValue == origStartM + 177L should be (true)

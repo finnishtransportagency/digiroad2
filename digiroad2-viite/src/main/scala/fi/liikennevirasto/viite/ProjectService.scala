@@ -1399,7 +1399,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val splitCurrentRoadAddressIds = splitReplacements.map(_.roadAddressId).toSet
     val linkGeomSources = splitReplacements.map(pl => pl.linkId -> pl.linkGeomSource).toMap
     val addresses = RoadAddressDAO.fetchByLinkId(splitTerminationLinkIds, includeFloating = true, includeHistory = true,
-      splitCurrentRoadAddressIds) // Do not include current ones as they're created separately with other project links
+      includeTerminated = false, splitCurrentRoadAddressIds) // Do not include current ones as they're created separately with other project links
     val splitAddresses = addresses.flatMap(RoadAddressSplitMapper.mapRoadAddresses(mapping)).map(ra =>
       ra.copy(terminated = if (splitTerminationLinkIds.contains(ra.linkId)) Subsequent else NoTermination,
         linkGeomSource = linkGeomSources(ra.linkId)))
