@@ -408,7 +408,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getFloatingAdresses(includesHistory: Boolean = true) = {
+  /**
+    * Returns all floating road addresses that are represented on ROAD_ADDRESS table and are valid (excluding history)
+    *
+    * @param includesHistory - default value = false to exclude history values
+    * @return Seq[RoadAddress]
+    */
+  def getFloatingAdresses(includesHistory: Boolean = false) = {
     withDynSession{
       RoadAddressDAO.fetchAllFloatingRoadAddresses(includesHistory)
     }

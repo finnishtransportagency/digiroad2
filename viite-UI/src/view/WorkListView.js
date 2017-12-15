@@ -62,7 +62,7 @@
     listP.then(function(floatings) {
       counter = 0;
       var floatingLinks = _.map(floatings, _.partial(floatingLinksTable, layerName));
-      if(counter == 0){
+      if(counter === 0){
         $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
       }
       else {

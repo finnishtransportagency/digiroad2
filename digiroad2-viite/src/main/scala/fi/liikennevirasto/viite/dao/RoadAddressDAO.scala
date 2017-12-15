@@ -509,9 +509,9 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def fetchAllFloatingRoadAddresses(includesHistory: Boolean = true) = {
+  def fetchAllFloatingRoadAddresses(includesHistory: Boolean = false) = {
 
-    val history = if(includesHistory) s" AND ra.END_DATE is null " else ""
+    val history = if(!includesHistory) s" AND ra.END_DATE is null " else ""
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,

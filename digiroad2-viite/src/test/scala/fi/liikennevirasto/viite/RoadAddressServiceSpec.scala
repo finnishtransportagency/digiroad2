@@ -154,6 +154,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       """.as[(Long, Long, Long, Long, Long, Int)].list
   }
 
+  private def getFloatingCount(): Long = {
+    sql"""
+       select count(*)
+       from ROAD_ADDRESS where floating = 1 and (valid_from is null or valid_from <= sysdate)
+       and (valid_to is null or valid_to > sysdate) and END_DATE is null
+    """.as[Long].first
+  }
+
   test("Check the correct return of a RoadAddressLink by Municipality") {
     val municipalityId = 235
 
@@ -901,6 +909,16 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         .values.forall(_.size == 2) should be (true)
     }
   }
+
+  test("Fetch floating road addresses and validate list")  {
+    runWithRollback{
+      val existingFloatings = getFloatingCount()
+      val fetchedFloatings = roadAddressService.getFloatingAdresses()
+      existingFloatings should be (fetchedFloatings.size)
+    }
+  }
+
+
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false) = {
