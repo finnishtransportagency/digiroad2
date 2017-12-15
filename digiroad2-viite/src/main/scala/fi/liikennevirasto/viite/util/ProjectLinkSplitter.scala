@@ -32,7 +32,7 @@ object ProjectLinkSplitter {
       } else if (GeometryUtils.areAdjacent(geometry2, templateLink.geometry)){
         (geometry2, geometry1)
       } else {
-        throw new SplittingException("At least one of the geometries do not overlaps the link properly.")
+        throw new SplittingException("At least one of the geometries does not overlap the link properly.")
       }
     }
 
