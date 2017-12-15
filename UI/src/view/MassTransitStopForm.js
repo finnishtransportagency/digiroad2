@@ -566,6 +566,7 @@
           'yllapitajan_koodi',
           'matkustajatunnus',
           'laiturinumero', //Platform Number
+          'alternative_link_id',
           'liitetty_terminaaliin',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',

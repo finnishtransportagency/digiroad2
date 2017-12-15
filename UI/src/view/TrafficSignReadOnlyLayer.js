@@ -9,7 +9,7 @@
       map = params.map;
 
     var me = this;
-    me.minZoomForContent = zoomlevels.minZoomForAssets;
+    var minZoomForContent = zoomlevels.minZoomForAssets;
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
       source: vectorSource,
@@ -21,13 +21,7 @@
 
     var isShowingForLayer = {
       speedLimit: false,
-      trSpeedLimits: false,
-      totalWeightLimit: false,
-      trailerTruckWeightLimit: false,
-      axleWeightLimit: false,
-      bogieWeightLimit: false,
-      heightLimit: false,
-      lengthLimit: false
+      trSpeedLimits: false
     };
 
     var setLayerToShow = function(layerName, isShowing){
@@ -42,14 +36,14 @@
 
     var showReadOnlyTrafficSigns = function(){
       setLayerToShow(parentLayerName, true);
-      collection.setTrafficSigns(parentLayerName, true);
+      collection.setTrafficSigns('speedLimits', true);
       me.show();
       me.refreshView();
     };
 
     var hideReadOnlyTrafficSigns = function(){
       setLayerToShow(parentLayerName, false);
-      collection.setTrafficSigns(parentLayerName, false);
+      collection.setTrafficSigns('speedLimits', false);
       me.hide();
     };
 
@@ -61,11 +55,17 @@
       vectorLayer.setOpacity(1);
     };
 
+    var mapMovedHandler = function(mapState) {
+      if(mapState.selectedLayer === parentLayerName && mapState.zoom < minZoomForContent)
+        me.removeLayerFeatures();
+    };
+
     eventbus.on(parentLayerName + ':hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
     eventbus.on(parentLayerName + ':showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
     eventbus.on('readOnlyLayer:' + parentLayerName + ':shown', function (layerName) {
-       showLayer(layerName);
+      showLayer(layerName);
     }, this);
+    eventbus.on('map:moved', mapMovedHandler, this);
 
     var showLayer = function(layer){
       if(layer == parentLayerName && isShowingForLayer[parentLayerName]){
@@ -76,10 +76,13 @@
 
     this.refreshView = function () {
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function (assets) {
-          var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
+        var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
+        me.removeLayerFeatures();
+        if(map.getView().getZoom() >= minZoomForContent){
           vectorLayer.getSource().addFeatures(features);
           vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
-        });
+        }
+      });
     };
 
     this.removeLayerFeatures = function() {
