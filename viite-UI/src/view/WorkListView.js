@@ -23,7 +23,7 @@
     };
 
     var floatingDescription = function(desc, value){
-      return $('<td align=left style="width: 100px;"> '+desc +': '+value + '</td>');
+      return $('<td align=left style="width: 100px;"> <b>'+desc +'</b>: '+value + '</td>');
     };
 
     var tableToDisplayFloatings = function(floatingLinks) {
@@ -78,11 +78,11 @@
 
   var bindEvents = function() {
     eventbus.on('workList:select', function(layerName, listP) {
+      $('#work-list').html("");
       addSpinner();
       $('.container').hide();
       $('#work-list').show();
       $('body').addClass('scrollable');
-
       generateWorkList(layerName, listP);
     });
   };
