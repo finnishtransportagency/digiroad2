@@ -389,6 +389,7 @@ class AssetDataImporter {
       addressPS.setLong(18, address._5)
       addressPS.setLong(19, address._4)
       addressPS.setInt(20, 2)
+      println(addressPS.toString)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
