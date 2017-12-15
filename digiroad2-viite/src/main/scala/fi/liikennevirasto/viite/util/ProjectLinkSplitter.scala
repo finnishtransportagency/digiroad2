@@ -22,8 +22,8 @@ object ProjectLinkSplitter {
         GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks)
   }
 
-  private def suravageWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
-                                  splitAddressM: Long) = {
+  private def splitedWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
+                                  templateM: Double, splitAddressM: Long) = {
     def splitedGeometries = {
       val geometry1 = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength)
       val geometry2 = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM)
@@ -32,9 +32,12 @@ object ProjectLinkSplitter {
       } else if (GeometryUtils.areAdjacent(geometry2, templateLink.geometry)){
         (geometry2, geometry1)
       } else {
-        throw new SplittingException("At least one of the geometries do not overlaps the link properly.")
+        throw new SplittingException("At least one of the geometries does not overlap the link properly.")
       }
     }
+
+    //check if Unchanged/Transfer link (splited A) is at end of Template link (Project link)
+    if(GeometryUtils.areAdjacent(splitedGeometries._1, templateLink.geometry.last))
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
@@ -69,35 +72,68 @@ object ProjectLinkSplitter {
         geometry = splitedGeometries._2,
         geometryLength = GeometryUtils.geometryLength(splitedGeometries._2),
         ely = templateLink.ely
-        )
+        ),
+      templateLink.copy(
+        startMValue = 0.0,
+        endMValue = templateM,
+        endAddrMValue = splitAddressM,
+        status = LinkStatus.Terminated,
+        connectedLinkId = Some(suravage.linkId)
       )
+    )
+    else
+      (
+        suravage.copy(roadNumber = split.roadNumber,
+          roadPartNumber = split.roadPartNumber,
+          track = split.trackCode,
+          discontinuity = split.discontinuity,
+          roadType = split.roadType,
+          startMValue = 0.0,
+          endMValue = suravageM,
+          startAddrMValue = templateLink.startAddrMValue,
+          endAddrMValue = splitAddressM,
+          status = split.statusA,
+          sideCode = templateLink.sideCode,
+          roadAddressId = templateLink.roadAddressId,
+          connectedLinkId = Some(templateLink.linkId),
+          geometry = splitedGeometries._1,
+          geometryLength = GeometryUtils.geometryLength(splitedGeometries._1),
+          ely = templateLink.ely
+        ),
+        suravage.copy(roadNumber = split.roadNumber,
+          roadPartNumber = split.roadPartNumber,
+          track = split.trackCode,
+          discontinuity = split.discontinuity,
+          roadType = split.roadType,
+          startMValue = suravageM,
+          endMValue = suravage.geometryLength,
+          startAddrMValue = splitAddressM,
+          endAddrMValue = templateLink.endAddrMValue,
+          status = split.statusB,
+          sideCode = templateLink.sideCode,
+          roadAddressId = templateLink.roadAddressId,
+          connectedLinkId = Some(templateLink.linkId),
+          geometry = splitedGeometries._2,
+          geometryLength = GeometryUtils.geometryLength(splitedGeometries._2),
+          ely = templateLink.ely
+        ),
+        templateLink.copy(
+          startMValue = templateM,
+          endMValue = templateLink.geometryLength,
+          startAddrMValue = splitAddressM,
+          status = LinkStatus.Terminated,
+          connectedLinkId = Some(suravage.linkId))
+        )
   }
 
   def split(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions): Seq[ProjectLink] = {
     def movedFromStart(suravageM: Double, templateM: Double, splitAddressM: Long) = {
-      val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
-      val splitT = templateLink.copy(
-        startMValue = templateM,
-        endMValue = templateLink.geometryLength,
-        geometryLength = templateLink.geometryLength - templateM,
-        startAddrMValue = splitAddressM,
-        status = LinkStatus.Terminated,
-        geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength),
-        connectedLinkId = Some(suravage.linkId)
-      )
-      (splitA, splitB, splitT)
+      val (splitA, splitB, terminated) = splitedWithOptions(suravage, templateLink, split, suravageM, templateM, splitAddressM)
+      (splitA, splitB, terminated.copy(geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength), geometryLength = templateLink.geometryLength - templateM))
     }
     def movedFromEnd(suravageM: Double, templateM: Double, splitAddressM: Long) = {
-      val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
-      val splitT = templateLink.copy(
-        startMValue = 0.0,
-        endMValue = templateM,
-        geometryLength = templateM,
-        endAddrMValue = splitAddressM,
-        status = LinkStatus.Terminated,
-        geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM),
-        connectedLinkId = Some(suravage.linkId))
-      (splitA, splitB, splitT)
+      val (splitA, splitB, terminated) = splitedWithOptions(suravage, templateLink, split, suravageM, templateM, splitAddressM)
+      (splitA, splitB, terminated.copy(geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM), geometryLength = templateM))
     }
     def switchDigitization(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
       val (splitA, splitB, splitT) = splits
@@ -118,10 +154,10 @@ object ProjectLinkSplitter {
       (templateLink.endAddrMValue - templateLink.startAddrMValue))
     val isReversed = isDirectionReversed(suravage, templateLink)
     val splits =
-      if (isReversed || !isTailConnected(suravage, templateLink))
-        movedFromStart(suravageM, templateM, splitAddressM)
-      else
+      if (isReversed)
         movedFromEnd(suravageM, templateM, splitAddressM)
+      else
+        movedFromStart(suravageM, templateM, splitAddressM)
     if (isReversed)
       toSeq(switchDigitization(splits))
     else
