@@ -219,6 +219,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val fetchResult = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val (historyLinkAddresses, addresses) = (fetchResult.historyLinkAddresses, fetchResult.current)
+
     val missingViiteRoadAddress = if(!frozenTimeVVHAPIServiceEnabled) Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf) else Map[Long, Seq[MissingRoadAddress]]()
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
@@ -293,6 +294,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val adjustedAddresses = adjustedRoadParts.flatMap { case (road, part) => RoadAddressDAO.fetchByRoadPart(road, part) }
 
         (adjustedAddresses ++ RoadAddressDAO.fetchByIdMassQuery(ids -- adjustedAddresses.map(_.id).toSet, true, true)).groupBy(_.linkId)
+
+        //filtramos no final e só retorna sem end_date
       }
   }
 
