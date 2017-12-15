@@ -1352,16 +1352,19 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
-      val oldLimit = linearAssetService.getPersistedAssetsByIds(170, Set(asset)).head
 
       verify(mockEventBus, times(1))
         .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
 
-
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
+      val projectedAssets = captor.getValue
+      projectedAssets.length should be(1)
+      projectedAssets.foreach { proj =>
+        proj.id should be (0)
+        proj.linkId should be (6000)
+      }
       dynamicSession.rollback()
     }
   }
-
 }
