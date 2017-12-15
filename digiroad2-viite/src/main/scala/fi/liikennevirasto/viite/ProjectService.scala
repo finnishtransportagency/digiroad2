@@ -667,7 +667,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val timeStamp = new Date().getTime
       val updatedProjectLinks = projectLinks.map { pl =>
         val (geometry, time) = geometryMap.getOrElse(pl.linkId, (Seq(), timeStamp))
-        pl.copy(geometry = geometry, linkGeometryTimeStamp = time)
+        pl.copy(geometry = GeometryUtils.truncateGeometry2D(geometry, pl.startMValue, pl.endMValue),
+          linkGeometryTimeStamp = time)
       }
       ProjectDAO.updateProjectLinksGeometry(updatedProjectLinks, username)
     }

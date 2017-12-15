@@ -7,6 +7,7 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
 import fi.liikennevirasto.digiroad2.masstransitstop.{MassTransitStopOperations, TerminalPublishInfo}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -243,6 +244,10 @@ object Digiroad2Context {
     new AssetPropertyService(eventbus, userProvider, DefaultDatabaseTransaction)
   }
 
+  lazy val linearMassLimitationService: LinearMassLimitationService = {
+    new LinearMassLimitationService(roadLinkService, new OracleMassLimitationDao)
+  }
+
   lazy val speedLimitService: SpeedLimitService = {
     new SpeedLimitService(eventbus, vvhClient, roadLinkService)
   }
@@ -279,6 +284,10 @@ object Digiroad2Context {
 
   lazy val roadAddressesService: RoadAddressesService = {
     new RoadAddressesService(eventbus, roadLinkService)
+  }
+
+  lazy val assetService: AssetService = {
+    new AssetService(eventbus)
   }
 
   lazy val revision: String = {
