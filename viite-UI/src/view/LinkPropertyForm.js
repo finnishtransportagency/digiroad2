@@ -540,6 +540,10 @@
         }
       });
 
+      eventbus.on('form:showPropertyForm', function () {
+        addOpenProjectButton();
+      });
+
       eventbus.on('adjacents:added', function(sources, targets) {
         processAdjacents(sources,targets);
         applicationModel.removeSpinner();
