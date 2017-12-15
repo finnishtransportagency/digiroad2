@@ -2,7 +2,6 @@ CREATE OR REPLACE TRIGGER road_address_history_check BEFORE
   UPDATE OR
   INSERT ON ROAD_ADDRESS FOR EACH ROW DECLARE v_duplicated NUMBER (2);
   BEGIN
-    ELSE
       SELECT COUNT (*)
       INTO v_duplicated
       FROM ROAD_ADDRESS
@@ -26,6 +25,5 @@ CREATE OR REPLACE TRIGGER road_address_history_check BEFORE
       IF v_duplicated                    > 0 THEN
         RAISE_APPLICATION_ERROR(-20002,'Atempted to insert a duplicate road address (road_number:' || :NEW.ROAD_NUMBER || ', road_part:' || :NEW.ROAD_PART_NUMBER || ', start_addr_m:' || :NEW.START_ADDR_M || ', end_addr_m:' || :NEW.END_ADDR_M ||')');
       END IF;
-    END IF;
   END;
   /
