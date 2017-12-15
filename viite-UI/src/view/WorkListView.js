@@ -61,9 +61,13 @@
 
     listP.then(function(floatings) {
       counter = 0;
-      $('#work-list .work-list').html("");
       var floatingLinks = _.map(floatings, _.partial(floatingLinksTable, layerName));
-      $('#work-list .work-list').append($('<h3 style="padding-left: 10px;"/>').html( " " + counter + " tieosoitetta on irti geometriasta")).append(floatingLinks);
+      if(counter == 0){
+        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
+      }
+      else {
+        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html(" " + counter + " tieosoitetta on irti geometriasta")).append(floatingLinks);
+      }
       removeSpinner();
     });
   };
@@ -78,10 +82,9 @@
 
   var bindEvents = function() {
     eventbus.on('workList:select', function(layerName, listP) {
-      $('#work-list').html("");
+      $('#work-list').html("").show();
       addSpinner();
       $('.container').hide();
-      $('#work-list').show();
       $('body').addClass('scrollable');
       generateWorkList(layerName, listP);
     });
