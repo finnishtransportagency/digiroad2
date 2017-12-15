@@ -692,16 +692,18 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false, false)).thenReturn(addresses.map(toRoadLink))
       mockForProject(id, addresses ++ Seq(addProjectAddressLink584))
-      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(addProjectAddressLink584)), id, "U", addProjectAddressLink584.linkId) should be (None)
+      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(addProjectAddressLink584).copy(status = LinkStatus.New)),
+        id, "U", addProjectAddressLink584.linkId) should be (None)
 
       val linksAfter = ProjectDAO.getProjectLinks(id)
       linksAfter should have size (links.size + 1)
       linksAfter.find(_.linkId == 5176512).get.sideCode should be (changedLinks.find(_.linkId == 5176512).get.sideCode)
       linksAfter.find(_.linkId == 5176552).get.sideCode should be (changedLinks.find(_.linkId == 5176552).get.sideCode)
-      linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be(Some(addProjectAddressLink584.sideCode))
-      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be(1798)
-      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be(687)
+      linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be(Some(AgainstDigitizing))
+      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be(2004)
+      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be(893)
       linksAfter.find(_.linkId == 5176584).get.startAddrMValue should be(0)
+      linksAfter.find(_.linkId == 5176584).get.endAddrMValue should be(206)
     }
   }
 

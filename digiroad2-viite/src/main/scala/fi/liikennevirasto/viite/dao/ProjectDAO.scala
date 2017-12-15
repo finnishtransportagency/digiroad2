@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
 import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -235,12 +236,25 @@ object ProjectDAO {
   }
 
   def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
+    val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
+    val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
+    val links = projectLinks.map{ pl =>
+      if (nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId)) {
+        val ra = addresses(pl.roadAddressId)
+        // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
+        pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
+          startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
+          reversed = false)
+      } else
+        pl
+    }
     val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
-      "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ? , CALIBRATION_POINTS= ? , " +
-      "STATUS=?,  ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ? WHERE id = ?")
-    val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, MODIFIED_DATE=? WHERE ID = ?")
+      "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ?, " +
+      "CALIBRATION_POINTS= ? , STATUS=?,  ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ? WHERE id = ?")
+    val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, " +
+      "MODIFIED_DATE=? WHERE ID = ?")
 
-    for (projectLink <- projectLinks) {
+    for (projectLink <- links) {
       projectLinkPS.setLong(1, projectLink.roadNumber)
       projectLinkPS.setLong(2, projectLink.roadPartNumber)
       projectLinkPS.setInt(3, projectLink.track.value)
