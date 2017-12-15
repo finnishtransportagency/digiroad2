@@ -495,7 +495,7 @@ object RoadAddressDAO {
     * @param roadPartNumbers roadparts needed to be checked
     * @return returns roadnumber, roadpartnumber and startaddressM for links that are overlapping either by date or m values
     */
-  def historySanityCheck(roadNumber:Long, roadPartNumbers:Seq[Long]): List[Long,Long,Long] = {
+  def historySanityCheck(roadNumber:Long, roadPartNumbers:Seq[Long]): List[(Long, Long, Long)] = {
    val query= s"""
     SELECT r.ROAD_NUMBER, r.ROAD_PART_NUMBER, r.START_ADDR_M FROM ROAD_ADDRESS r
       WHERE  EXISTS(
@@ -510,7 +510,7 @@ object RoadAddressDAO {
       (r2.TRACK_CODE = r.TRACK_CODE OR r.TRACK_CODE = 0 OR r2.TRACK_CODE = 0) AND
       NOT (r2.END_ADDR_M <= r.START_ADDR_M OR r2.START_ADDR_M >= r.END_ADDR_M)
     )"""
-    Q.queryNA[(Long,Long,Long)](query).list.flatten
+    Q.queryNA[(Long,Long,Long)](query).list
   }
 
 
