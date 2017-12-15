@@ -342,7 +342,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     } else {
       val max = roadAddresses.maxBy(ra => ra.endMValue)
       val min = roadAddresses.minBy(ra => ra.startMValue)
-      min.copy(startAddrMValue = Math.min(min.startAddrMValue, max.startAddrMValue), endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue), startMValue = min.startMValue, endMValue = max.endMValue, geometry = Seq(min.geometry.head, max.geometry.last))
+      min.copy(startAddrMValue = Math.min(min.startAddrMValue, max.startAddrMValue),
+        endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue), startMValue = min.startMValue,
+        endMValue = max.endMValue, geometry = Seq(min.geometry.head, max.geometry.last))
     }
   }
 
