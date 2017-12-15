@@ -155,7 +155,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def importSpeedLimits(): Unit = {
-    speedLimitTierekisteriImporter.importAssets();
+    speedLimitTierekisteriImporter.importAssets()
   }
 
   def updateSpeedLimits(): Unit = {

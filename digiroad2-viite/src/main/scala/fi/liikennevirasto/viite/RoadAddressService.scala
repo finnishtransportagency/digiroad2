@@ -155,8 +155,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       )
     val (historyLinkAddresses, addresses, floating) = (roadAddressResults.historyLinkAddresses, roadAddressResults.current, roadAddressResults.floating)
     val (roadsWithEndDate, roadsWithoutEndDate) = addresses.values.flatten.partition(a => a.endDate.isDefined)
+    val filteredRoadsWithEndDate = roadsWithEndDate.filterNot(r => roadsWithoutEndDate.exists(_.linkId == r.linkId))
     val complementaryLinkIds = complementaryLinks.map(_.linkId)
-    val roadsWithEndDateLinkIds = roadsWithEndDate.map(_.linkId).toSet
+    val roadsWithEndDateLinkIds = filteredRoadsWithEndDate.map(_.linkId).toSet
     val normalRoadLinkIds = roadLinks.filterNot(rl => roadsWithEndDateLinkIds.contains(rl.linkId)).map(_.linkId)
     val allRoadLinks = roadLinks.filterNot(rl => roadsWithEndDateLinkIds.contains(rl.linkId))++complementaryLinks
     val linkIds = (complementaryLinkIds ++ normalRoadLinkIds).toSet
@@ -273,14 +274,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
           r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
             r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
-
-        val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
-
-        val removedIds = addresses.values.flatten.map(_.id).toSet -- ids
+        val removedIds = addresses.values.flatten.map(_.id).toSet -- (savedRoadAddresses++unchanged).map(x=>x.id)
         removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
           logger.debug("Expired: "+s.mkString(","))
         })
-
+        val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
         val changedRoadParts = addressesToCreate.map(a => a.roadNumber -> a.roadPartNumber).groupBy(_._1).mapValues(seq => seq.map(_._2).toSet)
 
         val adjustedRoadParts = changedRoadParts.flatMap(r => r._2.map(p => r._1 -> p)).toSeq.filter { x =>
@@ -728,9 +726,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
-case class ReservedRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Double, addressLength: Long,
-                            discontinuity: Discontinuity, ely: Long = -1, startDate: Option[DateTime], endDate: Option[DateTime],
-                            startingLinkId: Option[Long] = None, isDirty: Boolean = false) {
+case class ReservedRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, addressLength: Option[Long] = None,
+                            discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None,
+                            newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None,
+                            newEly: Option[Long] = None, startingLinkId: Option[Long] = None, isDirty: Boolean = false) {
   def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
     roadNumber == baseRoadAddress.roadNumber && roadPartNumber == baseRoadAddress.roadPartNumber
   }
