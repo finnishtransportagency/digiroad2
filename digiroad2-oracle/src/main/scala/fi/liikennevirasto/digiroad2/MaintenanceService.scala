@@ -29,13 +29,13 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val (toInsert, toUpdate) = newMaintenanceAssets.partition(_.id == 0L)
     withDynTransaction {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newMaintenanceAssets.map(_.linkId).toSet, newTransaction = false)
+      if(toUpdate.nonEmpty) {
         val persisted = maintenanceDAO.fetchMaintenancesByIds(maintenanceRoadAssetTypeId, toUpdate.map(_.id).toSet).groupBy(_.id)
         updateProjected(toUpdate, persisted)
-      if (newMaintenanceAssets.nonEmpty)
-        logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
-
+        if (newMaintenanceAssets.nonEmpty)
+          logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
+      }
       toInsert.foreach { maintenanceAsset =>
-
         val area = getAssetArea(roadLinks.find(_.linkId == maintenanceAsset.linkId), Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure))
         val id = maintenanceDAO.createLinearAsset(maintenanceAsset.typeId, maintenanceAsset.linkId, maintenanceAsset.expired, maintenanceAsset.sideCode,
           Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure), maintenanceAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), maintenanceAsset.vvhTimeStamp, getLinkSource(roadLinks.find(_.linkId == maintenanceAsset.linkId)), area = area)
@@ -182,7 +182,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roads, groupedAssets, maintenanceRoadAssetTypeId, changedSet)
 
     eventBus.publish("linearAssets:update", changeSet)
-    eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets)
+    eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets.filter(_.id == 0L))
 
     filledTopology
   }

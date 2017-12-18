@@ -116,12 +116,13 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
-        val persisted = dao.fetchLinearAssetsByIds(toUpdate.map(_.id).toSet, LinearAssetTypes.numericValuePropertyId).groupBy(_.id)
-      updateProjected(toUpdate, persisted)
+        if(toUpdate.nonEmpty) {
+          val persisted = dao.fetchLinearAssetsByIds(toUpdate.map(_.id).toSet, LinearAssetTypes.numericValuePropertyId).groupBy(_.id)
+          updateProjected(toUpdate, persisted)
 
-      if (newLinearAssets.nonEmpty)
-        logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
-
+          if (newLinearAssets.nonEmpty)
+            logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
+        }
       toInsert.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
           Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
