@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, NormalRo
 import fi.liikennevirasto.digiroad2.{ChangeType, _}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -16,7 +17,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.util._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
@@ -93,14 +95,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       "endAddressM" -> roadLink.endAddressM,
       "discontinuity" -> roadLink.discontinuity,
       "endDate" -> roadLink.endDate)
-  }
-
-  test("testGetCalibrationPoints") {
-    //TODO
-  }
-
-  test("testRoadClass") {
-    //TODO
   }
 
   test("test getRoadLinkFromVVH should have specific fields (still to be defined) not empty"){
@@ -901,6 +895,74 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         .values.forall(_.size == 2) should be (true)
     }
   }
+
+  test("Mapping floating road addresses back to link work for historic addresses too") {
+    /*
+       Test that road address history is placed on links properly: history is moved, terminated address is not
+       Current address checks calculation isn't affected by historic. No recalculation for historic
+     */
+    runWithRollback {
+      val linkGeom1 = Seq(Point(0, 0), Point(1.0, 4.5))
+      val linkGeom2 = Seq(Point(1.0, 4.5), Point(12.5, 7.15))
+      val newGeom = Seq(Point(0, 0), Point(1.0, 5.0), Point(13.0, 7.0))
+
+      val history1Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 100L, 105L,
+        Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 0L, 123L, 0.0, 4.61, TowardsDigitizing,
+        84600L, (None, None), true, linkGeom1, NormalLinkInterface, 20L, false)
+      val history2Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.LeftSide, Continuous, 105L, 116L,
+        Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 0L, 124L, 0.0, 11.801, TowardsDigitizing,
+        84600L, (None, None), true, linkGeom2, NormalLinkInterface, 20L, false)
+      val current1Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 15L, 21L,
+        Some(DateTime.now().minusYears(10)), None, None, 0L, 123L, 0.0, 4.61, TowardsDigitizing,
+        84600L, (None, None), true, linkGeom1, NormalLinkInterface, 20L, false)
+      val current2Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 21L, 35L,
+        Some(DateTime.now().minusYears(10)), None, None, 0L, 124L, 0.0, 11.801, TowardsDigitizing,
+        84600L, (None, None), true, linkGeom2, NormalLinkInterface, 20L, false)
+      val terminatedAddress = RoadAddress(NewRoadAddress, 198, 201, PublicRoad, Track.Combined, Continuous, 10L, 15L,
+        Some(DateTime.now().minusYears(20)), Some(DateTime.now().minusYears(17)), None, 0L, 123L, 0.0, 4.61, AgainstDigitizing,
+        84600L, (None, None), true, linkGeom1, NormalLinkInterface, 20L, true)
+
+      val surrounding1 = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 0L, 15L,
+        Some(DateTime.now().minusYears(10)), None, None, 0L, 121L, 0.0, 15.0, AgainstDigitizing,
+        84600L, (Some(CalibrationPoint(121L, 15.0, 0L)), None), false, Seq(Point(0, 0),Point(-14,5.385)), NormalLinkInterface, 20L, false)
+      val surrounding2 = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 35L, 50L,
+        Some(DateTime.now().minusYears(10)), None, None, 0L, 125L, 0.0, 15.0, TowardsDigitizing,
+        84600L, (None, Some(CalibrationPoint(125L, 15.0, 50L))), false, Seq(Point(13.0, 7.0),Point(13.0, 22.0)), NormalLinkInterface, 20L, false)
+      RoadAddressDAO.create(Seq(history1Address, history2Address, current1Address, current2Address, terminatedAddress)) should have size (5)
+
+      val roadLinksSeq = Seq(RoadLink(123L, linkGeom1, 4.61, State, 99, BothDirections, UnknownLinkType,
+        Some("25.11.2013 02:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(124L, linkGeom2, 11.801, State, 99, BothDirections, UnknownLinkType, Some("25.11.2013 02:00:00"),
+          Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(456L, newGeom, 17.265, State, 99, BothDirections, UnknownLinkType, Some("25.11.2013 02:00:00"),
+          Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt(235))))
+      when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(123L), false)).thenReturn(
+        (Seq[RoadLink](), roadLinksSeq.filter(_.linkId==123L).map(toHistoryLink)))
+      when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(124L), false)).thenReturn(
+        (Seq[RoadLink](), roadLinksSeq.filter(_.linkId==124L).map(toHistoryLink)))
+      when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(456L), false)).thenReturn(
+        (roadLinksSeq.filter(_.linkId==456L), Seq[VVHHistoryRoadLink]()))
+      val postTransfer = roadAddressService.getRoadAddressesAfterCalculation(Seq("123", "124"), Seq("456"), User(1L, "k", Configuration()))
+      postTransfer should have size(3)
+      postTransfer.foreach{ ra =>
+        ra.roadNumber should be (199L)
+        ra.roadPartNumber should be (199L)
+        (ra.track == Track.Combined || ra.startAddrMValue == 105) should be (true)
+        ra.terminated should be (false)
+      }
+      postTransfer.count(_.endDate.isEmpty) should be (1)
+      postTransfer.exists(ra => ra.startAddrMValue == 15L && ra.endAddrMValue == 35 && ra.endDate.isEmpty) should be (true)
+      RoadAddressDAO.create(Seq(surrounding1, surrounding2)) should have size (2)
+      roadAddressService.transferFloatingToGap(Set(123L, 124L), Set(456L), postTransfer, "-")
+      val termRA = RoadAddressDAO.fetchByLinkId(Set(123L, 124L), true, true, true)
+      termRA should have size(1)
+      termRA.head.terminated should be (true)
+      val current = RoadAddressDAO.fetchByLinkId(Set(456L), true, true, true)
+      current should have size(3)
+      current.exists(ra => ra.startAddrMValue == 16L && ra.endAddrMValue == 34 && ra.endDate.isEmpty) should be (true)
+    }
+  }
+
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false) = {
@@ -912,6 +974,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,
       anomaly, 0)
 
+  }
+
+  private def toHistoryLink(rl: RoadLink): VVHHistoryRoadLink = {
+    VVHHistoryRoadLink(rl.linkId, rl.municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection,
+      FeatureClass.AllOthers, 84600, 86400, rl.attributes)
   }
 
   private def createChangeTable(oldId: Long, newId: Long, changeType: ChangeType, oldStart: Double, oldEnd: Double,

@@ -661,7 +661,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String): Unit = {
     withDynTransaction {
-      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true, includeHistory = true)
+      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true, includeHistory = true,
+        includeTerminated = false)
       RoadAddressDAO.expireById(currentRoadAddresses.map(_.id).toSet)
       RoadAddressDAO.create(roadAddresses, Some(username))
       recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
@@ -669,7 +670,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
-    val mapping = DefloatMapper.createAddressMap(sources, targets)
+    def latestSegments(segments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+      if (segments.exists(_.endDate == ""))
+        segments.filter(_.endDate == "")
+      else {
+        val max = RoadAddressLinkBuilder.formatter.print(segments.map(s =>
+          RoadAddressLinkBuilder.formatter.parseDateTime(s.endDate)).maxBy(_.toDate))
+        segments.filter(_.endDate == max)
+      }
+    }
+    val mapping = DefloatMapper.createAddressMap(latestSegments(sources), targets)
     if (mapping.exists(DefloatMapper.invalidMapping)) {
       throw new InvalidAddressDataException("Mapping failed to map following items: " +
         mapping.filter(DefloatMapper.invalidMapping).map(
@@ -678,19 +688,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
     val sourceRoadAddresses = withDynSession {
       RoadAddressDAO.fetchByLinkId(sources.map(_.linkId).toSet, includeFloating = true,
-        includeHistory = false)
+        includeHistory = true, includeTerminated = false)
     }
 
-    DefloatMapper.preTransferChecks(sourceRoadAddresses)
+    DefloatMapper.preTransferChecks(sourceRoadAddresses.filter(_.endDate.isEmpty))
     val targetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(sourceRoadAddresses.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
-    DefloatMapper.postTransferChecks(targetRoadAddresses, sourceRoadAddresses)
+    DefloatMapper.postTransferChecks(targetRoadAddresses.filter(_.endDate.isEmpty), sourceRoadAddresses.filter(_.endDate.isEmpty))
 
     targetRoadAddresses
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long): Boolean = {
     try{
-      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
+      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true,
+        includeExpired = false, includeHistory = false)
       if (!roads.exists(_.floating)) {
         try {
           val adjusted = LinkRoadAddressCalculator.recalculate(roads)
