@@ -16,13 +16,23 @@ class OracleAssetDao {
     """.as[Int].list
   }
 
-  def getLastExecutionDate(typeId: Int, createdBy: String): DateTime = {
+  def getLastExecutionDate(typeId: Int, createdBy: String): Option[DateTime] = {
 
     sql""" select MAX( case when a.modified_date is null then MAX(a.created_date) else MAX(a.modified_date) end ) as lastExecution
            from asset a
            where a.created_by = $createdBy and ( a.modified_by = $createdBy or a.modified_by is null) and a.asset_type_id = $typeId
-           group by a.modified_date, a.created_date""".as[DateTime].first
+           group by a.modified_date, a.created_date""".as[DateTime].firstOption
 
+  }
+
+  def getMunicipalityById(id: Long): Seq[Long] = {
+    val municipalityCode = sql"""select id from municipality where id = $id """.as[Long].list
+    municipalityCode
+  }
+
+  def getGeometryType(typeId: Int): String = {
+    val geometryType = sql""" select GEOMETRY_TYPE from asset_type where id = $typeId""".as[String].firstOption.get
+    geometryType
   }
 
   /**

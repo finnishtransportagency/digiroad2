@@ -94,18 +94,17 @@
   };
 
   var setupMap = function(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable) {
-    var tileMaps = new TileMapCollection(map, arcConfig);
+    var tileMaps = new TileMapCollection(arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
-    var mapOverlay = new MapOverlay(jQuery('.container'));
     var styler = new Styler();
     var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    new ProjectForm(models.projectCollection, models.selectedProjectLinkProperty);
+    new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
     new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
 

@@ -11,16 +11,16 @@ Ympäristön pystytys
   ```
 
 1. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
-1. Asenna [bower](https://github.com/bower/bower)
+1. Asenna [yarn](https://yarnpkg.com/lang/en/)
 
   ```
-  npm install -g bower
+  npm install -g yarn
   ```
 
 1. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
 
   ```
-  npm install && bower install
+  npm install && yarn install
   ```
 
 1. Asenna [grunt](http://gruntjs.com/getting-started)

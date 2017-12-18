@@ -1,11 +1,18 @@
 package fi.liikennevirasto.digiroad2.masstransitstop
 
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{PersistedMassTransitStop, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 
-class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService) extends AbstractBusStopStrategy {
+class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService, val eventbus: DigiroadEventBus) extends AbstractBusStopStrategy {
+
+  override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
+    publishInfo.asset match {
+      case Some(asset) => eventbus.publish("asset:saved", asset)
+      case _ => None
+    }
+  }
 
   override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
     asset.terminalId match {
@@ -16,13 +23,21 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
           s"${terminalAsset.nationalId} $name"
         }
         val newProperty = Property(0, "liitetty_terminaaliin", PropertyTypes.ReadOnlyText, values = Seq(PropertyValue(terminalId.toString, displayValue)))
-        (asset.copy(propertyData = asset.propertyData ++ Seq(newProperty)), false)
+
+        val terminalExternalId = terminalAssetOption.map(_.nationalId.toString) match {
+          case Some(extId) => Seq(PropertyValue(extId))
+          case _ => Seq()
+        }
+
+        val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalExternalId)
+
+        (asset.copy(propertyData = asset.propertyData ++ Seq(newProperty, newPropertyExtId)), false)
       case _ =>
         (asset, false)
     }
   }
 
-  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
+  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     validateBusStopDirections(asset.properties, roadLink)
 
@@ -43,12 +58,13 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
     val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
-    updateAdministrativeClassValue(assetId, roadLink.administrativeClass) //.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
+    updateAdministrativeClassValue(assetId, roadLink.administrativeClass)
 
-    fetchAsset(assetId)
+    val resultAsset = fetchAsset(assetId)
+    (resultAsset, PublishInfo(Some(resultAsset)))
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     if (properties.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(properties.toSeq, roadLink)
@@ -70,11 +86,13 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     val props = MassTransitStopOperations.setPropertiesDefaultValues(properties.toSeq, roadLink)
     updatePropertiesForAsset(asset.id, props, roadLink.administrativeClass, asset.nationalId)
 
-    fetchAsset(asset.id)
+    val resultAsset = enrichBusStop(fetchAsset(asset.id))._1
+    (resultAsset, PublishInfo(Some(resultAsset)))
   }
 
-  override def delete(asset: PersistedMassTransitStop): Unit = {
+  override def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo] = {
     massTransitStopDao.deleteAllMassTransitStopData(asset.id)
+    None
   }
 
   override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {

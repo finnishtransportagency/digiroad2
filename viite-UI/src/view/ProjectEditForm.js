@@ -9,7 +9,6 @@
     var formCommon = new FormCommon('');
 
     var endDistanceOriginalValue = '--';
-    var options =['Valitse'];
 
     var showProjectChangeButton = function() {
       return '<div class="project-form form-controls">' +
@@ -40,7 +39,12 @@
         return transitionModifiers(targetLinkStatus, linkStatus);
     };
 
-    var selectedProjectLinkTemplate = function(project, optionTags, selected) {
+    var selectedProjectLinkTemplate = function(project, selected) {
+      var road = {
+        roadNumber: selected[0].roadNumber,
+        roadPartNumber: selected[0].roadPartNumber,
+        trackCode: selected[0].trackCode
+      };
       var selection = formCommon.selectedData(selected);
       return _.template('' +
         '<header>' +
@@ -53,7 +57,7 @@
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
-        selectionForm(selection, selected, 0) +
+        selectionForm(selection, selected, road) +
         formCommon.changeDirection(selected) +
         formCommon.actionSelectedField()+
         '</div>'+
@@ -63,7 +67,7 @@
         '<footer>' + formCommon.actionButtons('project-', projectCollection.isDirty()) + '</footer>');
     };
 
-    var selectionForm = function(selection, selected){
+    var selectionForm = function(selection, selected, road){
       var defaultOption = (selected[0].status === LinkStatus.NotHandled.value ? LinkStatus.NotHandled.description : LinkStatus.Undefined.description);
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
@@ -78,7 +82,7 @@
         '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
-        formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
+        formCommon.newRoadAddressInfo(selected, selectedProjectLink, road) +
         '</form>';
     };
 
@@ -97,17 +101,8 @@
         '</div></div>';
     };
 
-    var directionChangedInfo = function (selected, isPartialReversed) {
-      if (isPartialReversed) {
-        return '<label class="split-form-group">Osittain käännetty</label>';
-      } else if (selected[0].reversed) {
-        return '<label class="split-form-group">&#9745; Käännetty</label>';
-      } else {
-        return '<label class="split-form-group">&#9744; Käännetty</label>';
-      }
-    };
-
     var emptyTemplate = function(project) {
+      formCommon.toggleAdditionalControls();
       return _.template('' +
         '<header>' +
         formCommon.titleWithProjectName(project.name, currentProject) +
@@ -203,10 +198,9 @@
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         checkInputs('.project-');
-        formCommon.toggleAdditionalControls();
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
@@ -364,6 +358,7 @@
           projectCollection.setTmpDirty([]);
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
+          formCommon.toggleAdditionalControls();
           eventbus.trigger('roadAddress:projectLinksEdited');
           eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
           eventbus.trigger('roadAddressProject:reOpenCurrent');
@@ -381,7 +376,7 @@
         else $('#manualCPWarning').css('display', 'none');
       });
 
-      rootElement.on('change', '.roadTypeDropDown', function(){
+      rootElement.on('change', '#roadTypeDropDown', function(){
         setFormDirty();
       });
 
@@ -468,8 +463,31 @@
       });
 
       rootElement.on('click', '.project-form button.send', function(){
-        projectCollection.publishProject();
+        new GenericConfirmPopup("Haluatko varmasti poistaa tämän projektin?", {
+          successCallback: function () {
+            projectCollection.publishProject();
+            closeProjectMode(true, true);
+          },
+          closeCallback: function () {
+          }
+        });
+
       });
+
+      var closeProjectMode = function (changeLayerMode, noSave) {
+        eventbus.trigger("roadAddressProject:startAllInteractions");
+        eventbus.trigger('projectChangeTable:hide');
+        applicationModel.setOpenProject(false);
+        rootElement.find('header').toggle();
+        rootElement.find('.wrapper').toggle();
+        rootElement.find('footer').toggle();
+        projectCollection.clearRoadAddressProjects();
+        eventbus.trigger('layer:enableButtons', true);
+        if (changeLayerMode) {
+          eventbus.trigger('roadAddressProject:clearOnClose');
+          applicationModel.selectLayer('linkProperty', true, noSave);
+        }
+      };
 
       rootElement.on('click', '.project-form button.show-changes', function(){
         $(this).empty();

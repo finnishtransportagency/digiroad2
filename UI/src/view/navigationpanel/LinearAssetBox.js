@@ -1,18 +1,22 @@
 (function(root) {
-  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, allowComplementaryLinks) {
+  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, allowComplementaryLinks, hasTrafficSignReadOnlyLayer) {
     var legendTemplate = _.map(legendValues, function(value, idx) {
-      return '<div class="legend-entry">' +
+      return value ? '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
                '<div class="symbol linear limit-' + idx + '" />' +
-             '</div>';
+             '</div>' : '';
     }).join('');
 
+      var trafficSignsCheckbox = hasTrafficSignReadOnlyLayer ? [
+          '<div class="check-box-container">' +
+          '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
+          '</div>'
+      ].join('') : '';
 
       var complementaryLinkCheckBox = allowComplementaryLinks ? [
-          '  <div class="panel-section roadLink-complementary-checkbox">',
-          '<div class="check-box-container">' +
+          '  <div  class="check-box-container">' +
           '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
-          '</div>' +
+
           '</div>'
       ].join('') : '';
 
@@ -23,8 +27,9 @@
       '  </header>',
       '  <div class="panel-section panel-legend limit-legend">',
             legendTemplate,
+            complementaryLinkCheckBox,
+            trafficSignsCheckbox,
       '  </div>',
-      complementaryLinkCheckBox,
       '</div>'].join('');
 
     var elements = {
@@ -71,6 +76,14 @@
                 eventbus.trigger('complementaryLinks:hide');
             }
         }
+    });
+
+    elements.expanded.find('#signsCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger(layerName + ':showReadOnlyTrafficSigns');
+      } else {
+        eventbus.trigger(layerName + ':hideReadOnlyTrafficSigns');
+      }
     });
 
     var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();

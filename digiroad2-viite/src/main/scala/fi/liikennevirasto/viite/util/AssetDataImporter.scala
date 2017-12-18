@@ -169,12 +169,7 @@ class AssetDataImporter {
         // Import only complementary links
         vvhClientProd.getOrElse(vvhClient).complementaryData.fetchByLinkIds(group)
       else {
-        // If in production or QA environment -> load complementary links, too
-        if (vvhClientProd.isEmpty)
-          vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
-        else
-        // If in DEV environment -> don't load complementary links at this stage (no data for them)
-          vvhClientProd.get.roadLinkData.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchByLinkIds(group)
+        vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
       }
     ).toSeq
 
@@ -203,24 +198,26 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(roads.filterNot(r => linkLengths.get(r._1).isDefined).size))
 
-    val linkIdMapping: Map[Long,Long] = if (vvhClientProd.nonEmpty) {
-      print(s"${DateTime.now()} - ")
-      println("Converting link ids to DEV link ids")
-      val mmlIdMaps = roadLinks.filter(_.attributes.get("MTKID").nonEmpty).map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
-      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.roadLinkData.fetchByMmlIds(grp)).toSeq
-      val fromMmlIdMap = links.map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
-      val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
-        mmlIdMaps(mmlId) -> devLinkId
-      }.partition { case (pid, did) => pid != did }
-      print(s"${DateTime.now()} - ")
-      println("Removing the non-differing mmlId+linkId combinations from mapping: %d road links".format(same.size))
-      differ
-    } else {
-      Map()
-    }
+    // TODO: When production and dev differ enough, uncomment this and adjust: now the code above doesn't check the production first
+    // This must be changed to check from production all the links that weren't found and then mapping again. See also the sql batch below.
+//    val linkIdMapping: Map[Long,Long] = if (vvhClientProd.nonEmpty) {
+//      print(s"${DateTime.now()} - ")
+//      println("Converting link ids to DEV link ids")
+//      val mmlIdMaps = roadLinks.filter(_.attributes.get("MTKID").nonEmpty).map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
+//      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.roadLinkData.fetchByMmlIds(grp)).toSeq
+//      val fromMmlIdMap = links.map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
+//      val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
+//        mmlIdMaps(mmlId) -> devLinkId
+//      }.partition { case (pid, did) => pid != did }
+//      print(s"${DateTime.now()} - ")
+//      println("Removing the non-differing mmlId+linkId combinations from mapping: %d road links".format(same.size))
+//      differ
+//    } else {
+//      Map()
+//    }
 
-    print(s"${DateTime.now()} - ")
-    println("Link mapping contains %d entries".format(linkIdMapping.size))
+//    print(s"${DateTime.now()} - ")
+//    println("Link mapping contains %d entries".format(linkIdMapping.size))
 
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
@@ -244,7 +241,9 @@ class AssetDataImporter {
         (address._15, address._16, address._13, address._14)
 
       lrmPositionPS.setLong(1, lrmId)
-      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
+      // TODO: link id mapping, see above
+//      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
+      lrmPositionPS.setLong(2, pos.linkId)
       lrmPositionPS.setLong(3, sideCode)
       lrmPositionPS.setDouble(4, pos.startM)
       lrmPositionPS.setDouble(5, pos.endM)
@@ -457,11 +456,12 @@ class AssetDataImporter {
     var counter = 0
     var changed = 0
     OracleDatabase.withDynTransaction {
-      val roadNumbers = Queries.getDistinctRoadNumbers(filterRoadAddresses)
+      val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
+        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "")
       roadNumbers.foreach(roadNumber =>{
         counter +=1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
-        val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
+        val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds, false)
         val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
 

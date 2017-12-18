@@ -10,6 +10,15 @@
         });
     };
 
+      this.getAssetEnumeratedPropertyValues = function(assetType) {
+          $.getJSON('api/enumeratedPropertyValues/'+assetType, function (enumeratedPropertyValues) {
+              eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValues});
+          })
+              .fail(function () {
+                  console.log("error");
+              });
+      };
+
     this.getAssetTypeMetadata = function(assetTypeId) {
       $.getJSON('api/getAssetTypeMetadata/'+ assetTypeId, function (getAssetTypeMetadata) {
         eventbus.trigger('getAssetTypeMetadata:fetched', getAssetTypeMetadata);
@@ -234,6 +243,18 @@
     this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
+    this.getReadOnlyLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/linearassets/massLimitation?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
+    this.getReadOnlyLinearAssetsComplementaries = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/linearassets/massLimitation/complementary/?bbox=' + boundingBox + '&typeId=' + typeId
       };
     });
 
@@ -499,7 +520,14 @@
 
     this.withEnumeratedPropertyValues = function(enumeratedPropertyValuesData) {
       self.getEnumeratedPropertyValues = function () {
-        eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+          eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+      };
+      return self;
+    };
+
+    this.withAssetEnumeratedPropertyValues = function(enumeratedPropertyValuesData, typeId) {
+      self.getAssetEnumeratedPropertyValues = function (typeId) {
+          eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValuesData});
       };
       return self;
     };

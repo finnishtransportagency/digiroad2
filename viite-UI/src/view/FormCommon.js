@@ -1,6 +1,7 @@
 (function (root) {
   root.FormCommon = function(prefix) {
-    var projectStatus = LinkValues.ProjectStatus;
+    var ProjectStatus = LinkValues.ProjectStatus;
+    var LinkStatus = LinkValues.LinkStatus;
 
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
@@ -17,19 +18,23 @@
       '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
     };
 
-    var newRoadAddressInfo = function(selected, link){
-      var road = link.roadNumber;
-      var part = link.roadPartNumber;
-      var track = link.trackCode;
+    var newRoadAddressInfo = function(selected, links, road){
+      var roadNumber = road.roadNumber;
+      var part = road.roadPartNumber;
+      var track = road.trackCode;
+      var link = _.first(_.filter(links, function (l) {
+        return !_.isUndefined(l.status);
+      }));
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
+        (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie',(road !== 0 ? road : '')) +
+        addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
         addSmallInputNumber('ajr',(track !== 99 ? track :
-          (road >= 20001 && road <= 39999 ? '0' : ''))) +
+          (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
@@ -80,7 +85,7 @@
 
     var addDiscontinuityDropdown = function(link){
       if(link.endAddressM === 0){
-        return '<select class="form-select-control" id="discontinuityDropdown" size="1">'+
+        return '<select class="form-select-control" id="discontinuityDropdown" size="1" style="visibility: hidden">'+
           '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
           '</select>';
       }
@@ -135,9 +140,9 @@
       return span;
     };
 
-    var actionButtons = function(btnPrefix, disabled) {
+    var actionButtons = function(btnPrefix, notDisabled) {
       return '<div class="'+btnPrefix+'form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save" ' + (disabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
+        '<button class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
     };
@@ -153,6 +158,11 @@
     var toggleAdditionalControls = function(){
       $('[id^=editProject]').css('visibility', 'visible');
       $('#closeProjectSpan').css('visibility', 'visible');
+    };
+
+    var hideEditAndCloseControls = function(){
+      $('[id^=editProject]').css('visibility', 'hidden');
+      $('#closeProjectSpan').css('visibility', 'hidden');
     };
 
     var checkInputs = function (localPrefix) {
@@ -184,7 +194,7 @@
     };
 
     var sendRoadAddressChangeButton = function(localPrefix, projectData) {
-      var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === projectStatus.ErroredInTR.value;
+      var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
       return '<div class="'+localPrefix+'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
         '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';

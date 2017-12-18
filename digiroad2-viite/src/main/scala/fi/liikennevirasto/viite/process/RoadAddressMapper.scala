@@ -9,10 +9,10 @@ trait RoadAddressMapper {
 
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
     def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
-      val startM = Math.max(Math.min(d1, d2), 0.0)
+      // When operating with fake geometries (automatic change tables) the geometry may not have correct length
+      val startM = Math.min(Math.max(Math.min(d1, d2), 0.0), GeometryUtils.geometryLength(geometry))
       val endM = Math.min(Math.max(d1, d2), GeometryUtils.geometryLength(geometry))
-      GeometryUtils.truncateGeometry3D(geometry,
-        startM, endM)
+      GeometryUtils.truncateGeometry3D(geometry, startM, endM)
     }
 
     // When mapping contains a larger span (sourceStart, sourceEnd) than the road address then split the mapping
@@ -141,7 +141,7 @@ trait RoadAddressMapper {
     if (addr.endAddrMValue != cp.addressMValue)
       throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
     if (seq.exists(_.endAddrMValue > cp.addressMValue))
-      throw new IllegalArgumentException("Start calibration point not in the last link of source")
+      throw new IllegalArgumentException(s"End calibration point not in the last link of source in linkId ${addr.linkId}")
     if (Math.abs(cp.segmentMValue -
       (addr.sideCode match {
         case SideCode.AgainstDigitizing => 0.0
