@@ -1176,7 +1176,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinks = ProjectDAO.getProjectLinks(id)
 
       val validationErrors = projectValidator.validateProject(project, projectLinks)
-      validationErrors.size should be (0)
+      validationErrors.head.validationError.message should be ("")
+      validationErrors.head.optionalInformation should not be ("")
+      validationErrors.head.validationError.value should be (8)
     }
   }
 
