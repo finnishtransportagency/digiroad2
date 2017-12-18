@@ -95,7 +95,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val config = userProvider.getCurrentUser().configuration
       (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
     }
-    StartupParameters(east.getOrElse(DefaultLongitude), north.getOrElse(DefaultLatitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
+    StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
   }
 
   get("/roadlinks") {

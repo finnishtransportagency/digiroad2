@@ -38,6 +38,9 @@
     me.browsingStyleProvider.addRules(oneWayRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
 
+    me.browsingStyleProviderReadOnly =  new StyleRuleProvider({ stroke : { opacity: 0.7 , color: '#439232'}});
+    me.browsingStyleProviderReadOnly.addRules(zoomLevelRules);
+    me.browsingStyleProviderReadOnly.addRules(oneWayRules);
   };
 })(this);
 

@@ -392,34 +392,21 @@ class AssetDataImporter {
     // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
     println(s"Splitting road address id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
-    val roadAddressA = roadAddress.copy(
-      id = fi.liikennevirasto.viite.NewRoadAddress,
-      endAddrMValue = addrMToSplit,
-      endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-        roadAddress.endMValue
-      else
-        splitMValue,
-      startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-        roadAddress.endMValue - splitMValue
-      else
-        0.0,
-      geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue),
-      roadType = roadTypeBefore, ely = elyCode)
+    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+            roadAddress.endMValue - splitMValue
+          else
+            0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+            roadAddress.endMValue
+          else
+            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode)
 
-    val roadAddressB = roadAddress.copy(
-      id = fi.liikennevirasto.viite.NewRoadAddress,
-      startAddrMValue = addrMToSplit,
-      startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-        0.0
-      else
-        splitMValue,
-      endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-        roadAddress.endMValue - splitMValue
-      else
-        roadAddress.endMValue,
-      geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue),
-      roadType = roadTypeAfter, ely = elyCode
-    )
+    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+            0.0
+          else
+            splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+            roadAddress.endMValue - splitMValue
+          else
+            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode)
     Seq(roadAddressA, roadAddressB)
   }
 
@@ -456,11 +443,12 @@ class AssetDataImporter {
     var counter = 0
     var changed = 0
     OracleDatabase.withDynTransaction {
-      val roadNumbers = Queries.getDistinctRoadNumbers(filterRoadAddresses)
+      val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
+        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "")
       roadNumbers.foreach(roadNumber =>{
         counter +=1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
-        val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
+        val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds, false)
         val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
 

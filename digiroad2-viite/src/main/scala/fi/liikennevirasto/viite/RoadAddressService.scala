@@ -166,7 +166,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
         addresses.keySet.contains(id) || normalRoadLinkIds.contains(id)))
-    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(), addresses)
+    val roadEndDateLinkIds = roadsWithEndDate.map(_.linkId).toSeq
+    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(), addresses.filterNot(a => roadEndDateLinkIds.contains(a._1))) ++ addresses.filter(rl => roadEndDateLinkIds.contains(rl._1))
     val missingLinkIds = linkIds -- floating.keySet -- allRoadAddressesAfterChangeTable.keySet
     val missedRL = withTiming(
       withDynTransaction {
@@ -221,9 +222,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val missingViiteRoadAddress = if(!frozenTimeVVHAPIServiceEnabled) Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf) else Map[Long, Seq[MissingRoadAddress]]()
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
-    val roadsWithEndDate = addresses.values.flatten.filter(a => a.endDate.isDefined).map(_.linkId).toSeq
+    val (roadsWithEndDate, roadsWithoutEndDate) = addresses.values.flatten.partition(a => a.endDate.isDefined)
+    val filteredRoadsWithEndDate = roadsWithEndDate.filterNot(r => roadsWithoutEndDate.exists(_.linkId == r.linkId)).map(_.linkId).toSeq
 
-    val addressLinkIds = addresses.filterNot(rl => roadsWithEndDate.contains(rl._1)).keySet ++ missingViiteRoadAddress.keySet
+    val addressLinkIds = addresses.filterNot(rl => filteredRoadsWithEndDate.contains(rl._1)).keySet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = if (!frozenTimeVVHAPIServiceEnabled) roadLinkService.getChangeInfoFromVVHF(addressLinkIds) else Future(Seq())
 
@@ -238,7 +240,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       linkIds.contains(id) && addresses.getOrElse(id, Seq()).exists(ra => crl.affects(ra.linkId, ra.adjustedTimestamp))))
     logger.info("End change info in %.3f sec".format((System.currentTimeMillis() - fetchVVHEndTime) * 0.001))
 
-    val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(), addresses)
+    val roadEndDateLinkIds = roadsWithEndDate.map(_.linkId).toSeq
+    val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(), addresses.filterNot(a => roadEndDateLinkIds.contains(a._1))) ++ addresses.filter(rl => roadEndDateLinkIds.contains(rl._1))
 
     val (changedFloating, missingFloating) = historyLinkAddresses.partition(ral => linkIds.contains(ral._1))
 
@@ -273,7 +276,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
         val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
           r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
-            r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
+                      r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
 
         val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
 
@@ -343,9 +346,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val max = roadAddresses.maxBy(ra => ra.endMValue)
       val min = roadAddresses.minBy(ra => ra.startMValue)
       min.copy(startAddrMValue = Math.min(min.startAddrMValue, max.startAddrMValue),
-        endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue),
-        startMValue = min.startMValue, endMValue = max.endMValue,
-        geometry = Seq(min.geometry.head, max.geometry.last))
+        endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue), startMValue = min.startMValue,
+        endMValue = max.endMValue, geometry = Seq(min.geometry.head, max.geometry.last))
     }
   }
 
