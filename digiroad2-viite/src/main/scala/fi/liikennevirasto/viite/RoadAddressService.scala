@@ -276,7 +276,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
         val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
           r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
-            r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
+                      r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
 
         val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
 
@@ -346,9 +346,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val max = roadAddresses.maxBy(ra => ra.endMValue)
       val min = roadAddresses.minBy(ra => ra.startMValue)
       min.copy(startAddrMValue = Math.min(min.startAddrMValue, max.startAddrMValue),
-        endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue),
-        startMValue = min.startMValue, endMValue = max.endMValue,
-        geometry = Seq(min.geometry.head, max.geometry.last))
+        endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue), startMValue = min.startMValue,
+        endMValue = max.endMValue, geometry = Seq(min.geometry.head, max.geometry.last))
     }
   }
 

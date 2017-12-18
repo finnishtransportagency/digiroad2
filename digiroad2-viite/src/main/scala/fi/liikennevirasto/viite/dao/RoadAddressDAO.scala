@@ -11,12 +11,13 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointMValues}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
+import fi.liikennevirasto.viite.{NewRoadAddress, ReservedRoadPart, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.format.DateTimeFormat
@@ -84,6 +85,22 @@ object CalibrationCode {
 }
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
 
+sealed trait TerminationCode {
+  def value: Int
+}
+
+object TerminationCode {
+  val values = Set(NoTermination, Termination, Subsequent)
+
+  def apply(intValue: Int): TerminationCode = {
+    values.find(_.value == intValue).getOrElse(NoTermination)
+  }
+
+  case object NoTermination extends TerminationCode { def value = 0 }
+  case object Termination extends TerminationCode { def value = 1 }
+  case object Subsequent extends TerminationCode { def value = 2 }
+}
+
 trait BaseRoadAddress {
   def id: Long
   def roadNumber: Long
@@ -114,10 +131,12 @@ trait BaseRoadAddress {
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
-                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: Boolean = false) extends BaseRoadAddress {
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
+                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, modifiedBy: Option[String] = None,
+                       lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
+                       floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
+                       terminated: TerminationCode = NoTermination) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -168,7 +187,7 @@ object RoadAddressDAO {
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
     val floatingFilter = fetchOnlyFloating match {
-      case true => " and ra.floating = 1"
+      case true => " and ra.floating != '0'"
       case false => ""
     }
 
@@ -272,17 +291,19 @@ object RoadAddressDAO {
       val y2 = r.nextDouble()
       val geomSource = LinkGeomSource.apply(r.nextInt)
       val ely = r.nextLong()
-      val terminated = r.nextBoolean()
+      val terminated = TerminationCode.apply(r.nextInt())
       RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
-        SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
-          endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)), geomSource, ely, terminated)
+        SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode),
+          linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)), floating,
+        Seq(Point(x,y), Point(x2,y2)), geomSource, ely, terminated)
     }
   }
 
-  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true): List[RoadAddress] = {
-    if (linkIds.size > 1000) {
-      return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory)
+  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true,
+                    filterIds: Set[Long] = Set()): List[RoadAddress] = {
+    if (linkIds.size > 1000 || filterIds.size > 1000) {
+      return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
     }
     val linkIdString = linkIds.mkString(",")
     val where = linkIds.isEmpty match {
@@ -295,6 +316,10 @@ object RoadAddressDAO {
       ""
     val history = if (!includeHistory)
       "AND ra.end_date is null"
+    else
+      ""
+    val idFilter = if (filterIds.nonEmpty)
+      s"AND ra.id not in ${filterIds.mkString("(", ",", ")")}"
     else
       ""
 
@@ -314,7 +339,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $floating $history $valid and t.id < t2.id and
+        $where $floating $history $valid $idFilter and t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
@@ -973,7 +998,7 @@ object RoadAddressDAO {
       "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,?,?,?,0.0,?)), ?, ?, ? ,?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
-    val (ready, idLess) = roadAddresses.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
+    val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
     val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
     val createAddresses = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
@@ -981,7 +1006,7 @@ object RoadAddressDAO {
     val savedIds = createAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue,
         address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
-      val nextId = if (address.id == fi.liikennevirasto.viite.NewRoadAddress)
+      val nextId = if (address.id == NewRoadAddress)
         Sequences.nextViitePrimaryKeySeqValue
       else address.id
       addressPS.setLong(1, nextId)
@@ -1012,7 +1037,7 @@ object RoadAddressDAO {
       addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
       addressPS.setLong(20, address.ely)
       addressPS.setInt(21, address.roadType.value)
-      addressPS.setInt(22, if (address.terminated) 1 else 0)
+      addressPS.setInt(22, address.terminated.value)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
@@ -1083,4 +1108,11 @@ object RoadAddressDAO {
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
     Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
+
+  def setSubsequentTermination(linkIds: Set[Long]): Unit = {
+    val roadAddresses = fetchByLinkId(linkIds, true, true).filter(_.terminated == NoTermination)
+    expireById(roadAddresses.map(_.id).toSet)
+    create(roadAddresses.map(ra => ra.copy(id = NewRoadAddress, terminated = Subsequent)))
+  }
+
 }
