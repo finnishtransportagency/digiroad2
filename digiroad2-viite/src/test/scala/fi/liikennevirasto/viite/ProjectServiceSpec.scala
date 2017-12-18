@@ -61,7 +61,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     override def withDynTransaction[T](f: => T): T = f
   }
-
+  val projectValidator = ProjectValidator
 
 
   after {
@@ -1155,6 +1155,62 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         a.endDate.nonEmpty should be (true)
         a.linkGeomSource should be (NormalLinkInterface)
       }
+    }
+  }
+
+  //|-----------------------------------|
+  //|                                   |
+  //|   Project Validator Test cases    |
+  //|                                   |
+  //|-----------------------------------|
+
+  test("validator should not trigger any error"){
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val id = project.id
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))))
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+
+      val validationErrors = projectValidator.validateProject(project, projectLinks)
+      validationErrors.size should be (0)
+    }
+  }
+
+  test("validator should output one missingEndOfRoad error") {
+    runWithRollback {
+      val project = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2021-01-01"), DateTime.now(), "Some additional info", Seq(), None)
+      val savedProject = projectService.createRoadLinkProject(project)
+      ProjectDAO.getProjectLinks(savedProject.id).size should be (0)
+
+
+      val newLinkTemplates = Seq(ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 1234L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
+        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
+        None, 86400L),
+        ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
+          None, 0L, 1235L, 0.0, 71.1, SideCode.Unknown, (None, None), false,
+          Seq(Point(510.0, 0.0), Point(581.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 71.1, 0L, 0, false,
+          None, 86400L))
+
+      when(mockRoadLinkService.fetchSuravageLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(newLinkTemplates.take(1).map(toRoadLink))
+      createProjectLinks(newLinkTemplates.take(1).map(_.linkId), savedProject.id, 999L, 205L, 1, 5, 2, 1, 8, "U").get("success") should be (Some(true))
+      ProjectDAO.getProjectLinks(savedProject.id).size should be (1)
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(newLinkTemplates.tail.take(1).map(toRoadLink))
+      createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId), savedProject.id, 999L, 205L, 2, 5, 2, 1, 8, "U").get("success") should be (Some(true))
+
+      val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
+      projectLinks.size should be (2)
+
+      val validationErrors = projectValidator.validateProject(project, projectLinks)
+      validationErrors.size should be (1)
+      validationErrors.head.projectId should be (savedProject.id)
+      validationErrors.head.affectedLinkIds should contain theSameElementsAs newLinkTemplates.map(_.linkId).toSeq
+      validationErrors.head.validationError.value should be (0)
     }
   }
 }

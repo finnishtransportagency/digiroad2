@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Unknown => _, apply => _, _}
 import fi.liikennevirasto.viite.dao.ProjectState._
@@ -1537,6 +1538,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectDAO.getProjectEly(projectId)
   }
 
+  def validateProjectById(projectId: Long): Seq[ValidationErrorDetails] = {
+    withDynSession {
+      validator.validateProject(ProjectDAO.getRoadAddressProjectById(projectId).get, ProjectDAO.getProjectLinks(projectId))
+    }
+  }
+
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
 
 }
@@ -1549,6 +1556,10 @@ class SplittingException(s: String) extends RuntimeException {
   override def getMessage: String = s
 }
 
+case class ProjectBoundingBoxResult(projectLinkResultF: Future[Map[Long, Seq[ProjectLink]]], roadLinkF: Future[Seq[RoadLink]],
+                                    complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[VVHRoadlink]])
+
+
 object ProjectValidator {
 
   sealed trait ValidationError {
@@ -1557,61 +1568,126 @@ object ProjectValidator {
   }
 
   object ValidationError {
-    val values = Set(minorDiscontinuityFound, majorDiscontinuityFound, insufficientTrackCoverage, discontinuousAddressScheme,
-      sharedLinkIdsExist, noContinuityCodesAtEnd, unsuccessfulRecalculation)
+    val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
+      SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad)
+    //Viite-942
+    case object MissingEndOfRoad extends ValidationError {def value = 0;
+      def message = MissingEndOfRoadMessage}
+    //Viite-453
     //There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
-    case object minorDiscontinuityFound extends ValidationError {def value = 0; def message = "<TO_BE_DETERMINED>"}
+    case object MinorDiscontinuityFound extends ValidationError {def value = 1;
+      def message = MinorDiscontinuityFoundMessage}
+    //Viite-453
     //There must be a major discontinuity if the jump is longer than 50 meters
-    case object majorDiscontinuityFound extends ValidationError {def value = 1;def message = "<TO_BE_DETERMINED>"}
+    case object MajorDiscontinuityFound extends ValidationError {def value = 2;
+      def message = MajorDiscontinuityFoundMessage}
+    //Viite-453
     //For every track 1 there must exist track 2 that covers the same address span and vice versa
-    case object insufficientTrackCoverage extends ValidationError {def value = 2;def message = "<TO_BE_DETERMINED>"}
+    case object InsufficientTrackCoverage extends ValidationError {def value = 3;
+      def message = InsufficientTrackCoverageMessage}
+    //Viite-453
     //There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
-    case object discontinuousAddressScheme extends ValidationError {def value = 3;def message = "<TO_BE_DETERMINED>"}
+    case object DiscontinuousAddressScheme extends ValidationError {def value = 4;
+      def message = DiscontinuousAddressSchemeMessage}
+    //Viite-453
     //There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
-    case object sharedLinkIdsExist extends ValidationError {def value = 4;def message = "<TO_BE_DETERMINED>"}
+    case object SharedLinkIdsExist extends ValidationError {def value = 5;
+      def message = SharedLinkIdsExistMessage}
+    //Viite-453
     //Continuity codes are given for end of road
-    case object noContinuityCodesAtEnd extends ValidationError {def value = 5;def message = "<TO_BE_DETERMINED>"}
-    //Recalculation of M values and delta calculation are both successful for every road part in project
-    case object unsuccessfulRecalculation extends ValidationError {def value = 6;def message = "<TO_BE_DETERMINED>"}
+    case object NoContinuityCodesAtEnd extends ValidationError {def value = 6;
+      def message = NoContinuityCodesAtEndMessage}
+    //Viite-453
+    //Recalculation of M values and delta calculation are both unsuccessful for every road part in project
+    case object UnsuccessfulRecalculation extends ValidationError {def value = 7;
+      def message = UnsuccessfulRecalculationMessage}
+
+    case object HasNotHandledLinks extends ValidationError{
+      def value = 8
+      def message = ""
+    }
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
   }
 
   case class ValidationErrorDetails(projectId: Long, validationError: ValidationError,
-                                    affectedLinkIds: Seq[Long], coordinates: Map[Long,ProjectCoordinates],
+                                    affectedLinkIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+
+    def checkProjectContinuity = {
+      def checkCorrectEndCode(projectLinks: Seq[ProjectLink]): Boolean = {
+        return projectLinks.filter(_.discontinuity.value == 1).size == projectLinks.size
+      }
+
+      def determineValidationError(projectEndRoads: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+        val anomalous = projectEndRoads.filter(_.discontinuity.value != 1)
+        val mappedCoords = anomalous.map(link => {
+          val middle = GeometryUtils.midPointGeometry(link.geometry)
+          ProjectCoordinates(middle.x, middle.y, 8)
+        })
+        Seq(ValidationErrorDetails(anomalous.head.projectId, ValidationError.MissingEndOfRoad, anomalous.map(_.linkId), mappedCoords, None))
+      }
+
+      def calcEndRoadsAndAddrMValue(groupedProjectLinks: Seq[ProjectLink]): (Long, Seq[ProjectLink]) = {
+        val maxEndAddrMValue = groupedProjectLinks.maxBy(_.endAddrMValue).endAddrMValue
+        (maxEndAddrMValue, groupedProjectLinks.filter(_.endAddrMValue == maxEndAddrMValue))
+      }
+
+      projectLinks.groupBy(_.roadNumber).flatMap(grouped => {
+        val existingAddresses = RoadAddressDAO.fetchByRoad(grouped._1)
+        if (existingAddresses.size > 0) {
+          val existingEnd = existingAddresses.maxBy(_.endAddrMValue)
+          val (maxEndAddrMValue, projectEndRoads) = calcEndRoadsAndAddrMValue(grouped._2)
+          if ((maxEndAddrMValue > existingEnd.endAddrMValue) && !checkCorrectEndCode(projectEndRoads)) {
+            determineValidationError(projectEndRoads)
+          } else {
+            Seq.empty[ValidationErrorDetails]
+          }
+        } else {
+          val (_, projectEndRoads) = calcEndRoadsAndAddrMValue(grouped._2)
+
+          if (!checkCorrectEndCode(projectEndRoads)) {
+            determineValidationError(projectEndRoads)
+          } else {
+            Seq.empty[ValidationErrorDetails]
+          }
+        }
+      }).toSeq
+    }
+
+    def checkProjectCoverage = {
+      Seq.empty[ValidationErrorDetails]
+    }
+
+    def checkProjectContinuousSchema = {
+      Seq.empty[ValidationErrorDetails]
+    }
+
+    def checkProjectSharedLinks = {
+      Seq.empty[ValidationErrorDetails]
+    }
+
+    def checkForContinuityCodes = {
+      Seq.empty[ValidationErrorDetails]
+    }
+
+    def checkForUnsuccessfulRecalculation = {
+      Seq.empty[ValidationErrorDetails]
+    }
+
+    def checkForNotHandledLinks = {
+      val notHandled = projectLinks.filter(_.status == LinkStatus.NotHandled)
+      notHandled.groupBy(link => (link.roadNumber, link.roadPartNumber)).foldLeft(Seq.empty[ValidationErrorDetails])((errorDetails, road) =>
+        errorDetails :+ ValidationErrorDetails(project.id, ValidationError.HasNotHandledLinks,
+          Seq(road._2.size), road._2.map(l => ProjectCoordinates(l.geometry.head.x, l.geometry.head.y, 12)),
+          Some(HasNotHandledLinksMessage.format(road._2.size, road._1._1, road._1._2)))
+      )
+    }
+
     checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks
   }
-
-  private def checkProjectContinuity(): Seq[ValidationErrorDetails] = {
-    Seq.empty[ValidationErrorDetails]
-  }
-
-  private def checkProjectCoverage(): Seq[ValidationErrorDetails] = {
-    Seq.empty[ValidationErrorDetails]
-  }
-
-  private def checkProjectContinuousSchema(): Seq[ValidationErrorDetails] = {
-    Seq.empty[ValidationErrorDetails]
-  }
-
-  private def checkProjectSharedLinks(): Seq[ValidationErrorDetails] = {
-    Seq.empty[ValidationErrorDetails]
-  }
-
-  private def checkForContinuityCodes(): Seq[ValidationErrorDetails] = {
-    Seq.empty[ValidationErrorDetails]
-  }
-
-  private def checkForUnsuccessfulRecalculation(): Seq[ValidationErrorDetails] = {
-    Seq.empty[ValidationErrorDetails]
-  }
-
 }
-
-case class ProjectBoundingBoxResult(projectLinkResultF: Future[Map[Long, Seq[ProjectLink]]], roadLinkF: Future[Seq[RoadLink]],
-                                    complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[VVHRoadlink]])
