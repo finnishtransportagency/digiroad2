@@ -20,6 +20,8 @@ namespace :deploy do
   task :prepare_release do
     on roles(:all) do |host|
       execute "tmux kill-server || true"
+      execute "export TMPDIR=#{release_path}/tmp"
+      execute "mkdir -p $TMPDIR"
       execute "cd #{release_path} && npm install && yarn install && grunt deploy --target=#{fetch(:grunt_target)}"
       execute "cd #{deploy_path} && mkdir #{release_path}/digiroad2-oracle/lib && cp oracle/* #{release_path}/digiroad2-oracle/lib/."
       execute "mkdir -p #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}"
