@@ -805,7 +805,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId), true)
 
       // Test that this is not accepted as 101-103 is moved to locate after 103-113
       newAddresses.values.toSeq.flatten.map(_.id).toSet should be (addresses.map(_.id).toSet)
@@ -849,7 +849,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId), true)
       // should contain just the 5622953
       newAddresses.values.toSeq.flatten.map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size (1)
       newAddresses.get(5622953).isEmpty should be (false)
@@ -888,7 +888,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId), true)
       newAddresses should have size (5)
       newAddresses(5622953).headOption.exists(_.calibrationPoints._2.nonEmpty) should be (true)
       val flatList = newAddresses.values.flatten
