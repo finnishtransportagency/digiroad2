@@ -1,10 +1,10 @@
 require.config({
   paths: {
-    'underscore': '../bower_components/underscore/underscore',
-    'jquery': '../bower_components/jquery/dist/jquery.min',
-    'lodash': '../bower_components/lodash/lodash.min',
-    'backbone': '../../bower_components/backbone/backbone',
-    'chai': '../../bower_components/chai/chai',
+    'underscore': '../node_modules/underscore/underscore',
+    'jquery': '../node_modules/jquery/dist/jquery.min',
+    'lodash': '../node_modules/lodash/index',
+    'backbone': '../../node_modules/backbone/backbone',
+    'chai': '../../node_modules/chai/chai',
     'EventBus': '../src/utils/eventbus',
     'Backend': '../src/utils/backend-utils',
     'GeometryUtils': '../src/utils/GeometryUtils',

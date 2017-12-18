@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.LinkStatus.{Unknown => _, apply => _, _}
+import fi.liikennevirasto.viite.dao.LinkStatus.{Terminated, Unknown => _, apply => _, _}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadAddressDAO, _}
@@ -1294,13 +1294,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val listOfPendingProjects = getProjectsPendingInTR
     for (project <- listOfPendingProjects) {
       try {
-        withDynSession {
+        withDynTransaction {
           logger.info(s"Checking status for $project")
           val newStatus = checkAndUpdateProjectStatus(project)
           logger.info(s"new status is $newStatus")
         }
       } catch {
-        case t: Throwable => logger.warn(s"Couldn't update project $project", t)
+        case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
       }
     }
 
@@ -1407,7 +1407,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.create(splitAddresses)
   }
 
-  def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Seq[Long] = {
+  def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
@@ -1416,21 +1416,33 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projectLinks.isEmpty)
       throw new RuntimeException(s"Tried to import empty project to road address table after TR response : $newState")
 
+    val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
+    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
+    logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
+    if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size){
+      throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
+    }
+
     ProjectDAO.moveProjectLinksToHistory(projectID)
 
-    val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
-    val expiringRoadAddresses = RoadAddressDAO.fetchByIdMassQuery(replacements.map(_.roadAddressId).toSet,
-      true,false).map(ra => ra.id -> ra).toMap
-    logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
-    val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
-    val (roadAddressesWithoutGeom, newRoadAddresses) = convertToRoadAddress(splitReplacements, pureReplacements, additions,
-      expiringRoadAddresses, project).partition(_.floating)
-    //Expiring all old addresses by their ID
-    roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
-    val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
-    updateTerminationForHistory(terminatedLinkIds, splitReplacements)
-    //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-    RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
+    try {
+      val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
+      val (roadAddressesWithoutGeom, newRoadAddresses) = convertToRoadAddress(splitReplacements, pureReplacements, additions,
+        expiringRoadAddresses, project).partition(_.floating)
+
+      //Expiring all old addresses by their ID
+      roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
+      val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
+      updateTerminationForHistory(terminatedLinkIds, splitReplacements)
+      //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
+      val created = RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
+      Some(s"${created.size} road addresses created")
+    } catch {
+      case e: ProjectValidationException => {
+        logger.info(e.getMessage)
+        Some(e.getMessage)
+      }
+    }
   }
 
   def convertToRoadAddress(splitReplacements: Seq[ProjectLink], pureReplacements: Seq[ProjectLink], additions: Seq[ProjectLink],

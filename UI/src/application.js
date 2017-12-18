@@ -231,7 +231,7 @@
       return new TrafficSignReadOnlyLayer({
         layerName: layerName,
         style: new PointAssetStyle('trafficSigns'),
-        collection: new TrafficSignsCollection(backend, 'trafficSigns', true),
+        collection: new TrafficSignsReadOnlyCollection(backend, 'trafficSigns', true),
         assetLabel: new TrafficSignLabel(),
         assetGrouping: new AssetGrouping(9),
         map: map
