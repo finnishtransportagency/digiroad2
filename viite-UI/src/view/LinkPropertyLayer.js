@@ -12,6 +12,7 @@
     var indicatorVector = new ol.source.Vector({});
     var floatingMarkerVector = new ol.source.Vector({});
     var anomalousMarkerVector = new ol.source.Vector({});
+    var suravageMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
     var greenRoadLayerVector = new ol.source.Vector({});
@@ -45,6 +46,11 @@
       name: 'anomalousMarkerLayer'
     });
     anomalousMarkerLayer.setZIndex(11);
+
+    var suravageMarkerLayer = new ol.layer.Vector({
+      source: suravageMarkerVector,
+      name: 'suravageMarkerLayer'
+    });
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
@@ -140,6 +146,7 @@
 
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
+    map.addLayer(suravageMarkerLayer);
     map.addLayer(directionMarkerLayer);
     map.addLayer(geometryChangedLayer);
     map.addLayer(calibrationPointLayer);
@@ -153,6 +160,7 @@
 
     floatingMarkerLayer.setVisible(true);
     anomalousMarkerLayer.setVisible(true);
+    suravageMarkerLayer.setVisible(true);
     directionMarkerLayer.setVisible(true);
     geometryChangedLayer.setVisible(false);
     calibrationPointLayer.setVisible(true);
@@ -188,6 +196,7 @@
       roadLayer.layer.setOpacity(opacity);
       floatingMarkerLayer.setOpacity(opacity);
       anomalousMarkerLayer.setOpacity(opacity);
+      suravageMarkerLayer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
       suravageRoadLayer.setOpacity(opacity);
       historicRoadsLayer.setOpacity(opacity);
@@ -408,8 +417,9 @@
       var visibleGreenRoadLayer = withGreenRoads ? greenRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visiblePickRoadsLayer = withGreenRoads ? pickRoadsLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
+      var visibleSuravageMarkers = withDirectionalMarkers ? suravageMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleSuravageRoads = withSuravageRoads ? suravageRoadLayer.getSource().getFeaturesInExtent(extent) : [];
-      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleSuravageRoads);
+      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleSuravageRoads).concat(visibleSuravageMarkers);
     };
 
     /**
@@ -427,6 +437,7 @@
     var clearLayers = function(){
       floatingMarkerLayer.getSource().clear();
       anomalousMarkerLayer.getSource().clear();
+      suravageMarkerLayer.getSource().clear();
       directionMarkerLayer.getSource().clear();
       calibrationPointLayer.getSource().clear();
       indicatorLayer.getSource().clear();
@@ -543,6 +554,8 @@
         anomalousMarkerLayer.getSource().clear();
       if(geometryChangedLayer.getSource() !== null)
         geometryChangedLayer.getSource().clear();
+      if(suravageMarkerLayer.getSource() !== null)
+        suravageMarkerLayer.getSource().clear();
       if(directionMarkerLayer.getSource() !== null)
         directionMarkerLayer.getSource().clear();
 
@@ -566,7 +579,7 @@
         _.each(suravageRoadMarkers, function(directionLink) {
           var marker = cachedMarker.createMarker(directionLink);
           if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
-            directionMarkerLayer.getSource().addFeature(marker);
+            suravageMarkerLayer.getSource().addFeature(marker);
         });
 
         var geometryChangedRoadMarkers = _.filter(roadLinks, function(roadlink){
@@ -789,6 +802,7 @@
       });
       eventListener.listenTo(eventbus, 'suravageRoads:toggleVisibility', function(visibility){
         suravageRoadLayer.setVisible(visibility);
+        suravageMarkerLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
