@@ -18,7 +18,7 @@ import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.{ProjectService, RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite._
 import org.apache.http.impl.client.HttpClientBuilder
 
 import scala.concurrent.duration.FiniteDuration
@@ -145,6 +145,13 @@ class RoadAddressMerger(roadAddressService: RoadAddressService) extends Actor {
   }
 }
 
+class RoadAddressChanges(roadAddressService: RoadAddressService) extends Actor {
+  def receive = {
+    case w: RoadAddressChange => roadAddressService.changeRoadAddress(w.asInstanceOf[RoadAddressChange])
+    case _                    => println("roadAddressChanges: Received unknown message")
+  }
+}
+
 class RoadAddressAdjustment(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
     case w: Seq[any] => roadAddressService.saveAdjustments(w.asInstanceOf[Seq[LRMValueAdjustment]])
@@ -221,6 +228,9 @@ object Digiroad2Context {
 
   val roadAddressMerger = system.actorOf(Props(classOf[RoadAddressMerger], roadAddressService), name = "roadAddressMerger")
   eventbus.subscribe(roadAddressMerger, "roadAddress:mergeRoadAddress")
+
+  val roadAddressChanges = system.actorOf(Props(classOf[RoadAddressChanges], roadAddressService), name = "roadAddressChanges")
+  eventbus.subscribe(roadAddressChanges, "roadAddress:changeRoadAddress")
 
   val roadAddressAdjustment = system.actorOf(Props(classOf[RoadAddressAdjustment], roadAddressService), name = "roadAddressAdjustment")
   eventbus.subscribe(roadAddressAdjustment, "roadAddress:persistAdjustments")
