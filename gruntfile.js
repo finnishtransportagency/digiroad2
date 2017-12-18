@@ -288,15 +288,15 @@ module.exports = function(grunt) {
     exec: {
       prepare_openlayers: {
         cmd: 'npm install',
-        cwd: './bower_components/openlayers/'
+        cwd: './node_modules/openlayers/'
       },
       viite_build_openlayers: {
         cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
-        cwd: './bower_components/openlayers/'
+        cwd: './node_modules/openlayers/'
       },
       oth_build_openlayers: {
         cmd: 'node tasks/build.js ../../UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
-        cwd: './bower_components/openlayers/'
+        cwd: './node_modules/openlayers/'
       }
     }
   });
