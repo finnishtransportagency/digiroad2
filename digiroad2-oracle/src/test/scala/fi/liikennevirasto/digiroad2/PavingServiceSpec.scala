@@ -184,42 +184,6 @@ class PavingServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should not create paving assets when it's requested a different asset type.") {
-
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-    val newLinkId = 5001
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val differentAssetTypeId = 250
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-    val vvhTimeStamp = 11121
-
-    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
-
-    val changeInfoSeq = Seq(
-      ChangeInfo(Some(newLinkId), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
-    )
-
-    runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String], any[Boolean])).thenReturn(List())
-
-      val createdAsset = service.getByBoundingBox(differentAssetTypeId, boundingBox).toList.flatten
-
-      val filteredAssets = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined))
-
-      createdAsset.length should be (1)
-      createdAsset.head.typeId should be (differentAssetTypeId)
-
-      filteredAssets.length should be (0)
-    }
-  }
   test("Paving asset changes: new roadlinks") {
     val municipalityCode = 564
     val roadLinks = createRoadLinks(municipalityCode)
