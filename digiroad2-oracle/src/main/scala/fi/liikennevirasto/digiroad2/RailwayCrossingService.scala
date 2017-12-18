@@ -10,6 +10,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String]) extends IncomingPointAsset
+case class IncomingRailwayCrossingtAsset(linkId: Long, mValue: Long, safetyEquipment: Int, name: Option[String])  extends IncomePointAsset
 
 class RailwayCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingRailwayCrossing
@@ -72,6 +73,12 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
       OracleRailwayCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
     }
     id
+  }
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingRailwayCrossing] = {
+    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
+      point =>  IncomingRailwayCrossing(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingRailwayCrossingtAsset].safetyEquipment, asset.asInstanceOf[IncomingRailwayCrossingtAsset].name)
+    }
   }
 }
 

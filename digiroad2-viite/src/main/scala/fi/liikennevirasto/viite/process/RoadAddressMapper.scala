@@ -141,7 +141,7 @@ trait RoadAddressMapper {
     if (addr.endAddrMValue != cp.addressMValue)
       throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
     if (seq.exists(_.endAddrMValue > cp.addressMValue))
-      throw new IllegalArgumentException("Start calibration point not in the last link of source")
+      throw new IllegalArgumentException(s"End calibration point not in the last link of source in linkId ${addr.linkId}")
     if (Math.abs(cp.segmentMValue -
       (addr.sideCode match {
         case SideCode.AgainstDigitizing => 0.0

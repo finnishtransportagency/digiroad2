@@ -456,11 +456,12 @@ class AssetDataImporter {
     var counter = 0
     var changed = 0
     OracleDatabase.withDynTransaction {
-      val roadNumbers = Queries.getDistinctRoadNumbers(filterRoadAddresses)
+      val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
+        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "")
       roadNumbers.foreach(roadNumber =>{
         counter +=1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
-        val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
+        val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds, false)
         val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
 

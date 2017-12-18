@@ -160,6 +160,11 @@
       $('#closeProjectSpan').css('visibility', 'visible');
     };
 
+    var hideEditAndCloseControls = function(){
+      $('[id^=editProject]').css('visibility', 'hidden');
+      $('#closeProjectSpan').css('visibility', 'hidden');
+    };
+
     var checkInputs = function (localPrefix) {
       var rootElement = $('#feature-attributes');
       var inputs = rootElement.find('input');

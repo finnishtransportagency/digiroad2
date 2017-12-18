@@ -116,6 +116,7 @@
     this.clearRoadAddressProjects = function () {
       roadAddressProjects = [];
       currentReservedParts = [];
+      newReservedParts = [];
       dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
       projectInfo=undefined;
@@ -332,7 +333,12 @@
 
     this.saveCuttedProjectLinks = function(changedLinks, statusA, statusB){
       applicationModel.addSpinner();
-      
+      if (_.isUndefined(statusB)) {
+        statusB = LinkStatus.New.description;
+      }
+      if (_.isUndefined(statusA)) {
+        statusA = LinkStatus.Transfer.description;
+      }
       var linkId = Math.abs(changedLinks[0].linkId);
 
       var projectId = projectInfo.id;
