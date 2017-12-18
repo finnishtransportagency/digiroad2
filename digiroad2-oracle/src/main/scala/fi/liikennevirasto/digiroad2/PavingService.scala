@@ -36,7 +36,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
     val (expiredIds, newAndUpdatedPavingAssets) = getPavingAssetChanges(existingAssets, roadLinks, changes, typeId)
 
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds,
+      expiredAssetIds = (existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds).filterNot(_ == 0L),
       adjustedMValues = newAndUpdatedPavingAssets.filter(_.id != 0).map( a => MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)),
       adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 

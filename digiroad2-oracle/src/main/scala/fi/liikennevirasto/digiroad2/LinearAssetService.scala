@@ -180,7 +180,7 @@ trait LinearAssetOperations {
                                adjustedMValues = Seq.empty[MValueAdjustment],
                                adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
-    val (projectedAssets, changedSet)= fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
 
     val newAssets = projectedAssets ++ assetsWithoutChangedLinks

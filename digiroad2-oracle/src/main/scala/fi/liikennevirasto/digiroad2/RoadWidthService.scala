@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{AssetLastModification, OracleLinearAssetDao}
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
@@ -21,45 +21,40 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val linkIds = roadLinks.map(_.linkId)
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
-
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-
-    val (existingAssets) =
+    val existingAssets =
       withDynTransaction {
           dao.fetchLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
       }
 
     val timing = System.currentTimeMillis
-
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
     val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
-    val (expiredRoadWidthAssetIds, newRoadWidthAssets) = getRoadWidthAssetChanges(existingAssets, roadLinks, changes, (newAssetIds) => withDynTransaction {
+    val (expiredIds, newRoadWidthAssets) = getRoadWidthAssetChanges(existingAssets, roadLinks, changes, (newAssetIds) => withDynTransaction {
       dao.fetchExpireAssetLastModificationsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, newAssetIds)
     })
+    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
+                                  expiredAssetIds = (existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds).filterNot(_ == 0L),
+                                  adjustedMValues = Seq.empty[MValueAdjustment],
+                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
-    val combinedAssets = assetsOnChangedLinks.filterNot(a => expiredRoadWidthAssetIds.contains(a.id)) ++ newRoadWidthAssets
+    val combinedAssets = assetsOnChangedLinks.filterNot(a => expiredIds.contains(a.id)) ++ newRoadWidthAssets
 
-    val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
+    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+      combinedAssets, assetsOnChangedLinks, changes, initChangeSet)
 
-    val newAssets = newRoadWidthAssets.filterNot(a => filledNewAssets.contains(a)) ++ filledNewAssets
+    val newAssets = newRoadWidthAssets.filterNot(a => projectedAssets.contains(a)) ++ projectedAssets
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
-    val groupedAssets = (existingAssets.filterNot(a => expiredRoadWidthAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
+    val groupedAssets = (existingAssets.filterNot(a => expiredIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, changedSet)
 
-    val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
-      changeSet.expiredAssetIds
-
-    eventBus.publish("roadWidth:update", changeSet.copy(expiredAssetIds = expiredRoadWidthAssetIds.filterNot(_ == 0L)))
-
-    //Remove the asset ids ajusted in the "roadWidth:update" otherwise if the "roadWidth:saveProjectedRoadWidth" is executed after the "roadWidth:update"
-    //it will update the mValues to the previous ones
-    eventBus.publish("RoadWidth:saveProjectedRoadWidth", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
+    eventBus.publish("roadWidth:update", changeSet)
+    eventBus.publish("RoadWidth:saveProjectedRoadWidth", newAssets)
 
     filledTopology
   }
