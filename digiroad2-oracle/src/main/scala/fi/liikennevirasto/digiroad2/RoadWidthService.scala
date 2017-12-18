@@ -54,7 +54,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, changedSet)
 
     eventBus.publish("roadWidth:update", changeSet)
-    eventBus.publish("RoadWidth:saveProjectedRoadWidth", newAssets)
+    eventBus.publish("RoadWidth:saveProjectedRoadWidth", newAssets.filter(_.id == 0L))
 
     filledTopology
   }
@@ -140,14 +140,6 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
       !persistedLinearAsset.exists(_.value == assetToPersist.value)
     }
-    def mValueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(pl => pl.startMeasure == assetToPersist.startMeasure &&
-        pl.endMeasure == assetToPersist.endMeasure &&
-        pl.vvhTimeStamp == assetToPersist.vvhTimeStamp)
-    }
-    def sideCodeChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(_.sideCode == assetToPersist.sideCode)
-    }
     toUpdate.foreach { linearAsset =>
       val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
       val id = linearAsset.id
@@ -158,8 +150,6 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case _ => None
         }
       }
-      if (mValueChanged(linearAsset, persistedLinearAsset)) dao.updateMValues(linearAsset.id, (linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.vvhTimeStamp)
-      if (sideCodeChanged(linearAsset, persistedLinearAsset)) dao.updateSideCode(linearAsset.id, SideCode(linearAsset.sideCode))
     }
   }
 
@@ -187,6 +177,18 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   override def updateChangeSet(changeSet: ChangeSet) : Unit = {
     withDynTransaction {
+      dao.floatLinearAssets(changeSet.droppedAssetIds)
+
+      if (changeSet.adjustedMValues.nonEmpty)
+        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+
+      changeSet.adjustedMValues.foreach { adjustment =>
+        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+      }
+
+      changeSet.adjustedSideCodes.foreach { adjustment =>
+        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
+      }
 
       val ids = changeSet.expiredAssetIds.toSeq
       if (ids.nonEmpty)

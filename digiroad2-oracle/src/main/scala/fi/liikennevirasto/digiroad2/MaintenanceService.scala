@@ -54,14 +54,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
       !persistedLinearAsset.exists(_.value == assetToPersist.value)
     }
-    def mValueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(pl => pl.startMeasure == assetToPersist.startMeasure &&
-        pl.endMeasure == assetToPersist.endMeasure &&
-        pl.vvhTimeStamp == assetToPersist.vvhTimeStamp)
-    }
-    def sideCodeChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(_.sideCode == assetToPersist.sideCode)
-    }
+
     toUpdate.foreach { maintenanceAsset =>
       val persistedLinearAsset = persisted.getOrElse(maintenanceAsset.id, Seq()).headOption
       val id = maintenanceAsset.id
@@ -72,8 +65,6 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
           case _ => None
         }
       }
-        if (mValueChanged(maintenanceAsset, persistedLinearAsset)) dao.updateMValues(maintenanceAsset.id, (maintenanceAsset.startMeasure, maintenanceAsset.endMeasure), maintenanceAsset.vvhTimeStamp)
-        if (sideCodeChanged(maintenanceAsset, persistedLinearAsset)) dao.updateSideCode(maintenanceAsset.id, SideCode(maintenanceAsset.sideCode))
     }
   }
 
@@ -161,42 +152,40 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     // Filter high functional classes from maintenance roads
     val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)
-
+    val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
     val linkIds = roads.map(_.linkId)
-    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roads)
+    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
     val existingAssets =
       withDynTransaction {
         maintenanceDAO.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, linkIds ++ removedLinkIds, includeFloating = false).filterNot(_.expired)
       }
 
+    val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
+    val projectableTargetRoadLinks = roads.filter(
+      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+
     val timing = System.currentTimeMillis
-
-    val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
-
-    val projectableTargetRoadLinks = roads.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+    val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
 
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                   expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                   adjustedMValues = Seq.empty[MValueAdjustment],
                                   adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
-    val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
-
-    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+    val (newAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       combinedAssets, assetsOnChangedLinks, changes, initChangeSet)
 
-    if (projectedAssets.nonEmpty) {
-      logger.info("Transferred %d assets in %d ms ".format(projectedAssets.length, System.currentTimeMillis - timing))
+    if (newAssets.nonEmpty) {
+      logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
-    val groupedAssets = (existingAssets.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++assetsWithoutChangedLinks).groupBy(_.linkId)
+    val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roads, groupedAssets, maintenanceRoadAssetTypeId, changedSet)
 
     eventBus.publish("linearAssets:update", changeSet)
-    eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", projectedAssets)
+    eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets)
 
     filledTopology
   }
-
   /**
     * Returns Maintenance assets by asset type and asset ids.
     */
@@ -227,7 +216,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   /**
-    * Saves linear asset when linear asset is split to two parts in UI (scissors icon). Used by Digiroad2Api /linearassets/:id POST endpoint.
+    * Saves linear asset when linear asset is split to two parts in UI (scissors icon).
     */
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {

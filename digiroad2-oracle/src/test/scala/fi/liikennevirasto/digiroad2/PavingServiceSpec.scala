@@ -14,7 +14,6 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 class PavingServiceSpec extends FunSuite with Matchers {
   val PavingAssetTypeId = 110
@@ -637,5 +636,4 @@ class PavingServiceSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
-
 }
