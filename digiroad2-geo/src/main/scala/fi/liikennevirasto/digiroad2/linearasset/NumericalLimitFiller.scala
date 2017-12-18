@@ -490,7 +490,7 @@ object NumericalLimitFiller {
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments/*.copy(expiredAssetIds = assetAdjustments.expiredAssetIds.filterNot(_ == 0L))*/)
+      (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }
   }
 
