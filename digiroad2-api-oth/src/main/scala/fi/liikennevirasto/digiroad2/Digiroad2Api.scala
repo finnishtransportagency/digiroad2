@@ -49,13 +49,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val maintenanceRoadService: MaintenanceService,
                    val pavingService: PavingService,
                    val roadWidthService: RoadWidthService,
+                   val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
+                   val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
+                   val numericValueLinearAssetService: NumericValueLinearAssetService = Digiroad2Context.numericValueLinearAssetService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
-                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
-                   val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService)
+                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1254,9 +1256,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
       case LinearAssetTypes.PavingAssetTypeId => pavingService
       case LinearAssetTypes.RoadWidthAssetTypeId => roadWidthService
-      case LinearAssetTypes.ProhibitionAssetTypeId => prohibitionService
-      case LinearAssetTypes.HazmatTransportProhibitionAssetTypeId => prohibitionService
-      case _ => linearAssetService
+      case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId => prohibitionService
+      case LinearAssetTypes.ExitNumberAssetTypeId | LinearAssetTypes.EuropeanRoadAssetTypeId => textValueLinearAssetService
+      case _ => numericValueLinearAssetService
     }
   }
 

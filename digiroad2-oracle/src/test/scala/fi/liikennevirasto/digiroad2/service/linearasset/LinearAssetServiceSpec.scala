@@ -74,91 +74,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
 
-  test("Expire numerical limit") {
-    runWithRollback {
-      ServiceWithDao.expire(Seq(11111l), "lol")
-      val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limit.expired should be (true)
-    }
-  }
-
-  test("Update numerical limit") {
-    runWithRollback {
-      //Update Numeric Values By Expiring the Old Asset
-      val limitToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "UnitTestsUser")
-
-      //Verify if the new data of the new asset is equal to old asset
-      val limitUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
-
-      limitUpdated.id should not be (limitToUpdate.id)
-      limitUpdated.linkId should be (limitToUpdate.linkId)
-      limitUpdated.sideCode should be (limitToUpdate.sideCode)
-      limitUpdated.value should be (Some(NumericValue(2000)))
-      limitUpdated.startMeasure should be (limitToUpdate.startMeasure)
-      limitUpdated.endMeasure should be (limitToUpdate.endMeasure)
-      limitUpdated.createdBy should be (limitToUpdate.createdBy)
-      limitUpdated.createdDateTime should be (limitToUpdate.createdDateTime)
-      limitUpdated.modifiedBy should be (Some("UnitTestsUser"))
-      limitUpdated.modifiedDateTime should not be empty
-      limitUpdated.expired should be (false)
-      limitUpdated.typeId should be (limitToUpdate.typeId)
-      limitUpdated.vvhTimeStamp should be (limitToUpdate.vvhTimeStamp)
-
-      //Verify if old asset is expired
-      val limitExpired = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limitExpired.expired should be (true)
-    }
-  }
-
-  test("Update Exit number Text Field") {
-    runWithRollback {
-      //Update Text Values By Expiring the Old Asset
-      val assetToUpdate = linearAssetDao.fetchAssetsWithTextualValuesByIds(Set(600068), "liittymänumero").head
-      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(600068), TextualValue("Value for Test"), "UnitTestsUser")
-
-      //Verify if the new data of the new asset is equal to old asset
-      val assetUpdated = linearAssetDao.fetchAssetsWithTextualValuesByIds(newAssetIdCreatedWithUpdate.toSet, "liittymänumero").head
-
-      assetUpdated.id should not be (assetToUpdate.id)
-      assetUpdated.linkId should be(assetToUpdate.linkId)
-      assetUpdated.sideCode should be(assetToUpdate.sideCode)
-      assetUpdated.value should be(Some(TextualValue("Value for Test")))
-      assetUpdated.startMeasure should be(assetToUpdate.startMeasure)
-      assetUpdated.endMeasure should be(assetToUpdate.endMeasure)
-      assetUpdated.createdBy should be(assetToUpdate.createdBy)
-      assetUpdated.createdDateTime should be(assetToUpdate.createdDateTime)
-      assetUpdated.modifiedBy should be(Some("UnitTestsUser"))
-      assetUpdated.modifiedDateTime should not be empty
-      assetUpdated.expired should be(false)
-      assetUpdated.typeId should be(assetToUpdate.typeId)
-      assetUpdated.vvhTimeStamp should be(assetToUpdate.vvhTimeStamp)
-
-      //Verify if old asset is expired
-      val assetExpired = linearAssetDao.fetchLinearAssetsByIds(Set(600068), "liittymänumero").head
-      assetExpired.expired should be(true)
-    }
-  }
-
-  test("Update numerical limit and verify asset") {
-    runWithRollback {
-      //Update Numeric Values By Expiring the Old Asset (asset type 30)
-      val limitToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "TestsUser")
-
-      //Verify if the new data of the new asset is equal to old asset
-      val limitUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
-
-      limitUpdated.id should not be limitToUpdate.id
-      limitUpdated.expired should be (false)
-      limitUpdated.verifiedBy should be (Some("TestsUser"))
-      limitUpdated.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-
-      //Verify if old asset is expired
-      val limitExpired = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limitExpired.expired should be (true)
-    }
-  }
 
   test("Create new linear asset") {
     runWithRollback {
@@ -191,16 +106,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     linearAssets.map(_.value) should be(Seq(Some(NumericValue(40000))))
     verify(mockEventBus, times(1))
       .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil, Set.empty[Long]))
-  }
-
-  test("Municipality fetch dispatches to dao based on asset type id") {
-    when(mockLinearAssetDao.fetchAssetsWithTextualValuesByLinkIds(260, Seq(1l), "eurooppatienumero")).thenReturn(Nil)
-    PassThroughService.getByMunicipality(260, 235)
-    verify(mockLinearAssetDao).fetchAssetsWithTextualValuesByLinkIds(260, Seq(1l), "eurooppatienumero")
-
-    when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(100, Seq(1l), "mittarajoitus", false)).thenReturn(Nil)
-    PassThroughService.getByMunicipality(100, 235)
-    verify(mockLinearAssetDao).fetchLinearAssetsByLinkIds(100, Seq(1l), "mittarajoitus", false)
   }
 
   test("Separate linear asset") {
@@ -594,80 +499,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
       val latestModifiedDate = DateTime.parse("2016-02-17 10:03:51.047483", formatter)
       after.head.modifiedDateTime should be(Some(latestModifiedDate))
-
-      dynamicSession.rollback()
-    }
-  }
-
-  test("Should map linear asset with textual value of old link to three new road links, asset covers the whole road link") {
-
-    // Divided road link (change types 5 and 6)
-
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    val oldLinkId = 5000
-    val newLinkId1 = 6001
-    val newLinkId2 = 6002
-    val newLinkId3 = 6003
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val assetTypeId = 260 // european road
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-
-    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
-
-    val newRoadLinks = Seq(RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
-
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
-
-    OracleDatabase.withDynTransaction {
-      val lrm = Sequences.nextLrmPositionPrimaryKeySeqValue
-      val assetId = Sequences.nextPrimaryKeySeqValue
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) values ($lrm, $oldLinkId, 0, 25.000, 1)""".execute
-      sqlu"""insert into asset (id, asset_type_id, created_date, created_by) values ($assetId, $assetTypeId, SYSDATE, 'dr2_test_data')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values ($assetId, $lrm)""".execute
-      sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values ($assetId, $assetId, (select id from property where public_id='eurooppatienumero'), 'E666' || chr(10) || 'E667', sysdate, 'dr2_test_data')""".execute
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
-      val before = service.getByBoundingBox(assetTypeId, boundingBox).toList
-
-      before.length should be (1)
-      before.head.map(_.value should be (Some(TextualValue("E666\nE667"))))
-      before.head.map(_.sideCode should be (SideCode.BothDirections))
-      before.head.map(_.startMeasure should be (0))
-      before.head.map(_.endMeasure should be (25))
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
-      val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
-      after.length should be (3)
-      after.foreach(_.value should be (Some(TextualValue("E666\nE667"))))
-      after.foreach(_.sideCode should be (SideCode.BothDirections))
-
-      val afterByLinkId = after.groupBy(_.linkId)
-      val linearAsset1 = afterByLinkId(newLinkId1)
-      linearAsset1.length should be (1)
-      linearAsset1.head.startMeasure should be (0)
-      linearAsset1.head.endMeasure should be (10)
-      val linearAsset2 = afterByLinkId(newLinkId2)
-      linearAsset2.length should be (1)
-      linearAsset2.head.startMeasure should be (0)
-      linearAsset2.head.endMeasure should be (10)
-      val linearAsset3 = afterByLinkId(newLinkId3)
-      linearAsset3.length should be (1)
-      linearAsset3.head.startMeasure should be (0)
-      linearAsset3.head.endMeasure should be (5)
 
       dynamicSession.rollback()
     }

@@ -9,10 +9,13 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
+import scala.slick.jdbc.{StaticQuery => Q}
+
+class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -22,21 +25,12 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-  /**
-    * Returns linear assets by asset type and asset ids. Used by Digiroad2Api /linearassets POST and /linearassets DELETE endpoints.
-    */
-  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
-      dao.fetchProhibitionsByIds(typeId, ids)
-    }
-  }
-
   override def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     withDynTransaction {
-          dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
+      dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
     }.filterNot(_.expired)
   }
 
@@ -44,9 +38,21 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
-        dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
+          dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
       }.filterNot(_.expired)
     existingAssets
+  }
+
+  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
+    }
+  }
+
+  override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
+    }
   }
 
   override protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
@@ -66,14 +72,46 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       val id = linearAsset.id
       if (valueChanged(linearAsset, persistedLinearAsset)) {
         linearAsset.value match {
-          case Some(prohibitions: Prohibitions) =>
-            dao.updateProhibitionValue(id, prohibitions, LinearAssetTypes.VvhGenerated)
+          case Some(TextualValue(textValue)) =>
+            dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
       if (mValueChanged(linearAsset, persistedLinearAsset)) dao.updateMValues(linearAsset.id, (linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.vvhTimeStamp)
       if (sideCodeChanged(linearAsset, persistedLinearAsset)) dao.updateSideCode(linearAsset.id, SideCode(linearAsset.sideCode))
     }
+  }
+
+  override protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int]): Option[Long] = {
+    //Get Old Asset
+    val oldAsset =
+      valueToUpdate match {
+        case TextualValue(textValue) =>
+          dao.fetchAssetsWithTextualValuesByIds(Set(assetId), valuePropertyId).head
+        case _ => return None
+      }
+
+    //Expire the old asset
+    dao.updateExpiration(assetId, expired = true, username)
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
+    //Create New Asset
+    val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
+      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
+
+    Some(newAssetIDcreate)
+  }
+
+  override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+                                         createdByFromUpdate: Option[String] = Some(""),
+                                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None): Long = {
+    val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
+    value match {
+      case TextualValue(textValue) =>
+        dao.insertValue(id, LinearAssetTypes.getValuePropertyId(typeId), textValue)
+      case _ => None
+    }
+    id
   }
 
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
@@ -86,41 +124,13 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     ids.flatMap { id =>
       val typeId = assetTypeById(id)
       value match {
-        case prohibitions: Prohibitions =>
-          updateValueByExpiration(id, prohibitions, typeId, username, measures, vvhTimeStamp, sideCode)
+        case TextualValue(textValue) =>
+          updateValueByExpiration(id, TextualValue(textValue), LinearAssetTypes.getValuePropertyId(typeId), username, measures, vvhTimeStamp, sideCode)
         case _ =>
           Some(id)
       }
     }
   }
 
-  protected def updateValueByExpiration(assetId: Long, prohibitions: Prohibitions, assetTypeId: Int, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int]): Option[Long] = {
-    //Get Old Asset
-    dao.fetchProhibitionsByIds(assetTypeId, Set(assetId)).headOption.map {
-      oldAsset =>
-      if(oldAsset.value.contains(prohibitions)){
-        dao.updateProhibitionValue(assetId, prohibitions, username, measures).head
-      } else {
-        //Expire the old asset
-        dao.updateExpiration(assetId)
-        val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
-        //Create New Asset
-        createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, sideCode.getOrElse(oldAsset.sideCode),
-          measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
-      }
-    }
-  }
 
-  override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
-                                                  createdByFromUpdate: Option[String] = Some(""),
-                                                  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None): Long = {
-    val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
-    value match {
-      case prohibitions: Prohibitions =>
-        dao.insertProhibitionValue(id, prohibitions)
-      case _ => None
-    }
-    id
-  }
 }
