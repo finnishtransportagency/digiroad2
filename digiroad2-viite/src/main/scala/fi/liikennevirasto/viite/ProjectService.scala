@@ -65,12 +65,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       if (!RoadAddressDAO.roadPartExists(roadNumber, roadStartPart)) {
         if (!RoadAddressDAO.roadNumberExists(roadNumber)) {
-          Some("Tienumeroa ei ole olemassa, tarkista tiedot")
+          Some(ErrorRoadNumberDoesNotExist)
         }
         else //roadnumber exists, but starting roadpart not
-          Some("Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot")
+          Some(ErrorStartingRoadPartNotFound)
       } else if (!RoadAddressDAO.roadPartExists(roadNumber, roadEndPart)) { // ending part check
-        Some("Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot")
+        Some(ErrorEndingRoadPartNotFound)
       } else
         None
     }
@@ -279,7 +279,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         if (GeometryUtils.isNonLinear(newLinks))
-          throw new ProjectValidationException("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä.")
+          throw new ProjectValidationException(ErrorGeometryContainsBranches)
         // Determine address value scheme (ramp, roundabout, all others)
         val createLinks =
           if (newLinks.headOption.exists(isRamp)) {
@@ -353,7 +353,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction {
         if (ProjectDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
-          return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan.")
+          return Some(ErrorReversingUnchangedLinks)
         val continuity = ProjectDAO.getContinuityCodes(projectId, roadNumber, roadPartNumber)
         val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {
           val discontinuityAtEnd = continuity.maxBy(_._1)
@@ -375,7 +375,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } catch {
       case NonFatal(e) =>
         logger.info("Direction change failed", e)
-        Some("Päivitys ei onnistunut")
+        Some(ErrorSavingFailed)
     }
   }
 
