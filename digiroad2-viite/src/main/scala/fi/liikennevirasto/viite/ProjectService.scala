@@ -407,15 +407,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val reserved = checkAndReserve(project, reservation)
           if (reserved.isEmpty)
             throw new RuntimeException(s"Can't reserve road part ${reservation.roadNumber}/${reservation.roadPartNumber}")
-          val generatedInfo = generateAddressPartInfo(reservation.roadNumber, reservation.roadPartNumber) match {
-            case Some(info) =>
-              info.copy(id = reserved.get.id, newLength = None, newDiscontinuity = None, newEly = None)
-            case None => reservation.copy(id = reserved.get.id, newLength = None, newDiscontinuity = None, newEly = None)
-          }
-          val projectLinks = addressesOnPart.map(ra => newProjectTemplate(mapping(ra.linkId), ra, project))
-          ProjectDAO.updateReservedRoadPart(generatedInfo)
-          logger.debug(s"New parts updated $generatedInfo")
-          projectLinks
+          addressesOnPart.map(ra => newProjectTemplate(mapping(ra.linkId), ra, project))
         }
         logger.debug(s"Reserve done")
         val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
@@ -1019,11 +1011,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           }
           case LinkStatus.Numbering => {
             if (toUpdateLinks.nonEmpty) {
-              if (RoadAddressDAO.fetchByIdMassQuery(toUpdateLinks.map(_.roadAddressId).toSet, includeFloating = true).exists(x =>
+              val roadAddresses = RoadAddressDAO.fetchByIdMassQuery(toUpdateLinks.map(_.roadAddressId).toSet, includeFloating = true)
+              if (roadAddresses.exists(x =>
                 x.roadNumber == newRoadNumber && x.roadPartNumber == newRoadPartNumber)) // check the original numbering wasn't exactly the same
                 throw new ProjectValidationException(ErrorRenumberingToOriginalNumber) // you cannot use current roadnumber and roadpart number in numbering operation
+              if (toUpdateLinks.map(pl => (pl.roadNumber, pl.roadPartNumber)).distinct.size != 1 ||
+                roadAddresses.map(ra => (ra.roadNumber, ra.roadPartNumber)).distinct.size != 1) {
+                throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
+              }
+              //TODO: Check that the numbering target road number + road part does not exist or is reserved to this project
               checkAndMakeReservation(toUpdateLinks.head.ely)
-              ProjectDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPartNumber, userName)
+              ProjectDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber,
+                linkStatus, newRoadNumber, newRoadPartNumber, userName)
             } else {
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
             }

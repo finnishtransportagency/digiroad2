@@ -409,7 +409,6 @@ object ProjectDAO {
     sqlu"""
          update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate, add_info=${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate}, ely = ${roadAddressProject.ely} where id = ${roadAddressProject.id}
          """.execute
-    roadAddressProject.reservedParts.foreach(updateReservedRoadPart)
   }
 
   /**
@@ -762,6 +761,8 @@ object ProjectDAO {
 
   @Deprecated
   def updateReservedRoadPart(reserved: ReservedRoadPart): Unit = {
+    // TODO: remove after current merges are done and no method calls this
+    throw new RuntimeException("Deprecated method")
   }
 
   def countLinksUnchangedUnhandled(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
