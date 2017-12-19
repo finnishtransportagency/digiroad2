@@ -37,6 +37,8 @@
         linkGroups
     );
 
+    WorkListView.initialize(backend);
+
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
       startApplication(backend, models, tileMaps, startupParameters, projectChangeTable);

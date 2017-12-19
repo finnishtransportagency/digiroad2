@@ -114,6 +114,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
+  get("/floatingRoadAddresses") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+    roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
+      g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.startAddrMValue))
+        .map(floatingRoadAddressToApi))
+  }
+
   get("/roadlinks/:linkId") {
     val linkId = params("linkId").toLong
     val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
@@ -690,6 +697,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value
+    )
+  }
+
+  def floatingRoadAddressToApi(roadAddress: RoadAddress) : Map[String, Any] = {
+    Map(
+      "id" -> roadAddress.id,
+      "linkId" -> roadAddress.linkId,
+      "roadNumber" -> roadAddress.roadNumber,
+      "roadPartNumber" -> roadAddress.roadPartNumber,
+      "trackCode" -> roadAddress.track.value,
+      "startAddressM" -> roadAddress.startAddrMValue,
+      "endAddressM" -> roadAddress.endAddrMValue,
+      "startMValue" -> roadAddress.startMValue,
+      "endMValue" -> roadAddress.endMValue,
+      "ely" -> roadAddress.ely
     )
   }
 

@@ -980,7 +980,7 @@
       applicationModel.setActiveButtons(false);
       applicationModel.setContinueButton(false);
       eventbus.trigger('layer:enableButtons', true);
-      $('#feature-attributes').empty();
+      eventbus.trigger('form:showPropertyForm');
       clearLayers();
       me.refreshView();
       activateSelectInteractions(true);

@@ -297,6 +297,10 @@
      });
     }, 1000);
 
+    this.getFloatingRoadAddresses = function() {
+      return $.getJSON('api/viite/floatingRoadAddresses');
+    };
+
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
       return function(parameter, callback) {
