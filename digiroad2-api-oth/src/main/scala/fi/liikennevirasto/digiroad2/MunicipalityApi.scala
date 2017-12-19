@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import java.text.SimpleDateFormat
+import java.util.Date
+
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
@@ -229,7 +231,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     parsedBody.extractOpt[NewManoeuvreValues].map { manoeuvre =>
       validateManoeuvrePropForUpdate(manoeuvre)
 
-      validateTimeststamp(manoeuvre.geometryTimestamp.getOrElse(halt(NotFound("geometryTimestamp not found"))), convertStringToDate(oldAsset.modifiedDateTime))
+      validateTimeststamp(manoeuvre.geometryTimestamp.getOrElse(halt(NotFound("geometryTimestamp not found"))), convertDateToString(oldAsset.modifiedDateTime.getOrElse(oldAsset.createdDateTime)))
 
       val validityPeriods = convertValidityPeriod(manoeuvre.properties.find(_.name == "validityPeriods"))
       val exceptions = manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt))
@@ -481,7 +483,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       "startMeasure" -> 0,
       "endMeasure" -> GeometryUtils.geometryLength(geomtry),
       "modifiedAt" -> manoeuvre.modifiedDateTime,
-      "geometryTimestamp" -> convertStringToDate(manoeuvre.modifiedDateTime),
+      "createdAt" -> manoeuvre.createdDateTime,
+      "geometryTimestamp" -> convertDateToString(manoeuvre.modifiedDateTime.getOrElse(manoeuvre.createdDateTime)),
       "municipalityCode" -> municipalityCode
     )
   }
@@ -538,8 +541,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  private def convertStringToDate(strDate: String): Long = {
-    new SimpleDateFormat("dd.MM.yyyy hh:mm:ss").parse(strDate).getTime
+  protected def convertDateToString(date: DateTime): Long = {
+    new SimpleDateFormat("dd.MM.yyyy hh:mm:ss").parse(date.toString()).getTime
   }
 
   private def linkIdValidation(linkIds: Set[Long]): Seq[RoadLink] = {

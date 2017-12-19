@@ -56,7 +56,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       id > 0 should be (true)
       val persisted = dao.find(id).get
           val manoeuvreRowOld = dao.fetchManoeuvreById(id).head
-      val newId = dao.createManoeuvreForUpdate("updater", manoeuvreRowOld, Option("Additional Info"))
+      val newId = dao.createManoeuvreForUpdate("updater", manoeuvreRowOld, Option("Additional Info"), None)
 
       val newManoeuvre = dao.find(newId).get
       newManoeuvre shouldNot be(persisted)

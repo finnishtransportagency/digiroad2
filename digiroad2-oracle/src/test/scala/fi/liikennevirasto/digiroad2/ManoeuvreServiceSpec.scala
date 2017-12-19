@@ -234,7 +234,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val manoeuvreUpdate = ManoeuvreUpdates(Option(validityPeriod), Option(exceptions), Option(additionalInfo))
 
-      val newId = manoeuvreService.updateManoeuvre("updater", oldId, manoeuvreUpdate)
+      val newId = manoeuvreService.updateManoeuvre("updater", oldId, manoeuvreUpdate, None)
       val manoeuvresNew = manoeuvreService.getByBoundingBox(bounds, Set(235))
       val manoeuvreUpdated = manoeuvresNew.find(_.id == newId).get
       manoeuvreUpdated.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1611419)

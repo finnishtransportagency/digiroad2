@@ -86,17 +86,25 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     manoeuvreId
   }
 
-  def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String], modifiedDate: Option[DateTime]): Long = {
+  def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String], modifiedDateOpt: Option[DateTime]): Long = {
     val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
     val additionalInfo = additionalInfoOpt match {
       case Some(additionalValue) => additionalValue
       case _ => oldManoeuvreRow.additionalInfo
     }
 
-    sqlu"""
+    modifiedDateOpt match {
+      case Some(modifiedDate) =>
+        sqlu"""
+            insert into manoeuvre(id, type, created_by, created_date, additional_info, modified_by, modified_date)
+            values ($manoeuvreId, 2, ${oldManoeuvreRow.createdBy}, ${oldManoeuvreRow.createdDate}, $additionalInfo, $userName, $modifiedDate)
+          """.execute
+      case _ =>
+        sqlu"""
             insert into manoeuvre(id, type, created_by, created_date, additional_info, modified_by, modified_date)
             values ($manoeuvreId, 2, ${oldManoeuvreRow.createdBy}, ${oldManoeuvreRow.createdDate}, $additionalInfo, $userName, sysdate)
           """.execute
+    }
 
     sqlu"""
              insert into manoeuvre_element(manoeuvre_id, element_type, link_id, dest_link_id)
