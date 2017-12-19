@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
+import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{Track, VVHRoadLinkHistoryProcessor, VVHSerializer}
 import org.joda.time.format.ISODateTimeFormat
@@ -826,6 +827,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else
       Some(roadLinks.minBy(roadlink => minimumDistance(point, roadlink.geometry)))
   }
+
+  def getClosestRoadlinkForCarTrafficFromVVH(user: User, point: Point): Seq[VVHRoadlink] = {
+    val diagonal = Vector3d(10, 10, 0)
+
+    val roadLinks = user.isOperator() match {
+        case true =>  getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+        case false => getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+      }
+
+    roadLinks.isEmpty match {
+      case true => Seq.empty[VVHRoadlink]
+      case false => roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0).filter(_.featureClass != FeatureClass.CycleOrPedestrianPath)
+    }
+  }
+
 
   protected def removeIncompleteness(linkId: Long) = {
     sqlu"""delete from incomplete_link where link_id = $linkId""".execute

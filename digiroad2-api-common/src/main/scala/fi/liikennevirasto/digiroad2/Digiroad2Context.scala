@@ -348,7 +348,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService)
+    new TrafficSignService(roadLinkService, userProvider)
   }
 
   lazy val manoeuvreService = {
