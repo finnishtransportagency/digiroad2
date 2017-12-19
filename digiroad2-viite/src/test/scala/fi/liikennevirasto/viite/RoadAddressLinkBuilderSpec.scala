@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
@@ -238,9 +239,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
   test("Fuse road address should not merge different termination status") {
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, true),
+        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, Termination),
       RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, false)
+        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination)
     )
     RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (2)
   }
@@ -248,9 +249,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
   test("Fuse road address should not merge different ely code") {
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, false),
+        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination),
       RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, false)
+        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination)
     )
     RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (2)
   }
@@ -258,9 +259,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
   test("Fuse road address should not merge different road type") {
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, false),
+        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination),
       RoadAddress(2, 1, 1, RoadType.FerryRoad, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, false)
+        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination)
     )
     RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (2)
   }

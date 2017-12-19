@@ -460,7 +460,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       createTerminatedRoadAddress7777(Option.apply(DateTime.parse("1975-11-18")))
       val roadAddresses = RoadAddressDAO.fetchByLinkId(Set(7777777))
       roadAddresses.size should be (1)
-      roadAddresses.head.terminated should be (true)
+      roadAddresses.head.terminated.value should be (1)
     }
   }
 
