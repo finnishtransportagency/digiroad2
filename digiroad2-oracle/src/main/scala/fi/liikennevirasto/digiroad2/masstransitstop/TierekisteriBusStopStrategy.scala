@@ -117,7 +117,63 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     super.publishSaveEvent(publishInfo)
   }
 
-  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, PublishInfo) = {
+  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) =
+    create(asset, username, point, roadLink, createTierekisteriBusStop)
+
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+    if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
+      validateBusStopDirections(props.toSeq, roadLink)
+    }
+
+    val properties = MassTransitStopOperations.setPropertiesDefaultValues(props.toSeq, roadLink).toSet
+
+    if (MassTransitStopOperations.mixedStoptypes(properties))
+      throw new IllegalArgumentException
+
+    municipalityValidation(asset.municipalityCode)
+
+    // Enrich properties with old administrator, if administrator value is empty in CSV import
+    val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
+
+    //Remove from common assets the side code property
+    val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
+      filterNot(prop => prop._1 == AssetPropertyConfiguration.ValidityDirectionId || prop._1 == AssetPropertyConfiguration.ValidToId)
+
+    val mergedProperties = (asset.propertyData.
+      filterNot(property => properties.exists(_.publicId == property.publicId)).
+      map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
+      filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
+
+    //If it was already stored in Tierekisteri
+    if (was(asset)) {
+      val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
+      if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
+        //Expires the current asset and creates a new one in OTH and expire and creates a new one in Tierekisteri
+        val position = optionalPosition.get
+        massTransitStopDao.expireMassTransitStop(username, asset.id)
+        create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
+          mergedProperties), username, Point(position.lon, position.lat), roadLink, replaceTirekisteriBusStop(liviId))
+
+      }else{
+        //Updates the asset in OTH and Tierekisteri
+        update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
+          username, updateTierekisteriBusStop)
+      }
+    }else{
+      //Updates the asset in OTH and creates a new one in Tierekisteri
+      update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, toLiviId.format(asset.nationalId),
+        username, createTierekisteriBusStop)
+    }
+  }
+
+  override def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo] = {
+    super.delete(asset)
+
+    val liviId = getLiviIdValue(asset.propertyData).getOrElse(throw new NoSuchElementException)
+    deleteTierekisteriBusStop(liviId)
+    None
+  }
+  private def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     validateBusStopDirections(asset.properties, roadLink)
 
@@ -145,84 +201,23 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
     val persistedAsset = fetchAsset(assetId)
 
-    createTierekisteriBusStop(persistedAsset, roadLink, liviId)
+    tierekisteriOperation(persistedAsset, roadLink, liviId)
+
     (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
 
-  //TODO this can be improved for sure
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimpleProperty], roadLink: RoadLink, liviId: String, username: String, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit): (PersistedMassTransitStop, AbstractPublishInfo) = {
+    optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
+    massTransitStopDao.updateAssetLastModified(asset.id, username)
+    massTransitStopDao.updateAssetProperties(asset.id, properties)
+    massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
+    updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 
-    if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
-      validateBusStopDirections(props.toSeq, roadLink)
-    }
+    val persistedAsset = enrichBusStop(fetchAsset(asset.id))._1
 
-    val properties = MassTransitStopOperations.setPropertiesDefaultValues(props.toSeq, roadLink).toSet
+    tierekisteriOperation(persistedAsset, roadLink, liviId)
 
-    if (MassTransitStopOperations.mixedStoptypes(properties))
-      throw new IllegalArgumentException
-
-    municipalityValidation(asset.municipalityCode)
-
-    // Enrich properties with old administrator, if administrator value is empty in CSV import
-    val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
-
-    //Remove from common assets the side code property
-    val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
-      filterNot(prop => prop._1 == AssetPropertyConfiguration.ValidityDirectionId || prop._1 == AssetPropertyConfiguration.ValidToId)
-
-    val mergedProperties = (asset.propertyData.
-      filterNot(property => properties.exists(_.publicId == property.publicId)).
-      map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
-      filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
-
-    //If it was already in Tierekisteri
-    if (was(asset)) {
-      val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
-      if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
-        val position = optionalPosition.get
-
-        //Expire the old asset
-        expireMassTransitStop(username, liviId, asset)
-
-        //Create a new asset
-        create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
-          mergedProperties), username, Point(position.lon, position.lat), roadLink)
-
-      }else{
-        optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
-        massTransitStopDao.updateAssetLastModified(asset.id, username)
-        massTransitStopDao.updateAssetProperties(asset.id, verifiedProperties.toSeq)
-        massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
-        updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
-
-        val persistedAsset = enrichBusStop(fetchAsset(asset.id))._1
-
-        updateTierekisteriBusStop(persistedAsset, roadLink, liviId)
-
-        (persistedAsset, PublishInfo(Some(persistedAsset)))
-      }
-    }else{
-      val newLiviId = toLiviId.format(asset.nationalId)
-      optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
-      massTransitStopDao.updateAssetLastModified(asset.id, username)
-      massTransitStopDao.updateAssetProperties(asset.id, verifiedProperties.toSeq)
-      massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, newLiviId)
-      updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
-
-      val persistedAsset = enrichBusStop(fetchAsset(asset.id))._1
-
-      createTierekisteriBusStop(persistedAsset, roadLink, newLiviId)
-
-      (persistedAsset, PublishInfo(Some(persistedAsset)))
-    }
-  }
-
-  override def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo] = {
-    super.delete(asset)
-
-    val liviId = getLiviIdValue(asset.propertyData).getOrElse(throw new NoSuchElementException)
-    deleteTierekisteriBusStop(liviId)
-    None
+    (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
 
   private def getLiviIdValue(properties: Seq[AbstractProperty]) = {
@@ -237,13 +232,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         assetPoint.distance2DTo(newPoint)
       case _ => 0
     }
-  }
-
-  //  @throws(classOf[TierekisteriClientException])
-  private def expireMassTransitStop(username: String, liviId: String, persistedStop: PersistedMassTransitStop) = {
-    massTransitStopDao.expireMassTransitStop(username, persistedStop.id)
-    //TODO This need to be changed because if after expire the asset, the update in OTH side fails the we are not doing rollback
-    expireTierekisteriBusStop(persistedStop, liviId, username)
   }
 
   /**
@@ -318,6 +306,9 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
   private def createTierekisteriBusStop(persistedStop: PersistedMassTransitStop, roadLink: RoadLink, liviId: String): Unit =
     if(tierekisteriClient.isTREnabled) tierekisteriClient.createMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)))
+
+  private def replaceTirekisteriBusStop(replaceLiviId: String)(persistedStop: PersistedMassTransitStop, roadLink: RoadLink, liviId: String): Unit =
+    if(tierekisteriClient.isTREnabled) tierekisteriClient.createMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)), Some(replaceLiviId))
 
   private def updateTierekisteriBusStop(persistedStop: PersistedMassTransitStop, roadLink: RoadLink, liviId: String): Unit =
     if(tierekisteriClient.isTREnabled) tierekisteriClient.updateMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)), Some(liviId))
