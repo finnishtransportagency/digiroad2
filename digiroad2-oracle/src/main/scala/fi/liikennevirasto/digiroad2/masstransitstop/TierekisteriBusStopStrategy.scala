@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.masstransitstop
 
 import java.util.{Date, NoSuchElementException}
 
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{AbstractPublishInfo, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
@@ -60,7 +60,7 @@ object TierekisteriBusStopStrategyOperations{
   }
 }
 
-class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService)
+class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, geometryTransform: GeometryTransform, eventbus: DigiroadEventBus) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus)
 {
   val toLiviId = "OTHJ%d"
   val MaxMovementDistanceMeters = 50
@@ -113,11 +113,14 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     }
   }
 
+  override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
+    super.publishSaveEvent(publishInfo)
+  }
+
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop =
     create(asset, username, point, roadLink, createTierekisteriBusStop)
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
-
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(props.toSeq, roadLink)
     }
@@ -163,13 +166,13 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     }
   }
 
-  override def delete(asset: PersistedMassTransitStop): Unit = {
+  override def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo] = {
     super.delete(asset)
 
     val liviId = getLiviIdValue(asset.propertyData).getOrElse(throw new NoSuchElementException)
     deleteTierekisteriBusStop(liviId)
+    None
   }
-
   private def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit): PersistedMassTransitStop = {
 
     validateBusStopDirections(asset.properties, roadLink)
@@ -200,7 +203,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
     tierekisteriOperation(persistedAsset, roadLink, liviId)
 
-    persistedAsset
+    (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
 
   private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimpleProperty], roadLink: RoadLink, liviId: String, username: String, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit) = {
@@ -210,11 +213,11 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
     updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 
-    val persistedAsset = fetchAsset(asset.id)
+    val persistedAsset = enrichBusStop(fetchAsset(asset.id))._1
 
     tierekisteriOperation(persistedAsset, roadLink, liviId)
 
-    persistedAsset
+    (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
 
   private def getLiviIdValue(properties: Seq[AbstractProperty]) = {

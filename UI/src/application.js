@@ -203,6 +203,7 @@
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
+    new TrafficSignToggle(map, mapPluginsContainer);
 
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
@@ -230,7 +231,7 @@
       return new TrafficSignReadOnlyLayer({
         layerName: layerName,
         style: new PointAssetStyle('trafficSigns'),
-        collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
+        collection: new TrafficSignsReadOnlyCollection(backend, 'trafficSigns', true),
         assetLabel: new TrafficSignLabel(),
         assetGrouping: new AssetGrouping(9),
         map: map
@@ -254,7 +255,9 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        editConstrains : asset.editConstrains || function() {return false;},
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName)
+       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
+       massLimitation : asset.editControlLabels.massLimitations,
+       typeId : asset.typeId
      });
      return acc;
     }, {});
@@ -297,6 +300,8 @@
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
     }, linearAssetLayers, pointAssetLayers);
+
+    VioniceLayer({ map: map });
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
@@ -376,7 +381,7 @@
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
-        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
+        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled, asset.editControlLabels.massLimitations];
         return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks, asset.hasTrafficSignReadOnlyLayer)];
       }
       return [];

@@ -11,7 +11,7 @@
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: getLabelProperty(trafficSign, counter).findImage(),
-          anchor : [0.5, 1+(counter)]
+          anchor : [0.48, 0.75 + (counter)]
         }))
       });
     };
@@ -28,13 +28,14 @@
     var getLabelProperty = function (trafficSign, counter) {
 
       var labelingProperties = [
-        {signValue: [1, 8], image: 'images/traffic-signs/speedLimitSign.png', validation: validateSpeedLimitValues},
+        {signValue: [1], image: 'images/traffic-signs/speedLimitSign.png', validation: validateSpeedLimitValues},
         {signValue: [2], image: 'images/traffic-signs/endOfSpeedLimitSign.png', validation: validateSpeedLimitValues},
         {signValue: [3], image: 'images/traffic-signs/speedLimitZoneSign.png', validation: validateSpeedLimitValues},
         {signValue: [4], image: 'images/traffic-signs/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues},
-        {signValue: [5], image:  'images/traffic-signs/urbanAreaSign.png'},
+        {signValue: [5], image: 'images/traffic-signs/urbanAreaSign.png', offset: -8 - (counter * 35)},
         {signValue: [6], image: 'images/traffic-signs/endOfUrbanAreaSign.png'},
         {signValue: [7], image: 'images/traffic-signs/crossingSign.png'},
+        {signValue: [8], image: 'images/traffic-signs/maximumLengthSign.png', validation: validateMaximumRestrictions, offset: -3 - (counter * 35),convertion: convertToMeters, unit: addMeters},
         {signValue: [9], image: 'images/traffic-signs/warningSign.png'},
         {signValue: [10], image: 'images/traffic-signs/turningRestrictionLeftSign.png'},
         {signValue: [11], image: 'images/traffic-signs/turningRestrictionRightSign.png'},
@@ -55,13 +56,13 @@
         {signValue: [26], image: 'images/traffic-signs/noHorsesSign.png'},
         {signValue: [27], image: 'images/traffic-signs/noEntrySign.png'},
         {signValue: [28], image: 'images/traffic-signs/overtakingProhibitedSign.png'},
-        {signValue: [29], image: 'images/traffic-signs/endOfOvertakingProhibitonSign.png'},
-        {signValue: [30], image: 'images/traffic-signs/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters },
-        {signValue: [31], image: 'images/traffic-signs/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
-        {signValue: [32], image: 'images/traffic-signs/totalWeightLimit.png', validation: validateMaximumRestrictions, offset: -15 - (counter * 30), convertion: convertToTons },
-        {signValue: [33], image: 'images/traffic-signs/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, offset: -10 - (counter * 30), convertion: convertToTons },
-        {signValue: [34], image: 'images/traffic-signs/axleWeightLimit.png', validation: validateMaximumRestrictions, offset: -18 - (counter * 30), convertion: convertToTons },
-        {signValue: [35], image: 'images/traffic-signs/bogieWeightLimit.png', validation: validateMaximumRestrictions, offset: -18 - (counter * 30), convertion: convertToTons },
+        {signValue: [29], image: 'images/traffic-signs/endOfOvertakingProhibitionSign.png'},
+        {signValue: [30], image: 'images/traffic-signs/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
+        {signValue: [31], image: 'images/traffic-signs/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters},
+        {signValue: [32], image: 'images/traffic-signs/totalWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons},
+        {signValue: [33], image: 'images/traffic-signs/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, offset: -3 - (counter * 35), convertion: convertToTons, unit: addTons},
+        {signValue: [34], image: 'images/traffic-signs/axleWeightLimit.png', validation: validateMaximumRestrictions, offset: -12 - (counter * 35), convertion: convertToTons, unit: addTons },
+        {signValue: [35], image: 'images/traffic-signs/bogieWeightLimit.png', validation: validateMaximumRestrictions, offset: -12 - (counter * 35), convertion: convertToTons, unit: addTons },
         {signValue: [36], image: 'images/traffic-signs/rightBendSign.png'},
         {signValue: [37], image: 'images/traffic-signs/leftBendSign.png'},
         {signValue: [38], image: 'images/traffic-signs/severalBendRightSign.png'},
@@ -82,7 +83,7 @@
       }
 
       function getTextOffset(){
-        return labelProperty && labelProperty.offset ? labelProperty.offset :  -15 - (counter * 30);
+        return labelProperty && labelProperty.offset ? labelProperty.offset :  -10 - (counter * 35);
       }
 
       function getValidation(){
@@ -93,18 +94,31 @@
         return labelProperty && labelProperty.convertion ? labelProperty.convertion.call(trafficSign) : trafficSign.value;
       }
 
+      function getUnit() {
+        return labelProperty && labelProperty.unit ? labelProperty.unit.call(trafficSign) : '';
+      }
+
       return {
         findImage: findImage,
         getTextOffset: getTextOffset,
         getValidation: getValidation,
-        getValue : getValue
+        getValue : getValue,
+        getUnit : getUnit
       };
     };
 
     var textStyle = function (trafficSign) {
       if (!getLabelProperty(trafficSign).getValidation())
         return '';
-      return "" + getLabelProperty(trafficSign).getValue();
+      return getLabelProperty(trafficSign).getValue() + getLabelProperty(trafficSign).getUnit();
+    };
+
+    var addTons = function () {
+      return ''.concat('t');
+    };
+
+    var addMeters = function() {
+      return ''.concat('m');
     };
 
     var convertToTons = function(){
@@ -131,7 +145,7 @@
           fill: new ol.style.Fill({
             color: '#000000'
           }),
-          font: 'bold 12px sans-serif',
+          font: '12px sans-serif',
           offsetX: 0,
           offsetY: getLabelProperty(trafficSign, counter).getTextOffset()
         })

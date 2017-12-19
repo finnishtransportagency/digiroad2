@@ -1306,22 +1306,19 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       testTRSpeedLimit.createSpeedLimitTest(ra, addressSection, None, Some(vvhRoadLink), Seq(trUrbanArea), roadSide)
 
-      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001), LinearAssetTypes.numericValuePropertyId)
-      asset.size should be (3)
-      asset.head.linkId should be(5001)
-      asset.head.sideCode should be(roadSide.value)
-      asset.head.value should be(Some(NumericValue(80)))
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      val assets = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001), LinearAssetTypes.numericValuePropertyId)
 
-      asset.tail.head.linkId should be(5001)
-      asset.tail.head.sideCode should be(roadSide.value)
-      asset.tail.head.value should be(Some(NumericValue(50)))
-      asset.tail.head.createdBy should be(Some("batch_process_speedLimitState"))
+      assets.size should be (3)
+      assets.foreach{ asset =>
+        asset.linkId should be(5001)
+        asset.sideCode should be(roadSide.value)
+        asset.createdBy should be(Some("batch_process_speedLimitState"))
+      }
 
-      asset.last.linkId should be(5001)
-      asset.last.sideCode should be(roadSide.value)
-      asset.last.value should be(Some(NumericValue(80)))
-      asset.last.createdBy should be(Some("batch_process_speedLimitState"))
+      assets.sortBy(_.startMeasure)
+      assets.head.value should be(Some(NumericValue(80)))
+      assets.tail.head.value should be(Some(NumericValue(50)))
+      assets.last.value should be(Some(NumericValue(80)))
     }
   }
 }
