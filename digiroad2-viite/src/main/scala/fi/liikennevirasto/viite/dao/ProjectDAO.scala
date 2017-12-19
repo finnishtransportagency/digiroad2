@@ -509,7 +509,7 @@ object ProjectDAO {
               WHERE
                 rp.project_id = $projectId AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
-                (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)))
+                (PL.STATUS IS NULL OR PL.STATUS != 5)
               GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
               ) gr $filter"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
