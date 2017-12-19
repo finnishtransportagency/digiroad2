@@ -472,13 +472,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def mergeRoadAddress(data: RoadAddressMerge): Unit = {
-    withDynTransaction {
-      mergeRoadAddressInTX(data)
+    try {
+      withDynTransaction {
+        mergeRoadAddressInTX(data)
+      }
+    } catch {
+      case ex: InvalidAddressDataException => logger.info("Duplicate merging(s) found, skipped")
     }
   }
 
   def mergeRoadAddressInTX(data: RoadAddressMerge): Unit = {
-    val unMergedCount = RoadAddressDAO.queryById(data.merged, true, true).size
+    val unMergedCount = RoadAddressDAO.queryById(data.merged).size
     if (unMergedCount != data.merged.size)
       throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
     val mergedCount = expireRoadAddresses(data.merged)
