@@ -1412,6 +1412,25 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("Reserve road part, try to renumber it to the same number should produce an error") {
+    runWithRollback {
+      reset(mockRoadLinkService)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 201, false).sortBy(_.startAddrMValue)
+      val reservedRoadPart = ReservedRoadPart(addresses.head.id, addresses.head.roadNumber, addresses.head.roadPartNumber,
+        Some(addresses.last.endAddrMValue), Some(addresses.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
+
+      val project = projectService.createRoadLinkProject(rap)
+      mockForProject(project.id, addresses.map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart)))
+      val savedProject = projectService.getRoadAddressSingleProject(project.id).get
+      savedProject.reservedParts should have size (1)
+      reset(mockRoadLinkService)
+
+      projectService.updateProjectLinks(project.id, addresses.map(_.linkId).toSet, LinkStatus.Numbering, "TestUser",
+        5, 201, 1, Option.empty[Int]) should be (Some(ErrorRenumberingToOriginalNumber))
+    }
+  }
 
   test("Create a roundabout addressing") {
     runWithRollback {
