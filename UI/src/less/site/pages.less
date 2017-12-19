@@ -1,6 +1,58 @@
+.page.csv-import{
+  .file-upload {
+    position: relative;
+    overflow: hidden;
+    margin: 10px;
+    text-align: center;
+    background-color: #1c7fdd;
+    border: 1px;
+    border-color: #0f4374;
+    box-shadow: inset 0 1px 0 rgba(204, 227, 249, 0.325), 0px 1px 1px 0px rgba(23, 23, 23, 0.25);
+    display: inline-block;
+    border-radius: 3px;
+    vertical-align: middle;
+    color: #ffffff;
+    background-image: none;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-transition: all 0.2s cubic-bezier(0.55, 0, 0.1, 1);
+    -o-transition: all 0.2s cubic-bezier(0.55, 0, 0.1, 1);
+    transition: all 0.2s cubic-bezier(0.55, 0, 0.1, 1);
+    padding: 5px 12.5px;
+    font-size: 12px;
+    line-height: 20px;
+  }
+  .file-upload:hover,
+  .file-upload:focus {
+    background-color: #1c70be;
+    border-color: #0f4374;
+    box-shadow: inset 0 1px 0 rgba(129, 186, 239, 0.325), 0px 1px 1px 0px rgba(23, 23, 23, 0.125);
+  }
+  .file-upload input.upload {
+    border-color: #0f4374;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0;
+    filter: alpha(opacity=0);
+    height: 100%;
+    text-align: center;
+  }
+  #asset-selection{
+    margin-left: 10px;
+    color: #000000;
+  }
+}
 .page.login,
 .page.excel-import,
-.page.csv-import,
 .page.new-user {
   .form {
     width: auto;
