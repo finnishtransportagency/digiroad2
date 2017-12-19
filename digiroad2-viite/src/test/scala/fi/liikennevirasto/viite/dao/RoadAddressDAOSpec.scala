@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.SQLException
+
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
@@ -8,7 +10,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{ReservedRoadPart,RoadAddressMerge, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService, RoadType}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -16,6 +18,8 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
+
+import scala.util.control.NonFatal
 
 
 /**
@@ -29,6 +33,42 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  test("insert roadaddress duplicate info check") {
+      runWithRollback {
+        val error = intercept[SQLException] {
+        sqlu"""
+      Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (lrm_position_primary_key_seq.nextval,null,'2','0','21,021',null,'1111102483','1476392565000',to_timestamp('17.09.15 19:39:30,365338000','RR.MM.DD HH24:MI:SS,FF'),'1')""".execute
+        sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY) values (viite_general_seq.nextval,'1010','1','0','5','627','648',lrm_position_primary_key_seq.currval,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4)""".execute
+        sqlu"""
+      Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (lrm_position_primary_key_seq.nextval,null,'2','0','21,021',null,'1111102483','1476392565000',to_timestamp('17.09.15 19:39:30,365338000','RR.MM.DD HH24:MI:SS,FF'),'1')""".execute
+        sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY) values (viite_general_seq.nextval,'1010','1','0','5','627','648',lrm_position_primary_key_seq.currval,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4)""".execute
+        }
+        error.getErrorCode should be (20002)
+      }
+  }
+
+
+
+
+  test("insert roadaddress m-values overlap") {
+    var errored: Option[Boolean] = None
+    try {
+      runWithRollback {
+        sqlu"""
+      Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (lrm_position_primary_key_seq.nextval,null,'2','0','21,021',null,'1111102483','1476392565000',to_timestamp('17.09.15 19:39:30,365338000','RR.MM.DD HH24:MI:SS,FF'),'1')""".execute
+        sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY) values (viite_general_seq.nextval,'1010','1','0','5','627','648',lrm_position_primary_key_seq.currval,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4)""".execute
+        errored = Some(true)
+        sqlu"""
+      Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (lrm_position_primary_key_seq.nextval,null,'2','0','21,021',null,'1111102483','1476392565000',to_timestamp('17.09.15 19:39:30,365338000','RR.MM.DD HH24:MI:SS,FF'),'1')""".execute
+        sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY) values (viite_general_seq.nextval,'1010','1','0','5','627','648',lrm_position_primary_key_seq.currval,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),'0','0',MDSYS.SDO_GEOMETRY(4012,3057,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4)""".execute
+        errored = Some(false)
+      }
+    } catch {
+      case NonFatal(e) => errored should be(Some(true))
+    }
+  }
+
 
   test("testFetchByRoadPart") {
     runWithRollback {
