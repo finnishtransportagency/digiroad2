@@ -1,6 +1,7 @@
 (function (root) {
   root.FormCommon = function(prefix) {
-    var projectStatus = LinkValues.ProjectStatus;
+    var ProjectStatus = LinkValues.ProjectStatus;
+    var LinkStatus = LinkValues.LinkStatus;
 
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
@@ -17,20 +18,23 @@
       '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
     };
 
-    var newRoadAddressInfo = function(selected, link){
-      var road = link.roadNumber;
-      var part = link.roadPartNumber;
-      var track = link.trackCode;
+    var newRoadAddressInfo = function(selected, links, road){
+      var roadNumber = road.roadNumber;
+      var part = road.roadPartNumber;
+      var track = road.trackCode;
+      var link = _.first(_.filter(links, function (l) {
+        return !_.isUndefined(l.status);
+      }));
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
         (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie',(road !== 0 ? road : '')) +
+        addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
         addSmallInputNumber('ajr',(track !== 99 ? track :
-          (road >= 20001 && road <= 39999 ? '0' : ''))) +
+          (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
@@ -136,9 +140,9 @@
       return span;
     };
 
-    var actionButtons = function(btnPrefix, disabled) {
+    var actionButtons = function(btnPrefix, notDisabled) {
       return '<div class="'+btnPrefix+'form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save" ' + (disabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
+        '<button class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
     };
@@ -154,6 +158,11 @@
     var toggleAdditionalControls = function(){
       $('[id^=editProject]').css('visibility', 'visible');
       $('#closeProjectSpan').css('visibility', 'visible');
+    };
+
+    var hideEditAndCloseControls = function(){
+      $('[id^=editProject]').css('visibility', 'hidden');
+      $('#closeProjectSpan').css('visibility', 'hidden');
     };
 
     var checkInputs = function (localPrefix) {
@@ -185,7 +194,7 @@
     };
 
     var sendRoadAddressChangeButton = function(localPrefix, projectData) {
-      var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === projectStatus.ErroredInTR.value;
+      var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
       return '<div class="'+localPrefix+'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
         '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
@@ -214,6 +223,49 @@
       return field;
     };
 
+    var getCoordButton = function (index, coordinates) {
+      return coordButton(index, coordinates);
+    };
+
+    var coordButton = function(index, coordinates){
+      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
+      return {index:index, html:html, coordinates:coordinates};
+    };
+
+    var getErrorCoordinates = function(error, links){
+      if (error.coordinates.length  > 0){
+        return error.coordinates;
+      }
+      var linkCoords = _.find(links, function (link) {
+        return link.linkId == error.linkIds[0];
+      });
+      if (!_.isUndefined(linkCoords)){
+        return linkCoords.points[0];
+      }
+      return false;
+    };
+
+    var getProjectErrors = function (projectErrors, links, projectCollection) {
+      var buttonIndex = 0;
+      var errorLines = '';
+      _.each(projectErrors, function (error) {
+        var button = '';
+        var coordinates = getErrorCoordinates(error, links);
+        if (coordinates) {
+          button = getCoordButton(buttonIndex, error.coordinates);
+          projectCollection.pushCoordinates(button);
+          buttonIndex++;
+        }
+        errorLines += '<div class="form-project-errors-list">' +
+          addSmallLabel('LINKIDS: ') + ' ' + addSmallLabel(error.linkIds) + '</br>' +
+          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.message: 'N/A')) + '</br>' +
+          addSmallLabel('INFO: ') + ' ' + addSmallLabel((error.info ? error.info: 'N/A')) + '</br>' +
+          (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
+          '</div>';
+      });
+      return errorLines;
+    };
+
     return {
       newRoadAddressInfo: newRoadAddressInfo,
       replaceAddressInfo: replaceAddressInfo,
@@ -235,7 +287,8 @@
       title: title,
       titleWithProjectName: titleWithProjectName,
       projectButtons: projectButtons,
-      staticField: staticField
+      staticField: staticField,
+      getProjectErrors:getProjectErrors
     };
   };
 })(this);

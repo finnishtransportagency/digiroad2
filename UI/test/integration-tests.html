@@ -2,17 +2,17 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="../../components/theme/default/style.css">
-    <link rel="stylesheet" type="text/css" href="../../bower_components/pikaday/css/pikaday.css">
+    <link rel="stylesheet" type="text/css" href="../../node_modules/pikaday/css/pikaday.css">
     <link rel="stylesheet" type="text/css" href="../css/digiroad2.css">
-    <script type="text/javascript" src="../../bower_components/jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="../../bower_components/jquery-migrate/jquery-migrate.min.js"></script>
-    <script type="text/javascript" src="../../bower_components/momentjs/min/moment.min.js"></script>
-    <script type="text/javascript" src="../../bower_components/lodash/lodash.min.js"></script>
-    <script type="text/javascript" src="../../bower_components/backbone/backbone.js"></script>
-    <script type="text/javascript" src="../../bower_components/pikaday/pikaday.js"></script>
-    <script type="text/javascript" src="../../bower_components/proj4/dist/proj4.js"></script>
-    <script type="text/javascript" src="../../bower_components/bacon/dist/Bacon.js"></script>
-    <script type="text/javascript" src="../../bower_components/bacon.jquery/dist/bacon.jquery.js"></script>
+    <script type="text/javascript" src="../../node_modules/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="../../node_modules/jquery-migrate/dist/jquery-migrate.min.js"></script>
+    <script type="text/javascript" src="../../node_modules/moment/min/moment.min.js"></script>
+    <script type="text/javascript" src="../../node_modules/lodash/index.js"></script>
+    <script type="text/javascript" src="../../node_modules/backbone/backbone.js"></script>
+    <script type="text/javascript" src="../../node_modules/pikaday/pikaday.js"></script>
+    <script type="text/javascript" src="../../node_modules/proj4/dist/proj4.js"></script>
+    <script type="text/javascript" src="../../node_modules/baconjs/dist/Bacon.js"></script>
+    <script type="text/javascript" src="../../node_modules/bacon.jquery/dist/bacon.jquery.js"></script>
     <script type="text/javascript" src="../components/ol3.js"></script>
     <script type="text/javascript" src="../src/utils/eventbus.js"></script>
     <script type="text/javascript" src="../src/utils/geometry-calculations.js"></script>
@@ -51,6 +51,8 @@
 <script type="text/javascript" src="../src/view/CoordinatesDisplay.js"></script>
 <script type="text/javascript" src="../src/view/ScaleBar.js"></script>
 <script type="text/javascript" src="../src/view/TileMapSelector.js"></script>
+<script type="text/javascript" src="../src/view/TrafficSignToggle.js"></script>
+<script type="text/javascript" src="../src/view/VioniceLayer.js"></script>
 <script type="text/javascript" src="../src/view/InstructionsPopup.js"></script>
 <script type="text/javascript" src="../src/view/EditModeDisclaimer.js"></script>
 <script type="text/javascript" src="../src/view/ZoomBox.js"></script>
@@ -70,6 +72,7 @@
 <script type="text/javascript" src="../src/view/ServiceRoadLabel.js"></script>
 <script type="text/javascript" src="../src/view/LinearAssetLayer.js"></script>
 <script type="text/javascript" src="../src/view/PointAssetLayer.js"></script>
+<script type="text/javascript" src="../src/view/filterCollection.js"></script>
 <script type="text/javascript" src="../src/view/TrafficSignLabel.js"></script>
 <script type="text/javascript" src="../src/view/LinkPropertyLayer.js"></script>
 <script type="text/javascript" src="../src/view/LinkPropertyLayerStyles.js"></script>
@@ -93,7 +96,7 @@
 <script type="text/javascript" src="../src/view/navigationpanel/SearchBox.js"></script>
 <script type="text/javascript" src="../src/model/ApplicationModel.js"></script>
 <script type="text/javascript" src="../src/model/TrafficSignsCollection.js"></script>
-<script type="text/javascript" src="../src/model/ReadOnlyTrafficSignsCollection.js"></script>
+<script type="text/javascript" src="../src/model/TrafficSignsReadOnlyCollection.js"></script>
 <script type="text/javascript" src="../src/model/MassTransitStopsCollection.js"></script>
 <script type="text/javascript" src="../src/model/SelectedMassTransitStop.js"></script>
 <script type="text/javascript" src="../src/model/SpeedLimitsCollection.js"></script>
@@ -131,9 +134,9 @@
 <script type="text/javascript" src="../src/utils/script-loader.js"></script>
 <script type="text/javascript" src="../src/utils/environment-utils.js"></script>
 <script type="text/javascript" src="../src/assetgrouping/asset-grouping.js"></script>
-<script src="../../bower_components/WebConsole-reporter/WebConsole.js"></script>
-<script data-main="run-integration-tests" src="../../bower_components/requirejs/require.js"></script>
-<script src="../../bower_components/mocha/mocha.js"></script>
+<script src="../../node_modules/web-console-reporter/WebConsole.js"></script>
+<script data-main="run-integration-tests" src="../../node_modules/requirejs/require.js"></script>
+<script src="../../node_modules/mocha/mocha.js"></script>
 <script type="text/javascript">
     mocha.setup({ui: 'bdd', reporter: WebConsole});
 </script>

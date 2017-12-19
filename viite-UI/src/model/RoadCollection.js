@@ -63,8 +63,11 @@
     var tmpRoadAddresses = [];
     var tmpNewRoadAddresses = [];
     var preMovedRoadAddresses = [];
+    var date = [];
+    var historicRoadLinks = [];
     var changedIds = [];
     var LinkStatus = LinkValues.LinkStatus;
+    var LinkSource = LinkValues.LinkGeomSource;
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -80,8 +83,21 @@
       return LinkStatus;
     };
 
+    this.getDate = function() {
+      return date;
+    };
+
+    this.setDate = function(newDate){
+      date = newDate;
+    };
+
     this.fetch = function(boundingBox, zoom) {
-      backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
+      var withHistory = date.length !== 0;
+      var day = withHistory ? date[0] : -1;
+      var month = withHistory ? date[1] : -1;
+      var year = withHistory ? date[2] : -1;
+      backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom,
+        withHistory: withHistory, day: day, month: month, year: year}, function(fetchedRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();
         });
@@ -95,32 +111,21 @@
             _.contains(selectedIds, roadLink.getId());
           });
         }).concat(getSelectedRoadLinks());
+
+        historicRoadLinks = _.filter(roadLinkGroups, function(group) {
+          groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
+        });
         roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
-          if(_.isArray(group)){
-            return _.some(group, function (roadLink) {
-              if (roadLink!==null)
-                  return roadLink.getData().roadLinkSource === 3;
-                else
-                  return false;
-            });
-          } else {
-            return group.getData().roadLinkSource === 3;
-          }
+          groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
         });
         var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
-          if(_.isArray(group)){
-            return _.some(group, function (roadLink) {
-              if (roadLink!==null)
-                return roadLink.getData().roadLinkSource === 3;
-              else
-                return false;
-            });
-          } else {
-            return group.getData().roadLinkSource === 3;
-          }
+          groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
         });
         roadLinkGroups = nonSuravageRoadLinkGroups;
         eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups);
+        if(historicRoadLinks.length !== 0) {
+          eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
+        }
         if(roadLinkGroupsSuravage.length !== 0)
           eventbus.trigger('suravageRoadLinks:fetched', roadLinkGroupsSuravage);
         if(applicationModel.isProjectButton()){
@@ -128,6 +133,18 @@
           applicationModel.setProjectButton(false);
         }
       });
+    };
+
+    var groupDataSourceFilter = function(group, dataSource){
+      if(_.isArray(group)) {
+        return _.some(group, function(roadLink) {
+          if(roadLink !== null)
+            return roadLink.getData().roadLinkSource === dataSource.value;
+          else return false;
+        });
+      } else {
+        return group.getData().roadLinkSource === dataSource.value;
+      }
     };
 
     var suravageRoadLinks = function() {
@@ -319,6 +336,9 @@
         eventbus.trigger('linkProperties:highlightReservedRoads', notHandledOL3Features);
       });
     };
-    
+
+    eventbus.on('linkProperty:fetchedHistoryLinks',function (date){
+
+    });
   };
 })(this);

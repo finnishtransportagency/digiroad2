@@ -62,4 +62,7 @@ case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
   override def isSplit: Boolean = {
     connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
   }
+
+  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+
 }

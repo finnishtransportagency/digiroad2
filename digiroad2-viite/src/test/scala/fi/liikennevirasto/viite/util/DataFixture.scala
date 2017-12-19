@@ -10,8 +10,9 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.viite.{ProjectService, RoadAddressLinkBuilder, RoadAddressService}
-import org.joda.time.DateTime
-import slick.jdbc.{StaticQuery => Q}
+import org.joda.time.format.PeriodFormatterBuilder
+import org.joda.time.{DateTime, Period}
+import scala.language.postfixOps
 
 object DataFixture {
   val TestAssetId = 300000
@@ -33,6 +34,8 @@ object DataFixture {
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
 
+  private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits(2) printZeroAlways() appendHours() appendSeparator(":") appendMinutes() appendSuffix(":") appendSeconds() toFormatter
+
   private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
   private def loopRoadParts(roadNumber: Int) = {
@@ -44,8 +47,8 @@ object DataFixture {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
         assert(adjusted.size == roads.size) // Must not lose any
         val (changed, unchanged) = adjusted.partition(ra =>
-          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-        )
+            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+          )
         println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
         changed.foreach(addr => RoadAddressDAO.update(addr, None))
       } catch {
@@ -86,6 +89,14 @@ object DataFixture {
       dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
+    println()
+  }
+
+  def importRoadAddressesHistory(): Unit = {
+    println(s"\nCommencing road address history import from conversion at time: ${DateTime.now()}")
+    val importDate = dr2properties.getProperty("digiroad2.viite.historyImportDate", "")
+    dataImporter.importRoadAddressHistory(Conversion.database(), importDate)
+    println(s"Road address history import complete at time: ${DateTime.now()}")
     println()
   }
 
@@ -192,7 +203,7 @@ object DataFixture {
       if(roadLinks.nonEmpty) {
         //  Get road address from viite DB from the roadLinks ids
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
+          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet, false, true, false)
         }
         try {
           val groupedAddresses = roadAddresses.groupBy(_.linkId)
@@ -229,7 +240,15 @@ object DataFixture {
 
   }
 
-
+  private def correctNullElyCodeProjects(): Unit = {
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
+    val startTime = DateTime.now()
+    println(s"Starting project Ely code correct now")
+    projectService.correctNullProjectEly()
+    println(s"Project Ely's correct in  ${hms.print(new Period(startTime, DateTime.now()))}")
+  }
 
 
   private def updateRoadAddressGeometrySource(): Unit = {
@@ -326,10 +345,14 @@ object DataFixture {
         updateRoadAddressGeometrySource()
       case Some ("update_project_link_geom") =>
         updateProjectLinkGeom()
+      case Some("correct_null_ely_code_projects") =>
+        correctNullElyCodeProjects()
+      case Some("import_road_address_history") =>
+        importRoadAddressesHistory()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+
-        "| apply_change_information_to_road_address_links | update_road_address_link_source")
+        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects")
     }
   }
 }
