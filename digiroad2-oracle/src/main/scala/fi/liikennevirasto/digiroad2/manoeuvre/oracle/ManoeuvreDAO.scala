@@ -86,7 +86,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     manoeuvreId
   }
 
-  def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String]): Long = {
+  def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String], modifiedDate: Option[DateTime]): Long = {
     val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
     val additionalInfo = additionalInfoOpt match {
       case Some(additionalValue) => additionalValue

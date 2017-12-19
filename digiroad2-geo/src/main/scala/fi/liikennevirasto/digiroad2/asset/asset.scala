@@ -209,7 +209,7 @@ object AssetTypeInfo {
   val values =  Set(SpeedLimitAsset,TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
                     HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw,
                     NumberOfLanes, CongestionTendency, MassTransitLane, TrafficVolume, WinterSpeedLimit,
-                    Prohibition, PedestrianCrossings, HazardousMaterialTransportProhibition, Obstacles,
+                    Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
                     TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, UnknownAssetTypeId)
 
@@ -240,7 +240,7 @@ case object TrafficVolume extends AssetTypeInfo { val typeId = 170; def geometry
 case object WinterSpeedLimit extends AssetTypeInfo { val typeId = 180; def geometryType = "linear"; val label = "WinterSpeedLimit"  }
 case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = "" }
 case object PedestrianCrossings extends AssetTypeInfo { val typeId = 200; def geometryType = "point"; val label = "" }
-case object HazardousMaterialTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = "" }
+case object HazmatTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = "" }
 case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = "" }
 case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = "" }
 case object DirectionalTrafficSigns extends AssetTypeInfo { val typeId = 240; def geometryType = "point"; val label = "" }

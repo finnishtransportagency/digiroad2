@@ -1252,11 +1252,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case MaintenanceRoadAsset.typeId => maintenanceRoadService
       case PavedRoad.typeId => pavingService
       case RoadWidth.typeId => roadWidthService
-      case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
-      case LinearAssetTypes.PavingAssetTypeId => pavingService
-      case LinearAssetTypes.RoadWidthAssetTypeId => roadWidthService
-      case LinearAssetTypes.ProhibitionAssetTypeId => prohibitionService
-      case LinearAssetTypes.HazmatTransportProhibitionAssetTypeId => prohibitionService
+      case Prohibition.typeId => prohibitionService
+      case HazmatTransportProhibition.typeId => prohibitionService
       case _ => linearAssetService
     }
   }
