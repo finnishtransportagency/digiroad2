@@ -170,11 +170,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       persistedStop.linkSource)
   }
 
-  def getAssetValidityDirection(bearing: Int): Option[Int] = {
-    if(bearing >= 270 || bearing < 90){
-      Some(AgainstDigitizing.value)
-    }else{
-      Some(TowardsDigitizing.value)
+  def getAssetValidityDirection(bearing: Int): Int = {
+    bearing >= 270 || bearing < 90 match {
+      case true =>  AgainstDigitizing.value
+      case false => TowardsDigitizing.value
     }
   }
 
@@ -187,11 +186,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     val lonDifference = assetLocation.x - roadLinkPoint.get.x
     val latDifference = assetLocation.y - roadLinkPoint.get.y
 
-
-    if((latDifference <= 0 && linkBearing <= 90) || (latDifference >= 0 && linkBearing > 270)) {
-      TowardsDigitizing.value
-    }else{
-      AgainstDigitizing.value
+    (latDifference <= 0 && linkBearing <= 90) || (latDifference >= 0 && linkBearing > 270) match {
+      case true => TowardsDigitizing.value
+      case false =>  AgainstDigitizing.value
     }
   }
 
@@ -201,11 +198,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   private def generateProperties(tRTrafficSignType: TRTrafficSignType, value: Any) = {
+    val signValue = value.toString
     val trafficType = tRTrafficSignType.trafficSignType
     val typeProperty = SimpleProperty(typePublicId, Seq(PropertyValue(trafficType.value.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
-      case true => SimpleProperty(infoPublicId, Seq(PropertyValue(value.toString)))
-      case _ => SimpleProperty(valuePublicId, Seq(PropertyValue(value.toString)))
+      case true => SimpleProperty(infoPublicId, Seq(PropertyValue(signValue)))
+      case _ => SimpleProperty(valuePublicId, Seq(PropertyValue(signValue)))
     }
 
     Set(typeProperty, valueProperty)
@@ -224,7 +222,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
         val validityDirection =
           bearing match {
             case Some(assetBearing) if twoSided.getOrElse(false) => BothDirections.value
-            case Some(assetBearing) => getAssetValidityDirection(assetBearing).get
+            case Some(assetBearing) => getAssetValidityDirection(assetBearing)
             case None if twoSided.getOrElse(false) =>  BothDirections.value
             case _ =>  getTrafficSignValidityDirection(Point(lon, lat), link.geometry)
           }

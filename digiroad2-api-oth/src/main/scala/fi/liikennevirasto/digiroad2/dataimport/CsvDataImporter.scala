@@ -146,18 +146,17 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       }
     }
   }
-  def getPropertyValue(trafficSignAttributes: CsvAssetRow, propertyName: String): Option[AssetProperty] = {
-    trafficSignAttributes.properties.find (prop => prop.columnName == propertyName)
+  def getPropertyValue(trafficSignAttributes: CsvAssetRow, propertyName: String) = {
+    trafficSignAttributes.properties.find (prop => prop.columnName == propertyName).map(_.value).get
   }
   def createTrafficSigns(trafficSignAttributes: CsvAssetRow): Unit ={
-    val value = tryToInt(getPropertyValue(trafficSignAttributes, "value").map(_.value).get.toString)
-    val trafficSignType = getPropertyValue(trafficSignAttributes, "trafficSignType").map(_.value).get.toString.toInt
-    val bearing = tryToInt(getPropertyValue(trafficSignAttributes, "bearing").map(_.value).get.toString)
-    val trafficDirection = tryToInt(getPropertyValue(trafficSignAttributes, "trafficDirection").map(_.value).get.toString)
-    val twoSided = getPropertyValue(trafficSignAttributes, "twoSided").map(_.value).get.toString match { case "Kaksipuoleinen" => true case _ => false }
-    val lon = getPropertyValue(trafficSignAttributes, "lon").map(_.value).get.asInstanceOf[BigDecimal].toLong
-    val lat = getPropertyValue(trafficSignAttributes, "lat").map(_.value).get.asInstanceOf[BigDecimal].toLong
-
+    val value = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString)
+    val trafficSignType = getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt
+    val bearing = tryToInt(getPropertyValue(trafficSignAttributes, "bearing").toString)
+    val trafficDirection = tryToInt(getPropertyValue(trafficSignAttributes, "trafficDirection").toString)
+    val twoSided = getPropertyValue(trafficSignAttributes, "twoSided").toString match { case "Kaksipuoleinen" => true case _ => false }
+    val lon = getPropertyValue(trafficSignAttributes, "lon").asInstanceOf[BigDecimal].toLong
+    val lat = getPropertyValue(trafficSignAttributes, "lat").asInstanceOf[BigDecimal].toLong
 
     trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided), TrafficDirection.apply(trafficDirection), bearing)
   }

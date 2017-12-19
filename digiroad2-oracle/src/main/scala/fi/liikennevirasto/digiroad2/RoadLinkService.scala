@@ -829,16 +829,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getClosestRoadlinkForCarTrafficFromVVH(user: User, point: Point): Seq[VVHRoadlink] = {
     val diagonal = Vector3d(10, 10, 0)
 
-    val roadLinks =
-      if (user.isOperator())
-        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
-      else
-        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+    val roadLinks = user.isOperator() match {
+        case true =>  getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+        case false => getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+      }
 
-    if (roadLinks.isEmpty)
-      Seq.empty[VVHRoadlink]
-    else
-      roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0).filter(_.featureClass != FeatureClass.CycleOrPedestrianPath)
+    roadLinks.isEmpty match {
+      case true => Seq.empty[VVHRoadlink]
+      case false => roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0).filter(_.featureClass != FeatureClass.CycleOrPedestrianPath)
+    }
   }
 
 
