@@ -625,8 +625,6 @@ trait LinearAssetOperations {
         getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
-      //Queries.updateAssetModified(id, username).execute
-
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
       val newIdsToReturn = existingValue match {
