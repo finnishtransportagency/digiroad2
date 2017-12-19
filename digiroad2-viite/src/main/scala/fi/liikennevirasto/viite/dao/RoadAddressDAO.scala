@@ -911,7 +911,7 @@ object RoadAddressDAO {
     } else {
       s""" where ra.id in ($idString)"""
     }
-    val terminatedFilter = if(includeTerminated) {
+    val terminatedFilter = if(!includeTerminated) {
       "AND ra.terminated = 0"
     } else {
       ""

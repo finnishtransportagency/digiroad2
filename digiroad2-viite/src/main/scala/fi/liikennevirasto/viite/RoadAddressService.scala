@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite
+import java.net.ConnectException
 import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.RoadLinkType.UnknownRoadLinkType
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -477,7 +479,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         mergeRoadAddressInTX(data)
       }
     } catch {
-      case ex: InvalidAddressDataException => logger.info("Duplicate merging(s) found, skipped")
+      case ex: InvalidAddressDataException => logger.error("Duplicate merging(s) found, skipped.", ex)
+      case ex: ConnectException => logger.error("A connection problem has occurred.", ex)
+      case ex: Exception => logger.error("An unexpected error occurred.", ex)
     }
   }
 
