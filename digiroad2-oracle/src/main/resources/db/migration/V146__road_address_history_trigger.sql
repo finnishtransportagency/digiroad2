@@ -27,3 +27,5 @@ CREATE OR REPLACE TRIGGER road_address_history_check BEFORE
       END IF;
   END;
   /
+
+ALTER TRIGGER road_address_history_check DISABLE;
