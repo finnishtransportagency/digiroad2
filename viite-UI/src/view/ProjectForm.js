@@ -1,6 +1,8 @@
 (function (root) {
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
+    //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
     var currentProject = false;
+    var formCommon = new FormCommon('');
     var activeLayer = false;
     var hasReservedRoadParts = false;
     var ProjectStatus = LinkValues.ProjectStatus;
@@ -51,7 +53,7 @@
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
-    var actionButtons = function (ready) {
+    var actionButtons = function () {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
         '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka Toimenpiteisiin</button>' +
         '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
@@ -136,7 +138,7 @@
         '<div id ="newReservedRoads">' +
         newReservedRoads +
         '</div></div></div></div>' +
-        '<footer>' + actionButtons(reservedRoads !== '') + '</footer>');
+        '<footer>' + actionButtons() + '</footer>');
     };
 
     var selectedProjectLinkTemplate = function (project) {
@@ -144,6 +146,13 @@
         '<header>' +
         titleWithDeletingTool(project.name) +
         '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<label>VIRHEILMOITUKSIA:</label>' +
+        '<div id ="projectErrors">' +
+        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
+        '</div></div></div></div></br></br>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
 
@@ -155,6 +164,14 @@
 
     var addSmallLabel = function (label) {
       return '<label class="control-label-small">' + label + '</label>';
+    };
+
+    var addLabel = function (label) {
+      return '<label>' + label+ ": " + '</label>';
+    };
+
+    var addLabelInfo = function (label) {
+      return '<label>' + label + '</label>';
     };
 
     var addSmallLabelWithIds = function (label, id) {
@@ -348,6 +365,7 @@
 
       eventbus.on('roadAddress:openProject', function (result) {
         currentProject = result.project;
+        projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
@@ -638,6 +656,9 @@
         rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
       });
 
+      rootElement.on('click', '.projectErrorButton', function (event) {
+        eventbus.trigger('projectCollection:clickCoordinates', event, map);
+      });
     };
     bindEvents();
   };

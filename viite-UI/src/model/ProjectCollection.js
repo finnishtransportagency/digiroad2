@@ -1,9 +1,10 @@
 (function(root) {
   root.ProjectCollection = function(backend) {
     var roadAddressProjects = [];
+    var projectErrors = [];
     var currentReservedParts = [];
+    var coordinateButtons = [];
     var newReservedParts = [];
-    var reservedDirtyRoadPartList = [];
     var projectInfo;
     var currentProject;
     var fetchedProjectLinks = [];
@@ -85,7 +86,7 @@
       });
     };
 
-    this.getProjectsWithLinksById = function (projectId, openForm) {
+    this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.project;
         currentProject = result;
@@ -93,14 +94,9 @@
           id: result.project.id,
           publishable: result.publishable
         };
+        projectErrors = result.projectErrors;
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
-        if(openForm){
-          eventbus.trigger('roadAddress:openProject', result);
-          if(applicationModel.isReadOnly()) {
-            $('.edit-mode-btn:visible').click();
-          }
-        }
       });
     };
 
@@ -522,6 +518,7 @@
       return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
+
     var addToDirtyRoadPartList = function (queryResult) {
       var qRoadParts = [];
       _.each(queryResult.roadparts, function (row) {
@@ -578,6 +575,18 @@
       return self.getCurrentReservedParts().concat(self.getNewReservedParts());
     };
 
+    this.setProjectErrors = function(errors) {
+      projectErrors = errors;
+    };
+
+    this.getProjectErrors = function(){
+      return projectErrors;
+    };
+
+    this.pushCoordinates = function(button) {
+      coordinateButtons.push(button);
+    };
+
     this.setTmpDirty = function(editRoadLinks){
       dirtyProjectLinks = editRoadLinks;
     };
@@ -612,6 +621,24 @@
 
     eventbus.on('clearproject', function() {
       this.clearRoadAddressProjects();
+    });
+
+    eventbus.on('projectCollection:clickCoordinates',function (event, map) {
+      var currentCoordinates =  map.getView().getCenter();
+      var errorIndex = event.currentTarget.id;
+      var errorCoordinates = _.find(coordinateButtons, function (b) {
+        return b.index == errorIndex;
+      }).coordinates;
+      var index = _.findIndex(errorCoordinates, function (coordinates) {
+        return coordinates.x == currentCoordinates[0] && coordinates.y == currentCoordinates[1];
+      });
+      if (index >= 0 && index + 1 < errorCoordinates.length) {
+        map.getView().setCenter([errorCoordinates[index + 1].x, errorCoordinates[index + 1].y]);
+        map.getView().setZoom(errorCoordinates[index + 1].zoom);
+      } else {
+        map.getView().setCenter([errorCoordinates[0].x, errorCoordinates[0].y]);
+        map.getView().setZoom(errorCoordinates[0].zoom);
+      }
     });
 
     this.getCurrentProject = function(){

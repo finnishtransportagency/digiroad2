@@ -92,6 +92,14 @@ object DataFixture {
     println()
   }
 
+  def importRoadAddressesHistory(): Unit = {
+    println(s"\nCommencing road address history import from conversion at time: ${DateTime.now()}")
+    val importDate = dr2properties.getProperty("digiroad2.viite.historyImportDate", "")
+    dataImporter.importRoadAddressHistory(Conversion.database(), importDate)
+    println(s"Road address history import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def updateRoadAddressesValues(vVHClient: VVHClient): Unit = {
     println(s"\nStarting road address update values from conversion at time: ${DateTime.now()}")
     dataImporter.updateRoadAddressesValues(Conversion.database(), vvhClient)
@@ -339,6 +347,8 @@ object DataFixture {
         updateProjectLinkGeom()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
+      case Some("import_road_address_history") =>
+        importRoadAddressesHistory()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+

@@ -53,10 +53,10 @@ trait RoadAddressMapper {
         case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
-      ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
-        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), floating = false,
-        sideCode = sideCode, startMValue = startM, endMValue = endM, geometry = mappedGeom, calibrationPoints = (startCP, endCP),
-        adjustedTimestamp = VVHClient.createVVHTimeStamp())
+      ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
+        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
+        startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
+        calibrationPoints = (startCP, endCP), floating = false, geometry = mappedGeom)
     })
   }
 
@@ -217,7 +217,7 @@ trait RoadAddressMapper {
   protected def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
     def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
       if (r1.endAddrMValue == r2.startAddrMValue && r1.endCalibrationPoint.isEmpty)
-        Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity))
+        Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue))
       else
         Seq(r2, r1)
     }
