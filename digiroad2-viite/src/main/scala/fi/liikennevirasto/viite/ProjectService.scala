@@ -396,10 +396,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinks = ProjectDAO.getProjectLinks(project.id)
     logger.debug(s"Links fetched")
     project.reservedParts.foreach(p => logger.debug(s"Project has part ${p.roadNumber}/${p.roadPartNumber} in ${p.ely} (${p.addressLength} m)"))
+    val projectLinkOriginalParts = RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).map(ra => (ra.roadNumber, ra.roadPartNumber)).toSet
     validateReservations(project.reservedParts, project.ely, project.id, projectLinks) match {
       case Some(error) => throw new RoadPartReservedException(error)
       case None => logger.debug(s"Validation passed")
-        val addresses = project.reservedParts.flatMap { reservation =>
+        val addresses = project.reservedParts.filterNot(res =>
+          projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap { reservation =>
           logger.debug(s"Reserve $reservation")
           val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber, false)
           val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false, frozenTimeVVHAPIServiceEnabled)
