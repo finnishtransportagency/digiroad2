@@ -5,7 +5,7 @@
   };
 
   root.EditModeToggleButton = function(toolSelection) {
-    var button = $('<button class="action-mode-btn btn btn-block edit-mode-btn btn-primary">').text('Siirry muokkaustilaan');
+    var button = $('<button id="toggleEditMode" class="action-mode-btn btn btn-block edit-mode-btn btn-primary">').text('Siirry muokkaustilaan');
     var element = $('<div class="panel-section panel-toggle-edit-mode">').append(button);
     var toggleReadOnlyMode = function(mode) {
       if(mode && applicationModel.isActiveButtons()){

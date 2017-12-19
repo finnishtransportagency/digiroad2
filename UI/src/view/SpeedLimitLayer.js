@@ -61,11 +61,11 @@ window.SpeedLimitLayer = function(params) {
     collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
         eventbus.trigger('layer:speedLimit:' + event);
       });
+    trafficSignReadOnlyLayer.refreshView();
     };
     if (isActive) {
       showSpeedLimitsHistory();
     }
-    trafficSignReadOnlyLayer.refreshView();
 
   this.removeLayerFeatures = function() {
       vectorLayer.getSource().clear();

@@ -28,13 +28,21 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     getBySourceRoadLinks(roadLinks)
   }
 
+  def getByMunicipalityAndRoadLinks(municipalityNumber: Int): Seq[(Manoeuvre, Seq[(RoadLink)])] = {
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
+    val manoeuvres = getBySourceRoadLinks(roadLinks)
+    manoeuvres.map{ manoeuvre => (manoeuvre, roadLinks.filter(road => road.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).get ||
+      road.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).get))
+    }
+  }
+
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     getByRoadLinks(roadLinks)
   }
 
-  def updateManoeuvre(userName: String, oldManoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates): Long = {
-    withDynTransaction {
+  def updateManoeuvre(userName: String, oldManoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates, modifiedDate: Option[DateTime])): Long = {
+     withDynTransaction {
       val manoeuvreRowOld = dao.fetchManoeuvreById(oldManoeuvreId).head
       val manoeuvreId = dao.createManoeuvreForUpdate(userName, manoeuvreRowOld, manoeuvreUpdates.additionalInfo)
       dao.expireManoeuvre(oldManoeuvreId)

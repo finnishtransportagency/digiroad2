@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
+import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{Track, VVHRoadLinkHistoryProcessor, VVHSerializer}
 import org.joda.time.format.ISODateTimeFormat
@@ -75,14 +76,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param newTransaction
     * @return Road link
     */
-  def getRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
-    val vvhRoadLinks = fetchVVHRoadlinks(Set(linkId))
+  def getRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadsLinksFromVVH(Set(linkId), newTransaction: Boolean).headOption
+
+  def getRoadsLinksFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinks(linkId)
     if (newTransaction)
       withDynTransaction {
         enrichRoadLinksFromVVH(vvhRoadLinks)
-      }.headOption
+      }
     else
-      enrichRoadLinksFromVVH(vvhRoadLinks).headOption
+      enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
   def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksAndComplementariesFromVVH(Set(linkId), newTransaction: Boolean).headOption
@@ -94,7 +97,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         enrichRoadLinksFromVVH(vvhRoadLinks)
       }
     else
-        enrichRoadLinksFromVVH(vvhRoadLinks)
+      enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
   def getComplementaryRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
@@ -344,14 +347,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadLinksAndChangesFromVVHWithFrozenTimeAPI(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), frozenTimeVVHAPIServiceEnabled:Boolean = false): (Seq[RoadLink], Seq[ChangeInfo])= {
-   if (frozenTimeVVHAPIServiceEnabled) {
-     val (changes, links) =
-       Await.result(Future(Seq.empty[ChangeInfo]).zip(vvhClient.frozenTimeRoadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
-     withDynTransaction {
-       (enrichRoadLinksFromVVH(links, changes), changes)
-     }
-   } else
-       getRoadLinksAndChangesFromVVH(bounds,municipalities)
+    if (frozenTimeVVHAPIServiceEnabled) {
+      val (changes, links) =
+        Await.result(Future(Seq.empty[ChangeInfo]).zip(vvhClient.frozenTimeRoadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
+      withDynTransaction {
+        (enrichRoadLinksFromVVH(links, changes), changes)
+      }
+    } else
+      getRoadLinksAndChangesFromVVH(bounds,municipalities)
   }
 
   def getRoadLinksAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
@@ -824,6 +827,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else
       Some(roadLinks.minBy(roadlink => minimumDistance(point, roadlink.geometry)))
   }
+
+  def getClosestRoadlinkForCarTrafficFromVVH(user: User, point: Point): Seq[VVHRoadlink] = {
+    val diagonal = Vector3d(10, 10, 0)
+
+    val roadLinks = user.isOperator() match {
+        case true =>  getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+        case false => getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+      }
+
+    roadLinks.isEmpty match {
+      case true => Seq.empty[VVHRoadlink]
+      case false => roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0).filter(_.featureClass != FeatureClass.CycleOrPedestrianPath)
+    }
+  }
+
 
   protected def removeIncompleteness(linkId: Long) = {
     sqlu"""delete from incomplete_link where link_id = $linkId""".execute

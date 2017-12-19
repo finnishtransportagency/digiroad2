@@ -38,7 +38,7 @@
         });
 
         var selectInteraction = new ol.interaction.Select({
-            layer: layer,
+            layers: [layer],
             condition: function(events){
                 return !isPolygonActive && !isRectangleActive && enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },

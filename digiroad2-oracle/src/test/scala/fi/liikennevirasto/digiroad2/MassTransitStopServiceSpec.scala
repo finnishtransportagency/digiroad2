@@ -75,12 +75,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     vvhRoadLinks.foreach(rl =>
       when(mockRoadLinkService.getRoadLinkFromVVH(rl.linkId, false))
         .thenReturn(Some(toRoadLink(rl))))
-//    when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(toRoadLink(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
   }
-
-  object RollbackBusStopStrategy extends BusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService)
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  object RollbackBusStopStrategy extends BusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockEventBus)
   {
     def updateAdministrativeClassValueTest(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
       super.updateAdministrativeClassValue(assetId, administrativeClass)
@@ -637,7 +636,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
-//      val values = List(PropertyValue("1"))
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
@@ -749,7 +747,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviId = liviIdentifierProperty.values.head.propertyValue
 
       val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
-      verify(mockTierekisteriClient, Mockito.atLeastOnce).createMassTransitStop(captor.capture)
+      verify(mockTierekisteriClient, Mockito.atLeastOnce).createMassTransitStop(captor.capture, any[Option[String]])
       val capturedStop = captor.getValue
       capturedStop.liviId should be (liviId)
 
@@ -993,6 +991,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(None)
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
       val props = stop.propertyData
@@ -1008,7 +1007,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           Seq(newAdmin, newTypes))
       val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
-      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
     }
   }
@@ -1026,6 +1025,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(None)
+
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
       val props = stop.propertyData
@@ -1041,7 +1042,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           Seq(newAdmin, newTypes))
       val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
-      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
     }
   }
@@ -1057,7 +1058,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
-      verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
     }
   }
   test("Updating the mass transit stop from ELY -> others should expire a stop in TR") {
@@ -1080,7 +1081,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newStop = stop.copy(stopTypes = Seq(2, 3), propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja") ++ Seq(admin))
       val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
-      verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
       verify(mockTierekisteriClient, times(1)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
     }
   }
@@ -1203,7 +1204,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("getByMunicipality gets Tierekisteri Equipment") {
-    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, new GeometryTransform)
+    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, new GeometryTransform, mockEventBus )
     val combinations: List[(Existence, String)] = List(Existence.No, Existence.Yes, Existence.Unknown).zip(List("1", "2", "99"))
     combinations.foreach { case (e, v) =>
       reset(mockTierekisteriClient, mockRoadLinkService)
@@ -1282,6 +1283,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus, mockRoadLinkService)
     when(mockTierekisteriClient.isTREnabled).thenReturn(true)
     when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])).thenThrow(new TierekisteriClientException("TR-test exception"))
+    when(mockTierekisteriClient.createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])).thenThrow(new TierekisteriClientException("TR-test exception"))
+
     when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
       (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
     )

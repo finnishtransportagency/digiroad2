@@ -54,23 +54,21 @@
         var unfinishedProjects = _.filter(projects, function(proj){
           return proj.statusCode < 6 && proj.statusCode > 0 ;
         });
+        var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
         if(!_.isEmpty(unfinishedProjects)){
-          var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
           _.each(unfinishedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
-            if(proj.statusCode === projectStatus.ErroredInTR.value) {
-              html += '<tr class="project-item">' +
-                '<td>'+ staticFieldProjectName(proj.name)+'</td>'+
-                '<td title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
-                '<td>'+'<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom:6px" id="reopen-project-'+proj.id +'" value="'+proj.id+'"">Avaa uudelleen</button>' +'</td>'+
-                '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
-            } else {
               html += '<tr class="project-item">' +
                 '<td style="width: 310px;">'+ staticFieldProjectName(proj.name)+'</td>'+
                 '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.ely)+'</td>'+
                 '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.createdBy)+'</td>'+
-                '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
-                '<td>'+'<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px; margin-left: 70px" id="open-project-'+proj.id +'" value="'+proj.id+'"">Avaa</button>' +'</td>'+
+                '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>';
+            if(proj.statusCode === projectStatus.ErroredInTR.value) {
+              html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom:6px; margin-left: 45px"" id="reopen-project-' + proj.id + '" value="' + proj.id + '"">Avaa uudelleen</button>' + '</td>' +
+                '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
+            }
+              else{
+              html +='<td>'+'<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px; margin-left: 70px" id="open-project-'+proj.id +'" value="'+proj.id+'"">Avaa</button>' +'</td>'+
                 '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
             }
           });
@@ -87,6 +85,10 @@
               openProjectSteps(event);
             }
           });
+        }
+        else{
+          html += '</table>';
+          $('#project-list').html($(html));
         }
       });
 
