@@ -1,7 +1,9 @@
 CREATE OR REPLACE TRIGGER road_address_history_check BEFORE
   UPDATE OR
-  INSERT ON ROAD_ADDRESS FOR EACH ROW DECLARE pragma autonomous_transaction;
+  INSERT ON ROAD_ADDRESS FOR EACH ROW
+  DECLARE
   v_duplicated NUMBER (2);
+  PRAGMA AUTONOMOUS_TRANSACTION;
   BEGIN
     SELECT COUNT (*)
     INTO v_duplicated
