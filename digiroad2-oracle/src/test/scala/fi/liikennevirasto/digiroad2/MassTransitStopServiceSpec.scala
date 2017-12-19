@@ -1283,6 +1283,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus, mockRoadLinkService)
     when(mockTierekisteriClient.isTREnabled).thenReturn(true)
     when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])).thenThrow(new TierekisteriClientException("TR-test exception"))
+    when(mockTierekisteriClient.createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])).thenThrow(new TierekisteriClientException("TR-test exception"))
+
     when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
       (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
     )
