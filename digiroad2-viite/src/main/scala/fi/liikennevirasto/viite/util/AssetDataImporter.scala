@@ -365,13 +365,7 @@ class AssetDataImporter {
         (address.x1, address.y1, address.x2, address.y2)
       else
         (address.x2, address.y2, address.x1, address.y1)
-
-      println(s"insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values ($lrmId, ${pos.linkId}, $sideCode, ${df.format(pos.startM).toDouble}, ${df.format(pos.endM).toDouble});")
-
-      println(s"insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
-        s"track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-        s"VALID_FROM, geometry, floating, road_type, ely, terminated) VALUES " +
-        s"(viite_general_seq.nextval, $lrmId, ${address.roadNumber}, ${address.roadPartNumber}, ${address.trackCode}, ${address.discontinuity}, ${startAddrM}, ${endAddrM}, TO_DATE('${address.startDate.get}', 'YYYY-MM-DD'), TO_DATE('${address.endDate.get}', 'YYYY-MM-DD'), '${address.userId}', TO_DATE('${address.validFrom.get}', 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${x1.get},${y1.get},0.0,0.0,${x2.get},${y2.get},0.0, ${endAddrM - startAddrM})), 0, ${address.roadType}, ${address.ely}, 2);")
+      
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, pos.linkId)
       lrmPositionPS.setLong(3, sideCode)
