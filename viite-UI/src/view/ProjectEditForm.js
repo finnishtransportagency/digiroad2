@@ -110,7 +110,7 @@
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
         '<div class="form-group">' +
-        '<label>VIRHEILMOITUKSIA:</label>' +
+        '<label>TARKASTUSILMOITUKSET:</label>' +
         '<div id ="projectErrors">' +
         formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
         '</div></div></div></div></br></br>' +

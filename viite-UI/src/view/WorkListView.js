@@ -1,9 +1,24 @@
 (function (root) {
   var counter = 0;
+  var elyDecoded = [
+    {value: 1, description: "Uusimaa"},
+    {value: 2, description: "Varsinais-Suomi"},
+    {value: 3, description: "Kaakkois-Suomi"},
+    {value: 4, description: "Pirkanmaa"},
+    {value: 8, description: "Pohjois-Savo"},
+    {value: 9, description: "Keski-Suomi"},
+    {value: 10, description: "Etelä-Pohjanmaa"},
+    {value: 12, description: "Pohjois-Pohjanmaa"},
+    {value: 14, description: "Lappi"}
+  ];
+  var decodeEly = function(ely){
+    var elyObject = _.find(elyDecoded, function (obj) { return obj.value === Number(ely); });
+    return (!_.isUndefined(elyObject) ? elyObject.description : "Unknown");
+  };
   var floatingLinksTable = function(layerName, floatingLinks, elyCode) {
     counter += floatingLinks.length;
     var elyHeader = function(elyCode) {
-      return $('<h2/>').html("ELY " + elyCode );
+      return $('<h2/>').html("ELY " + elyCode + " " + decodeEly(elyCode));
     };
 
     var tableContentRows = function(links) {
