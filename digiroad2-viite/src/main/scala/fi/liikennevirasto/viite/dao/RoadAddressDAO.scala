@@ -906,7 +906,7 @@ object RoadAddressDAO {
     * @param ids
     * @return
     */
-  def queryById(ids: Set[Long]): List[RoadAddress] = {
+  def queryById(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false): List[RoadAddress] = {
     if (ids.size > 1000) {
       return queryByIdMassQuery(ids)
     }
@@ -916,6 +916,16 @@ object RoadAddressDAO {
     } else {
       s""" where ra.id in ($idString)"""
     }
+    val terminatedFilter = if(!includeTerminated) {
+      "AND ra.terminated = 0"
+    } else {
+      ""
+    }
+
+    val historyFilter = if (includeHistory)
+      "AND end_date is null"
+    else
+      ""
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
@@ -926,7 +936,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where and t.id < t2.id and
+        $where $historyFilter $terminatedFilter and t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
