@@ -82,6 +82,7 @@ trait PointAssetOperations {
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
   def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long
+  def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
@@ -131,26 +132,27 @@ trait PointAssetOperations {
     Some(AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, reason))
   }
 
-  protected def floatingAdjustment(adjustmentOperation: ((PersistedAsset, AssetAdjustment) => Any), createOperation: ((PersistedAsset, AssetAdjustment) => PersistedAsset))
+  protected def floatingAdjustment(adjustmentOperation: ((PersistedAsset, AssetAdjustment, RoadLink) => Any), createOperation: ((PersistedAsset, AssetAdjustment) => PersistedAsset))
                                       (roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], persistedAsset: PersistedAsset, floating: Boolean, floatingReason: Option[FloatingReason]
   ): Option[AssetBeforeUpdate]= {
 
-      val roadLink = roadLinks.find(_.linkId == persistedAsset.linkId)
-      PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match {
-        case Some(adjustment) =>
-          adjustmentOperation(persistedAsset, adjustment)
-          val persitedAsset = createOperation(persistedAsset, adjustment)
-          Some(AssetBeforeUpdate(persitedAsset, adjustment.floating, Some(FloatingReason.Unknown)))
-        case None if (roadLink.isEmpty || floating) =>
-          None
-        case _ =>
-          PointAssetFiller.snapPersistedAssetToRoadLink(persistedAsset, roadLink.get) match {
-            case Some(adjustment) =>
-              adjustmentOperation(persistedAsset, adjustment)
-              Some(AssetBeforeUpdate(createOperation(persistedAsset, adjustment), adjustment.floating, Some(FloatingReason.Unknown)))
-            case _ =>
-              None
-      }
+    roadLinks.find(_.linkId == persistedAsset.linkId) match {
+      case Some(roadLink) =>
+        PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match {
+          case Some(adjustment) =>
+            adjustmentOperation(persistedAsset, adjustment, roadLink)
+            val persitedAsset = createOperation(persistedAsset, adjustment)
+            Some(AssetBeforeUpdate(persitedAsset, adjustment.floating, Some(FloatingReason.Unknown)))
+          case None if floating =>  None
+          case _ =>
+            PointAssetFiller.snapPersistedAssetToRoadLink(persistedAsset, roadLink) match {
+              case Some(adjustment) =>
+                adjustmentOperation(persistedAsset, adjustment, roadLink)
+                Some(AssetBeforeUpdate(createOperation(persistedAsset, adjustment), adjustment.floating, Some(FloatingReason.Unknown)))
+              case _ => None
+            }
+        }
+      case _ => None
     }
   }
 
@@ -242,17 +244,35 @@ trait PointAssetOperations {
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedAsset] = {
     withDynSession {
+      getPersistedAssetsByIdsWithoutTransaction(ids)
+    }
+  }
+
+  def getPersistedAssetsByIdsWithoutTransaction(ids: Set[Long]): Seq[PersistedAsset] = {
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
       fetchPointAssets(withFilter(filter))
-    }
   }
 
   def expire(id: Long, username: String): Long = {
     withDynSession {
-      Queries.updateAssetModified(id, username).first
-      sqlu"update asset set valid_to = sysdate where id = $id".first
+      expireWithoutTransaction(id, username)
     }
+  }
+
+  def expire(id: Long): Long = {
+    withDynSession{
+      expireWithoutTransaction(id)
+    }
+  }
+
+  def expireWithoutTransaction(id: Long) = {
+    sqlu"update asset set valid_to = sysdate where id = $id".first
+  }
+
+  def expireWithoutTransaction(id: Long, username: String) = {
+    Queries.updateAssetModified(id, username).first
+    sqlu"update asset set valid_to = sysdate where id = $id".first
   }
 
   protected def convertPersistedAsset[T](setFloating: (PersistedAsset, Boolean) => T,

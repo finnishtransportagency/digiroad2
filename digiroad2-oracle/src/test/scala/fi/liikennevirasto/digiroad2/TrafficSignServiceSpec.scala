@@ -139,6 +139,70 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("Update traffic sign with geometry changes"){
+    runWithRollback {
+
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val propertiesToUpdate = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("2"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("60"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), "jakke", roadLink )
+      val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
+      oldAsset.modifiedAt.isDefined should equal(false)
+
+      val newId = service.update(id, IncomingTrafficSign(0.0, 10.0, 388553075, propertiesToUpdate, 1, None),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+
+      val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
+      updatedAsset.id should not be id
+      updatedAsset.lon should equal (0.0)
+      updatedAsset.lat should equal (10.0)
+      updatedAsset.createdBy should equal (oldAsset.createdBy)
+      updatedAsset.createdAt should equal (oldAsset.createdAt)
+      updatedAsset.modifiedBy should equal (Some("test"))
+      updatedAsset.modifiedAt.isDefined should equal(true)
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("2")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("60")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
+    }
+  }
+
+  test("Update traffic sign without geometry changes"){
+    runWithRollback {
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val propertiesToUpdate = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("2"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("60"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for update test"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), "jakke", roadLink )
+      val asset = service.getPersistedAssetsByIds(Set(id)).head
+
+      val newId = service.update(id, IncomingTrafficSign(0.0, 20.0, 388553075, propertiesToUpdate, 1, None),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+
+      val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
+      updatedAsset.id should be (id)
+      updatedAsset.lon should be (asset.lon)
+      updatedAsset.lat should be (asset.lat)
+      updatedAsset.createdBy should equal (Some("jakke"))
+      updatedAsset.modifiedBy should equal (Some("test"))
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("2")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("60")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for update test")
+    }
+  }
+
   test("Create traffic sign with direction towards digitizing using coordinates without asset bearing") {
     /*mock road link is set to (2,2), (4,4), so this asset is set to go towards digitizing*/
     runWithRollback {
