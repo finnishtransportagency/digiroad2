@@ -1,28 +1,18 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.asset._
 
 
 class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: OracleLinearAssetDao,
                                roadAddressDao: RoadAddressDAO, linearAssetService: LinearAssetService) {
 
-  val trafficVolumeId = 170
-  val litRoadAssetId = 100
-  val roadWidthAssetId = 120
-  val trafficSignsId = 300
-  val pavedRoadAssetId = 110
-  val massTransitLaneAssetId = 160
-  val damagedByThawAssetId = 130
-  val europeanRoadAssetId = 260
-  val speedLimitAssetId = 20
 
   val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
@@ -66,7 +56,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     new OracleAssetDao()
   }
 
-  def obtainLastExecutionDate(assetName: String, assetId: Int): DateTime = {
+  def obtainLastExecutionDate(assetName: String, assetId: Int): Option[DateTime] = {
     OracleDatabase.withDynSession{
       assetDao.getLastExecutionDate(assetId, s"batch_process_$assetName")
     }
@@ -75,7 +65,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   def importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient) = {
     println("\nExpiring Traffic Volume From OTH Database")
     OracleDatabase.withDynSession {
-      oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId)
+      oracleLinearAssetDao.expireAllAssetsByTypeId(TrafficVolume.typeId)
     }
     println("\nTraffic Volume data Expired")
 
@@ -112,7 +102,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
             roadAddresses
               .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId))
               .foreach { ra =>
-                val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
+                val assetId = linearAssetService.dao.createLinearAsset(TrafficVolume.typeId, ra.linkId, false, SideCode.BothDirections.value,
                   Measures(ra.startMValue, ra.endMValue), "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
                 println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
@@ -135,13 +125,13 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateLitRoadAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(litRoadImporterOperations.assetName, litRoadAssetId)
-    litRoadImporterOperations.updateAssets(lastUpdate)
+    val lastUpdate = obtainLastExecutionDate(litRoadImporterOperations.assetName, LitRoad.typeId)
+    litRoadImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 
   def updateRoadWidthAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(roadWidthImporterOperations.assetName, roadWidthAssetId)
-    roadWidthImporterOperations.updateAssets(lastUpdate)
+    val lastUpdate = obtainLastExecutionDate(roadWidthImporterOperations.assetName, RoadWidth.typeId)
+    roadWidthImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 
   def importTrafficSigns(): Unit = {
@@ -149,12 +139,17 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateTrafficSigns(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(trafficSignTierekisteriImporter.assetName, trafficSignsId)
-    trafficSignTierekisteriImporter.updateAssets(lastUpdate)
+    val lastUpdate = obtainLastExecutionDate(trafficSignTierekisteriImporter.assetName, TrafficSigns.typeId)
+    trafficSignTierekisteriImporter.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 
   def importSpeedLimits(): Unit = {
-    speedLimitTierekisteriImporter.importAssets();
+    speedLimitTierekisteriImporter.importAssets()
+  }
+
+  def updateSpeedLimits(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(speedLimitTierekisteriImporter.assetName, StateSpeedLimit.typeId)
+    speedLimitTierekisteriImporter.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 
   def importPavedRoadAsset(): Unit = {
@@ -162,8 +157,8 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updatePavedRoadAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(pavedRoadImporterOperations.assetName, pavedRoadAssetId)
-    pavedRoadImporterOperations.updateAssets(lastUpdate)
+    val lastUpdate = obtainLastExecutionDate(pavedRoadImporterOperations.assetName, PavedRoad.typeId)
+    pavedRoadImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 
   def importMassTransitLaneAsset(): Unit = {
@@ -171,8 +166,8 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateMassTransitLaneAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(massTransitLaneImporterOperations.assetName, massTransitLaneAssetId)
-    massTransitLaneImporterOperations.updateAssets(lastUpdate)
+    val lastUpdate = obtainLastExecutionDate(massTransitLaneImporterOperations.assetName, MassTransitLane.typeId)
+    massTransitLaneImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 
   def importDamagedByThawAsset(): Unit = {
@@ -180,8 +175,8 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateDamagedByThawAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(damagedByThawAssetImporterOperations.assetName, damagedByThawAssetId)
-    damagedByThawAssetImporterOperations.updateAssets(lastUpdate)
+    val lastUpdate = obtainLastExecutionDate(damagedByThawAssetImporterOperations.assetName, DamagedByThaw.typeId)
+    damagedByThawAssetImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 
   def importEuropeanRoadAsset(): Unit = {
@@ -189,8 +184,8 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateEuropeanRoadAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(europeanRoadImporterOperations.assetName, europeanRoadAssetId)
-    europeanRoadImporterOperations.updateAssets(lastUpdate)
+    val lastUpdate = obtainLastExecutionDate(europeanRoadImporterOperations.assetName, EuropeanRoads.typeId)
+    europeanRoadImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 
   def importSpeedLimitAsset(): Unit = {
@@ -198,7 +193,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateSpeedLimitAssets(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(speedLimitAssetTierekisteriImporter.assetName, speedLimitAssetId)
-    speedLimitAssetTierekisteriImporter.updateAssets(lastUpdate)
+    val lastUpdate = obtainLastExecutionDate(speedLimitAssetTierekisteriImporter.assetName, SpeedLimitAsset.typeId)
+    speedLimitAssetTierekisteriImporter.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
   }
 }

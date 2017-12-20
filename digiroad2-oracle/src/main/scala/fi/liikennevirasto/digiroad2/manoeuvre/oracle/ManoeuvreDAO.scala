@@ -12,7 +12,7 @@ import slick.jdbc.{StaticQuery => Q}
 /**
   * Created by venholat on 3.5.2016.
   */
-case class PersistedManoeuvreRow(id: Long, linkId: Long, destLinkId: Long, elementType: Int, modifiedDate: DateTime, modifiedBy: String, additionalInfo: String)
+case class PersistedManoeuvreRow(id: Long, linkId: Long, destLinkId: Long, elementType: Int, modifiedDate: Option[DateTime], modifiedBy: Option[String], additionalInfo: String, createdDate: DateTime, createdBy: String)
 
 class ManoeuvreDao(val vvhClient: VVHClient) {
 
@@ -45,11 +45,19 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
           """.execute
   }
 
+  def expireManoeuvre(id: Long) = {
+    sqlu"""
+             update manoeuvre
+             set valid_to = sysdate
+             where id = $id
+          """.execute
+  }
+
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre): Long = {
     val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
     val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
     sqlu"""
-             insert into manoeuvre(id, type, modified_date, modified_by, additional_info)
+             insert into manoeuvre(id, type, created_date, created_by, additional_info)
              values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo)
           """.execute
 
@@ -78,6 +86,47 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     manoeuvreId
   }
 
+  def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String], modifiedDateOpt: Option[DateTime]): Long = {
+    val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
+    val additionalInfo = additionalInfoOpt match {
+      case Some(additionalValue) => additionalValue
+      case _ => oldManoeuvreRow.additionalInfo
+    }
+
+    modifiedDateOpt match {
+      case Some(modifiedDate) =>
+        sqlu"""
+            insert into manoeuvre(id, type, created_by, created_date, additional_info, modified_by, modified_date)
+            values ($manoeuvreId, 2, ${oldManoeuvreRow.createdBy}, ${oldManoeuvreRow.createdDate}, $additionalInfo, $userName, $modifiedDate)
+          """.execute
+      case _ =>
+        sqlu"""
+            insert into manoeuvre(id, type, created_by, created_date, additional_info, modified_by, modified_date)
+            values ($manoeuvreId, 2, ${oldManoeuvreRow.createdBy}, ${oldManoeuvreRow.createdDate}, $additionalInfo, $userName, sysdate)
+          """.execute
+    }
+
+    sqlu"""
+             insert into manoeuvre_element(manoeuvre_id, element_type, link_id, dest_link_id)
+             select $manoeuvreId, element_type, link_id, dest_link_id
+             from manoeuvre_element where manoeuvre_Id = ${oldManoeuvreRow.id}
+          """.execute
+
+    sqlu"""
+             insert into manoeuvre_exceptions(manoeuvre_id, exception_type)
+             select $manoeuvreId, exception_type
+             from manoeuvre_exceptions where manoeuvre_Id = ${oldManoeuvreRow.id}
+          """.execute
+
+    sqlu"""
+             insert into manoeuvre_validity_period(id, manoeuvre_id, type, start_hour, end_hour, start_minute, end_minute)
+             select primary_key_seq.nextval, $manoeuvreId, type, start_hour, end_hour, start_minute, end_minute
+             from manoeuvre_validity_period where manoeuvre_Id = ${oldManoeuvreRow.id}
+          """.execute
+
+    manoeuvreId
+  }
+
   def addManoeuvreExceptions(manoeuvreId: Long, exceptions: Seq[Int]) {
     if (exceptions.nonEmpty) {
       val query = s"insert all " +
@@ -101,11 +150,9 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
                               (manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Manoeuvre = {
     val (id, manoeuvreRows) = manoeuvreRowsForId
     val manoeuvreRow = manoeuvreRows.head
-    val modifiedTimeStamp = DateTimePropertyFormat.print(manoeuvreRow.modifiedDate)
-
     Manoeuvre(id, manoeuvreElementsFromRows(manoeuvreRowsForId),
       manoeuvreValidityPeriodsById.getOrElse(id, Set.empty), manoeuvreExceptionsById.getOrElse(id, Seq()),
-      modifiedTimeStamp, manoeuvreRow.modifiedBy, manoeuvreRow.additionalInfo)
+      manoeuvreRow.modifiedDate, manoeuvreRow.modifiedBy, manoeuvreRow.additionalInfo, manoeuvreRow.createdDate, manoeuvreRow.createdBy)
   }
 
   private def manoeuvreElementsFromRows(manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Seq[ManoeuvreElement] = {
@@ -117,16 +164,16 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
                                manoeuvreValidityPeriods: Set[ValidityPeriod])
   : Manoeuvre = {
     val manoeuvreRow = manoeuvreRows.head
-    val modifiedTimeStamp = DateTimePropertyFormat.print(manoeuvreRow.modifiedDate)
+
     val elements = manoeuvreRows.map(row => ManoeuvreElement(row.id, row.linkId, row.destLinkId, row.elementType))
     Manoeuvre(manoeuvreRow.id, elements,
       manoeuvreValidityPeriods, manoeuvreExceptions,
-      modifiedTimeStamp, manoeuvreRow.modifiedBy, manoeuvreRow.additionalInfo)
+      manoeuvreRow.modifiedDate, manoeuvreRow.modifiedBy, manoeuvreRow.additionalInfo, manoeuvreRow.createdDate, manoeuvreRow.createdBy)
   }
 
   private def fetchManoeuvresByLinkIds(linkIds: Seq[Long]): Map[Long, Seq[PersistedManoeuvreRow]] = {
     val manoeuvres = MassQuery.withIds(linkIds.toSet) { idTableName =>
-      sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
+      sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
             WHERE (valid_to is null OR valid_to > SYSDATE) AND
@@ -134,16 +181,17 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
                                FROM MANOEUVRE_ELEMENT k
                                join #$idTableName i on i.id = k.link_id
                                where
-                                   k.manoeuvre_id = m.id)""".as[(Long, Long, Long, Int, DateTime, String, String)].list
+                                   k.manoeuvre_id = m.id)""".as[(Long, Long, Long, Int, Option[DateTime], Option[String], String, DateTime, String)].list
     }
     manoeuvres.map { manoeuvreRow =>
-      PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6, manoeuvreRow._7)
+      PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6,
+        manoeuvreRow._7, manoeuvreRow._8, manoeuvreRow._9)
     }.groupBy(_.id)
   }
 
   private def fetchManoeuvresByElementTypeLinkIds(elementType: Long, linkIds: Seq[Long]): Map[Long, Seq[PersistedManoeuvreRow]] = {
     val manoeuvres = MassQuery.withIds(linkIds.toSet) { idTableName =>
-      sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
+      sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
             WHERE (valid_to is null OR valid_to > SYSDATE) AND
@@ -151,21 +199,21 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
                                FROM MANOEUVRE_ELEMENT k
                                join #$idTableName i on i.id = k.link_id
                                where
-                                   k.manoeuvre_id = m.id and k.element_type = $elementType)""".as[(Long, Long, Long, Int, DateTime, String, String)].list
+                                   k.manoeuvre_id = m.id and k.element_type = $elementType)""".as[(Long, Long, Long, Int, Option[DateTime], Option[String], String, DateTime, String)].list
     }
     manoeuvres.map { manoeuvreRow =>
-      PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6, manoeuvreRow._7)
+      PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6, manoeuvreRow._7, manoeuvreRow._8, manoeuvreRow._9)
     }.groupBy(_.id)
   }
 
-  private def fetchManoeuvreById(id: Long): Seq[PersistedManoeuvreRow] = {
+  def fetchManoeuvreById(id: Long): Seq[PersistedManoeuvreRow] = {
     val manoeuvre =
-      sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
+      sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
-            WHERE m.id = $id and (valid_to > SYSDATE OR valid_to is null)""".as[(Long, Long, Long, Int, DateTime, String, String)].list
+            WHERE m.id = $id and (valid_to > SYSDATE OR valid_to is null)""".as[(Long, Long, Long, Int, Option[DateTime], Option[String], String, DateTime, String)].list
     manoeuvre.map(row =>
-      PersistedManoeuvreRow(row._1, row._2, row._3, row._4, row._5, row._6, row._7))
+      PersistedManoeuvreRow(row._1, row._2, row._3, row._4, row._5, row._6, row._7, row._8, row._9))
   }
 
   private def fetchManoeuvreExceptionsByIds(manoeuvreIds: Seq[Long]): Map[Long, Seq[Int]] = {
@@ -207,12 +255,23 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     addManoeuvreValidityPeriods(manoeuvreId, validityPeriods)
   }
 
-  private def updateModifiedData(username: String, manoeuvreId: Long) {
-    sqlu"""
+  private def updateModifiedData(username: String, manoeuvreId: Long, modifiedDate: Option[DateTime]) {
+    modifiedDate match {
+      case Some(date) =>
+        sqlu"""
            update manoeuvre
-           set modified_date = sysdate, modified_by = $username
+           set modified_date = $date
+           , modified_by = $username
            where id = $manoeuvreId
         """.execute
+      case _ =>
+        sqlu"""
+           update manoeuvre
+           set modified_date = sysdate
+           , modified_by = $username
+           where id = $manoeuvreId
+        """.execute
+    }
   }
 
   def setManoeuvreAdditionalInfo(manoeuvreId: Long)(additionalInfo: String) = {
@@ -221,13 +280,6 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
            set additional_info = $additionalInfo
            where id = $manoeuvreId
         """.execute
-  }
-
-  def updateManoueuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
-    manoeuvreUpdates.additionalInfo.foreach(setManoeuvreAdditionalInfo(manoeuvreId))
-    manoeuvreUpdates.exceptions.foreach(setManoeuvreExceptions(manoeuvreId))
-    manoeuvreUpdates.validityPeriods.foreach(setManoeuvreValidityPeriods(manoeuvreId))
-    updateModifiedData(userName, manoeuvreId)
   }
 
   def getByRoadLinks(roadLinkIds: Seq[Long]): Seq[Manoeuvre] = {

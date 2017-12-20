@@ -20,7 +20,9 @@
       routes: {
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
-        'roadAddressProject/:projectId' : 'roadAddressProject'
+        'roadAddressProject/:projectId': 'roadAddressProject',
+        'historyLayer/:date': 'historyLayer',
+        'work-list/floatingRoadAddress' : 'floatingAddressesList'
       },
 
       linkProperty: function (linkId) {
@@ -50,8 +52,25 @@
         applicationModel.selectLayer('roadAddressProject');
         var parsedProjectId = parseInt(projectId);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
+      },
+
+      historyLayer: function (date) {
+        applicationModel.selectLayer('linkProperty');
+        var dateSeparated = date.split('-');
+        eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
+        eventbus.trigger('suravageRoads:toggleVisibility', false);
+        $('.suravage-visible-wrapper').hide();
+        $('#toggleEditMode').hide();
+        $('#emptyFormDiv,#projectListButton').hide();
+        eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
+      },
+
+      floatingAddressesList: function () {
+        eventbus.trigger('workList:select', 'linkProperty', backend.getFloatingRoadAddresses());
       }
     });
+
+
 
     var router = new Router();
 

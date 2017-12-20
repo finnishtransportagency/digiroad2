@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
@@ -36,6 +37,11 @@ object FloatingReason{
 trait IncomingPointAsset {
   val lon: Double
   val lat: Double
+  val linkId: Long
+}
+
+trait IncomePointAsset {
+  val mValue: Long
   val linkId: Long
 }
 
@@ -76,7 +82,7 @@ trait PointAssetOperations {
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
   def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long
-  def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
+  def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)

@@ -18,6 +18,8 @@ case class PersistedSpeedLimit(id: Long, linkId: Long, sideCode: SideCode, value
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource)
 
+case class AssetLastModification(id: Long, linkId: Long, modifiedBy: Option[String], modifiedDate: Option[DateTime])
+
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
 
   def MassQueryThreshold = 500
@@ -280,6 +282,28 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
+  def fetchExpireAssetLastModificationsByLinkIds(assetTypeId: Int, linkIds: Seq[Long]) : Seq[AssetLastModification] = {
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      val assets = sql"""
+        select a.id, pos.link_id, a.modified_date, a.modified_by
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join #$idTableName i on i.id = pos.link_id
+          join (select pos.link_id, max(a.modified_date) as modified_date
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            join #$idTableName i on i.id = pos.link_id
+            group by pos.link_id) asset_lk on asset_lk.link_id = pos.link_id and asset_lk.modified_date = a.modified_date
+        where asset_type_id = $assetTypeId and a.floating = 0 and  a.valid_to is not null and a.valid_to < sysdate"""
+        .as[(Long, Long, Option[DateTime], Option[String])].list
+      assets.map { case(id, linkId, modifiedDate, modifiedBy) =>
+        AssetLastModification(id, linkId, modifiedBy, modifiedDate)
+      }
+    }
+  }
+
   /**
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
@@ -497,18 +521,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Returns speed limits by asset id. Used by SpeedLimitService.loadSpeedLimit.
     */
-  def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = {
-    val speedLimits = sql"""
-      select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date
+  def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = getSpeedLimitLinksByIds(Set(id))
+
+  def getSpeedLimitLinksByIds(ids: Set[Long]): Seq[SpeedLimit] = {
+    val speedLimits = MassQuery.withIds(ids) { idTableName =>
+      sql"""select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
-        where a.asset_type_id = 20 and a.id = $id
+        join #$idTableName i on i.id = a.id
+        where a.asset_type_id = 20
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
-
+    }
     val roadLinksWithComplementaryByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
@@ -870,6 +897,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       sqlu"update asset set valid_to = null where id = $id".first
     }
     if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  /**
+    * Updates validity of asset in db.
+    */
+  def updateExpiration(id: Long) = {
+
+    val propertiesUpdated =
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+
+    if (propertiesUpdated == 1) {
       Some(id)
     } else {
       None

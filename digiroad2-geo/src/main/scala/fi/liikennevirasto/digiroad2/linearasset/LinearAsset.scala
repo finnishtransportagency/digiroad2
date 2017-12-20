@@ -22,17 +22,39 @@ case class NumericValue(value: Int) extends Value {
 case class TextualValue(value: String) extends Value {
   override def toJson: Any = value
 }
-case class MaintenanceRoad(maintenanceRoad: Seq[Properties]) extends Value{
-  override def toJson: Any = maintenanceRoad
+case class MaintenanceRoad(properties: Seq[Properties]) extends Value{
+  override def toJson: Any = properties
 }
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
+
+  override def equals(obj: scala.Any): Boolean = {
+    obj match {
+      case prohs: Prohibitions =>
+        prohibitions.size == prohs.prohibitions.size && prohibitions.forall(
+          argValue1  =>
+            prohs.prohibitions.find(_.typeId == argValue1.typeId) match {
+              case Some(argValue2) =>
+                argValue1.typeId == argValue2.typeId && argValue1.additionalInfo == argValue2.additionalInfo &&
+                  argValue1.exceptions.size == argValue2.exceptions.size && argValue1.validityPeriods.size == argValue2.validityPeriods.size &&
+                  argValue1.exceptions.subsetOf(argValue2.exceptions) && argValue1.validityPeriods.subsetOf(argValue2.validityPeriods)
+              case _ => false
+            }
+        )
+      case _ => super.equals(obj)
+    }
+
+  }
+}
+case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
+  override def toJson: Any = massLimitation
 }
 
+case class AssetTypes(typeId: Int, value: String)
 case class AssetProperties(name: String, value: String)
+case class ManoeuvreProperties(name: String, value: Any)
 
 case class Properties(publicId: String, propertyType: String, value: String)
-
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {
@@ -131,7 +153,8 @@ case class PieceWiseLinearAsset(id: Long, linkId: Long, sideCode: SideCode, valu
 case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource)
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime],linkSource: LinkGeomSource)
 
 case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
+

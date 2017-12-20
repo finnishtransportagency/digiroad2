@@ -203,6 +203,7 @@
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
+    new TrafficSignToggle(map, mapPluginsContainer);
 
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
@@ -223,8 +224,19 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel);
+     PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
     });
+
+    var trafficSignReadOnlyLayer = function(layerName){
+      return new TrafficSignReadOnlyLayer({
+        layerName: layerName,
+        style: new PointAssetStyle('trafficSigns'),
+        collection: new TrafficSignsReadOnlyCollection(backend, 'trafficSigns', true),
+        assetLabel: new TrafficSignLabel(),
+        assetGrouping: new AssetGrouping(9),
+        map: map
+      });
+    };
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
      acc[asset.layerName] = new LinearAssetLayer({
@@ -241,7 +253,11 @@
        formElements: AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label,
        roadAddressInfoPopup: roadAddressInfoPopup,
-       editConstrains : asset.editConstrains || function() {return false;}
+       editConstrains : asset.editConstrains || function() {return false;},
+       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
+       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
+       massLimitation : asset.editControlLabels.massLimitations,
+       typeId : asset.typeId
      });
      return acc;
     }, {});
@@ -276,7 +292,7 @@
        application: applicationModel,
        collection: models.speedLimitsCollection,
        selectedSpeedLimit: models.selectedSpeedLimit,
-       backend: backend,
+       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer('speedLimit'),
        style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer,
        roadAddressInfoPopup: roadAddressInfoPopup
@@ -284,6 +300,8 @@
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
     }, linearAssetLayers, pointAssetLayers);
+
+    VioniceLayer({ map: map });
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
@@ -363,8 +381,8 @@
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
-        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks)];
+        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled, asset.editControlLabels.massLimitations];
+        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks, asset.hasTrafficSignReadOnlyLayer)];
       }
       return [];
     }

@@ -15,6 +15,7 @@ trait RoadLinkLike extends PolyLine{
   def linkSource: LinkGeomSource
   def attributes: Map[String, Any]
   def constructionType: ConstructionType
+  def vvhTimeStamp: Long
 }
 
 case class RoadLinkProperties(linkId: Long,
@@ -36,6 +37,7 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   def verticalLevel : Int = attributes("VERTICALLEVEL").asInstanceOf[BigInt].intValue
   def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
+  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 
   //TODO isPaved = !isNotPaved = SurfaceType.apply(surfaceType) match {case SurfaceType.Paved => true case _ => false
   def isPaved : Boolean = surfaceType == SurfaceType.Paved.value

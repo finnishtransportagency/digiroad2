@@ -68,6 +68,8 @@
     }
 
     function hide() {
+      $('#information-content').empty();
+      $('#send-button').attr('disabled', true);
       changeTable.hide();
     }
 
@@ -83,7 +85,7 @@
     function bindEvents(){
       eventbus.once('projectChanges:fetched', function(projectChangeData){
         var htmlTable ='<table class="change-table">';
-        if(projectChangeData !== null){
+        if(!_.isUndefined(projectChangeData) && projectChangeData !== null){
           _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
             if (changeInfoSeq.changetype === newLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
@@ -218,6 +220,10 @@
     eventbus.on('projectChangeTable:refresh', function() {
       bindEvents();
       getChanges();
+    });
+
+    eventbus.on('projectChangeTable:hide', function() {
+      hide();
     });
 
     return{

@@ -115,13 +115,13 @@ object OracleTrafficSignDao {
     }
   }
 
-  def create(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource): Long = {
+  def create(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource, floating: Boolean = false): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
-        values ($id, 300, $username, sysdate, $municipality, ${trafficSign.bearing})
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
+        values ($id, 300, $username, sysdate, $municipality, ${trafficSign.bearing}, $floating)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})

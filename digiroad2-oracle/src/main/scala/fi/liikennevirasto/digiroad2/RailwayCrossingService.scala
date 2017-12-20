@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleRailwayCrossingDao,
 import fi.liikennevirasto.digiroad2.user.User
 
 case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String]) extends IncomingPointAsset
+case class IncomingRailwayCrossingtAsset(linkId: Long, mValue: Long, safetyEquipment: Int, name: Option[String])  extends IncomePointAsset
 
 class RailwayCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingRailwayCrossing
@@ -78,6 +79,12 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
         OracleRailwayCrossingDao.create(setAssetPosition(updatedAsset, geometry, value), value, municipality, username, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
       case _ =>
         OracleRailwayCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, value), value, municipality, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
+    }
+  }
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingRailwayCrossing] = {
+    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
+      point =>  IncomingRailwayCrossing(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingRailwayCrossingtAsset].safetyEquipment, asset.asInstanceOf[IncomingRailwayCrossingtAsset].name)
     }
   }
 }
