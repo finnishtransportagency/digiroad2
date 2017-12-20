@@ -1,13 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
-import java.sql.Date
-
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Weekday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -507,21 +506,24 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val propManoeuvreUpd = """ "properties":[{"value":[10,22], "name":"exceptions"},{"value":[{"startHour":12, "startMinute": 30, "endHour": 13, "endMinute": 35, "days": "Weekday"}],"name":"validityPeriods"}]"""
 
   test("Manoeuvre asset is updated with newer timestamp"){
-    val requestPayloadManoeuvre = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "19.11.2017 14:33:47", "geometryTimestamp": 1510966863005, "endMeasure": 200, """ + propManoeuvreUpd + """  }"""
+    val createdAt = DateTime.now.plusDays(1).toString("dd-MM-yyyy HH:mm:ss")
+    val requestPayloadManoeuvre = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": """" + createdAt + """", "geometryTimestamp": """ + DateTime.now.plusDays(1).getMillis + """ , "endMeasure": 200, """ + propManoeuvreUpd + """  }"""
     putJsonWithUserAuth("/manoeuvre/1", requestPayloadManoeuvre.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(200)
     }
   }
 
   test("Manoeuvre asset is not updated if timestamp is older than the existing asset"){
-    val requestPayloadManoeuvre = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47",  "geometryTimestamp": 1511264400, "endMeasure": 15, """ + propManoeuvreUpd + """}"""
+    val requestPayloadManoeuvre = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47",  "geometryTimestamp": 1511264405, "endMeasure": 15, """ + propManoeuvreUpd + """}"""
     putJsonWithUserAuth("/manoeuvre/1", requestPayloadManoeuvre.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(422)
     }
   }
 
   test("encode Manoeuvre asset") {
-    val manoeuvreAsset = Manoeuvre(1, manoeuvreElement, Set(ValidityPeriod(12, 13, Weekday , 30, 35)), Seq(10,22), Some(DateTime.parse("18.11.2017 03:01:03")), None, "test", DateTime.now, "")
+    val formatter = DateTimeFormat.forPattern("dd-MM-yyyy HH:mm:ss")
+    val modifiedAt = DateTime.parse("18-11-2017 03:01:03", formatter)
+    val manoeuvreAsset = Manoeuvre(1, manoeuvreElement, Set(ValidityPeriod(12, 13, Weekday , 30, 35)), Seq(10,22), Some(modifiedAt), None, "test", DateTime.now, "")
 
     val manoeuvreMap =  municipalityApi.manoeuvreAssetToApi(manoeuvreAsset, newRoadLinks)
     manoeuvreMap.get("id").get should be (1)
