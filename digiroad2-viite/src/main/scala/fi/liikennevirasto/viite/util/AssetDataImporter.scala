@@ -363,6 +363,8 @@ class AssetDataImporter {
       else
         (address._15, address._16, address._13, address._14)
 
+      println(s"insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values ($lrmId, ${pos.linkId}, $sideCode, ${df.format(pos.startM).toDouble}, ${df.format(pos.endM).toDouble})")
+
       println(s"insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
         s"track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
         s"VALID_FROM, geometry, floating, road_type, ely, terminated) VALUES " +
