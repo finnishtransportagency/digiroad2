@@ -354,8 +354,8 @@ class AssetDataImporter {
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmAddresses.size}""".as[Long].list
     val df = new DecimalFormat("#.###")
     assert(ids.size == lrmAddresses.size || lrmAddresses.isEmpty)
-    lrmAddresses.zip(ids).foreach { case ((pos), (lrmId)) =>
-      val address = roadList.find(_.lrmId == pos.id).get
+    lrmAddresses.foreach { case (pos) =>
+      val address = roadList.find(r => r.lrmId == pos.id && r.startAddrM.toDouble == pos.startM && r.endAddrM.toDouble == pos.endM).get
       val (startAddrM, endAddrM, sideCode) = if (address.startAddrM < address.endAddrM) {
         (address.startAddrM, address.endAddrM, SideCode.TowardsDigitizing.value)
       } else {
@@ -366,13 +366,13 @@ class AssetDataImporter {
       else
         (address.x2, address.y2, address.x1, address.y1)
       
-      lrmPositionPS.setLong(1, lrmId)
+      lrmPositionPS.setLong(1, pos.id)
       lrmPositionPS.setLong(2, pos.linkId)
       lrmPositionPS.setLong(3, sideCode)
       lrmPositionPS.setDouble(4, df.format(pos.startM).toDouble)
       lrmPositionPS.setDouble(5, df.format(pos.endM).toDouble)
       lrmPositionPS.addBatch()
-      addressPS.setLong(1, lrmId)
+      addressPS.setLong(1, pos.id)
       addressPS.setLong(2, address.roadNumber)
       addressPS.setLong(3, address.roadPartNumber)
       addressPS.setLong(4, address.trackCode)
