@@ -523,6 +523,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def preSplitSuravageLinkInTX(linkId: Long, username: String,
                                splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Option[String], Option[(Point, Vector3d)]) = {
+    //Discontinuity of splits should be the given only for the part with the biggest M Address Value
+    //The rest of them should be 5 (Continuous)
+    def adjustSplitsDiscontinuity(splitLinks: Seq[ProjectLink]) = {
+      val bigEndAddr = splitLinks.filter(_.id == NewRoadAddress).maxBy(_.endAddrMValue).endAddrMValue
+      splitLinks.map(split => {
+        if(split.id == NewRoadAddress)
+          if(split.endAddrMValue == bigEndAddr)
+            split.copy(discontinuity = splitOptions.discontinuity)
+          else
+            split.copy(discontinuity = Discontinuity.Continuous)
+        else
+          split
+      })
+    }
     val projectId = splitOptions.projectId
     val sOption = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(linkId)), false).headOption
     val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
@@ -554,7 +568,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       else {
         val bestFit = commonSections.maxBy(_._2)._1
         val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, splitOptions)
-        (Some(splitLinks), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
+        (Some(adjustSplitsDiscontinuity(splitLinks)), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
   }
