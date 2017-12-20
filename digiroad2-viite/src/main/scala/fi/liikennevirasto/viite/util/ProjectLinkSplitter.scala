@@ -134,6 +134,20 @@ object ProjectLinkSplitter {
     def toSeq(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
       Seq(splits._1, splits._2, splits._3).filter(pl => Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength)
     }
+    //Discontinuity of splits should be the given only for the part with the biggest M Address Value
+    //The rest of them should be 5 (Continuous)
+    def adjustSplitsDiscontinuity(splitLinks: Seq[ProjectLink]) = {
+      val bigEndAddr = splitLinks.filter(_.id == NewRoadAddress).maxBy(_.endAddrMValue).endAddrMValue
+      splitLinks.map(split => {
+        if(split.id == NewRoadAddress)
+          if(split.endAddrMValue == bigEndAddr)
+            split.copy(discontinuity = split.discontinuity)
+          else
+            split.copy(discontinuity = Discontinuity.Continuous)
+        else
+          split
+      })
+    }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
     val splitAddressM = templateLink.addrAt(templateM)
@@ -144,9 +158,9 @@ object ProjectLinkSplitter {
       else
         movedFromStart(suravageM, templateM, splitAddressM, isReversed)
     if (isReversed)
-      toSeq(switchDigitization(splits))
+      adjustSplitsDiscontinuity(toSeq(switchDigitization(splits)))
     else
-      toSeq(splits)
+      adjustSplitsDiscontinuity(toSeq(splits))
   }
 
   def findMatchingGeometrySegment(suravage: PolyLine, template: PolyLine): Option[Seq[Point]] = {
