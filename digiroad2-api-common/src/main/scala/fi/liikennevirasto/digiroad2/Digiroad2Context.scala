@@ -109,6 +109,13 @@ class PavingSaveProjected[T](pavingProvider: PavingService) extends Actor {
   }
 }
 
+class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) extends Actor {
+  def receive = {
+    case x: Seq[T] => prohibitionProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("pavingSaveProjected: Received unknown message")
+  }
+}
+
 class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
     case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
@@ -205,6 +212,9 @@ object Digiroad2Context {
 
   val pavingSaveProjected = system.actorOf(Props(classOf[PavingSaveProjected[PersistedLinearAsset]], pavingService), name = "pavingSaveProjected")
   eventbus.subscribe(pavingSaveProjected, "paving:saveProjectedPaving")
+
+  val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
+  eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
@@ -325,6 +335,10 @@ object Digiroad2Context {
 
   lazy val onOffLinearAssetService: OnOffLinearAssetService = {
     new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
+  }
+
+  lazy val prohibitionService: ProhibitionService = {
+    new ProhibitionService(roadLinkService, eventbus)
   }
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = {
