@@ -301,7 +301,7 @@ class AssetDataImporter {
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
             alkux, alkuy, loppux, loppuy
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate"""
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """
           .as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
       } else {
         sql"""select linkid, alku, loppu,
@@ -311,7 +311,7 @@ class AssetDataImporter {
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
             alkux, alkuy, loppux, loppuy
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely"""
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL"""
           .as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
       }
     }
@@ -362,6 +362,11 @@ class AssetDataImporter {
         (address._13, address._14, address._15, address._16)
       else
         (address._15, address._16, address._13, address._14)
+
+      println(s"insert into ROAD_ADDRESS values (id, lrm_position_id, road_number, road_part_number, " +
+        s"track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
+        s"VALID_FROM, geometry, floating, road_type, ely, terminated)" +
+        s"(viite_general_seq.nextval, $lrmId, ${address._1}, ${address._2}, ${address._3}, ${address._6}, ${startAddrM}), ${endAddrM}, ${address._9}, ${address._10.getOrElse("")}, ${address._11}), ${address._12}, $x1,$y1, $x2, $y2, ${endAddrM - startAddrM}, 0, ${address._5}, ${address._4}, 2)")
 
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, pos.linkId)
