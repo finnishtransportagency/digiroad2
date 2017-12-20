@@ -113,13 +113,13 @@
         }).concat(getSelectedRoadLinks());
 
         historicRoadLinks = _.filter(roadLinkGroups, function(group) {
-          groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
+          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
         });
         roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
-          groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
+          return groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
         });
         var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
-          groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
+          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
         });
         roadLinkGroups = nonSuravageRoadLinkGroups;
         eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups);
