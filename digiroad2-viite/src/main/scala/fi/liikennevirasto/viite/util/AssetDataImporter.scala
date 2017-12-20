@@ -363,11 +363,10 @@ class AssetDataImporter {
       else
         (address._15, address._16, address._13, address._14)
 
-      println(s"insert into ROAD_ADDRESS values (id, lrm_position_id, road_number, road_part_number, " +
+      println(s"insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
         s"track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-        s"VALID_FROM, geometry, floating, road_type, ely, terminated)" +
-        s"(viite_general_seq.nextval, $lrmId, ${address._1}, ${address._2}, ${address._3}, ${address._6}, ${startAddrM}), ${endAddrM}, ${address._9}, ${address._10.getOrElse("")}, ${address._11}), ${address._12}, $x1,$y1, $x2, $y2, ${endAddrM - startAddrM}, 0, ${address._5}, ${address._4}, 2)")
-
+        s"VALID_FROM, geometry, floating, road_type, ely, terminated) VALUES " +
+        s"(viite_general_seq.nextval, $lrmId, ${address._1}, ${address._2}, ${address._3}, ${address._6}, ${startAddrM}, ${endAddrM}, TO_DATE(${address._9}, 'YYYY-MM-DD'), TO_DATE(${address._10.getOrElse("")}, 'YYYY-MM-DD'), ${address._11}, TO_DATE(${address._12}, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY($x1,$y1,0.0,0.0,$x2,$y2,0.0, ${endAddrM - startAddrM})), 0, ${address._5}, ${address._4}, 2);")
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, pos.linkId)
       lrmPositionPS.setLong(3, sideCode)
