@@ -409,7 +409,6 @@ object ProjectDAO {
     sqlu"""
          update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate, add_info=${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate}, ely = ${roadAddressProject.ely} where id = ${roadAddressProject.id}
          """.execute
-    roadAddressProject.reservedParts.foreach(updateReservedRoadPart)
   }
 
   /**
@@ -509,7 +508,7 @@ object ProjectDAO {
               WHERE
                 rp.project_id = $projectId AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
-                (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)))
+                (PL.STATUS IS NULL OR PL.STATUS != 5)
               GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
               ) gr $filter"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
@@ -762,6 +761,8 @@ object ProjectDAO {
 
   @Deprecated
   def updateReservedRoadPart(reserved: ReservedRoadPart): Unit = {
+    // TODO: remove after current merges are done and no method calls this
+    throw new RuntimeException("Deprecated method")
   }
 
   def countLinksUnchangedUnhandled(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
