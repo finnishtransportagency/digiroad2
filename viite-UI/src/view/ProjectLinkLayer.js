@@ -631,7 +631,7 @@
         });
         var style = new ol.style.Style({
           stroke: new ol.style.Stroke({color: '#c6c00f', width: 13, lineCap: 'round'}),
-          zIndex: 11
+          zIndex: -1
         });
         terminatedFeature.setStyle(style);
         removeFeaturesByType('pre-split');
