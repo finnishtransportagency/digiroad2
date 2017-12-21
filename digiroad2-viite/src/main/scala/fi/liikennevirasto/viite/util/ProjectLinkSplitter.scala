@@ -44,23 +44,22 @@ object ProjectLinkSplitter {
       GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.last, suravage.geometry),
       GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.head, suravage.geometry),
       GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.last, suravage.geometry))
-    val splitAddresses =
+    val (splitAddressesA, splitAddressesB) =
       (Seq(templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.head, templateLink.geometry)),
         templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.last, templateLink.geometry))),
         Seq(templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.head, templateLink.geometry)),
           templateLink.addrAt(GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.last, templateLink.geometry))))
-    println(startMA, endMA, startMB, endMB)
-
+    val bigEndAddr = (splitAddressesA ++ splitAddressesB).max
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
         track = split.trackCode,
-        discontinuity = split.discontinuity,
+        discontinuity = if (bigEndAddr == splitAddressesA.max) split.discontinuity else Discontinuity.Continuous,
         roadType = split.roadType,
         startMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.head, suravage.geometry),
         endMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._1.last, suravage.geometry),
-        startAddrMValue = splitAddresses._1.min,
-        endAddrMValue = splitAddresses._1.max,
+        startAddrMValue = splitAddressesA.min,
+        endAddrMValue = splitAddressesA.max,
         status = split.statusA,
         sideCode = templateLink.sideCode,
         roadAddressId = templateLink.roadAddressId,
@@ -72,12 +71,12 @@ object ProjectLinkSplitter {
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
         track = split.trackCode,
-        discontinuity = split.discontinuity,
+        discontinuity = if (bigEndAddr == splitAddressesB.max) split.discontinuity else Discontinuity.Continuous,
         roadType = split.roadType,
         startMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.head, suravage.geometry),
         endMValue = GeometryUtils.calculateLinearReferenceFromPoint(splitGeometries._2.last, suravage.geometry),
-        startAddrMValue = splitAddresses._2.min,
-        endAddrMValue = splitAddresses._2.max,
+        startAddrMValue = splitAddressesB.min,
+        endAddrMValue = splitAddressesB.max,
         status = split.statusB,
         sideCode = templateLink.sideCode,
         roadAddressId = templateLink.roadAddressId,
@@ -136,18 +135,6 @@ object ProjectLinkSplitter {
     }
     //Discontinuity of splits should be the given only for the part with the biggest M Address Value
     //The rest of them should be 5 (Continuous)
-    def adjustSplitsDiscontinuity(splitLinks: Seq[ProjectLink]) = {
-      val bigEndAddr = splitLinks.filter(_.id == NewRoadAddress).maxBy(_.endAddrMValue).endAddrMValue
-      splitLinks.map(split => {
-        if(split.id == NewRoadAddress)
-          if(split.endAddrMValue == bigEndAddr)
-            split.copy(discontinuity = split.discontinuity)
-          else
-            split.copy(discontinuity = Discontinuity.Continuous)
-        else
-          split
-      })
-    }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
     val splitAddressM = templateLink.addrAt(templateM)
@@ -157,10 +144,12 @@ object ProjectLinkSplitter {
         movedFromEnd(suravageM, templateM, splitAddressM, isReversed)
       else
         movedFromStart(suravageM, templateM, splitAddressM, isReversed)
-    if (isReversed)
-      adjustSplitsDiscontinuity(toSeq(switchDigitization(splits)))
-    else
-      adjustSplitsDiscontinuity(toSeq(splits))
+
+    toSeq(
+      if (isReversed)
+        switchDigitization(splits)
+      else
+        splits)
   }
 
   def findMatchingGeometrySegment(suravage: PolyLine, template: PolyLine): Option[Seq[Point]] = {
