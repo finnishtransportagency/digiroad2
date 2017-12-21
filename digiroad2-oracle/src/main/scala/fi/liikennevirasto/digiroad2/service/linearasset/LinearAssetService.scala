@@ -174,19 +174,19 @@ trait LinearAssetOperations {
       val unVerifiedAssets = dao.getUnVerifiedLinearAsset(typeId)
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unVerifiedAssets.map(_._2).toSet, false)
 
-      val unVerified =  unVerifiedAssets.map {
+      val unVerified =  unVerifiedAssets.flatMap{
         case (id, linkId) =>
-          val roadLink = roadLinks.find(_.linkId == linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-
-          municipalityCodes match {
-            case Some(municipality) if municipality.contains(roadLink.municipalityCode) =>
-                (roadLink.municipalityCode, id, roadLink.administrativeClass)
-            case None =>
-              (roadLink.municipalityCode, id, roadLink.administrativeClass)
+          roadLinks.filter(_.linkId == linkId).map { road =>
+            municipalityCodes match {
+              case Some(municipality) if municipality.contains(road.municipalityCode) =>
+                (road.municipalityCode, id, road.administrativeClass)
+              case None =>
+                (road.municipalityCode, id, road.administrativeClass)
+            }
           }
       }
 
-      unVerified.groupBy(_._1).map{
+      unVerified.filterNot(_._1 == 0).groupBy(_._1).map{
         case (municipalityCode, grouped) => (municipalityDao.getMunicipalityNameByCode(municipalityCode), grouped)}
         .mapValues(municipalityAssets => municipalityAssets
           .groupBy(_._3.toString)
