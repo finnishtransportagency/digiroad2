@@ -241,6 +241,7 @@
       };
 
       var createOrSaveProject = function () {
+        applicationModel.addSpinner();
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
           projectCollection.createProject(data, map.getView().getResolution());
