@@ -253,7 +253,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
           join enumerated_value e on e.id = s.enumerated_value_id and e.value = 0
           where a.asset_type_id = 290
-          and(valid_to is NULL OR valid_to >= SYSDATE)"""
+          and(valid_to is NULL OR valid_to > SYSDATE)"""
 
     val sql = optionalAreas match {
       case Some(area) => uncheckedQuery + s" and a.area in ($area)"

@@ -1591,7 +1591,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             JOIN LRM_POSITION pos on ra.LRM_POSITION_ID = pos.ID
             JOIN $idTableName i on i.ID = pos.LINK_ID
             WHERE (VALID_FROM IS NULL OR VALID_FROM <= sysdate) AND
-              (VALID_TO IS NULL OR VALID_TO >= sysdate) AND
+              (VALID_TO IS NULL OR VALID_TO > sysdate) AND
               (START_DATE IS NULL OR START_DATE <= sysdate) AND
               (END_DATE IS NULL OR END_DATE >= sysdate)
             GROUP BY LINK_ID, ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE, SIDE_CODE"""
