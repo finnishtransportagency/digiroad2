@@ -222,10 +222,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
     val addressMaps = addresses.mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
-    val (roadsWithEndDate, roadsWithoutEndDate) = addresses.values.flatten.partition(a => a.endDate.isDefined)
-    val filteredRoadsWithEndDate = roadsWithEndDate.filterNot(r => roadsWithoutEndDate.exists(_.linkId == r.linkId)).map(_.linkId).toSeq
 
-    val addressLinkIds = addresses.filterNot(rl => filteredRoadsWithEndDate.contains(rl._1)).keySet ++ missingViiteRoadAddress.keySet
+    val addressLinkIds = addresses.keySet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = if (!frozenTimeVVHAPIServiceEnabled) roadLinkService.getChangeInfoFromVVHF(addressLinkIds) else Future(Seq())
 

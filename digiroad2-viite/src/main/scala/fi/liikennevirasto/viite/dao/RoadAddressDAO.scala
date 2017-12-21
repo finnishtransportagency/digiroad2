@@ -195,6 +195,7 @@ object RoadAddressDAO {
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
+          terminated = '0' and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
