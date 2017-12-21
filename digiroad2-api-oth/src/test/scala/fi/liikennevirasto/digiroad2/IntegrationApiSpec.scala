@@ -255,7 +255,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
             ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement),
             ManoeuvreElement(1, 4, 5, ElementTypes.IntermediateElement),
             ManoeuvreElement(1, 5, 0, ElementTypes.LastElement)),
-        Set.empty,Nil, "","","")
+        Set.empty,Nil, None, None, "", DateTime.now, "")
 
       val result = integrationApi.manouvresToApi(Seq(manoeuvre))
 

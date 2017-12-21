@@ -1,8 +1,7 @@
 package fi.liikennevirasto.viite
-import java.net.ConnectException
-import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.UnknownRoadLinkType
+import java.net.ConnectException
+
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -13,7 +12,6 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LRMValueAdjustment}
 import fi.liikennevirasto.viite.process._
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.SortedMap
@@ -275,14 +273,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
           r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
             r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
-
-        val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
-
-        val removedIds = addresses.values.flatMap(_.allSegments).map(_.id).toSet -- ids
+        val removedIds = addresses.values.flatMap(_.allSegments).map(_.id).toSet -- (savedRoadAddresses++unchanged).map(x=>x.id)
         removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
           logger.debug("Expired: "+s.mkString(","))
         })
-
+        val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
         val changedRoadParts = addressesToCreate.map(a => (a.roadNumber, a.roadPartNumber)).toSet
 
         val adjustedRoadParts = changedRoadParts.filter { x => recalculateRoadAddresses(x._1, x._2)}
@@ -344,9 +339,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val max = roadAddresses.maxBy(ra => ra.endMValue)
       val min = roadAddresses.minBy(ra => ra.startMValue)
       min.copy(startAddrMValue = Math.min(min.startAddrMValue, max.startAddrMValue),
-        endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue),
-        startMValue = min.startMValue, endMValue = max.endMValue,
-        geometry = Seq(min.geometry.head, max.geometry.last))
+        endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue), startMValue = min.startMValue,
+        endMValue = max.endMValue, geometry = Seq(min.geometry.head, max.geometry.last))
     }
   }
 
@@ -408,6 +402,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case (_, _, 0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
       case (Anomaly.NoAddressGiven, 0, _) => missedRL.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
       case (_, _, _) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+    }
+  }
+
+  /**
+    * Returns all floating road addresses that are represented on ROAD_ADDRESS table and are valid (excluding history)
+    *
+    * @param includesHistory - default value = false to exclude history values
+    * @return Seq[RoadAddress]
+    */
+  def getFloatingAdresses(includesHistory: Boolean = false) = {
+    withDynSession{
+      RoadAddressDAO.fetchAllFloatingRoadAddresses(includesHistory)
     }
   }
 

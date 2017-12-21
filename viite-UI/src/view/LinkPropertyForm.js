@@ -387,6 +387,9 @@
       var emptyFormDiv = '<div class="form-initial-state" id="emptyFormDiv">' +
         '<span class="header-noposition">Aloita valitsemalla projekti.</span>' +
         '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
+        '</div>'+
+        '<div class="form form-horizontal">'+
+        '<a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a>'+
         '</div>';
       rootElement.append(emptyFormDiv);
       $('[id=formProjectButton]').click(function(){
@@ -535,6 +538,10 @@
           });
           switchMode(applicationModel.isReadOnly());
         }
+      });
+
+      eventbus.on('form:showPropertyForm', function () {
+        addOpenProjectButton();
       });
 
       eventbus.on('adjacents:added', function(sources, targets) {

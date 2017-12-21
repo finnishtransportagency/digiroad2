@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
+case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime], modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String)
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
@@ -41,9 +41,14 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     getByRoadLinks(roadLinks)
   }
 
-  def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates, modifiedDate: Option[DateTime]) = {
-    withDynTransaction {
-      dao.updateManoueuvre(userName, manoeuvreId, manoeuvreUpdates, modifiedDate)
+  def updateManoeuvre(userName: String, oldManoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates, modifiedDate: Option[DateTime]): Long = {
+     withDynTransaction {
+      val manoeuvreRowOld = dao.fetchManoeuvreById(oldManoeuvreId).head
+      val manoeuvreId = dao.createManoeuvreForUpdate(userName, manoeuvreRowOld, manoeuvreUpdates.additionalInfo, modifiedDate: Option[DateTime])
+      dao.expireManoeuvre(oldManoeuvreId)
+      manoeuvreUpdates.exceptions.foreach(dao.setManoeuvreExceptions(manoeuvreId))
+      manoeuvreUpdates.validityPeriods.foreach(dao.setManoeuvreValidityPeriods(manoeuvreId))
+      manoeuvreId
     }
   }
 
@@ -120,7 +125,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
 
-    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, null, null, newManoeuvre.additionalInfo.getOrElse(null))
+    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.getOrElse(null), null, null)
 
     isValidManoeuvre(roadLinks)(manoeuvre)
   }

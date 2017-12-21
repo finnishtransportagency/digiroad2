@@ -1,10 +1,8 @@
 (function (root) {
-  root.ProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
+  root.ProjectEditForm = function(map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErroredInTR.value, LinkValues.ProjectStatus.Unknown.value];
-
-    var currentProject = false;
     var selectedProjectLink = false;
     var formCommon = new FormCommon('');
 
@@ -48,7 +46,7 @@
       var selection = formCommon.selectedData(selected);
       return _.template('' +
         '<header>' +
-        formCommon.titleWithProjectName(project.name, currentProject) +
+        formCommon.titleWithProjectName(project.name, projectCollection.getCurrentProject()) +
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
@@ -105,8 +103,15 @@
       formCommon.toggleAdditionalControls();
       return _.template('' +
         '<header>' +
-        formCommon.titleWithProjectName(project.name, currentProject) +
+        formCommon.titleWithProjectName(project.name, projectCollection.getCurrentProject()) +
         '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<label>TARKASTUSILMOITUKSET:</label>' +
+        '<div id ="projectErrors">' +
+        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
+        '</div></div></div></div></br></br>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
     };
 
@@ -196,7 +201,7 @@
 
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
-        currentProject = projectCollection.getCurrentProject();
+        var currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
@@ -299,7 +304,7 @@
       };
 
       var saveChanges = function(){
-        currentProject = projectCollection.getCurrentProject();
+        var currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         var statusDropdown_0 =$('#dropdown_0').val();
         var statusDropdown_1 = $('#dropdown_1').val();
@@ -504,6 +509,14 @@
       rootElement.on('keyup','.form-control.small-input', function () {
         checkInputs('.project-');
         setFormDirty();
+      });
+
+      eventbus.on('projectLink:mapClicked', function () {
+        rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
+      });
+
+      rootElement.on('click', '.projectErrorButton', function (event) {
+        eventbus.trigger('projectCollection:clickCoordinates', event, map);
       });
 
     };

@@ -692,14 +692,18 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false, false)).thenReturn(addresses.map(toRoadLink))
       mockForProject(id, addresses ++ Seq(addProjectAddressLink584))
-      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(addProjectAddressLink584)), id, "U", addProjectAddressLink584.linkId) should be (None)
+      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(addProjectAddressLink584).copy(status = LinkStatus.New)),
+        id, "U", addProjectAddressLink584.linkId) should be (None)
 
       val linksAfter = ProjectDAO.getProjectLinks(id)
       linksAfter should have size (links.size + 1)
+      linksAfter.find(_.linkId == 5176512).get.sideCode should be (changedLinks.find(_.linkId == 5176512).get.sideCode)
+      linksAfter.find(_.linkId == 5176552).get.sideCode should be (changedLinks.find(_.linkId == 5176552).get.sideCode)
       linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be(Some(AgainstDigitizing))
-      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be(1798)
-      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be(687)
+      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be(2004)
+      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be(893)
       linksAfter.find(_.linkId == 5176584).get.startAddrMValue should be(0)
+      linksAfter.find(_.linkId == 5176584).get.endAddrMValue should be(206)
     }
   }
 
@@ -1189,7 +1193,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val reservedRoadPart1 = ReservedRoadPart(address1.head.id, address1.head.roadNumber, address1.head.roadPartNumber,
         Some(address1.last.endAddrMValue), Some(address1.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
       val reservedRoadPart2 = ReservedRoadPart(address2.head.id, address2.head.roadNumber, address2.head.roadPartNumber,
-        Some(address1.last.endAddrMValue), Some(address2.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+        Some(address2.last.endAddrMValue), Some(address2.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
       val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1) ++ Seq(reservedRoadPart2), None, None)
 
       val links = (address1 ++ address2).map(address => {
@@ -1199,7 +1203,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(links.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
 
-      val transferLink = address2.sortBy(_.startAddrMValue).head
+      val transferLink = address2.minBy(_.startAddrMValue)
       projectService.updateProjectLinks(project.id, address1.map(_.linkId).toSet, LinkStatus.UnChanged, "TestUser",
         0, 0, 0, Option.empty[Int]) should be(None)
       projectService.updateProjectLinks(project.id, Set(transferLink.linkId), LinkStatus.Transfer, "TestUser",
@@ -1209,10 +1213,13 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val linksRoad11 = updatedLinks.filter(_.roadNumber == 11).sortBy(_.startAddrMValue)
       val linksRoad259 = updatedLinks.filter(_.roadNumber == 259).sortBy(_.startAddrMValue)
 
-      linksRoad259.head.calibrationPoints._1 should not be (None)
+      linksRoad11.size should be (address1.size + 1)
+      linksRoad259.size should be (address2.size - 1)
+      linksRoad11.head.calibrationPoints._1 should not be (None)
       linksRoad11.last.calibrationPoints._2 should not be (None)
-      linksRoad11.size should be(address1.size + 1)
-      linksRoad259.size should be(address2.size - 1)
+      linksRoad259.head.calibrationPoints._1 should not be (None)
+      linksRoad259.last.calibrationPoints._2 should not be (None)
+
     }
   }
 

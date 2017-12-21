@@ -46,13 +46,16 @@ object ProjectDeltaCalculator {
           case Transfer =>
             val termAddress = connectedLink.map(l => (l.startAddrMValue, l.endAddrMValue))
             termAddress.map{ case (st, en) =>
-              address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
-                startAddrMValue = if (st == address.startAddrMValue) en else address.startAddrMValue,
-                endAddrMValue = if (en == address.endAddrMValue) st else address.endAddrMValue, geometry = geom)
+              address.copy(startAddrMValue = if (st == address.startAddrMValue) en else address.startAddrMValue,
+                endAddrMValue = if (en == address.endAddrMValue) st else address.endAddrMValue, startMValue = pl.startMValue,
+                endMValue = pl.endMValue, geometry = geom)
             }.getOrElse(address)
-          case UnChanged | Terminated =>
-            address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
-              startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, geometry = geom)
+          case Terminated =>
+            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
+              endMValue = pl.endMValue, geometry = geom)
+          case UnChanged =>
+            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
+              endMValue = pl.endMValue, geometry = geom)
           case _ =>
             address
         }
@@ -108,12 +111,12 @@ object ProjectDeltaCalculator {
       ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
-          case x: RoadAddress => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
+          case x: RoadAddress => x.copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R]
           case x: ProjectLink if x.reversed => x.copy(startAddrMValue = ra2.startAddrMValue, discontinuity = ra1.discontinuity).asInstanceOf[R]
           case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
       },
         pl1 match {
-          case x: RoadAddress => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
+          case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue).asInstanceOf[P]
           case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity).asInstanceOf[P]
           case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
       }))
@@ -125,7 +128,7 @@ object ProjectDeltaCalculator {
   private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
     if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
       r1 match {
-        case x: RoadAddress => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+        case x: RoadAddress => Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue).asInstanceOf[T])
         case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
       }
     else
