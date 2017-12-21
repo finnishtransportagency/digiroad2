@@ -65,12 +65,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       if (!RoadAddressDAO.roadPartExists(roadNumber, roadStartPart)) {
         if (!RoadAddressDAO.roadNumberExists(roadNumber)) {
-          Some("Tienumeroa ei ole olemassa, tarkista tiedot")
+          Some(ErrorRoadNumberDoesNotExist)
         }
         else //roadnumber exists, but starting roadpart not
-          Some("Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot")
+          Some(ErrorStartingRoadPartNotFound)
       } else if (!RoadAddressDAO.roadPartExists(roadNumber, roadEndPart)) { // ending part check
-        Some("Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot")
+        Some(ErrorEndingRoadPartNotFound)
       } else
         None
     }
@@ -279,7 +279,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         if (GeometryUtils.isNonLinear(newLinks))
-          throw new ProjectValidationException("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä.")
+          throw new ProjectValidationException(ErrorGeometryContainsBranches)
         // Determine address value scheme (ramp, roundabout, all others)
         val createLinks =
           if (newLinks.headOption.exists(isRamp)) {
@@ -353,7 +353,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction {
         if (ProjectDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
-          return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan.")
+          return Some(ErrorReversingUnchangedLinks)
         val continuity = ProjectDAO.getContinuityCodes(projectId, roadNumber, roadPartNumber)
         val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {
           val discontinuityAtEnd = continuity.maxBy(_._1)
@@ -375,7 +375,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } catch {
       case NonFatal(e) =>
         logger.info("Direction change failed", e)
-        Some("Päivitys ei onnistunut")
+        Some(ErrorSavingFailed)
     }
   }
 
@@ -396,10 +396,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinks = ProjectDAO.getProjectLinks(project.id)
     logger.debug(s"Links fetched")
     project.reservedParts.foreach(p => logger.debug(s"Project has part ${p.roadNumber}/${p.roadPartNumber} in ${p.ely} (${p.addressLength} m)"))
+    val projectLinkOriginalParts = RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).map(ra => (ra.roadNumber, ra.roadPartNumber)).toSet
     validateReservations(project.reservedParts, project.ely, project.id, projectLinks) match {
       case Some(error) => throw new RoadPartReservedException(error)
       case None => logger.debug(s"Validation passed")
-        val addresses = project.reservedParts.flatMap { reservation =>
+        val addresses = project.reservedParts.filterNot(res =>
+          projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap { reservation =>
           logger.debug(s"Reserve $reservation")
           val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber, false)
           val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false, frozenTimeVVHAPIServiceEnabled)
@@ -407,15 +409,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val reserved = checkAndReserve(project, reservation)
           if (reserved.isEmpty)
             throw new RuntimeException(s"Can't reserve road part ${reservation.roadNumber}/${reservation.roadPartNumber}")
-          val generatedInfo = generateAddressPartInfo(reservation.roadNumber, reservation.roadPartNumber) match {
-            case Some(info) =>
-              info.copy(id = reserved.get.id, newLength = None, newDiscontinuity = None, newEly = None)
-            case None => reservation.copy(id = reserved.get.id, newLength = None, newDiscontinuity = None, newEly = None)
-          }
-          val projectLinks = addressesOnPart.map(ra => newProjectTemplate(mapping(ra.linkId), ra, project))
-          ProjectDAO.updateReservedRoadPart(generatedInfo)
-          logger.debug(s"New parts updated $generatedInfo")
-          projectLinks
+          addressesOnPart.map(ra => newProjectTemplate(mapping(ra.linkId), ra, project))
         }
         logger.debug(s"Reserve done")
         val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
@@ -996,10 +990,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     try {
       withDynTransaction {
-        val projectLinks = ProjectDAO.getProjectLinks(projectId)
-        val toUpdateLinks = projectLinks.filter(pl => linkIds.contains(pl.linkId))
+        val toUpdateLinks = ProjectDAO.getProjectLinksByProjectAndLinkId(linkIds, projectId)
         if (toUpdateLinks.exists(_.isSplit))
-          throw new ProjectValidationException("Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää")
+          throw new ProjectValidationException(ErrorSplitSuravageNotUpdatable)
         userDefinedEndAddressM.map(addressM => {
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
           val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, addressM)
@@ -1019,14 +1012,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             ProjectDAO.updateProjectLinksToTerminated(toUpdateLinks.map(_.id).toSet, userName)
           }
           case LinkStatus.Numbering => {
-            ProjectDAO.getProjectLinksByLinkId(toUpdateLinks.head.linkId).headOption match {
-              case Some(roadPartLink) =>
-                val floaters, history = false
-                if (!RoadAddressDAO.fetchByLinkId(linkIds, floaters, history).exists(x => x.roadPartNumber != newRoadNumber && x.roadPartNumber != newRoadPartNumber)) //check if renumbering has already been done (and we are actually doing ie direction change)
-                  throw new ProjectValidationException(s"Numeroinnissa ei voi käyttää alkuperäistä tienumeroa ja -osanumeroa") // you cannot use current roadnumber and roadpart number in numbering operation
-                checkAndMakeReservation(toUpdateLinks.head.ely)
-                ProjectDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPartNumber, userName)
-              case _ => throw new ProjectValidationException(s"Linkkiä ei löytynyt projektista")
+            if (toUpdateLinks.nonEmpty) {
+              val roadAddresses = RoadAddressDAO.fetchByIdMassQuery(toUpdateLinks.map(_.roadAddressId).toSet, includeFloating = true)
+              if (roadAddresses.exists(x =>
+                x.roadNumber == newRoadNumber && x.roadPartNumber == newRoadPartNumber)) // check the original numbering wasn't exactly the same
+                throw new ProjectValidationException(ErrorRenumberingToOriginalNumber) // you cannot use current roadnumber and roadpart number in numbering operation
+              if (toUpdateLinks.map(pl => (pl.roadNumber, pl.roadPartNumber)).distinct.size != 1 ||
+                roadAddresses.map(ra => (ra.roadNumber, ra.roadPartNumber)).distinct.size != 1) {
+                throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
+              }
+              //TODO: Check that the numbering target road number + road part does not exist or is reserved to this project
+              checkAndMakeReservation(toUpdateLinks.head.ely)
+              ProjectDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber,
+                linkStatus, newRoadNumber, newRoadPartNumber, userName)
+            } else {
+              throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
             }
           }
           case LinkStatus.Transfer => {

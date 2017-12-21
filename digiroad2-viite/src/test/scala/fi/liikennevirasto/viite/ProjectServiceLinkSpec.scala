@@ -1412,6 +1412,25 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("Reserve road part, try to renumber it to the same number should produce an error") {
+    runWithRollback {
+      reset(mockRoadLinkService)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 201, false).sortBy(_.startAddrMValue)
+      val reservedRoadPart = ReservedRoadPart(addresses.head.id, addresses.head.roadNumber, addresses.head.roadPartNumber,
+        Some(addresses.last.endAddrMValue), Some(addresses.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
+
+      val project = projectService.createRoadLinkProject(rap)
+      mockForProject(project.id, addresses.map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart)))
+      val savedProject = projectService.getRoadAddressSingleProject(project.id).get
+      savedProject.reservedParts should have size (1)
+      reset(mockRoadLinkService)
+
+      projectService.updateProjectLinks(project.id, addresses.map(_.linkId).toSet, LinkStatus.Numbering, "TestUser",
+        5, 201, 1, Option.empty[Int]) should be (Some(ErrorRenumberingToOriginalNumber))
+    }
+  }
 
   test("Create a roundabout addressing") {
     runWithRollback {
@@ -1443,6 +1462,37 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       end.get.endAddressM should be (28L)
       end.get.discontinuity should be (Discontinuity.EndOfRoad.value)
       links.count(_.discontinuity != Discontinuity.Continuous.value) should be (1)
+    }
+  }
+
+  test("Create new road with track 2, update to track 0 should not crash") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2018-01-01"),
+        "TestUser", DateTime.parse("2100-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+
+      val points6552 = "[{\"x\":537869.292,\"y\":6997722.466,\"z\":110.39800000000105}," +
+        "{\"x\":538290.056,\"y\":6998265.169,\"z\":85.4429999999993}]"
+      val geom = JSON.parseFull(points6552).get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
+
+
+      val addProjectAddressLink552 = ProjectAddressLink(NewRoadAddress, 6552, geom, GeometryUtils.geometryLength(geom),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 19999, 1, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addresses = Seq(addProjectAddressLink552)
+      mockForProject(id, addresses)
+      projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.head.linkId) should be(None)
+      val links = ProjectDAO.getProjectLinks(id)
+      ProjectDAO.fetchReservedRoadParts(id) should have size(1)
+      projectService.updateProjectLinks(id, links.map(_.linkId).toSet, LinkStatus.New, "test", 19999, 1, 0, None,
+        RoadType.FerryRoad.value, Discontinuity.EndOfRoad.value, Some(8), false)
+      val linksAfterUpdate = ProjectDAO.getProjectLinks(id)
+      val firstLink = linksAfterUpdate.head
+      firstLink.roadNumber should be (19999)
+      firstLink.roadPartNumber should be (1)
+      firstLink.track.value should be (0)
     }
   }
 }
