@@ -199,11 +199,13 @@
     var mapOverlay = new MapOverlay($('.container'));
 
     var mapPluginsContainer = $('#map-plugins');
+    var mapPluginsHeader = $('#header-plugin');
     new ScaleBar(map, mapPluginsContainer);
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
     new TrafficSignToggle(map, mapPluginsContainer);
+    new MunicipalityWorkList(map, mapPluginsHeader);
 
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
