@@ -799,10 +799,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq())))
 
       // Test that this is not accepted as 101-103 is moved to locate after 103-113
-      newAddresses.values.toSeq.flatten.map(_.id).toSet should be (addresses.map(_.id).toSet)
+      newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet should be (addresses.map(_.id).toSet)
     }
   }
 
@@ -843,9 +843,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq())))
       // should contain just the 5622953
-      newAddresses.values.toSeq.flatten.map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size (1)
+      newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size (1)
       newAddresses.get(5622953).isEmpty should be (false)
     }
   }
@@ -882,7 +882,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s =>
+        LinkRoadAddressHistory(s, Seq()))).mapValues(_.allSegments)
       newAddresses should have size (5)
       newAddresses(5622953).headOption.exists(_.calibrationPoints._2.nonEmpty) should be (true)
       val flatList = newAddresses.values.flatten

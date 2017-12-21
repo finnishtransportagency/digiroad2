@@ -89,6 +89,10 @@ trait RoadAddressMapper {
     commonPostTransferChecks(seq, section.startMAddr, section.endMAddr)
   }
 
+  def postTransferChecksWithHistory(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
+    postTransferChecks((s._1, s._2.flatMap(_.currentSegments)))
+  }
+
   protected def commonPostTransferChecks(seq: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
     val nonHistoric = seq.filter(_.endDate.isEmpty)
     calibrationPointCountCheck(false, nonHistoric)
@@ -216,7 +220,7 @@ trait RoadAddressMapper {
     * @param roadAddresses
     * @return
     */
-  protected def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
+  protected def partition(roadAddresses: Iterable[RoadAddress]): Seq[RoadAddressSection] = {
     def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
       if (r1.endAddrMValue == r2.startAddrMValue && r1.endCalibrationPoint.isEmpty)
         Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity))
@@ -232,7 +236,7 @@ trait RoadAddressMapper {
         combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
     }
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-    grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+    grouped.mapValues(v => combine(v.toSeq.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown, ra.ely, ra.reversed)
     ).toSeq
