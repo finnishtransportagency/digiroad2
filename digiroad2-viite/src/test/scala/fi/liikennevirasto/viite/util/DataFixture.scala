@@ -9,9 +9,10 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.viite.{ProjectService, RoadAddressLinkBuilder, RoadAddressService}
+import fi.liikennevirasto.viite.{LinkRoadAddressHistory, ProjectService, RoadAddressLinkBuilder, RoadAddressService}
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
+
 import scala.language.postfixOps
 
 object DataFixture {
@@ -213,7 +214,7 @@ object DataFixture {
               ci.affects(ci.oldId.get, timestamps(ci.oldId.get)))
           println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
 
-          roadAddressService.applyChanges(roadLinks, affectingChanges, groupedAddresses)
+          roadAddressService.applyChanges(roadLinks, affectingChanges, groupedAddresses.mapValues(s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }
