@@ -15,7 +15,7 @@
 
     var projectButtons = function() {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-      '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
+      '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
     var newRoadAddressInfo = function(selected, links, road){
@@ -197,7 +197,7 @@
       var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
       return '<div class="'+localPrefix+'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var distanceValue = function() {
