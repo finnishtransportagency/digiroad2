@@ -86,7 +86,7 @@
     var showChangesAndSendButton = function () {
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
-      $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
+      $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>');
     };
 
     var fireDeselectionConfirmation = function (shiftPressed, selection, clickType) {
