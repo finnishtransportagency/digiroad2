@@ -1210,22 +1210,20 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, roadAddressStartAddressMValue, roadAddressEndAddressMValue, None, None, 1L, 5001, 1.5, 11.4, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
-
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-
-
       testTRSpeedLimit.createSpeedLimitTest(ra, addressSection, None, Some(vvhRoadLink), Seq(trUrbanArea), roadSide)
 
-      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001), LinearAssetTypes.numericValuePropertyId)
-      asset.size should be (2)
-      asset.head.linkId should be(5001)
-      asset.head.sideCode should be(roadSide.value)
-      asset.head.value should be(Some(NumericValue(80)))
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
-      asset.last.linkId should be(5001)
-      asset.last.sideCode should be(roadSide.value)
-      asset.last.value should be(Some(NumericValue(50)))
-      asset.last.createdBy should be(Some("batch_process_speedLimitState"))
+      val assets = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001), LinearAssetTypes.numericValuePropertyId)
+      assets.size should be (2)
+      assets.foreach{ asset =>
+        asset.linkId should be(5001)
+        asset.sideCode should be(roadSide.value)
+        asset.createdBy should be(Some("batch_process_speedLimitState"))
+      }
+
+      assets.sortBy(_.startMeasure)
+      assets.head.value should be(Some(NumericValue(80)))
+      assets.last.value should be(Some(NumericValue(50)))
     }
   }
 
@@ -1261,16 +1259,16 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       testTRSpeedLimit.createSpeedLimitTest(ra, addressSection, None, Some(vvhRoadLink), Seq(trUrbanArea), roadSide)
 
-      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001), LinearAssetTypes.numericValuePropertyId)
-      asset.size should be (2)
-      asset.head.linkId should be(5001)
-      asset.head.sideCode should be(roadSide.value)
-      asset.head.value should be(Some(NumericValue(50)))
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
-      asset.last.linkId should be(5001)
-      asset.last.sideCode should be(roadSide.value)
-      asset.last.value should be(Some(NumericValue(80)))
-      asset.last.createdBy should be(Some("batch_process_speedLimitState"))
+      val assets = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001), LinearAssetTypes.numericValuePropertyId)
+      assets.size should be (2)
+      assets.foreach{ asset =>
+        asset.linkId should be(5001)
+        asset.sideCode should be(roadSide.value)
+        asset.createdBy should be(Some("batch_process_speedLimitState"))
+      }
+      assets.sortBy(_.startMeasure)
+      assets.head.value should be(Some(NumericValue(50)))
+      assets.last.value should be(Some(NumericValue(80)))
     }
   }
 
