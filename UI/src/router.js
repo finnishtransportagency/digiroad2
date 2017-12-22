@@ -45,7 +45,8 @@
         'work-list/railwayCrossings': 'railwayCrossingWorkList',
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
         'work-list/trafficSigns': 'trafficSignWorkList',
-        'work-list/maintenanceRoad': 'maintenanceRoadWorkList'
+        'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
+        'work-list/municipality': 'municipalityWorkList'
       },
 
       massTransitStop: function (id) {
@@ -212,7 +213,12 @@
 
       maintenanceRoadWorkList: function () {
         eventbus.trigger('workList:select', 'maintenanceRoad', backend.getLinearAssetUnchecked(290));
+      },
+
+      municipalityWorkList: function () {
+        eventbus.trigger('municipality:select', backend.getUncheckedMunicipalities());
       }
+
     });
 
     var router = new Router();

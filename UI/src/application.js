@@ -87,6 +87,7 @@
     MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
+    MunicipalityWorkList.initialize(backend);
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
@@ -199,13 +200,11 @@
     var mapOverlay = new MapOverlay($('.container'));
 
     var mapPluginsContainer = $('#map-plugins');
-    var mapPluginsHeader = $('#header-plugin');
     new ScaleBar(map, mapPluginsContainer);
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
     new TrafficSignToggle(map, mapPluginsContainer);
-    new MunicipalityWorkList(map, mapPluginsHeader);
 
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
