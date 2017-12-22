@@ -190,7 +190,7 @@
   };
 
   var arePointsAdjacent = function(point1, point2){
-    var epsilon = 0.1;
+    var epsilon = 0.01;
     return distanceBetweenPoints(point1, point2) <= epsilon;
   };
 
