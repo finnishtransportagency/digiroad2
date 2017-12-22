@@ -643,7 +643,7 @@
         displayCloseConfirmMessage(defaultPopupMessage, true);
       });
       rootElement.on('click', '#closeProjectSpan', function () {
-        displayCloseConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true);
+        closeProjectMode(true);
       });
 
       rootElement.on('click', '#deleteProjectSpan', function(){
