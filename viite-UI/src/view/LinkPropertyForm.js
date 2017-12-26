@@ -48,10 +48,10 @@
     ];
 
     var allRoadTypes = [
-      [1, 'Yleinen tie'],
-      [2, 'Lauttaväylä yleisellä tiellä'],
+      [1, 'Maantie'],
+      [2, 'Lauttaväylä maantiellä'],
       [3, 'Kunnan katuosuus'],
-      [4, 'Yleisen tien työmaa'],
+      [4, 'Maantien työmaa'],
       [5, 'Yksityistie'],
       [9, 'Omistaja selvittämättä']
     ];
@@ -330,7 +330,7 @@
     };
 
     var template = function(options, linkProperty) {
-      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadType) : dynamicField('TIETYYPPI');
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
       var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
       return _.template('' +
