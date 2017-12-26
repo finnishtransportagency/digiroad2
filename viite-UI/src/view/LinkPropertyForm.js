@@ -64,9 +64,51 @@
       [5, 'Jatkuva']
     ];
 
-    var floatingText = [
-      [0, 'Ei'],
-      [-1, 'Kyllä']
+    var decodedAttributes = [
+      {
+        id: 'AJORATA',
+        attributes: [
+          {value: 0, description: "Yksiajoratainen osuus"},
+          {value: 1, description: "Oikeanpuoleinen ajorata"},
+          {value: 2, description: "Vasemmanpuoleinen ajorata"}
+        ]
+      },
+      {
+        id: 'ELY',
+        attributes: [
+          {value: 1, description: "Uusimaa"},
+          {value: 2, description: "Varsinais-Suomi"},
+          {value: 3, description: "Kaakkois-Suomi"},
+          {value: 4, description: "Pirkanmaa"},
+          {value: 8, description: "Pohjois-Savo"},
+          {value: 9, description: "Keski-Suomi"},
+          {value: 10, description: "Etelä-Pohjanmaa"},
+          {value: 12, description: "Pohjois-Pohjanmaa"},
+          {value: 14, description: "Lappi"}
+        ]
+      },
+      {
+        id: 'TIETYYPPI',
+        attributes: [
+          {value: 1, description: "Maantie"},
+          {value: 2, description: "Lauttaväylä maantiellä"},
+          {value: 3, description: "Kunnan katuosuus"},
+          {value: 4, description: "Maantien työmaa"},
+          {value: 5, description: "Yksityistie"},
+          {value: 9, description: "Omistaja selvittämättä"},
+          {value: 99, description: "Ei määritetty"}
+        ]
+      },
+      {
+        id: 'JATKUVUUS',
+        attributes: [
+          {value: 1, description: "Tien loppu"},
+          {value: 2, description: "Epäjatkuva"},
+          {value: 3, description: "ELY:n raja"},
+          {value: 4, description: "Lievä epäjatkuvuus"},
+          {value: 5, description: "Jatkuva"}
+        ]
+      }
     ];
 
     function getRoadType(askedRoadType){
@@ -226,18 +268,34 @@
       ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS HALUAT KORJATA TEKEMÄSI MUUTOKSIA, PAINA PERUUTA</span></p>' +
       '</div>';
 
+    var decodeAttributes = function(attr, value){
+      var attrObj = _.find(decodedAttributes, function (obj) { return obj.id === attr; });
+      if(!_.isUndefined(attrObj)) {
+        var attrValue = _.find(attrObj.attributes, function (obj) { return obj.value === value; });
+        if(!_.isUndefined(attrValue)){
+          return attrValue.description;
+        } else {
+          return "Ei määritetty";
+        }
+      } else {
+        return "";
+      }
+
+      };
+
     var staticField = function(labelText, dataField) {
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field;
+
       if(floatingTransfer){
         field = '<div class="form-group">' +
           '<label class="control-label-floating">' + labelText + '</label>' +
-          '<p class="form-control-static-floating"><%- ' + dataField + ' %></p>' +
+          '<p class="form-control-static-floating">' + dataField + ' ' + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
       } else {
         field = '<div class="form-group">' +
           '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+          '<p class="form-control-static">' + dataField + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
       }
       return field;
@@ -271,10 +329,10 @@
         return '';
     };
 
-    var template = function(options) {
-      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', 'startAddressM') : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', 'endAddressM') : dynamicField('LOPPUETÄISUUS');
+    var template = function(options, linkProperty) {
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadType) : dynamicField('TIETYYPPI');
+      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
       return _.template('' +
         '<header>' +
         title() +
@@ -287,14 +345,14 @@
         '<div class="form-group">' +
         '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
         '</div>' +
-        staticField('TIENUMERO', 'roadNumber') +
-        staticField('TIEOSANUMERO', 'roadPartNumber') +
-        staticField('AJORATA', 'trackCode') +
+        staticField('TIENUMERO', linkProperty.roadNumber) +
+        staticField('TIEOSANUMERO', linkProperty.roadPartNumber) +
+        staticField('AJORATA', linkProperty.trackCode) +
         startAddress +
         endAddress +
-        staticField('ELY', 'elyCode') +
+        staticField('ELY', linkProperty.elyCode) +
         roadTypes +
-        staticField('JATKUVUUS', 'discontinuity') +
+        staticField('JATKUVUUS', linkProperty.discontinuity) +
         '</div>' +
         '<footer>' + '</footer>', options);
     };
