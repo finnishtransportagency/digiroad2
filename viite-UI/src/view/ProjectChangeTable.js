@@ -14,6 +14,7 @@
     var transferredLinkStatus = 3;
     var numberingLinkStatus = 4;
     var terminatedLinkStatus = 5;
+    var windowMaximized = false;
 
     var changeTable =
       $('<div class="change-table-frame"></div>');
@@ -125,13 +126,6 @@
       });
 
       changeTable.on('click', 'button.close', function (){
-        $('.project-changes').height('110px');
-        $('[id=change-table-borders-target]').height('180px');
-        $('[id=change-table-borders-reverse]').height('180px');
-        $('[id=change-table-borders-source]').height('180px');
-        $('[id=change-table-borders-changetype]').height('180px');
-        $('#information-content').empty();
-        $('#send-button').attr('disabled', true);
         hide();
       });
     }
@@ -192,7 +186,6 @@
         '<td class="project-change-table-data-cell">' + changeInfoSeq.source.ely + '</td>';
     }
 
-    var windowMaximized = false;
     changeTable.on('click', 'button.max', function (){
       if(windowMaximized) {
         $('.change-table-frame').height('260px');
