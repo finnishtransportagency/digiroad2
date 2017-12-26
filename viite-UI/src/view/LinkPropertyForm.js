@@ -143,23 +143,25 @@
       //If other fields get the same treatment they can be added here
       if(labelText === 'TIETYYPPI'){
         var roadTypes = "";
-        _.each(selectedLinkProperty.get(), function(slp){
-          var roadType = slp.roadType;
-          if (roadTypes.length === 0) {
-            roadTypes = roadType;
-          } else if(roadTypes.search(roadType) === -1) {
-            roadTypes = roadTypes + ", " + roadType;
+        var uniqRoadTypes = _.uniq(_.pluck(selectedLinkProperty.get(), 'roadTypeId'));
+        var decodedRoadTypes = "";
+        _.each(uniqRoadTypes, function(rt){
+          if (decodedRoadTypes.length === 0) {
+            decodedRoadTypes = rt + " " + decodeAttributes(labelText, rt);
+          } else {
+            decodedRoadTypes = decodedRoadTypes + ", " + rt + " " + decodeAttributes(labelText, rt);
           }
         });
+
         if(floatingTransfer){
           field = '<div class="form-group">' +
             '<label class="control-label-floating">' + labelText + '</label>' +
-            '<p class="form-control-static-floating">' + roadTypes + '</p>' +
+            '<p class="form-control-static-floating">' + decodedRoadTypes + '</p>' +
             '</div>' ;
         } else {
           field = '<div class="form-group">' +
             '<label class="control-label">' + labelText + '</label>' +
-            '<p class="form-control-static">' + roadTypes + '</p>' +
+            '<p class="form-control-static">' + decodedRoadTypes + '</p>' +
             '</div>';
         }
       } else if(labelText === 'VALITUT LINKIT'){
@@ -357,10 +359,10 @@
         '<footer>' + '</footer>', options);
     };
 
-    var templateFloating = function(options) {
-      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', 'startAddressM') : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', 'endAddressM') : dynamicField('LOPPUETÄISUUS');
-      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
+    var templateFloating = function(options, linkProperty) {
+      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
         title() +
@@ -373,9 +375,9 @@
         '<div class="form-group">' +
         '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
         '</div>' +
-        staticField('TIENUMERO', 'roadNumber') +
-        staticField('TIEOSANUMERO', 'roadPartNumber') +
-        staticField('AJORATA', 'trackCode') +
+        staticField('TIENUMERO', linkProperty.roadNumber) +
+        staticField('TIEOSANUMERO', linkProperty.roadPartNumber) +
+        staticField('AJORATA', linkProperty.trackCode) +
         startAddress +
         endAddress +
         roadTypes +
@@ -385,7 +387,7 @@
         '<footer>' + '</footer>', options);
     };
 
-    var templateFloatingEditMode = function(options) {
+    var templateFloatingEditMode = function(options, linkProperty) {
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', 'startAddressM') : dynamicField('ALKUETÄISYYS');
       var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', 'endAddressM') : dynamicField('LOPPUETÄISUUS');
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
@@ -402,11 +404,11 @@
         '<div class="form-group">' +
         '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
         '</div>' +
-        staticField('TIENUMERO', 'roadNumber') +
-        staticField('TIEOSANUMERO', 'roadPartNumber') +
+        staticField('TIENUMERO',linkProperty.roadNumber) +
+        staticField('TIEOSANUMERO', linkProperty.roadPartNumber) +
         startAddress +
         endAddress +
-        staticField('AJORATA', 'trackCode') +
+        staticField('AJORATA', linkProperty.trackCode) +
         roadTypes +
         notificationFloatingTransfer(true) +
         staticField('VALITUT LINKIT:', '') +
