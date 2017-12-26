@@ -1087,7 +1087,8 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
+      val newCreatedBy = createdBy.getOrElse(address.modifiedBy.getOrElse("-"))
+      addressPS.setString(11, if(newCreatedBy == null) "-" else newCreatedBy)
       val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
