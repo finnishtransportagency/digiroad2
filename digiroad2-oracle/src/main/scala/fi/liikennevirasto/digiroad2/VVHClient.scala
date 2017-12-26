@@ -10,18 +10,16 @@ import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
-import org.joda.time.format.DateTimeFormat
 import org.apache.http.message.BasicNameValuePair
-import org.apache.http.util.EntityUtils
-import org.apache.http.NameValuePair
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 sealed trait FeatureClass
 object FeatureClass {

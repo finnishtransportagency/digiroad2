@@ -387,7 +387,7 @@ class AssetDataImporter {
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $prohibitionAssetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)
+          and (a.valid_to > sysdate or a.valid_to is null)
           #$floatingFilter"""
         .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Int, Int)].list
     }
@@ -1321,11 +1321,11 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
             join number_property_value prop on prop.asset_id = a.id
             join #$idTableName i on i.id = pos.link_id
             where a.asset_type_id = $typeId
-            and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Int, Long)].list
+            and (a.valid_to > sysdate or a.valid_to is null)""".as[(Long, Int, Long)].list
     }
   }
   def getAssetsByLinkIds(typeId: Long, linkId: Seq[Long], includeExpire: Boolean) = {
-    val filter = if (includeExpire) "" else "and (a.valid_to >= sysdate or a.valid_to is null)"
+    val filter = if (includeExpire) "" else "and (a.valid_to > sysdate or a.valid_to is null)"
     MassQuery.withIds(linkId.toSet) { idTableName =>
       sql"""
             select a.id, pos.link_id, pos.start_measure, pos.end_measure

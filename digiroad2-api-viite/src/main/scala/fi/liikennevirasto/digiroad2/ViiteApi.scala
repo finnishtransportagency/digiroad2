@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
@@ -111,6 +112,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     params.get("bbox")
       .map(getRoadAddressLinks(municipalities, zoomLevel))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
+  get("/floatingRoadAddresses") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+    roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
+      g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.startAddrMValue))
+        .map(floatingRoadAddressToApi))
   }
 
   get("/roadlinks/:linkId") {
@@ -326,9 +334,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = projectService.getRoadAddressSingleProject(projectId).get
     val projectMap = roadAddressProjectToApi(project)
     val parts = project.reservedParts.map(reservedRoadPartToApi)
+    val errorParts = projectService.validateProjectById(project.id)
     val publishable = projectService.projectLinkPublishable(projectId)
     Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-      "projectLinks" -> parts, "publishable" -> publishable)
+      "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi))
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/") {
@@ -460,7 +469,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong
-    projectService.getChangeProject(projectId).map(project =>
+    val changeTableData = projectService.getChangeProject(projectId).map(project =>
       Map(
         "id" -> project.id,
         "ely" -> project.ely,
@@ -472,6 +481,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
             "target" -> changeInfo.target, "reversed"-> changeInfo.reversed)))
     ).getOrElse(None)
+    Map("changeTable" -> changeTableData, "validationErrors" -> projectService.validateProjectById(projectId).map(issue => {
+      Map(
+       "id" -> issue.projectId,
+        "validationError" -> issue.validationError.value,
+        "affectedLinkIds" -> issue.affectedLinkIds.toArray,
+        "coordinates" -> issue.coordinates,
+        "optionalInformation" -> issue.optionalInformation.getOrElse("")
+      )
+    }))
   }
 
 
@@ -682,6 +700,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
+  def floatingRoadAddressToApi(roadAddress: RoadAddress) : Map[String, Any] = {
+    Map(
+      "id" -> roadAddress.id,
+      "linkId" -> roadAddress.linkId,
+      "roadNumber" -> roadAddress.roadNumber,
+      "roadPartNumber" -> roadAddress.roadPartNumber,
+      "trackCode" -> roadAddress.track.value,
+      "startAddressM" -> roadAddress.startAddrMValue,
+      "endAddressM" -> roadAddress.endAddrMValue,
+      "startMValue" -> roadAddress.startMValue,
+      "endMValue" -> roadAddress.endMValue,
+      "ely" -> roadAddress.ely
+    )
+  }
+
   def roadAddressLinkToApi(roadAddressLink: RoadAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(roadAddressLink) ++
       Map(
@@ -741,6 +774,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "newDiscontinuity" -> reservedRoadPart.newDiscontinuity.map(_.description),
       "linkId" -> reservedRoadPart.startingLinkId,
       "isDirty" -> reservedRoadPart.isDirty
+    )
+  }
+
+  def errorPartsToApi(errorParts: ValidationErrorDetails): Map[String, Any] = {
+    Map("linkIds" -> errorParts.affectedLinkIds,
+      "errorCode" -> errorParts.validationError.value,
+      "errorMessage" -> errorParts.validationError.message,
+      "info" -> errorParts.optionalInformation,
+      "coordinates" -> errorParts.coordinates
     )
   }
 

@@ -90,6 +90,7 @@
           html += '</table>';
           $('#project-list').html($(html));
         }
+        applicationModel.removeSpinner();
       });
 
       var openProjectSteps = function(event) {

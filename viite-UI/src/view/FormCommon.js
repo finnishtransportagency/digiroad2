@@ -15,7 +15,7 @@
 
     var projectButtons = function() {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-      '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
+      '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
     var newRoadAddressInfo = function(selected, links, road){
@@ -197,7 +197,7 @@
       var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
       return '<div class="'+localPrefix+'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var distanceValue = function() {
@@ -223,6 +223,49 @@
       return field;
     };
 
+    var getCoordButton = function (index, coordinates) {
+      return coordButton(index, coordinates);
+    };
+
+    var coordButton = function(index, coordinates){
+      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
+      return {index:index, html:html, coordinates:coordinates};
+    };
+
+    var getErrorCoordinates = function(error, links){
+      if (error.coordinates.length  > 0){
+        return error.coordinates;
+      }
+      var linkCoords = _.find(links, function (link) {
+        return link.linkId == error.linkIds[0];
+      });
+      if (!_.isUndefined(linkCoords)){
+        return linkCoords.points[0];
+      }
+      return false;
+    };
+
+    var getProjectErrors = function (projectErrors, links, projectCollection) {
+      var buttonIndex = 0;
+      var errorLines = '';
+      _.each(projectErrors, function (error) {
+        var button = '';
+        var coordinates = getErrorCoordinates(error, links);
+        if (coordinates) {
+          button = getCoordButton(buttonIndex, error.coordinates);
+          projectCollection.pushCoordinates(button);
+          buttonIndex++;
+        }
+        errorLines += '<div class="form-project-errors-list">' +
+          addSmallLabel('LINKIDS: ') + ' ' + addSmallLabel(error.linkIds) + '</br>' +
+          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.message: 'N/A')) + '</br>' +
+          addSmallLabel('INFO: ') + ' ' + addSmallLabel((error.info ? error.info: 'N/A')) + '</br>' +
+          (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
+          '</div>';
+      });
+      return errorLines;
+    };
+
     return {
       newRoadAddressInfo: newRoadAddressInfo,
       replaceAddressInfo: replaceAddressInfo,
@@ -244,7 +287,8 @@
       title: title,
       titleWithProjectName: titleWithProjectName,
       projectButtons: projectButtons,
-      staticField: staticField
+      staticField: staticField,
+      getProjectErrors:getProjectErrors
     };
   };
 })(this);

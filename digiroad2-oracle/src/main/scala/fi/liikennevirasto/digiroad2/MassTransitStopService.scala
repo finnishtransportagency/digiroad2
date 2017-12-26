@@ -146,6 +146,15 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  override def setAssetPosition(asset: NewMassTransitStop, geometry: Seq[Point], mValue: Double): NewMassTransitStop = {
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        asset.copy(lon = point.x, lat = point.y)
+      case _ =>
+        asset
+    }
+  }
+
   def getPersistedAssetsByIdsEnriched(ids: Set[Long]): Seq[PersistedAsset] = {
     val idsStr = ids.toSeq.mkString(",")
     val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
@@ -475,7 +484,7 @@ trait MassTransitStopService extends PointAssetOperations {
       asset.created, asset.modified, asset.propertyData, asset.linkSource, asset.terminalId)
   }
 
-  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
+  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     updateAjustedGeometry(adjustment, persistedAsset.linkSource)
     persistedAsset.id
   }

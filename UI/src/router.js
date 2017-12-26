@@ -44,7 +44,7 @@
         'work-list/obstacles': 'obstacleWorkList',
         'work-list/railwayCrossings': 'railwayCrossingWorkList',
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
-        'work-list/trafficSigns': 'trafficSigntWorkList',
+        'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList'
       },
 
