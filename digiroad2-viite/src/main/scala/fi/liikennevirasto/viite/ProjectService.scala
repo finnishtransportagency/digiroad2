@@ -709,6 +709,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectLinks
   }
 
+  def getProjectLinksLinearWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
+                                  roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
+                                  publicRoads: Boolean=false): Seq[ProjectAddressLink] ={
+    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
+    val suravageList = Await.result(fetch.suravageF, Duration.Inf).map(l => RoadAddressLinkBuilder.buildSuravageRoadAddressLink(l))
+    val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, frozenTimeVVHAPIServiceEnabled, fetch)
+    val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
+    keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
+      projectLinks
+  }
+
   def getChangeProject(projectId: Long): Option[ChangeProject] = {
     val changeProjectData = withDynTransaction {
       try {
