@@ -47,7 +47,7 @@
       '<td class="project-change-table-dimension">JATKUU</td>' +
       '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
       '<td class="project-change-table-dimension">ELY</td>' +
-      '<td class="project-change-table-dimension">KÄÄNTO</td>' +
+      '<td class="project-change-table-dimension">&nbsp;KÄÄNTÖ</td>' +
       '<td class="project-change-table-dimension">TIE</td>' +
       '<td class="project-change-table-dimension">AJR</td>' +
       '<td class="project-change-table-dimension">AOSA</td>' +
