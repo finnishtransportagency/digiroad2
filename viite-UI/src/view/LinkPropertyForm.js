@@ -290,12 +290,12 @@
       if(floatingTransfer){
         field = '<div class="form-group">' +
           '<label class="control-label-floating">' + labelText + '</label>' +
-          '<p class="form-control-static-floating">' + dataField + ' ' + decodeAttributes(labelText, dataField) + '</p>' +
+          '<p class="form-control-static-floating">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
       } else {
         field = '<div class="form-group">' +
           '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static">' + dataField + decodeAttributes(labelText, dataField) + '</p>' +
+          '<p class="form-control-static">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
       }
       return field;
