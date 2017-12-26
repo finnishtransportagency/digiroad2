@@ -59,10 +59,10 @@
 
     var roadTypeDropdown = function() {
       return '<select class="'+prefix+'form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "1">1 Yleinen tie</option>'+
-        '<option value = "2">2 Lauttaväylä yleisellä tiellä</option>'+
+        '<option value = "1">1 Maantie</option>'+
+        '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
-        '<option value = "4">4 Yleisen tien työmaa</option>'+
+        '<option value = "4">4 Maantien työmaa</option>'+
         '<option value = "5">5 Yksityistie</option>'+
         '<option value = "9">9 Omistaja selvittämättä</option>' +
         '<option value = "99">99 Ei määritelty</option>' +
