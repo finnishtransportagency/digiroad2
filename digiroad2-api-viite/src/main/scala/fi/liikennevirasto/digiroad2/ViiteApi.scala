@@ -627,7 +627,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Seq()
       case DrawRoadPartsOnly =>
         Seq()
-      case DrawLinearPublicRoads => projectService.getProjectLinksLinearWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
+      case DrawLinearPublicRoads => projectService.getProjectLinksLinear(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
       case DrawPublicRoads => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
       case DrawAllRoads => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq(), Set(), everything = true)
       case _ => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
