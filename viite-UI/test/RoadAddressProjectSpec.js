@@ -56,28 +56,31 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         $('[id^=tie]').val('1130').trigger("change");
         $('[id^=aosa]').val('4').trigger("change");
         $('[id^=losa]').val('4').trigger("change");
-        eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult){
+        eventbus.once('roadPartsValidation:checkRoadParts', function(validationResult){
           if(validationResult.success == "ok"){
+            $('#reservedRoadLength').text('50');
+            $('#reservedDiscontinuity').text('5');
+            $('#reservedEly').text('1');
             done();
           }
         });
         testHelpers.clickReserveButton();
       });
 
-      it('Seuraava button should be enabled', function () {
-        var isSeuraavaButtonDisabled = $('#generalNext').is(":disabled");
-        expect(isSeuraavaButtonDisabled).to.be.false;
+      it('Jatka button should be enabled', function () {
+        var isJatkaButtonDisabled = $('#generalNext').is(":disabled");
+        expect(isJatkaButtonDisabled).to.be.false;
+        testHelpers.clickNextButton();
       });
     });
 
     // 4-fourth -click in the next-Seuraava button
     describe('when clicking in next aka Seuraava button and select one reserved link', function() {
       before(function () {
-        eventbus.on('roadAddressProject:fetched',function (){
+        eventbus.once('roadAddressProject:fetched',function (){
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
         });
-        testHelpers.clickNextButton();
       });
 
       it('Check if the project link was selected ', function(){
@@ -147,6 +150,13 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         assert($('.project-form:visible').length > 0, "Form didn't open.");
       });
     });
+
+    /** TODO Tests
+     * Zoom on open project
+     * Error messages
+     * Open form for project link
+     * Field validations on form
+     */
 
   });
 

@@ -91,7 +91,7 @@ define(['RoadAddressTestData',
     var fakeBackend = function(zoomLevel, generatedData, latitude, longitude) {
       return new Backend().withRoadLinkData(generatedData, selectTestData('roadAddressAfterSave'))
         .withUserRolesData(UserRolesTestData.roles())
-        .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10 })
+        .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10, deploy_date: "" })
         .withFloatingAdjacents(selectTestData('floatingRoadAddress'))
         .withGetTargetAdjacent(selectTestData('unknownRoadAddress'))
         .withGetTransferResult(selectTestData('transferFloating'))
