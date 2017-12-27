@@ -32,22 +32,8 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
-  when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
-
-  object PassThroughService extends LinearAssetOperations {
-    override def withDynTransaction[T](f: => T): T = f
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = mockLinearAssetDao
-    override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
-    override def polygonTools: PolygonTools = mockPolygonTools
-
-    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-  }
 
   object ServiceWithDao extends ProhibitionService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
