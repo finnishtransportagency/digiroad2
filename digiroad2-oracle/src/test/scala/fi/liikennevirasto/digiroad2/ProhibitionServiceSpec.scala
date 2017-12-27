@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import org.joda.time.DateTime
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
@@ -457,6 +458,33 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
     val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
     prohibition1 == prohibition2 should be (false)
+  }
+
+  test("Update prohibition and verify asset") {
+    when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+    runWithRollback {
+      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "TestsUser")
+      val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
+
+      limit.verifiedBy should be (Some("TestsUser"))
+      limit.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))))
+      limit.expired should be (false)
+    }
+  }
+
+  test("Create new prohibition with verified info") {
+    val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, prohibition, 1, 0, None)), 190, "testuser")
+      newAssets.length should be(1)
+      val asset = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360l)).head
+      asset.value should be (Some(prohibition))
+      asset.expired should be (false)
+      asset.verifiedBy.get should be ("testuser")
+      asset.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
+    }
   }
 
 }
