@@ -462,14 +462,14 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Update prohibition and verify asset") {
     when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-
+    val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
     runWithRollback {
-      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "TestsUser")
+      ServiceWithDao.update(Seq(600020l), prohibition, "TestsUser")
       val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
 
       limit.verifiedBy should be (Some("TestsUser"))
       limit.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))))
+      limit.value should be (Some(prohibition))
       limit.expired should be (false)
     }
   }
