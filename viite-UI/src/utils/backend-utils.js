@@ -452,5 +452,13 @@
       return self;
     };
 
+    this.withPreSplitData = function(returnData) {
+      self.getPreSplitedData = function (data, linkId, callback) {
+        callback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
   };
 }(this));

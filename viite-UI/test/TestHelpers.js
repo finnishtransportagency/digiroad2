@@ -1,11 +1,10 @@
-define(['RoadAddressTestData',
-    'RoadLinkTestData',
-    'UserRolesTestData',
-    'RoadAddressProjectTestData'],
+define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAddressProjectTestData', 'SplittingTestData'],
+
   function(RoadAddressTestData,
            RoadLinkTestData,
            UserRolesTestData,
-           RoadAddressProjectTestData) {
+           RoadAddressProjectTestData,
+           SplittingTestData) {
 
     var getRoadLayerName = function() {
       return 'roadLayer';
@@ -85,23 +84,25 @@ define(['RoadAddressTestData',
     //It was "quick-fixed" by changing the default backend function (bellow) in the this file to retrive the data I need (thus locking the backend in one mode).
     //I require some assistance with this issue.
     var defaultBackend = function() {
-      return fakeBackend(13, selectTestData('roadAddress'),354810.0, 6676460.0);
+      return fakeBackend(13, selectTestData('roadAddress'),354810.0, 6676460.0, 'Project Two');
     };
 
-    var fakeBackend = function(zoomLevel, generatedData, latitude, longitude) {
+    var fakeBackend = function(zoomLevel, generatedData, latitude, longitude, projectDefinition) {
+      var data = getSimulatedData(projectDefinition);
       return new Backend().withRoadLinkData(generatedData, selectTestData('roadAddressAfterSave'))
         .withUserRolesData(UserRolesTestData.roles())
         .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10, deploy_date: "" })
-        .withFloatingAdjacents(selectTestData('floatingRoadAddress'))
-        .withGetTargetAdjacent(selectTestData('unknownRoadAddress'))
-        .withGetTransferResult(selectTestData('transferFloating'))
-        .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
-        .withRoadPartReserved(RoadAddressProjectTestData.generateRoadPartChecker())
-        .withProjectLinks(RoadAddressProjectTestData.generateProjectLinks())
-        .withGetProjectsWithLinksById(RoadAddressProjectTestData.generateProjectLinksByProjectId())
-        .withRoadAddressProjects(RoadAddressProjectTestData.generateProject())
-        .withGetRoadLinkByLinkId(RoadAddressProjectTestData.generateRoadLinkByLinkId())
-        .withCreateRoadAddressProject(RoadAddressProjectTestData.generateCreateRoadAddressProject())
+        .withFloatingAdjacents(data.floatingAdjacents)
+        .withGetTargetAdjacent(data.targetAdjacent)
+        .withGetTransferResult(data.transferResult)
+        .withRoadAddressProjectData(data.projectData)
+        .withRoadPartReserved(data.partReserved)
+        .withProjectLinks(data.projectLinks)
+        .withGetProjectsWithLinksById(data.projectsWithLinks)
+        .withRoadAddressProjects(data.projects)
+        .withGetRoadLinkByLinkId(data.roadLinkById)
+        .withCreateRoadAddressProject(data.createRoadAddressProject)
+        .withPreSplitData(data.splitData)
         .withRoadAddressCreation();
     };
 
@@ -177,6 +178,40 @@ define(['RoadAddressTestData',
       }
     };
 
+    var getSimulatedData = function (projectDefinition) {
+      switch (projectDefinition) {
+        case 'Project Two':
+          return {
+            floatingAdjacents: selectTestData('floatingRoadAddress'),
+            targetAdjacent: selectTestData('unknownRoadAddress'),
+            transferResult: selectTestData('transferFloating'),
+            projectData: RoadAddressProjectTestData.generate(),
+            partReserved: RoadAddressProjectTestData.generateRoadPartChecker(),
+            projectLinks: RoadAddressProjectTestData.generateProjectLinks(),
+            projectsWithLinks: RoadAddressProjectTestData.generateProjectLinksByProjectId(),
+            projects: RoadAddressProjectTestData.generateProject(),
+            roadLinkById: RoadAddressProjectTestData.generateRoadLinkByLinkId(),
+            createRoadAddressProject: RoadAddressProjectTestData.generateCreateRoadAddressProject(),
+            splitData: {}
+          };
+
+        case 'projectThree': //Suravage project
+          return {
+            floatingAdjacents: {},
+            targetAdjacent: {},
+            transferResult: {},
+            projectData: {},
+            roadLinkById: {},
+            projectsWithLinks: SplittingTestData.generateProjectData(),
+            partReserved: SplittingTestData.generateReservedPart(),
+            projectLinks: SplittingTestData.generateProjectRoadLinks(),
+            projects: SplittingTestData.generateProjectData(),
+            createRoadAddressProject: SplittingTestData.generateProject(),
+            splitData: SplittingTestData.generatePreSplitData()
+          };
+      }
+    };
+
     var selectTestData = function(selection){
       switch (selection){
         case 'user':
@@ -199,6 +234,8 @@ define(['RoadAddressTestData',
           return RoadAddressProjectTestData.generateProjectLinkData();
         case 'terminatedProjectLinks':
           return RoadAddressProjectTestData.generateTerminatedProjectLinkData();
+        case 'suravageProjectLinks':
+          return SplittingTestData.generateProjectRoadLinks();
       }
     };
 
