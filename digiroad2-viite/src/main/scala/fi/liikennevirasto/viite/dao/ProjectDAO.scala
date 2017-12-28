@@ -65,7 +65,6 @@ object LinkStatus {
   case object Transfer extends LinkStatus {def value = 3}
   case object Numbering extends LinkStatus {def value = 4}
   case object Terminated extends LinkStatus {def value = 5}
-  case object Rollbacked extends LinkStatus {def value = 42}
   case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -473,6 +472,7 @@ object ProjectDAO {
   }
 
   def fetchReservedRoadParts(projectId: Long, filterNotStatus: Seq[Int] = Seq.empty[Int]): Seq[ReservedRoadPart] = {
+    // TODO: Check this filter: is it required to filter all road parts where ANY of the project links status is in filterNotStatus?
     val filter = if (filterNotStatus.nonEmpty) s""" where NOT EXISTS (
            SELECT * FROM PROJECT_LINK pl WHERE pl.project_id = gr.PROJECT_ID AND
            pl.ROAD_NUMBER = gr.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER AND STATUS IN (${filterNotStatus.mkString(" ,")}))

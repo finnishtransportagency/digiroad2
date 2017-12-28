@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BaseRoadAddress
+import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 
 import scala.util.matching.Regex.Match
@@ -61,7 +62,8 @@ package object viite {
   val ErrorReversingUnchangedLinks = "Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan."
   val ErrorSavingFailed = "Päivitys ei onnistunut"
   val ErrorMultipleRoadNumbersOrParts = "Valitut linkit eivät ole samalta tieosalta. Tallennus tulee tehdä erikseen."
-  val MissingEndOfRoadMessage = "Tieosalle ei ole määritelty jatkuvuuskoodia, 1 - Tien loppu, tieosan viimeiselle linkille."
+  val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia, ${EndOfRoad.toString}, tieosan viimeiselle linkille."
+  val EndOfRoadNotOnLastPartMessage = "Tieosalle on määritelty jatkuvuuskoodi ${EndOfRoad.toString}, vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val MajorDiscontinuityFoundMessage = "Tieosalla on epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val InsufficientTrackCoverageMessage = "Tieosalta puuttuu toinen ajorata. Numeroi molemmat ajoradat."
@@ -69,6 +71,9 @@ package object viite {
   val SharedLinkIdsExistMessage = "Linkillä on voimassa oleva tieosoite tämän projektin alkupäivämäärällä."
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
+  val ConnectedDiscontinuousMessage = "Jatkuvalle linkille on määritelty epäjatkuvuus."
+  val DifferingDiscontinuityCodesForTracks = "Tieosan lopussa on yhteensopimattomat jatkuvuuskoodit."
+  val ElyCodeChangeNotPresent = s"Tieosan päässä ei ole jatkuvuuskoodia ${ChangingELYCode.toString}"
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
