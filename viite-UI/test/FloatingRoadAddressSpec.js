@@ -43,9 +43,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     describe('Clicking the \"Valinta\" button',function(){
       before(function(done) {
         testHelpers.clickValintaButton();
-        setTimeout(function(){
           done();
-        },150);
       });
 
       it('check that the \"Valinta\" was pressed and the unknowns are \"forward\"', function () {
