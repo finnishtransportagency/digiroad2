@@ -1199,6 +1199,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }.getOrElse(Map("success:" ->false, "Reason"->"Id not found or invalid input"))
   }
 
+  get("/municipalities/unverified") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    linearAssetService.getMunicipalitiesNameByCode(municipalities)
+  }
+
   private def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
     if (user.isServiceRoadMaintainer())

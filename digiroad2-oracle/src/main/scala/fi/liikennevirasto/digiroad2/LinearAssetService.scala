@@ -790,6 +790,13 @@ trait LinearAssetOperations {
       dao.getMunicipalityById(id)
     }
   }
+
+  def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): Map[String, Seq[String]] = {
+    val municipalities = withDynTransaction {
+      dao.getMunicipalitiesNameByCode(municipalityCodes)
+    }
+    Map("municipality" -> municipalities.sorted)
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {

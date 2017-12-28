@@ -1094,5 +1094,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def getMunicipalityById(id: Long): Seq[Long] = {
     sql"""select id from municipality where id = $id """.as[Long].list
   }
+
+  def getMunicipalitiesNameByCode(codes: Set[Int]): Seq[String] = {
+    val filter = if (codes.nonEmpty) {"where id in " + codes.mkString(",") } else ""
+
+    sql"""
+      select name_fi from municipality
+      #$filter
+    """.as[String].list
+  }
 }
 
