@@ -1,5 +1,6 @@
 /*jshint expr: true*/
 define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers) {
+  console.log = function() {};
   var expect = chai.expect;
 
   var floatingsLinkIds = [1718152, 1718151];
@@ -9,7 +10,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     this.timeout(1500000);
     var openLayersMap;
     before(function(done) {
-      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
+      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0, 'Project Two');
 
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
@@ -43,25 +44,27 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     describe('Clicking the \"Valinta\" button',function(){
       before(function(done) {
         testHelpers.clickValintaButton();
-          done();
+        done();
       });
 
       it('check that the \"Valinta\" was pressed and the unknowns are \"forward\"', function () {
-        var isValintaButtonDisabled = $('.link-properties button.continue').is(":disabled");
-        expect(isValintaButtonDisabled).to.be.true;
-        var pickFeatures = testHelpers.getFeatures(openLayersMap, 'pickRoadsLayer');
-        expect(pickFeatures).to.be.not.empty;
+        setTimeout(function () {
+          var isValintaButtonDisabled = $('.link-properties button.continue').is(":disabled");
+          expect(isValintaButtonDisabled).to.be.true;
+          var pickFeatures = testHelpers.getFeatures(openLayersMap, 'pickRoadsLayer');
+          expect(pickFeatures).to.be.not.empty;
+        }, 2000);
       });
     });
 
     describe('Selecting a unknown road to transfer the floatings', function(){
       before(function(done){
-        var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
-        expect(ol3Feature).to.not.be.undefined;
-        testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
-        setTimeout(function(){
+        setTimeout(function () {
+          var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
+          expect(ol3Feature).to.not.be.undefined;
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
           done();
-        },1000);
+        }, 10000);
       });
 
       it('Check if the unknown road was selected via form',function(){
