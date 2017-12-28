@@ -7,12 +7,11 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     this.timeout(1500000);
     var openLayersMap;
     before(function(done) {
-      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
+      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0, 'Project Two');
 
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         eventbus.once('roadLayer:featuresLoaded', function() {
-          console.log("Started the application.");
           done();
         });
       }, backend);
@@ -77,10 +76,10 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     // 4-fourth -click in the next-Seuraava button
     describe('when clicking in next aka Seuraava button and select one reserved link', function() {
       before(function () {
-        eventbus.once('roadAddressProject:fetched',function (){
+        setTimeout(function () {
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-        });
+        }, 2000);
       });
 
       it('Check if the project link was selected ', function(){
@@ -137,11 +136,13 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('when clicking Peruuta button', function() {
       before(function (done) {
-        var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-        testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-        // Click Cancel (Peruuta)
-        $('.cancelLink').click();
-        done();
+        setTimeout(function () {
+          var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
+          // Click Cancel (Peruuta)
+          $('.cancelLink').click();
+          done();
+        }, 2000);
       });
 
       it('Check if it change to the road form', function(){
