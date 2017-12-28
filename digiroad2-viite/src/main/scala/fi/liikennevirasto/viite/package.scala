@@ -70,6 +70,7 @@ package object viite {
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
+  val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 

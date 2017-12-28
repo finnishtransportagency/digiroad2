@@ -1571,41 +1571,65 @@ object ProjectValidator {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad)
     //Viite-942
-    case object MissingEndOfRoad extends ValidationError {def value = 0;
-      def message = MissingEndOfRoadMessage}
+    case object MissingEndOfRoad extends ValidationError {
+      def value = 0
+      def message = MissingEndOfRoadMessage
+    }
     //Viite-453
     //There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
-    case object MinorDiscontinuityFound extends ValidationError {def value = 1;
-      def message = MinorDiscontinuityFoundMessage}
+    case object MinorDiscontinuityFound extends ValidationError {
+      def value = 1
+      def message = MinorDiscontinuityFoundMessage
+    }
     //Viite-453
     //There must be a major discontinuity if the jump is longer than 50 meters
-    case object MajorDiscontinuityFound extends ValidationError {def value = 2;
-      def message = MajorDiscontinuityFoundMessage}
+    case object MajorDiscontinuityFound extends ValidationError {
+      def value = 2
+      def message = MajorDiscontinuityFoundMessage
+    }
     //Viite-453
     //For every track 1 there must exist track 2 that covers the same address span and vice versa
-    case object InsufficientTrackCoverage extends ValidationError {def value = 3;
-      def message = InsufficientTrackCoverageMessage}
+    case object InsufficientTrackCoverage extends ValidationError {
+      def value = 3
+      def message = InsufficientTrackCoverageMessage
+    }
     //Viite-453
     //There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
-    case object DiscontinuousAddressScheme extends ValidationError {def value = 4;
-      def message = DiscontinuousAddressSchemeMessage}
+    case object DiscontinuousAddressScheme extends ValidationError {
+      def value = 4
+      def message = DiscontinuousAddressSchemeMessage
+    }
     //Viite-453
     //There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
-    case object SharedLinkIdsExist extends ValidationError {def value = 5;
-      def message = SharedLinkIdsExistMessage}
+    case object SharedLinkIdsExist extends ValidationError {
+      def value = 5
+      def message = SharedLinkIdsExistMessage
+    }
     //Viite-453
     //Continuity codes are given for end of road
-    case object NoContinuityCodesAtEnd extends ValidationError {def value = 6;
-      def message = NoContinuityCodesAtEndMessage}
+    case object NoContinuityCodesAtEnd extends ValidationError {
+      def value = 6
+      def message = NoContinuityCodesAtEndMessage
+    }
     //Viite-453
     //Recalculation of M values and delta calculation are both unsuccessful for every road part in project
-    case object UnsuccessfulRecalculation extends ValidationError {def value = 7;
-      def message = UnsuccessfulRecalculationMessage}
+    case object UnsuccessfulRecalculation extends ValidationError {
+      def value = 7
+      def message = UnsuccessfulRecalculationMessage
+    }
 
     case object HasNotHandledLinks extends ValidationError{
       def value = 8
       def message = ""
     }
+
+    //Viite-473
+    // Unchanged project links cannot have any other operation (transfer, termination) previously on the same number and part
+    case object ErrorInValidationOfUnchangedLinks extends ValidationError {
+      def value = 9
+      def message = ErrorInValidationOfUnchangedLinksMessage
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -1687,7 +1711,15 @@ object ProjectValidator {
       )
     }
 
+    def checkForInvalidUnchangedLinks = {
+      val roadNumberAndParts = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).keySet
+      val invalidUnchangedLinks = roadNumberAndParts.flatMap(rn => ProjectDAO.getInvalidUnchangedOperationProjectLinks(rn._1, rn._2)).toSeq
+      invalidUnchangedLinks.map(projectLink =>
+        ValidationErrorDetails(project.id, ValidationError.ErrorInValidationOfUnchangedLinks,
+          Seq(projectLink.linkId), Seq(ProjectCoordinates(projectLink.geometry.head.x, projectLink.geometry.head.y, 12)), Some("")))
+    }
+
     checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks
   }
 }
