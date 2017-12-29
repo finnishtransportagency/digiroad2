@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
 import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
+//import fi.liikennevirasto.digiroad2.AssetService
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
@@ -50,7 +51,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
                    val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
-                   val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService)
+                   val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
+                   val assetService: AssetService = Digiroad2Context.assetService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1202,7 +1204,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/municipalities/unverified") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-    linearAssetService.getMunicipalitiesNameByCode(municipalities)
+    assetService.getMunicipalitiesNameByCode(municipalities)
+  }
+
+  get("/municipalities/assetTypes") {
+    assetService.getVerifiableAssets
   }
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {

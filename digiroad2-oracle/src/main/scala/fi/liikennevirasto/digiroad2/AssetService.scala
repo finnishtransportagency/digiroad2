@@ -13,6 +13,19 @@ trait AssetOperations {
       assetDao.getMunicipalityById(id)
     }
   }
+
+  def getVerifiableAssets: Seq[String] = {
+    withDynTransaction {
+      assetDao.getVerifiableAssetTypes
+    }
+  }
+
+  def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): Map[String, Seq[String]] = {
+    val municipalities = withDynTransaction {
+      assetDao.getMunicipalitiesNameByCode(municipalityCodes)
+    }
+    Map("municipality" -> municipalities.sorted)
+  }
 }
 
 class AssetService(eventbus: DigiroadEventBus) extends AssetOperations {

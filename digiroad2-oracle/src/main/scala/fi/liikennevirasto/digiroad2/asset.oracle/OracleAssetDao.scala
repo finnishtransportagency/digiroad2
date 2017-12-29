@@ -66,4 +66,18 @@ class OracleAssetDao {
       """.execute
     }
   }
+
+  def getVerifiableAssetTypes: Seq[String] = {
+    val assetTypes = sql"""select name from asset_type where verifiable = 1""".as[(String)].list
+    assetTypes
+  }
+
+  def getMunicipalitiesNameByCode(codes: Set[Int]): Seq[String] = {
+    val filter = if (codes.nonEmpty) {"where id in " + codes.mkString(",") } else ""
+
+    sql"""
+      select name_fi from municipality
+      #$filter
+    """.as[String].list
+  }
 }
