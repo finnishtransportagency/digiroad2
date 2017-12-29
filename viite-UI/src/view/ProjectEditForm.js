@@ -468,7 +468,7 @@
       });
 
       rootElement.on('click', '.project-form button.send', function(){
-        new GenericConfirmPopup("Haluatko varmasti lähettää muutosilmoituksen Tierekisteriin?", {
+        new GenericConfirmPopup("Haluatko lähettää muutosilmoituksen Tierekisteriin?", {
           successCallback: function () {
             projectCollection.publishProject();
             closeProjectMode(true, true);
