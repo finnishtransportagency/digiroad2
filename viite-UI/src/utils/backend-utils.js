@@ -193,6 +193,18 @@
       });
     }, 1000);
 
+    this.getCutLine = _.throttle(function(data, success, error) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/project/getCutLine",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: error
+      });
+    }, 1000);
+
       this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
           $.ajax({
               contentType: "application/json",

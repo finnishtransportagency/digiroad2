@@ -29,6 +29,7 @@ import scala.util.{Left, Right}
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
+
 case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
 case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNumber: Long)
@@ -42,6 +43,8 @@ case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int,
                                             coordinates: ProjectCoordinates)
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
+
+case class CutLineExtractor(linkId: Long, splitedPoint: Point)
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -276,15 +279,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  delete("/roadlinks/roadaddress/project"){
+  delete("/roadlinks/roadaddress/project") {
     val projectId = parsedBody.extract[Long]
     try {
-        if (projectService.deleteProject(projectId)) {
-          Map("success" -> true)
-        }
-        else {
-          Map("success" -> false, "errorMessage" -> "Projekti ei ole vielä luotu")
-        }
+      if (projectService.deleteProject(projectId)) {
+        Map("success" -> true)
+      }
+      else {
+        Map("success" -> false, "errorMessage" -> "Projekti ei ole vielä luotu")
+      }
     }
     catch {
       case ex: Exception => Map("success" -> false, "errorMessage" -> ex.getMessage)
@@ -479,11 +482,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "changeInfoSeq" -> project.changeInfoSeq.map(changeInfo =>
           Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.roadType.value,
             "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
-            "target" -> changeInfo.target, "reversed"-> changeInfo.reversed)))
+            "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
     ).getOrElse(None)
     Map("changeTable" -> changeTableData, "validationErrors" -> projectService.validateProjectById(projectId).map(issue => {
       Map(
-       "id" -> issue.projectId,
+        "id" -> issue.projectId,
         "validationError" -> issue.validationError.value,
         "affectedLinkIds" -> issue.affectedLinkIds.toArray,
         "coordinates" -> issue.coordinates,
@@ -491,7 +494,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
     }))
   }
-
 
   post("/project/publish") {
     val user = userProvider.getCurrentUser()
@@ -512,6 +514,28 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  post("/project/getCutLine") {
+    try {
+      val splitLine = parsedBody.extract[CutLineExtractor]
+
+      if (splitLine.linkId == 0)
+        BadRequest("Missing mandatory 'linkId' parameter")
+      roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(splitLine.linkId))).headOption match {
+        case Some(suravage) =>
+          val splitGeom = GeometryUtils.calculatePointAndHeadingOnGeometry(suravage.geometry, splitLine.splitedPoint)
+          splitGeom match {
+            case Some(x) => val (p, v) = x
+              val cutGeom = Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
+              Map("success" -> true, "response" -> Map("geometry" -> cutGeom))
+            case _ => Map("success" -> false, "errorMessage" -> "Error during spliting calculation")
+          }
+        case _ => Map("success" -> false, "errorMessage" -> ErrorSuravageLinkNotFound)
+      }
+    } catch {
+      case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
+    }
+  }
+
   put("/project/presplit/:linkID") {
     val user = userProvider.getCurrentUser()
     params.get("linkID").map(_.toLong) match {
@@ -525,9 +549,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
             case _ => Seq()
           }
-          if (errorMessage.nonEmpty){
+          if (errorMessage.nonEmpty) {
             Map("success" -> false, "errorMessage" -> errorMessage.get)
-          } else if(splitLinks.isEmpty){
+          } else if (splitLinks.isEmpty) {
             Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
           } else {
             val roadwithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
@@ -571,7 +595,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   delete("/project/split") {
     val user = userProvider.getCurrentUser()
-    try{
+    try {
       val data = parsedBody.extract[RevertSplitExtractor]
       val projectId = data.projectId
       val linkId = data.linkId
@@ -700,7 +724,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
-  def floatingRoadAddressToApi(roadAddress: RoadAddress) : Map[String, Any] = {
+  def floatingRoadAddressToApi(roadAddress: RoadAddress): Map[String, Any] = {
     Map(
       "id" -> roadAddress.id,
       "linkId" -> roadAddress.linkId,
@@ -791,44 +815,44 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case LinkStatus.New => {
         Map("b" ->
           Map(
-          "linkId" -> splittedLinks.linkId,
-          "geometry"-> splittedLinks.geometry,
-          "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
-          "startAddressM" -> splittedLinks.startAddrMValue,
-          "endAddressM" -> splittedLinks.endAddrMValue,
-          "status" -> splittedLinks.status.value,
-          "roadTypeId" -> splittedLinks.roadType.value,
-          "discontinuity" -> splittedLinks.discontinuity.value,
-          "elyCode" -> splittedLinks.ely
-        ))
+            "linkId" -> splittedLinks.linkId,
+            "geometry" -> splittedLinks.geometry,
+            "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
+            "startAddressM" -> splittedLinks.startAddrMValue,
+            "endAddressM" -> splittedLinks.endAddrMValue,
+            "status" -> splittedLinks.status.value,
+            "roadTypeId" -> splittedLinks.roadType.value,
+            "discontinuity" -> splittedLinks.discontinuity.value,
+            "elyCode" -> splittedLinks.ely
+          ))
       }
       case LinkStatus.Terminated => {
         Map("c" ->
           Map(
-          "linkId" -> splittedLinks.linkId,
-          "geometry"-> splittedLinks.geometry,
-          "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
-          "startAddressM" -> splittedLinks.startAddrMValue,
-          "endAddressM" -> splittedLinks.endAddrMValue,
-          "status" -> splittedLinks.status.value,
-          "roadTypeId" -> splittedLinks.roadType.value,
-          "discontinuity" -> splittedLinks.discontinuity.value,
-          "elyCode" -> splittedLinks.ely
-        ))
+            "linkId" -> splittedLinks.linkId,
+            "geometry" -> splittedLinks.geometry,
+            "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
+            "startAddressM" -> splittedLinks.startAddrMValue,
+            "endAddressM" -> splittedLinks.endAddrMValue,
+            "status" -> splittedLinks.status.value,
+            "roadTypeId" -> splittedLinks.roadType.value,
+            "discontinuity" -> splittedLinks.discontinuity.value,
+            "elyCode" -> splittedLinks.ely
+          ))
       }
       case _ => {
         Map("a" ->
           Map(
-          "linkId" -> splittedLinks.linkId,
-          "geometry"-> splittedLinks.geometry,
-          "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
-          "startAddressM" -> splittedLinks.startAddrMValue,
-          "endAddressM" -> splittedLinks.endAddrMValue,
-          "status" -> splittedLinks.status.value,
-          "roadTypeId" -> splittedLinks.roadType.value,
-          "discontinuity" -> splittedLinks.discontinuity.value,
-          "elyCode" -> splittedLinks.ely
-        ))
+            "linkId" -> splittedLinks.linkId,
+            "geometry" -> splittedLinks.geometry,
+            "middlePoint" -> GeometryUtils.midPointGeometry(splittedLinks.geometry),
+            "startAddressM" -> splittedLinks.startAddrMValue,
+            "endAddressM" -> splittedLinks.endAddrMValue,
+            "status" -> splittedLinks.status.value,
+            "roadTypeId" -> splittedLinks.roadType.value,
+            "discontinuity" -> splittedLinks.discontinuity.value,
+            "elyCode" -> splittedLinks.ely
+          ))
       }
     }
   }

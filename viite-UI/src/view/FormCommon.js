@@ -15,7 +15,7 @@
 
     var projectButtons = function() {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-      '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
+      '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
     var newRoadAddressInfo = function(selected, links, road){
@@ -59,10 +59,10 @@
 
     var roadTypeDropdown = function() {
       return '<select class="'+prefix+'form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "1">1 Yleinen tie</option>'+
-        '<option value = "2">2 Lauttaväylä yleisellä tiellä</option>'+
+        '<option value = "1">1 Maantie</option>'+
+        '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
-        '<option value = "4">4 Yleisen tien työmaa</option>'+
+        '<option value = "4">4 Maantien työmaa</option>'+
         '<option value = "5">5 Yksityistie</option>'+
         '<option value = "9">9 Omistaja selvittämättä</option>' +
         '<option value = "99">99 Ei määritelty</option>' +
@@ -197,7 +197,7 @@
       var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
       return '<div class="'+localPrefix+'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var distanceValue = function() {
