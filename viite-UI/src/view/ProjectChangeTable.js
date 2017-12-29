@@ -87,7 +87,7 @@
       eventbus.once('projectChanges:fetched', function(projectChangeData){
         var htmlTable ='<table class="change-table">';
         if(!_.isUndefined(projectChangeData) && projectChangeData !== null){
-          _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
+          _.each(projectChangeData.changeTable.changeInfoSeq, function(changeInfoSeq) {
             if (changeInfoSeq.changetype === newLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
               htmlTable += getEmptySource(changeInfoSeq);
