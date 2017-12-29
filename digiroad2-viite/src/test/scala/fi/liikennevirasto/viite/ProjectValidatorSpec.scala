@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
@@ -47,6 +47,19 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
     }
     ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
     ProjectDAO.create(links)
+    project
+  }
+
+  private def setUpProjectWithRampLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
+    val id = Sequences.nextViitePrimaryKeySeqValue
+    val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+      "", Seq(), None, Some(8), None)
+    ProjectDAO.createRoadAddressProject(project)
+    val links = addrM.init.zip(addrM.tail).map{ case (st, en) =>
+      projectLink(st, en, Combined, id, linkStatus).copy(roadNumber = 39999)
+    }
+    ProjectDAO.reserveRoadPart(id, 39999L, 1L, "u")
+    ProjectDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
     project
   }
 
@@ -196,4 +209,45 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       ProjectValidator.checkRemovedEndOfRoadParts(updProject2) should have size(0)
     }
   }
+
+  test("Ramps must have continuity validation") {
+    runWithRollback {
+      val project = setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val errors = ProjectValidator.checkRampContinuityCodes(project, projectLinks)
+      errors should have size(0)
+
+      val (starting, last) = projectLinks.splitAt(3)
+      val errorsUpd = ProjectValidator.checkRampContinuityCodes(project,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.Continuous)))
+      errorsUpd should have size(1)
+
+      val errorsUpd2 = ProjectValidator.checkRampContinuityCodes(project,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)))
+      errorsUpd2 should have size(1)
+
+      val ra = Seq(
+        RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, AgainstDigitizing, 0L,
+          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+          false, Seq(Point(2.0,30.0), Point(0.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+        RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          10L, 20L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+          false, Seq(Point(2.0, 30.0), Point(7.0,35.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+        RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          20L, 30L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+          false, Seq(Point(7.0,35.0), Point(0.0,40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination))
+      RoadAddressDAO.create(ra)
+
+      ProjectDAO.reserveRoadPart(project.id, 39999L, 20L, "u")
+      ProjectDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
+        .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, modifiedBy = Some("I"))))
+      val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
+      ProjectValidator.checkRampContinuityCodes(updProject,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))) should have size(0)
+    }
+  }
+
 }

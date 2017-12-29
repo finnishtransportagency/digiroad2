@@ -75,6 +75,7 @@ package object viite {
   val DifferingDiscontinuityCodesForTracks = "Tieosan lopussa on yhteensopimattomat jatkuvuuskoodit."
   val ElyCodeChangeNotPresent = s"Tieosan päässä ei ole jatkuvuuskoodia ${ChangingELYCode.toString}"
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
+  val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 

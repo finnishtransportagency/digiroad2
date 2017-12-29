@@ -1,11 +1,14 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.process.TrackSectionOrder
 
 object ProjectValidator {
 
@@ -91,6 +94,11 @@ object ProjectValidator {
       def message = ElyCodeChangeNotPresent
       def notification = false}
 
+    case object DiscontinuityOnRamp extends ValidationError {
+      def value = 13
+      def message = RampDiscontinuityFoundMessage
+      def notification = true}
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -175,12 +183,6 @@ object ProjectValidator {
     * @return
     */
   def checkOrdinaryRoadContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    def trackMatch(track1: Track, track2: Track) = {
-      track1 == track2 || track1 == Track.Combined || track2 == Track.Combined
-    }
-    def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
-      GeometryUtils.areAdjacent(pl1.geometry, pl2.geometry, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
-    }
     def error(validationError: ValidationError)(pl: Seq[ProjectLink]) = {
       val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
       if (linkIds.nonEmpty)
@@ -258,6 +260,115 @@ object ProjectValidator {
     // Checks inside road part (not including last links' checks)
     checkConnectedAreContinuous.toSeq ++ checkNotConnectedHaveMinorDiscontinuity.toSeq ++
       checkRoadPartEnd(seq.filter(_.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)).toSeq
+  }
+
+  /**
+    * Check for ramp and roundabout roads:
+    * 1) If inside a part there is a gap between links > .1 meters, discontinuity 4 (minor) is required
+    * 2) If inside a part there is no gap, discontinuity 5 (cont) is required
+    * 3) End of road part, discontinuity 2 or 3 (major, ely change) is required if there is a gap
+    * 4) If a part that contained end of road discontinuity is terminated / renumbered / transferred,
+    *    there must be a new end of road link for that road at the last part
+    * 5) If the next road part has differing ely code then there must be a discontinuity code 3 at the end
+    * @param project
+    * @param seq
+    * @return
+    */
+  def checkRampContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    def endPoint(b: BaseRoadAddress) = {
+      b.sideCode match {
+        case TowardsDigitizing => b.geometry.last
+        case AgainstDigitizing => b.geometry.head
+        case _ => Point(0.0, 0.0)
+      }
+    }
+    def error(validationError: ValidationError)(pl: Seq[ProjectLink]) = {
+      val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+      if (linkIds.nonEmpty)
+        Some(ValidationErrorDetails(project.id, validationError, linkIds,
+          points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
+      else
+        None
+    }
+    def checkDiscontinuityBetweenLinks = {
+      error(ValidationError.DiscontinuityOnRamp)(seq.filter{pl =>
+        // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
+        val nextLink = seq.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
+        (nextLink.nonEmpty && pl.discontinuity != Continuous) ||
+          nextLink.exists(pl2 => !connected(pl2, pl))
+      })
+    }
+    def checkRoadPartEnd(lastProjectLinks: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
+      val (road, part) = (lastProjectLinks.head.roadNumber, lastProjectLinks.head.roadPartNumber)
+      val discontinuity = lastProjectLinks.head.discontinuity
+      val ely = lastProjectLinks.head.ely
+      val projectNextRoadParts = project.reservedParts.filter(rp =>
+        rp.roadNumber == road && rp.roadPartNumber > part)
+
+      val nextProjectPart = projectNextRoadParts.filter(_.newLength.getOrElse(0L) > 0L)
+        .map(_.roadPartNumber).sorted.headOption
+      val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
+        .filterNot(p => projectNextRoadParts.exists(_.roadPartNumber == p)).sorted.headOption
+      if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
+        if (discontinuity != EndOfRoad)
+          return error(ValidationError.MissingEndOfRoad)(lastProjectLinks)
+      } else {
+        val nextLinks =
+          if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get < nextAddressPart.get))
+            ProjectDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
+          else
+            RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
+              .filter(_.startAddrMValue == 0L)
+        if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
+          return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
+        val isConnected = lastProjectLinks.forall(lpl => nextLinks.exists(nl => connected(lpl, nl)))
+        val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => connected(lpl, nl)))
+        if (isDisConnected) {
+          discontinuity match {
+            case MinorDiscontinuity =>
+              // This code means that this road part (of a ramp) should be connected to a roundabout
+              val endPoints = lastProjectLinks.map(endPoint).map(p => (p.x, p.y)).unzip
+              val boundingBox = BoundingRectangle(Point(endPoints._1.min,
+                endPoints._2.min),Point(endPoints._1.max, endPoints._2.max))
+              // Fetch all ramps and roundabouts roads and parts this is connected to (or these, if ramp has multiple links)
+              val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, false, false,
+                Seq((RampsMinBound, RampsMaxBound))).filter(ra =>
+                lastProjectLinks.exists(pl => connected(pl, ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
+
+              // Check all the fetched road parts to see if any of them is a roundabout
+              if (!roadParts.keys.exists (rp => TrackSectionOrder.isRoundabout(
+                RoadAddressDAO.fetchByRoadPart(rp._1, rp._2, includeFloating = true))))
+                return error(ValidationError.DiscontinuityOnRamp)(lastProjectLinks)
+            case Continuous =>
+              return error(ValidationError.MajorDiscontinuityFound)(lastProjectLinks)
+            case EndOfRoad =>
+              return error(ValidationError.EndOfRoadNotOnLastPart)(lastProjectLinks)
+            case _ => // no error, continue
+          }
+        }
+        if (isConnected) {
+          discontinuity match {
+            case MinorDiscontinuity | Discontinuous =>
+              return error(ValidationError.ConnectedDiscontinuousLink)(lastProjectLinks)
+            case EndOfRoad =>
+              return error(ValidationError.EndOfRoadNotOnLastPart)(lastProjectLinks)
+            case _ => // no error, continue
+          }
+        }
+      }
+      None
+    }
+    // Checks inside road part (not including last links' checks)
+    checkDiscontinuityBetweenLinks.toSeq ++
+      checkRoadPartEnd(seq.filter(_.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)).toSeq
+  }
+
+  private def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
+    GeometryUtils.areAdjacent(pl1.geometry, pl2.geometry, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+  }
+
+  private def trackMatch(track1: Track, track2: Track) = {
+    track1 == track2 || track1 == Track.Combined || track2 == Track.Combined
   }
 }
 
