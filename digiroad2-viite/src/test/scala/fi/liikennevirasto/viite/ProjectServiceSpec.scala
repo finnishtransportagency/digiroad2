@@ -1224,12 +1224,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), None)
       val project = projectService.createRoadLinkProject(rap)
       val id = project.id
-      mockForProject(id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project)))
-      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))))
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(5, 205).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))))
       val projectLinks = ProjectDAO.getProjectLinks(id).sortBy(_.startAddrMValue)
-      projectService.updateProjectLinks(id, Set(projectLinks.head.linkId), LinkStatus.Transfer, "-", 5, 206, 0, Option.empty[Int])
-      projectService.updateProjectLinks(id, projectLinks.tail.map(_.linkId).toSet, LinkStatus.UnChanged, "-", 5, 207, 0, Option.empty[Int])
-      val validationErrors = projectValidator.validateProject(project, projectLinks)
+      ProjectDAO.updateProjectLinks(Set(projectLinks.head.id), LinkStatus.Transfer, "test")
+      ProjectDAO.updateProjectLinks(projectLinks.tail.map(_.id).toSet, LinkStatus.UnChanged, "test")
+      val validationErrors = projectValidator.validateProject(project, ProjectDAO.getProjectLinks(id))
 
       validationErrors.size shouldNot be (0)
       validationErrors.count(_.validationError.value == ValidationError.ErrorInValidationOfUnchangedLinks.value) should be (1)
