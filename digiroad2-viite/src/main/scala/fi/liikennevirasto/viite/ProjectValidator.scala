@@ -116,7 +116,7 @@ object ProjectValidator {
           if (road < RampsMinBound || road > RampsMaxBound) {
             checkOrdinaryRoadContinuityCodes(project, seq)
           } else {
-            Seq()
+            checkRampContinuityCodes(project, seq)
           }
         case _ => Seq()
       }.toSeq
