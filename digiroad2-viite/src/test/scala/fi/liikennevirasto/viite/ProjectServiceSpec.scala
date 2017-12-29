@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
+import fi.liikennevirasto.viite.ProjectValidator.{ValidationError, ValidationErrorDetails}
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
@@ -1213,6 +1214,25 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       validationErrors.head.projectId should be (savedProject.id)
       validationErrors.head.affectedLinkIds should contain theSameElementsAs newLinkTemplates.map(_.linkId).toSeq
       validationErrors.head.validationError.value should be (0)
+    }
+  }
+
+  test("validator should return invalid unchanged links error"){
+    runWithRollback{
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val id = project.id
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))))
+      val projectLinks = ProjectDAO.getProjectLinks(id).sortBy(_.startAddrMValue)
+      projectService.updateProjectLinks(id, Set(projectLinks.head.linkId), LinkStatus.Transfer, "-", 5, 206, 0, Option.empty[Int])
+      projectService.updateProjectLinks(id, projectLinks.tail.map(_.linkId).toSet, LinkStatus.UnChanged, "-", 5, 207, 0, Option.empty[Int])
+      val validationErrors = projectValidator.validateProject(project, projectLinks)
+
+      validationErrors.size shouldNot be (0)
+      validationErrors.count(_.validationError.value == ValidationError.ErrorInValidationOfUnchangedLinks.value) should be (1)
     }
   }
 }
