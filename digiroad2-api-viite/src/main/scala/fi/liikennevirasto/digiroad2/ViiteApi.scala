@@ -22,10 +22,6 @@ import org.slf4j.LoggerFactory
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
-/**
-  * Created by venholat on 25.8.2016.
-  */
-
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
