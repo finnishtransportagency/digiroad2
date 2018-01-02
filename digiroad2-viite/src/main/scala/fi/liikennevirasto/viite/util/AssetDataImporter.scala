@@ -394,7 +394,7 @@ class AssetDataImporter {
       addressPS.setInt(20, address.terminated.toInt)
       addressPS.addBatch()
         println("road_number: %s, road_part_number: %s, START_ADDR_M: %s, END_ADDR_M : %s, TRACK_CODE : %s, DISCONTINUITY: %s, START_DATE: %s, END_DATE: %s, VALID_FROM: %s, VALID_TO: %s, ELY: %s, ROAD_TYPE: %s, TERMINATED: %s"
-          .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get,  address.endDate.getOrElse(""), address.validFrom.get ,address.ely,address.roadType ,address.terminated.toInt))
+          .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get,  address.endDate.getOrElse(""), address.validFrom.getOrElse("") , address.validTo.getOrElse(""),address.ely,address.roadType ,address.terminated.toInt))
     }
     lrmPositionPS.executeBatch()
     println(s"${DateTime.now()} - LRM Positions saved")
