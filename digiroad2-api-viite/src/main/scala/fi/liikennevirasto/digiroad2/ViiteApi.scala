@@ -472,6 +472,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong
+    val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
     val changeTableData = projectService.getChangeProject(projectId).map(project =>
       Map(
         "id" -> project.id,
@@ -483,23 +484,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.roadType.value,
             "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
             "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)),
-    "validationErrors" -> projectService.validateProjectById(projectId).map(issue => {
-      Map(
-        "validationError" -> issue.validationError.value,
-        "affectedLinkIds" -> issue.affectedLinkIds.toArray,
-        "coordinates" -> issue.coordinates,
-        "optionalInformation" -> issue.optionalInformation.getOrElse("")
-      )
-    }))).getOrElse(None)
-    Map("changeTable" -> changeTableData, "validationErrors" -> projectService.validateProjectById(projectId).map(issue => {
-      Map(
-        "id" -> issue.projectId,
-        "validationError" -> issue.validationError.value,
-        "affectedLinkIds" -> issue.affectedLinkIds.toArray,
-        "coordinates" -> issue.coordinates,
-        "optionalInformation" -> issue.optionalInformation.getOrElse("")
-      )
-    }))
+        "validationErrors" -> validationErrors
+      ))
+    Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors)
   }
 
   post("/project/publish") {
@@ -862,6 +849,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           ))
       }
     }
+  }
+
+  private def mapValidationIssues(issue: ProjectValidator.ValidationErrorDetails): Map[String, Any] = {
+    Map(
+      "id" -> issue.projectId,
+      "validationError" -> issue.validationError.value,
+      "affectedLinkIds" -> issue.affectedLinkIds.toArray,
+      "coordinates" -> issue.coordinates,
+      "optionalInformation" -> issue.optionalInformation.getOrElse("")
+    )
   }
 
   // Fold segments on same link together
