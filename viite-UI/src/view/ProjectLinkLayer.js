@@ -603,7 +603,7 @@
         });
       };
 
-      var addCutLine = function(cutGeom){
+      this.addCutLine = function(cutGeom){
         var points = _.map(cutGeom.geometry, function (point) {
           return [point.x, point.y];
         });
@@ -620,7 +620,7 @@
         addFeaturesToSelection([cutFeature]);
       };
 
-      var addTerminatedFeature = function(terminatedLink){
+      this.addTerminatedFeature = function(terminatedLink){
         var points = _.map(terminatedLink.geometry, function (point) {
           return [point.x, point.y];
         });
@@ -711,12 +711,9 @@
         if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
           nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
         }
-        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, {x: nearest.point[0], y: nearest.point[1]});
-        eventbus.once('split:cutPointFeature', function(cutGeom, terminatedLink) {
-          addCutLine(cutGeom);
-          addTerminatedFeature(terminatedLink);
-        });
-          projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
+        selectedProjectLinkProperty.setNearestPoint({x: nearest.point[0], y: nearest.point[1]});
+        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage);
+        projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
       };
     };
 
@@ -993,6 +990,11 @@
 
     eventbus.on('roadAddressProject:startAllInteractions', function () {
       activateSelectInteractions(true);
+    });
+
+    eventbus.on('split:cutPointFeature', function(cutGeom, terminatedLink) {
+      suravageCutter.addCutLine(cutGeom);
+      suravageCutter.addTerminatedFeature(terminatedLink);
     });
 
     vectorLayer.setVisible(true);

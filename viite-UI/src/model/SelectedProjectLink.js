@@ -8,6 +8,7 @@
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var LinkStatus = LinkValues.LinkStatus;
     var preSplitData = null;
+    var nearest = null;
 
     var open = function (linkid, multiSelect) {
       if (!multiSelect) {
@@ -57,38 +58,8 @@
       eventbus.trigger('split:projectLinks',  [suravageA, suravageB, terminatedC]);
     };
 
-    var preSplitSuravageLink = function(suravage, nearestPoint) {
-      projectLinkCollection.preSplitProjectLinks(suravage, nearestPoint);
-        eventbus.once('projectLink:preSplitSuccess', function(data){
-          preSplitData = data;
-          var suravageA = data.a;
-          if (!suravageA) {
-            suravageA = zeroLengthSplit(data.b);
-          }
-          var suravageB = data.b;
-          if (!suravageB) {
-            suravageB = zeroLengthSplit(suravageA);
-            suravageB.status = LinkStatus.New.value;
-          }
-          var terminatedC = data.c;
-          if (!terminatedC) {
-            terminatedC = zeroLengthTerminated(suravageA);
-          }
-          ids = projectLinkCollection.getMultiSelectIds(suravageA.linkId);
-          current = projectLinkCollection.getByLinkId(_.flatten(ids));
-          suravageA.marker = "A";
-          suravageB.marker = "B";
-          terminatedC.marker = "C";
-          suravageA.text = "SUUNNITELMALINKKI";
-          suravageB.text = "SUUNNITELMALINKKI";
-          terminatedC.text = "NYKYLINKKI";
-          suravageA.splitPoint = nearestPoint;
-          suravageB.splitPoint = nearestPoint;
-          terminatedC.splitPoint = nearestPoint;
-          applicationModel.removeSpinner();
-          eventbus.trigger('split:projectLinks', [suravageA, suravageB, terminatedC]);
-          eventbus.trigger('split:cutPointFeature', data.split, terminatedC);
-        });
+    var preSplitSuravageLink = function(suravage) {
+      projectLinkCollection.preSplitProjectLinks(suravage, nearest);
     };
 
     var zeroLengthSplit = function(suravageLink) {
@@ -223,6 +194,45 @@
       splitSuravage = {};
     };
 
+    var getNearestPoint = function () {
+      return nearest;
+    };
+
+    var setNearestPoint = function(point) {
+      nearest = point;
+    };
+
+    eventbus.on('projectLink:preSplitSuccess', function(data){
+      preSplitData = data;
+      var suravageA = data.a;
+      if (!suravageA) {
+        suravageA = zeroLengthSplit(data.b);
+      }
+      var suravageB = data.b;
+      if (!suravageB) {
+        suravageB = zeroLengthSplit(suravageA);
+        suravageB.status = LinkStatus.New.value;
+      }
+      var terminatedC = data.c;
+      if (!terminatedC) {
+        terminatedC = zeroLengthTerminated(suravageA);
+      }
+      ids = projectLinkCollection.getMultiSelectIds(suravageA.linkId);
+      current = projectLinkCollection.getByLinkId(_.flatten(ids));
+      suravageA.marker = "A";
+      suravageB.marker = "B";
+      terminatedC.marker = "C";
+      suravageA.text = "SUUNNITELMALINKKI";
+      suravageB.text = "SUUNNITELMALINKKI";
+      terminatedC.text = "NYKYLINKKI";
+      suravageA.splitPoint = nearest;
+      suravageB.splitPoint = nearest;
+      terminatedC.splitPoint = nearest;
+      applicationModel.removeSpinner();
+      eventbus.trigger('split:projectLinks', [suravageA, suravageB, terminatedC]);
+      eventbus.trigger('split:cutPointFeature', data.split, terminatedC);
+    });
+
     return {
       open: open,
       openShift: openShift,
@@ -238,7 +248,9 @@
       setDirty: setDirty,
       preSplitSuravageLink: preSplitSuravageLink,
       getPreSplitData: getPreSplitData,
-      revertSuravage: revertSuravage
+      revertSuravage: revertSuravage,
+      getNearestPoint: getNearestPoint,
+      setNearestPoint: setNearestPoint
     };
   };
 })(this);

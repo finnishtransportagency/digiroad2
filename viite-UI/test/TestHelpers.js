@@ -72,7 +72,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       unbindEvents();
       clearDom();
       clearAddressBar();
-      eventbus.once('map:initialized', function(map) {
+      eventbus.on('map:initialized', function(map) {
         applicationModel.assetDragDelay = 0;
         callback(map);
       });
@@ -148,6 +148,10 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
 
     var clickNewProjectButton = function(){
       $('button.new').click();
+    };
+
+    var clickCancelButton = function () {
+      $('.split-form button.cancelLink').click();
     };
 
     var getLayerByName = function(map, name){
@@ -280,6 +284,10 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       });
     };
 
+    var selectTool = function(tool) {
+      applicationModel.setSelectedTool(tool);
+    };
+
     return {
       getRoadLayerName: getRoadLayerName,
       getFloatingMarkerLayerName: getFloatingMarkerLayerName,
@@ -317,6 +325,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       getFeaturesRoadLinkData: getFeaturesRoadLinkData,
       getFeatureByLinkId: getFeatureByLinkId,
       getRoadLinkDataByLinkId: getRoadLinkDataByLinkId,
-      selectSingleFeatureByInteraction: selectSingleFeatureByInteraction
+      selectSingleFeatureByInteraction: selectSingleFeatureByInteraction,
+      selectTool: selectTool,
+      clickCancelButton: clickCancelButton
     };
   });
