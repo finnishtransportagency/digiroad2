@@ -124,7 +124,7 @@
         htmlTable += '</table>';
         $('.project-changes').html($(htmlTable));
         if (projectChangeData.validationErrors.length===0)
-        $('.change-table-header').html($('<div>Validointi ok. Alla näet muutokset projektissa.</div>'));
+          $('.change-table-header').html($('<div>Validointi ok. Alla näet muutokset projektissa.</div>'));
         else
         {
           $('.change-table-header').html($('<div>Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
