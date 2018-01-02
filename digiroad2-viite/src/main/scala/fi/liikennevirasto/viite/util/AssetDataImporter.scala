@@ -355,7 +355,7 @@ class AssetDataImporter {
     val df = new DecimalFormat("#.###")
     assert(ids.size == lrmAddresses.size || lrmAddresses.isEmpty)
     lrmAddresses.zip(ids).foreach { case ((pos), (lrmId)) =>
-      val address = roadList.find(r => r.lrmId == pos.id && r.startM == pos.startM && r.endM == pos.endM).get
+      val address = roadList.find(r => lrmId == pos.id).get
       val (startAddrM, endAddrM, sideCode) = if (address.startAddrM < address.endAddrM) {
         (address.startAddrM, address.endAddrM, SideCode.TowardsDigitizing.value)
       } else {
