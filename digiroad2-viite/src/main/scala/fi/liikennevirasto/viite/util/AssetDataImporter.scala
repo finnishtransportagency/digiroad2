@@ -369,8 +369,8 @@ class AssetDataImporter {
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, pos.linkId)
       lrmPositionPS.setLong(3, sideCode)
-      lrmPositionPS.setDouble(4, df.format(Math.abs(pos.startM)).toDouble)
-      lrmPositionPS.setDouble(5, df.format(Math.abs(pos.endM)).toDouble)
+      lrmPositionPS.setDouble(4, pos.startM)
+      lrmPositionPS.setDouble(5, pos.endM)
       lrmPositionPS.addBatch()
       addressPS.setLong(1, lrmId)
       addressPS.setLong(2, address.roadNumber)
@@ -393,6 +393,7 @@ class AssetDataImporter {
       addressPS.setLong(19, address.ely)
       addressPS.setInt(20, 2)
       addressPS.addBatch()
+        println("lrmId: %s, link_id: %s, startM: %s, endAddrM: %s, startAddrM: %s, endAddrM: %s".format(lrmId, pos.linkId,pos.startM, pos.endM, Math.abs(startAddrM), Math.abs(endAddrM) ))
     }
     lrmPositionPS.executeBatch()
     println(s"${DateTime.now()} - LRM Positions saved")
