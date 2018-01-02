@@ -301,7 +301,7 @@ class AssetDataImporter {
 
     print(s"\n${DateTime.now()} - ")
     println("Got %d current road addresses history".format(currentHistory.size))
-    val importDateFilter = if (importDate != "") "AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate" else " "
+    val importDateFilter = if (importDate != "") s"""AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate""" else " "
 
     val roadHistory = conversionDatabase.withDynSession {
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'),
