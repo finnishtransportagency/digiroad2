@@ -400,9 +400,12 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(lrmList.filterNot(_.linkId != 0).size))
 
+    println("TESTING PURPOSES")
+    println(s"""nonExistingAddresses size: ${nonExistingAddresses.size}""")
+    println(s"""existingAddresses size: ${existingAddresses.size}""")
     fillStatements(lrmAddresses, nonExistingAddresses.filterNot(_.linkId == 0).distinct, 1)
     if(existingAddresses.size != 0)
-      fillStatements(lrmAddresses, existingAddresses.filterNot(_.linkId == 0).distinct, 1)
+      fillStatements(lrmAddresses, existingAddresses.filterNot(_.linkId == 0).distinct, 2)
 
     lrmPositionPS.executeBatch()
     println(s"${DateTime.now()} - LRM Positions saved")
