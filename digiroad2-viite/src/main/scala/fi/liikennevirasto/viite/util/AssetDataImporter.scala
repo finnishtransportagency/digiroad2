@@ -303,13 +303,13 @@ class AssetDataImporter {
     println("Got %d current road addresses history".format(currentHistory.size))
     val roadHistory = conversionDatabase.withDynSession {
       if (importDate != "") {
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'),
+        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
                ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
             from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """
           .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
       }
         else{
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'),
+        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
                ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
             from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL """
           .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
@@ -391,9 +391,10 @@ class AssetDataImporter {
       addressPS.setInt(17, 0)
       addressPS.setLong(18, address.roadType)
       addressPS.setLong(19, address.ely)
-      addressPS.setInt(20, 2)
+      addressPS.setInt(20, address.terminated.toInt)
       addressPS.addBatch()
-        println("lrmId: %s, link_id: %s, startM: %s, endAddrM: %s, startAddrM: %s, endAddrM: %s".format(lrmId, pos.linkId,pos.startM, pos.endM, Math.abs(startAddrM), Math.abs(endAddrM) ))
+        println("road_number: %s, road_part_number: %s, START_ADDR_M: %s, END_ADDR_M : %s, TRACK_CODE : %s, DISCONTINUITY: %s, START_DATE: %s, END_DATE: %s, VALID_FROM: %s, VALID_TO: %s, ELY: %s, ROAD_TYPE: %s, TERMINATED: %s"
+          .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get,  address.endDate.getOrElse(""), address.validFrom.get ,address.ely,address.roadType ,address.terminated.toInt))
     }
     lrmPositionPS.executeBatch()
     println(s"${DateTime.now()} - LRM Positions saved")
