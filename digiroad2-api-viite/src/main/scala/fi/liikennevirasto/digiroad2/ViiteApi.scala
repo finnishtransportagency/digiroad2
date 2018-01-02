@@ -479,8 +479,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "changeInfoSeq" -> project.changeInfoSeq.map(changeInfo =>
           Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.roadType.value,
             "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
-            "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)),
-        "validationErrors" -> validationErrors
+            "target" -> changeInfo.target, "reversed" -> changeInfo.reversed))
       ))
     Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors)
   }
