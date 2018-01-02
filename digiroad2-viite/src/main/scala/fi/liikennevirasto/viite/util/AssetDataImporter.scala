@@ -100,7 +100,7 @@ class AssetDataImporter {
 
   case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double)
   case class RoadAddressHistory(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
-                                startAddrM: Long, endAddrM: Long, startDate: Option[String], endDate: Option[String],
+                                startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[String], endDate: Option[String],
                                 validFrom: Option[String], validTo: Option[String], ely: Long, roadType: Long,
                                 terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
                                 x2: Option[Double], y2: Option[Double], lrmId: Long)
@@ -288,42 +288,36 @@ class AssetDataImporter {
 
     //Get current roadHistory
     val currentHistory =
-      sql"""SELECT RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.DISCONTINUITY, RA.START_ADDR_M, RA.END_ADDR_M,
+      sql"""SELECT RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.DISCONTINUITY, RA.START_ADDR_M, RA.END_ADDR_M, LR.START_MEASURE, LR.END_MEASURE
          TO_CHAR(RA.START_DATE,'YYYY-MM-DD'), TO_CHAR(RA.END_DATE,'YYYY-MM-DD'), TO_CHAR(RA.VALID_FROM,'YYYY-MM-DD'),
          TO_CHAR(RA.VALID_TO,'YYYY-MM-DD'), RA.ELY, RA.ROAD_TYPE, RA.TERMINATED, LR.LINK_ID, RA.CREATED_BY, LR.ID FROM ROAD_ADDRESS RA, LRM_POSITION LR
          WHERE RA.END_DATE IS NOT NULL AND RA.LRM_POSITION_ID = LR.ID AND RA.ELY = $ely""".
-        as[(Long, Long, Long, Long, Long, Long, Option[String], Option[String], Option[String], Option[String], Long, Long, Long, Long, String, Long)].list.map{
-        case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM,
+        as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Option[String], Long, Long, Long, Long, String, Long)].list.map{
+        case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
         startDate, endDate, validFrom, validTo, ely, roadType, terminated, linkId, createdBy, lrmId) =>
-          RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM,
+          RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
             startDate, endDate, validFrom, validTo, ely, roadType, terminated, linkId, createdBy, Some(0), Some(0), Some(0), Some(0), lrmId)
       }
 
     print(s"\n${DateTime.now()} - ")
     println("Got %d current road addresses history".format(currentHistory.size))
+    val importDateFilter = if (importDate != "") "AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate" else " "
 
     val roadHistory = conversionDatabase.withDynSession {
-      if (importDate != "") {
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'),
-               ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """
-          .as[(Long, Long, Long, Long, Long, Long, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
-      } else {
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'),
-               ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL"""
-          .as[(Long, Long, Long, Long, Long, Long, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
-      }
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'),
+             ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
+          from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL $importDateFilter """
+        .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
     }.map {
-      case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startDate, endDate, validFrom, ely, roadType, linkId, createdBy, x1, y1, x2, y2, lrmId) =>
-        RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM,
-          startDate, endDate, validFrom, None, ely, roadType, 2, linkId, createdBy, x1, y1, x2, y2, lrmId)
+      case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDate, validFrom, elyCode, roadType, linkId, createdBy, x1, y1, x2, y2, lrmId) =>
+        RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
+          startDate, endDate, validFrom, None, elyCode, roadType, 2, linkId, createdBy, x1, y1, x2, y2, lrmId)
     }
 
     print(s"\n${DateTime.now()} - ")
     println("Read %d rows from conversion database for ELY %d".format(roadHistory.size, ely))
 
-    val lrmList = roadHistory.map(r => LRMPos(r.lrmId, r.linkId, r.startAddrM.toDouble, r.endAddrM.toDouble)) // linkId -> (id, linkId, startM, endM)
+    val lrmList = roadHistory.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM)) // linkId -> (id, linkId, startM, endM)
     val addressList = roadHistory.filterNot(rh => {
       currentHistory.exists(ch => {
         rh.roadNumber == ch.roadNumber &&
