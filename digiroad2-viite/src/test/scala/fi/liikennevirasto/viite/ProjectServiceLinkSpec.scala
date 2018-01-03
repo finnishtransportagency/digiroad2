@@ -1409,8 +1409,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Calculate delta after double opposite splits between roundabouts, having Unchanged for all links before " +
-    "the 1st split, with the 1st split having Unchanged + New, the 2nd split having Transfer + New, and Transferring the rest of the links of the roadpart after the 2nd split") {
+  test("Calculate delta after Unchanged + double split (Unchanged + New) and (Transfer + New) + Transfer") {
     def toGeom(json: Option[Any]): List[Point] = {
       json.get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
     }
@@ -1424,37 +1423,37 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
             MODIFIED_DATE,LINK_SOURCE) values (${lrms(0)},null,'3','0',635.000,null,'1820767','1476392565000',
             sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO) values
+            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
             (${ids(0)},'16081','1','0','5','0','635',${lrms(0)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'2','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(480695.572,7058971.185,0,0,481049.95703856583,7058685.435957936,0,635)),null)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(480695.572,7058971.185,0,0,481049.95703856583,7058685.435957936,0,635)),null, 8)""".execute
 
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
             MODIFIED_DATE,LINK_SOURCE) values (${lrms(1)},null,'3','0',118.000,null,'1820764','1476392565000',
             sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO) values
+            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
             (${ids(1)},'16081','1','0','5','635','753',${lrms(1)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481234.045,7058485.271,0,0,481158.027,7058573.51,0,753)),null)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481234.045,7058485.271,0,0,481158.027,7058573.51,0,753)),null, 8)""".execute
 
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
             MODIFIED_DATE,LINK_SOURCE) values (${lrms(2)},null,'3','0',88.000,null,'1820753','1476392565000',
             sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO) values
+            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
             (${ids(2)},'16081','1','0','5','753','841',${lrms(2)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481250.504,7058400.315,0,0,481234.04508322186,7058485.270820141,0,841)),null)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481250.504,7058400.315,0,0,481234.04508322186,7058485.270820141,0,841)),null, 8)""".execute
 
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
             MODIFIED_DATE,LINK_SOURCE) values (${lrms(3)},null,'3','0',1274.000,null,'6700868','1476392565000',
             sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO) values
+            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
             (${ids(3)},'16081','1','0','5','841','2115',${lrms(3)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'1','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481234.04508322186,7058485.270820141,0,0,480783.428,7057271.799,0,2115)),null)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481234.04508322186,7058485.270820141,0,0,480783.428,7057271.799,0,2115)),null, 8)""".execute
 
       val points1820767 = "[ {\"x\": 480695.572, \"y\": 7058971.185, \"z\": 95.14500000000407},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569},{\"x\": 481122.722, \"y\": 7058607.764, \"z\": 101.07300000000396},{\"x\": 481091.689, \"y\": 7058641.794, \"z\": 100.70500000000175},{\"x\": 481066.306, \"y\": 7058667.604, \"z\": 100.58599999999569},{\"x\": 481049.95703856583, \"y\": 7058685.435957936, \"z\": 100.48000025004062}, {\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407}]"
       val points1820764 = "[ {\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407},{\"x\": 481222.496, \"y\": 7058507.705, \"z\": 101.28100000000268},{\"x\": 481212.636, \"y\": 7058520.221, \"z\": 101.33400000000256},{\"x\": 481200.552, \"y\": 7058533.592, \"z\": 101.3920000000071},{\"x\": 481177.416, \"y\": 7058555.96, \"z\": 101.4149999999936},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569}]"
@@ -1475,10 +1474,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val addresses = RoadAddressDAO.fetchByRoadPart(16081, 1, false).sortBy(_.startAddrMValue)
       val reservedRoadPart = ReservedRoadPart(addresses.head.id, addresses.head.roadNumber, addresses.head.roadPartNumber,
-        Some(addresses.last.endAddrMValue), Some(addresses.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
-      val project = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(reservedRoadPart), None , None)
+        Some(addresses.last.endAddrMValue), Some(addresses.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, Some(8L), Some(1820767))
+      val project = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(reservedRoadPart), None , None, None)
       val projectLinks = addresses.map(toProjectLink(project)).map {
-        pl => pl.copy(geometry = mappedGeoms(pl.linkId))
+        pl => pl.copy(geometry = mappedGeoms(pl.linkId), ely = 8l)
       }
       val roadLinks = projectLinks.map(toRoadLink)
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
@@ -1496,6 +1495,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val unchangedLinks = ProjectDAO.getProjectLinks(resultProject.id, Some(LinkStatus.UnChanged))
       unchangedLinks.size should be (1)
 
+      val getChangeTable1 = projectService.getChangeProject(resultProject.id)
+      val unchangedRow1 = getChangeTable1.get.changeInfoSeq.filter(_.changeType == AddressChangeType.Unchanged)
+      unchangedRow1.head.source.endAddressM should be (Some(635))
       when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(7507573), false)).thenReturn(
         Seq(RoadLink(7507573,
         Seq(Point(481215.883, 7058528.184), Point(481204.373, 7058538.503), Point(481186.514, 7058553.584), Point(481173.438, 7058559.561), Point(481158.027, 7058573.51)),
@@ -1517,12 +1519,12 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(savedProjectLinks.map(toRoadLink))
 //      split 1st and 2nd for north and south of roundabout ends
             val opts1stSplit = SplitOptions(Point(481172.6876185415,7058560.240194794,0.0), LinkStatus.UnChanged, LinkStatus.New, 16081, 1, Track.Combined, Discontinuity.Continuous, 8, LinkGeomSource.SuravageLinkInterface, RoadType.MunicipalityStreetRoad, resultProject.id, ProjectCoordinates(481193.47783403023,7058532.197852876,13))
-            val failmessage1 = projectService.splitSuravageLinkInTX(7507573, "testUser", opts1stSplit)
+            projectService.splitSuravageLinkInTX(7507573, "testUser", opts1stSplit)
 
       val projectLinksAfter1stSplit = ProjectDAO.getProjectLinks(resultProject.id)
 
             val opts2ndSplit = SplitOptions(Point(481253.3736063617,7058425.837635641,0.0), LinkStatus.Transfer, LinkStatus.New, 16081, 1, Track.Combined, Discontinuity.Continuous, 8, LinkGeomSource.SuravageLinkInterface, RoadType.MunicipalityStreetRoad, resultProject.id, ProjectCoordinates(481245.3833092349,7058436.896503245,13))
-            val failmessage2 = projectService.splitSuravageLinkInTX(7507575, "testUser", opts2ndSplit)
+            projectService.splitSuravageLinkInTX(7507575, "testUser", opts2ndSplit)
 
       val projectLinksAfter2ndSplit = ProjectDAO.getProjectLinks(resultProject.id)
 
@@ -1532,10 +1534,17 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       sharingSplit.size should be (6)
       terminated.size should be (2)
 
+      val getChangeTable2 = projectService.getChangeProject(resultProject.id)
+      val unchangedRow2 = getChangeTable2.get.changeInfoSeq.filter(_.changeType == AddressChangeType.Unchanged)
+      unchangedRow2.last.source.endAddressM should not be (Some(753))
       //transfer the rest of roadpart
+      projectService.updateProjectLinks(resultProject.id, Set(6700868), LinkStatus.Transfer, "TestUser",
+        16081, 1, 0, Option.empty[Int]) should be(None)
 
       //validate if unchanged links have changed his max LET value
-
+      val getChangeTable3 = projectService.getChangeProject(resultProject.id)
+      val unchangedRow3 = getChangeTable2.get.changeInfoSeq.filter(_.changeType == AddressChangeType.Unchanged)
+      unchangedRow3.head.source.endAddressM should be (unchangedRow2.head.source.endAddressM)
     }
   }
 
