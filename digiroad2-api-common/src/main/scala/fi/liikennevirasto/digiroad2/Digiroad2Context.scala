@@ -168,7 +168,8 @@ class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
 
 class RoadNetworkChecker(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case _ => roadAddressService.checkRoadAddressNetwork
+    case w: Int => roadAddressService.checkRoadAddressNetwork
+    case _ => println("roadAddressUpdater: Received unknown message")
   }
 }
 

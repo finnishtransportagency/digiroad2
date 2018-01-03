@@ -1299,6 +1299,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"Checking status for $project")
           val newStatus = checkAndUpdateProjectStatus(project)
           logger.info(s"new status is $newStatus")
+          newStatus
+        } match {
+          case Saved2TR => eventbus.publish("roadAddress:RoadNetworkChecker", 1)
+          case _ => logger.info(s"Not going to check road network (status != Saved2TR)")
         }
       } catch {
         case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)

@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 object ExportLockDAO {
@@ -9,7 +10,7 @@ object ExportLockDAO {
   }
 
   def delete: Unit = {
-    sqlu"""DELETE FROM EXPORT_LOCK"""
+    sqlu"""DELETE FROM EXPORT_LOCK""".execute
   }
 
 }
