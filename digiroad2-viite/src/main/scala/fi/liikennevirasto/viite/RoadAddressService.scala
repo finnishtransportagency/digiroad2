@@ -734,6 +734,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
     false
   }
+
+  def checkRoadAddressNetwork: Unit = {
+    withDynTransaction {
+      ExportLockDAO.delete
+      ExportLockDAO.insert
+    }
+  }
+
   def prettyPrint(changes: Seq[ChangeInfo]) = {
     def setPrecision(d: Double) = {
       BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble

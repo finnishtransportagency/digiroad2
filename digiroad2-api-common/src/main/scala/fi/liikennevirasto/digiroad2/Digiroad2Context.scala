@@ -166,6 +166,12 @@ class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
   }
 }
 
+class RoadNetworkChecker(roadAddressService: RoadAddressService) extends Actor {
+  def receive = {
+    case _ => roadAddressService.checkRoadAddressNetwork
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -237,6 +243,9 @@ object Digiroad2Context {
 
   val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
+
+  val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadAddressService), name = "roadNetworkChecker")
+  eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
