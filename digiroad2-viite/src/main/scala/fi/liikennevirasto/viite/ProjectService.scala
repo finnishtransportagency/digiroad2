@@ -72,24 +72,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  /**
-    * Checks that new road address is not already reserved (currently only checks road address table)
-    *
-    * @param roadNumber road number
-    * @param roadPart   road part number
-    * @param project    road address project needed for id and error message
-    * @return
-    */
-  def checkNewRoadPartAvailableForProject(roadNumber: Long, roadPart: Long, project: RoadAddressProject): Option[String] = {
-    val isReserved = RoadAddressDAO.isNotAvailableForProject(roadNumber, roadPart, project.id)
-    if (!isReserved) {
-      None
-    } else {
-      val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-      Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot") //message to user if address is already in use
-    }
-  }
-
   def calculateProjectCoordinates(projectId: Long, resolution: Int): ProjectCoordinates = {
     withDynTransaction{
       val links = ProjectDAO.getProjectLinks(projectId)
@@ -638,9 +620,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getRoadAddressSingleProject(projectId: Long, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus]): Option[RoadAddressProject] = {
+  def getRoadAddressSingleProject(projectId: Long): Option[RoadAddressProject] = {
     withDynTransaction {
-      ProjectDAO.getRoadAddressProjects(projectId, filterNotStatus).headOption
+      ProjectDAO.getRoadAddressProjects(projectId).headOption
     }
   }
 
@@ -760,21 +742,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
       suravageRoadLinks.map(ProjectAddressLinkBuilder.build)
     }
-  }
-
-  def getLinksByProjectLinkId(linkIdsToGet: Set[Long], projectId: Long, newTransaction: Boolean = true): Seq[ProjectAddressLink] = {
-    if (linkIdsToGet.isEmpty)
-      return Seq()
-
-    val fetchVVHStartTime = System.currentTimeMillis()
-    val complementedRoadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction, frozenTimeVVHAPIServiceEnabled)
-    val fetchVVHEndTime = System.currentTimeMillis()
-    logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
-    val fetchProjectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)
-
-    fetchProjectLinks.map {
-      pl => pl._1 -> buildProjectRoadLink(pl._2)
-    }.values.flatten.toSeq
   }
 
   def fetchProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
@@ -1518,7 +1485,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def correctNullProjectEly(): Unit = {
     withDynSession {
       //Get all the projects with non-existant ely code
-      val nullElyProjects = ProjectDAO.getRoadAddressProjects(0, Seq.empty[LinkStatus], true)
+      val nullElyProjects = ProjectDAO.getRoadAddressProjects(0, true)
       nullElyProjects.foreach(project => {
         //Get all the reserved road parts of said projects
         val reservedRoadParts = ProjectDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)

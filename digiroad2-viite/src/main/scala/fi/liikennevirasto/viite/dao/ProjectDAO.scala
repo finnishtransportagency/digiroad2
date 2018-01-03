@@ -487,14 +487,7 @@ object ProjectDAO {
     }.headOption
   }
 
-  def fetchReservedRoadParts(projectId: Long, filterNotStatus: Seq[Int] = Seq.empty[Int]): Seq[ReservedRoadPart] = {
-    // TODO: Check this filter: is it required to filter all road parts where ANY of the project links status is in filterNotStatus?
-    val filter = if (filterNotStatus.nonEmpty) s""" where NOT EXISTS (
-           SELECT * FROM PROJECT_LINK pl WHERE pl.project_id = gr.PROJECT_ID AND
-           pl.ROAD_NUMBER = gr.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER AND STATUS IN (${filterNotStatus.mkString(" ,")}))
-      """
-    else
-      ""
+  def fetchReservedRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
     val sql =
       s"""
         SELECT id, road_number, road_part_number, length, length_new,
@@ -526,7 +519,7 @@ object ProjectDAO {
                 rp.project_id = $projectId AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-            ) gr $filter"""
+            ) gr"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
       Option[Long], Option[Long])](sql).list.map {
       case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
@@ -576,7 +569,7 @@ object ProjectDAO {
     }
   }
 
-  def getRoadAddressProjects(projectId: Long = 0, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus], withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
+  def getRoadAddressProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
     val filter = projectId match {
       case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
       case _ => if(withNullElyFilter) s""" where id =$projectId AND ELY IS NULL """ else s""" where id =$projectId """
@@ -589,7 +582,7 @@ object ProjectDAO {
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
-          modifiedDate, addInfo, fetchReservedRoadParts(id, filterNotStatus.map(_.value)), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          modifiedDate, addInfo, fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
       }
     }
   }
