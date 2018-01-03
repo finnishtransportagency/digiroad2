@@ -99,6 +99,13 @@ object ProjectValidator {
       def message = RampDiscontinuityFoundMessage
       def notification = true}
 
+    //Viite-473
+    // Unchanged project links cannot have any other operation (transfer, termination) previously on the same number and part
+    case object ErrorInValidationOfUnchangedLinks extends ValidationError {
+      def value = 14
+      def message = ErrorInValidationOfUnchangedLinksMessage
+      def notification = false}
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -150,8 +157,17 @@ object ProjectValidator {
       )
     }
 
+    def checkForInvalidUnchangedLinks = {
+      val roadNumberAndParts = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).keySet
+      val invalidUnchangedLinks = roadNumberAndParts.flatMap(rn => ProjectDAO.getInvalidUnchangedOperationProjectLinks(rn._1, rn._2)).toSeq
+      invalidUnchangedLinks.map(projectLink =>
+        ValidationErrorDetails(project.id, ValidationError.ErrorInValidationOfUnchangedLinks,
+          Seq(projectLink.linkId), Seq(ProjectCoordinates(projectLink.geometry.head.x, projectLink.geometry.head.y, 12)),
+          Some("TIE : %d, OSA: %d, AET: %d".format(projectLink.roadNumber, projectLink.roadPartNumber, projectLink.startAddrMValue))))
+    }
+
     checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks
   }
 
   def checkRemovedEndOfRoadParts(project: RoadAddressProject): Seq[ValidationErrorDetails] = {

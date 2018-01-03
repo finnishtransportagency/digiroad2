@@ -18,6 +18,8 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.viite.util._
+import org.mockito.Matchers.any
+import org.mockito.Mockito.when
 
 class ProjectValidatorSpec extends FunSuite with Matchers{
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -250,4 +252,72 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
     }
   }
 
+  test("validator should produce an error on Not Handled links"){
+    runWithRollback {
+      val ra = Seq(
+        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+          false, Seq(Point(10.0,30.0,0.0), Point(10.0, 40.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+          false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination))
+      val raIds = RoadAddressDAO.create(ra, Some("U"))
+      val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      ProjectDAO.createRoadAddressProject(project)
+      ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
+      ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
+
+      ProjectDAO.create(Seq(projectLink(0L, 10L, Combined, id, LinkStatus.NotHandled),
+        projectLink(0L, 10L, Combined, id, LinkStatus.Terminated)).zip(roadAddress).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
+        roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
+
+      val validationErrors = ProjectValidator.validateProject(project, ProjectDAO.getProjectLinks(project.id)).filter(_.validationError.value == HasNotHandledLinks.value)
+      validationErrors.size should be (1)
+      validationErrors.head.validationError.message should be ("")
+      validationErrors.head.optionalInformation should not be ("")
+    }
+  }
+
+  test("validator should return invalid unchanged links error"){
+    runWithRollback{
+      val ra = Seq(
+        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+          false, Seq(Point(10.0,30.0,0.0), Point(10.0, 40.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          10L, 20L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+          false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination))
+      val raId1 = RoadAddressDAO.create(Set(ra.head), Some("U"))
+      val raId2 = RoadAddressDAO.create(ra.tail, Some("U"))
+      val roadAddress1 = RoadAddressDAO.fetchByIdMassQuery(raId1.toSet).sortBy(_.roadPartNumber)
+      val roadAddress2 = RoadAddressDAO.fetchByIdMassQuery(raId2.toSet).sortBy(_.roadPartNumber)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      ProjectDAO.createRoadAddressProject(project)
+      ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
+
+      ProjectDAO.create(Seq(projectLink(0L, 10L, Combined, id, LinkStatus.NotHandled),
+        projectLink(0L, 10L, Combined, id, LinkStatus.Transfer)).zip(roadAddress1).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
+        roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
+      ProjectDAO.create(Seq(projectLink(10L, 20L, Combined, id, LinkStatus.NotHandled),
+        projectLink(10L, 20L, Combined, id, LinkStatus.UnChanged)).zip(roadAddress2).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
+        roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
+
+      val projectLinks = ProjectDAO.getProjectLinks(id, Some(LinkStatus.NotHandled))
+      val updatedProjectLinks = Seq(projectLinks.head.copy(status = LinkStatus.Transfer)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.UnChanged))
+      ProjectDAO.updateProjectLinksToDB(updatedProjectLinks, "U")
+      val validationErrors = ProjectValidator.validateProject(project, ProjectDAO.getProjectLinks(project.id))
+
+      validationErrors.size shouldNot be (0)
+      validationErrors.count(_.validationError.value == ValidationError.ErrorInValidationOfUnchangedLinks.value) should be (1)
+    }
+  }
 }

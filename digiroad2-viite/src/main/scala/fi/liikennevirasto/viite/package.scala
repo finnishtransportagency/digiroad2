@@ -62,8 +62,8 @@ package object viite {
   val ErrorReversingUnchangedLinks = "Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan."
   val ErrorSavingFailed = "Päivitys ei onnistunut"
   val ErrorMultipleRoadNumbersOrParts = "Valitut linkit eivät ole samalta tieosalta. Tallennus tulee tehdä erikseen."
-  val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia, ${EndOfRoad.toString}, tieosan viimeiselle linkille."
-  val EndOfRoadNotOnLastPartMessage = "Tieosalle on määritelty jatkuvuuskoodi ${EndOfRoad.toString}, vaikka tieosan jälkeen on olemassa tieosa."
+  val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia, ${EndOfRoad.description}, tieosan viimeiselle linkille."
+  val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi ${EndOfRoad.description}, vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val MajorDiscontinuityFoundMessage = "Tieosalla on epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val InsufficientTrackCoverageMessage = "Tieosalta puuttuu toinen ajorata. Numeroi molemmat ajoradat."
@@ -73,8 +73,9 @@ package object viite {
   val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
   val ConnectedDiscontinuousMessage = "Jatkuvalle linkille on määritelty epäjatkuvuus."
   val DifferingDiscontinuityCodesForTracks = "Tieosan lopussa on yhteensopimattomat jatkuvuuskoodit."
-  val ElyCodeChangeNotPresent = s"Tieosan päässä ei ole jatkuvuuskoodia ${ChangingELYCode.toString}"
+  val ElyCodeChangeNotPresent = s"Tieosan päässä ei ole jatkuvuuskoodia ${ChangingELYCode.description}"
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
+  val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999

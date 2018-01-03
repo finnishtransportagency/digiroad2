@@ -377,6 +377,22 @@ object ProjectDAO {
     listQuery(query)
   }
 
+  def getInvalidUnchangedOperationProjectLinks(roadNumber: Long, roadPartNumber: Long) : Seq[ProjectLink]= {
+    if(roadNumber == 0 || roadPartNumber == 0)
+      return Seq()
+    val query =
+      s"""
+         $projectLinkQueryBase
+                where ROAD_ADDRESS.road_number = $roadNumber and ROAD_ADDRESS.road_part_number = $roadPartNumber and ROAD_ADDRESS.TRACK_CODE = PROJECT_LINK.TRACK_CODE and PROJECT_LINK.status = ${LinkStatus.UnChanged.value}
+                and (ROAD_ADDRESS.valid_to IS NULL OR ROAD_ADDRESS.valid_to > sysdate) AND (ROAD_ADDRESS.valid_from IS NULL OR ROAD_ADDRESS.valid_from <= sysdate)
+                and ROAD_ADDRESS.start_addr_m in
+                (select ra.end_addr_m from road_address ra, project_link pl
+                where ra.id = pl.road_address_id and ra.road_number = $roadNumber and ra.road_part_number = $roadPartNumber and ra.TRACK_CODE = pl.TRACK_CODE and pl.status NOT IN (${LinkStatus.NotHandled.value}, ${LinkStatus.UnChanged.value})
+                and (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate)) order by START_ADDR_M
+       """
+    listQuery(query)
+  }
+
   def isRoadPartNotHandled(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber " +
       s"AND PROJECT_LINK.PROJECT_ID = $projectId AND PROJECT_LINK.STATUS = ${LinkStatus.NotHandled.value}"
