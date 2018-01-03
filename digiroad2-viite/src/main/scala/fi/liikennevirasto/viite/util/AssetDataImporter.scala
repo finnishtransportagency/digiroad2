@@ -295,7 +295,7 @@ class AssetDataImporter {
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
 
-    def fillStatements(lrmAddresses: List[LRMPos], roadList: List[RoadAddressHistory], terminationStatus: Int) = {
+    def fillStatements(lrmAddresses: List[LRMPos], roadList: List[RoadAddressHistory]) = {
       if(roadList.size != 0) {
         val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmAddresses.size}""".as[Long].list
         val df = new DecimalFormat("#.###")
@@ -337,7 +337,7 @@ class AssetDataImporter {
           addressPS.setInt(17, 0)
           addressPS.setLong(18, address.roadType)
           addressPS.setLong(19, address.ely)
-          addressPS.setInt(20, terminationStatus)
+          addressPS.setInt(20, if(address.validTo.isEmpty) 0 else address.terminated.toInt)
           addressPS.addBatch()
           println("road_number: %s, road_part_number: %s, START_ADDR_M: %s, END_ADDR_M : %s, TRACK_CODE : %s, DISCONTINUITY: %s, START_DATE: %s, END_DATE: %s, VALID_FROM: %s, VALID_TO: %s, ELY: %s, ROAD_TYPE: %s, TERMINATED: %s"
             .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get, address.endDate.getOrElse(""), address.validFrom.getOrElse(""), address.validTo.getOrElse(""), address.ely, address.roadType, address.terminated.toInt))
@@ -403,13 +403,7 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(lrmList.filterNot(_.linkId != 0).size))
 
-    println("TESTING PURPOSES")
-    println(s"""Ammount of register items to put: ${checkCompliantAddresses.size}""")
-    val (emptyValidTo, filledValidTo) = checkCompliantAddresses.partition(_.validTo.isEmpty)
-    println(s"""Ammount of emptyValidTo items to put: ${emptyValidTo.size}""")
-    println(s"""Ammount of filledValidTo items to put: ${filledValidTo.size}""")
-    fillStatements(lrmAddresses, filledValidTo.filterNot(_.linkId == 0).distinct, 1)
-    fillStatements(lrmAddresses, emptyValidTo.filterNot(_.linkId == 0).distinct, 0)
+    fillStatements(lrmAddresses, checkCompliantAddresses.filterNot(_.linkId == 0).distinct)
 
     lrmPositionPS.executeBatch()
     println(s"${DateTime.now()} - LRM Positions saved")
