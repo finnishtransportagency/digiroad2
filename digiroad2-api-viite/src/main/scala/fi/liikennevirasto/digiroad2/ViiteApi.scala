@@ -64,8 +64,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   val DrawMainRoadPartsOnly = 1
   val DrawRoadPartsOnly = 2
-  val DrawPublicRoads = 3
-  val DrawAllRoads = 4
+  val DrawLinearPublicRoads = 3
+  val DrawPublicRoads = 4
+  val DrawAllRoads = 5
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -632,6 +633,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawRoadPartsOnly =>
         //        roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
         Seq()
+      case DrawLinearPublicRoads => roadAddressService.getRoadAddressesWithLinearGeometry(boundingRectangle, Seq((1, 19999), (40000, 49999)), municipalities)
       case DrawPublicRoads => roadAddressService.getRoadAddressLinksByLinkId(boundingRectangle, Seq((1, 19999), (40000, 49999)), municipalities)
       case DrawAllRoads => roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq(), municipalities, everything = true)
       case _ => roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq((1, 19999)), municipalities)
@@ -651,6 +653,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Seq()
       case DrawRoadPartsOnly =>
         Seq()
+      case DrawLinearPublicRoads => projectService.getProjectLinksLinear(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
       case DrawPublicRoads => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
       case DrawAllRoads => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq(), Set(), everything = true)
       case _ => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
@@ -666,15 +669,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def chooseDrawType(zoomLevel: String) = {
     val C1 = new Contains(-10 to 3)
     val C2 = new Contains(4 to 5)
-    val C3 = new Contains(6 to 10)
-    val C4 = new Contains(11 to 16)
+    val C3 = new Contains(6 to 8)
+    val C4 = new Contains(9 to 10)
+    val C5 = new Contains(11 to 16)
     try {
       val level: Int = Math.round(zoomLevel.toDouble).toInt
       level match {
         case C1() => DrawMainRoadPartsOnly
         case C2() => DrawRoadPartsOnly
-        case C3() => DrawPublicRoads
-        case C4() => DrawAllRoads
+        case C3() => DrawLinearPublicRoads
+        case C4() => DrawPublicRoads
+        case C5() => DrawAllRoads
         case _ => DrawMainRoadPartsOnly
       }
     } catch {
