@@ -300,6 +300,10 @@ object Digiroad2Context {
     new AssetService(eventbus)
   }
 
+  lazy val verificationService: VerificationService = {
+    new VerificationService(eventbus)
+  }
+
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }

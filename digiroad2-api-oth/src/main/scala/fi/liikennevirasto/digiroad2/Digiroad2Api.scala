@@ -52,7 +52,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
                    val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
                    val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
-                   val assetService: AssetService = Digiroad2Context.assetService)
+                   val assetService: AssetService = Digiroad2Context.assetService,
+                   val verificationService: VerificationService = Digiroad2Context.verificationService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1208,7 +1209,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/municipalities/assetTypes") {
-    assetService.getVerifiableAssets
+    //val id = params("municipalityCode").toInt
+    verificationService.getAssetTypesByMunicipality(235)
+  }
+
+  get("/municipalities/assetVerification") {
+    //val id = params("municipalityCode").toInt
+    verificationService.getAssetVerification(235, 90)
   }
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {
