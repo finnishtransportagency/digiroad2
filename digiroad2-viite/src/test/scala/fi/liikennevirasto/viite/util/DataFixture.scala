@@ -317,7 +317,7 @@ object DataFixture {
   }
 
   private def tearUp() {
-    flyway.clean()
+    flyway.migrate()
     viiteFlyway.migrate()
 
     SqlScriptRunner.runScripts(List(
