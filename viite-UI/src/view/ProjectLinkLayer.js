@@ -16,7 +16,6 @@
     var RoadLinkType = LinkValues.RoadLinkType;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var RoadClass = LinkValues.RoadClass;
-
     var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
     var me = this;
