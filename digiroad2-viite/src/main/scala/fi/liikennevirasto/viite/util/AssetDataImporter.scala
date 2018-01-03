@@ -339,8 +339,6 @@ class AssetDataImporter {
           addressPS.setLong(19, address.ely)
           addressPS.setInt(20, terminationStatus)
           addressPS.addBatch()
-          println("road_number: %s, road_part_number: %s, START_ADDR_M: %s, END_ADDR_M : %s, TRACK_CODE : %s, DISCONTINUITY: %s, START_DATE: %s, END_DATE: %s, VALID_FROM: %s, VALID_TO: %s, ELY: %s, ROAD_TYPE: %s, TERMINATED: %s"
-            .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get,  address.endDate.getOrElse(""), address.validFrom.getOrElse("") , address.validTo.getOrElse(""),address.ely,address.roadType ,address.terminated.toInt))
         }
       }
 
@@ -407,7 +405,6 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(lrmList.filterNot(_.linkId != 0).size))
 
-    println("TESTING PURPOSES")
     println(s"""nonExistingAddresses size: ${nonExistingAddresses.size}""")
     println(s"""existingAddresses size: ${existingAddresses.size}""")
     fillStatements(lrmAddresses, nonExistingAddresses.filterNot(_.linkId == 0).distinct, 1)
