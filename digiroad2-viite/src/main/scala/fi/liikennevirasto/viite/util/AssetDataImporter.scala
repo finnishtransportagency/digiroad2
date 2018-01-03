@@ -337,12 +337,43 @@ class AssetDataImporter {
           addressPS.setInt(17, 0)
           addressPS.setLong(18, address.roadType)
           addressPS.setLong(19, address.ely)
-          addressPS.setInt(20, if(address.validTo.isEmpty) 0 else address.terminated.toInt)
+          addressPS.setInt(20, address.terminated.toInt)
           addressPS.addBatch()
           println("road_number: %s, road_part_number: %s, START_ADDR_M: %s, END_ADDR_M : %s, TRACK_CODE : %s, DISCONTINUITY: %s, START_DATE: %s, END_DATE: %s, VALID_FROM: %s, VALID_TO: %s, ELY: %s, ROAD_TYPE: %s, TERMINATED: %s"
             .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get, address.endDate.getOrElse(""), address.validFrom.getOrElse(""), address.validTo.getOrElse(""), address.ely, address.roadType, address.terminated.toInt))
         }
       }
+    }
+
+    def mapTerminations(fetchedHistory: List[RoadAddressHistory], currentRoadHistory: List[RoadAddressHistory]): List[RoadAddressHistory] = {
+      fetchedHistory.map(a => {
+        if(a.endDate.isEmpty) {
+          RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
+          a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
+        }
+        else {
+          val presentInHistory = currentRoadHistory.find(curr => {
+             curr.roadNumber == a.roadNumber &&
+               curr.roadPartNumber == a.roadPartNumber &&
+               curr.trackCode == a.trackCode &&
+               curr.discontinuity == a.discontinuity &&
+               curr.startAddrM == a.startAddrM &&
+               curr.endAddrM == a.endAddrM &&
+               curr.startDate.getOrElse("") == a.startDate.getOrElse("") &&
+               curr.endDate.getOrElse("") == a.endDate.getOrElse("") &&
+               curr.ely == a.ely &&
+               curr.roadType == a.roadType &&
+               curr.linkId == a.linkId
+          })
+          if(presentInHistory.isEmpty){
+            RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
+              a.validTo, a.ely, a.roadType, 1, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
+          } else {
+            RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
+              a.validTo, a.ely, a.roadType, 2, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
+          }
+        }
+      })
     }
 
     //Get current roadHistory
@@ -378,12 +409,13 @@ class AssetDataImporter {
           RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
             startDate, endDate, validFrom, None, elyCode, roadType, 2, linkId, createdBy, x1, y1, x2, y2, lrmId)
       }
+    val adjustedTermination = mapTerminations(roadHistory, currentHistory)
 
     print(s"\n${DateTime.now()} - ")
     println("Read %d rows from conversion database for ELY %d".format(roadHistory.size, ely))
 
-    val lrmList = roadHistory.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM)) // linkId -> (id, linkId, startM, endM)
-    val checkCompliantAddresses = roadHistory.filterNot(rh => {
+    val lrmList = adjustedTermination.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM)) // linkId -> (id, linkId, startM, endM)
+    val checkCompliantAddresses = adjustedTermination.filterNot(rh => {
       currentHistory.exists(ch => {
         rh.roadNumber == ch.roadNumber &&
         rh.roadPartNumber == ch.roadPartNumber &&
