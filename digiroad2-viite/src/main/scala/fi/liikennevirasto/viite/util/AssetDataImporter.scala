@@ -380,8 +380,9 @@ class AssetDataImporter {
     println("Read %d rows from conversion database for ELY %d".format(roadHistory.size, ely))
 
     val lrmList = roadHistory.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM)) // linkId -> (id, linkId, startM, endM)
-    val (nonExistingAddresses, existingAddresses) = roadHistory.partition(rh => {
-      !currentHistory.exists(ch => {
+    //Check out the constraint ROAD_ADDRESS_HISTORY_CHECK
+    val checkCompliantAddresses = roadHistory.filterNot(rh => {
+      currentHistory.exists(ch => {
         rh.roadNumber == ch.roadNumber &&
         rh.roadPartNumber == ch.roadPartNumber &&
         rh.trackCode == ch.trackCode &&
@@ -392,7 +393,9 @@ class AssetDataImporter {
         rh.endDate.getOrElse("") == ch.endDate.getOrElse("") &&
         rh.ely == ch.ely &&
         rh.roadType == ch.roadType &&
-        rh.linkId == ch.linkId
+        rh.linkId == ch.linkId &&
+        rh.validFrom.getOrElse("") == ch.validFrom.getOrElse("") &&
+        rh.validTo.getOrElse("") == ch.validTo.getOrElse("")
       })
     })
 
@@ -401,11 +404,15 @@ class AssetDataImporter {
     println("%d segments with invalid link id removed".format(lrmList.filterNot(_.linkId != 0).size))
 
     println("TESTING PURPOSES")
-    println(s"""nonExistingAddresses size: ${nonExistingAddresses.size}""")
-    println(s"""existingAddresses size: ${existingAddresses.size}""")
-    fillStatements(lrmAddresses, nonExistingAddresses.filterNot(_.linkId == 0).distinct, 1)
-    if(existingAddresses.size != 0)
-      fillStatements(lrmAddresses, existingAddresses.filterNot(_.linkId == 0).distinct, 2)
+    println(s"""Ammount of register items to put: ${checkCompliantAddresses.size}""")
+    val (existing, notExisting) = checkCompliantAddresses.partition(ad => {
+      currentHistory.exists(ch => {
+        ad.terminated == ch.terminated
+      })
+    })
+    println(s"""Ammount of same terminated items to put: ${existing.size}""")
+    println(s"""Ammount of different terminated items to put: ${notExisting.size}""")
+    fillStatements(lrmAddresses, checkCompliantAddresses.filterNot(_.linkId == 0).distinct, 2)
 
     lrmPositionPS.executeBatch()
     println(s"${DateTime.now()} - LRM Positions saved")
