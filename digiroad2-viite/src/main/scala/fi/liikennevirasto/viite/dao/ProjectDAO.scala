@@ -65,7 +65,6 @@ object LinkStatus {
   case object Transfer extends LinkStatus {def value = 3}
   case object Numbering extends LinkStatus {def value = 4}
   case object Terminated extends LinkStatus {def value = 5}
-  case object Rollbacked extends LinkStatus {def value = 42}
   case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -148,8 +147,8 @@ object ProjectDAO {
       val endMValue = r.nextDouble()
       val sideCode = SideCode.apply(r.nextInt)
       val lrmPositionId = r.nextLong()
-      val createdBy = r.nextString()
-      val modifiedBy = r.nextString()
+      val createdBy = r.nextStringOption()
+      val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
       val geom=r.nextStringOption()
       val length = r.nextDouble()
@@ -168,7 +167,7 @@ object ProjectDAO {
       val geometryTimeStamp = r.nextLong()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
-        Some(modifiedBy), lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom.getOrElse("")), projectId,
+        modifiedBy, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom.getOrElse("")), projectId,
         status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp)
     }
   }
@@ -489,6 +488,7 @@ object ProjectDAO {
   }
 
   def fetchReservedRoadParts(projectId: Long, filterNotStatus: Seq[Int] = Seq.empty[Int]): Seq[ReservedRoadPart] = {
+    // TODO: Check this filter: is it required to filter all road parts where ANY of the project links status is in filterNotStatus?
     val filter = if (filterNotStatus.nonEmpty) s""" where NOT EXISTS (
            SELECT * FROM PROJECT_LINK pl WHERE pl.project_id = gr.PROJECT_ID AND
            pl.ROAD_NUMBER = gr.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER AND STATUS IN (${filterNotStatus.mkString(" ,")}))
@@ -500,12 +500,12 @@ object ProjectDAO {
         SELECT id, road_number, road_part_number, length, length_new,
           ely, ely_new,
           (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
-          ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-          AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
+            ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+            AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
-          AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-          AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
-          AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
+            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
+            AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
+            AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl JOIN LRM_POSITION lrm ON (lrm.id = pl.LRM_POSITION_ID)
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
@@ -520,13 +520,13 @@ object ProjectDAO {
               FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
               ROAD_ADDRESS ra ON (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number)
               LEFT JOIN
-              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
+              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
+                pl.road_part_number = rp.road_part_number AND pl.status != 5)
               WHERE
                 rp.project_id = $projectId AND
-                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
-                (PL.STATUS IS NULL OR PL.STATUS != 5)
-              GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-              ) gr $filter"""
+                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+                GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
+            ) gr $filter"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
       Option[Long], Option[Long])](sql).list.map {
       case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>

@@ -16,6 +16,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
 import fi.liikennevirasto.viite.ProjectValidator.{ValidationError, ValidationErrorDetails}
+import fi.liikennevirasto.viite.ProjectValidator.ValidationError.MissingEndOfRoad
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
@@ -1165,18 +1166,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   //|                                   |
   //|-----------------------------------|
 
-  test("validator should not trigger any error"){
+  test("validator should produce an error on Not Handled links"){
     runWithRollback {
       val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
         Seq(), None)
       val project = projectService.createRoadLinkProject(rap)
       val id = project.id
-      mockForProject(id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project)))
-      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))))
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(5, 206).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(5: Long, 5: Long, 206: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))))
       val projectLinks = ProjectDAO.getProjectLinks(id)
 
-      val validationErrors = projectValidator.validateProject(project, projectLinks)
+      val validationErrors = projectValidator.validateProject(project, projectLinks).filterNot(_.validationError == MissingEndOfRoad)
       validationErrors.head.validationError.message should be ("")
       validationErrors.head.optionalInformation should not be ("")
       validationErrors.head.validationError.value should be (8)
@@ -1209,7 +1210,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       projectLinks.size should be (2)
 
-      val validationErrors = projectValidator.validateProject(project, projectLinks)
+      val validationErrors = projectValidator.validateProject(savedProject, projectLinks)
       validationErrors.size should be (1)
       validationErrors.head.projectId should be (savedProject.id)
       validationErrors.head.affectedLinkIds should contain theSameElementsAs newLinkTemplates.map(_.linkId).toSeq
