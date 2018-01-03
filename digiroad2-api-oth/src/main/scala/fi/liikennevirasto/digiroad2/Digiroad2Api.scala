@@ -1208,29 +1208,39 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     assetService.getMunicipalitiesNameByCode(municipalities)
   }
 
-  get("/municipalities/assetTypes") {
-    //val id = params("municipalityCode").toInt
-    verificationService.getAssetTypesByMunicipality(235)
+  get("/municipalities/assetTypes/:municipalityCode") {
+    val id = params("municipalityCode").toInt
+    verificationService.getAssetTypesByMunicipality(id)
   }
 
-  get("/municipalities/assetVerification") {
-    //val id = params("municipalityCode").toInt
-    //val assetTypeId = params("assetTypeId").toInt
-    verificationService.getAssetVerification(235, 90)
+  get("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
+    val id = params("municipalityCode").toInt
+    val assetTypeId = params("assetTypeId").toInt
+    verificationService.getAssetVerification(id, assetTypeId)
   }
 
-  put("/municipalities/assetVerification") {
-    //val user = userProvider.getCurrentUser()
-    //val id = params("municipalityCode").toInt
-    //val assetTypeId = params("assetTypeId").toInt
-    verificationService.verifyAssetType(235, 100, "testaroni")
+  put("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
+    val user = userProvider.getCurrentUser()
+    val id = params("municipalityCode").toInt
+    val assetTypeId = params("assetTypeId").toInt
+    verificationService.getAssetVerification(id, assetTypeId) match {
+      case Some(date) => verificationService.updateAssetTypeVerification(id, assetTypeId, "testaroni")
+      case _ => verificationService.verifyAssetType(id, assetTypeId, "testaroni")
+    }
   }
 
-  post("/municipalities/assetVerification") {
-    //val user = userProvider.getCurrentUser()
-    //val id = params("municipalityCode").toInt
-    //val assetTypeId = params("assetTypeId").toInt
-    verificationService.verifyAssetType(235, 100, "testaroni")
+  put("/municipalities/removeAssetVerification/:municipalityCode/:assetTypeId") {
+    val user = userProvider.getCurrentUser()
+    val id = params("municipalityCode").toInt
+    val assetTypeId = params("assetTypeId").toInt
+    verificationService.updateAssetTypeVerification(id, assetTypeId, "testaroni")
+  }
+
+  post("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
+    val user = userProvider.getCurrentUser()
+    val id = params("municipalityCode").toInt
+    val assetTypeId = params("assetTypeId").toInt
+    verificationService.verifyAssetType(id, assetTypeId, "testaroni")
   }
 
 

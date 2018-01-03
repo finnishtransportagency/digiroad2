@@ -31,10 +31,13 @@ class VerificationService(eventbus: DigiroadEventBus) {
 
   def verifyAssetType(municipalityCode: Int, assetTypeId: Int, username: String) = {
     withDynTransaction{
-      getAssetVerification(municipalityCode, assetTypeId) match {
-        case Some(date) => dao.updateAssetTypeVerification(municipalityCode, assetTypeId, username)
-        case _ => dao.verifyAssetType(municipalityCode, assetTypeId, username)
+        dao.verifyAssetType(municipalityCode, assetTypeId, username)
+      }
+  }
+
+  def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {
+    withDynTransaction{
+        dao.updateAssetTypeVerification(municipalityCode, assetTypeId, username)
       }
     }
-  }
 }

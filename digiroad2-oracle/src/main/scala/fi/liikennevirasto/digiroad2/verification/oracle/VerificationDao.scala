@@ -10,10 +10,10 @@ class VerificationDao {
 
   def getVerifiedAssetTypes(municipalityCode: Int) = {
     val verifiedAssetTypes =
-      sql"""select m.name_fi, at.name, mv.verified_at, mv.verified_by
+      sql"""select m.name_fi, asst.name, mv.verified_at, mv.verified_by
          from municipality_verification mv
          join municipality m on mv.municipality_id = m.id
-         join asset_type at on mv.asset_type_id = at.id
+         join asset_type asst on mv.asset_type_id = asst.id
          where mv.municipality_id = $municipalityCode""".as[(String, String, DateTime, String)].list
     verifiedAssetTypes
   }
@@ -35,9 +35,17 @@ class VerificationDao {
 
   def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {
     sqlu"""update municipality_verification
-           set verified_at = sysdate, verified_by = username
+           set verified_at = sysdate, verified_by = $username
            where municipality_id = $municipalityCode
            and asset_type_id = $assetTypeId
         """.execute
+  }
+
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeId: Int) = {
+    sqlu"""update municipality_verification
+           set verified_at = NULL, verified_by = NULL
+           where municipality_id = $municipalityCode
+           and asset_type_id = $assetTypeId
+      """.execute
   }
 }
