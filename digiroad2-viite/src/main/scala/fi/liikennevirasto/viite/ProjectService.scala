@@ -20,7 +20,6 @@ import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressL
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter, SplitOptions}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -452,7 +451,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadLinks.map(roadLink => {
         vvhHistoryLinks.find(h => h.linkId == linkId && h.linkId == roadLink.linkId) match {
           case Some(historyRoadLink) => {
-            if (roadLink.attributes.get("CREATED_DATE").getOrElse(0).asInstanceOf[BigInt] >= historyRoadLink.createdDate) {
+            if (roadLink.attributes.getOrElse("CREATED_DATE", 0).asInstanceOf[BigInt] >= historyRoadLink.createdDate) {
               roadLink.geometry
             } else {
               historyRoadLink.geometry
@@ -550,21 +549,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectDAO.getProjectLinksByProjectAndLinkId(roadLinks.keys, projectId).filter(_.status == LinkStatus.NotHandled)
   }
 
-  private def existsInSuravageOrNew(projectLink: Option[ProjectLink]): Boolean = {
-    if (projectLink.isEmpty) {
-      false
-    } else {
-      val link = projectLink.get
-      if (link.linkGeomSource != LinkGeomSource.SuravageLinkInterface) {
-        link.status == LinkStatus.New
-      } else {
-        if (roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(Set(link.linkId)).isEmpty) {
-          false
-        } else true
-      }
-    }
-  }
-
   /**
     * Save road link project, reserve new road parts, free previously reserved road parts that were removed
     *
@@ -647,12 +631,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           linkGeometryTimeStamp = time)
       }
       ProjectDAO.updateProjectLinksGeometry(updatedProjectLinks, username)
-    }
-  }
-
-  def getSplitLinkData(projectId: Long, linkId: Long): Seq[ProjectLink] = {
-    withDynTransaction {
-      ProjectDAO.fetchSplitLinks(projectId, linkId)
     }
   }
 
