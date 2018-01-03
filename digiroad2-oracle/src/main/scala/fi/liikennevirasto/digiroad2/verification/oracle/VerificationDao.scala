@@ -26,4 +26,18 @@ class VerificationDao {
          and mv.asset_type_id = $assetTypeId""".as[DateTime].firstOption
     verifiedAssetType
   }
+
+  def verifyAssetType(municipalityCode: Int, assetTypeId: Int, username: String) = {
+    sqlu"""insert into municipality_verification (municipality_id, asset_type_id, verified_at, verified_by)
+           values ($municipalityCode, $assetTypeId, sysdate, $username)
+      """.execute
+  }
+
+  def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {
+    sqlu"""update municipality_verification
+           set verified_at = sysdate, verified_by = username
+           where municipality_id = $municipalityCode
+           and asset_type_id = $assetTypeId
+        """.execute
+  }
 }

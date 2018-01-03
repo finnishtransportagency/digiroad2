@@ -1215,8 +1215,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/municipalities/assetVerification") {
     //val id = params("municipalityCode").toInt
+    //val assetTypeId = params("assetTypeId").toInt
     verificationService.getAssetVerification(235, 90)
   }
+
+  put("/municipalities/assetVerification") {
+    //val user = userProvider.getCurrentUser()
+    //val id = params("municipalityCode").toInt
+    //val assetTypeId = params("assetTypeId").toInt
+    verificationService.verifyAssetType(235, 100, "testaroni")
+  }
+
+  post("/municipalities/assetVerification") {
+    //val user = userProvider.getCurrentUser()
+    //val id = params("municipalityCode").toInt
+    //val assetTypeId = params("assetTypeId").toInt
+    verificationService.verifyAssetType(235, 100, "testaroni")
+  }
+
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
