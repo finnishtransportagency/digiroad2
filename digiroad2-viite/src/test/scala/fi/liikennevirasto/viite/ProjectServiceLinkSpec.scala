@@ -1456,9 +1456,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
             to_date('16.10.1998','DD.MM.RRRR'),'1','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
             MDSYS.SDO_ORDINATE_ARRAY(481234.04508322186,7058485.270820141,0,0,480783.428,7057271.799,0,2115)),null)""".execute
 
-      val points1820767 = "[ {\"x\": 480695.572, \"y\": 7058971.185, \"z\": 95.14500000000407},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569},{\"x\": 481122.722, \"y\": 7058607.764, \"z\": 101.07300000000396},{\"x\": 481091.689, \"y\": 7058641.794, \"z\": 100.70500000000175},{\"x\": 481066.306, \"y\": 7058667.604, \"z\": 100.58599999999569},{\"x\": 481049.95703856583, \"y\": 7058685.435957936, \"z\": 100.48000025004062}]"
-      val points1820764 = "[ {\"x\": 481049.95703856583, \"y\": 7058685.435957936, \"z\": 100.48000025004062},{\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407},{\"x\": 481228.158, \"y\": 7058497.998, \"z\": 101.19500000000698},{\"x\": 481222.496, \"y\": 7058507.705, \"z\": 101.28100000000268},{\"x\": 481212.636, \"y\": 7058520.221, \"z\": 101.33400000000256},{\"x\": 481200.552, \"y\": 7058533.592, \"z\": 101.3920000000071},{\"x\": 481177.416, \"y\": 7058555.96, \"z\": 101.4149999999936},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569}]"
-      val points1820753 = "[ {\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569},{\"x\": 481250.504, \"y\": 7058400.315, \"z\": 101.25400000000081},{\"x\": 481253.614, \"y\": 7058427.976, \"z\": 100.97400000000198},{\"x\": 481246.483, \"y\": 7058458.39, \"z\": 100.90600000000268},{\"x\": 481234.04508322186, \"y\": 7058485.270820141, \"z\": 101.14499840087004}]"
+      val points1820767 = "[ {\"x\": 480695.572, \"y\": 7058971.185, \"z\": 95.14500000000407},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569},{\"x\": 481122.722, \"y\": 7058607.764, \"z\": 101.07300000000396},{\"x\": 481091.689, \"y\": 7058641.794, \"z\": 100.70500000000175},{\"x\": 481066.306, \"y\": 7058667.604, \"z\": 100.58599999999569},{\"x\": 481049.95703856583, \"y\": 7058685.435957936, \"z\": 100.48000025004062}, {\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407}]"
+      val points1820764 = "[ {\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407},{\"x\": 481222.496, \"y\": 7058507.705, \"z\": 101.28100000000268},{\"x\": 481212.636, \"y\": 7058520.221, \"z\": 101.33400000000256},{\"x\": 481200.552, \"y\": 7058533.592, \"z\": 101.3920000000071},{\"x\": 481177.416, \"y\": 7058555.96, \"z\": 101.4149999999936},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569}]"
+      val points1820753 = "[ {\"x\": 481250.504, \"y\": 7058400.315, \"z\": 101.25400000000081},{\"x\": 481253.614, \"y\": 7058427.976, \"z\": 100.97400000000198},{\"x\": 481246.483, \"y\": 7058458.39, \"z\": 100.90600000000268},{\"x\": 481234.04508322186, \"y\": 7058485.270820141, \"z\": 101.14499840087004}]"
       val points6700868 = "[ {\"x\": 481234.04508322186, \"y\": 7058485.270820141, \"z\": 101.14499840087004},{\"x\": 480779.784, \"y\": 7057242.879, \"z\": 98.60199999999895},{\"x\": 480780.587, \"y\": 7057248.18, \"z\": 98.65799999999581},{\"x\": 480782.136, \"y\": 7057262.34, \"z\": 98.76200000000244},{\"x\": 480783.428, \"y\": 7057271.799, \"z\": 98.85099999999511}]"
 
       val geom1820767 = toGeom(JSON.parseFull(points1820767))
@@ -1496,9 +1496,41 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val unchangedLinks = ProjectDAO.getProjectLinks(resultProject.id, Some(LinkStatus.UnChanged))
       unchangedLinks.size should be (1)
 
-      //suravage roadlinks for double splitting operations
+      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(7507573), false)).thenReturn(
+        Seq(RoadLink(7507573,
+        Seq(Point(481215.883, 7058528.184), Point(481204.373, 7058538.503), Point(481186.514, 7058553.584), Point(481173.438, 7058559.561), Point(481158.027, 7058573.51)),
+        GeometryUtils.geometryLength(Seq(Point(481215.883, 7058528.184), Point(481204.373, 7058538.503), Point(481186.514, 7058553.584), Point(481173.438, 7058559.561), Point(481158.027, 7058573.51))),
+        Municipality, 1,
+        extractTrafficDirection(SideCode.apply(1), Track.apply(99)), LinkType.apply(99), None, None, Map(
+          "MUNICIPALITYCODE" -> BigInt(263), "SURFACETYPE" -> BigInt(1),
+          "ROADNUMBER" -> BigInt(16081), "ROADPARTNUMBER" -> BigInt(1)),
+        ConstructionType.apply(3), LinkGeomSource.apply(3))))
+      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(7507575), false)).thenReturn(
+        Seq(RoadLink(7507575,
+        Seq(Point(481250.504, 7058400.315), Point(481252.01, 7058413.708), Point(481253.614, 7058427.976), Point(481255.489, 7058443.953), Point(481254.77700186556, 7058460.714956081)),
+        GeometryUtils.geometryLength(Seq(Point(481250.504, 7058400.315), Point(481252.01, 7058413.708), Point(481253.614, 7058427.976), Point(481255.489, 7058443.953), Point(481254.77700186556, 7058460.714956081))),
+        Municipality, 1,
+        extractTrafficDirection(SideCode.apply(1), Track.apply(99)), LinkType.apply(99), None, None, Map(
+          "MUNICIPALITYCODE" -> BigInt(263), "SURFACETYPE" -> BigInt(1),
+          "ROADNUMBER" -> BigInt(16081), "ROADPARTNUMBER" -> BigInt(1)),
+        ConstructionType.apply(3), LinkGeomSource.apply(3))))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(savedProjectLinks.map(toRoadLink))
+//      split 1st and 2nd for north and south of roundabout ends
+            val opts1stSplit = SplitOptions(Point(481172.6876185415,7058560.240194794,0.0), LinkStatus.UnChanged, LinkStatus.New, 16081, 1, Track.Combined, Discontinuity.Continuous, 8, LinkGeomSource.SuravageLinkInterface, RoadType.MunicipalityStreetRoad, resultProject.id, ProjectCoordinates(481193.47783403023,7058532.197852876,13))
+            val failmessage1 = projectService.splitSuravageLinkInTX(7507573, "testUser", opts1stSplit)
 
-      //split 1st and 2nd for north and south of roundabout ends
+      val projectLinksAfter1stSplit = ProjectDAO.getProjectLinks(resultProject.id)
+
+            val opts2ndSplit = SplitOptions(Point(481253.3736063617,7058425.837635641,0.0), LinkStatus.Transfer, LinkStatus.New, 16081, 1, Track.Combined, Discontinuity.Continuous, 8, LinkGeomSource.SuravageLinkInterface, RoadType.MunicipalityStreetRoad, resultProject.id, ProjectCoordinates(481245.3833092349,7058436.896503245,13))
+            val failmessage2 = projectService.splitSuravageLinkInTX(7507575, "testUser", opts2ndSplit)
+
+      val projectLinksAfter2ndSplit = ProjectDAO.getProjectLinks(resultProject.id)
+
+      val sharingSplit = projectLinksAfter2ndSplit.filter(pl => pl.connectedLinkId.isDefined)
+      val terminated = projectLinksAfter2ndSplit.filter(_.status == LinkStatus.Terminated)
+
+      sharingSplit.size should be (6)
+      terminated.size should be (2)
 
       //transfer the rest of roadpart
 
