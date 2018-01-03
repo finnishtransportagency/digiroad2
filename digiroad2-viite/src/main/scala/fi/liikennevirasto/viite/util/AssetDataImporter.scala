@@ -365,13 +365,13 @@ class AssetDataImporter {
       if (importDate != "") {
         sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
                ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely and TIE = 11323 and AOSA = 4  AND loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """
           .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
       }
         else{
         sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
                ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL """
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL AND TIE = 11323 and AOSA = 4  """
           .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
       }
       }.map {
@@ -390,12 +390,13 @@ class AssetDataImporter {
         rh.roadPartNumber == ch.roadPartNumber &&
         rh.trackCode == ch.trackCode &&
         rh.discontinuity == ch.discontinuity &&
-        rh.startAddrM == ch.startAddrM &&
-        rh.endAddrM == ch.endAddrM &&
+        ((rh.startAddrM < rh.endAddrM && rh.startAddrM == ch.startAddrM) ||  (rh.startAddrM > rh.endAddrM && rh.startAddrM == ch.endAddrM)) &&
+        ((rh.startAddrM < rh.endAddrM && rh.endAddrM == ch.endAddrM) ||  (rh.startAddrM > rh.endAddrM && rh.endAddrM == ch.startAddrM)) &&
         rh.startDate.getOrElse("") == ch.startDate.getOrElse("") &&
         rh.endDate.getOrElse("") == ch.endDate.getOrElse("") &&
         rh.validFrom.getOrElse("") == ch.validFrom.getOrElse("") &&
         rh.validTo.getOrElse("") == ch.validTo.getOrElse("") &&
+        rh.startM == ch.startM && rh.endM == ch.endM &&
         rh.ely == ch.ely &&
         rh.roadType == ch.roadType &&
         rh.linkId == ch.linkId
