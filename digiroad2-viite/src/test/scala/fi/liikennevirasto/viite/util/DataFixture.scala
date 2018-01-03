@@ -307,7 +307,7 @@ object DataFixture {
     flyway.setInitVersion("-1")
     flyway.setInitOnMigrate(true)
     flyway.setTable("schema_viite_version")
-    flyway.setLocations("db.migration.viite")
+    flyway.setLocations("db.viite.migration")
     flyway
   }
 

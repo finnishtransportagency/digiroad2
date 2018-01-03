@@ -7,8 +7,8 @@ object DatabaseMigration {
   def main(args: Array[String]) : Unit = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
-    flyway.setLocations("db.migration")
-    flyway.setTable("viite_schema_version")
+    flyway.setTable("schema_viite_version")
+    flyway.setLocations("db.viite.migration")
     flyway.migrate()
   }
 }
