@@ -405,13 +405,9 @@ class AssetDataImporter {
 
     println("TESTING PURPOSES")
     println(s"""Ammount of register items to put: ${checkCompliantAddresses.size}""")
-    val (existing, notExisting) = checkCompliantAddresses.partition(ad => {
-      currentHistory.exists(ch => {
-        ad.terminated == ch.terminated
-      })
-    })
-    println(s"""Ammount of same terminated items to put: ${existing.size}""")
-    println(s"""Ammount of different terminated items to put: ${notExisting.size}""")
+    val (emptyValidTo, filledValidTo) = checkCompliantAddresses.partition(_.validTo.isEmpty)
+    println(s"""Ammount of emptyValidTo items to put: ${emptyValidTo.size}""")
+    println(s"""Ammount of filledValidTo items to put: ${filledValidTo.size}""")
     fillStatements(lrmAddresses, checkCompliantAddresses.filterNot(_.linkId == 0).distinct, 2)
 
     lrmPositionPS.executeBatch()
