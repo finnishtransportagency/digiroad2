@@ -38,7 +38,8 @@ namespace :deploy do
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/viite/"
       execute "killall -q java; exit 0"
-      execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DatabaseMigration'"
+      execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.viite.util.DatabaseMigration'"
+      execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-viite' 'test:run-main fi.liikennevirasto.viite.util.DatabaseMigration'"
     end
   end
 

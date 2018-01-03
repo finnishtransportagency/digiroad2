@@ -2,10 +2,12 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
+import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -290,6 +292,65 @@ object DataFixture {
     println("Road link geometry freeze is active; exiting without changes")
   }
 
+  private def flyway: Flyway = {
+    val flyway = new Flyway()
+    flyway.setDataSource(ds)
+    flyway.setInitVersion("-1")
+    flyway.setInitOnMigrate(true)
+    flyway.setLocations("db.migration")
+    flyway
+  }
+
+  private def viiteFlyway: Flyway = {
+    val flyway = new Flyway()
+    flyway.setDataSource(ds)
+    flyway.setInitVersion("-1")
+    flyway.setInitOnMigrate(true)
+    flyway.setTable("schema_viite_version")
+    flyway.setLocations("db.migration.viite")
+    flyway
+  }
+
+  private def tearDown() {
+    flyway.clean()
+    viiteFlyway.clean()
+  }
+
+  private def tearUp() {
+    flyway.clean()
+    viiteFlyway.migrate()
+
+    SqlScriptRunner.runScripts(List(
+      "insert_test_fixture.sql",
+      "insert_users.sql",
+      "kauniainen_production_speed_limits.sql",
+      "kauniainen_total_weight_limits.sql",
+      "kauniainen_manoeuvres.sql",
+      "kauniainen_functional_classes.sql",
+      "kauniainen_traffic_directions.sql",
+      "kauniainen_link_types.sql",
+      "test_fixture_sequences.sql",
+      "kauniainen_lit_roads.sql",
+      "kauniainen_vehicle_prohibitions.sql",
+      "kauniainen_paved_roads.sql",
+      "kauniainen_pedestrian_crossings.sql",
+      "kauniainen_obstacles.sql",
+      "kauniainen_european_roads.sql",
+      "kauniainen_exit_numbers.sql",
+      "kauniainen_traffic_lights.sql",
+      "kauniainen_railway_crossings.sql",
+      "kauniainen_traffic_signs.sql",
+      //      "siilijarvi_functional_classes.sql",
+      //      "siilijarvi_link_types.sql",
+      //      "siilijarvi_traffic_directions.sql",
+      //      "siilinjarvi_speed_limits.sql",
+      //      "siilinjarvi_linear_assets.sql",
+      "insert_road_address_data.sql",
+      "insert_floating_road_addresses.sql",
+      "insert_project_link_data.sql"
+    ))
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -308,6 +369,9 @@ object DataFixture {
     }
 
     args.headOption match {
+      case Some("test") =>
+        tearDown
+        tearUp
       case Some ("find_floating_road_addresses")  if geometryFrozen =>
         showFreezeInfo()
       case Some ("find_floating_road_addresses") =>
