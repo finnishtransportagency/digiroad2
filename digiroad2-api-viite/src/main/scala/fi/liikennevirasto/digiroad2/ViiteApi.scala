@@ -475,6 +475,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong
+    val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
     val changeTableData = projectService.getChangeProject(projectId).map(project =>
       Map(
         "id" -> project.id,
@@ -487,15 +488,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
             "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
     ).getOrElse(None)
-    Map("changeTable" -> changeTableData, "validationErrors" -> projectService.validateProjectById(projectId).map(issue => {
-      Map(
-        "id" -> issue.projectId,
-        "validationError" -> issue.validationError.value,
-        "affectedLinkIds" -> issue.affectedLinkIds.toArray,
-        "coordinates" -> issue.coordinates,
-        "optionalInformation" -> issue.optionalInformation.getOrElse("")
-      )
-    }))
+    Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors)
   }
 
   post("/project/publish") {
@@ -690,6 +683,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private[this] def constructBoundingRectangle(bbox: String) = {
     val BBOXList = bbox.split(",").map(_.toDouble)
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
+  }
+
+  private def mapValidationIssues(issue: ProjectValidator.ValidationErrorDetails): Map[String, Any] = {
+    Map(
+      "id" -> issue.projectId,
+      "validationError" -> issue.validationError.value,
+      "affectedLinkIds" -> issue.affectedLinkIds.toArray,
+      "coordinates" -> issue.coordinates,
+      "optionalInformation" -> issue.optionalInformation.getOrElse("")
+    )
   }
 
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {

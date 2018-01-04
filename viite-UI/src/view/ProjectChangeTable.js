@@ -87,7 +87,7 @@
       eventbus.once('projectChanges:fetched', function(projectChangeData){
         var htmlTable ="";
         if(!_.isUndefined(projectChangeData) && projectChangeData !== null){
-          _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
+          _.each(projectChangeData.changeTable.changeInfoSeq, function(changeInfoSeq) {
             if (changeInfoSeq.changetype === newLinkStatus) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getEmptySource(changeInfoSeq);
@@ -123,6 +123,12 @@
         }
         $('.row-changes').remove();
         $('.change-table-dimensions').append($(htmlTable));
+        if (projectChangeData.validationErrors.length===0)
+          $('.change-table-header').html($('<div>Validointi ok. Alla näet muutokset projektissa.</div>'));
+        else
+        {
+          $('.change-table-header').html($('<div>Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
+        }
       });
 
       changeTable.on('click', 'button.close', function (){
