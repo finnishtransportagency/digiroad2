@@ -55,8 +55,8 @@
       '<td class="project-change-table-dimension-h">LET</td>' +
       '<td class="project-change-table-dimension-h">PIT</td>' +
       '<td class="project-change-table-dimension-h">JATK</td>' +
-      '<td class="project-change-table-dimension dimension-road-type-h">TIETY</td>' +
-      '<td class="project-change-table-dimension dimension-last-h">ELY</td>' +
+      '<td class="project-change-table-dimension-h dimension-road-type-h">TIETY</td>' +
+      '<td class="project-change-table-dimension-h dimension-last-h">ELY</td>' +
       '</tr>' +
       '</table>' +
       '</div>');
