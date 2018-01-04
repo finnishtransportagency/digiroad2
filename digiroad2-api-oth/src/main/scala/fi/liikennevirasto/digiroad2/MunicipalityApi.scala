@@ -165,7 +165,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     } else None
   }
 
-  def updateLinearAsset(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): (PersistedLinearAsset, RoadLink) = {
+  def updateLinearAsset(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): Seq[(PersistedLinearAsset, RoadLink)] = {
     val usedService = verifyLinearServiceToUse(assetTypeId)
     val oldAsset = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired).headOption.
       getOrElse(halt(NotFound("Asset not found.")))
@@ -175,7 +175,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
     val updatedId = usedService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
-    getLinearAssetsAndRoadLinks(assetTypeId, updatedId.toSet).getOrElse(halt(InternalServerError("Asset not Updated"))).head
+    updatedId match {
+      case Seq(0L) => Seq.empty
+      case _ => getLinearAssetsAndRoadLinks(assetTypeId, updatedId.toSet).getOrElse(halt(InternalServerError("Asset not Updated")))
+    }
   }
 
   def updatePointAssets(parsedBody: JValue, typeId: Int, assetId: Int): PersistedPointAsset = {
@@ -859,7 +862,13 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           case "linear" =>
             (parsedBody \ "sideCode").extractOrElse[Int](halt(BadRequest("Missing mandatory 'sideCode' parameter")))
             if (assetTypeId == SpeedLimitAsset.typeId) speedLimitAssetToApi(updateSpeedLimitAsset(assetId, parsedBody, linkId))
-            else linearAssetToApi(updateLinearAsset(assetTypeId, assetId, parsedBody, linkId))
+            else{
+              val asset = updateLinearAsset(assetTypeId, assetId, parsedBody, linkId)
+              asset.nonEmpty match {
+                case true => linearAssetToApi(asset.head)
+                case false =>
+              }
+            }
           case "point" => pointAssetToApi(updatePointAssets(parsedBody, assetTypeId, assetId), assetTypeId)
           case _ =>
         }

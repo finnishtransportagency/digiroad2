@@ -31,6 +31,8 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 sealed trait Discontinuity {
   def value: Int
   def description: String
+
+  override def toString: String = s"$value - $description"
 }
 object Discontinuity {
   val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
@@ -625,7 +627,7 @@ object RoadAddressDAO {
           SELECT * FROM (
             SELECT ra.road_number
             FROM road_address ra
-            WHERE floating = '0' and road_number > $current AND (end_date < sysdate OR end_date IS NULL)
+            WHERE and road_number > $current AND (valid_to > sysdate OR valid_to IS NULL)
             ORDER BY road_number ASC
           ) WHERE ROWNUM < 2
       """
@@ -638,7 +640,7 @@ object RoadAddressDAO {
           SELECT * FROM (
             SELECT ra.road_part_number
             FROM road_address ra
-            WHERE floating = '0' and road_number = $roadNumber  AND road_part_number > $current AND (end_date < sysdate OR end_date IS NULL)
+            WHERE and road_number = $roadNumber  AND road_part_number > $current AND (valid_to > sysdate OR valid_to IS NULL)
             ORDER BY road_part_number ASC
           ) WHERE ROWNUM < 2
       """
@@ -859,7 +861,16 @@ object RoadAddressDAO {
     sql"""
        select distinct road_part_number
               from road_address ra
-              where road_number = $roadNumber AND ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
+              where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL)
+      """.as[Long].list
+  }
+
+  def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
+    sql"""
+       select distinct road_part_number
+              from road_address ra
+              where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL) AND START_DATE <= $startDate
+              AND (END_DATE IS NULL OR END_DATE > $startDate)
       """.as[Long].list
   }
 
@@ -1087,7 +1098,8 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
+      val newCreatedBy = createdBy.getOrElse(address.modifiedBy.getOrElse("-"))
+      addressPS.setString(11, if(newCreatedBy == null) "-" else newCreatedBy)
       val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)

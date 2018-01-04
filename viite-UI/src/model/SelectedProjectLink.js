@@ -76,7 +76,7 @@
           if (!terminatedC) {
             terminatedC = zeroLengthTerminated(suravageA);
           }
-          ids = projectLinkCollection.getMultiSelectIds(suravageA.linkId);
+          ids = [suravageA.linkId, suravageB.linkId];
           current = projectLinkCollection.getByLinkId(_.flatten(ids));
           suravageA.marker = "A";
           suravageB.marker = "B";

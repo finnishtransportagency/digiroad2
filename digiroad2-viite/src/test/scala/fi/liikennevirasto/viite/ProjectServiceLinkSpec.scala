@@ -1449,7 +1449,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         toMockAnswer(roadLinks))
       val resp = createProjectLinks(Seq(123L, 121L, 122L), project.id, 39999, 12, 0, 1, 1, 1, 8, "user")
       resp.get("success") should be(Some(true))
-      val links = projectService.getLinksByProjectLinkId(Set(123L, 121L, 122L), project.id, false)
+      val links =
+        ProjectDAO.getProjectLinks(project.id).groupBy(_.linkId).map {
+          pl => pl._1 -> ProjectAddressLinkBuilder.build(pl._2.head)
+        }.values.toSeq
       val start = links.find(_.linkId == 123L)
       start.isEmpty should be (false)
       start.get.sideCode should be (AgainstDigitizing)
