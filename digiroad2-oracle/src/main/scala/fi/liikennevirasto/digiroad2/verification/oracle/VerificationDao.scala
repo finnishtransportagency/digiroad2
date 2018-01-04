@@ -11,15 +11,18 @@ class VerificationDao {
 
   def getVerifiedAssetTypes(municipalityCode: Int) = {
     val verifiedAssetTypes =
-      sql"""select m.name_fi, asst.name, mv.verified_at, mv.verified_by
-         from municipality_verification mv
-         join municipality m on mv.municipality_id = m.id
-         join asset_type asst on mv.asset_type_id = asst.id
-         where mv.municipality_id = $municipalityCode""".as[(String, String, DateTime, String)].list
-    verifiedAssetTypes
+      sql"""select  m.id, m.name_fi, mv.verified_by, mv.verified_date, asst.name
+         from municipality m
+		     join asset_type asst on asst.verifiable = 1
+         left join municipality_verification mv on mv.municipality_id = m.id and mv.asset_type_id = asst.id
+         where m.id = $municipalityCode""".as[(Int, String, Option[String], Option[DateTime], Option[String])].list
+
+    verifiedAssetTypes.map { case (municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeName) =>
+      VerificationInfo(municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeName)
+    }
   }
 
-    def getAssetVerification(municipality: Int, typeId: Int) = {
+  def getAssetVerification(municipality: Int, typeId: Int) = {
     val verifiedAssetType =
       sql"""select m.id, m.name_fi, mv.verified_by, mv.verified_date
          from municipality m

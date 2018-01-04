@@ -1226,7 +1226,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/municipalities/assetTypes/:municipalityCode") {
     val id = params("municipalityCode").toInt
-    verificationService.getAssetTypesByMunicipality(id)
+    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
+
+    verifiedAssetTypes.map {x => Map(verifiedAssetTypes.head.municipalityName -> verifiedAssetTypes.map {
+      assetType => Map("asset name"  -> assetType.assetTypeName,
+                       "verified at" -> assetType.verifiedDate,
+                       "verified by" -> assetType.verifiedBy)})}.headOption
   }
 
   get("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
@@ -1235,14 +1240,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.getAssetVerification(id, assetTypeId)
   }
 
-  put("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
+  post("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
     val user = userProvider.getCurrentUser()
     val id = params("municipalityCode").toInt
     val assetTypeId = params("assetTypeId").toInt
-    verificationService.getAssetVerification(id, assetTypeId) match {
-      case Some(date) => verificationService.updateAssetTypeVerification(id, assetTypeId, "testaroni")
-      case _ => verificationService.verifyAssetType(id, assetTypeId, "testaroni")
-    }
+    verificationService.verifyAssetType(id, assetTypeId, "tester")
   }
 
   put("/municipalities/removeAssetVerification/:municipalityCode/:assetTypeId") {
@@ -1251,14 +1253,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val assetTypeId = params("assetTypeId").toInt
     verificationService.updateAssetTypeVerification(id, assetTypeId, "testaroni")
   }
-
-  post("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
-    val user = userProvider.getCurrentUser()
-    val id = params("municipalityCode").toInt
-    val assetTypeId = params("assetTypeId").toInt
-    verificationService.verifyAssetType(id, assetTypeId, "testaroni")
-  }
-
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()

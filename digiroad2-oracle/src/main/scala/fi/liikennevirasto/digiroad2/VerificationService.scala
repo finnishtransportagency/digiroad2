@@ -2,27 +2,20 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.verification.oracle.VerificationDao
+import fi.liikennevirasto.digiroad2.verification.oracle.{VerificationDao}
 import org.joda.time.DateTime
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime])
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], assetTypeName: Option[String] = None)
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def dao: VerificationDao = new VerificationDao
 
-  def getAssetTypesByMunicipality(municipalityCode: Int): Option[Map[String, List[Map[String, Any]]]] = {
-
-    val verifiedAssetTypes = withDynTransaction {
+  def getAssetTypesByMunicipality(municipalityCode: Int): List[VerificationInfo] = {
+    withDynTransaction {
       dao.getVerifiedAssetTypes(municipalityCode)
     }
-
-    verifiedAssetTypes.map {x => Map(verifiedAssetTypes.head._1 -> verifiedAssetTypes.map {
-      assetType => Map("asset name"  -> assetType._2,
-                       "verified at" -> assetType._3,
-                       "verified by" -> assetType._4)
-    })}.headOption
   }
 
   def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Option[VerificationInfo] = {
@@ -32,10 +25,11 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def verifyAssetType(municipalityCode: Int, assetTypeId: Int, username: String) = {
-    withDynTransaction{
-        dao.verifyAssetType(municipalityCode, assetTypeId, username)
-      }
+    getAssetVerification(municipalityCode, assetTypeId).get.verifiedBy match {
+      case Some(info) => updateAssetTypeVerification(municipalityCode, assetTypeId, username)
+      case None => createAssetTypeVerification(municipalityCode, assetTypeId, username)
     }
+  }
 
   def getMunicipalityInfo(typeId: Int, bounds: BoundingRectangle): VerificationInfo = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
@@ -46,10 +40,21 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     getAssetVerification(nearestRoadLink.municipalityCode, typeId).get
   }
 
-
   def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {
     withDynTransaction{
         dao.updateAssetTypeVerification(municipalityCode, assetTypeId, username)
       }
     }
+
+  def createAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {
+    withDynTransaction{
+      dao.verifyAssetType(municipalityCode, assetTypeId, username)
+    }
+  }
+
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeId: Int) = {
+    withDynTransaction{
+      dao.removeAssetTypeVerification(municipalityCode, assetTypeId)
+    }
+  }
 }
