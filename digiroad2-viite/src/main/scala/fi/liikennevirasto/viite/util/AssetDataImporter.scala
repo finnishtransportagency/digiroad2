@@ -295,7 +295,7 @@ class AssetDataImporter {
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
 
-    def fillStatements(lrmAddresses: List[LRMPos], roadList: List[RoadAddressHistory], terminationStatus: Int) = {
+    def fillStatements(lrmAddresses: List[LRMPos], roadList: List[RoadAddressHistory]) = {
       if(roadList.size != 0) {
         val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmAddresses.size}""".as[Long].list
         val df = new DecimalFormat("#.###")
