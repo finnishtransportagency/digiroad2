@@ -295,52 +295,55 @@ class AssetDataImporter {
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
 
-    def fillStatements(lrmAddresses: List[LRMPos], roadList: List[RoadAddressHistory]) = {
+    def fillStatements(lrmAddresses: List[LRMPos], roadList: List[RoadAddressHistory], terminationStatus: Int) = {
       if(roadList.size != 0) {
         val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmAddresses.size}""".as[Long].list
         val df = new DecimalFormat("#.###")
         assert(ids.size == lrmAddresses.size || lrmAddresses.isEmpty)
         lrmAddresses.zip(ids).foreach { case ((pos), (lrmId)) =>
-          val address = roadList.find(r => r.lrmId == pos.id && r.startM == pos.startM && r.endM == pos.endM).get
-          val (startAddrM, endAddrM, sideCode) = if (address.startAddrM < address.endAddrM) {
-            (address.startAddrM, address.endAddrM, SideCode.TowardsDigitizing.value)
-          } else {
-            (address.endAddrM, address.startAddrM, SideCode.AgainstDigitizing.value)
-          }
-          val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
-            (address.x1, address.y1, address.x2, address.y2)
-          else
-            (address.x2, address.y2, address.x1, address.y1)
+          val addr = roadList.find(r => r.lrmId == pos.id && r.startM == pos.startM && r.endM == pos.endM)
+          if (addr.isDefined) {
+            val address = addr.get
+            val (startAddrM, endAddrM, sideCode) = if (address.startAddrM < address.endAddrM) {
+              (address.startAddrM, address.endAddrM, SideCode.TowardsDigitizing.value)
+            } else {
+              (address.endAddrM, address.startAddrM, SideCode.AgainstDigitizing.value)
+            }
+            val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
+              (address.x1, address.y1, address.x2, address.y2)
+            else
+              (address.x2, address.y2, address.x1, address.y1)
 
-          lrmPositionPS.setLong(1, lrmId)
-          lrmPositionPS.setLong(2, pos.linkId)
-          lrmPositionPS.setLong(3, sideCode)
-          lrmPositionPS.setDouble(4, pos.startM)
-          lrmPositionPS.setDouble(5, pos.endM)
-          lrmPositionPS.addBatch()
-          addressPS.setLong(1, lrmId)
-          addressPS.setLong(2, address.roadNumber)
-          addressPS.setLong(3, address.roadPartNumber)
-          addressPS.setLong(4, address.trackCode)
-          addressPS.setLong(5, address.discontinuity)
-          addressPS.setLong(6, Math.abs(startAddrM))
-          addressPS.setLong(7, Math.abs(endAddrM))
-          addressPS.setString(8, address.startDate.get)
-          addressPS.setString(9, address.endDate.getOrElse(""))
-          addressPS.setString(10, address.userId)
-          addressPS.setString(11, address.validFrom.get)
-          addressPS.setDouble(12, x1.get)
-          addressPS.setDouble(13, y1.get)
-          addressPS.setDouble(14, x2.get)
-          addressPS.setDouble(15, y2.get)
-          addressPS.setDouble(16, Math.abs(endAddrM) - Math.abs(startAddrM))
-          addressPS.setInt(17, 0)
-          addressPS.setLong(18, address.roadType)
-          addressPS.setLong(19, address.ely)
-          addressPS.setInt(20, address.terminated.toInt)
-          addressPS.addBatch()
-          println("road_number: %s, road_part_number: %s, START_ADDR_M: %s, END_ADDR_M : %s, TRACK_CODE : %s, DISCONTINUITY: %s, START_DATE: %s, END_DATE: %s, VALID_FROM: %s, VALID_TO: %s, ELY: %s, ROAD_TYPE: %s, TERMINATED: %s"
-            .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get, address.endDate.getOrElse(""), address.validFrom.getOrElse(""), address.validTo.getOrElse(""), address.ely, address.roadType, address.terminated.toInt))
+            lrmPositionPS.setLong(1, lrmId)
+            lrmPositionPS.setLong(2, pos.linkId)
+            lrmPositionPS.setLong(3, sideCode)
+            lrmPositionPS.setDouble(4, pos.startM)
+            lrmPositionPS.setDouble(5, pos.endM)
+            lrmPositionPS.addBatch()
+            addressPS.setLong(1, lrmId)
+            addressPS.setLong(2, address.roadNumber)
+            addressPS.setLong(3, address.roadPartNumber)
+            addressPS.setLong(4, address.trackCode)
+            addressPS.setLong(5, address.discontinuity)
+            addressPS.setLong(6, Math.abs(startAddrM))
+            addressPS.setLong(7, Math.abs(endAddrM))
+            addressPS.setString(8, address.startDate.get)
+            addressPS.setString(9, address.endDate.getOrElse(""))
+            addressPS.setString(10, address.userId)
+            addressPS.setString(11, address.validFrom.get)
+            addressPS.setDouble(12, x1.get)
+            addressPS.setDouble(13, y1.get)
+            addressPS.setDouble(14, x2.get)
+            addressPS.setDouble(15, y2.get)
+            addressPS.setDouble(16, Math.abs(endAddrM) - Math.abs(startAddrM))
+            addressPS.setInt(17, 0)
+            addressPS.setLong(18, address.roadType)
+            addressPS.setLong(19, address.ely)
+            addressPS.setInt(20, address.terminated.toInt)
+            addressPS.addBatch()
+            println("road_number: %s, road_part_number: %s, START_ADDR_M: %s, END_ADDR_M : %s, TRACK_CODE : %s, DISCONTINUITY: %s, START_DATE: %s, END_DATE: %s, VALID_FROM: %s, VALID_TO: %s, ELY: %s, ROAD_TYPE: %s, TERMINATED: %s"
+              .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get, address.endDate.getOrElse(""), address.validFrom.getOrElse(""), address.validTo.getOrElse(""), address.ely, address.roadType, address.terminated.toInt))
+          }
         }
       }
     }
@@ -399,7 +402,7 @@ class AssetDataImporter {
       if (importDate != "") {
         sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
                ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
-            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """
+            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely  AND loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """
           .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
       }
         else{
@@ -425,10 +428,13 @@ class AssetDataImporter {
         rh.roadPartNumber == ch.roadPartNumber &&
         rh.trackCode == ch.trackCode &&
         rh.discontinuity == ch.discontinuity &&
-        rh.startAddrM == ch.startAddrM &&
-        rh.endAddrM == ch.endAddrM &&
+        ((rh.startAddrM < rh.endAddrM && rh.startAddrM == ch.startAddrM) ||  (rh.startAddrM > rh.endAddrM && rh.startAddrM == ch.endAddrM)) &&
+        ((rh.startAddrM < rh.endAddrM && rh.endAddrM == ch.endAddrM) ||  (rh.startAddrM > rh.endAddrM && rh.endAddrM == ch.startAddrM)) &&
         rh.startDate.getOrElse("") == ch.startDate.getOrElse("") &&
         rh.endDate.getOrElse("") == ch.endDate.getOrElse("") &&
+        rh.validFrom.getOrElse("") == ch.validFrom.getOrElse("") &&
+        rh.validTo.getOrElse("") == ch.validTo.getOrElse("") &&
+        rh.startM == ch.startM && rh.endM == ch.endM &&
         rh.ely == ch.ely &&
         rh.roadType == ch.roadType &&
         rh.linkId == ch.linkId
