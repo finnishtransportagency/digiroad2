@@ -1100,12 +1100,14 @@
     });
 
     eventbus.on('linkProperties:highlightReservedRoads', function(reservedOL3Features){
-     var styledFeatures = _.map(reservedOL3Features,function(feature) {
+      var styledFeatures = _.map(reservedOL3Features,function(feature) {
         feature.setStyle(projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: map.getView().getZoom()}));
-       return feature;
+        return feature;
       });
-      reservedRoadLayer.setZIndex(10000);
-      reservedRoadLayer.getSource().addFeatures(styledFeatures);
+      if (applicationModel.getSelectedLayer()==="linkProperty"){ //check if user is still in reservation form
+        reservedRoadLayer.setZIndex(10000);
+        reservedRoadLayer.getSource().addFeatures(styledFeatures);
+      }
     });
 
     eventbus.on('linkProperties:deselectFeaturesSelected', function(){
