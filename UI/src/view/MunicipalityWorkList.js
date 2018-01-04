@@ -17,19 +17,17 @@
         };
 
         //Todo check if is it really needed
-        if (municipalityValues.length == 1)
-            $('.button').attr("href", hrefDir + municipalityValues);
-        else
-            $('.button').removeAttr("href");
+        // if (municipalityValues.length == 1)
+        //     $('.button').attr("href", hrefDir + municipalityValues);
+        // else
+        //     $('.button').removeAttr("href");
 
         return tableContentRows(municipalityValues);
     };
 
     var searchbox = $('<div class="municipality-list">' +
         '<div class="filter-box">' +
-        '<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" id="searchBox">' +
-        '<a class="button">Hae</a></div>');
-
+        '<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" id="searchBox"></div>');
 
     var generateWorkList = function (listP) {
         var title = 'Tietolajien kuntasivu';
@@ -53,7 +51,6 @@
         };
         $(window).on('hashchange', showApp);
 
-
         listP.then(function (limits) {
             var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
             var formAndTable = searchbox.append($('<table id="tableData"/>').append(unknownLimits));
@@ -62,13 +59,6 @@
             $('#searchBox').on('keyup', function(event){
                 var currentInput = event.currentTarget.value;
 
-                //Todo check if is it really needed (only limit after first 3 letter)
-                // var unknownLimits = function() {
-                //     if(currentInput.length > 2) {
-                //     return _.partial.apply(null, [municipalityTable].concat([limits, currentInput]))();
-                // } else {
-                //     return _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
-                // }
                 var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, currentInput]))();
                 $('#tableData tbody').html(unknownLimits);
 

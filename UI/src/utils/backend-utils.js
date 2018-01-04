@@ -397,6 +397,17 @@
       return $.getJSON('api/linearAsset/unchecked?typeId=' + typeId);
     };
 
+
+    this.getUncheckedMunicipalities = function() {
+      return $.getJSON('api/municipalities/unverified');
+    };
+
+    this.getVerificationInfo = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/verificationInfo?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({

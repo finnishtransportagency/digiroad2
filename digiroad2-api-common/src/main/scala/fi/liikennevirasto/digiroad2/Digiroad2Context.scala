@@ -301,7 +301,7 @@ object Digiroad2Context {
   }
 
   lazy val verificationService: VerificationService = {
-    new VerificationService(eventbus)
+    new VerificationService(eventbus, roadLinkService)
   }
 
   lazy val revision: String = {

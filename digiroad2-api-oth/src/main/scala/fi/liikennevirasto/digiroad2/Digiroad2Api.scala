@@ -685,6 +685,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/verificationInfo") {
+//    val user = userProvider.getCurrentUser()
+//    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      val usedService =  getLinearAssetService(typeId)
+          verificationService.getMunicipalityInfo(typeId, boundingRectangle)
+
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+
   get("/linearassets/complementary"){
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities

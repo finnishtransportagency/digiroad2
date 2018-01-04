@@ -1,10 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.verification.oracle.VerificationDao
 import org.joda.time.DateTime
 
-class VerificationService(eventbus: DigiroadEventBus) {
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, verifiedBy: String, verifiedDate: DateTime)
+
+class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def dao: VerificationDao = new VerificationDao
@@ -22,18 +25,27 @@ class VerificationService(eventbus: DigiroadEventBus) {
     })}.headOption
   }
 
-  def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Option[DateTime] = {
-    val verificationDate = withDynTransaction{
+  def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Option[VerificationInfo] = {
+    withDynTransaction{
       dao.getAssetVerification(municipalityCode, assetTypeId)
     }
-    verificationDate
   }
 
   def verifyAssetType(municipalityCode: Int, assetTypeId: Int, username: String) = {
     withDynTransaction{
         dao.verifyAssetType(municipalityCode, assetTypeId, username)
       }
+    }
+
+  def getMunicipalityInfo(typeId: Int, bounds: BoundingRectangle): VerificationInfo = {
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
+    val midPoint = Point((bounds.rightTop.x + bounds.leftBottom.x) / 2, (bounds.rightTop.y + bounds.leftBottom.y) / 2)
+
+    val nearestRoadLink = roadLinks.minBy(road => GeometryUtils.minimumDistance(midPoint, road.geometry))
+
+    getAssetVerification(nearestRoadLink.municipalityCode, typeId).get
   }
+
 
   def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {
     withDynTransaction{
