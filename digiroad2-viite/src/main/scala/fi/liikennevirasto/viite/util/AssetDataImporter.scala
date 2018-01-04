@@ -441,11 +441,12 @@ class AssetDataImporter {
       })
     })
 
-    val lrmAddresses = lrmList.filterNot( lrm=> currentHistory.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).distinct
+    val lrmAddresses = lrmList.filterNot( lrm=> checkCompliantAddresses.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).distinct
     print(s"${DateTime.now()} - ")
-    println("%d segments with invalid link id removed".format(lrmList.filterNot(_.linkId != 0).size))
+    println("%d valid addresses to insert", checkCompliantAddresses.count(_.linkId != 0))
+    println("%d segments with invalid link id removed".format(lrmList.count(_.linkId == 0)))
 
-    fillStatements(lrmAddresses, checkCompliantAddresses.filterNot(_.linkId == 0).distinct)
+    fillStatements(lrmAddresses, checkCompliantAddresses.filter(_.linkId != 0).distinct)
 
     lrmPositionPS.executeBatch()
     println(s"${DateTime.now()} - LRM Positions saved")
