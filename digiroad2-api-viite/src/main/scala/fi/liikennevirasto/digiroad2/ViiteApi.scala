@@ -22,10 +22,6 @@ import org.slf4j.LoggerFactory
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
-/**
-  * Created by venholat on 25.8.2016.
-  */
-
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
@@ -475,6 +471,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong
+    val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
     val changeTableData = projectService.getChangeProject(projectId).map(project =>
       Map(
         "id" -> project.id,
@@ -485,17 +482,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "changeInfoSeq" -> project.changeInfoSeq.map(changeInfo =>
           Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.roadType.value,
             "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
-            "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
-    ).getOrElse(None)
-    Map("changeTable" -> changeTableData, "validationErrors" -> projectService.validateProjectById(projectId).map(issue => {
-      Map(
-        "id" -> issue.projectId,
-        "validationError" -> issue.validationError.value,
-        "affectedLinkIds" -> issue.affectedLinkIds.toArray,
-        "coordinates" -> issue.coordinates,
-        "optionalInformation" -> issue.optionalInformation.getOrElse("")
-      )
-    }))
+            "target" -> changeInfo.target, "reversed" -> changeInfo.reversed))
+      ))
+    Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors)
   }
 
   post("/project/publish") {
@@ -862,6 +851,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           ))
       }
     }
+  }
+
+  private def mapValidationIssues(issue: ProjectValidator.ValidationErrorDetails): Map[String, Any] = {
+    Map(
+      "id" -> issue.projectId,
+      "validationError" -> issue.validationError.value,
+      "affectedLinkIds" -> issue.affectedLinkIds.toArray,
+      "coordinates" -> issue.coordinates,
+      "optionalInformation" -> issue.optionalInformation.getOrElse("")
+    )
   }
 
   // Fold segments on same link together
