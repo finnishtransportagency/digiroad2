@@ -423,7 +423,7 @@ class AssetDataImporter {
 
     val lrmList = adjustedTermination.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM)) // linkId -> (id, linkId, startM, endM)
     val (checkCompliantAddresses, nonCheckingAddresses) = adjustedTermination.partition(rh => {
-      currentHistory.exists(ch => {
+      !currentHistory.exists(ch => {
         rh.roadNumber == ch.roadNumber &&
         rh.roadPartNumber == ch.roadPartNumber &&
         rh.trackCode == ch.trackCode &&
