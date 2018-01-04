@@ -152,7 +152,7 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressCh
       JField("ajr", s.trackCode.map(l => JInt(BigInt.apply(l))).orNull),
       JField("aosa", s.startRoadPartNumber.map(l => JInt(BigInt.apply(l))).orNull),
       JField("aet", s.startAddressM.map(l => JInt(BigInt.apply(l))).orNull),
-      JField("losa", s.endRoadPartNumber.map(l => JInt(BigInt.apply(l))).orNull),v
+      JField("losa", s.endRoadPartNumber.map(l => JInt(BigInt.apply(l))).orNull),
       JField("let", s.endAddressM.map(l => JInt(BigInt.apply(l))).orNull))
 }))
 
