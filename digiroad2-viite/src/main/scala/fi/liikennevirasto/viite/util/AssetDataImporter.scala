@@ -434,7 +434,6 @@ class AssetDataImporter {
         rh.endDate.getOrElse("") == ch.endDate.getOrElse("") &&
         rh.validFrom.getOrElse("") == ch.validFrom.getOrElse("") &&
         rh.validTo.getOrElse("") == ch.validTo.getOrElse("") &&
-        rh.startM == ch.startM && rh.endM == ch.endM &&
         rh.ely == ch.ely &&
         rh.roadType == ch.roadType &&
         rh.linkId == ch.linkId
