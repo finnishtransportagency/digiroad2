@@ -1523,28 +1523,38 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val projectLinksAfter1stSplit = ProjectDAO.getProjectLinks(resultProject.id)
 
+      val sharingSplit1 = projectLinksAfter1stSplit.filter(pl => pl.connectedLinkId.isDefined)
+      val terminated1 = projectLinksAfter1stSplit.filter(_.status == LinkStatus.Terminated)
+
+      sharingSplit1.size should be (3)
+      terminated1.size should be (1)
+
+      val getChangeTable2 = projectService.getChangeProject(resultProject.id)
+      val unchangedRow2 = getChangeTable2.get.changeInfoSeq.filter(_.changeType == AddressChangeType.Unchanged)
+      unchangedRow2.last.source.endAddressM should be (Some(655))
+
             val opts2ndSplit = SplitOptions(Point(481253.3736063617,7058425.837635641,0.0), LinkStatus.Transfer, LinkStatus.New, 16081, 1, Track.Combined, Discontinuity.Continuous, 8, LinkGeomSource.SuravageLinkInterface, RoadType.MunicipalityStreetRoad, resultProject.id, ProjectCoordinates(481245.3833092349,7058436.896503245,13))
             projectService.splitSuravageLinkInTX(7507575, "testUser", opts2ndSplit)
 
       val projectLinksAfter2ndSplit = ProjectDAO.getProjectLinks(resultProject.id)
 
-      val sharingSplit = projectLinksAfter2ndSplit.filter(pl => pl.connectedLinkId.isDefined)
-      val terminated = projectLinksAfter2ndSplit.filter(_.status == LinkStatus.Terminated)
+      val sharingSplit2 = projectLinksAfter2ndSplit.filter(pl => pl.connectedLinkId.isDefined)
+      val terminated2 = projectLinksAfter2ndSplit.filter(_.status == LinkStatus.Terminated)
 
-      sharingSplit.size should be (6)
-      terminated.size should be (2)
+      sharingSplit2.size should be (6)
+      terminated2.size should be (2)
 
-      val getChangeTable2 = projectService.getChangeProject(resultProject.id)
-      val unchangedRow2 = getChangeTable2.get.changeInfoSeq.filter(_.changeType == AddressChangeType.Unchanged)
-      unchangedRow2.last.source.endAddressM should not be (Some(753))
+      val getChangeTable3 = projectService.getChangeProject(resultProject.id)
+      val unchangedRow3 = getChangeTable3.get.changeInfoSeq.filter(_.changeType == AddressChangeType.Unchanged)
+      unchangedRow3.last.source.endAddressM should be (unchangedRow2.last.source.endAddressM)
       //transfer the rest of roadpart
       projectService.updateProjectLinks(resultProject.id, Set(6700868), LinkStatus.Transfer, "TestUser",
         16081, 1, 0, Option.empty[Int]) should be(None)
 
       //validate if unchanged links have changed his max LET value
-      val getChangeTable3 = projectService.getChangeProject(resultProject.id)
-      val unchangedRow3 = getChangeTable2.get.changeInfoSeq.filter(_.changeType == AddressChangeType.Unchanged)
-      unchangedRow3.head.source.endAddressM should be (unchangedRow2.head.source.endAddressM)
+      val getChangeTable4 = projectService.getChangeProject(resultProject.id)
+      val unchangedRow4 = getChangeTable3.get.changeInfoSeq.filter(_.changeType == AddressChangeType.Unchanged)
+      unchangedRow4.last.source.endAddressM should be (unchangedRow3.last.source.endAddressM)
     }
   }
 
