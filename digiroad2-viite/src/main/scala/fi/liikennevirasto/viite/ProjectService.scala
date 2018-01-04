@@ -676,7 +676,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val changeProjectData = withDynTransaction {
       try {
         if (recalculateChangeTable(projectId)) {
-          //check why is the calculation wrong
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
           Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
         } else {
