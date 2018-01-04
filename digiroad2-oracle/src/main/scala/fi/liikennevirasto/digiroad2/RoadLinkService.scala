@@ -693,10 +693,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds: Set[Long],
-                                                frozenTimeVVHAPIServiceEnabled: Boolean = false): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
+                                                frozenVVHLinks: Boolean = false): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
     val fut = for{
       f1Result <- vvhClient.historyData.fetchVVHRoadLinkByLinkIdsF(linkIds)
-      f2Result <- if(frozenTimeVVHAPIServiceEnabled)vvhClient.frozenTimeRoadLinkData.fetchByLinkIdsF(linkIds) else {vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)}
+      f2Result <- if(frozenVVHLinks)vvhClient.frozenTimeRoadLinkData.fetchByLinkIdsF(linkIds) else {vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)}
       f3Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
     } yield (f1Result, f2Result, f3Result)
 
