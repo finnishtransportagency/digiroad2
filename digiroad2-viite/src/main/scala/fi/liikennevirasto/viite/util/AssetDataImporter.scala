@@ -422,7 +422,7 @@ class AssetDataImporter {
     println("Read %d rows from conversion database for ELY %d".format(roadHistory.size, ely))
 
     val lrmList = adjustedTermination.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM)) // linkId -> (id, linkId, startM, endM)
-    val checkCompliantAddresses = adjustedTermination.filterNot(rh => {
+    val (checkCompliantAddresses, nonCheckingAddresses) = adjustedTermination.partition(rh => {
       currentHistory.exists(ch => {
         rh.roadNumber == ch.roadNumber &&
         rh.roadPartNumber == ch.roadPartNumber &&
@@ -441,7 +441,7 @@ class AssetDataImporter {
       })
     })
 
-    val lrmAddresses = lrmList.filterNot( lrm=> checkCompliantAddresses.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).distinct
+    val lrmAddresses = lrmList.filterNot( lrm=> nonCheckingAddresses.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).distinct
     print(s"${DateTime.now()} - ")
     println("%d valid addresses to insert", checkCompliantAddresses.count(_.linkId != 0))
     println("%d segments with invalid link id removed".format(lrmList.count(_.linkId == 0)))
