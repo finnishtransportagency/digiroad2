@@ -9,7 +9,7 @@ import javax.servlet.ServletContext
 class
 ScalatraBootstrap extends LifeCycle {
   override def init(context: ServletContext) {
-    context.mount(new Digiroad2Api(Digiroad2Context.roadLinkService,
+    context.mount(new Digiroad2Api(Digiroad2Context.roadLinkOTHService,
       Digiroad2Context.speedLimitService,
       Digiroad2Context.obstacleService,
       Digiroad2Context.railwayCrossingService,
@@ -33,7 +33,7 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new ViiteIntegrationApi(Digiroad2Context.roadAddressService), "/api/viite/integration/*")
     context.mount(new ChangeApi(), "/api/changes/*")
     context.mount(new MunicipalityApi(Digiroad2Context.onOffLinearAssetService,
-      Digiroad2Context.roadLinkService,
+      Digiroad2Context.roadLinkOTHService,
       Digiroad2Context.linearAssetService,
       Digiroad2Context.speedLimitService,
       Digiroad2Context.pavingService,
@@ -43,7 +43,7 @@ ScalatraBootstrap extends LifeCycle {
     ), "/api/municipality/*")
     context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.vvhClient,
       Digiroad2Context.roadAddressService, Digiroad2Context.projectService), "/api/viite/*")
-    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService ), "/api/livi/*")
+    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkOTHService ), "/api/livi/*")
     if (Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
       val url = Digiroad2Context.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
       if ("http://localhost.*/api/trrest/".r.findFirstIn(url).nonEmpty) {

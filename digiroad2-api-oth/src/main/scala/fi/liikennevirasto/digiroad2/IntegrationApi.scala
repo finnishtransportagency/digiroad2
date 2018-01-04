@@ -20,7 +20,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
   def clearCache() = {
-    roadLinkService.clearCache()
+    roadLinkOTHService.clearCache()
   }
 
   before() {
@@ -466,10 +466,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
         case "european_roads" => linearAssetsToApi(260, municipalityNumber)
         case "exit_numbers" => linearAssetsToApi(270, municipalityNumber)
-        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
+        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkOTHService.withRoadAddress(roadLinkOTHService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
+        case "road_nodes" => roadNodesToApi(roadLinkOTHService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

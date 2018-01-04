@@ -27,6 +27,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynSession[T](f: => T): T = f
   }
 
+  class RoadLinkTestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkOTHService(vvhClient, eventBus, vvhSerializer) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
+  }
+
+
   private def simulateQuery[T](f: => T): T = {
     val result = f
     sqlu"""delete from temp_id""".execute
@@ -165,7 +171,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     when(mockVVHComplementaryClient.fetchByLinkId(1l)).thenReturn(None)
 
-    val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+    val service = new RoadLinkOTHService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
     roadLink.map(_.linkType) should be(None)
   }
@@ -915,7 +921,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(Set(1611447l)))
         .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.WinterRoads)))
-      val service = new TestService(mockVVHClient)
+      val service = new RoadLinkTestService(mockVVHClient)
       val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
       roadLinks.length should be (0)
       dynamicSession.rollback()
@@ -932,7 +938,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.WinterRoads),
           VVHRoadlink(1611448, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
           VVHRoadlink(1611449, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      val service = new TestService(mockVVHClient)
+      val service = new RoadLinkTestService(mockVVHClient)
       val roadLinks = service.getRoadLinksFromVVHByMunicipality(91)
       roadLinks.length should be (2)
       roadLinks.sortBy(_.linkId)
@@ -941,5 +947,4 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       dynamicSession.rollback()
     }
   }
-
 }
