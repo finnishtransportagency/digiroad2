@@ -24,7 +24,7 @@ class VerificationDao {
       sql"""select m.id, m.name_fi, mv.verified_by, mv.verified_date
          from municipality m
          left join municipality_verification mv on mv.municipality_id = m.id and mv.asset_type_id = $typeId
-         where m.id = $municipality""".as[(Int, String, String, DateTime)].firstOption
+         where m.id = $municipality""".as[(Int, String, Option[String], Option[DateTime])].firstOption
 
     verifiedAssetType.map { case (municipalityCode, municipalityName, verifiedBy, verifiedDate) =>
       VerificationInfo(municipalityCode, municipalityName, verifiedBy, verifiedDate)

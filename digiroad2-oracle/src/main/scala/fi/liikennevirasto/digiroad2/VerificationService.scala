@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.verification.oracle.VerificationDao
 import org.joda.time.DateTime
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, verifiedBy: String, verifiedDate: DateTime)
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime])
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
