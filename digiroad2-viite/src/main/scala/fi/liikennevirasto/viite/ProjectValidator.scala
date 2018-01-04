@@ -234,7 +234,7 @@ object ProjectValidator {
         val nextProjectPart = projectNextRoadParts.filter(_.newLength.getOrElse(0L) > 0L)
           .map(_.roadPartNumber).sorted.headOption
         val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
-          .filterNot(p => projectNextRoadParts.exists(_.roadPartNumber == p)).sorted.headOption
+          .filterNot(p => p == part || projectNextRoadParts.exists(_.roadPartNumber == p)).sorted.headOption
         if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
           if (discontinuity != EndOfRoad)
             return error(ValidationError.MissingEndOfRoad)(lastProjectLinks)
@@ -248,9 +248,9 @@ object ProjectValidator {
           if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
             return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
           val isConnected = lastProjectLinks.forall(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
-          connected(lpl, nl)))
+            connected(lpl, nl)))
           val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
-          connected(lpl, nl)))
+            connected(lpl, nl)))
           if (isDisConnected) {
             discontinuity match {
               case Continuous | MinorDiscontinuity =>
