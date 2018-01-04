@@ -405,10 +405,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     retval.flatMap(x => x._2).toSeq
   }
 
+  /**
+    * returns road addresses with link-id currently does not include terminated links which it cannot build roadaddress with out geometry
+    * @param id link-id, boolean if we want
+    *
+    * @return roadaddress[]
+    */
   def getRoadAddressLink(id: Long) = {
 
     val (addresses, missedRL) = withDynTransaction {
-      (RoadAddressDAO.fetchByLinkId(Set(id), true),
+      (RoadAddressDAO.fetchByLinkId(Set(id), includeFloating = true,includeHistory = true,  includeTerminated = false), // cannot builld terminated link because missing geometry
         RoadAddressDAO.getMissingRoadAddresses(Set(id)))
     }
     val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
