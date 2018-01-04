@@ -441,7 +441,7 @@ class AssetDataImporter {
       })
     })
 
-    val lrmAddresses = lrmList.filterNot(_.linkId == 0).distinct
+    val lrmAddresses = lrmList.filterNot( lrm=> currentHistory.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).distinct
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(lrmList.filterNot(_.linkId != 0).size))
 
