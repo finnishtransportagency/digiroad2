@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.verification.oracle.{VerificationDao}
 import org.joda.time.DateTime
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], assetTypeName: Option[String] = None)
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime] ,assetTypeName: Option[String] = None)
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
@@ -18,26 +18,26 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
-  def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Option[VerificationInfo] = {
+  def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Seq[VerificationInfo] = {
     withDynTransaction{
       dao.getAssetVerification(municipalityCode, assetTypeId)
     }
   }
 
   def verifyAssetType(municipalityCode: Int, assetTypeId: Int, username: String) = {
-    getAssetVerification(municipalityCode, assetTypeId).get.verifiedBy match {
+    getAssetVerification(municipalityCode, assetTypeId).headOption match {
       case Some(info) => updateAssetTypeVerification(municipalityCode, assetTypeId, username)
       case None => createAssetTypeVerification(municipalityCode, assetTypeId, username)
     }
   }
 
-  def getMunicipalityInfo(typeId: Int, bounds: BoundingRectangle): VerificationInfo = {
+  def getMunicipalityInfo(typeId: Int, bounds: BoundingRectangle): Seq[VerificationInfo] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     val midPoint = Point((bounds.rightTop.x + bounds.leftBottom.x) / 2, (bounds.rightTop.y + bounds.leftBottom.y) / 2)
 
     val nearestRoadLink = roadLinks.minBy(road => GeometryUtils.minimumDistance(midPoint, road.geometry))
 
-    getAssetVerification(nearestRoadLink.municipalityCode, typeId).get
+    getAssetVerification(nearestRoadLink.municipalityCode, typeId)
   }
 
   def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {

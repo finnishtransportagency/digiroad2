@@ -18,7 +18,7 @@ class VerificationDao {
          where m.id = $municipalityCode""".as[(Int, String, Option[String], Option[DateTime], Option[String])].list
 
     verifiedAssetTypes.map { case (municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeName) =>
-      VerificationInfo(municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeName)
+      VerificationInfo(municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeName = assetTypeName)
     }
   }
 
@@ -26,8 +26,10 @@ class VerificationDao {
     val verifiedAssetType =
       sql"""select m.id, m.name_fi, mv.verified_by, mv.verified_date
          from municipality m
-         left join municipality_verification mv on mv.municipality_id = m.id and mv.asset_type_id = $typeId
-         where m.id = $municipality""".as[(Int, String, Option[String], Option[DateTime])].firstOption
+         join asset_type asst on asst.verifiable = 1 and asst.asset_type_id = $typeId
+         join municipality_verification mv on mv.municipality_id = m.id and mv.asset_type_id = asst.asset_type_id
+         where m.id = $municipality
+         and mv.valid_to is null or mv.valid_to >= sysdate """.as[(Int, String, Option[String], Option[DateTime])].list
 
     verifiedAssetType.map { case (municipalityCode, municipalityName, verifiedBy, verifiedDate) =>
       VerificationInfo(municipalityCode, municipalityName, verifiedBy, verifiedDate)
@@ -50,7 +52,7 @@ class VerificationDao {
 
   def removeAssetTypeVerification(municipalityCode: Int, assetTypeId: Int) = {
     sqlu"""update municipality_verification
-           set verified_date = NULL, verified_by = NULL
+           set valid_to = sysdate
            where municipality_id = $municipalityCode
            and asset_type_id = $assetTypeId
       """.execute

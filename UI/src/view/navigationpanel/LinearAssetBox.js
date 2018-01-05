@@ -1,5 +1,7 @@
 (function(root) {
   root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, allowComplementaryLinks, hasTrafficSignReadOnlyLayer) {
+    var checkIcon = '<img src="images/check-icon.png"/>';
+
     var legendTemplate = _.map(legendValues, function(value, idx) {
       return value ? '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
@@ -20,10 +22,13 @@
           '</div>'
       ].join('') : '';
 
+      var header = ['<div id="left-panel">    ' + title + (showUnit ? ' ('+unit+')': '') + '</div>' +
+      ' <div id="right-panel">' + checkIcon + '</div>'].join('');
+
     var expandedTemplate = [
       '<div class="panel ' + layerName +'">',
       '  <header class="panel-header expanded">',
-      '    ' + title + (showUnit ? ' ('+unit+')': ''),
+            header,
       '  </header>',
       '  <div class="panel-section panel-legend limit-legend">',
             legendTemplate,
@@ -84,6 +89,14 @@
       } else {
         eventbus.trigger(layerName + ':hideReadOnlyTrafficSigns');
       }
+    });
+
+    eventbus.on('verificationInfo:fetched', function(visible) {
+      var img = elements.expanded.find('#right-panel');
+        if (visible)
+           img.css('display','inline');
+        else
+           img.css('display','none');
     });
 
     var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();

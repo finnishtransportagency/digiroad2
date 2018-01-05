@@ -5,6 +5,7 @@
   var rectangleToolIcon = '<img src="images/rectangle-tool.svg"/>';
   var polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
   var terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
+  var checkIcon = '<img src="images/check-icon.png"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();
@@ -103,10 +104,13 @@
       '</div>'
     ].join('');
 
+    var header = ['<div id="left-panel">    Nopeusrajoitukset</div>' +
+        ' <div id="right-panel">' + checkIcon + '</div>'].join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      '    Nopeusrajoitukset',
+      header,
       '  </header>',
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
             speedLimitLegendTemplate,
@@ -188,6 +192,14 @@
       } else {
         eventbus.trigger('speedLimit:hideReadOnlyTrafficSigns');
       }
+    });
+
+    eventbus.on('verificationInfo:fetched', function(visible) {
+      var img = elements.expanded.find('#right-panel');
+      if (visible)
+        img.css('display','inline');
+      else
+        img.css('display','none');
     });
 
     return {

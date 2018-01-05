@@ -1,6 +1,9 @@
 create table municipality_verification (
-  municipality_id references municipality,
-  asset_type_id number references asset_type,
-  verified_date timestamp,
-	verified_by varchar2(128)
+  id NUMBER NOT NULL,
+  municipality_id REFERENCES municipality,
+  asset_type_id NUMBER REFERENCES asset_type,
+  verified_date TIMESTAMP default null,
+	verified_by VARCHAR2(128) default null,
+  valid_to TIMESTAMP default null,
+	PRIMARY KEY ("ID")
 );
