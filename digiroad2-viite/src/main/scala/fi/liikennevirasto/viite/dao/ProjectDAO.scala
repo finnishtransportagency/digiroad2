@@ -238,7 +238,7 @@ object ProjectDAO {
     val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
     val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
     val links = projectLinks.map{ pl =>
-      if (nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId)) {
+      if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId)) {
         val ra = addresses(pl.roadAddressId)
         // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
         pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
