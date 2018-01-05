@@ -1227,11 +1227,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/municipalities/assetTypes/:municipalityCode") {
     val id = params("municipalityCode").toInt
     val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
+    verifiedAssetTypes.groupBy(_.municipalityName)
+      .mapValues(
+      _.map(assetType => Map("assetName" -> assetType.assetTypeName,
+                             "verified_date" -> assetType.verifiedDate.getOrElse(""),
+                             "verified_by"   -> assetType.verifiedBy.getOrElse(""))))
 
-    verifiedAssetTypes.map {x => Map(verifiedAssetTypes.head.municipalityName -> verifiedAssetTypes.map {
-      assetType => Map("asset name"  -> assetType.assetTypeName,
-                       "verified at" -> assetType.verifiedDate,
-                       "verified by" -> assetType.verifiedBy)})}.headOption
   }
 
   get("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
