@@ -296,7 +296,7 @@ class AssetDataImporter {
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
 
     def fillStatements(lrmAddresses: List[LRMPos], roadList: List[RoadAddressHistory]) = {
-      if(roadList.size != 0) {
+      if(roadList.nonEmpty) {
         val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmAddresses.size}""".as[Long].list
         val df = new DecimalFormat("#.###")
         assert(ids.size == lrmAddresses.size || lrmAddresses.isEmpty)
@@ -394,7 +394,7 @@ class AssetDataImporter {
         startDate, endDate, validFrom, validTo, ely, roadType, terminated, linkId, createdBy, lrmId) =>
           RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
             startDate, endDate, validFrom, validTo, ely, roadType, terminated, linkId, createdBy, Some(0), Some(0), Some(0), Some(0), lrmId)
-      }
+      }.filter(ch => ch.startAddrM >= 0 && ch.endAddrM >= 0)
 
     print(s"\n${DateTime.now()} - ")
     println("Got %d current road addresses history".format(currentHistory.size))
