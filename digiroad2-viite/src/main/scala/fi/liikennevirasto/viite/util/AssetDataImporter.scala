@@ -341,8 +341,6 @@ class AssetDataImporter {
             addressPS.setLong(19, address.ely)
             addressPS.setInt(20, address.terminated.toInt)
             addressPS.addBatch()
-            println("road_number: %s, road_part_number: %s, START_ADDR_M: %s, END_ADDR_M : %s, TRACK_CODE : %s, DISCONTINUITY: %s, START_DATE: %s, END_DATE: %s, VALID_FROM: %s, VALID_TO: %s, ELY: %s, ROAD_TYPE: %s, TERMINATED: %s"
-              .format(address.roadNumber, address.roadPartNumber, Math.abs(startAddrM), Math.abs(endAddrM), address.trackCode, address.discontinuity, address.startDate.get, address.endDate.getOrElse(""), address.validFrom.getOrElse(""), address.validTo.getOrElse(""), address.ely, address.roadType, address.terminated.toInt))
           }
         }
       }
@@ -442,7 +440,6 @@ class AssetDataImporter {
 
     val lrmAddresses = lrmList.filterNot( lrm=> nonCheckingAddresses.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).distinct
     print(s"${DateTime.now()} - ")
-    println("%d valid addresses to insert", checkCompliantAddresses.count(_.linkId != 0))
     println("%d segments with invalid link id removed".format(lrmList.count(_.linkId == 0)))
 
     fillStatements(lrmAddresses, checkCompliantAddresses.filter(_.linkId != 0).distinct)
