@@ -36,7 +36,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
     val (expiredIds, newAndUpdatedPavingAssets) = getPavingAssetChanges(existingAssets, roadLinks, changes, typeId)
 
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = (existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds)/*.filterNot(_ == 0L)*/,
+      expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds,
       adjustedMValues = newAndUpdatedPavingAssets.filter(_.id != 0).map( a => MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)),
       adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
@@ -51,7 +51,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (existingAssets.filterNot(a => expiredIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, changedSet)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
     eventBus.publish("linearAssets:update", changeSet)
     eventBus.publish("paving:saveProjectedPaving", newAssets.filter(_.id == 0L))

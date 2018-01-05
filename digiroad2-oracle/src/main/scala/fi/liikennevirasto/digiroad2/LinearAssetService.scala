@@ -189,7 +189,7 @@ trait LinearAssetOperations {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, changedSet)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
     eventBus.publish("linearAssets:update", changeSet)
     eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filter(_.id == 0L))

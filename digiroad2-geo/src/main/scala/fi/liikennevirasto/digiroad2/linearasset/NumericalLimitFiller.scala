@@ -468,7 +468,7 @@ object NumericalLimitFiller {
     }
   }
 
-  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       dropShortSegments,
@@ -482,6 +482,14 @@ object NumericalLimitFiller {
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
     )
+
+    val changeSet = changedSet match {
+      case Some(change) => change
+      case None => ChangeSet( droppedAssetIds = Set.empty[Long],
+                              expiredAssetIds = Set.empty[Long],
+                              adjustedMValues = Seq.empty[MValueAdjustment],
+                              adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+    }
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
@@ -524,14 +532,18 @@ object NumericalLimitFiller {
     }
   }
 
-  def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection, changeSet: ChangeSet) : (PersistedLinearAsset, ChangeSet)= {
+  def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection, changedSet: ChangeSet) : (PersistedLinearAsset, ChangeSet)= {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {
       case to.linkId => asset.id
       case _ => 0
     }
     val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(asset, projection, to.length)
-    changeSet.copy(adjustedMValues =  changeSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)), adjustedSideCodes = changeSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode))))
+
+    val changeSet = assetId match {
+      case 0 => changedSet
+      case _ => changedSet.copy(adjustedMValues =  changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode))))
+    }
 
     (PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,
       value = asset.value, startMeasure = newStart, endMeasure = newEnd,

@@ -179,7 +179,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roads, groupedAssets, maintenanceRoadAssetTypeId, changedSet)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roads, groupedAssets, maintenanceRoadAssetTypeId, Some(changedSet))
 
     eventBus.publish("linearAssets:update", changeSet)
     eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets.filter(_.id == 0L))
