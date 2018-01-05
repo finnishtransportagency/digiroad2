@@ -394,7 +394,7 @@ class AssetDataImporter {
         startDate, endDate, validFrom, validTo, ely, roadType, terminated, linkId, createdBy, lrmId) =>
           RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
             startDate, endDate, validFrom, validTo, ely, roadType, terminated, linkId, createdBy, Some(0), Some(0), Some(0), Some(0), lrmId)
-      }.filter(ch => ch.startAddrM >= 0 && ch.endAddrM >= 0)
+      }
 
     print(s"\n${DateTime.now()} - ")
     println("Got %d current road addresses history".format(currentHistory.size))
@@ -415,7 +415,7 @@ class AssetDataImporter {
         case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDate, validFrom, elyCode, roadType, linkId, createdBy, x1, y1, x2, y2, lrmId) =>
           RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
             startDate, endDate, validFrom, None, elyCode, roadType, 2, linkId, createdBy, x1, y1, x2, y2, lrmId)
-      }
+      }.filter(rh => rh.startAddrM >= 0 && rh.endAddrM >= 0)
     val adjustedTermination = mapTerminations(roadHistory, currentHistory)
 
     print(s"\n${DateTime.now()} - ")
