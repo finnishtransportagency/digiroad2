@@ -8,10 +8,9 @@
 
 
     function getChanges(projectID){
-      $('.project-changes').html('<table class="change-table"></table>');
       backend.getChangeTable(projectID,function(changedata) {
-        var parsedResult=roadChangeAPIResultParser(changedata.changeTable);
-        if (parsedResult!==null && parsedResult.discontinuity !==null) {
+        var parsedResult=roadChangeAPIResultParser(changedata);
+        if (!_.isUndefined(parsedResult) && parsedResult.discontinuity !== null) {
           eventbus.trigger('projectChanges:fetched', roadChangeAPIResultParser(parsedResult));
         }
       });

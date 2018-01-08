@@ -16,7 +16,6 @@
     var RoadLinkType = LinkValues.RoadLinkType;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var RoadClass = LinkValues.RoadClass;
-
     var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -368,6 +367,49 @@
         if (!_.contains(olUids, feature.ol_uid)) {
           selectSingleClick.getFeatures().push(feature);
           olUids.push(feature.ol_uid); // prevent adding duplicate entries
+        }
+      });
+    };
+
+    var addCutLine = function(cutGeom){
+      var points = _.map(cutGeom.geometry, function (point) {
+        return [point.x, point.y];
+      });
+      var cutFeature = new ol.Feature({
+        geometry: new ol.geom.LineString(points),
+        type: 'cut-line'
+      });
+      var style = new ol.style.Style({
+        stroke: new ol.style.Stroke({color: [20, 20 , 255, 1], width: 9}),
+        zIndex: 11
+      });
+      cutFeature.setStyle(style);
+      removeFeaturesByType('cut-line');
+      addFeaturesToSelection([cutFeature]);
+    };
+
+    var addTerminatedFeature = function(terminatedLink){
+      var points = _.map(terminatedLink.geometry, function (point) {
+        return [point.x, point.y];
+      });
+      var terminatedFeature = new ol.Feature({
+        projectLinkData: terminatedLink,
+        geometry: new ol.geom.LineString(points),
+        type: 'pre-split'
+      });
+      var style = new ol.style.Style({
+        stroke: new ol.style.Stroke({color: '#c6c00f', width: 13, lineCap: 'round'}),
+        zIndex: 11
+      });
+      terminatedFeature.setStyle(style);
+      removeFeaturesByType('pre-split');
+      addFeaturesToSelection([terminatedFeature]);
+    };
+
+    var removeFeaturesByType = function (match) {
+      _.each(selectSingleClick.getFeatures().getArray(), function(feature){
+        if(feature && feature.getProperties().type == match) {
+          selectSingleClick.getFeatures().remove(feature);
         }
       });
     };
@@ -758,6 +800,11 @@
         else
           selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, false);
       });
+    });
+
+    eventbus.on('split:splitedCutLine', function(cutGeom) {
+      addCutLine(cutGeom);
+      applicationModel.removeSpinner();
     });
 
     eventbus.on('projectLink:revertedChanges', function () {

@@ -65,7 +65,6 @@ object LinkStatus {
   case object Transfer extends LinkStatus {def value = 3}
   case object Numbering extends LinkStatus {def value = 4}
   case object Terminated extends LinkStatus {def value = 5}
-  case object Rollbacked extends LinkStatus {def value = 42}
   case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -148,8 +147,8 @@ object ProjectDAO {
       val endMValue = r.nextDouble()
       val sideCode = SideCode.apply(r.nextInt)
       val lrmPositionId = r.nextLong()
-      val createdBy = r.nextString()
-      val modifiedBy = r.nextString()
+      val createdBy = r.nextStringOption()
+      val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
       val geom=r.nextStringOption()
       val length = r.nextDouble()
@@ -168,7 +167,7 @@ object ProjectDAO {
       val geometryTimeStamp = r.nextLong()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
-        None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom.getOrElse("")), projectId,
+        modifiedBy, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom.getOrElse("")), projectId,
         status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp)
     }
   }
@@ -239,7 +238,7 @@ object ProjectDAO {
     val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
     val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
     val links = projectLinks.map{ pl =>
-      if (nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId)) {
+      if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId)) {
         val ra = addresses(pl.roadAddressId)
         // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
         pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
@@ -378,6 +377,22 @@ object ProjectDAO {
     listQuery(query)
   }
 
+  def getInvalidUnchangedOperationProjectLinks(roadNumber: Long, roadPartNumber: Long) : Seq[ProjectLink]= {
+    if(roadNumber == 0 || roadPartNumber == 0)
+      return Seq()
+    val query =
+      s"""
+         $projectLinkQueryBase
+                where ROAD_ADDRESS.road_number = $roadNumber and ROAD_ADDRESS.road_part_number = $roadPartNumber and ROAD_ADDRESS.TRACK_CODE = PROJECT_LINK.TRACK_CODE and PROJECT_LINK.status = ${LinkStatus.UnChanged.value}
+                and (ROAD_ADDRESS.valid_to IS NULL OR ROAD_ADDRESS.valid_to > sysdate) AND (ROAD_ADDRESS.valid_from IS NULL OR ROAD_ADDRESS.valid_from <= sysdate)
+                and ROAD_ADDRESS.start_addr_m in
+                (select ra.end_addr_m from road_address ra, project_link pl
+                where ra.id = pl.road_address_id and ra.road_number = $roadNumber and ra.road_part_number = $roadPartNumber and ra.TRACK_CODE = pl.TRACK_CODE and pl.status NOT IN (${LinkStatus.NotHandled.value}, ${LinkStatus.UnChanged.value})
+                and (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate)) order by START_ADDR_M
+       """
+    listQuery(query)
+  }
+
   def isRoadPartNotHandled(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber " +
       s"AND PROJECT_LINK.PROJECT_ID = $projectId AND PROJECT_LINK.STATUS = ${LinkStatus.NotHandled.value}"
@@ -472,24 +487,18 @@ object ProjectDAO {
     }.headOption
   }
 
-  def fetchReservedRoadParts(projectId: Long, filterNotStatus: Seq[Int] = Seq.empty[Int]): Seq[ReservedRoadPart] = {
-    val filter = if (filterNotStatus.nonEmpty) s""" where NOT EXISTS (
-           SELECT * FROM PROJECT_LINK pl WHERE pl.project_id = gr.PROJECT_ID AND
-           pl.ROAD_NUMBER = gr.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER AND STATUS IN (${filterNotStatus.mkString(" ,")}))
-      """
-    else
-      ""
+  def fetchReservedRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
     val sql =
       s"""
         SELECT id, road_number, road_part_number, length, length_new,
           ely, ely_new,
           (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
-          ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-          AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
+            ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+            AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
-          AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-          AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
-          AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
+            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
+            AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
+            AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl JOIN LRM_POSITION lrm ON (lrm.id = pl.LRM_POSITION_ID)
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
@@ -504,13 +513,13 @@ object ProjectDAO {
               FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
               ROAD_ADDRESS ra ON (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number)
               LEFT JOIN
-              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
+              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
+                pl.road_part_number = rp.road_part_number AND pl.status != 5)
               WHERE
                 rp.project_id = $projectId AND
-                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
-                (PL.STATUS IS NULL OR PL.STATUS != 5)
-              GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-              ) gr $filter"""
+                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+                GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
+            ) gr"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
       Option[Long], Option[Long])](sql).list.map {
       case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
@@ -560,7 +569,7 @@ object ProjectDAO {
     }
   }
 
-  def getRoadAddressProjects(projectId: Long = 0, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus], withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
+  def getRoadAddressProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
     val filter = projectId match {
       case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
       case _ => if(withNullElyFilter) s""" where id =$projectId AND ELY IS NULL """ else s""" where id =$projectId """
@@ -573,7 +582,7 @@ object ProjectDAO {
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
-          modifiedDate, addInfo, fetchReservedRoadParts(id, filterNotStatus.map(_.value)), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          modifiedDate, addInfo, fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
       }
     }
   }

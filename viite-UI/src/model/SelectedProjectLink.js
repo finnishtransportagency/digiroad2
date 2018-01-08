@@ -56,6 +56,8 @@
         terminatedC.marker = "C";
       }
       eventbus.trigger('split:projectLinks',  [suravageA, suravageB, terminatedC]);
+      var splitPoint = GeometryUtils.connectingEndPoint(suravageA.points, suravageB.points);
+      projectLinkCollection.getCutLine(suravageA.linkId, splitPoint);
     };
 
     var preSplitSuravageLink = function(suravage) {
