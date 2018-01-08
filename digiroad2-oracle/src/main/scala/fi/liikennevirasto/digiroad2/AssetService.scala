@@ -20,11 +20,15 @@ trait AssetOperations {
     }
   }
 
-  def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): Map[String, Seq[String]] = {
+  def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): (List[Map[String, Any]]) = {
     val municipalities = withDynTransaction {
       assetDao.getMunicipalitiesNameByCode(municipalityCodes)
     }
-    Map("municipality" -> municipalities.sorted)
+
+    municipalities.map { municipality =>
+      Map("id" -> municipality._1,
+          "name" -> municipality._2)
+    }
   }
 }
 

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.verification.oracle.{VerificationDao}
 import org.joda.time.DateTime
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime] ,assetTypeName: Option[String] = None)
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean)
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
@@ -24,37 +24,39 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
-  def verifyAssetType(municipalityCode: Int, assetTypeId: Int, username: String) = {
-    getAssetVerification(municipalityCode, assetTypeId).headOption match {
-      case Some(info) => updateAssetTypeVerification(municipalityCode, assetTypeId, username)
-      case None => createAssetTypeVerification(municipalityCode, assetTypeId, username)
+  def getAssetVerificationById(id: Long, assetTypeId: Int): Option[VerificationInfo] = {
+    withDynTransaction{
+      dao.getAssetVerificationById(id)
     }
   }
 
-  def getMunicipalityInfo(typeId: Int, bounds: BoundingRectangle): Seq[VerificationInfo] = {
+  def verifyAssetType(municipalityCode: Int, assetTypeId: Set[Int], userName: String) = {
+    assetTypeId.foreach { typeId =>
+      dao.expireAssetTypeVerification(municipalityCode, typeId, userName)
+      dao.insertAssetTypeVerification(municipalityCode, typeId, userName)
+      }
+    }
+
+  def getMunicipalityInfo(typeId: Int, bounds: BoundingRectangle): Option[VerificationInfo] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     val midPoint = Point((bounds.rightTop.x + bounds.leftBottom.x) / 2, (bounds.rightTop.y + bounds.leftBottom.y) / 2)
 
     val nearestRoadLink = roadLinks.minBy(road => GeometryUtils.minimumDistance(midPoint, road.geometry))
 
-    getAssetVerification(nearestRoadLink.municipalityCode, typeId)
+    getAssetVerification(nearestRoadLink.municipalityCode, typeId).headOption
   }
 
-  def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {
-    withDynTransaction{
-        dao.updateAssetTypeVerification(municipalityCode, assetTypeId, username)
+  def setAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], username: String): Seq[Long] = {
+    withDynTransaction {
+      assetTypeIds.map { assetTypeId =>
+        dao.insertAssetTypeVerification(municipalityCode, assetTypeId, username)
       }
-    }
-
-  def createAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, username: String) = {
-    withDynTransaction{
-      dao.verifyAssetType(municipalityCode, assetTypeId, username)
-    }
+    }.toSeq
   }
 
-  def removeAssetTypeVerification(municipalityCode: Int, assetTypeId: Int) = {
+  def removeAssetTypeVerification(municipalityCode: Int, assetType: Int, userName: String) = {
     withDynTransaction{
-      dao.removeAssetTypeVerification(municipalityCode, assetTypeId)
+      dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
     }
   }
 }

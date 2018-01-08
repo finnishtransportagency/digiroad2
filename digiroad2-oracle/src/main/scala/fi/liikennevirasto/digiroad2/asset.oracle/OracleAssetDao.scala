@@ -72,12 +72,12 @@ class OracleAssetDao {
     assetTypes
   }
 
-  def getMunicipalitiesNameByCode(codes: Set[Int]): Seq[String] = {
-    val filter = if (codes.nonEmpty) {"where id in " + codes.mkString(",") } else ""
+  def getMunicipalitiesNameByCode(codes: Set[Int]): List[(Int, String)] = {
+    val filter = if (codes.nonEmpty) {"where id in (" + codes.mkString(",") + ")" } else ""
 
     sql"""
-      select name_fi from municipality
+      select id, name_fi from municipality
       #$filter
-    """.as[String].list
+    """.as[(Int, String)].list
   }
 }

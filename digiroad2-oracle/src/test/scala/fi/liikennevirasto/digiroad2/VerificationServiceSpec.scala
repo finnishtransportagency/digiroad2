@@ -11,7 +11,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-
 class VerificationServiceSpec extends FunSuite with Matchers {
 
   val mockVerificationService = MockitoSugar.mock[VerificationService]
@@ -31,36 +30,42 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
 
-  test("remove asset type verification") {
-    runWithRollback {
-      ServiceWithDao.removeAssetTypeVerification(20, 100)
-      ServiceWithDao.verifyAssetType(20, 100, "testuser")
-      ServiceWithDao.removeAssetTypeVerification(20, 100)
-      val newVerificationInfo = ServiceWithDao.getAssetVerification(20, 100)
-      newVerificationInfo.head.verifiedBy should be (None)
-      newVerificationInfo.head.verifiedDate should be (None)
-    }
-  }
-
-  test("same method creates new record if does not exist from earlier, updates if exists"){
-    runWithRollback{
-      OracleDatabase.withDynTransaction {
-        sqlu"""delete from municipality_verification where municipality_id = 235 and asset_type_id = 100""".execute
-      }
-      ServiceWithDao.verifyAssetType(235, 100, "creatingTestuser")
-      val createdVerification = ServiceWithDao.getAssetVerification(235, 100)
-      createdVerification.head.verifiedBy should equal (Some("creatingTestuser"))
-      ServiceWithDao.verifyAssetType(235, 100, "updatingTestuser")
-      val updatedVerification = ServiceWithDao.getAssetVerification(235, 100)
-      updatedVerification.head.verifiedBy should be (Some("updatingTestuser"))
-    }
-  }
-
   test("get asset verification"){
     runWithRollback {
-      ServiceWithDao.verifyAssetType(235, 120, "testuser")
-      val oldVerificationInfo = ServiceWithDao.getAssetVerification(235, 120)
-      oldVerificationInfo.head.verifiedBy should equal (Some("testuser"))
+      ServiceWithDao.setAssetTypeVerification(235, Set(120), "testuser")
+      val newVerification = ServiceWithDao.getAssetVerification(235, 120)
+      newVerification should have size 1
+      newVerification.head.verifiedBy should equal (Some("testuser"))
+    }
+  }
+
+  test("remove asset type verification") {
+    runWithRollback {
+      ServiceWithDao.setAssetTypeVerification(20, Set(100), "testuser")
+      ServiceWithDao.removeAssetTypeVerification(20, 100, "testuser")
+      val verificationInfo = ServiceWithDao.getAssetVerification(20, 100)
+      verificationInfo should have size 0
+    }
+  }
+
+  test("update asset type verification") {
+    runWithRollback {
+      ServiceWithDao.setAssetTypeVerification(20, Set(100), "testuser")
+      ServiceWithDao.verifyAssetType(20, Set(100), "updateuser")
+      val newVerification = ServiceWithDao.getAssetVerification(20, 100)
+      newVerification should have size 1
+      newVerification.head.verifiedBy should be (Some("updateuser"))
+    }
+  }
+
+  test("set verify an unverified asset type") {
+    runWithRollback {
+      val oldVerification = ServiceWithDao.getAssetVerification(20, 120)
+      ServiceWithDao.verifyAssetType(20, Set(120), "testuser")
+      val newVerification = ServiceWithDao.getAssetVerification(20, 120)
+      oldVerification should have size 0
+      newVerification should have size 1
+      newVerification.head.verifiedBy should be (Some("testuser"))
     }
   }
 }

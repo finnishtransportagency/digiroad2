@@ -686,20 +686,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/verificationInfo") {
-//    val user = userProvider.getCurrentUser()
-//    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       val usedService =  getLinearAssetService(typeId)
           verificationService.getMunicipalityInfo(typeId, boundingRectangle)
-
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
-
 
   get("/linearassets/complementary"){
     val user = userProvider.getCurrentUser()
@@ -1222,6 +1218,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     assetService.getMunicipalitiesNameByCode(municipalities)
+
   }
 
   get("/municipalities/assetTypes/:municipalityCode") {
@@ -1229,30 +1226,40 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
       .mapValues(
-      _.map(assetType => Map("assetName" -> assetType.assetTypeName,
+      _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
+                             "assetName" -> assetType.assetTypeName,
                              "verified_date" -> assetType.verifiedDate.getOrElse(""),
                              "verified_by"   -> assetType.verifiedBy.getOrElse(""))))
-
   }
 
   get("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
-    val id = params("municipalityCode").toInt
+    val municipalityCode = params("municipalityCode").toInt
     val assetTypeId = params("assetTypeId").toInt
-    verificationService.getAssetVerification(id, assetTypeId)
+    verificationService.getAssetVerification(municipalityCode, assetTypeId)
   }
 
-  post("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
-    val user = userProvider.getCurrentUser()
-    val id = params("municipalityCode").toInt
-    val assetTypeId = params("assetTypeId").toInt
-    verificationService.verifyAssetType(id, assetTypeId, "tester")
-  }
+//  post("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
+//    val user = userProvider.getCurrentUser()
+//    val municipalityCode = params("municipalityCode").toInt
+//    val assetTypeId = params("assetTypeId").toInt
+//    validateUserMunicipalityAccess(user)(municipalityCode)
+//    verificationService.verifyAssetType(municipalityCode, assetTypeId, user.username)
+//  }
+//
+//  put("/municipalities/removeAssetVerification/:municipalityCode") {
+//    val user = userProvider.getCurrentUser()
+//    val assetTypeId = (parsedBody \ "assetTypeId").extract[Set[Int]]
+//    val municipalityCode = params("municipalityCode").toInt
+//    validateUserMunicipalityAccess(user)(municipalityCode)
+//    verificationService.updateAssetTypeVerification(municipalityCode, assetTypeId, user.username)
+//  }
 
-  put("/municipalities/removeAssetVerification/:municipalityCode/:assetTypeId") {
+  post("/municipalities/assetVerification/:municipalityCode") {
     val user = userProvider.getCurrentUser()
-    val id = params("municipalityCode").toInt
-    val assetTypeId = params("assetTypeId").toInt
-    verificationService.updateAssetTypeVerification(id, assetTypeId, "testaroni")
+    val municipalityCode = params("municipalityCode").toInt
+    validateUserMunicipalityAccess(user)(municipalityCode)
+    val assetTypeId = (parsedBody \ "typeId").extract[Set[Int]]
+    verificationService.verifyAssetType(municipalityCode, assetTypeId, user.username)
   }
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {
