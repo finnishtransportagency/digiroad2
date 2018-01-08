@@ -1,32 +1,24 @@
 (function (root) {
-
     var hrefDir = "#municipality/";
 
-    var municipalityTable = function (municipalitiesName, filter) {
+    var municipalityTable = function (municipalities, filter) {
         var municipalityValues =
-            _.isEmpty(filter) ? municipalitiesName.municipality : _.filter(municipalitiesName.municipality, function (name) {
-                return name.toLowerCase().startsWith(filter.toLowerCase());});
+            _.isEmpty(filter) ? municipalities : _.filter(municipalities, function (municipality) {
+                return municipality.name.toLowerCase().startsWith(filter.toLowerCase());});
 
-        var tableContentRows = function (municipalitiesName) {
-            return _.map(municipalitiesName, function (item) {
-                return $('<tr/>').append($('<td/>').append(idLink(item)));
+        var tableContentRows = function (municipalities) {
+            return _.map(municipalities, function (municipality) {
+                return $('<tr/>').append($('<td/>').append(idLink(municipality)));
             });
         };
         var idLink = function (municipality) {
-            return $('<a class="work-list-item"/>').attr('href', hrefDir + municipality).html(municipality);
+            return $('<a class="work-list-item"/>').attr('href', hrefDir + municipality.id).html(municipality.name);
         };
 
-        //Todo check if is it really needed
-        // if (municipalityValues.length == 1)
-        //     $('.button').attr("href", hrefDir + municipalityValues);
-        // else
-        //     $('.button').removeAttr("href");
-
-        return tableContentRows(municipalityValues);
+        return $('<table id="tableData"/>').append(tableContentRows(municipalityValues));
     };
 
-    var searchbox = $('<div class="municipality-list">' +
-        '<div class="filter-box">' +
+    var searchbox = $('<div class="filter-box">' +
         '<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" id="searchBox"></div>');
 
     var generateWorkList = function (listP) {
@@ -36,7 +28,7 @@
             '<div class="page">' +
             '<div class="content-box">' +
             '<header>' + title +
-            '<a class="header-link" href="#work-list/municipalityWorkList">Sulje</a>' +
+            '<a class="header-link" href="#" onclick="windows.location">Sulje</a>' +
             '</header>' +
             '<div class="work-list">' +
             '</div>' +
@@ -53,16 +45,24 @@
 
         listP.then(function (limits) {
             var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
-            var formAndTable = searchbox.append($('<table id="tableData"/>').append(unknownLimits));
-            $('#work-list .work-list').html(formAndTable);
+
+             if (_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium')) {
+                 $('#work-list .work-list').html($('<div class="municipality-list">').append(searchbox.append(unknownLimits)));
+             } else
+                 $('#work-list .work-list').append($('<div class="municipality-list">').append(unknownLimits));
 
             $('#searchBox').on('keyup', function(event){
                 var currentInput = event.currentTarget.value;
 
                 var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, currentInput]))();
                 $('#tableData tbody').html(unknownLimits);
-
             });
+        });
+    };
+
+    var bindExternalEventHandlers = function() {
+        eventbus.on('roles:fetched', function(roles) {
+            userRoles = roles;
         });
     };
 
@@ -77,6 +77,8 @@
 
     root.MunicipalityWorkList =  {
         initialize: function () {
+            var userRoles;
+            bindExternalEventHandlers();
             bindEvents();
         }
     };

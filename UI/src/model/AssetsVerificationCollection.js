@@ -3,7 +3,7 @@
 
         this.fetch = function(boundingBox, typeId) {
             return backend.getVerificationInfo(boundingBox, typeId).then(function(result) {
-                var verified = result ? result.verified : false;
+                var verified = result.verified ? true : false;
                 eventbus.trigger('verificationInfo:fetched', verified);
             });
         };
