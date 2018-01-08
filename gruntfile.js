@@ -283,7 +283,7 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9003/test/integration-tests.html'],
           run: false,
           log: true,
-          timeout: 10000,
+          timeout: 1000000,
           reporter: 'Spec'
         }
       }
