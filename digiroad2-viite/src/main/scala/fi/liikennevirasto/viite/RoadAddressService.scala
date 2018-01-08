@@ -740,6 +740,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     withDynTransaction {
       ExportLockDAO.delete
       ExportLockDAO.insert
+      /*val roadNetwork = RoadAddressDAO.fetchAllRoads
+      val roadNetworkErrors =
+        roadNetwork.map(r => (r.startDate, r.endDate) -> roadNetwork.filter(f => f.startDate == r.startDate && f.endDate == r.endDate)).toMap
+        .foldLeft(Seq[Long])(r => r)
+*/
     }
   }
 
