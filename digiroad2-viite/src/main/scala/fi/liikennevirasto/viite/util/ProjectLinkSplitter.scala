@@ -144,7 +144,6 @@ object ProjectLinkSplitter {
         movedFromEnd(suravageM, templateM, splitAddressM, isReversed)
       else
         movedFromStart(suravageM, templateM, splitAddressM, isReversed)
-
     toSeq(
       if (isReversed)
         switchDigitization(splits)

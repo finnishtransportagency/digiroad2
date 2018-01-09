@@ -15,6 +15,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
+import fi.liikennevirasto.viite.ProjectValidator.{ValidationError, ValidationErrorDetails}
+import fi.liikennevirasto.viite.ProjectValidator.ValidationError.MissingEndOfRoad
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
@@ -1157,7 +1159,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
     }
   }
-
   test("two projects with same road part") {
     runWithRollback {
       val error = intercept[RuntimeException] {

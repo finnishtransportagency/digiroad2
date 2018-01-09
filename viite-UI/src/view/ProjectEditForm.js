@@ -239,6 +239,7 @@
         projectCollection.setDirty([]);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
+        rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         } else {
@@ -468,7 +469,7 @@
       });
 
       rootElement.on('click', '.project-form button.send', function(){
-        new GenericConfirmPopup("Haluatko varmasti lähettää muutosilmoituksen Tierekisteriin?", {
+        new GenericConfirmPopup("Haluatko lähettää muutosilmoituksen Tierekisteriin?", {
           successCallback: function () {
             projectCollection.publishProject();
             closeProjectMode(true, true);

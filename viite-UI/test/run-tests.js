@@ -14,7 +14,8 @@ require.config({
     'LocationInputParser': '../src/utils/LocationInputParser',
     'RoadAddressTestData': '../test_data/RoadAddressTestData',
     'RoadLinkTestData': '../test_data/RoadLinkTestData',
-    'UserRolesTestData': '../test_data/UserRolesTestData'
+    'UserRolesTestData': '../test_data/UserRolesTestData',
+    'SplittingTestData': '../test_data/SplittingTestData'
   },
   shim: {
     'jquery': {exports: '$'},
@@ -40,7 +41,8 @@ require.config({
     'RoadAddressTestData': {exports: 'RoadAddressTestData'},
     'RoadLinkTestData': {exports: 'RoadLinkTestData'},
     'UserRolesTestData': {exports: 'UserRolesTestData'},
-    'validitydirections': {exports: 'validitydirections'}
+    'validitydirections': {exports: 'validitydirections'},
+    'SplittingTestData': {exports: 'SplittingTestData'}
   },
   waitSeconds: 10
 });

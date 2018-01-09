@@ -282,6 +282,7 @@
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
+              projectErrors = successObject.projectErrors;
               eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
             }
           });

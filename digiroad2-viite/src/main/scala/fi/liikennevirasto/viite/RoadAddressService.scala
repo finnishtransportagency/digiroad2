@@ -261,6 +261,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
+  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] ={
+
+    val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, false, true, roadNumberLimits))
+
+    val fetchResult = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
+    val (historyLinkAddresses, addresses) = (fetchResult.historyLinkAddresses, fetchResult.current)
+
+    val buildStartTime = System.currentTimeMillis()
+    val viiteRoadLinks = addresses.values.flatten.toSeq.map { address =>
+      address.linkId -> RoadAddressLinkBuilder.buildSimpleLink(address)
+    }.toMap
+    val buildEndTime = System.currentTimeMillis()
+    logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
+
+   viiteRoadLinks.values.toSeq
+  }
+
   def applyChanges(roadLinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, LinkRoadAddressHistory]): Map[Long, LinkRoadAddressHistory] = {
     if (changedRoadLinks.isEmpty)
       addresses
@@ -388,10 +405,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     retval.flatMap(x => x._2).toSeq
   }
 
+  /**
+    * returns road addresses with link-id currently does not include terminated links which it cannot build roadaddress with out geometry
+    * @param id link-id, boolean if we want
+    *
+    * @return roadaddress[]
+    */
   def getRoadAddressLink(id: Long) = {
 
     val (addresses, missedRL) = withDynTransaction {
-      (RoadAddressDAO.fetchByLinkId(Set(id), true),
+      (RoadAddressDAO.fetchByLinkId(Set(id), includeFloating = true,includeHistory = true,  includeTerminated = false), // cannot builld terminated link because missing geometry
         RoadAddressDAO.getMissingRoadAddresses(Set(id)))
     }
     val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
