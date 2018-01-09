@@ -11,7 +11,7 @@ class VerificationDao {
 
   def getVerifiedAssetTypes(municipalityId: Int) = {
     val verifiedAssetTypes =
-      sql"""select mv.id, m.id, m.name_fi, mv.verified_by, mv.verified_date, asst.id, asst.name,
+      sql"""select m.id, m.name_fi, mv.verified_by, mv.verified_date, asst.id, asst.name,
          case when MONTHS_BETWEEN(sysdate,mv.verified_date) < $TwoYears then 1 else 0 end as verified
          from municipality m
 		     join asset_type asst on asst.verifiable = 1
@@ -67,5 +67,12 @@ class VerificationDao {
            and mv.asset_type_id = $assetTypeCode
            and valid_to is null
       """.execute
+  }
+
+  def getVerifiableAssetTypes: Seq[Int] = {
+    sql"""select asst.id
+           from asset_type asst
+           where asst.verifiable = 1
+      """.as[(Int)].list
   }
 }

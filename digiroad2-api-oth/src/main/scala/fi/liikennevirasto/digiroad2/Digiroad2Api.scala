@@ -1238,28 +1238,20 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.getAssetVerification(municipalityCode, assetTypeId)
   }
 
-//  post("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
-//    val user = userProvider.getCurrentUser()
-//    val municipalityCode = params("municipalityCode").toInt
-//    val assetTypeId = params("assetTypeId").toInt
-//    validateUserMunicipalityAccess(user)(municipalityCode)
-//    verificationService.verifyAssetType(municipalityCode, assetTypeId, user.username)
-//  }
-//
-//  put("/municipalities/removeAssetVerification/:municipalityCode") {
-//    val user = userProvider.getCurrentUser()
-//    val assetTypeId = (parsedBody \ "assetTypeId").extract[Set[Int]]
-//    val municipalityCode = params("municipalityCode").toInt
-//    validateUserMunicipalityAccess(user)(municipalityCode)
-//    verificationService.updateAssetTypeVerification(municipalityCode, assetTypeId, user.username)
-//  }
-
   post("/municipalities/assetVerification/:municipalityCode") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = params("municipalityCode").toInt
     validateUserMunicipalityAccess(user)(municipalityCode)
     val assetTypeId = (parsedBody \ "typeId").extract[Set[Int]]
     verificationService.verifyAssetType(municipalityCode, assetTypeId, user.username)
+  }
+
+  delete("/municipalities/removeVerification/:municipalityCode/") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = params("municipalityCode").toInt
+    validateUserMunicipalityAccess(user)(municipalityCode)
+    val assetTypeIds = (parsedBody \ "assetId").extract[Set[Int]]
+    verificationService.removeAssetTypeVerification(municipalityCode, assetTypeIds, user.username)
   }
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {

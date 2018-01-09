@@ -30,12 +30,17 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
-  def verifyAssetType(municipalityCode: Int, assetTypeId: Set[Int], userName: String) = {
-    assetTypeId.foreach { typeId =>
-      dao.expireAssetTypeVerification(municipalityCode, typeId, userName)
-      dao.insertAssetTypeVerification(municipalityCode, typeId, userName)
+  def verifyAssetType(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
+    withDynTransaction {
+      if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
+        throw new IllegalStateException("Asset type not allowed")
+
+      assetTypeIds.foreach { typeId =>
+        dao.expireAssetTypeVerification(municipalityCode, typeId, userName)
+        dao.insertAssetTypeVerification(municipalityCode, typeId, userName)
       }
     }
+  }
 
   def getMunicipalityInfo(typeId: Int, bounds: BoundingRectangle): Option[VerificationInfo] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
@@ -47,6 +52,9 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def setAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], username: String): Seq[Long] = {
+    if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
+      throw new IllegalStateException("Asset type not allowed")
+
     withDynTransaction {
       assetTypeIds.map { assetTypeId =>
         dao.insertAssetTypeVerification(municipalityCode, assetTypeId, username)
@@ -54,9 +62,11 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }.toSeq
   }
 
-  def removeAssetTypeVerification(municipalityCode: Int, assetType: Int, userName: String) = {
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
     withDynTransaction{
-      dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
+      assetTypeIds.foreach { assetType =>
+        dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
+      }
     }
   }
 }

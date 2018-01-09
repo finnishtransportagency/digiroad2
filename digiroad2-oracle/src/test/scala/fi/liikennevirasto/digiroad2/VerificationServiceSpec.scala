@@ -30,6 +30,31 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
 
+  test("get verification asset types info"){
+    runWithRollback {
+      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id, 235, 30, (sysdate - interval '1' year), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+1, 235, 40, (sysdate - interval '23' month), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+2, 235, 50, (sysdate - interval '2' year), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+3, 235, 60, sysdate, 'testuser')""".execute
+
+      val verificationInfo = ServiceWithDao.getAssetTypesByMunicipality(235)
+      verificationInfo should have size 12
+      verificationInfo.filter(_.municipalityCode == 235) should have size 12
+      verificationInfo.filter(_.verifiedBy.isDefined) should have size 4
+      verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (true)
+      verificationInfo.find(_.assetTypeCode == 40).map(_.verified).head should be (true)
+      verificationInfo.find(_.assetTypeCode == 50).map(_.verified).head should be (false)
+      verificationInfo.find(_.assetTypeCode == 60).map(_.verified).head should be (true)
+      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy) should have size 4
+      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
+    }
+  }
+
   test("get asset verification"){
     runWithRollback {
       ServiceWithDao.setAssetTypeVerification(235, Set(120), "testuser")
@@ -42,7 +67,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   test("remove asset type verification") {
     runWithRollback {
       ServiceWithDao.setAssetTypeVerification(20, Set(100), "testuser")
-      ServiceWithDao.removeAssetTypeVerification(20, 100, "testuser")
+      ServiceWithDao.removeAssetTypeVerification(20, Set(100), "testuser")
       val verificationInfo = ServiceWithDao.getAssetVerification(20, 100)
       verificationInfo should have size 0
     }
@@ -66,6 +91,24 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       oldVerification should have size 0
       newVerification should have size 1
       newVerification.head.verifiedBy should be (Some("testuser"))
+    }
+  }
+
+  test("not update with wrong asset type") {
+    runWithRollback {
+      val thrown = intercept[IllegalStateException] {
+        ServiceWithDao.verifyAssetType(235, Set(110), "testuser")
+      }
+      thrown.getMessage should be("Asset type not allowed")
+    }
+  }
+
+  test("not insert with wrong asset type") {
+    runWithRollback {
+      val thrown = intercept[IllegalStateException] {
+        ServiceWithDao.setAssetTypeVerification(235, Set(110), "testuser")
+      }
+      thrown.getMessage should be("Asset type not allowed")
     }
   }
 }
