@@ -448,9 +448,10 @@
         '<span class="header-noposition">Aloita valitsemalla projekti.</span>' +
         '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
         '</div>'+
-        '<div class="form form-horizontal">'+
-        '<a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a>'+
-        '</div>';
+        '<p class="form form-horizontal">'+
+        '<p><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>'+
+        '<p><a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">ROAD ADDRESS ERRORS</a></p>'+
+        '</p>';
       rootElement.append(emptyFormDiv);
       $('[id=formProjectButton]').click(function(){
         $('[id=projectListButton]').click();

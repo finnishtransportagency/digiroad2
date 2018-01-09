@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
@@ -122,6 +123,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
       g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.startAddrMValue))
         .map(floatingRoadAddressToApi))
+  }
+
+  get("/roadAddressErrors") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+    roadAddressService.getRoadAddressErrors().groupBy(_.ely).map(
+      g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber))
+        .map(roadAddressErrorsToApi))
   }
 
   get("/roadlinks/:linkId") {
@@ -736,6 +744,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startMValue" -> roadAddress.startMValue,
       "endMValue" -> roadAddress.endMValue,
       "ely" -> roadAddress.ely
+    )
+  }
+
+  def roadAddressErrorsToApi(addressError: AddressErrorDetails): Map[String, Long] = {
+    Map(
+      "id" -> addressError.id,
+      "linkId" -> addressError.linkId,
+      "roadNumber" -> addressError.roadNumber,
+      "roadPartNumber" -> addressError.roadPartNumber,
+      "errorCode" -> addressError.addressError.value,
+      "ely" -> addressError.ely
     )
   }
 

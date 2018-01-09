@@ -1575,35 +1575,35 @@ object ProjectValidator {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad)
     //Viite-942
-    case object MissingEndOfRoad extends ValidationError {def value = 0;
+    case object MissingEndOfRoad extends ValidationError {def value = 0
       def message = MissingEndOfRoadMessage}
     //Viite-453
     //There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
-    case object MinorDiscontinuityFound extends ValidationError {def value = 1;
+    case object MinorDiscontinuityFound extends ValidationError {def value = 1
       def message = MinorDiscontinuityFoundMessage}
     //Viite-453
     //There must be a major discontinuity if the jump is longer than 50 meters
-    case object MajorDiscontinuityFound extends ValidationError {def value = 2;
+    case object MajorDiscontinuityFound extends ValidationError {def value = 2
       def message = MajorDiscontinuityFoundMessage}
     //Viite-453
     //For every track 1 there must exist track 2 that covers the same address span and vice versa
-    case object InsufficientTrackCoverage extends ValidationError {def value = 3;
+    case object InsufficientTrackCoverage extends ValidationError {def value = 3
       def message = InsufficientTrackCoverageMessage}
     //Viite-453
     //There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
-    case object DiscontinuousAddressScheme extends ValidationError {def value = 4;
+    case object DiscontinuousAddressScheme extends ValidationError {def value = 4
       def message = DiscontinuousAddressSchemeMessage}
     //Viite-453
     //There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
-    case object SharedLinkIdsExist extends ValidationError {def value = 5;
+    case object SharedLinkIdsExist extends ValidationError {def value = 5
       def message = SharedLinkIdsExistMessage}
     //Viite-453
     //Continuity codes are given for end of road
-    case object NoContinuityCodesAtEnd extends ValidationError {def value = 6;
+    case object NoContinuityCodesAtEnd extends ValidationError {def value = 6
       def message = NoContinuityCodesAtEndMessage}
     //Viite-453
     //Recalculation of M values and delta calculation are both unsuccessful for every road part in project
-    case object UnsuccessfulRecalculation extends ValidationError {def value = 7;
+    case object UnsuccessfulRecalculation extends ValidationError {def value = 7
       def message = UnsuccessfulRecalculationMessage}
 
     case object HasNotHandledLinks extends ValidationError{

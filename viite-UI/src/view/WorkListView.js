@@ -50,7 +50,42 @@
       .append(tableToDisplayFloatings(floatingLinks));
   };
 
-  var generateWorkList = function(layerName, listP) {
+  var roadAddressErrorsTable = function(layerName, addressErrors, elyCode) {
+    counter += addressErrors.length;
+    var elyHeader = function(elyCode) {
+      return $('<h2/>').html("ELY " + elyCode + " " + decodeEly(elyCode));
+    };
+
+    var tableContentRows = function(addresses) {
+      return _.map(addresses, function(address) {
+        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>')
+          .append(errorsDescription('ID', address.id))
+          .append(errorsDescription('TIE', address.roadNumber))
+          .append(errorsDescription('OSA', address.roadPartNumber))
+          .append(errorsDescription('ERROR', address.errorCode)))
+          .append($('<td align=right />').append(roadAddressError(address)));
+      });
+    };
+
+    var roadAddressError = function(roadAddress) {
+      var link = '#' + layerName + '/' + roadAddress.linkId;
+      return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
+    };
+
+    var errorsDescription = function(desc, value){
+      return $('<td align=left style="width: 100px;"> <b>'+desc +'</b>: '+value + '</td>');
+    };
+
+    var tableToDisplayErrors = function(addressErrors) {
+      if (!addressErrors || addressErrors.length === 0) return '';
+      return $('<table/>').addClass('table')
+        .append(tableContentRows(addressErrors));
+    };
+    return $('<div/>').append(elyHeader(elyCode, addressErrors.length))
+      .append(tableToDisplayErrors(addressErrors));
+  };
+
+  var generateWorkListFloatings = function(layerName, listP) {
     var title = {
       linkProperty: 'Korjattavien linkkien lista'
     };
@@ -87,6 +122,43 @@
     });
   };
 
+  var generateWorkListErrors = function(layerName, listP) {
+    var title = {
+      linkProperty: 'Road address errors list'
+    };
+    $('#work-list').append('' +
+      '<div style="overflow: auto;">' +
+        '<div class="page">' +
+          '<div class="content-box">' +
+            '<header>' + title[layerName] +
+              '<a class="header-link" href="#' + layerName + '">Sulje lista</a>' +
+            '</header>' +
+            '<div class="work-list">' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+    var showApp = function() {
+      $('.container').show();
+      $('#work-list').hide();
+      $('body').removeClass('scrollable').scrollTop(0);
+      $(window).off('hashchange', showApp);
+    };
+    $(window).on('hashchange', showApp);
+
+    listP.then(function(errors) {
+      counter = 0;
+      var roadAddressErrors = _.map(errors, _.partial(roadAddressErrorsTable, layerName));
+      if(counter === 0){
+        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
+      }
+      else {
+        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html(" " + counter + " addresses have errors")).append(roadAddressErrors);
+      }
+      removeSpinner();
+    });
+  };
+
   var addSpinner = function () {
     $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
@@ -96,12 +168,20 @@
   };
 
   var bindEvents = function() {
-    eventbus.on('workList:select', function(layerName, listP) {
+    eventbus.on('workList-floatings:select', function(layerName, listP) {
       $('#work-list').html("").show();
       addSpinner();
       $('.container').hide();
       $('body').addClass('scrollable');
-      generateWorkList(layerName, listP);
+      generateWorkListFloatings(layerName, listP);
+    });
+
+    eventbus.on('workList-errors:select', function(layerName, listP) {
+      $('#work-list').html("").show();
+      addSpinner();
+      $('.container').hide();
+      $('body').addClass('scrollable');
+      generateWorkListErrors(layerName, listP);
     });
   };
 
