@@ -13,11 +13,11 @@
       });
     };
     var idLink = function(id) {
-      var link = '#' + layerName + '/verification/'+ id;
+      var link = '#' + layerName + '/'+ id;
       return $('<a class="work-list-item"/>').attr('href', link).html(link);
     };
     var assetLink = function(asset) {
-      var link = '#' + layerName + '/verification/' + asset.id;
+      var link = '#' + layerName + '/' + asset.id;
       return $('<a class="work-list-item"/>').attr('href', link).html(link);
     };
     var tableForGroupingValues = function(values, Ids, count) {

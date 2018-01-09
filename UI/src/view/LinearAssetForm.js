@@ -162,7 +162,7 @@
 
     $('#information-content').append('' +
       '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-      '<a id="unchecked-links" class="unchecked-linear-assets" href="#verification-list/' + layerName + '/' + typeId + '">' + linkDescription + '</a>' +
+      '<a id="unchecked-links" class="unchecked-linear-assets" href="#verification-list/' + layerName + '">' + linkDescription + '</a>' +
       '</div>');
   };
 

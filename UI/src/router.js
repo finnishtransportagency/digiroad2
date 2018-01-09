@@ -7,6 +7,42 @@
       mapView.setZoom(zoom);
     };
 
+    var linearCentering = function(layerName, id){
+      applicationModel.selectLayer(layerName);
+      var asset = _(models.linearAssets).find({ layerName: layerName });
+      var linearAsset = asset.selectedLinearAsset.getLinearAsset(parseInt(id));
+      if (linearAsset) {
+        asset.selectedLinearAsset.open(linearAsset, true);
+        applicationModel.setSelectedTool('Select');
+      }
+      backend.getLinearAssetMidPoint(asset.typeId, id).then(function (result) {
+        if(result.success){
+          if(result.source === 1){
+            eventbus.once(asset.multiElementEventCategory + ':fetched', function() {
+              var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
+              if (linearAsset) {
+                asset.selectedLinearAsset.open(linearAsset, true);
+                applicationModel.setSelectedTool('Select');
+              }
+            });
+          }else if(result.source === 2) {
+            eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
+              eventbus.trigger(layerName + ':checkComplementaryLinkCheckBox');
+              eventbus.trigger('complementaryLinks:show');
+              eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
+                var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
+                if (linearAsset) {
+                  asset.selectedLinearAsset.open(linearAsset, true);
+                  applicationModel.setSelectedTool('Select');
+                }
+              });
+            });
+          }
+          mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
+        }
+      });
+    };
+
     var Router = Backbone.Router.extend({
       initialize: function () {
         // Support legacy format for opening mass transit stop via ...#300289
@@ -36,7 +72,19 @@
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
         'trafficSigns/:id': 'trafficSigns',
         'maintenanceRoad/:linkId': 'maintenanceRoad',
-        ':layerName/verification/:assetId': 'linearCentering',
+        'litRoad/:id': 'litRoad',
+        'roadWidth/:id': 'roadWidth',
+        'numberOfLanes/:id': 'numberOfLanes',
+        'massTransitLanes/:id': 'massTransitLanes',
+        'prohibition/:id': 'prohibition',
+        'hazardousMaterialTransportProhibition/:id': 'hazardousMaterialTransportProhibition',
+        'totalWeightLimit/:id': 'totalWeightLimit',
+        'trailerTruckWeightLimit/:id': 'trailerTruckWeightLimit',
+        'axleWeightLimit/:id': 'axleWeightLimit',
+        'bogieWeightLimit/:id': 'bogieWeightLimit',
+        'heightLimit/:id': 'heightLimit',
+        'lengthLimit/:id': 'lengthLimit',
+        'widthLimit/:id': 'widthLimit',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -47,45 +95,7 @@
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
-        'verification-list/:layerName/:typeId': 'unverifiedLinearAssetWorkList'
-      },
-
-      linearCentering: function(layerName, id){
-        applicationModel.selectLayer(layerName);
-        var selectedLinearAsset = _(models.linearAssets).find({ layerName: layerName }).selectedLinearAsset;
-        var multiElementEvent = _(models.linearAssets).find({ layerName: layerName }).multiElementEventCategory;
-        var typeId = _(models.linearAssets).find({ layerName: layerName }).typeId;
-        var linearAsset = selectedLinearAsset.getLinearAsset(parseInt(id));
-        if (linearAsset) {
-          selectedLinearAsset.open(linearAsset, true);
-          applicationModel.setSelectedTool('Select');
-        }
-        backend.getLinearAssetMidPoint(typeId, id).then(function (result) {
-          if(result.success){
-            if(result.source === 1){
-              eventbus.once(multiElementEvent + ':fetched', function() {
-                var linearAsset = selectedLinearAsset.getLinearAsset(result.id);
-                if (linearAsset) {
-                  selectedLinearAsset.open(linearAsset, true);
-                  applicationModel.setSelectedTool('Select');
-                }
-              });
-            }else if(result.source === 2) {
-              eventbus.once(multiElementEvent + ':fetched', function () {
-                eventbus.trigger(layerName + ':checkComplementaryLinkCheckBox');
-                eventbus.trigger('complementaryLinks:show');
-                eventbus.once(multiElementEvent + ':fetched', function () {
-                  var linearAsset = selectedLinearAsset.getLinearAsset(result.id);
-                  if (linearAsset) {
-                    selectedLinearAsset.open(linearAsset, true);
-                    applicationModel.setSelectedTool('Select');
-                  }
-                });
-              });
-            }
-            mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
-          }
-        });
+        'verification-list/:layerName': 'unverifiedLinearAssetWorkList'
       },
 
       massTransitStop: function (id) {
@@ -270,7 +280,60 @@
         eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedLinearAsset(290));
       },
 
-      unverifiedLinearAssetWorkList: function(layerName, typeId) {
+      litRoad: function (id) {
+        linearCentering('litRoad', id);
+      },
+
+      roadWidth: function (id) {
+        linearCentering('roadWidth', id);
+      },
+
+      numberOfLanes: function (id) {
+        linearCentering('numberOfLanes', id);
+      },
+
+      massTransitLanes: function (id) {
+        linearCentering('massTransitLanes', id);
+      },
+
+      prohibition: function (id) {
+        linearCentering('prohibition', id);
+      },
+
+      hazardousMaterialTransportProhibition: function (id) {
+        linearCentering('hazardousMaterialTransportProhibition', id);
+      },
+
+      totalWeightLimit: function (id) {
+        linearCentering('totalWeightLimit', id);
+      },
+
+      trailerTruckWeightLimit: function (id) {
+        linearCentering('trailerTruckWeightLimit', id);
+      },
+
+      axleWeightLimit: function (id) {
+        linearCentering('axleWeightLimit', id);
+      },
+
+      bogieWeightLimit: function (id) {
+        linearCentering('bogieWeightLimit', id);
+      },
+
+      heightLimit: function (id) {
+        linearCentering('heightLimit', id);
+      },
+
+      lengthLimit: function (id) {
+        linearCentering('lengthLimit', id);
+      },
+
+      widthLimit: function (id) {
+        linearCentering('widthLimit', id);
+      },
+
+      unverifiedLinearAssetWorkList: function(layerName) {
+        var typeId = _.find(models.linearAssets, function(assetSpec) { return assetSpec.layerName == layerName; }).typeId;
         eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedLinearAssets(typeId));
       }
     });
