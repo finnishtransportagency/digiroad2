@@ -94,6 +94,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
       println(s"Moved Geometry: ${ra.geometry}")
       println(s"Moved Address ID: ${ra.id}")
       println(s"Moved Address Created/Modified: ${ra.modifiedBy}")
+      println("---------")
     }
     }
     movedRoadAddresses
