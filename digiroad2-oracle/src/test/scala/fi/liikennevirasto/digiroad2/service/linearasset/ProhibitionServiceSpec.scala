@@ -476,7 +476,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 20, prohibition, 1, 0, None)), 190, "dr1_conversion")
       val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 20, 60, prohibition, 1, 0, None)), 190, "testuser")
 
-      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(190)
+      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(190, Set())
       unVerifiedAssets.keys.head should be ("Kauniainen")
       unVerifiedAssets.flatMap(_._2).keys.head should be ("Municipality")
       unVerifiedAssets.flatMap(_._2).values.head should be (newAssets1)

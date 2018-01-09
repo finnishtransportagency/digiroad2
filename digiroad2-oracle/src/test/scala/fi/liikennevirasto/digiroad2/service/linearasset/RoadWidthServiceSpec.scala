@@ -298,7 +298,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val newAssets1 = service.create(Seq(NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)), RoadWidthAssetTypeId, "dr1_conversion")
       val newAssets2 = service.create(Seq(NewLinearAsset(linkId2, 40.0, 120, NumericValue(4779), 1, 234567, None)), RoadWidthAssetTypeId, "testuser")
 
-      val unVerifiedAssets = service.getUnverifiedLinearAssets(RoadWidthAssetTypeId)
+      val unVerifiedAssets = service.getUnverifiedLinearAssets(RoadWidthAssetTypeId, Set())
       unVerifiedAssets.keys.head should be ("Kauniainen")
       unVerifiedAssets.flatMap(_._2).keys.head should be("Municipality")
       unVerifiedAssets.flatMap(_._2).values.head should be(newAssets1)

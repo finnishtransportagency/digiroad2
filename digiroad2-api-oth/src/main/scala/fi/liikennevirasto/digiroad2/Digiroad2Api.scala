@@ -830,13 +830,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets/unverified"){
       val user = userProvider.getCurrentUser()
-      val includedMunicipalities = user.isOperator() match {
-        case true => None
-        case false => Some(user.configuration.authorizedMunicipalities)
-      }
+      val includedMunicipalities = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
       val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val usedService = getLinearAssetService(typeId)
-    usedService.getUnverifiedLinearAssets(typeId, includedMunicipalities)
+    usedService.getUnverifiedLinearAssets(typeId, includedMunicipalities.toSet)
   }
 
   get("/linearassets/midpoint"){

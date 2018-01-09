@@ -1126,7 +1126,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join LRM_POSITION pos on al.position_id = pos.id
           where a.asset_type_id = $assetTypeId
           and(valid_to is NULL OR valid_to >= SYSDATE)
-          and a.created_by = 'dr1_conversion' AND a.modified_date is NULL AND a.verified_date is NULL
+          and a.created_by in ('dr1_conversion', 'dr1conversion') AND a.modified_date is NULL AND a.verified_date is NULL
       """.as[(Long, Long)].list
   }
 

@@ -840,11 +840,50 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
       val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, NumericValue(800), 1, 0, None)), 40, "testuser")
 
-      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40)
+      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set())
       unVerifiedAssets.keys.head should be ("Kauniainen")
       unVerifiedAssets.flatMap(_._2).keys.head should be ("Municipality")
       unVerifiedAssets.flatMap(_._2).values.head should be (newAssets1)
     }
   }
 
+  test("get unVerified linear assets only for specific municipalities") {
+    val roadLink = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
+      RoadLink(2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(92)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
+      RoadLink(3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
+
+    when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
+    when(mockMunicipalityDao.getMunicipalityNameByCode(92)).thenReturn("Vantaa")
+    runWithRollback {
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(2, 0, 60, NumericValue(800), 1, 0, None)), 40, "dr1_conversion")
+      val newAssets3 = ServiceWithDao.create(Seq(NewLinearAsset(3, 0, 30, NumericValue(100), 1, 0, None)), 40, "dr1_conversion")
+
+      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set(91,92))
+      unVerifiedAssets.keys.size should be (2)
+      unVerifiedAssets.keys.forall(List("Vantaa", "Helsinki").contains) should be (true)
+      unVerifiedAssets.filter(_._1 == "Vantaa").flatMap(_._2).keys.head should be ("Municipality")
+      unVerifiedAssets.filter(_._1 == "Vantaa").flatMap(_._2).values.head should be (newAssets2)
+      unVerifiedAssets.filter(_._1 == "Helsinki").flatMap(_._2).keys.head should be ("Municipality")
+      unVerifiedAssets.filter(_._1 == "Helsinki").flatMap(_._2).values.head should be (newAssets1)
+    }
+  }
+
+  test("should not get administrative class 'State'") {
+    val roadLink = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
+    when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
+
+    runWithRollback {
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
+
+      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set(91))
+      unVerifiedAssets should be(empty)
+    }
+  }
 }

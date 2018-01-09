@@ -166,7 +166,7 @@ trait LinearAssetOperations {
 
   protected def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String,List[Long]]]
 
-  def getUnverifiedLinearAssets(typeId: Int, municipalityCodes: Option[Set[Int]] = None): Map[String, Map[String,List[Long]]] = {
+  def getUnverifiedLinearAssets(typeId: Int, municipalityCodes: Set[Int]): Map[String, Map[String,List[Long]]] = {
     withDynTransaction {
       val allowedAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
       if (!allowedAssetType.contains(typeId)) throw new IllegalStateException("Asset type not allowed")
@@ -174,19 +174,16 @@ trait LinearAssetOperations {
       val unVerifiedAssets = dao.getUnVerifiedLinearAsset(typeId)
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unVerifiedAssets.map(_._2).toSet, false)
 
-      val unVerified =  unVerifiedAssets.flatMap{
-        case (id, linkId) =>
-          roadLinks.filter(_.linkId == linkId).map { road =>
-            municipalityCodes match {
-              case Some(municipality) if municipality.contains(road.municipalityCode) =>
-                (road.municipalityCode, id, road.administrativeClass)
-              case None =>
-                (road.municipalityCode, id, road.administrativeClass)
-            }
+      val roads = if (municipalityCodes.nonEmpty) roadLinks.filter(road => municipalityCodes.contains(road.municipalityCode)).filterNot(_.administrativeClass == State)
+                        else roadLinks.filterNot(_.administrativeClass == State)
+
+      val unVerified =  unVerifiedAssets.flatMap {
+        case (id, linkId) =>  roads.filter(_.linkId == linkId).map { road =>
+            (road.municipalityCode, id, road.administrativeClass)
           }
       }
 
-      unVerified.filterNot(_._1 == 0).groupBy(_._1).map{
+      unVerified.groupBy(_._1).map{
         case (municipalityCode, grouped) => (municipalityDao.getMunicipalityNameByCode(municipalityCode), grouped)}
         .mapValues(municipalityAssets => municipalityAssets
           .groupBy(_._3.toString)
