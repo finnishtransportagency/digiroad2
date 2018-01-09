@@ -658,7 +658,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def checkAndReserve(project: RoadAddressProject, reservedRoadPart: ReservedRoadPart): (Option[ReservedRoadPart], Option[String]) = {
     logger.info(s"Check ${project.id} matching to " + ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber))
     ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber) match {
-      case Some(proj) if proj._1 != project.id => (None, Option(proj._2))
+      case Some(proj) if proj._1 != project.id => (None, Some(proj._2))
       case Some(proj) if proj._1 == project.id =>
         (ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber), None)
       case _ =>
