@@ -654,10 +654,6 @@
         rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
         rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
       });
-
-      rootElement.on('click', '.projectErrorButton', function (event) {
-        eventbus.trigger('projectCollection:clickCoordinates', event, map);
-      });
     };
     bindEvents();
   };

@@ -610,6 +610,10 @@
       coordinateButtons.push(button);
     };
 
+    this.clearCoordinates = function(button) {
+      coordinateButtons = [];
+    };
+
     this.setTmpDirty = function(editRoadLinks){
       dirtyProjectLinks = editRoadLinks;
     };
