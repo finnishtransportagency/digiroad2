@@ -1,22 +1,5 @@
 CREATE OR REPLACE PROCEDURE road_network_check IS
 
-    v_id                       NUMBER;
-    v_road_number              NUMBER;
-    v_road_part_number         NUMBER;
-    v_track_code               NUMBER;
-    v_discontinuity            NUMBER;
-    v_start_addr_m             NUMBER;
-    v_end_addr_m               NUMBER;
-    v_lrm_position_id          NUMBER;
-    v_start_date               DATE;
-    v_end_date                 DATE;
-    v_calibration_points       NUMBER;
-    v_ely                      NUMBER;
-    v_road_type                NUMBER;
-    x1                         NUMBER;
-    y1                         NUMBER;
-    x2                         NUMBER;
-    y2                         NUMBER;
     min_start_date             DATE;
     max_end_date               DATE;
     current_road               NUMBER := 0;
@@ -36,7 +19,7 @@ CREATE OR REPLACE PROCEDURE road_network_check IS
         IS
     BEGIN
         INSERT INTO road_network_errors VALUES (
-            road_network_errors_key_seq.nextval,
+            road_network_errors_key_seq.NEXTVAL,
             road_address_id,
             error_code
         );
@@ -50,7 +33,10 @@ CREATE OR REPLACE PROCEDURE road_network_check IS
         end_track1     NUMBER;
         end_track2     NUMBER;
     BEGIN
-    dbms_output.put_line('Checking tracks for road ' || v_road_number || ' road part ' || v_road_part_number);
+        dbms_output.put_line('Checking tracks for road '
+        || current_road
+        || ' road part '
+        || current_road_part);
         SELECT
             MIN(start_addr_m),
             MAX(end_addr_m)
@@ -59,8 +45,8 @@ CREATE OR REPLACE PROCEDURE road_network_check IS
         FROM
             road_address
         WHERE
-            road_number = v_road_number
-            AND   road_part_number = v_road_part_number
+            road_number = current_road
+            AND   road_part_number = current_road_part
             AND   track_code = 1;
 
         SELECT
@@ -71,8 +57,8 @@ CREATE OR REPLACE PROCEDURE road_network_check IS
         FROM
             road_address
         WHERE
-            road_number = v_road_number
-            AND   road_part_number = v_road_part_number
+            road_number = current_road
+            AND   road_part_number = current_road_part
             AND   track_code = 2;
 
         IF
@@ -150,21 +136,19 @@ BEGIN
                 track_code
         ) LOOP
             IF
-                 current_road != road.road_number OR current_road_part != road.road_part_number
+                current_road != road.road_number OR current_road_part != road.road_part_number
             THEN
                 IF
                     current_track > 0 AND check_tracks () = false
                 THEN
                     num_errors := num_errors + write_error(road.id,error_overlaping_address);
+                    dbms_output.put_line('Houve um erro no check tracks');
                 END IF;
+
                 current_track := 0;
                 current_road := road.road_number;
                 current_road_part := road.road_part_number;
             END IF;
-            dbms_output.put_line('current_track ' || current_track);
-            dbms_output.put_line('current_road ' || current_road);
-            dbms_output.put_line('current_road_part ' || current_road_part);
-
             IF
                 road.track_code != current_track
             THEN
@@ -174,20 +158,22 @@ BEGIN
                     road.calibration_points = 0
                 THEN
                     num_errors := num_errors + write_error(road.id,error_overlaping_address);
+                    dbms_output.put_line('Houve um erro nos calibration points');
                 END IF;
+
             ELSE
                 IF
                     road.start_addr_m != current_end_addr_m
                 THEN
                     num_errors := num_errors + write_error(road.id,error_overlaping_address);
+                    dbms_output.put_line('Houve um erro nos m values');
                 END IF;
             END IF;
-
             IF
                 current_end_x > 0 AND current_end_y > 0
             THEN
                 IF
-                    x1 != current_end_x OR y1 != current_end_y
+                      road.s_x != current_end_x AND road.s_y != current_end_y  and  road.e_x != current_end_x AND road.e_y != current_end_y
                 THEN
                     IF
                         road.discontinuity NOT IN (
@@ -196,19 +182,21 @@ BEGIN
                         )
                     THEN
                         num_errors := num_errors + write_error(road.id,error_topology);
+                        dbms_output.put_line('Houve um erro na discontinuidade (devia existir)');
                     ELSE
                         IF
-                            v_discontinuity != 5
+                            road.discontinuity != 5
                         THEN
                             num_errors := num_errors + write_error(road.id,error_topology);
+                            dbms_output.put_line('Houve um erro na discontinuidade (não devia existir)');
                         END IF;
                     END IF;
+
                 END IF;
             END IF;
-
-            current_end_x := x2;
-            current_end_y := y2;
-            current_end_addr_m := v_end_addr_m;
+            current_end_x := road.e_x;
+            current_end_y := road.e_y;
+            current_end_addr_m := road.end_addr_m;
         END LOOP;
     END LOOP;
 
