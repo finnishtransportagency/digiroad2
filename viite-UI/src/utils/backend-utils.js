@@ -313,6 +313,10 @@
       return $.getJSON('api/viite/floatingRoadAddresses');
     };
 
+    this.getRoadAddressErrors = function() {
+      return $.getJSON('api/viite/roadAddressErrors');
+    };
+
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
       return function(parameter, callback) {

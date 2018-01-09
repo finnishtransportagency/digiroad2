@@ -450,6 +450,7 @@
         '</div>'+
         '<div class="form form-horizontal">'+
         '<a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a>'+
+        '<a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">ROAD ADDRESS ERRORS</a>'+
         '</div>';
       rootElement.append(emptyFormDiv);
       $('[id=formProjectButton]').click(function(){

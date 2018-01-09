@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
@@ -593,6 +594,19 @@ object RoadAddressDAO {
           order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
       """
     queryList(query)
+  }
+
+  def fetchAllRoadAddressErrors(includesHistory: Boolean = false) = {
+
+    val history = if(!includesHistory) s" where ra.end_date is null " else ""
+      val query =
+        s"""
+        select ra.id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from road_address ra join road_network_errors re on re.road_address_id = ra.id $history
+          order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
+      """
+    Q.queryNA[(Long, Long, Long, Int, Long)](query).list.map {
+      case (id, roadNumber, roadPartNumber, errorCode, ely) =>
+        AddressErrorDetails(id, roadNumber, roadPartNumber, AddressError.apply(errorCode), ely)}
   }
 
   def fetchMultiSegmentLinkIds(roadNumber: Long) = {

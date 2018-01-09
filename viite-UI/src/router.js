@@ -22,7 +22,8 @@
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'roadAddressProject/:projectId': 'roadAddressProject',
         'historyLayer/:date': 'historyLayer',
-        'work-list/floatingRoadAddress' : 'floatingAddressesList'
+        'work-list/floatingRoadAddress' : 'floatingAddressesList',
+        'work-list/roadAddressErrors' : 'roadAddressErrorsList'
       },
 
       linkProperty: function (linkId) {
@@ -66,7 +67,11 @@
       },
 
       floatingAddressesList: function () {
-        eventbus.trigger('workList:select', 'linkProperty', backend.getFloatingRoadAddresses());
+        eventbus.trigger('workList-floatings:select', 'linkProperty', backend.getFloatingRoadAddresses());
+      },
+
+      roadAddressErrorsList: function () {
+        eventbus.trigger('workList-errors:select', 'linkProperty', backend.getRoadAddressErrors());
       }
     });
 
