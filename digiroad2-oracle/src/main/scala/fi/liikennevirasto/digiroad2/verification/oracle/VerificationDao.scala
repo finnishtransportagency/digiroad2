@@ -7,11 +7,12 @@ import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
 class VerificationDao {
+  val TwoYears: Int = 24
 
   def getVerifiedAssetTypes(municipalityId: Int) = {
     val verifiedAssetTypes =
       sql"""select mv.id, m.id, m.name_fi, mv.verified_by, mv.verified_date, asst.id, asst.name,
-         case when mv.verified_date < sysdate then 0 else 1 end as verified
+         case when MONTHS_BETWEEN(sysdate,mv.verified_date) < $TwoYears then 1 else 0 end as verified
          from municipality m
 		     join asset_type asst on asst.verifiable = 1
          left join municipality_verification mv on mv.municipality_id = m.id and mv.asset_type_id = asst.id and mv.valid_to is null or mv.valid_to > sysdate
@@ -25,8 +26,7 @@ class VerificationDao {
   def getAssetVerificationById(Id: Long): Option[VerificationInfo] = {
     val verifiedAssetType =
       sql"""select m.id, m.name_fi, mv.verified_by, mv.verified_date, asst.id, asst.name,
-         case when mv.verified_date < sysdate then 0 else 1 end as verified,
-         case when mv.valid_to <= sysdate then 1 else 0 end as expired
+         case when MONTHS_BETWEEN(sysdate,mv.verified_date) < $TwoYears then 1 else 0 end as verified
          from  municipality_verification mv
          join asset_type asst on  asst.id = mv.asset_type_id and asst.verifiable = 1
          join municipality m on m.id = mv.municipality_id
@@ -40,7 +40,7 @@ class VerificationDao {
   def getAssetVerification(municipalityCode: Int, assetTypeCode: Int): Seq[VerificationInfo] = {
     val verifiedAssetType =
       sql"""select m.id, m.name_fi, mv.verified_by, mv.verified_date, asst.id, asst.name,
-         case when mv.verified_date < sysdate then 0 else 1 end as verified
+         case when MONTHS_BETWEEN(sysdate,mv.verified_date) < $TwoYears then 1 else 0 end as verified
          from municipality m
          join asset_type asst on asst.verifiable = 1 and asst.id = $assetTypeCode
          join municipality_verification mv on mv.municipality_id = m.id and mv.asset_type_id = asst.id
