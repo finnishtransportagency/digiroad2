@@ -140,7 +140,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       (startPart to endPart).foreach(part =>
         ProjectDAO.roadPartReservedByProject(roadNumber, part) match {
-          case Some(name) => return Left(s"TIE $roadNumber OSA $part on jo varattuna projektissa $name, tarkista tiedot")
+          case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna toisessa projektissa $name.")
           case _ =>
         })
       Right((startPart to endPart).flatMap(part => getAddressPartInfo(roadNumber, part))
@@ -181,6 +181,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         filterNot(_._2.isEmpty).foreach {
         case ((roadNumber, roadPartNumber), value) =>
           val (startDate, endDate) = value.map(v => (v._6, v._7)).get
+          if(startDate.nonEmpty && startDate.get.isEqual(date) && endDate.isEmpty)
+            return Option(s"TIE ${roadNumber} OSA ${roadPartNumber} ei ole vapaana projektin alkupäivämääränä. " +
+              s"Tieosoitteen alkupäivämäärä on sama kuin projektin alkupäivämäärä.")
           if (startDate.nonEmpty && startDate.get.isAfter(date))
             return Option(s"Tieosalla TIE ${roadNumber} OSA ${roadPartNumber} alkupäivämäärä " +
               s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
@@ -385,8 +388,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false, useFrozenVVHLinks)
             .map(rl => rl.linkId -> rl).toMap
           val reserved = checkAndReserve(project, reservation)
-          if (reserved.isEmpty)
-            throw new RuntimeException(s"Can't reserve road part ${reservation.roadNumber}/${reservation.roadPartNumber}")
+          if (reserved._1.isEmpty)
+            throw new RuntimeException(s"Tie ${reservation.roadNumber} osa ${reservation.roadPartNumber} ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna toisessa projektissa ${reserved._2.get}.")
           addressesOnPart.map(ra => newProjectTemplate(mapping(ra.linkId), ra, project))
         }
         logger.debug(s"Reserve done")
@@ -652,15 +655,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param reservedRoadPart Reservation information (req: road number, road part number)
     * @return
     */
-  private def checkAndReserve(project: RoadAddressProject, reservedRoadPart: ReservedRoadPart): Option[ReservedRoadPart] = {
+  private def checkAndReserve(project: RoadAddressProject, reservedRoadPart: ReservedRoadPart): (Option[ReservedRoadPart], Option[String]) = {
     logger.info(s"Check ${project.id} matching to " + ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber))
     ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber) match {
-      case Some(id) if id != project.id => None
-      case Some(id) if id == project.id =>
-        ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber)
+      case Some(proj) if proj._1 != project.id => (None, Some(proj._2))
+      case Some(proj) if proj._1 == project.id =>
+        (ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber), None)
       case _ =>
         ProjectDAO.reserveRoadPart(project.id, reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber, project.modifiedBy)
-        ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber)
+        (ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber), None)
     }
   }
 

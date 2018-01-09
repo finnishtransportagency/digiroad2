@@ -587,14 +587,14 @@ object ProjectDAO {
     }
   }
 
-  def roadPartReservedTo(roadNumber: Long, roadPart: Long): Option[Long] = {
+  def roadPartReservedTo(roadNumber: Long, roadPart: Long): Option[(Long, String)] = {
     val query =
-      s"""SELECT p.id
+      s"""SELECT p.id, p.name
               FROM project p
               JOIN PROJECT_RESERVED_ROAD_PART l
            ON l.PROJECT_ID =  p.ID
            WHERE l.road_number=$roadNumber AND road_part_number=$roadPart"""
-    Q.queryNA[Long](query).firstOption
+    Q.queryNA[(Long, String)](query).firstOption
   }
 
   def roadPartReservedByProject(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Boolean = false): Option[String] = {

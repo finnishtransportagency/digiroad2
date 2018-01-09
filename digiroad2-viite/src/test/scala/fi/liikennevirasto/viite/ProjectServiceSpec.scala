@@ -1159,4 +1159,79 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
     }
   }
+  test("two projects with same road part") {
+    runWithRollback {
+      val error = intercept[RuntimeException] {
+        val rap1 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+          "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+          Seq(), None)
+        val rap2 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject2", "TestUser", DateTime.parse("1901-01-01"),
+          "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+          Seq(), None)
+        val addr1 = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))
+        val project1 = projectService.createRoadLinkProject(rap1)
+        mockForProject(project1.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project1)))
+        projectService.saveProject(project1.copy(reservedParts = addr1))
+        val project2 = projectService.createRoadLinkProject(rap2)
+        mockForProject(project2.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project2)))
+        projectService.saveProject(project2.copy(reservedParts = addr1))
+      }
+      error.getMessage should be ("Tie 5 osa 207 ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna toisessa projektissa TestProject.")
+
+    }
+  }
+
+  test("create project link for road part that is not reserved") {
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val newLink = Seq(ProjectLink(-1000L, 5L, 203L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
+        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
+        None, 86400L))
+      val project = projectService.createRoadLinkProject(rap)
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(newLink.map(toRoadLink))
+      val response = projectService.createProjectLinks(Seq(12345L), project.id, 5, 203, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test")
+      response.get("success").get.asInstanceOf[Boolean] should be (false)
+      response.get("errormessage").get.asInstanceOf[String] should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
+    }
+  }
+
+  test("renumber a reserved road part to a road part reserved by other project") {
+    runWithRollback {
+      val rap1 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val rap2 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject2", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val addr1 = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))
+      val addr2 = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5, 203, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L),None, None, None, None, true))
+      val project1 = projectService.createRoadLinkProject(rap1)
+      mockForProject(project1.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project1)))
+      projectService.saveProject(project1.copy(reservedParts = addr1))
+
+      val project2 = projectService.createRoadLinkProject(rap2)
+      mockForProject(project2.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(project1)))
+      projectService.saveProject(project2.copy(reservedParts = addr2))
+
+      val response = projectService.updateProjectLinks(project1.id, ProjectDAO.getProjectLinks(project1.id).map(_.linkId).toSet, LinkStatus.Numbering, "TestUser", 5, 203, 0, None, RoadType.PublicRoad.value, Discontinuity.Continuous.value, Some(8))
+      response.get should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
+    }
+  }
+
+  test("renumber a project link to a road part not reserved with end date null") {
+    runWithRollback {
+      val rap1 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val addr1 = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))
+      val project1 = projectService.createRoadLinkProject(rap1)
+      mockForProject(project1.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project1)))
+      projectService.saveProject(project1.copy(reservedParts = addr1))
+      val response = projectService.updateProjectLinks(project1.id, ProjectDAO.getProjectLinks(project1.id).map(_.linkId).toSet, LinkStatus.Numbering, "TestUser", 5, 203, 0, None, RoadType.PublicRoad.value, Discontinuity.Continuous.value, Some(8))
+      response.get should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
+    }
+  }
 }
