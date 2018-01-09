@@ -16,7 +16,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     def outsideOfGeometry(ra: RoadAddress, roadLinks: Seq[RoadLinkLike]): Boolean = {
       !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue) ||
         !roadLinks.exists(rl => GeometryUtils.areAdjacent(
-          GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue),
+          GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
           ra.geometry))
     }
 
@@ -31,6 +31,12 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
         val rl = roadLinks(ra.linkId).head
         val len = GeometryUtils.geometryLength(rl.geometry)
         println(s"${pretty(ra)} moved to floating, outside of road link geometry (link is $len m)")
+        //TODO: Testing - No update
+        println(s"Road Address: ${ra.geometry}")
+        println(s"Road Address ID: ${ra.id}")
+        println(s"Road Address Created/Modified: ${ra.modifiedBy}")
+        println(s"Road Link: ${rl.geometry}")
+        println("---------")
       }
     )
     val floatings = checkGeometryChangeOfSegments(roadAddressList, roadLinks)
@@ -60,7 +66,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   }
 
   /**
-    * Check if road address geometry is moved by road link geometry change at leas MaxMoveDistanceBeforeFloating
+    * Check if road address geometry is moved by road link geometry change at least MaxMoveDistanceBeforeFloating
     * meters. Because road address geometry isn't directed check for fit either way. Public for testing.
     * @param roadLink Road link for road address list
     * @param roadAddresses Sequence of road addresses to check
@@ -82,8 +88,13 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     val sortedRoadAddresses = roadAddressList.groupBy(ra=> ra.linkId)
     val movedRoadAddresses = sortedRoadAddresses.filter(ra =>
       roadLinks.getOrElse(ra._1, Seq()).isEmpty || isGeometryChange(roadLinks.getOrElse(ra._1, Seq()).head, ra._2)).flatMap(_._2).toSeq
-    movedRoadAddresses.foreach{ ra =>
+    movedRoadAddresses.foreach{ ra =>{
       println(s"${pretty(ra)} moved to floating, geometry has changed")
+      //TODO: Testing - No update
+      println(s"Moved Geometry: ${ra.geometry}")
+      println(s"Moved Address ID: ${ra.id}")
+      println(s"Moved Address Created/Modified: ${ra.modifiedBy}")
+    }
     }
     movedRoadAddresses
   }

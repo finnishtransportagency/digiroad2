@@ -507,6 +507,7 @@ object RoadAddressDAO {
   /**
     * Check that the road part is available for the project at project date (and not modified to be changed
     * later)
+    *
     * @param roadNumber Road number to be reserved for project
     * @param roadPartNumber Road part number to be reserved for project
     * @param projectId Project that wants to reserve the road part (used to check the project date vs. address dates)
@@ -855,7 +856,8 @@ object RoadAddressDAO {
   }
 
   def getValidRoadNumbersWithFilterToTestAndDevEnv = {
-    getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
+    //TODO: Testing - No update
+    getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 ) AND (ra.Lrm_position_id in (Select id From lrm_position Where link_id in (5515411, 874259, 3319872, 3319872, 1217452, 6285577, 2713350, 6346005, 6518849, 6281357, 6281357, 2713350, 5515411, 966482, 6518849, 2818295, 753497, 753498, 91007, 91007, 6285577, 1826455, 2693008, 6474047, 966482, 1217452, 753498, 753497, 1826455)))")
   }
 
   def getValidRoadParts(roadNumber: Long) = {
@@ -987,6 +989,7 @@ object RoadAddressDAO {
 
   /**
     * Return road address table rows that are valid by their ids
+    *
     * @param ids
     * @return
     */
@@ -1027,7 +1030,18 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def queryByIdMassQuery(ids: Set[Long]): List[RoadAddress] = {
+  def queryByIdMassQuery(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false): List[RoadAddress] = {
+    val terminatedFilter = if(!includeTerminated) {
+      "AND ra.terminated = 0"
+    } else {
+      ""
+    }
+
+    val historyFilter = if (includeHistory)
+      "AND end_date is null"
+    else
+      ""
+
     MassQuery.withIds(ids) {
       idTableName =>
         val query =
@@ -1041,7 +1055,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = ra.id
-        where t.id < t2.id and
+        where t.id < t2.id $historyFilter $terminatedFilter and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
