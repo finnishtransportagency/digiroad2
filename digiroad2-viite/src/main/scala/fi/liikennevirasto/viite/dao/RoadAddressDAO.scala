@@ -506,6 +506,7 @@ object RoadAddressDAO {
   /**
     * Check that the road part is available for the project at project date (and not modified to be changed
     * later)
+    *
     * @param roadNumber Road number to be reserved for project
     * @param roadPartNumber Road part number to be reserved for project
     * @param projectId Project that wants to reserve the road part (used to check the project date vs. address dates)
@@ -601,12 +602,12 @@ object RoadAddressDAO {
     val history = if(!includesHistory) s" where ra.end_date is null " else ""
       val query =
         s"""
-        select ra.id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from road_address ra join road_network_errors re on re.road_address_id = ra.id $history
-          order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
+        select ra.id, lrm.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from road_address ra join lrm_position lrm on lrm.id = ra.lrm_position_id join road_network_errors re on re.road_address_id = ra.id $history
+        order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
       """
-    Q.queryNA[(Long, Long, Long, Int, Long)](query).list.map {
-      case (id, roadNumber, roadPartNumber, errorCode, ely) =>
-        AddressErrorDetails(id, roadNumber, roadPartNumber, AddressError.apply(errorCode), ely)}
+    Q.queryNA[(Long, Long, Long, Long, Int, Long)](query).list.map {
+      case (id, linkId, roadNumber, roadPartNumber, errorCode, ely) =>
+        AddressErrorDetails(id, linkId, roadNumber, roadPartNumber, AddressError.apply(errorCode), ely)}
   }
 
   def fetchMultiSegmentLinkIds(roadNumber: Long) = {
@@ -989,6 +990,7 @@ object RoadAddressDAO {
 
   /**
     * Return road address table rows that are valid by their ids
+    *
     * @param ids
     * @return
     */

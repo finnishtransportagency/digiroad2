@@ -59,10 +59,10 @@
     var tableContentRows = function(addresses) {
       return _.map(addresses, function(address) {
         return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>')
-          .append(floatingDescription('TIE', address.roadNumber))
-          .append(floatingDescription('OSA', address.roadPartNumber))
-          .append(floatingDescription('AJR', address.id))
-          .append(floatingDescription('ERROR', address.errorCode)))
+          .append(errorsDescription('ID', address.id))
+          .append(errorsDescription('TIE', address.roadNumber))
+          .append(errorsDescription('OSA', address.roadPartNumber))
+          .append(errorsDescription('ERROR', address.errorCode)))
           .append($('<td align=right />').append(roadAddressError(address)));
       });
     };
@@ -72,7 +72,7 @@
       return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
     };
 
-    var floatingDescription = function(desc, value){
+    var errorsDescription = function(desc, value){
       return $('<td align=left style="width: 100px;"> <b>'+desc +'</b>: '+value + '</td>');
     };
 

@@ -418,7 +418,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   /**
-    * Returns all road addresse errors that are represented on ROAD_ADDRESS table and are valid (excluding history)
+    * Returns all road address errors that are represented on ROAD_ADDRESS table and are valid (excluding history)
     *
     * @param includesHistory - default value = false to exclude history values
     * @return Seq[RoadAddress]
@@ -813,5 +813,5 @@ object AddressConsistencyValidator {
     }
   }
 
-  case class AddressErrorDetails(id: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
+  case class AddressErrorDetails(id: Long, linkId: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
 }
