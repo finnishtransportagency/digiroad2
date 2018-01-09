@@ -1,151 +1,218 @@
-CREATE OR REPLACE
-PROCEDURE road_network_check
-IS
-  v_road_number        NUMBER;
-  v_road_part_number   NUMBER;
-  v_track_code         NUMBER;
-  v_discontinuity      NUMBER;
-  v_start_addr_m       NUMBER;
-  v_end_addr_m         NUMBER;
-  v_lrm_position_id    NUMBER;
-  v_start_date         DATE;
-  v_end_date           DATE;
-  v_calibration_points NUMBER;
-  v_ely                NUMBER;
-  v_road_type          NUMBER;
-  x1                   NUMBER;
-  y1                   NUMBER;
-  x2                   NUMBER;
-  y2                   NUMBER;
-  min_start_date       DATE;
-  max_end_date         DATE;
-  current_track        NUMBER := 0;
-  --track_code_change number:=0;
-FUNCTION Write_error
-  RETURN BOOLEAN
-IS
-BEGIN
-  -- Aqui inserir na tabela de erros
-  RETURN TRUE;
-END;
+CREATE OR REPLACE PROCEDURE road_network_check IS
 
-FUNCTION Check_tracks
-  RETURN BOOLEAN
-IS
-  start_track1 NUMBER;
-  start_track2 NUMBER;
-  end_track1   NUMBER;
-  end_track2   NUMBER;
-BEGIN
-  SELECT MIN(start_addr_m),
-    end_addr_m
-  INTO start_track1,
-    end_track1
-  FROM road_address
-  WHERE road_number    = v_road_number
-  AND road_part_number = v_road_part_number
-  AND track_code       = 1;
-  SELECT start_addr_m,
-    end_addr_m
-  INTO start_track2,
-    end_track2
-  FROM road_address
-  WHERE road_number    = v_road_number
-  AND road_part_number = v_road_part_number
-  AND track_code       = 2;
-  IF start_track1     != start_track2 OR end_track1 != end_track2 THEN
-    -- Aqui fazer o erro
-    RETURN FALSE;
-  END IF;
-  RETURN TRUE;
-END;
+    v_id                       NUMBER;
+    v_road_number              NUMBER;
+    v_road_part_number         NUMBER;
+    v_track_code               NUMBER;
+    v_discontinuity            NUMBER;
+    v_start_addr_m             NUMBER;
+    v_end_addr_m               NUMBER;
+    v_lrm_position_id          NUMBER;
+    v_start_date               DATE;
+    v_end_date                 DATE;
+    v_calibration_points       NUMBER;
+    v_ely                      NUMBER;
+    v_road_type                NUMBER;
+    x1                         NUMBER;
+    y1                         NUMBER;
+    x2                         NUMBER;
+    y2                         NUMBER;
+    min_start_date             DATE;
+    max_end_date               DATE;
+    current_road               NUMBER := 0;
+    current_road_part          NUMBER := 0;
+    current_track              NUMBER := 0;
+    current_end_x              NUMBER := 0;
+    current_end_y              NUMBER := 0;
+    current_end_addr_m         NUMBER := 0;
+    error_overlaping_address   NUMBER := 1;
+    error_topology             NUMBER := 2;
+    num_errors                 NUMBER := 0;
+
+    FUNCTION write_error (
+        road_address_id   IN NUMBER,
+        error_code        IN NUMBER
+    ) RETURN NUMBER
+        IS
+    BEGIN
+        INSERT INTO road_network_errors VALUES (
+            road_network_errors_key_seq.nextval,
+            road_address_id,
+            error_code
+        );
+
+        RETURN 1;
+    END;
+
+    FUNCTION check_tracks RETURN BOOLEAN IS
+        start_track1   NUMBER;
+        start_track2   NUMBER;
+        end_track1     NUMBER;
+        end_track2     NUMBER;
+    BEGIN
+    dbms_output.put_line('Checking tracks for road ' || v_road_number || ' road part ' || v_road_part_number);
+        SELECT
+            MIN(start_addr_m),
+            MAX(end_addr_m)
+        INTO
+            start_track1,end_track1
+        FROM
+            road_address
+        WHERE
+            road_number = v_road_number
+            AND   road_part_number = v_road_part_number
+            AND   track_code = 1;
+
+        SELECT
+            MIN(start_addr_m),
+            MAX(end_addr_m)
+        INTO
+            start_track2,end_track2
+        FROM
+            road_address
+        WHERE
+            road_number = v_road_number
+            AND   road_part_number = v_road_part_number
+            AND   track_code = 2;
+
+        IF
+            start_track1 != start_track2 OR end_track1 != end_track2
+        THEN
+            RETURN false;
+        END IF;
+        RETURN true;
+    END;
 
 BEGIN
-  FOR r IN
-  (SELECT DISTINCT road_number as r_number,
-    road_part_number as r_p_number
-  FROM road_address
-  ORDER BY road_number,
-    road_part_number
-  )
-  LOOP
-    FOR road IN
-    (SELECT ra.road_number as rn,
-      ra.road_part_number as rpn,
-      ra.track_code as tc,
-      ra.discontinuity as ds,
-      ra.start_addr_m as sam,
-      ra.end_addr_m as eam,
-      ra.lrm_position_id as lpi,
-      ra.start_date as sd,
-      ra.end_date as ed,
-      ra.calibration_points as cp,
-      ra.ely as el,
-      ra.road_type as rtp,
-      t.x,
-      t.y,
-      t2.x,
-      t2.y,
-      MIN(ra.start_date),
-      MAX(ra.end_date)
-    INTO v_road_number,
-      v_road_part_number,
-      v_track_code,
-      v_discontinuity,
-      v_start_addr_m,
-      v_end_addr_m,
-      v_lrm_position_id,
-      v_start_date,
-      v_end_date,
-      v_calibration_points,
-      v_ely,
-      v_road_type,
-      x1,
-      y1,
-      x2,
-      y2,
-      min_start_date,
-      max_end_date
-    FROM road_address ra,
-      TABLE(sdo_util.Getvertices(geometry)) t,
-      TABLE(sdo_util.Getvertices(geometry)) t2
-    WHERE ra.road_number    = r.r_number
-    AND ra.road_part_number = r.r_p_number
-    AND ra.terminated       = 0
-    AND t.id             = 1
-    AND t2.id            = 2
-    GROUP BY ra.road_number,
-      ra.road_part_number,
-      ra.track_code,
-      ra.discontinuity,
-      ra.start_addr_m,
-      ra.end_addr_m,
-      ra.lrm_position_id,
-      ra.start_date,
-      ra.end_date,
-      ra.calibration_points,
-      ra.ely,
-      ra.road_type,
-      t.x,
-      t.y,
-      t2.x,
-      t2.y
-    HAVING ra.start_date             >= MIN(ra.start_date)
-    AND NVL(ra.end_date, '01.01.01') <= NVL(MAX(ra.end_date), '01.01.01')
-    ORDER BY ra.track_code
-    )
-    LOOP
-    DBMS_OUTPUT.PUT_LINE('Teste');
-      --IF v_track_code != current_track THEN
-      --current_track := v_track_code;
+    FOR r IN (
+        SELECT DISTINCT
+            road_number AS r_number,
+            road_part_number AS r_p_number
+        FROM
+            road_address
+        ORDER BY
+            road_number,
+            road_part_number
+    ) LOOP
+        FOR road IN (
+            SELECT
+                ra.id,
+                road_number,
+                road_part_number,
+                track_code,
+                discontinuity,
+                start_addr_m,
+                end_addr_m,
+                lrm_position_id,
+                start_date,
+                end_date,
+                calibration_points,
+                ely,
+                road_type,
+                t.x AS s_x,
+                t.y AS s_y,
+                t2.x AS e_x,
+                t2.y AS e_y,
+                MIN(start_date),
+                MAX(end_date)
+            FROM
+                road_address ra,
+                TABLE ( sdo_util.getvertices(geometry) ) t,
+                TABLE ( sdo_util.getvertices(geometry) ) t2
+            WHERE
+                road_number = r.r_number
+                AND   road_part_number = r.r_p_number
+                AND   terminated = 0
+                AND   t.id = 1
+                AND   t2.id = 2
+            GROUP BY
+                ra.id,
+                road_number,
+                road_part_number,
+                track_code,
+                discontinuity,
+                start_addr_m,
+                end_addr_m,
+                lrm_position_id,
+                start_date,
+                end_date,
+                calibration_points,
+                ely,
+                road_type,
+                t.x,
+                t.y,
+                t2.x,
+                t2.y
+            HAVING start_date >= MIN(start_date)
+                   AND nvl(end_date,'01.01.01') <= nvl(MAX(end_date),'01.01.01')
+            ORDER BY
+                start_addr_m,
+                track_code
+        ) LOOP
+            IF
+                 current_road != road.road_number OR current_road_part != road.road_part_number
+            THEN
+                IF
+                    current_track > 0 AND check_tracks () = false
+                THEN
+                    num_errors := num_errors + write_error(road.id,error_overlaping_address);
+                END IF;
+                current_track := 0;
+                current_road := road.road_number;
+                current_road_part := road.road_part_number;
+            END IF;
+            dbms_output.put_line('current_track ' || current_track);
+            dbms_output.put_line('current_road ' || current_road);
+            dbms_output.put_line('current_road_part ' || current_road_part);
 
-      --return;
-      --END IF;
+            IF
+                road.track_code != current_track
+            THEN
+                current_track := road.track_code;
+                current_end_addr_m := road.end_addr_m;
+                IF
+                    road.calibration_points = 0
+                THEN
+                    num_errors := num_errors + write_error(road.id,error_overlaping_address);
+                END IF;
+            ELSE
+                IF
+                    road.start_addr_m != current_end_addr_m
+                THEN
+                    num_errors := num_errors + write_error(road.id,error_overlaping_address);
+                END IF;
+            END IF;
+
+            IF
+                current_end_x > 0 AND current_end_y > 0
+            THEN
+                IF
+                    x1 != current_end_x OR y1 != current_end_y
+                THEN
+                    IF
+                        road.discontinuity NOT IN (
+                            2,
+                            4
+                        )
+                    THEN
+                        num_errors := num_errors + write_error(road.id,error_topology);
+                    ELSE
+                        IF
+                            v_discontinuity != 5
+                        THEN
+                            num_errors := num_errors + write_error(road.id,error_topology);
+                        END IF;
+                    END IF;
+                END IF;
+            END IF;
+
+            current_end_x := x2;
+            current_end_y := y2;
+            current_end_addr_m := v_end_addr_m;
+        END LOOP;
     END LOOP;
-    --if track_code > 0 then
-    -- compare start and end of the tracks (calibration points)
-    --if v_start_addr_m = 0 then
-    --start_track_address :=
-    --end if;
-  END LOOP;
+
+    dbms_output.put_line('Road network check ended with '
+    || num_errors
+    || ' errors');
 END;
