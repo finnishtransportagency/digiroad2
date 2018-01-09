@@ -1176,7 +1176,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         mockForProject(project2.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project2)))
         projectService.saveProject(project2.copy(reservedParts = addr1))
       }
-      error.getMessage should be ("Can't reserve road part 5/207")
+      error.getMessage should be ("Tie 5 osa 207 ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna toisessa projektissa TestProject.")
+
     }
   }
 
