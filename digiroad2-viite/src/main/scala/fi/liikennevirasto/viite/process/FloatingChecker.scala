@@ -17,7 +17,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
       !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue) ||
         !roadLinks.exists(rl => GeometryUtils.areAdjacent(
           GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
-          GeometryUtils.truncateGeometry2D(ra.geometry, ra.startMValue, ra.endMValue)))
+          (if(ra.geometry.isEmpty) ra.geometry else GeometryUtils.truncateGeometry2D(ra.geometry, ra.startMValue, ra.endMValue))))
     }
 
     val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true)
@@ -35,7 +35,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
         println(s"Road Address: ${ra.geometry}")
         println(s"Road Address ID: ${ra.id}")
         println(s"Road Address StartM: ${ra.startMValue}")
-        println(s"Road Address EndM: ${ra.endAddrMValue}")
+        println(s"Road Address EndM: ${ra.endMValue}")
         println(s"Road Address Created/Modified: ${ra.modifiedBy}")
         println(s"Road Link: ${rl.geometry}")
         println("---------")
