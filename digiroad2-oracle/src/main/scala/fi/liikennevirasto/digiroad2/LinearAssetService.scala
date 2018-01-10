@@ -186,28 +186,26 @@ trait LinearAssetOperations {
 
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
-    val projectableTargetRoadLinks = roadLinks.filter(
-      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+    val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
-    val projectedAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      assetsOnChangedLinks, assetsOnChangedLinks, changes)
+    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
+                               expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
+                               adjustedMValues = Seq.empty[MValueAdjustment],
+                               adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+
+    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+      assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
 
     val newAssets = projectedAssets ++ assetsWithoutChangedLinks
 
     if (newAssets.nonEmpty) {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
-    val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
+    val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
-    val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
-      changeSet.expiredAssetIds
-
-    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
-
-    //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "linearAssets:saveProjectedLinearAssets" is executed after the "linearAssets:update"
-    //it will update the mValues to the previous ones
-    eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
+    eventBus.publish("linearAssets:update", changeSet)
+    eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filter(_.id == 0L))
 
     filledTopology
   }
@@ -227,7 +225,8 @@ trait LinearAssetOperations {
     * Uses VVH ChangeInfo API to map OTH linear asset information from old road links to new road links after geometry changes.
     */
   protected def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
-                                                     currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] ={
+                                                     currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo], changeSet: ChangeSet) : (Seq[PersistedLinearAsset], ChangeSet) ={
+
     val (replacementChanges, otherChanges) = changes.partition(isReplacementChange)
     val reverseLookupMap = replacementChanges.filterNot(c=>c.oldId.isEmpty || c.newId.isEmpty).map(c => c.newId.get -> c).groupBy(_._1).mapValues(_.map(_._2))
 
@@ -237,20 +236,17 @@ trait LinearAssetOperations {
 
     val fullChanges = extensionChanges ++ replacementChanges
 
-
-    val linearAssets = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).flatMap(
-      limit =>
-        limit match {
-          case (asset, (Some(roadLink), Some(projection))) =>
-            Some(NumericalLimitFiller.projectLinearAsset(asset, roadLink, projection))
-          case (_, (_, _)) =>
-            None
-        })
+    val linearAssets = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLinearAsset], changeSet)) {
+      case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
+        val (linearAsset, changes) = NumericalLimitFiller.projectLinearAsset(asset, roadLink, projection, cs)
+        (persistedAsset ++ Seq(linearAsset), changes)
+      case _ => (Seq.empty[PersistedLinearAsset], changeSet)
+    }
     linearAssets
   }
 
-  private def mapReplacementProjections(oldLinearAssets: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
-                                        changes: Seq[ChangeInfo]) : Seq[(PersistedLinearAsset, (Option[RoadLink], Option[Projection]))] = {
+  private def mapReplacementProjections(oldLinearAssets: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[(PersistedLinearAsset, (Option[RoadLink], Option[Projection]))] = {
+
     val targetLinks = changes.flatMap(_.newId).toSet
     val newRoadLinks = roadLinks.filter(rl => targetLinks.contains(rl.linkId)).groupBy(_.linkId)
     val changeMap = changes.filterNot(c => c.newId.isEmpty || c.oldId.isEmpty).map(c => (c.oldId.get, c.newId.get)).groupBy(_._1)
@@ -502,17 +498,20 @@ trait LinearAssetOperations {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
+      if(toUpdate.nonEmpty) {
+        val toUpdateText = toUpdate.filter(a =>
+          Set(EuropeanRoads.typeId, ExitNumbers.typeId).contains(a.typeId))
 
-      val toUpdateText = toUpdate.filter(a =>
-        Set(EuropeanRoads.typeId, ExitNumbers.typeId).contains(a.typeId))
-      val groupedNum = toUpdate.filterNot(a => toUpdateText.contains(a)).groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
-      val groupedText= toUpdateText.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
-      val persisted = (groupedNum.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
-        groupedText.flatMap(group => dao.fetchAssetsWithTextualValuesByIds(group._2.map(_.id).toSet, group._1)).toSeq).groupBy(_.id)
-      updateProjected(toUpdate, persisted)
-      if (newLinearAssets.nonEmpty)
-        logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
+        val groupedNum = toUpdate.filterNot(a => toUpdateText.contains(a)).groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+        val groupedText = toUpdateText.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
 
+        val persisted = (groupedNum.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
+          groupedText.flatMap(group => dao.fetchAssetsWithTextualValuesByIds(group._2.map(_.id).toSet, group._1)).toSeq).groupBy(_.id)
+
+        updateProjected(toUpdate, persisted)
+        if (newLinearAssets.nonEmpty)
+          logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
+      }
       toInsert.foreach{ linearAsset =>
         val id =
           (linearAsset.createdBy, linearAsset.createdDateTime) match {
@@ -532,22 +531,14 @@ trait LinearAssetOperations {
           case _ => None
         }
       }
-      if (newLinearAssets.nonEmpty)
-        logger.info("Added assets for linkids " + toInsert.map(_.linkId))
+      if (toInsert.nonEmpty)
+        logger.info("Added assets for linkids " + newLinearAssets.map(_.linkId))
     }
   }
 
   protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
     def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
       !persistedLinearAsset.exists(_.value == assetToPersist.value)
-    }
-    def mValueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(pl => pl.startMeasure == assetToPersist.startMeasure &&
-        pl.endMeasure == assetToPersist.endMeasure &&
-        pl.vvhTimeStamp == assetToPersist.vvhTimeStamp)
-    }
-    def sideCodeChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(_.sideCode == assetToPersist.sideCode)
     }
     toUpdate.foreach { linearAsset =>
       val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
@@ -561,8 +552,6 @@ trait LinearAssetOperations {
           case _ => None
         }
       }
-      if (mValueChanged(linearAsset, persistedLinearAsset)) dao.updateMValues(linearAsset.id, (linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.vvhTimeStamp)
-      if (sideCodeChanged(linearAsset, persistedLinearAsset)) dao.updateSideCode(linearAsset.id, SideCode(linearAsset.sideCode))
     }
   }
 
