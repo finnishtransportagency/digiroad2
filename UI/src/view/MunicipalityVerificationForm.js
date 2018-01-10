@@ -1,4 +1,5 @@
 (function (root) {
+  var municipalityCode;
   var municipalityValidationTable = function(workListItems, municipalityName) {
     var municipalityHeader = function(municipalityName) {
       return $('<h2/>').html(municipalityName);
@@ -47,10 +48,10 @@
 
     var buttons = function() {
       return    '<input type="button" class="btn btn-municipality" id="verify" value="Merkitse tarkistetuksi" />' +
-        '<input type="button" class="btn btn-municipality" id="remove" value="Nollaa" />';
+                '<input type="button" class="btn btn-municipality" id="remove" value="Nollaa" />';
     };
 
-    $('#work-list').html('' +
+    $('#municipality-work-list').html('' +
       '<div style="overflow: auto;">' +
       '<div class="municipality-page">' +
       '<div class="municipality-content-box">' +
@@ -67,49 +68,61 @@
     );
     var showApp = function() {
       $('.container').show();
-      $('#work-list').hide();
+      $('#municipality-work-list').hide();
       $('body').removeClass('scrollable').scrollTop(0);
       $(window).off('hashchange', showApp);
     };
 
+/*
     $(window).on('hashchange', showApp);
+*/
 
     listP.then(function(assetTypes) {
       var assetTypesListed = _.map(assetTypes, _.partial(municipalityValidationTable));
-      $('#work-list .municipality-work-list').html(assetTypesListed);
+      $('#municipality-work-list .municipality-work-list').html(assetTypesListed);
 
       var selected = [];
 
       $("#verify").on("click", function () {
         $("input:checkbox[class=verificationCheckbox]:checked").each(function () {
-          selected.push($(this).attr('value'));
+          selected.push(parseInt(($(this).attr('value'))));
         });
-        //TODO: eventbus.trigger(verify, selected)
-        showApp();
+        eventbus.trigger("municipalityVerification:verify", selected, municipalityCode);
       });
 
       $("#remove").on("click", function () {
         $("input:checkbox[class=verificationCheckbox]:checked").each(function () {
-          selected.push($(this).attr('value'));
+          selected.push(parseInt(($(this).attr('value'))));
         });
-        //TODO: eventbus.trigger(remove, selected)
-        showApp();
+        eventbus.trigger("municipalityVerification:remove", selected, municipalityCode);
       });
     });
   };
 
   var bindEvents = function () {
-    eventbus.on('municipalityForm:open', function(listP) {
+    eventbus.on('municipalityForm:open', function(municipalityId, listP) {
       $('.container').hide();
-      $('#work-list').show();
+      $('#municipality-work-list').show();
+      $('#work-list').hide();
       $('body').addClass('scrollable');
       generateWorkList(listP);
+      municipalityCode = municipalityId;
     });
   };
 
   root.MunicipalityVerificationForm =  {
-    initialize: function () {
+    initialize: function (backend) {
       bindEvents();
+      eventbus.on("municipalityVerification:verify", verifyMunicipalityAssets);
+      eventbus.on("municipalityVerification:remove", removeMunicipalityVerification);
+
+      function verifyMunicipalityAssets(selectedAssets, municipalityCode) {
+        backend.verifyMunicipalityAssets(selectedAssets, municipalityCode);
+      }
+
+      function removeMunicipalityVerification(selectedAssets, municipalityCode) {
+        backend.removeMunicipalityVerification(selectedAssets, municipalityCode);
+      }
     }
   };
 })(this);

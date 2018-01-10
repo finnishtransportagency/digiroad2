@@ -406,6 +406,38 @@
       return $.getJSON('api/municipalities/assetTypes/' + municipalityCode);
     };
 
+    this.verifyMunicipalityAssets = function(typeIds, municipalityCode, errorCallback) {
+      eventbus.trigger('asset:creating');
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/municipalities/assetVerification/" + municipalityCode,
+        data: JSON.stringify({typeId:typeIds}),
+        dataType: "json",
+        success: function (asset) {
+          console.log("good stuff");
+          /*eventbus.trigger('asset:created', asset);*/
+        },
+        error: errorCallback
+      });
+    };
+
+    this.removeMunicipalityVerification = function(typeIds, municipalityCode, errorCallback) {
+      eventbus.trigger('asset:creating');
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/municipalities/removeVerification/" + municipalityCode,
+        data: JSON.stringify({typeId:typeIds}),
+        dataType: "json",
+        success: function (asset) {
+          console.log("good stuff");
+          /*eventbus.trigger('asset:created', asset);*/
+        },
+        error: errorCallback
+      });
+    };
+
     this.getVerificationInfo = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/verificationInfo?bbox=' + boundingBox + '&typeId=' + typeId

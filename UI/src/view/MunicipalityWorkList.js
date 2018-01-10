@@ -41,7 +41,9 @@
             $('body').removeClass('scrollable').scrollTop(0);
             $(window).off('hashchange', showApp);
         };
+/*
         $(window).on('hashchange', showApp);
+*/
 
         listP.then(function (limits) {
             var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
@@ -70,6 +72,7 @@
         eventbus.on('municipality:select', function(listP) {
             $('.container').hide();
             $('#work-list').show();
+            $('#municipality-work-list').hide();
             $('body').addClass('scrollable');
             generateWorkList(listP);
         });

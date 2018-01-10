@@ -1246,11 +1246,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.verifyAssetType(municipalityCode, assetTypeId, user.username)
   }
 
-  delete("/municipalities/removeVerification/:municipalityCode/") {
+  delete("/municipalities/removeVerification/:municipalityCode") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = params("municipalityCode").toInt
     validateUserMunicipalityAccess(user)(municipalityCode)
-    val assetTypeIds = (parsedBody \ "assetId").extract[Set[Int]]
+    val assetTypeIds = (parsedBody \ "typeId").extract[Set[Int]]
     verificationService.removeAssetTypeVerification(municipalityCode, assetTypeIds, user.username)
   }
 

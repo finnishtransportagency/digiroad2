@@ -221,7 +221,7 @@
       },
 
       municipalityVerificationForm: function(id) {
-        eventbus.trigger('municipalityForm:open', backend.getAssetTypesByMunicipality(id));
+        eventbus.trigger('municipalityForm:open', id, backend.getAssetTypesByMunicipality(id));
       }
 
     });
