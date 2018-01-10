@@ -193,6 +193,18 @@
       });
     }, 1000);
 
+    this.getCutLine = _.throttle(function(data, success, error) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/project/getCutLine",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: error
+      });
+    }, 1000);
+
       this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
           $.ajax({
               contentType: "application/json",
@@ -296,6 +308,10 @@
        error: errorCallback
      });
     }, 1000);
+
+    this.getFloatingRoadAddresses = function() {
+      return $.getJSON('api/viite/floatingRoadAddresses');
+    };
 
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
@@ -442,6 +458,14 @@
 
     this.withGetTargetAdjacent = function(returnData){
       self.getTargetAdjacent = function(linkId, callback){
+        callback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
+    this.withPreSplitData = function(returnData) {
+      self.getPreSplitedData = function (data, linkId, callback) {
         callback(returnData);
         return returnData;
       };

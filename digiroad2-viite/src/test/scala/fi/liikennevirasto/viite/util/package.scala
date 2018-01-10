@@ -27,7 +27,7 @@ package object util {
        |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue + " "} else ""}
        |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + " ->"} else ""}
        |${l.startDate.map(_.toString(" d.MM.YYYY -")).getOrElse("")} ${l.endDate.map(_.toString("d.MM.YYYY")).getOrElse("")}
-       |${if (l.terminated) " ✞" else ""}
+       |${if (l.terminated.value != 0) " ✞" else ""}
      """.stripMargin.replace("\n", "")
   }
 

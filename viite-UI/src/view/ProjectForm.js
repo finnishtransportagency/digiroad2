@@ -1,6 +1,8 @@
 (function (root) {
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
+    //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
     var currentProject = false;
+    var formCommon = new FormCommon('');
     var activeLayer = false;
     var hasReservedRoadParts = false;
     var ProjectStatus = LinkValues.ProjectStatus;
@@ -51,7 +53,7 @@
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
-    var actionButtons = function (ready) {
+    var actionButtons = function () {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
         '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka Toimenpiteisiin</button>' +
         '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
@@ -136,7 +138,7 @@
         '<div id ="newReservedRoads">' +
         newReservedRoads +
         '</div></div></div></div>' +
-        '<footer>' + actionButtons(reservedRoads !== '') + '</footer>');
+        '<footer>' + actionButtons() + '</footer>');
     };
 
     var selectedProjectLinkTemplate = function (project) {
@@ -144,17 +146,32 @@
         '<header>' +
         titleWithDeletingTool(project.name) +
         '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<label>TARKASTUSILMOITUKSET:</label>' +
+        '<div id ="projectErrors">' +
+        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
+        '</div></div></div></div></br></br>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
 
     var showProjectChangeButton = function () {
       return '<div class="project-form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var addSmallLabel = function (label) {
       return '<label class="control-label-small">' + label + '</label>';
+    };
+
+    var addLabel = function (label) {
+      return '<label>' + label+ ": " + '</label>';
+    };
+
+    var addLabelInfo = function (label) {
+      return '<label>' + label + '</label>';
     };
 
     var addSmallLabelWithIds = function (label, id) {
@@ -224,6 +241,7 @@
       };
 
       var createOrSaveProject = function () {
+        applicationModel.addSpinner();
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
           projectCollection.createProject(data, map.getView().getResolution());
@@ -287,7 +305,7 @@
           disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
           jQuery('.modal-overlay').remove();
           if (!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses, result.project);
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
           rootElement.html(selectedProjectLinkTemplate(currentProject));
@@ -341,13 +359,12 @@
         applicationModel.setOpenProject(true);
         activeLayer = true;
         projectCollection.clearRoadAddressProjects();
-        _.defer(function () {
-          $('#generalNext').prop('disabled', true);
-        });
+        $('#generalNext').prop('disabled', true);
       });
 
       eventbus.on('roadAddress:openProject', function (result) {
         currentProject = result.project;
+        projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
@@ -624,7 +641,7 @@
         displayCloseConfirmMessage(defaultPopupMessage, true);
       });
       rootElement.on('click', '#closeProjectSpan', function () {
-        displayCloseConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true);
+        closeProjectMode(true);
       });
 
       rootElement.on('click', '#deleteProjectSpan', function(){
@@ -638,6 +655,9 @@
         rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
       });
 
+      rootElement.on('click', '.projectErrorButton', function (event) {
+        eventbus.trigger('projectCollection:clickCoordinates', event, map);
+      });
     };
     bindEvents();
   };

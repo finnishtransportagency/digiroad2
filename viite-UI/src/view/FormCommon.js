@@ -15,7 +15,7 @@
 
     var projectButtons = function() {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-      '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
+      '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
     var newRoadAddressInfo = function(selected, links, road){
@@ -59,10 +59,10 @@
 
     var roadTypeDropdown = function() {
       return '<select class="'+prefix+'form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "1">1 Yleinen tie</option>'+
-        '<option value = "2">2 Lauttaväylä yleisellä tiellä</option>'+
+        '<option value = "1">1 Maantie</option>'+
+        '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
-        '<option value = "4">4 Yleisen tien työmaa</option>'+
+        '<option value = "4">4 Maantien työmaa</option>'+
         '<option value = "5">5 Yksityistie</option>'+
         '<option value = "9">9 Omistaja selvittämättä</option>' +
         '<option value = "99">99 Ei määritelty</option>' +
@@ -197,7 +197,7 @@
       var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
       return '<div class="'+localPrefix+'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var distanceValue = function() {
@@ -223,6 +223,49 @@
       return field;
     };
 
+    var getCoordButton = function (index, coordinates) {
+      return coordButton(index, coordinates);
+    };
+
+    var coordButton = function(index, coordinates){
+      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
+      return {index:index, html:html, coordinates:coordinates};
+    };
+
+    var getErrorCoordinates = function(error, links){
+      if (error.coordinates.length  > 0){
+        return error.coordinates;
+      }
+      var linkCoords = _.find(links, function (link) {
+        return link.linkId == error.linkIds[0];
+      });
+      if (!_.isUndefined(linkCoords)){
+        return linkCoords.points[0];
+      }
+      return false;
+    };
+
+    var getProjectErrors = function (projectErrors, links, projectCollection) {
+      var buttonIndex = 0;
+      var errorLines = '';
+      _.each(projectErrors, function (error) {
+        var button = '';
+        var coordinates = getErrorCoordinates(error, links);
+        if (coordinates) {
+          button = getCoordButton(buttonIndex, error.coordinates);
+          projectCollection.pushCoordinates(button);
+          buttonIndex++;
+        }
+        errorLines += '<div class="form-project-errors-list">' +
+          addSmallLabel('LINKIDS: ') + ' ' + addSmallLabel(error.linkIds) + '</br>' +
+          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
+          addSmallLabel('INFO: ') + ' ' + addSmallLabel((error.info ? error.info: 'N/A')) + '</br>' +
+          (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
+          '</div>';
+      });
+      return errorLines;
+    };
+
     return {
       newRoadAddressInfo: newRoadAddressInfo,
       replaceAddressInfo: replaceAddressInfo,
@@ -244,7 +287,8 @@
       title: title,
       titleWithProjectName: titleWithProjectName,
       projectButtons: projectButtons,
-      staticField: staticField
+      staticField: staticField,
+      getProjectErrors:getProjectErrors
     };
   };
 })(this);

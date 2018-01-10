@@ -21,7 +21,13 @@
 
     var isShowingForLayer = {
       speedLimit: false,
-      trSpeedLimits: false
+      trSpeedLimits: false,
+      totalWeightLimit: false,
+      trailerTruckWeightLimit: false,
+      axleWeightLimit: false,
+      bogieWeightLimit: false,
+      heightLimit: false,
+      lengthLimit: false
     };
 
     var setLayerToShow = function(layerName, isShowing){
@@ -36,14 +42,14 @@
 
     var showReadOnlyTrafficSigns = function(){
       setLayerToShow(parentLayerName, true);
-      collection.setTrafficSigns('speedLimits', true);
+      collection.setTrafficSigns(parentLayerName, true);
       me.show();
       me.refreshView();
     };
 
     var hideReadOnlyTrafficSigns = function(){
       setLayerToShow(parentLayerName, false);
-      collection.setTrafficSigns('speedLimits', false);
+      collection.setTrafficSigns(parentLayerName, false);
       me.hide();
     };
 

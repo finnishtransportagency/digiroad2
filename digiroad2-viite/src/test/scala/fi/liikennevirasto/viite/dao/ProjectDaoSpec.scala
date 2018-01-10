@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
+import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, Transfer}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -138,7 +138,9 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       ProjectDAO.create(addresses)
       val projectLinks = ProjectDAO.getProjectLinks(id)
       projectLinks.count(x => !x.reversed) should be(projectLinks.size)
-      val reversedprojectLinks = projectLinks.map(x => x.copy(reversed = true))
+      val maxM = projectLinks.map(_.endAddrMValue).max
+      val reversedprojectLinks = projectLinks.map(x => x.copy(reversed = true, status=Transfer,
+        startAddrMValue = maxM-x.endAddrMValue, endAddrMValue = maxM-x.startAddrMValue))
       ProjectDAO.updateProjectLinksToDB(reversedprojectLinks, "testuset")
       val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
       updatedProjectLinks.count(x => x.reversed) should be(updatedProjectLinks.size)
@@ -252,7 +254,6 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       val reserved = ProjectDAO.fetchReservedRoadPart(5, 203)
       reserved.nonEmpty should be(true)
       ProjectDAO.fetchReservedRoadParts(id) should have size (1)
-      ProjectDAO.fetchReservedRoadParts(id, Seq(NotHandled.value)) should have size (0)
       ProjectDAO.removeReservedRoadPart(id, reserved.get)
       val projectAfter = ProjectDAO.roadPartReservedByProject(5, 203)
       projectAfter should be(None)

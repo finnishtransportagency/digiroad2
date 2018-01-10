@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import java.text.SimpleDateFormat
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
@@ -166,7 +165,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     } else None
   }
 
-  def updateLinearAsset(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): (PersistedLinearAsset, RoadLink) = {
+  def updateLinearAsset(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): Seq[(PersistedLinearAsset, RoadLink)] = {
     val usedService = verifyLinearServiceToUse(assetTypeId)
     val oldAsset = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired).headOption.
       getOrElse(halt(NotFound("Asset not found.")))
@@ -176,7 +175,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
     val updatedId = usedService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
-    getLinearAssetsAndRoadLinks(assetTypeId, updatedId.toSet).getOrElse(halt(InternalServerError("Asset not Updated"))).head
+    updatedId match {
+      case Seq(0L) => Seq.empty
+      case _ => getLinearAssetsAndRoadLinks(assetTypeId, updatedId.toSet).getOrElse(halt(InternalServerError("Asset not Updated")))
+    }
   }
 
   def updatePointAssets(parsedBody: JValue, typeId: Int, assetId: Int): PersistedPointAsset = {
@@ -229,15 +231,15 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     parsedBody.extractOpt[NewManoeuvreValues].map { manoeuvre =>
       validateManoeuvrePropForUpdate(manoeuvre)
 
-      validateTimeststamp(manoeuvre.geometryTimestamp.getOrElse(halt(NotFound("geometryTimestamp not found"))), convertStringToDate(oldAsset.modifiedDateTime))
+      validateTimeststamp(manoeuvre.geometryTimestamp.getOrElse(halt(NotFound("geometryTimestamp not found"))), oldAsset.modifiedDateTime.getOrElse(oldAsset.createdDateTime).getMillis())
 
       val validityPeriods = convertValidityPeriod(manoeuvre.properties.find(_.name == "validityPeriods"))
       val exceptions = manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt))
       val additionalInfo = manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString)
 
       val manoeuvreUpdates = ManoeuvreUpdates(validityPeriods, exceptions, additionalInfo)
-      val updatedIds = manoeuvreService.updateManoeuvre(user.username, assetId, manoeuvreUpdates, Some(new DateTime(manoeuvre.geometryTimestamp.get)))
-      getManoeuvreAndRoadLinks(Seq(assetId.toInt)).getOrElse(halt(InternalServerError("Asset not Updated"))).head
+      val updatedId = manoeuvreService.updateManoeuvre(user.username, assetId, manoeuvreUpdates, Some(new DateTime(manoeuvre.geometryTimestamp.get)))
+      getManoeuvreAndRoadLinks(Seq(updatedId.toInt)).getOrElse(halt(InternalServerError("Asset not Updated"))).head
     }.get
   }
 
@@ -480,8 +482,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       "linkId" -> manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).get,
       "startMeasure" -> 0,
       "endMeasure" -> GeometryUtils.geometryLength(geomtry),
-      "modifiedAt" -> manoeuvre.modifiedDateTime,
-      "geometryTimestamp" -> convertStringToDate(manoeuvre.modifiedDateTime),
+      "modifiedAt" -> manoeuvre.modifiedDateTime.map(DateTimePropertyFormat.print).getOrElse(""),
+      "createdAt" -> manoeuvre.createdDateTime.toString("dd.MM.yyyy HH:mm:ss"),
+      "geometryTimestamp" -> manoeuvre.modifiedDateTime.getOrElse(manoeuvre.createdDateTime).getMillis,
       "municipalityCode" -> municipalityCode
     )
   }
@@ -536,10 +539,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case MassTransitLane.typeId => "hasLane"
       case _ => "asset"
     }
-  }
-
-  private def convertStringToDate(strDate: String): Long = {
-    new SimpleDateFormat("dd.MM.yyyy hh:mm:ss").parse(strDate).getTime
   }
 
   private def linkIdValidation(linkIds: Set[Long]): Seq[RoadLink] = {
@@ -863,7 +862,13 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           case "linear" =>
             (parsedBody \ "sideCode").extractOrElse[Int](halt(BadRequest("Missing mandatory 'sideCode' parameter")))
             if (assetTypeId == SpeedLimitAsset.typeId) speedLimitAssetToApi(updateSpeedLimitAsset(assetId, parsedBody, linkId))
-            else linearAssetToApi(updateLinearAsset(assetTypeId, assetId, parsedBody, linkId))
+            else{
+              val asset = updateLinearAsset(assetTypeId, assetId, parsedBody, linkId)
+              asset.nonEmpty match {
+                case true => linearAssetToApi(asset.head)
+                case false =>
+              }
+            }
           case "point" => pointAssetToApi(updatePointAssets(parsedBody, assetTypeId, assetId), assetTypeId)
           case _ =>
         }

@@ -98,7 +98,7 @@
 
     var suravagePartForm = function (selection, selected, index) {
       if (selected[index].endAddressM !== selected[index].startAddressM) {
-        return '<label>SUUMMITELMALINKKI</label>' + '<span class="marker">' + selected[index].marker + '</span>' +
+        return '<label>SUUNNITELMALINKKI</label>' + '<span class="marker">' + selected[index].marker + '</span>' +
           '<br>' + '<label>Toimenpiteet,' + selection + '</label>' +
           dropdownOption(index) + '<hr class="horizontal-line"/>';
       } else return '';
@@ -118,7 +118,7 @@
         '<option id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value="' + LinkStatus.Unchanged.description + '"  hidden>Ennallaan</option>' +
         '<option id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value="' + LinkStatus.Transfer.description + '" hidden>Siirto</option>' +
         '<option id="drop_' + index + '_' + LinkStatus.New.description + '" value="' + LinkStatus.New.description + '" hidden>Uusi</option>' +
-        '<option id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value="' + LinkStatus.Terminated.description + '" hidden> Lakkautus</option>' +
+        '<option id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value="' + LinkStatus.Terminated.description + '" hidden>Lakkautus</option>' +
         '</select>' +
         '</div>';
     };
@@ -139,29 +139,41 @@
       return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
     };
 
-    var changeDropDownValue = function (statusCode) {
+    var changeDropDownValue = function (statusCode,triggerChange) {
+      var fireChange = _.isUndefined(triggerChange) ? true : triggerChange;
       var rootElement = $('#feature-attributes');
       var link = _.first(_.filter(selectedProjectLink, function (l) {
-        return !_.isUndefined(l.status);
+        return !_.isUndefined(l.status) && l.status == statusCode;
       }));
       if (statusCode === LinkStatus.Unchanged.value) {
         $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").prop('disabled', false).prop('hidden', false);
-        $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected').change();
+        if(fireChange)
+          $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected').change();
+        else $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.Transfer.value) {
         $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
-        $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected').change();
+        if(fireChange)
+          $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected').change();
+        else $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.New.value) {
         $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").prop('disabled', false).prop('hidden', false);
-        $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected').change();
+        if(fireChange)
+          $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected').change();
+        else $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.Terminated.value) {
         $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").prop('disabled', false).prop('hidden', false);
-        $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected').change();
+        if(fireChange)
+          $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected').change();
+        else $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected');
       }
-      $('#discontinuityDropdown').val(link.discontinuity);
-      $('#roadTypeDropDown').val(link.roadTypeId);
+      // Set discontinuity from A/B unless it is continuous (defaults to Continuous if both are Continuous)
+      if (!_.isUndefined(link.discontinuity) && link.discontinuity !== 5 && (link.marker == 'A' || link.marker == 'B'))
+        $('#discontinuityDropdown').val(link.discontinuity);
+      if (!_.isUndefined(link.marker) && (link.marker == 'A' || link.marker == 'B'))
+        $('#roadTypeDropDown').val(link.roadTypeId);
     };
 
     var disableFormInputs = function () {
@@ -174,6 +186,7 @@
 
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
+
       eventbus.on('projectLink:split', function (selected) {
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
@@ -183,7 +196,7 @@
         formCommon.checkInputs('.split-');
         formCommon.toggleAdditionalControls();
         _.each(selectedProjectLink, function (link) {
-          changeDropDownValue(link.status);
+          changeDropDownValue(link.status, false);
         });
         disableFormInputs();
         $('#feature-attributes').find('.changeDirectionDiv').prop("hidden", false);
@@ -288,7 +301,10 @@
 
       var cancelChanges = function () {
         selectedProjectLinkProperty.setDirty(false);
-        if (projectCollection.isDirty()) {
+        var hasSplit = _.some(selectedProjectLinkProperty.getCurrent(), function(links) {
+          return links.hasOwnProperty('connectedLinkId');
+        });
+        if (projectCollection.isDirty() || hasSplit) {
           projectCollection.revertLinkStatus();
           projectCollection.setDirty([]);
           projectCollection.setTmpDirty([]);

@@ -168,6 +168,11 @@
   };
   root.distanceOfPoints = distanceOfPoints;
 
+  var distanceBetweenPoints = function (end, start) {
+    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+  };
+  root.distanceBetweenPoints = distanceBetweenPoints;
+
   var vectorialDistanceOfPoints = function (end, start) {
     return Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
   };
@@ -182,6 +187,11 @@
     var rad = ((Math.PI * 2) - (Math.atan2(v.y, v.x) + Math.PI)) + (3 * Math.PI / 2);
     var ret = rad > (Math.PI * 2) ? rad - (Math.PI * 2) : rad;
     return radiansToDegrees(ret);
+  };
+
+  var arePointsAdjacent = function(point1, point2){
+    var epsilon = 0.01;
+    return distanceBetweenPoints(point1, point2) <= epsilon;
   };
 
   root.calculateMidpointOfLineString = function (lineString) {
@@ -220,6 +230,15 @@
       distanceOfPoints(geom2LastPoint, geom1FirstPoint) < epsilon ||
       distanceOfPoints(geom2FirstPoint,geom1LastPoint) < epsilon ||
       distanceOfPoints(geom2LastPoint,geom1LastPoint) < epsilon;
+  };
+
+  root.connectingEndPoint = function(geometry1, geometry2){
+    var geom1FirstPoint = _.first(geometry1);
+    var geom1LastPoint = _.last(geometry1);
+    var geom2FirstPoint = _.first(geometry2);
+    var geom2LastPoint = _.last(geometry2);
+    var connectedEndPoint= _.find([geom1FirstPoint, geom1LastPoint], function(point){return arePointsAdjacent(point, geom2FirstPoint) || arePointsAdjacent(point, geom2LastPoint);});
+    return connectedEndPoint;
   };
 
 })(window.GeometryUtils = window.GeometryUtils || {});

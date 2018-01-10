@@ -21,7 +21,8 @@
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'roadAddressProject/:projectId': 'roadAddressProject',
-        'historyLayer/:date': 'historyLayer'
+        'historyLayer/:date': 'historyLayer',
+        'work-list/floatingRoadAddress' : 'floatingAddressesList'
       },
 
       linkProperty: function (linkId) {
@@ -62,8 +63,14 @@
         $('#toggleEditMode').hide();
         $('#emptyFormDiv,#projectListButton').hide();
         eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
+      },
+
+      floatingAddressesList: function () {
+        eventbus.trigger('workList:select', 'linkProperty', backend.getFloatingRoadAddresses());
       }
     });
+
+
 
     var router = new Router();
 
@@ -95,7 +102,7 @@
         var baseUrl = 'roadAddressProject/' + project.id;
         var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
         router.navigate(baseUrl + linkIdUrl);
-        if(project.coordX !== 0 && project.coordY !== 0 && project.zoomLevel !== 0){
+        if(!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0){
           applicationModel.selectLayer('linkProperty', false);
           map.getView().setCenter([project.coordX, project.coordY]);
           map.getView().setZoom(project.zoomLevel);

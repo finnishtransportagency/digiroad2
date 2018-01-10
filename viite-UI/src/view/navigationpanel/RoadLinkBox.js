@@ -102,6 +102,10 @@
         '<div class="legend-entry">' +
         '<div class="label">Käsittelemätön</div>' +
         '<div class="symbol linear operation-type-unhandeled" />' +
+        '<div class="label">Suravage-linkit</div>' +
+        '<div class="symbol linear operation-type-suravage" />' +
+        '<div class="label">Muu tieverkko, rakenteilla</div>' +
+        '<div class="symbol linear construction-type-0" />' +
         '</div>';
     };
 

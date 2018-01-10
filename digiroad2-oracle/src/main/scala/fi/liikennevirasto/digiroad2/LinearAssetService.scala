@@ -116,6 +116,21 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
+
+  def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
+    val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val linkIds = roadLinks.map(_.linkId)
+    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
+    withDynTransaction {
+      typeId match {
+        case EuropeanRoads.typeId | ExitNumbers.typeId =>
+          dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
+        case _ =>
+          dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
+      }
+    }.filterNot(_.expired)
+  }
+
   /**
     * Returns linear assets by municipality. Used by all IntegrationApi linear asset endpoints (except speed limits).
     *
@@ -160,9 +175,7 @@ trait LinearAssetOperations {
     val existingAssets =
       withDynTransaction {
         typeId match {
-          case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
-            dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
-          case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
+          case EuropeanRoads.typeId | ExitNumbers.typeId =>
             dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
           case _ =>
             dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
@@ -355,10 +368,8 @@ trait LinearAssetOperations {
   def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       typeId match {
-        case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
+        case EuropeanRoads.typeId | ExitNumbers.typeId =>
           dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
-        case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
-          dao.fetchProhibitionsByIds(typeId, ids)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
       }
@@ -368,7 +379,7 @@ trait LinearAssetOperations {
   def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       typeId match {
-        case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
+        case EuropeanRoads.typeId | ExitNumbers.typeId =>
           dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
         case _ =>
           dao.fetchLinearAssetsByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
@@ -487,22 +498,15 @@ trait LinearAssetOperations {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
-
       if(toUpdate.nonEmpty) {
-        val prohibitions = toUpdate.filter(a =>
-          Set(LinearAssetTypes.ProhibitionAssetTypeId, LinearAssetTypes.HazmatTransportProhibitionAssetTypeId).contains(a.typeId))
+        val toUpdateText = toUpdate.filter(a =>
+          Set(EuropeanRoads.typeId, ExitNumbers.typeId).contains(a.typeId))
 
-        val textAssets = toUpdate.filter(a =>
-          Set(LinearAssetTypes.EuropeanRoadAssetTypeId, LinearAssetTypes.ExitNumberAssetTypeId).contains(a.typeId))
-
-        val groupedNum = toUpdate.filterNot(a => textAssets.contains(a)).groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
-        val groupedText = textAssets.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+        val groupedNum = toUpdate.filterNot(a => toUpdateText.contains(a)).groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+        val groupedText = toUpdateText.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
 
         val persisted = (groupedNum.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
-          groupedText.flatMap(group => dao.fetchAssetsWithTextualValuesByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
-          dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet) ++
-          dao.fetchProhibitionsByIds(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId, prohibitions.map(_.id).toSet)).groupBy(_.id)
-
+          groupedText.flatMap(group => dao.fetchAssetsWithTextualValuesByIds(group._2.map(_.id).toSet, group._1)).toSeq).groupBy(_.id)
 
         updateProjected(toUpdate, persisted)
         if (newLinearAssets.nonEmpty)
@@ -524,8 +528,6 @@ trait LinearAssetOperations {
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
           case Some(TextualValue(textValue)) =>
             dao.insertValue(id, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), textValue)
-          case Some(prohibitions: Prohibitions) =>
-            dao.insertProhibitionValue(id, prohibitions)
           case _ => None
         }
       }
@@ -547,8 +549,6 @@ trait LinearAssetOperations {
             dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, LinearAssetTypes.VvhGenerated)
           case Some(TextualValue(textValue)) =>
             dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), LinearAssetTypes.VvhGenerated)
-          case Some(prohibitions: Prohibitions) =>
-            dao.updateProhibitionValue(id, prohibitions, LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
@@ -622,10 +622,9 @@ trait LinearAssetOperations {
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).
+        getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
-
-      Queries.updateAssetModified(id, username).execute
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
@@ -709,8 +708,6 @@ trait LinearAssetOperations {
           updateValueByExpiration(id, NumericValue(intValue), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
         case TextualValue(textValue) =>
           updateValueByExpiration(id, TextualValue(textValue), LinearAssetTypes.getValuePropertyId(typeId), username, measures, vvhTimeStamp, sideCode)
-        case prohibitions: Prohibitions =>
-          dao.updateProhibitionValue(id, prohibitions, username, measures)
         case _ =>
           Some(id)
       }
@@ -727,8 +724,6 @@ trait LinearAssetOperations {
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
       case TextualValue(textValue) =>
         dao.insertValue(id, LinearAssetTypes.getValuePropertyId(typeId), textValue)
-      case prohibitions: Prohibitions =>
-        dao.insertProhibitionValue(id, prohibitions)
       case _ => None
     }
     id

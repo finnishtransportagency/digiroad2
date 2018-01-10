@@ -1,13 +1,14 @@
 require.config({
   paths: {
-    jquery:                           '../../bower_components/jquery/dist/jquery.min',
-    chai:                             '../../bower_components/chai/chai',
-    'chai-jquery':                    '../../bower_components/chai-jquery/chai-jquery',
+    jquery:                           '../../node_modules/jquery/dist/jquery.min',
+    chai:                             '../../node_modules/chai/chai',
+    'chai-jquery':                    '../../node_modules/chai-jquery/chai-jquery',
     eventbus:                         '../src/utils/eventbus',
     RoadAddressTestData:              '../test_data/RoadAddressTestData',
     RoadLinkTestData:                 '../test_data/RoadLinkTestData',
     UserRolesTestData:                '../test_data/UserRolesTestData',
-    RoadAddressProjectTestData:       '../test_data/RoadAddressProjectTestData'
+    RoadAddressProjectTestData:       '../test_data/RoadAddressProjectTestData',
+    SplittingTestData:                '../test_data/SplittingTestData'
   },
   shim: {
     'chai-jquery': ['jquery', 'chai'],
@@ -15,7 +16,8 @@ require.config({
     'RoadAddressTestData': { exports: 'RoadAddressTestData' },
     'RoadAddressProjectTestData': { exports: 'RoadAddressProjectTestData' },
     'RoadLinkTestData': { exports: 'RoadLinkTestData' },
-    'UserRolesTestData': { exports: 'UserRolesTestData' }
+    'UserRolesTestData': { exports: 'UserRolesTestData' },
+    'SplittingTestData': { exports: 'SplittingTestData' }
   },
   waitSeconds: 10
 });
@@ -23,7 +25,8 @@ require(['chai',
          'chai-jquery',
          'TestHelpers',
          'FloatingRoadAddressSpec',
-         'RoadAddressProjectSpec'
+         'RoadAddressProjectSpec',
+         'SplittingRoadAddressSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);

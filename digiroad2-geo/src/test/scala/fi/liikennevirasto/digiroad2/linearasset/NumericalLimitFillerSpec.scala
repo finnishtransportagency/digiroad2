@@ -333,10 +333,10 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.startMeasure) should be(List(0.0))
     filledTopology.map(_.endMeasure) should be(List(10.0))
     changeSet.adjustedMValues should be(List())
-    changeSet.adjustedSideCodes.map(_.assetId) should be(List(1))
+    changeSet.adjustedSideCodes.length should be(1)
     changeSet.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
     changeSet.droppedAssetIds should be(Set())
-    changeSet.expiredAssetIds should be(Set(2))
+    changeSet.expiredAssetIds.size should be(1)
   }
 
   test("adjustSegments with None value") {

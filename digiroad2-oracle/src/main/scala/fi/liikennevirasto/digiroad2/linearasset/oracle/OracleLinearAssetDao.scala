@@ -259,7 +259,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
   def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
-    val filterExpired = if (includeExpired) "" else " and (a.valid_to >= sysdate or a.valid_to is null)"
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
@@ -321,7 +321,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join #$idTableName i on i.id = pos.link_id
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)
+          and (a.valid_to > sysdate or a.valid_to is null)
           and a.floating = 0"""
         .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int)].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource) =>
@@ -355,7 +355,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $prohibitionAssetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)
+          and (a.valid_to > sysdate or a.valid_to is null)
           #$floatingFilter"""
         .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Long, Option[DateTime], Option[Int], Option[Int], String, Int)].list
     }
@@ -403,7 +403,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $prohibitionAssetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)
+          and (a.valid_to > sysdate or a.valid_to is null)
           #$floatingFilter"""
         .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Long, Option[DateTime], Option[Int], Option[Int], String, Int)].list
     }
@@ -557,7 +557,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         join #$idTableName i on (i.id = pos.link_id)
-        where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= SYSDATE ) AND a.floating = 0""".as[
+        where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to > SYSDATE ) AND a.floating = 0""".as[
         (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Int)
         ].list
     }
@@ -599,7 +599,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       "join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus' " +
       "join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id " +
       "join ENUMERATED_VALUE e on s.enumerated_value_id = e.id " +
-      "where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= SYSDATE ) AND a.floating = 0"
+      "where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to > SYSDATE ) AND a.floating = 0"
 
     val idSql = sql + makeLinkIdSql(idString)
     Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Int)](idSql).list.map {
@@ -904,6 +904,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
+    * Updates validity of asset in db.
+    */
+  def updateExpiration(id: Long) = {
+
+    val propertiesUpdated =
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+
+    if (propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
@@ -1069,7 +1084,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join asset_link al on al.asset_id = a.id
           join lrm_position lrm on lrm.id = al.position_id
           where a.asset_type_id = $typeId
-          and (a.valid_to IS NULL OR a.valid_to >= SYSDATE )
+          and (a.valid_to IS NULL OR a.valid_to > SYSDATE )
           and a.floating = 0
           and a.id = $assetId
       """.as[(Long, Double, Double)].firstOption
