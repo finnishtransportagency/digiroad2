@@ -402,6 +402,10 @@
       return $.getJSON('api/municipalities/unverified');
     };
 
+    this.getAssetTypesByMunicipality = function(municipalityCode) {
+      return $.getJSON('api/municipalities/assetTypes/' + municipalityCode);
+    };
+
     this.getVerificationInfo = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/verificationInfo?bbox=' + boundingBox + '&typeId=' + typeId

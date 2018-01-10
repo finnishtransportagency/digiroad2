@@ -2,7 +2,7 @@
 
 .work-list {
   padding-bottom: @line-height-modifier * 2;
-  
+
   caption, h2 {
     padding-left: @line-height-modifier * 2;
   }
@@ -30,4 +30,28 @@
       margin-bottom: 0;
     }
   }
+}
+
+.municipality-work-list {
+  .work-list;
+  .table {
+    > thead,
+    > tbody,
+    > tfoot {
+      > tr {
+        > th{
+          font-size: 12px;
+        }
+      }
+        > td {
+          padding-left: @line-height-modifier * 2;
+          padding-right: @line-height-modifier * 2;
+          font-size: 12px;
+        }
+      }
+    }
+  &:last-child {
+    margin-bottom: 10em;
+  }
+
 }

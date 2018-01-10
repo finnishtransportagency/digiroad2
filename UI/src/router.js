@@ -46,7 +46,8 @@
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
-        'work-list/municipality': 'municipalityWorkList'
+        'work-list/municipality': 'municipalityWorkList',
+        'municipality/:municipalityId': 'municipalityVerificationForm'
       },
 
       massTransitStop: function (id) {
@@ -217,6 +218,10 @@
 
       municipalityWorkList: function () {
         eventbus.trigger('municipality:select', backend.getUncheckedMunicipalities());
+      },
+
+      municipalityVerificationForm: function(id) {
+        eventbus.trigger('municipalityForm:open', backend.getAssetTypesByMunicipality(id));
       }
 
     });

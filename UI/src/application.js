@@ -89,6 +89,7 @@
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
     MunicipalityWorkList.initialize(backend);
+    MunicipalityVerificationForm.initialize();
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
