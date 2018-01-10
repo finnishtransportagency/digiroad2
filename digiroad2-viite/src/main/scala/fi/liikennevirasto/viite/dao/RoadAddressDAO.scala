@@ -31,6 +31,8 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 sealed trait Discontinuity {
   def value: Int
   def description: String
+
+  override def toString: String = s"$value - $description"
 }
 object Discontinuity {
   val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
@@ -213,6 +215,7 @@ object RoadAddressDAO {
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
+          terminated = '0' and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
@@ -470,13 +473,18 @@ object RoadAddressDAO {
     fetchByAddress(roadNumber, roadPartNumber, track, None, Some(endAddrM))
   }
 
-  def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false, includeExpired: Boolean = false) = {
+  def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false, includeExpired: Boolean = false,
+                      includeHistory: Boolean = false): List[RoadAddress] = {
     val floating = if (!includeFloating)
       "floating='0' AND"
     else
       ""
     val expiredFilter = if (!includeExpired)
       "(valid_to IS NULL OR valid_to > sysdate) AND (valid_from IS NULL OR valid_from <= sysdate) AND"
+    else
+      ""
+    val historyFilter = if (!includeHistory)
+      "end_date is null AND"
     else
       ""
     // valid_to > sysdate because we may expire and query the data again in same transaction
@@ -490,7 +498,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
+        where $floating $expiredFilter $historyFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
@@ -511,11 +519,12 @@ object RoadAddressDAO {
          from project pro,
          road_address ra
          join lrm_position pos on ra.lrm_position_id = pos.id
-         where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
-         (ra.START_DATE>=pro.START_DATE or ra.END_DATE>pro.START_DATE) AND
-         ra.VALID_TO is null
-         )
-      """
+         where  pro.id = $projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
+         (ra.START_DATE >= pro.START_DATE or ra.END_DATE > pro.START_DATE) AND
+         ra.VALID_TO is null) OR EXISTS (
+         SELECT 1 FROM project_reserved_road_part pro, road_address ra JOIN lrm_position pos ON ra.lrm_position_id = pos.id
+          WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number
+           AND pro.road_number = $roadNumber AND pro.road_part_number = $roadPartNumber AND ra.end_date IS NULL)"""
     Q.queryNA[Int](query).firstOption.nonEmpty
   }
 
@@ -619,7 +628,7 @@ object RoadAddressDAO {
           SELECT * FROM (
             SELECT ra.road_number
             FROM road_address ra
-            WHERE floating = '0' and road_number > $current AND (end_date < sysdate OR end_date IS NULL)
+            WHERE and road_number > $current AND (valid_to > sysdate OR valid_to IS NULL)
             ORDER BY road_number ASC
           ) WHERE ROWNUM < 2
       """
@@ -632,7 +641,7 @@ object RoadAddressDAO {
           SELECT * FROM (
             SELECT ra.road_part_number
             FROM road_address ra
-            WHERE floating = '0' and road_number = $roadNumber  AND road_part_number > $current AND (end_date < sysdate OR end_date IS NULL)
+            WHERE and road_number = $roadNumber  AND road_part_number > $current AND (valid_to > sysdate OR valid_to IS NULL)
             ORDER BY road_part_number ASC
           ) WHERE ROWNUM < 2
       """
@@ -853,7 +862,16 @@ object RoadAddressDAO {
     sql"""
        select distinct road_part_number
               from road_address ra
-              where road_number = $roadNumber AND ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
+              where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL)
+      """.as[Long].list
+  }
+
+  def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
+    sql"""
+       select distinct road_part_number
+              from road_address ra
+              where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL) AND START_DATE <= $startDate
+              AND (END_DATE IS NULL OR END_DATE > $startDate)
       """.as[Long].list
   }
 
@@ -972,7 +990,7 @@ object RoadAddressDAO {
     * @param ids
     * @return
     */
-  def queryById(ids: Set[Long]): List[RoadAddress] = {
+  def queryById(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false): List[RoadAddress] = {
     if (ids.size > 1000) {
       return queryByIdMassQuery(ids)
     }
@@ -982,6 +1000,16 @@ object RoadAddressDAO {
     } else {
       s""" where ra.id in ($idString)"""
     }
+    val terminatedFilter = if(!includeTerminated) {
+      "AND ra.terminated = 0"
+    } else {
+      ""
+    }
+
+    val historyFilter = if (includeHistory)
+      "AND end_date is null"
+    else
+      ""
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
@@ -992,7 +1020,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where and t.id < t2.id and
+        $where $historyFilter $terminatedFilter and t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
@@ -1071,7 +1099,8 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
+      val newCreatedBy = createdBy.getOrElse(address.modifiedBy.getOrElse("-"))
+      addressPS.setString(11, if(newCreatedBy == null) "-" else newCreatedBy)
       val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)

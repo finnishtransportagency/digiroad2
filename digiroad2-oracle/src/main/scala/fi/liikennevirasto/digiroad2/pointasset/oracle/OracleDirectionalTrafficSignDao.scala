@@ -9,6 +9,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 case class DirectionalTrafficSign(id: Long, linkId: Long,
                                   lon: Double, lat: Double,
@@ -73,6 +74,25 @@ object OracleDirectionalTrafficSignDao {
         values ($id, 240, $username, sysdate, $municipality, ${sign.bearing})
         into lrm_position(id, start_measure, end_measure, link_id, side_code)
         values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection})
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+    updateAssetGeometry(id, Point(sign.lon, sign.lat))
+    sign.text.foreach(insertTextProperty(id, getTextPropertyId, _).execute)
+    id
+  }
+
+  def create(sign: IncomingDirectionalTrafficSign, mValue: Double,  municipality: Int, username: String, createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime]): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
+        values ($id, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $username, sysdate)
+        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
+        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection}, sysdate)
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
       select * from dual

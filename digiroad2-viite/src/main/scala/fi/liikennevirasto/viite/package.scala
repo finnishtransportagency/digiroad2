@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BaseRoadAddress
+import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 
 import scala.util.matching.Regex.Match
@@ -51,7 +52,18 @@ package object viite {
   val ErrorRoadPartsHaveDifferingEly = "Tieosat ovat eri ELYistä"
   val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt"
   val ErrorRoadLinkNotFound = "Tielinkkiä ei löytynyt"
-  val MissingEndOfRoadMessage = "Tieosalle ei ole määritelty jatkuvuuskoodia, 1 - Tien loppu, tieosan viimeiselle linkille."
+  val ErrorRoadLinkNotFoundInProject = "Tielinkkiä ei löytynyt projektista"
+  val ErrorRenumberingToOriginalNumber = "Numeroinnissa ei voi käyttää alkuperäistä tienumeroa ja -osanumeroa"
+  val ErrorSplitSuravageNotUpdatable = "Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää"
+  val ErrorRoadNumberDoesNotExist = "Tienumeroa ei ole olemassa, tarkista tiedot"
+  val ErrorStartingRoadPartNotFound = "Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot"
+  val ErrorEndingRoadPartNotFound = "Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot"
+  val ErrorGeometryContainsBranches = "Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä."
+  val ErrorReversingUnchangedLinks = "Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan."
+  val ErrorSavingFailed = "Päivitys ei onnistunut"
+  val ErrorMultipleRoadNumbersOrParts = "Valitut linkit eivät ole samalta tieosalta. Tallennus tulee tehdä erikseen."
+  val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia, ${EndOfRoad.description}, tieosan viimeiselle linkille."
+  val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi ${EndOfRoad.description}, vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val MajorDiscontinuityFoundMessage = "Tieosalla on epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val InsufficientTrackCoverageMessage = "Tieosalta puuttuu toinen ajorata. Numeroi molemmat ajoradat."
@@ -59,7 +71,12 @@ package object viite {
   val SharedLinkIdsExistMessage = "Linkillä on voimassa oleva tieosoite tämän projektin alkupäivämäärällä."
   val NoContinuityCodesAtEndMessage = "Tieosan lopusta puuttuu jatkuvuuskoodi."
   val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
+  val ConnectedDiscontinuousMessage = "Jatkuvalle linkille on määritelty epäjatkuvuus."
+  val DifferingDiscontinuityCodesForTracks = "Tieosan lopussa on yhteensopimattomat jatkuvuuskoodit."
+  val ElyCodeChangeNotPresent = s"Tieosan päässä ei ole jatkuvuuskoodia ${ChangingELYCode.description}"
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
+  val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
+  val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 

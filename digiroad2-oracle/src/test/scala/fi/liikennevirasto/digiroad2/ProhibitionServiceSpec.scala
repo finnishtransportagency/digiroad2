@@ -151,8 +151,11 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
     runWithRollback {
-      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
-      val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
+      val ids = ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
+      ids should have size (1)
+      val limits = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349))
+      limits should have size(1)
+      val limit = limits.head
 
       limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))))
       limit.expired should be (false)

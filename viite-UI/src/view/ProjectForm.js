@@ -159,7 +159,7 @@
     var showProjectChangeButton = function () {
       return '<div class="project-form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var addSmallLabel = function (label) {
@@ -241,6 +241,7 @@
       };
 
       var createOrSaveProject = function () {
+        applicationModel.addSpinner();
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
           projectCollection.createProject(data, map.getView().getResolution());
@@ -304,7 +305,7 @@
           disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
           jQuery('.modal-overlay').remove();
           if (!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses, result.project);
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
           rootElement.html(selectedProjectLinkTemplate(currentProject));
@@ -358,9 +359,7 @@
         applicationModel.setOpenProject(true);
         activeLayer = true;
         projectCollection.clearRoadAddressProjects();
-        _.defer(function () {
-          $('#generalNext').prop('disabled', true);
-        });
+        $('#generalNext').prop('disabled', true);
       });
 
       eventbus.on('roadAddress:openProject', function (result) {
@@ -642,7 +641,7 @@
         displayCloseConfirmMessage(defaultPopupMessage, true);
       });
       rootElement.on('click', '#closeProjectSpan', function () {
-        displayCloseConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true);
+        closeProjectMode(true);
       });
 
       rootElement.on('click', '#deleteProjectSpan', function(){

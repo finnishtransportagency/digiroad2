@@ -282,6 +282,7 @@
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
+              projectErrors = successObject.projectErrors;
               eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
             }
           });
@@ -327,7 +328,29 @@
 
     };
 
-    this.saveCuttedProjectLinks = function(changedLinks, statusA, statusB){
+    this.getCutLine = function(linkId, splitPoint){
+      applicationModel.addSpinner();
+      var dataJson = {
+        linkId: linkId,
+        splitedPoint: {
+          x: splitPoint.x,
+          y: splitPoint.y
+        }
+      };
+      backend.getCutLine(dataJson, function(successObject){
+        if (!successObject.success) {
+          new ModalConfirm(successObject.errorMessage);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('split:splitedCutLine', successObject.response);
+        }
+      }, function(failureObject){
+        eventbus.trigger('roadAddress:projectLinksUpdateFailed', BAD_REQUEST_400);
+      });
+
+    };
+
+      this.saveCuttedProjectLinks = function(changedLinks, statusA, statusB){
       applicationModel.addSpinner();
       if (_.isUndefined(statusB)) {
         statusB = LinkStatus.New.description;

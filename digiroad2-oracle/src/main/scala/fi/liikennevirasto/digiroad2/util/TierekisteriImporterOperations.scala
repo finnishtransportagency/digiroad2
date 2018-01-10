@@ -27,7 +27,7 @@ trait TierekisteriAssetImporterOperations {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  lazy val roadLinkService = new RoadLinkOTHService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
 
   lazy val assetDao: OracleAssetDao = new OracleAssetDao

@@ -102,7 +102,7 @@
         var baseUrl = 'roadAddressProject/' + project.id;
         var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
         router.navigate(baseUrl + linkIdUrl);
-        if(project.coordX !== 0 && project.coordY !== 0 && project.zoomLevel !== 0){
+        if(!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0){
           applicationModel.selectLayer('linkProperty', false);
           map.getView().setCenter([project.coordX, project.coordY]);
           map.getView().setZoom(project.zoomLevel);

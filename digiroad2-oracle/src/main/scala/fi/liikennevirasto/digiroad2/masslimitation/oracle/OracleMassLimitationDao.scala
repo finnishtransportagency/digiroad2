@@ -31,7 +31,7 @@ class OracleMassLimitationDao {
           join #$idTableName i on i.id = pos.link_id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id in (#${assetTypeId.mkString(",")})
-          and (a.valid_to >= sysdate or a.valid_to is null)
+          and (a.valid_to > sysdate or a.valid_to is null)
           and a.floating = 0"""
         .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int)].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource) =>

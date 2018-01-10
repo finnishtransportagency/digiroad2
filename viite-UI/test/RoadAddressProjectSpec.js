@@ -4,15 +4,14 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
   var assert = chai.assert;
 
   describe('when click on the Tieosoiteprojektit button', function() {
-    this.timeout(1500000);
+    this.timeout(3000000);
     var openLayersMap;
     before(function(done) {
-      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
+      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0, 'Project Two');
 
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
-        eventbus.once('roadLayer:featuresLoaded', function() {
-          console.log("Started the application.");
+        eventbus.on('roadLayer:featuresLoaded', function() {
           done();
         });
       }, backend);
@@ -58,26 +57,27 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         $('[id^=losa]').val('4').trigger("change");
         eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult){
           if(validationResult.success == "ok"){
+            $('#reservedRoadLength').text('50');
+            $('#reservedDiscontinuity').text('5');
+            $('#reservedEly').text('1');
             done();
           }
         });
         testHelpers.clickReserveButton();
       });
 
-      it('Seuraava button should be enabled', function () {
-        var isSeuraavaButtonDisabled = $('#generalNext').is(":disabled");
-        expect(isSeuraavaButtonDisabled).to.be.false;
+      it('Jatka button should be enabled', function () {
+        var isJatkaButtonDisabled = $('#generalNext').is(":disabled");
+        expect(isJatkaButtonDisabled).to.be.false;
+        testHelpers.clickNextButton();
       });
     });
 
     // 4-fourth -click in the next-Seuraava button
     describe('when clicking in next aka Seuraava button and select one reserved link', function() {
       before(function () {
-        eventbus.on('roadAddressProject:fetched',function (){
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-        });
-        testHelpers.clickNextButton();
       });
 
       it('Check if the project link was selected ', function(){
@@ -134,11 +134,10 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('when clicking Peruuta button', function() {
       before(function (done) {
-        var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-        testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-        // Click Cancel (Peruuta)
-        $('.cancelLink').click();
-        done();
+          var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
+          $('.cancelLink').click();
+          done();
       });
 
       it('Check if it change to the road form', function(){
@@ -147,7 +146,5 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         assert($('.project-form:visible').length > 0, "Form didn't open.");
       });
     });
-
-  });
-
+ });
 });
