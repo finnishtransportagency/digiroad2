@@ -19,7 +19,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockRoadAddressDAO: RoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
   val mockTRClient: TierekisteriLightingAssetClient = MockitoSugar.mock[TierekisteriLightingAssetClient]
   val mockTRTrafficSignsLimitClient: TierekisteriTrafficSignAssetClient = MockitoSugar.mock[TierekisteriTrafficSignAssetClient]
-  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadLinkService: RoadLinkOTHService = MockitoSugar.mock[RoadLinkOTHService]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
@@ -60,7 +60,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriLightingAssetClient = mockTRClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
 
     //Creating this new methods because is protected visibility on the trait
@@ -84,7 +84,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient = mockTRTrafficSignsLimitClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
 
@@ -103,7 +103,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriLightingAssetClient = mockTRClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -112,7 +112,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriPavedRoadAssetClient = mockTRPavedRoadClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
 
@@ -130,7 +130,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriMassTransitLaneAssetClient = mockMassTransitLaneClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
 
@@ -141,7 +141,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriDamagedByThawAssetClient = mockTRDamageByThawClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -150,7 +150,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriEuropeanRoadAssetClient = mockTREuropeanRoadClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -159,7 +159,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriSpeedLimitAssetClient = mockTRSpeedLimitAssetClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
   }

@@ -1643,3 +1643,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
 }
+
+
+class RoadLinkOTHService(vvhClient: VVHClient, eventbus: DigiroadEventBus, vvhSerializer: VVHSerializer) extends RoadLinkService(vvhClient, eventbus, vvhSerializer){
+
+  override protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
+    super.enrichRoadLinksFromVVH( vvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads), changes)
+  }
+}

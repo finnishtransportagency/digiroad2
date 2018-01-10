@@ -14,7 +14,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
                                roadAddressDao: RoadAddressDAO, linearAssetService: LinearAssetService) {
 
 
-  val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+  val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
 
   lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
     new LitRoadTierekisteriImporter()
