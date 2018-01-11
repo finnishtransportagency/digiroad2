@@ -132,8 +132,7 @@ object DataFixture {
       val checker = new FloatingChecker(roadLinkService)
       val roads = checker.checkRoadNetwork(username)
       println(s"${roads.size} segment(s) found")
-      //TODO: Remove Last
-     //roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, true)
+     roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, true)
     }
     println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
     println()
