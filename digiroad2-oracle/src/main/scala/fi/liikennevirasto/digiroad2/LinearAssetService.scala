@@ -795,7 +795,7 @@ trait LinearAssetOperations {
     val municipalities = withDynTransaction {
       dao.getMunicipalitiesNameByCode(municipalityCodes)
     }
-    Map("municipality" -> municipalities.sorted)
+    Map("municipality" -> municipalities)
   }
 }
 

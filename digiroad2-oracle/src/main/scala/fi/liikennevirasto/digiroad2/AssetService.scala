@@ -20,12 +20,13 @@ trait AssetOperations {
     }
   }
 
+  //this should be moved to municipalityDAO
   def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): (List[Map[String, Any]]) = {
     val municipalities = withDynTransaction {
       assetDao.getMunicipalitiesNameByCode(municipalityCodes)
     }
 
-    municipalities.map { municipality =>
+    municipalities.sortBy(_._2).map { municipality =>
       Map("id" -> municipality._1,
           "name" -> municipality._2)
     }

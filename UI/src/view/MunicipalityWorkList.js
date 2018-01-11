@@ -1,5 +1,5 @@
 (function (root) {
-    var hrefDir = "#municipality/";
+    var hrefDir = "#work-list/municipality/";
 
     var municipalityTable = function (municipalities, filter) {
         var municipalityValues =
@@ -19,7 +19,7 @@
     };
 
     var searchbox = $('<div class="filter-box">' +
-        '<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" id="searchBox"></div>');
+        '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
 
     var generateWorkList = function (listP) {
         var title = 'Tietolajien kuntasivu';
@@ -39,19 +39,18 @@
             $('.container').show();
             $('#work-list').hide();
             $('body').removeClass('scrollable').scrollTop(0);
-            $(window).off('hashchange', showApp);
         };
-/*
-        $(window).on('hashchange', showApp);
-*/
 
         listP.then(function (limits) {
-            var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
+            var element = $('#work-list .work-list');
+            if (limits.length == 1)
+                window.location = hrefDir + _.map(limits, function(limit) {return limit.id;});
 
-             if (_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium')) {
-                 $('#work-list .work-list').html($('<div class="municipality-list">').append(searchbox.append(unknownLimits)));
-             } else
-                 $('#work-list .work-list').append($('<div class="municipality-list">').append(unknownLimits));
+            var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
+            element.html($('<div class="municipality-list">').append(unknownLimits));
+
+             if (_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium'))
+                 searchbox.insertBefore('table');
 
             $('#searchBox').on('keyup', function(event){
                 var currentInput = event.currentTarget.value;

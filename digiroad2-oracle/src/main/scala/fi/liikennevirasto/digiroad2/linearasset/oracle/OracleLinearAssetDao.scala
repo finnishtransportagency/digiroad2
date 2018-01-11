@@ -1091,10 +1091,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     lrmInfo
   }
 
+  //this should be moved to municipalityDAO
   def getMunicipalityById(id: Long): Seq[Long] = {
     sql"""select id from municipality where id = $id """.as[Long].list
   }
 
+  //this should be moved to municipalityDAO
   def getMunicipalitiesNameByCode(codes: Set[Int]): Seq[String] = {
     val filter = if (codes.nonEmpty) {"where id in " + codes.mkString(",") } else ""
 

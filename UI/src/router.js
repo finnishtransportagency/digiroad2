@@ -47,7 +47,7 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
-        'municipality/:municipalityId': 'municipalityVerificationForm'
+        'work-list/municipality/:municipalityId': 'municipalityVerificationForm'
       },
 
       massTransitStop: function (id) {
