@@ -1,8 +1,9 @@
 
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
@@ -738,14 +739,18 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedLinearAssets = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
-      service.persistProjectedLinearAssets(projectedLinearAssets)
+      val changeSet = projectedLinearAssets.foldLeft(ChangeSet(Set.empty, Nil, Nil, Set.empty)) {
+        case (acc, proj) =>
+          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode))))
+      }
+
+      service.updateChangeSet(changeSet)
       val all = service.dao.fetchLinearAssetsByLinkIds(assetTypeId, Seq(oldLinkId1, oldLinkId2), "mittarajoitus")
       all.size should be (3)
       val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
       persisted.size should be (1)
       val head = persisted.head
       head.id should be (original.id)
-      head.vvhTimeStamp should be (vvhTimeStamp)
       head.startMeasure should be (0.1)
       head.endMeasure should be (10.1)
       head.expired should be (false)
@@ -918,4 +923,59 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Adjust projected asset with creation"){
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId = 5000
+    val newLinkId = 6000
+    val municipalityCode = 444
+    val functionalClass = 1
+    val assetTypeId = 170
+    val geom = List(Point(0, 0), Point(300, 0))
+    val len = GeometryUtils.geometryLength(geom)
+
+    val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+    val changeInfo = Seq(
+      ChangeInfo(Some(oldLinkId), Some(newLinkId), 1204467577, 1, Some(0), Some(150), Some(100), Some(200), 1461970812000L))
+
+
+    OracleDatabase.withDynTransaction {
+      val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""DELETE FROM asset_link WHERE position_id in (SELECT id FROM lrm_position where link_id = $oldLinkId)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code, adjusted_timestamp) VALUES ($lrm, $oldLinkId, 0.0, 150.0, ${SideCode.BothDirections.value}, 1)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset,$assetTypeId, null ,'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset,$lrm)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) (SELECT $asset, $asset, id, 4779 FROM PROPERTY WHERE PUBLIC_ID = 'mittarajoitus')""".execute
+
+
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
+      linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
+
+      verify(mockEventBus, times(1))
+        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
+
+      val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
+      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
+      val projectedAssets = captor.getValue
+      projectedAssets.length should be(1)
+      projectedAssets.foreach { proj =>
+        proj.id should be (0)
+        proj.linkId should be (6000)
+      }
+      dynamicSession.rollback()
+    }
+  }
 }

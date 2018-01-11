@@ -24,9 +24,9 @@ require.config({
 require(['chai',
          'chai-jquery',
          'TestHelpers',
-         'FloatingRoadAddressSpec',
-         'RoadAddressProjectSpec',
-         'SplittingRoadAddressSpec'
+         //'FloatingRoadAddressSpec',
+         //'RoadAddressProjectSpec',
+         //'SplittingRoadAddressSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);

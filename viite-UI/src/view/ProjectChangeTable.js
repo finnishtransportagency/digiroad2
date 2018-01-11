@@ -173,7 +173,7 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.startAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.endAddressM + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.endAddressM + '</td>' +
+        '<td class="project-change-table-dimension">' + (changeInfoSeq.target.endAddressM - changeInfoSeq.target.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.discontinuity + '</td>' +
         '<td class="project-change-table-dimension">'+ changeInfoSeq.target.roadType + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
@@ -186,7 +186,7 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.startAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.endAddressM + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.endAddressM + '</td>' +
+        '<td class="project-change-table-dimension">' + (changeInfoSeq.source.endAddressM - changeInfoSeq.source.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.discontinuity + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.roadType + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
