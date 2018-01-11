@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, Queries}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -52,6 +52,7 @@ trait LinearAssetOperations {
   def municipalityDao: MunicipalityDao
   def eventBus: DigiroadEventBus
   def polygonTools : PolygonTools
+  def assetDao: OracleAssetDao
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -62,11 +63,9 @@ trait LinearAssetOperations {
 
 
   def getMunicipalityCodeByAssetId(assetId: Int): Int = {
-    var municipalityCode = -1
     withDynTransaction {
-      municipalityCode = dao.getAssetMunicipalityCodeById(assetId)
+      assetDao.getAssetMunicipalityCodeById(assetId)
     }
-    municipalityCode
   }
 
   protected def getLinkSource(roadLink: Option[RoadLinkLike]): Option[Int] = {
@@ -114,7 +113,6 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
-
   def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     val linkIds = roadLinks.map(_.linkId)
@@ -134,20 +132,6 @@ trait LinearAssetOperations {
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     getByRoadLinks(typeId, roadLinks, change)
-  }
-
-  def getLinearMiddlePointById(typeId: Int, assetId: Long): (Long, Option[Point])  = {
-    val optLrmInfo = withDynTransaction {
-      dao.getAssetLrmPosition(typeId, assetId)
-    }
-    val roadLinks: Option[RoadLinkLike] = optLrmInfo.flatMap( x => roadLinkService.getRoadLinkAndComplementaryFromVVH(x._1))
-
-      val middePoint = (optLrmInfo, roadLinks) match {
-      case (Some(lrmInfo), Some(road)) =>
-        GeometryUtils.calculatePointFromLinearReference(road.geometry, lrmInfo._2 + (lrmInfo._3 - lrmInfo._2) / 2.0)
-      case _ => None
-    }
-    (assetId, middePoint)
   }
 
   def getLinearMiddlePointAndSourceById(typeId: Int, assetId: Long): (Long, Option[Point], Option[Int])  = {
@@ -217,13 +201,13 @@ trait LinearAssetOperations {
     val projectableTargetRoadLinks = roadLinks.filter(
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
+    val timing = System.currentTimeMillis
     val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
 
     val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
 
     if (newAssets.nonEmpty) {
-      val timing = System.currentTimeMillis
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
@@ -661,8 +645,6 @@ trait LinearAssetOperations {
         getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
-      //Queries.updateAssetModified(id, username).execute
-
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
       val newIdsToReturn = existingValue match {
@@ -801,7 +783,7 @@ trait LinearAssetOperations {
     }
   }
 
-  def getMunicipalityById (id: Long): Seq[Long]={
+  def getMunicipalityById (id: Int): Seq[Int]={
     withDynTransaction {
       municipalityDao.getMunicipalityById(id)
     }
@@ -824,6 +806,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools : PolygonTools = new PolygonTools()
+  override def assetDao: OracleAssetDao = new OracleAssetDao
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }

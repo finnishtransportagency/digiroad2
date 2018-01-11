@@ -45,10 +45,6 @@
      return collection.getById(id);
     };
 
-    this.getTypeId = function(){
-      return typeId;
-    };
-
     this.openMultiple = function(linearAssets) {
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
@@ -191,13 +187,9 @@
       eventbus.trigger(singleElementEvent('saving'));
       var knownLinearAssets = _.reject(selection, isUnknown);
       var payload = {ids: _.pluck(knownLinearAssets, 'id'), typeId: typeId};
-      backend.verifyLinearAssets(payload, function() {
-        dirty = false;
-        self.close();
-        eventbus.trigger(singleElementEvent('saved'));
-      }, function() {
-        eventbus.trigger('asset:verificationFailed');
-      });
+      collection.verifyLinearAssets(payload);
+      dirty = false;
+      self.close();
     };
 
     this.exists = function() {

@@ -7,6 +7,16 @@
       mapView.setZoom(zoom);
     };
 
+  function fetchLinearAssetEvent (asset, result) {
+    eventbus.once(asset.multiElementEventCategory + ':fetched', function() {
+      var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
+      if (linearAsset) {
+        asset.selectedLinearAsset.open(linearAsset, true);
+        applicationModel.setSelectedTool('Select');
+      }
+    });
+  }
+
     var linearCentering = function(layerName, id){
       applicationModel.selectLayer(layerName);
       var asset = _(models.linearAssets).find({ layerName: layerName });
@@ -18,25 +28,13 @@
       backend.getLinearAssetMidPoint(asset.typeId, id).then(function (result) {
         if(result.success){
           if(result.source === 1){
-            eventbus.once(asset.multiElementEventCategory + ':fetched', function() {
-              var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
-              if (linearAsset) {
-                asset.selectedLinearAsset.open(linearAsset, true);
-                applicationModel.setSelectedTool('Select');
-              }
-            });
+            fetchLinearAssetEvent(asset, result);
           }else if(result.source === 2) {
-            eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
+             eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
               eventbus.trigger(layerName + ':checkComplementaryLinkCheckBox');
               eventbus.trigger('complementaryLinks:show');
-              eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
-                var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
-                if (linearAsset) {
-                  asset.selectedLinearAsset.open(linearAsset, true);
-                  applicationModel.setSelectedTool('Select');
-                }
-              });
-            });
+               fetchLinearAssetEvent(asset, result);
+             });
           }
           mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
         }
@@ -95,7 +93,7 @@
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
-        'verification-list/:layerName': 'unverifiedLinearAssetWorkList'
+        'work-list/:layerName': 'unverifiedLinearAssetWorkList'
       },
 
       massTransitStop: function (id) {
@@ -157,39 +155,6 @@
           $.when(mapMoved).then(function () {
             eventbus.trigger('speedLimit:selectByLinkId', parseInt(linkId, 10));
           });
-        });
-      },
-
-      maintenanceRoad: function (id) {
-        applicationModel.selectLayer('maintenanceRoad');
-        var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(parseInt(id));
-        if (linearAsset) {
-          models.selectedMaintenanceRoad.open(linearAsset, true);
-          applicationModel.setSelectedTool('Select');
-        }
-        backend.getLinearAssetById(id, 'maintenanceRoad').then(function (result) {
-          if(result.success){
-            if(result.source === 1){
-              eventbus.once('maintenanceRoads:fetched', function() {
-                var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
-                models.selectedMaintenanceRoad.open(linearAsset, true);
-                applicationModel.setSelectedTool('Select');
-              });
-            }else if(result.source === 2){
-              eventbus.once('maintenanceRoads:fetched', function() {
-                eventbus.trigger('maintenanceRoadComplementaryCheckBox:check');
-                eventbus.trigger('complementaryLinks:show');
-                eventbus.once('maintenanceRoads:fetched', function(){
-                  var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
-                  if(linearAsset){
-                    models.selectedMaintenanceRoad.open(linearAsset, true);
-                    applicationModel.setSelectedTool('Select');
-                  }
-                });
-              });
-            }
-            mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
-          }
         });
       },
 
@@ -278,6 +243,10 @@
 
       maintenanceRoadWorkList: function () {
         eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedLinearAsset(290));
+      },
+
+      maintenanceRoad: function (id) {
+        linearCentering('maintenanceRoad', id);
       },
 
       litRoad: function (id) {

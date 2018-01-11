@@ -11,14 +11,13 @@ class MunicipalityDao {
     """.as[Int].list
   }
 
-  def getMunicipalityNameByCode(code: Int): String = {
+  def getMunicipalityNameByCode(id: Int): String = {
     sql"""
-      select name_fi from municipality where id = $code
-    """.as[String].first
+      select name_fi from municipality where id = $id""".as[String].first
   }
 
-  def getMunicipalityById(id: Long): Seq[Long] = {
-    sql"""select id from municipality where id = $id """.as[Long].list
+  def getMunicipalityById(id: Int): Seq[Int] = {
+    sql"""select id from municipality where id = $id """.as[Int].list
   }
 
 }

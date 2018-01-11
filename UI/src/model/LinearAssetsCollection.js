@@ -125,6 +125,14 @@
       return newSegments;
     };
 
+    this.verifyLinearAssets = function(payload) {
+      backend.verifyLinearAssets(payload, function () {
+        eventbus.trigger(singleElementEvent('saved'));
+      }, function () {
+        eventbus.trigger('asset:verificationFailed');
+      });
+    };
+
     var calculateMeasure = function(link) {
       var points = _.map(link.points, function(point) {
         return [point.x, point.y];

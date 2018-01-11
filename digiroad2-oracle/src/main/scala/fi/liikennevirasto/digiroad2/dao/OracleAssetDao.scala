@@ -50,4 +50,20 @@ class OracleAssetDao {
       """.execute
     }
   }
+
+  /**
+    * Returns the municipality code of a Asset by it's Id
+    *
+    * @param assetId The Id of the Asset
+    * @return Type: Int - The Municipality Code
+    */
+  def getAssetMunicipalityCodeById(assetId: Int): Int = {
+    val municipalityCode = sql"""Select municipality_code From asset Where id= $assetId""".as[Int].firstOption.get
+    municipalityCode
+  }
+
+  def getAssetTypeId(ids: Seq[Long]): Seq[(Long, Int)] = {
+    sql"""select ID, ASSET_TYPE_ID from ASSET where ID in (#${ids.mkString(",")})""".as[(Long, Int)].list
+  }
+
 }

@@ -53,7 +53,7 @@
       if(layerName === 'maintenanceRoad' && layerName === layer) {
         renderLinktoWorkList(layer);
       }else if(hasVerificationButton && layerName === layer){
-        renderVerificationList(layer, selectedLinearAsset);
+        renderLinktoWorkList(layer);
       }
        else {
         $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
@@ -147,24 +147,24 @@
         textName = "Tarkistamattomien huoltoteiden lista";
             break;
       default:
-        textName = "";
+        textName = "Vanhentuneiden kohteiden lista";
     }
 
       $('#information-content').append('' +
           '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
           '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">' + textName + '</a>' +
           '</div>');
-  };
 
-  var renderVerificationList = function (layerName, selectedLinearAsset) {
-    var linkDescription = 'Vanhentuneiden kohteiden lista';
-    var typeId = selectedLinearAsset.getTypeId();
 
-    $('#information-content').append('' +
-      '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-      '<a id="unchecked-links" class="unchecked-linear-assets" href="#verification-list/' + layerName + '">' + linkDescription + '</a>' +
-      '</div>');
-  };
+  //   var renderVerificationList = function (layerName) {
+  //     var linkDescription = 'Vanhentuneiden kohteiden lista';
+  //
+  //   $('#information-content').append('' +
+  //       '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
+  //       '<a id="unchecked-links" class="unchecked-linear-assets" href="#verification-list/' + layerName + '">' + linkDescription + '</a>' +
+  //       '</div>');
+  // };
+};
 
   function validateAdministrativeClass(selectedLinearAsset, editConstrains){
     var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {

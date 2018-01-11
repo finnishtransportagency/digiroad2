@@ -27,7 +27,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockOnOffLinearAssetService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.updateWithTimeStamp(Seq(any[Long]), any[Value], any[String], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1.toLong))
-  when(mockOnOffLinearAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
+  when(mockOnOffLinearAssetService.getMunicipalityById(any[Int])).thenReturn(Seq(235))
 
   private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService)
   addServlet(municipalityApi, "/*")

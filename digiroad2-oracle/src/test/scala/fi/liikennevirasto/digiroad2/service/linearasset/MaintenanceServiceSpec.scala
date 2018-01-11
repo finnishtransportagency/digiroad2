@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -46,6 +46,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockMaintenanceDao = MockitoSugar.mock[OracleMaintenanceDao]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
+  val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
   when(mockMaintenanceDao.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, Seq(1)))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, maintenanceRoadAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -60,6 +61,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override def assetDao: OracleAssetDao = mockAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -73,6 +75,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def polygonTools: PolygonTools = mockPolygonTools
     override def maintenanceDAO: OracleMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override def assetDao: OracleAssetDao = mockAssetDao
   }
 
   val geomFact= new GeometryFactory()
