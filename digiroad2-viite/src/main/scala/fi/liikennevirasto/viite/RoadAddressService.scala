@@ -689,7 +689,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.create(roadAddresses, Some(username))
       recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
     }
-    eventbus.publish("roadAddress:RoadNetworkChecker", 1)
+    if (RoadAddressDAO.fetchAllFloatingRoadAddresses(false).isEmpty)
+      eventbus.publish("roadAddress:RoadNetworkChecker", None)
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
@@ -746,18 +747,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case a: Exception => logger.error(a.getMessage, a)
     }
     false
-  }
-
-  def checkRoadAddressNetwork: Unit = {
-    withDynTransaction {
-      ExportLockDAO.delete
-      ExportLockDAO.insert
-      /*val roadNetwork = RoadAddressDAO.fetchAllRoads
-      val roadNetworkErrors =
-        roadNetwork.map(r => (r.startDate, r.endDate) -> roadNetwork.filter(f => f.startDate == r.startDate && f.endDate == r.endDate)).toMap
-        .foldLeft(Seq[Long])(r => r)
-*/
-    }
   }
 
   def prettyPrint(changes: Seq[ChangeInfo]) = {

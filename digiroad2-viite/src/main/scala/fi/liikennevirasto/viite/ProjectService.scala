@@ -1301,7 +1301,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"new status is $newStatus")
           newStatus
         } match {
-          case Saved2TR => eventbus.publish("roadAddress:RoadNetworkChecker", 1)
+          case Saved2TR => {
+            if (RoadAddressDAO.fetchAllFloatingRoadAddresses(false).isEmpty)
+              eventbus.publish("roadAddress:RoadNetworkChecker", None)
+          }
           case _ => logger.info(s"Not going to check road network (status != Saved2TR)")
         }
       } catch {

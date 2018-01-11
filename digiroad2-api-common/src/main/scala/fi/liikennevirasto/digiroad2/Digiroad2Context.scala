@@ -18,7 +18,7 @@ import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.{ProjectService, RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite.{ProjectService, RoadAddressMerge, RoadAddressService, RoadNetworkService}
 import org.apache.http.impl.client.HttpClientBuilder
 
 import scala.concurrent.duration.FiniteDuration
@@ -166,9 +166,9 @@ class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
   }
 }
 
-class RoadNetworkChecker(roadAddressService: RoadAddressService) extends Actor {
+class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
   def receive = {
-    case w: Int => roadAddressService.checkRoadAddressNetwork
+    case w: Int => roadNetworkService.checkRoadAddressNetwork(w.asInstanceOf[Option[Long]])
     case _ => println("roadAddressUpdater: Received unknown message")
   }
 }

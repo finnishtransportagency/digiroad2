@@ -10,15 +10,13 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
-import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.{NewRoadAddress, ReservedRoadPart, RoadType}
+import fi.liikennevirasto.viite.{NewRoadAddress, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
@@ -1192,6 +1190,29 @@ object RoadAddressDAO {
     val roadAddresses = fetchByLinkId(linkIds, true, true).filter(_.terminated == NoTermination)
     expireById(roadAddresses.map(_.id).toSet)
     create(roadAddresses.map(ra => ra.copy(id = NewRoadAddress, terminated = Subsequent)))
+  }
+
+  def fetchAllCurrentRoads(roadNumber: Option[Long]): List[RoadAddress] = {
+    val road = if (roadNumber.nonEmpty) {
+      s"AND ROAD_NUMBER = $roadNumber"
+    } else ""
+
+    val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code, pos.adjusted_timestamp,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to > sysdate) and terminated = 0 and end_date is null and floating = 0 $road"""
+    queryList(query)
+  }
+
+  def lockRoadAddressWriting: Unit = {
+    sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
 }
