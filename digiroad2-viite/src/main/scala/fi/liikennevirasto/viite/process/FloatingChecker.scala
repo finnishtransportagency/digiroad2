@@ -31,6 +31,11 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
         val rl = roadLinks(ra.linkId).head
         val len = GeometryUtils.geometryLength(rl.geometry)
         println(s"${pretty(ra)} moved to floating, outside of road link geometry (link is $len m)")
+        println(s"-------- RoadLink Geometry --------")
+        println(s"${rl.geometry.mkString(", ")}")
+        println(s"-------- Road Address Geometry --------")
+        println(s"${ra.geometry.mkString(", ")}")
+        println(s"----------------")
       }
     )
     val floatings = checkGeometryChangeOfSegments(roadAddressList, roadLinks)
