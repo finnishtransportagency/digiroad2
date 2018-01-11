@@ -248,6 +248,7 @@
     var getProjectErrors = function (projectErrors, links, projectCollection) {
       var buttonIndex = 0;
       var errorLines = '';
+      projectCollection.clearCoordinates();
       _.each(projectErrors, function (error) {
         var button = '';
         var coordinates = getErrorCoordinates(error, links);

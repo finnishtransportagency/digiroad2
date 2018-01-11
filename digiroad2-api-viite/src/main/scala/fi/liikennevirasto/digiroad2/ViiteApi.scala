@@ -378,7 +378,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, user) match {
           case None =>
             writableProject.saveProjectCoordinates(linksToRevert.projectId, linksToRevert.coordinates)
-            Map("success" -> true)
+            Map("success" -> true,
+              "publishable" -> projectService.projectLinkPublishable(linksToRevert.projectId),
+              "projectErrors" -> projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi))
           case Some(s) => Map("success" -> false, "errorMessage" -> s)
         }
       }
