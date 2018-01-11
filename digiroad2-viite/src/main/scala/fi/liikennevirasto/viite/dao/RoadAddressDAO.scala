@@ -856,7 +856,6 @@ object RoadAddressDAO {
   }
 
   def getValidRoadNumbersWithFilterToTestAndDevEnv = {
-    //TODO: Testing - No update
     getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
   }
 
