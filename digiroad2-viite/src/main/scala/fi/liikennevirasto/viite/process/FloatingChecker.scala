@@ -17,7 +17,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
       !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue) ||
         !roadLinks.exists(rl => GeometryUtils.areAdjacent(
           GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
-          (if(ra.geometry.isEmpty) ra.geometry else GeometryUtils.truncateGeometry2D(ra.geometry, ra.startMValue, ra.endMValue))))
+          ra.geometry.map(_.copy(z = 0.0))))
     }
 
     val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true)
@@ -31,14 +31,6 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
         val rl = roadLinks(ra.linkId).head
         val len = GeometryUtils.geometryLength(rl.geometry)
         println(s"${pretty(ra)} moved to floating, outside of road link geometry (link is $len m)")
-        //TODO: Testing - No update
-        println(s"Road Address: ${ra.geometry}")
-        println(s"Road Address ID: ${ra.id}")
-        println(s"Road Address StartM: ${ra.startMValue}")
-        println(s"Road Address EndM: ${ra.endMValue}")
-        println(s"Road Address Created/Modified: ${ra.modifiedBy}")
-        println(s"Road Link: ${rl.geometry}")
-        println("---------")
       }
     )
     val floatings = checkGeometryChangeOfSegments(roadAddressList, roadLinks)
@@ -75,28 +67,38 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     * @return true, if geometry has changed for any of the addresses beyond tolerance
     */
   def isGeometryChange(roadLink : RoadLinkLike, roadAddresses: Seq[RoadAddress]) : Boolean = {
-    roadAddresses.exists(ra => {
+    val movedAddresses = roadAddresses.filter(ra => {
       GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
-        GeometryUtils.truncateGeometry3D(roadLink.geometry, ra.startMValue, ra.endMValue),
+        GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
         ra.geometry) &&
         GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
-          GeometryUtils.truncateGeometry3D(roadLink.geometry, ra.startMValue, ra.endMValue),
+          GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
           ra.geometry.reverse) // Road Address geometry isn't necessarily directed: start and end may not be aligned by side code
     }
-    ) || Math.abs(roadAddresses.maxBy(_.endMValue).endMValue - GeometryUtils.geometryLength(roadLink.geometry)) > MaxMoveDistanceBeforeFloating
+    )
+    if(movedAddresses.size != 0) {
+      println(s"The following road addresses (${movedAddresses.map(_.id).mkString(", ")}) deviate by a factor of ${MaxMoveDistanceBeforeFloating} of the RoadLink: ${roadLink.linkId}")
+      println(s"Proceeding to check if the addresses are a result of automatic merging and if they overlap.")
+    }
+    val checkMaxMovedDistance = Math.abs(roadAddresses.maxBy(_.endMValue).endMValue - GeometryUtils.geometryLength(roadLink.geometry)) > MaxMoveDistanceBeforeFloating
+    if(!movedAddresses.isEmpty){
+      //If we get road addresses that were merged we check if they current road link is not overlapping, if it not, then there is a floating problem
+      val filteredNonOverlapping = movedAddresses.filter(ma => {
+        ma.modifiedBy.getOrElse("") == "Automatic_merged" && !GeometryUtils.overlaps((ma.startMValue, ma.endMValue),(0.0, roadLink.length))
+      })
+      (!filteredNonOverlapping.isEmpty) || checkMaxMovedDistance
+    } else {
+      !movedAddresses.isEmpty  || checkMaxMovedDistance
+    }
+
   }
 
   private def checkGeometryChangeOfSegments(roadAddressList: Seq[RoadAddress], roadLinks : Map[Long, Seq[RoadLinkLike]]): Seq[RoadAddress] = {
-    val sortedRoadAddresses = roadAddressList.groupBy(ra=> ra.linkId)
+    val sortedRoadAddresses = roadAddressList.groupBy(ra=> ra.linkId).map(g => (g._1 -> g._2.sortBy(_.endAddrMValue)))
     val movedRoadAddresses = sortedRoadAddresses.filter(ra =>
       roadLinks.getOrElse(ra._1, Seq()).isEmpty || isGeometryChange(roadLinks.getOrElse(ra._1, Seq()).head, ra._2)).flatMap(_._2).toSeq
     movedRoadAddresses.foreach{ ra =>{
       println(s"${pretty(ra)} moved to floating, geometry has changed")
-      //TODO: Testing - No update
-      println(s"Moved Geometry: ${ra.geometry}")
-      println(s"Moved Address ID: ${ra.id}")
-      println(s"Moved Address Created/Modified: ${ra.modifiedBy}")
-      println("---------")
     }
     }
     movedRoadAddresses

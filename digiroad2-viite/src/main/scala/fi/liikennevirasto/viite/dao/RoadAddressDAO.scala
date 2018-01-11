@@ -857,7 +857,7 @@ object RoadAddressDAO {
 
   def getValidRoadNumbersWithFilterToTestAndDevEnv = {
     //TODO: Testing - No update
-    getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 ) AND (ra.Lrm_position_id in (Select id From lrm_position Where link_id in (5515411, 874259, 3319872, 3319872, 1217452, 6285577, 2713350, 6346005, 6518849, 6281357, 6281357, 2713350, 5515411, 966482, 6518849, 2818295, 753497, 753498, 91007, 91007, 6285577, 1826455, 2693008, 6474047, 966482, 1217452, 753498, 753497, 1826455)))")
+    getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
   }
 
   def getValidRoadParts(roadNumber: Long) = {

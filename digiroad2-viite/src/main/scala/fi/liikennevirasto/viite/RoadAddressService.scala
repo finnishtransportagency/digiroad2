@@ -12,7 +12,6 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LRMValueAdjustment}
 import fi.liikennevirasto.viite.process._
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.SortedMap
