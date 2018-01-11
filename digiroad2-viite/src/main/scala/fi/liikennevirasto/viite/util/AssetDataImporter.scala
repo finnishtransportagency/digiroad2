@@ -177,7 +177,7 @@ class AssetDataImporter {
         // Import only complementary links
         vvhClientProd.getOrElse(vvhClient).complementaryData.fetchByLinkIds(group)
       } else {
-        vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
+        vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group) ++ vvhClient.suravageData.fetchSuravageByLinkIds(group)
       }
     ).toSeq
 
