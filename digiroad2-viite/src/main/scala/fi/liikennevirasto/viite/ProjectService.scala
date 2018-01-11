@@ -1096,12 +1096,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     setProjectDeltaToDB(delta, projectId)
   }
 
+  /**
+    * method to check if project is publishable. add filters for cases we do not want to prevent sending
+    * @param projectId project-id
+    * @return if project contains any notifications preventing sending
+    */
   def projectLinkPublishable(projectId: Long): Boolean = {
-    // TODO: add other checks after transfers etc. are enabled
-    withDynSession {
-      ProjectDAO.getProjectLinks(projectId, Some(LinkStatus.NotHandled)).isEmpty &&
-        ProjectDAO.getProjectLinks(projectId).nonEmpty
-    }
+    validateProjectById(projectId).isEmpty
   }
 
   /** Nullifies projects tr_id attribute, changes status to unfinnished and saves tr_info value to status_info. Tries to append old status info if it is possible
