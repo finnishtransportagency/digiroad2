@@ -1095,12 +1095,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projectOpt.isEmpty)
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
-    if(project.status == ProjectState.Saved2TR){
-      true
-    }
-    else {
-      val delta = ProjectDeltaCalculator.delta(project)
-      setProjectDeltaToDB(delta, projectId)
+    project.status match {
+      case ProjectState.Saved2TR => true
+      case _ =>
+        val delta = ProjectDeltaCalculator.delta(project)
+        setProjectDeltaToDB(delta, projectId)
+
     }
   }
 
