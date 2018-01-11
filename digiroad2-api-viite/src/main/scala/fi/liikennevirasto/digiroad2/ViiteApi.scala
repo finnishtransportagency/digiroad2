@@ -339,7 +339,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectMap = roadAddressProjectToApi(project)
     val parts = project.reservedParts.map(reservedRoadPartToApi)
     val errorParts = projectService.validateProjectById(project.id)
-    val publishable = projectService.projectLinkPublishable(projectId)
+    val publishable = projectService.isProjectPublishable(projectId)
     Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
       "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi))
   }
@@ -428,7 +428,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case None =>
           writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
           Map("success" -> true, "id" -> links.projectId,
-            "publishable" -> projectService.projectLinkPublishable(links.projectId),
+            "publishable" -> projectService.isProjectPublishable(links.projectId),
             "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
       }
     } catch {

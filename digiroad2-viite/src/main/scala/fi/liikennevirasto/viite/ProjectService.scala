@@ -240,7 +240,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case None => {
         addNewLinksToProject(sortRamps(projectLinks), projectId, user, linkId) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
-          case None => Map("success" -> true, "publishable" -> projectLinkPublishable(projectId))
+          case None => Map("success" -> true, "publishable" -> isProjectPublishable(projectId))
         }
       }
     }
@@ -1101,8 +1101,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectId project-id
     * @return if project contains any notifications preventing sending
     */
-  def projectLinkPublishable(projectId: Long): Boolean = {
+  def isProjectPublishable(projectId: Long): Boolean = {
     validateProjectById(projectId).isEmpty
+  }
+
+  def allLinksHandeled(projectId: Long): Boolean ={ //some tests want to know if all projectlinks have been handeled. to remove this test need to be updated to check if termination is correctly applied etc best done after all validations have been implemented
+    withDynSession {
+      ProjectDAO.getProjectLinks(projectId, Some(LinkStatus.NotHandled)).isEmpty &&
+        ProjectDAO.getProjectLinks(projectId).nonEmpty
+    }
   }
 
   /** Nullifies projects tr_id attribute, changes status to unfinnished and saves tr_info value to status_info. Tries to append old status info if it is possible
