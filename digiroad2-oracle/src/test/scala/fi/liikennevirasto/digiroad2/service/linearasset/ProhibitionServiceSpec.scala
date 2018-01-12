@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.{Municipality, _}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -39,6 +39,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
+  val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -52,6 +53,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override def assetDao: OracleAssetDao = mockAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -147,8 +149,9 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
     runWithRollback {
+      when(mockAssetDao.getAssetTypeId(Seq(600020l))).thenReturn(Seq((600020l, LinearAssetTypes.ProhibitionAssetTypeId)))
       ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
-      val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
+      val limit = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(1610349)).head
 
       limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))))
       limit.expired should be (false)
@@ -169,15 +172,17 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   test("Separate prohibition asset") {
     runWithRollback {
       val newLimit = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
-      val assetId = ServiceWithDao.create(Seq(newLimit), 190, "test").head
+      val assetId = ServiceWithDao.create(Seq(newLimit), LinearAssetTypes.ProhibitionAssetTypeId, "test").head
       val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), null)))
 
-      val createdId = ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
-      val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId(1))).head
-      val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId.head)).head
+      when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, LinearAssetTypes.ProhibitionAssetTypeId)))
 
-      val limits = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360))
+      val createdId = ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+      val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId(1))).head
+      val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId.head)).head
+
+      val limits = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(388562360))
 
       oldProhibition.linkId should be (388562360)
       oldProhibition.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -194,14 +199,15 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   test("Split prohibition") {
     runWithRollback {
       val newProhibition = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
-      val assetId = ServiceWithDao.create(Seq(newProhibition), 190, "test").head
+      val assetId = ServiceWithDao.create(Seq(newProhibition), LinearAssetTypes.ProhibitionAssetTypeId, "test").head
       val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), null)))
 
+      when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, LinearAssetTypes.ProhibitionAssetTypeId)))
       val ids = ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
       val createdId = ids(1)
-      val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId)).head
-      val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(190, Set(ids.head)).head
+      val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId)).head
+      val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(ids.head)).head
 
       oldProhibition.linkId should be (388562360)
       oldProhibition.sideCode should be (SideCode.BothDirections.value)
@@ -486,8 +492,10 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Update prohibition and verify asset") {
     runWithRollback {
+      when(mockAssetDao.getAssetTypeId(Seq(600020l))).thenReturn(Seq((600020l, LinearAssetTypes.ProhibitionAssetTypeId)))
       ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "testUser")
-      val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
+
+      val limit = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(1610349)).head
 
       limit.verifiedBy should be (Some("testUser"))
       limit.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
