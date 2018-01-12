@@ -240,7 +240,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case None => {
         addNewLinksToProject(sortRamps(projectLinks), projectId, user, linkId) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
-          case None => Map("success" -> true, "publishable" -> projectLinkPublishable(projectId))
+          case None => Map("success" -> true, "publishable" -> isProjectPublishable(projectId))
         }
       }
     }
@@ -1096,8 +1096,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     setProjectDeltaToDB(delta, projectId)
   }
 
-  def projectLinkPublishable(projectId: Long): Boolean = {
-    // TODO: add other checks after transfers etc. are enabled
+  /**
+    * method to check if project is publishable. add filters for cases we do not want to prevent sending
+    * @param projectId project-id
+    * @return if project contains any notifications preventing sending
+    */
+  def isProjectPublishable(projectId: Long): Boolean = {
+    validateProjectById(projectId).isEmpty
+  }
+
+  def allLinksHandled(projectId: Long): Boolean ={ //some tests want to know if all projectlinks have been handled. to remove this test need to be updated to check if termination is correctly applied etc best done after all validations have been implemented
     withDynSession {
       ProjectDAO.getProjectLinks(projectId, Some(LinkStatus.NotHandled)).isEmpty &&
         ProjectDAO.getProjectLinks(projectId).nonEmpty
