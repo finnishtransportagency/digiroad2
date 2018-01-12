@@ -730,7 +730,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
 
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
-        var selectedLink = (_.isArray(link) ? link : [link]);
+        var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
         var features = [];
         _.each(selectedLink, function (featureLink){
          _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
