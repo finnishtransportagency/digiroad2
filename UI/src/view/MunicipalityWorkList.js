@@ -28,7 +28,7 @@
             '<div class="page">' +
             '<div class="content-box">' +
             '<header>' + title +
-            '<a class="header-link" href="#" onclick="windows.location">Sulje</a>' +
+            '<input id="closebtn" type="button" class="btn header-link-btn" value="Sulje lista"/>' +
             '</header>' +
             '<div class="work-list">' +
             '</div>' +
@@ -39,7 +39,12 @@
             $('.container').show();
             $('#work-list').hide();
             $('body').removeClass('scrollable').scrollTop(0);
+            $(window).off('hashchange', showApp);
         };
+
+        $('#closebtn').click(function () {
+            showApp();
+        });
 
         listP.then(function (limits) {
             var element = $('#work-list .work-list');

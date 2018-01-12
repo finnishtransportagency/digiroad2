@@ -1,126 +1,132 @@
 (function (root) {
-  var municipalityCode;
-  var selected = [];
+  root.MunicipalityVerificationForm = {
+    initialize: initialize
+  };
 
-  var municipalityValidationTable = function (workListItems, municipalityName) {
-    var municipalityHeader = function (municipalityName) {
-      return $('<h2/>').html(municipalityName);
+  function initialize(backend){
+
+    var bindEvents = function () {
+      eventbus.on('municipalityForm:open', function (municipalityId, listP) {
+        $('.container').hide();
+        $('#municipality-work-list').show();
+        $('#work-list').hide();
+        $('body').addClass('scrollable');
+        generateWorkList(listP);
+        municipalityCode = municipalityId;
+      });
     };
-    var tableHeaderRow = function () {
-      return '<tr>' +
+
+    bindEvents();
+
+    var municipalityCode;
+
+    function verifyMunicipalityAssets(selectedAssets, municipalityCode) {
+      backend.verifyMunicipalityAssets(selectedAssets, municipalityCode);
+    }
+    function removeMunicipalityVerification(selectedAssets, municipalityCode) {
+      backend.removeMunicipalityVerification(selectedAssets, municipalityCode);
+    }
+
+    var municipalityValidationTable = function (workListItems, municipalityName) {
+      var municipalityHeader = function (municipalityName) {
+        return $('<h2/>').html(municipalityName);
+      };
+      var tableHeaderRow = function () {
+        return '<tr>' +
           '<th></th>' +
           '<th id="name">' + 'TIETOLAJI' + '</th>' +
           '<th id="date">' + 'TARKISTETTU' + '</th>' +
           '<th id="verifier">' + 'TARKISTAJA' + '</th></tr>';
-    };
+      };
 
-    var tableContentRows = function (values) {
-      var rows = "";
-      _.forEach(values, function (asset) {
-        rows += (asset.verified || _.isEmpty(asset.verified_by)) ?  upToDateAsset(asset) : oldAsset(asset);
-      });
-      return rows;
-    };
+      var tableContentRows = function (values) {
+        var rows = "";
+        _.forEach(values, function (asset) {
+          rows += (asset.verified || _.isEmpty(asset.verified_by)) ? upToDateAsset(asset) : oldAsset(asset);
+        });
+        return rows;
+      };
 
-    var upToDateAsset = function (asset) {
-      return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
+      var upToDateAsset = function (asset) {
+        return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
           "<td headers='name'>" + asset.assetName + "</td>" +
           "<td headers='date'>" + asset.verified_date + "</td>" +
           "<td headers='verifier'>" + asset.verified_by + "</td></tr>";
-    };
+      };
 
-    var oldAsset = function (asset) {
-      return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
-          "<td headers='name'>" + asset.assetName + "<img src='images/oldAsset.png'" + "</td>" +
+      var oldAsset = function (asset) {
+        return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
+          "<td headers='name'>" + asset.assetName + "    <img src='images/oldAsset.png'" + "</td>" +
           "<td style='color:red' headers='date'>" + asset.verified_date + "</td>" +
           "<td style='color:red' headers='verifier'>" + asset.verified_by + "</td></tr>";
-    };
+      };
 
-    var tableForGroupingValues = function (values) {
-      return $('<table/>').addClass('table')
+      var tableForGroupingValues = function (values) {
+        return $('<table/>').addClass('table')
           .append(tableHeaderRow())
           .append(tableContentRows(values));
+      };
+
+      return $('<div/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems));
     };
 
-    return $('<div/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems));
-  };
+    var generateWorkList = function (listP) {
 
-  var deleteBtn = $('<button />').addClass('delete btn btn-municipality').text('Nollaa').click(function () {
-    new GenericConfirmPopup("Haluatko varmasti poistaa tämän projektin?", {
-      successCallback: function () {
-        $(".verificationCheckbox:checkbox:checked").each(function () {
-          selected.push(parseInt(($(this).attr('value'))));
-        });
-        eventbus.trigger("municipalityVerification:remove", selected, municipalityCode);
-      },
-      closeCallback: function () {}
-    });
-  });
+      var buttons = function () {
+        return '<input type="button" class="btn btn-municipality" id="verify" value="Merkitse tarkistetuksi" />' +
+          '<input type="button" class="btn btn-municipality" id="remove" value="Nollaa" />';
+      };
 
-  var saveBtn = $('<button />').addClass('save btn btn-municipality').text('Merkitse tarkistetuksi').click(function () {
-    $("input:checkbox[class=verificationCheckbox]:checked").each(function () {
-      selected.push(parseInt(($(this).attr('value'))));
-    });
-    eventbus.trigger("municipalityVerification:verify", selected, municipalityCode);
-  });
-
-  var generateWorkList = function (listP) {
-
-    $('#municipality-work-list').html('' +
+      $('#municipality-work-list').html('' +
         '<div style="overflow: auto;">' +
-      '<div class="municipality-page">' +
-      '<div class="municipality-content-box container">' +
-        '<header>' + "Kuntatarkistus" +
-        '<a class="header-link" href="#work-list/municipality">Kuntavalinta</a>' +
-        '<a class="header-link" href="#' /*link to previous layer*/ + '">Sulje lista</a>' +
-        '</header>' +
-        '<div class="municipality-work-list">' +
-        '</div>' +
-        '</div>' +
+          '<div class="municipality-page">' +
+            '<div class="municipality-content-box">' +
+              '<header>' + "Kuntatarkistus" +
+                '<input id="closebtn2" type="button" class="btn header-link-btn" value="Sulje lista"/>' +
+               '<a class="header-link" href="#work-list/municipality">Kuntavalinta</a>' +
+              '</header>' +
+            '<div class="municipality-work-list">' +
+            '</div>' +
+            buttons() +
+          '</div>' +
         '</div>'
-    );
-    var showApp = function () {
-      $('.container').show();
-      $('#municipality-work-list').hide();
-      $('body').removeClass('scrollable').scrollTop(0);
-      $(window).off('hashchange', showApp);
+      );
+      var showApp = function () {
+        $('.container').show();
+        $('#municipality-work-list').hide();
+        $('body').removeClass('scrollable').scrollTop(0);
+        $(window).off('hashchange', showApp);
+      };
+
+      $('#closebtn2').click(function () {
+        showApp();
+      });
+
+      listP.then(function (assetTypes) {
+        var assetTypesListed = _.map(assetTypes, _.partial(municipalityValidationTable));
+        $('#municipality-work-list .municipality-work-list').html(assetTypesListed);
+
+        var selected = [];
+
+        $("#verify").on("click", function () {
+          $("input:checkbox[class=verificationCheckbox]:checked").each(function () {
+            selected.push(parseInt(($(this).attr('value'))));
+          });
+          verifyMunicipalityAssets(selected, municipalityCode);
+        });
+
+        $("#remove").on("click", function () {
+          new GenericConfirmPopup("Haluatko varmasti nollata tietolajin tarkistuksen?",
+            {container: '#municipality-work-list',
+            successCallback: function () {
+              $("input:checkbox[class=verificationCheckbox]:checked").each(function () {
+                selected.push(parseInt(($(this).attr('value'))));
+              });
+              removeMunicipalityVerification(selected, municipalityCode);
+            }
+          });
+        });
+      });
     };
-
-     $(window).on('hashchange', showApp);
-
-    listP.then(function (assetTypes) {
-      var assetTypesListed = _.map(assetTypes, _.partial(municipalityValidationTable));
-      $('#municipality-work-list .municipality-work-list').html(assetTypesListed)
-          .addClass('form-controls')
-          .append(deleteBtn)
-          .append(saveBtn);
-    });
-  };
-
-  var bindEvents = function () {
-    eventbus.on('municipalityForm:open', function(municipalityId, listP) {
-      $('.container').hide();
-      $('#municipality-work-list').show();
-      $('#work-list').hide();
-      $('body').addClass('scrollable');
-      generateWorkList(listP);
-      municipalityCode = municipalityId;
-    });
-  };
-
-  root.MunicipalityVerificationForm =  {
-    initialize: function (backend) {
-      bindEvents();
-      eventbus.on("municipalityVerification:verify", verifyMunicipalityAssets);
-      eventbus.on("municipalityVerification:remove", removeMunicipalityVerification);
-
-      function verifyMunicipalityAssets(selectedAssets, municipalityCode) {
-        backend.verifyMunicipalityAssets(selectedAssets, municipalityCode);
-      }
-
-      function removeMunicipalityVerification(selectedAssets, municipalityCode) {
-        backend.removeMunicipalityVerification(selectedAssets, municipalityCode);
-      }
-    }
-  };
+  }
 })(this);

@@ -406,35 +406,37 @@
       return $.getJSON('api/municipalities/assetTypes/' + municipalityCode);
     };
 
-    this.verifyMunicipalityAssets = function(typeIds, municipalityCode, errorCallback) {
-      eventbus.trigger('asset:creating');
+    this.verifyMunicipalityAssets = function(typeIds, municipalityCode) {
+      eventbus.trigger('municipality:verifying');
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/municipalities/assetVerification/" + municipalityCode,
         data: JSON.stringify({typeId:typeIds}),
         dataType: "json",
-        success: function (asset) {
-          console.log("good stuff");
-          /*eventbus.trigger('asset:created', asset);*/
+        success: function(){
+          eventbus.trigger('municipality:verified');
         },
-        error: errorCallback
+        error: function(){
+          eventbus.trigger('municipality:verificationFailed');
+        }
       });
     };
 
-    this.removeMunicipalityVerification = function(typeIds, municipalityCode, errorCallback) {
-      eventbus.trigger('asset:creating');
+    this.removeMunicipalityVerification = function(typeIds, municipalityCode) {
+      eventbus.trigger('municipality:verifying');
       $.ajax({
         contentType: "application/json",
         type: "DELETE",
         url: "api/municipalities/removeVerification/" + municipalityCode,
         data: JSON.stringify({typeId:typeIds}),
         dataType: "json",
-        success: function (asset) {
-          console.log("good stuff");
-          /*eventbus.trigger('asset:created', asset);*/
+        success: function(){
+          eventbus.trigger('municipality:verified');
         },
-        error: errorCallback
+        error: function(){
+          eventbus.trigger('municipality:verificationFailed');
+        }
       });
     };
 

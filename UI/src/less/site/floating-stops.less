@@ -34,6 +34,9 @@
 
 .municipality-work-list {
   .work-list;
+  .verificationCheckbox {
+    float:right;
+  }
   .table {
     > thead,
     > tbody,
@@ -42,7 +45,6 @@
         > th{
           font-size: 12px;
         }
-      }
         > td {
           padding-left: @line-height-modifier * 2;
           padding-right: @line-height-modifier * 2;
@@ -50,8 +52,9 @@
         }
       }
     }
-  &:last-child {
-    margin-bottom: 10em;
+    &:last-child {
+      margin-bottom: 2em;
+      border-bottom: 1px solid #cbcbc9;
+    }
   }
-
 }

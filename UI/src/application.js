@@ -136,6 +136,10 @@
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
+  var indicatorOverlayForVerification = function() {
+    jQuery('#municipality-work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+  };
+
   var bindEvents = function(linearAssetSpecs, pointAssetSpecs, roadCollection) {
     var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
     var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
@@ -143,6 +147,22 @@
     var pointAssetSavingEvents = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saving'; }).join(' ');
     eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving manoeuvres:saving ' + linearAssetSavingEvents + ' ' + pointAssetSavingEvents, function() {
       indicatorOverlay();
+    });
+
+    eventbus.on('municipality:verifying', function() {
+      indicatorOverlayForVerification();
+    });
+
+    eventbus.on('municipality:verified', function() {
+      jQuery('.spinner-overlay').remove();
+      window.location.reload();
+    });
+
+    eventbus.on('municipality:verificationFailed', function() {
+      jQuery('.spinner-overlay').remove();
+      if(confirm(assetUpdateFailedMessage)){
+        window.location.reload();
+      }
     });
 
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
