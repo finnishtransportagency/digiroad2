@@ -355,7 +355,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
-      projectService.projectLinkPublishable(savedProject.id) should be(false)
+      projectService.allLinksHandled(savedProject.id) should be(false)
       projectService.getRoadAddressSingleProject(savedProject.id).nonEmpty should be(true)
       projectService.getRoadAddressSingleProject(savedProject.id).get.reservedParts.nonEmpty should be(true)
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
@@ -368,11 +368,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         toMockAnswer(projectLinks, roadLink)
       )
       projectService.updateProjectLinks(savedProject.id, linkIds205, LinkStatus.UnChanged, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-      projectService.projectLinkPublishable(savedProject.id) should be(false)
+      projectService.allLinksHandled(savedProject.id) should be(false)
       projectService.updateProjectLinks(savedProject.id, linkIds206, LinkStatus.UnChanged, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-      projectService.projectLinkPublishable(savedProject.id) should be(true)
+      projectService.allLinksHandled(savedProject.id) should be(true)
       projectService.updateProjectLinks(savedProject.id, Set(5168573), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-      projectService.projectLinkPublishable(savedProject.id) should be(true)
+      projectService.allLinksHandled(savedProject.id) should be(true)
       val changeProjectOpt = projectService.getChangeProject(savedProject.id)
       val change = changeProjectOpt.get
       val updatedProjectLinks = ProjectDAO.getProjectLinks(savedProject.id)
@@ -406,7 +406,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
-      projectService.projectLinkPublishable(savedProject.id) should be(false)
+      projectService.allLinksHandled(savedProject.id) should be(false)
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
       val highestDistanceEnd = projectLinks.map(p => p.endAddrMValue).max
@@ -418,7 +418,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
       projectService.updateProjectLinks(savedProject.id, linkIds207, LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int]) should be(None)
       projectService.updateProjectLinks(savedProject.id, Set(5168510), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-      projectService.projectLinkPublishable(savedProject.id) should be(true)
+      projectService.allLinksHandled(savedProject.id) should be(true)
       val changeProjectOpt = projectService.getChangeProject(savedProject.id)
       val change = changeProjectOpt.get
       val updatedProjectLinks = ProjectDAO.getProjectLinks(savedProject.id)
@@ -451,7 +451,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
-      projectService.projectLinkPublishable(savedProject.id) should be(false)
+      projectService.allLinksHandled(savedProject.id) should be(false)
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
       val highestDistanceStart = projectLinks.map(p => p.startAddrMValue).max
@@ -464,7 +464,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
       projectService.updateProjectLinks(savedProject.id, Set(5168510), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
       projectService.updateProjectLinks(savedProject.id, linkIds207 - 5168510, LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int])
-      projectService.projectLinkPublishable(savedProject.id) should be(true)
+      projectService.allLinksHandled(savedProject.id) should be(true)
       val changeProjectOpt = projectService.getChangeProject(savedProject.id)
       val change = changeProjectOpt.get
       val updatedProjectLinks = ProjectDAO.getProjectLinks(savedProject.id)
@@ -517,7 +517,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId), savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U").get("success") should be (Some(true))
       ProjectDAO.getProjectLinks(savedProject.id).size should be (68)
       val changeInfo = projectService.getChangeProject(savedProject.id)
-      projectService.projectLinkPublishable(savedProject.id) should be(true)
+      projectService.allLinksHandled(savedProject.id) should be(true)
       changeInfo.get.changeInfoSeq.foreach { ci =>
         ci.changeType match {
           case Termination =>

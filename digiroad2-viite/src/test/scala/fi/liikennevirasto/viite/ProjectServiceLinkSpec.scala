@@ -184,10 +184,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         partitioned._1.map(pl => roadLink.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
 
 
-      projectService.projectLinkPublishable(saved.id) should be(false)
+      projectService.isProjectPublishable(saved.id) should be(false)
       val linkIds = ProjectDAO.getProjectLinks(saved.id).map(_.linkId).toSet
       projectService.updateProjectLinks(saved.id, linkIds, LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
-      projectService.projectLinkPublishable(saved.id) should be(true)
+      projectService.isProjectPublishable(saved.id) should be(true)
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects()
@@ -220,7 +220,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
         partitioned._1.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
 
-      projectService.projectLinkPublishable(saved.id) should be(false)
+      projectService.isProjectPublishable(saved.id) should be(false)
       val linkIds = ProjectDAO.getProjectLinks(saved.id).map(_.linkId).toSet
       projectService.updateProjectLinks(saved.id, linkIds, LinkStatus.Numbering, "-", 99999, 1, 0, Option.empty[Int])
       val afterNumberingLinks = ProjectDAO.getProjectLinks(saved.id)
@@ -376,7 +376,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
-      projectService.projectLinkPublishable(saved.id) should be(false)
+      projectService.isProjectPublishable(saved.id) should be(false)
       val projectLinks = ProjectDAO.getProjectLinks(saved.id)
       val partitioned = projectLinks.partition(_.roadPartNumber == 205)
       val linkIds205 = partitioned._1.map(_.linkId).toSet
@@ -388,11 +388,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       )
 
       projectService.updateProjectLinks(saved.id, linkIds205, LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
-      projectService.projectLinkPublishable(saved.id) should be(false)
+      projectService.isProjectPublishable(saved.id) should be(false)
 
 
       projectService.updateProjectLinks(saved.id, linkIds206, LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
-      projectService.projectLinkPublishable(saved.id) should be(true)
+      projectService.isProjectPublishable(saved.id) should be(true)
 
       val changeProjectOpt = projectService.getChangeProject(saved.id)
       changeProjectOpt.map(_.changeInfoSeq).getOrElse(Seq()) should have size (5)
