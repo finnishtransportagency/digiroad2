@@ -282,6 +282,9 @@ case class TierekisteriSpeedLimitData(roadNumber: Long, startRoadPartNumber: Lon
 case class TierekisteriUrbanAreaData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: String) extends TierekisteriAssetData
 
+case class TierekisteriTelematicSpeedLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                               track: Track, startAddressMValue: Long, endAddressMValue: Long, tecPointType: Int) extends TierekisteriAssetData
+
 case class TierekisteriError(content: Map[String, Any], url: String)
 
 class TierekisteriClientException(response: String) extends RuntimeException(response)
@@ -911,6 +914,27 @@ class TierekisteriUrbanAreaClient(trEndPoint: String, trEnable: Boolean, httpCli
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
     TierekisteriUrbanAreaData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, endMValue, assetValue)
+  }
+}
+
+class TierekisteriTelematicSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriAssetDataClient
+
+  override val trAssetType = "tl523"
+  private val trTecPointType = "TEKTYYPPI"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriTelematicSpeedLimitData = {
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+    val tecPointType = convertToInt(getMandatoryFieldValue(data, trTecPointType)).get
+
+    TierekisteriTelematicSpeedLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, endMValue, tecPointType)
   }
 }
 
