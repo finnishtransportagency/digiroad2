@@ -112,12 +112,16 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Separate linear asset") {
+    val typeId = 140
     runWithRollback {
       val newLimit = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
-      val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+      val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
+
+      when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
+
       val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId(1))).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId.head)).head
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId(1))).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -132,12 +136,16 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Separate with empty value towards digitization") {
+    val typeId = 140
     runWithRollback {
       val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
-      val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+      val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
+
+      when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
+
       val createdId = ServiceWithDao.separate(assetId, None, Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(assetId)).head
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -153,14 +161,17 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Separate with empty value against digitization") {
+    val typeId = 140
     runWithRollback {
       val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
-      val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+      val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
+
+      when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
       val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit)
       newAssetIdAfterUpdate.size should be(1)
 
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(newAssetIdAfterUpdate.head)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(newAssetIdAfterUpdate.head)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -172,9 +183,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Split linear asset") {
+    val typeId = 140
     runWithRollback {
       val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+
+      when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
       val ids = ServiceWithDao.split(assetId, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
 
@@ -799,6 +813,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       //Update Numeric Values
       val assetToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      when(mockAssetDao.getAssetTypeId(Seq(assetToUpdate.id))).thenReturn(Seq((assetToUpdate.id, totalWeightLimitAssetId)))
+
       val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "UnitTestsUser")
       val assetUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
 
