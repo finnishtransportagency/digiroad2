@@ -33,7 +33,7 @@
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
         addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
-        addSmallInputNumber('ajr',(track !== 99 ? track :
+        addTrackCodeDropdown((track !== 99 ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
@@ -51,7 +51,7 @@
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
-              $('#ajr').val("0");
+              $('#trackCodeDropdown').val("0");
           }
         });
       }
@@ -99,6 +99,20 @@
           '<option value="5" >5 Jatkuva</option>' +
           '</select>';
       }
+    };
+
+    var addTrackCodeDropdown = function (trackDefaultValue, properties){
+      if(trackDefaultValue === ''){
+        trackDefaultValue = 99;
+      }
+
+      return '<select class="form-select-small-control" id="trackCodeDropdown" size="1" '+properties+'>' +
+        '<option value = "'+trackDefaultValue+'" selected hidden>'+trackDefaultValue+'</option>' +
+        '<option value="0" >0</option>' +
+        '<option value="1" >1</option>' +
+        '<option value="2" >2</option>' +
+        '</select>';
+
     };
 
     var directionChangedInfo = function (selected, isPartialReversed) {

@@ -398,7 +398,7 @@
       rootElement.on('change', '#roadAddressProjectForm #dropdown_0', function() {
         $('#tie').prop('disabled',false);
         $('#osa').prop('disabled',false);
-        $('#ajr').prop('disabled',false);
+        $('#trackCodeDropdown').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropDown').prop('disabled',false);
         if(this.value == LinkStatus.Terminated.description) {
@@ -424,7 +424,7 @@
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled',true);
           $('#osa').prop('disabled',true);
-          $('#ajr').prop('disabled',true);
+          $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
@@ -442,7 +442,7 @@
         }
         else if(this.value == LinkStatus.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
-          $('#ajr').prop('disabled',true);
+          $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',true);
           $('#roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
