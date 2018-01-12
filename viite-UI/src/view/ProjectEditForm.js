@@ -305,6 +305,7 @@
       };
 
       var saveChanges = function(){
+        var successSavingChanges = true;
         var currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         var statusDropdown_0 =$('#dropdown_0').val();
@@ -312,48 +313,51 @@
         switch (statusDropdown_0){
           case LinkStatus.Unchanged.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
             }
             else if(_.isUndefined(statusDropdown_1)){
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
+              successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
             }
             break;
           }
           case LinkStatus.New.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Unchanged.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
+              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
             }
 
             else if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Transfer.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
+              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
             }
             else if(_.isUndefined(statusDropdown_1)) {
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
+              successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
             }
             break;
           }
           case LinkStatus.Transfer.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
             }
             else if(_.isUndefined(statusDropdown_1)){
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
+              successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
             }
             break;
           }
           case LinkStatus.Numbering.description : {
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value); break;
+            successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value); break;
           }
           case LinkStatus.Terminated.description: {
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value); break;
+            successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value); break;
           }
           case LinkStatus.Revert.description : {
             projectCollection.revertChangesRoadlink(selectedProjectLink); break;
           }
         }
-        selectedProjectLinkProperty.setDirty(false);
-        rootElement.html(emptyTemplate(currentProject.project));
-        formCommon.toggleAdditionalControls();
+
+        if(successSavingChanges){
+          selectedProjectLinkProperty.setDirty(false);
+          rootElement.html(emptyTemplate(currentProject.project));
+          formCommon.toggleAdditionalControls();
+        }
       };
 
       var cancelChanges = function() {

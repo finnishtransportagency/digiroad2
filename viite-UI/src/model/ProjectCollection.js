@@ -254,6 +254,12 @@
         coordinates:coordinates
       };
 
+      if(dataJson.trackCode === 99){
+        new ModalConfirm("Tarkista ajoratakoodi");
+        applicationModel.removeSpinner();
+        return false;
+      }
+
       var endDistance = parseInt($('#endDistance').val());
       var originalEndDistance = _.chain(changedLinks).uniq().sortBy(function(cl){
         return cl.endAddressM;
@@ -292,6 +298,7 @@
       } else {
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
       }
+      return true;
     };
 
     this.preSplitProjectLinks = function(suravage, nearestPoint){
@@ -389,6 +396,12 @@
         coordinates:coordinates
       };
 
+      if(dataJson.trackCode === 99){
+        new ModalConfirm("Tarkista ajoratakoodi");
+        applicationModel.removeSpinner();
+        return false;
+      }
+
       backend.saveProjectLinkSplit(dataJson, linkId, function(successObject){
         if (!successObject.success) {
           new ModalConfirm(successObject.reason);
@@ -401,6 +414,7 @@
           new ModalConfirm(failureObject.reason);
           applicationModel.removeSpinner();
       });
+      return true;
     };
 
     this.createProject = function (data, resolution) {
