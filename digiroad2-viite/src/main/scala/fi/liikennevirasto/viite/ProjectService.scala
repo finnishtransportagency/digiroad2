@@ -19,7 +19,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, 
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter, SplitOptions}
+import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter, SplitOptions, SplitResult}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -499,7 +499,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           splitOptions
       val r = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
       dynamicSession.rollback()
-      r
+      (r._1.map(rs => rs.toSeqWithMergeTerminated), r._2, r._3)
     }
   }
 
@@ -511,7 +511,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def preSplitSuravageLinkInTX(linkId: Long, username: String,
-                               splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Option[String], Option[(Point, Vector3d)]) = {
+                               splitOptions: SplitOptions): (Option[SplitResult], Option[String], Option[(Point, Vector3d)]) = {
     val projectId = splitOptions.projectId
     val sOption = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(linkId)), false).headOption
     val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
@@ -538,21 +538,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       else {
         val bestFit = commonSections.maxBy(_._2)._1
         val splitResult = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinksDisconnected, splitOptions)
-        (Some(splitResult.toSeqWithMergeTerminated), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
+        (Some(splitResult), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
   }
 
-  def splitSuravageLinkInTX(linkId: Long, username: String,
-                            splitOptions: SplitOptions): Option[String] = {
-    val (splitLinks, errorMessage, _) = preSplitSuravageLinkInTX(linkId, username, splitOptions)
+  def splitSuravageLinkInTX(linkId: Long, username: String, splitOptions: SplitOptions): Option[String] = {
+    val (splitResultOption, errorMessage, _) = preSplitSuravageLinkInTX(linkId, username, splitOptions)
     if(errorMessage.nonEmpty){
       errorMessage
     } else {
-      ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.get.map(_.linkId).toSet)
-      ProjectDAO.create(splitLinks.get.map(x => x.copy(modifiedBy = Some(username))))
-      ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
-      recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
+      splitResultOption.map{
+        splitResult =>
+          val splitLinks = splitResult.toSeqWithAllTerminated
+          ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.map(_.linkId).toSet)
+          ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
+          ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
+          recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
+      }
       None
     }
   }
