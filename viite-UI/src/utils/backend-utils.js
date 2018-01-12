@@ -336,6 +336,63 @@
     }
 
     //Methods for the UI Integrated Tests
+    var mockedRoadLinkModel = function(data) {
+      var selected = false;
+      var original = _.clone(data);
+
+      var getId = function() {
+        return data.roadLinkId || data.linkId;
+      };
+
+      var getData = function() {
+        return data;
+      };
+
+      var getPoints = function() {
+        return _.cloneDeep(data.points);
+      };
+
+      var setLinkProperty = function(name, value) {
+        if (value != data[name]) {
+          data[name] = value;
+        }
+      };
+
+      var select = function() {
+        selected = true;
+      };
+
+      var unselect = function() {
+        selected = false;
+      };
+
+      var isSelected = function() {
+        return selected;
+      };
+
+      var isCarTrafficRoad = function() {
+        return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21, 99], data.linkType);
+      };
+
+      var cancel = function() {
+        data.trafficDirection = original.trafficDirection;
+        data.functionalClass = original.functionalClass;
+        data.linkType = original.linkType;
+      };
+
+      return {
+        getId: getId,
+        getData: getData,
+        getPoints: getPoints,
+        setLinkProperty: setLinkProperty,
+        isSelected: isSelected,
+        isCarTrafficRoad: isCarTrafficRoad,
+        select: select,
+        unselect: unselect,
+        cancel: cancel
+      };
+    };
+
     var afterSave = false;
 
     var resetAfterSave = function(){
@@ -350,13 +407,21 @@
     };
 
     this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
+
+      var fetchedRoadLinkModels = function(fetchedRoadLinks) {
+       return _.map(fetchedRoadLinks, function (roadLinkGroup) {
+          return _.map(roadLinkGroup, function (roadLink) {
+            return new mockedRoadLinkModel(roadLink);
+          });
+        });
+      };
       self.getRoadLinks = function(boundingBox, callback) {
         if(afterSave){
           callback(afterSaveRoadLinkData);
         } else {
           callback(roadLinkData);
         }
-        eventbus.trigger('roadLinks:fetched', afterSave ? afterSaveRoadLinkData : roadLinkData);
+        eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveRoadLinkData) : fetchedRoadLinkModels(roadLinkData));
       };
       return self;
     };
