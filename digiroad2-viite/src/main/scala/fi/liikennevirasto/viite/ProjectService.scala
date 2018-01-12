@@ -1105,7 +1105,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     validateProjectById(projectId).isEmpty
   }
 
-  def allLinksHandeled(projectId: Long): Boolean ={ //some tests want to know if all projectlinks have been handeled. to remove this test need to be updated to check if termination is correctly applied etc best done after all validations have been implemented
+  def allLinksHandled(projectId: Long): Boolean ={ //some tests want to know if all projectlinks have been handled. to remove this test need to be updated to check if termination is correctly applied etc best done after all validations have been implemented
     withDynSession {
       ProjectDAO.getProjectLinks(projectId, Some(LinkStatus.NotHandled)).isEmpty &&
         ProjectDAO.getProjectLinks(projectId).nonEmpty
