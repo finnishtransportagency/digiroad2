@@ -527,7 +527,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val rightTop = Point(x._2, endPoints._2.y)
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
-      val projectLinksConnected = projectLinks.filter(l =>
+      val (projectLinksConnected, projectLinksDisconnected) = projectLinks.partition(l =>
         GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
       //we rank template links near suravage link by how much they overlap with suravage geometry
       val commonSections = projectLinksConnected.map(x =>
@@ -537,8 +537,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
       else {
         val bestFit = commonSections.maxBy(_._2)._1
-        val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, splitOptions)
-        (Some(splitLinks), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
+        val splitResult = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinksDisconnected, splitOptions)
+        (Some(splitResult.toSeqWithMergeTerminated), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
   }
