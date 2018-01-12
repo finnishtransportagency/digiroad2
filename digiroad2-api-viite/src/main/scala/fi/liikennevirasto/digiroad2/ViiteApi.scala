@@ -407,7 +407,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val retVal = writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
             Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username)
           writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
-          retVal
+          Map("success" -> true,
+            "publishable" -> projectService.projectLinkPublishable(links.projectId),
+            "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
         }
         case _ => Map("success" -> false, "errorMessage" -> "Invalid track code")
       }

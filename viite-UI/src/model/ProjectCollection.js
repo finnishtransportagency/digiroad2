@@ -274,19 +274,21 @@
         if(statusCode == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
-              new ModalConfirm(successObject.errormessage);
+              new ModalConfirm(successObject.errorMessage);
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
+              projectErrors = successObject.projectErrors;
               eventbus.trigger('projectLink:projectLinksCreateSuccess');
               eventbus.trigger('roadAddress:projectLinksCreateSuccess');
+              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
             }
           });
         }
         else {
           backend.updateProjectLinks(dataJson, function (successObject) {
             if (!successObject.success) {
-              new ModalConfirm(successObject.errormessage);
+              new ModalConfirm(successObject.errorMessage);
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;

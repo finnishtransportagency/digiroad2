@@ -107,12 +107,23 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
-        '<div class="form-group">' +
-        '<label>TARKASTUSILMOITUKSET:</label>' +
-        '<div id ="projectErrors">' +
-        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
-        '</div></div></div></div></br></br>' +
+        errorsList()+
+        '</div></div></br></br>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
+    };
+
+    var errorsList = function(){
+      if (projectCollection.getProjectErrors().length > 0){
+        return '<div class="form-group">' +
+          '<label>TARKASTUSILMOITUKSET:</label>' +
+          '<div id ="projectErrors">' +
+          formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
+          '</div>' +
+          '</div>' ;
+      }
+      else
+        return '';
+
     };
 
     var isProjectPublishable = function(){
