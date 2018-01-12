@@ -287,7 +287,8 @@
         disabled: 'Ei tiedossa',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      readOnly: true
     },
     {
       typeId: assetType.massTransitLane,
@@ -472,7 +473,8 @@
         disabled: 'Tuntematon'
       },
       label: new SpeedLimitAssetLabel(),
-      hasTrafficSignReadOnlyLayer: true
+      hasTrafficSignReadOnlyLayer: true,
+      readOnly: true
     }
   ];
 

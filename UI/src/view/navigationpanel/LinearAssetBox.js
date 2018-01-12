@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, allowComplementaryLinks, hasTrafficSignReadOnlyLayer) {
+  root.LinearAssetBox = function(assetConfig, legendValues) {
     var legendTemplate = _.map(legendValues, function(value, idx) {
       return value ? '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
@@ -7,13 +7,13 @@
              '</div>' : '';
     }).join('');
 
-      var trafficSignsCheckbox = hasTrafficSignReadOnlyLayer ? [
+      var trafficSignsCheckbox = assetConfig.hasTrafficSignReadOnlyLayer ? [
           '<div class="check-box-container">' +
           '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
           '</div>'
       ].join('') : '';
 
-      var complementaryLinkCheckBox = allowComplementaryLinks ? [
+      var complementaryLinkCheckBox = assetConfig.allowComplementaryLinks ? [
           '  <div  class="check-box-container">' +
           '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
 
@@ -21,9 +21,9 @@
       ].join('') : '';
 
     var expandedTemplate = [
-      '<div class="panel ' + layerName +'">',
+      '<div class="panel ' + assetConfig.layerName +'">',
       '  <header class="panel-header expanded">',
-      '    ' + title + (showUnit ? ' ('+unit+')': ''),
+      '    ' + assetConfig.title + (assetConfig.editControlLabels.showUnit ? ' ('+assetConfig.unit+')': ''),
       '  </header>',
       '  <div class="panel-section panel-legend limit-legend">',
             legendTemplate,
@@ -37,10 +37,10 @@
     };
 
     var actions = [
-      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedLinearAsset),
-      new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset),
-      new ActionPanelBoxes.Tool('Rectangle', ActionPanelBoxes.rectangleToolIcon, selectedLinearAsset),
-      new ActionPanelBoxes.Tool('Polygon', ActionPanelBoxes.polygonToolIcon, selectedLinearAsset)
+      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, assetConfig),
+      new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, assetConfig),
+      new ActionPanelBoxes.Tool('Rectangle', ActionPanelBoxes.rectangleToolIcon, assetConfig),
+      new ActionPanelBoxes.Tool('Polygon', ActionPanelBoxes.polygonToolIcon, assetConfig)
     ];
 
     var toolSelection = new ActionPanelBoxes.ToolSelection(actions);
@@ -51,8 +51,7 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
         userRoles = roles;
-        if ((layerName != 'trafficVolume') && (_.contains(roles, 'operator') || (_.contains(roles, 'premium') && layerName != 'maintenanceRoad') ||
-           (_.contains(roles, 'serviceRoadMaintainer') && layerName == 'maintenanceRoad'))) {
+        if (!assetConfig.readOnly && (_.contains(roles, 'operator') || (_.contains(roles, 'premium') && assetConfig.layerName != 'maintenanceRoad') || (_.contains(roles, 'serviceRoadMaintainer') && assetConfig.layerName == 'maintenanceRoad'))) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
@@ -80,16 +79,16 @@
 
     elements.expanded.find('#signsCheckbox').on('change', function (event) {
       if ($(event.currentTarget).prop('checked')) {
-        eventbus.trigger(layerName + ':showReadOnlyTrafficSigns');
+        eventbus.trigger(assetConfig.layerName + ':showReadOnlyTrafficSigns');
       } else {
-        eventbus.trigger(layerName + ':hideReadOnlyTrafficSigns');
+        eventbus.trigger(assetConfig.layerName + ':hideReadOnlyTrafficSigns');
       }
     });
 
-    var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();
+    var element = $('<div class="panel-group simple-limit ' + assetConfig.className + 's"/>').append(elements.expanded).hide();
 
     function show() {
-      if ((layerName == 'trafficVolume') || (editModeToggle.hasNoRolesPermission(userRoles) || (_.contains(userRoles, 'premium') && (layerName == 'maintenanceRoad')))) {
+      if (assetConfig.readOnly || (editModeToggle.hasNoRolesPermission(userRoles) || (_.contains(userRoles, 'premium') && (assetConfig.layerName == 'maintenanceRoad')))) {
         editModeToggle.reset();
       } else {
         editModeToggle.toggleEditMode(applicationModel.isReadOnly());
@@ -102,8 +101,8 @@
     }
 
     return {
-      title: title,
-      layerName: layerName,
+      title: assetConfig.title,
+      layerName: assetConfig.layerName,
       element: element,
       show: show,
       hide: hide

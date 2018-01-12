@@ -1,16 +1,16 @@
 (function (root) {
-  root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues, allowComplementaryLinks) {
-    var className = _.kebabCase(layerName);
+  root.PointAssetBox = function (assetConfig) {
+    var className = _.kebabCase(assetConfig.layerName);
     var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
 
     var toolSelection = new ActionPanelBoxes.ToolSelection([
-      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedPointAsset),
-      new ActionPanelBoxes.Tool('Add', ActionPanelBoxes.addToolIcon, selectedPointAsset)
+      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, assetConfig),
+      new ActionPanelBoxes.Tool('Add', ActionPanelBoxes.addToolIcon, assetConfig)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
-    var trafficSignPanel = (layerName == 'trafficSigns') ?
+    var trafficSignPanel = (assetConfig.layerName == 'trafficSigns') ?
             '<div class="panel-section">' +
               '<div class="checkbox">' +
                 '<label><input name="speedLimits" type="checkbox" /> Nopeusrajoitukset</label> <br>' +
@@ -29,21 +29,21 @@
               '</div>' +
             '</div>' : "";
 
-    var complementaryCheckBox = allowComplementaryLinks ?
+    var complementaryCheckBox = assetConfig.allowComplementaryLinks ?
             '<div class="panel-section">' +
               '<div class="check-box-container">' +
                 '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
               '</div>' +
             '</div>' : '';
 
-    var legendTemplate = _(legendValues).map(function (val) {
+    var legendTemplate = _(assetConfig.legendValues).map(function (val) {
       return '<div class="legend-entry">' +
         '<div class="label"><span>' + val.label + '</span> <img class="symbol" src="' + val.symbolUrl + '"/></div>' +
         '</div>';
     }).join('');
 
     var legend = legendTemplate !== "" ? '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>' : "";
-    var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + trafficSignPanel + complementaryCheckBox + '</div>');
+    var panel = $('<div class="panel"><header class="panel-header expanded">' + assetConfig.title + '</header>' + legend + trafficSignPanel + complementaryCheckBox + '</div>');
     panel.append(toolSelection.element);
 
     element.append(panel);
@@ -88,16 +88,16 @@
     element.find('.checkbox').find('input[type=checkbox]').change(trafficSignHandler);
 
     return {
-      title: title,
-      layerName: layerName,
+      title: assetConfig.title,
+      layerName: assetConfig.layerName,
       element: element,
-      allowComplementaryLinks: allowComplementaryLinks,
+      allowComplementaryLinks: assetConfig.allowComplementaryLinks,
       show: show,
       hide: hide
     };
 
     function show() {
-      if ((layerName != 'massTransitStop') && editModeToggle.hasNoRolesPermission(userRoles)) {
+      if ((assetConfig.layerName != 'massTransitStop') && editModeToggle.hasNoRolesPermission(userRoles)) {
         editModeToggle.reset();
       } else {
         editModeToggle.toggleEditMode(applicationModel.isReadOnly());
