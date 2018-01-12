@@ -3,11 +3,11 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title, editConstrains, layerName, hasVerificationButton) {
+  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title, editConstrains, layerName, isVerifiable) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on(events('selected', 'cancelled'), function() {
-      rootElement.html(template(selectedLinearAsset, formElements, newTitle, title, hasVerificationButton));
+      rootElement.html(template(selectedLinearAsset, formElements, newTitle, title, isVerifiable));
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
         formElements.bindEvents(rootElement.find('.form-elements-container'), selectedLinearAsset, 'a');
@@ -50,9 +50,7 @@
     }
 
     eventbus.on('layer:selected', function(layer) {
-      if(layerName === 'maintenanceRoad' && layerName === layer) {
-        renderLinktoWorkList(layer);
-      }else if(hasVerificationButton && layerName === layer){
+      if(isVerifiable && layerName === layer){
         renderLinktoWorkList(layer);
       }
        else {
@@ -61,7 +59,7 @@
     });
   }
 
-  function template(selectedLinearAsset, formElements, newTitle, title, hasVerificationButton) {
+  function template(selectedLinearAsset, formElements, newTitle, title, isVerifiable) {
     var modifiedBy = selectedLinearAsset.getModifiedBy() || '-';
     var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';
     var createdBy = selectedLinearAsset.getCreatedBy() || '-';
@@ -69,7 +67,7 @@
     var verifiedBy = selectedLinearAsset.getVerifiedBy();
     var verifiedDateTime = selectedLinearAsset.getVerifiedDateTime();
     var disabled = selectedLinearAsset.isDirty() ? '' : 'disabled';
-    var buttons = [(hasVerificationButton && !_.isNull(selectedLinearAsset.getId()) && selectedLinearAsset.count() === 1) ? '<button class="verify btn btn-primary">Merkitse tarkistetuksi</button>' : '',
+    var buttons = [(isVerifiable && !_.isNull(selectedLinearAsset.getId()) && selectedLinearAsset.count() === 1) ? '<button class="verify btn btn-primary">Merkitse tarkistetuksi</button>' : '',
                    '<button class="save btn btn-primary" disabled> Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var topButtons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
@@ -112,7 +110,7 @@
     };
 
     var verifiedFields = function() {
-      return (hasVerificationButton && verifiedBy && verifiedDateTime) ? '<div class="form-group">' +
+      return (isVerifiable && verifiedBy && verifiedDateTime) ? '<div class="form-group">' +
       '<p class="form-control-static asset-log-info">Tarkistettu: ' + verifiedBy + ' ' + verifiedDateTime + '</p>' +
       '</div>' : '';
     };
@@ -154,16 +152,6 @@
           '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
           '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">' + textName + '</a>' +
           '</div>');
-
-
-  //   var renderVerificationList = function (layerName) {
-  //     var linkDescription = 'Vanhentuneiden kohteiden lista';
-  //
-  //   $('#information-content').append('' +
-  //       '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-  //       '<a id="unchecked-links" class="unchecked-linear-assets" href="#verification-list/' + layerName + '">' + linkDescription + '</a>' +
-  //       '</div>');
-  // };
 };
 
   function validateAdministrativeClass(selectedLinearAsset, editConstrains){
