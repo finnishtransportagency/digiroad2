@@ -730,9 +730,10 @@
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
 
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
+        var selectedLink = (_.isArray(link) ? link : [link]);
         var features = [];
-        _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
-          _.each(link, function (featureLink){
+        _.each(selectedLink, function (featureLink){
+         _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
             if(featureLink.linkId !== 0 && feature.roadLinkData.linkId === featureLink.linkId){
               return features.push(feature);
             }
@@ -772,6 +773,8 @@
       });
 
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function(eventData){
+        eventbus.trigger('linkProperties:deselectFeaturesSelected');
+
         draw();
         _.defer(function(){
           var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
@@ -784,6 +787,17 @@
           if(featuresToReSelect.length !== 0){
             addFeaturesToSelection(featuresToReSelect);
           }
+          var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function(feature){
+            return _.contains(_.pluck(selectedLinkProperty.get(), 'linkId'), feature.roadLinkData.linkId);
+          }), function(feat){return feat.roadLinkData;});
+
+          var groups = _.flatten(eventData);
+          var fetchedLinksInSelection = _.filter(groups, function(group) {
+            return _.contains(_.pluck(fetchedDataInSelection, 'linkId'), group.getData().linkId);
+          });
+
+          selectedLinkProperty.setCurrent(fetchedLinksInSelection);
+          eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
         });
       });
       eventListener.listenTo(eventbus, 'suravageRoadLinks:fetched', function(suravageRoads){
