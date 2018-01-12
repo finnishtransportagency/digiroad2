@@ -81,15 +81,16 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
           ra.geometry.reverse) // Road Address geometry isn't necessarily directed: start and end may not be aligned by side code
     }
     )
+    val checkMaxMovedDistance = Math.abs(roadAddresses.maxBy(_.endMValue).endMValue - GeometryUtils.geometryLength(roadLink.geometry)) > MaxMoveDistanceBeforeFloating
     if(movedAddresses.size != 0) {
       println(s"The following road addresses (${movedAddresses.map(_.id).mkString(", ")}) deviate by a factor of ${MaxMoveDistanceBeforeFloating} of the RoadLink: ${roadLink.linkId}")
       println(s"Proceeding to check if the addresses are a result of automatic merging and if they overlap.")
     }
-    val checkMaxMovedDistance = Math.abs(roadAddresses.maxBy(_.endMValue).endMValue - GeometryUtils.geometryLength(roadLink.geometry)) > MaxMoveDistanceBeforeFloating
+
     if(!movedAddresses.isEmpty){
       //If we get road addresses that were merged we check if they current road link is not overlapping, if it not, then there is a floating problem
-      val filteredNonOverlapping = movedAddresses.filter(ma => {
-        val filterResult = ma.modifiedBy.getOrElse("") == "Automatic_merged" && !GeometryUtils.overlaps((ma.startMValue, ma.endMValue),(0.0, roadLink.length))
+      val filteredNonOverlapping = movedAddresses.filterNot(ma => {
+        val filterResult = ma.modifiedBy.getOrElse("") == "Automatic_merged" && GeometryUtils.overlaps((ma.startMValue, ma.endMValue),(0.0, roadLink.length))
         if(filterResult)
           println(s"Road address ${ma.id} is a result of automatic merging and it overlaps, discarding.")
         filterResult
