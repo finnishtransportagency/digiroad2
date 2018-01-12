@@ -297,7 +297,7 @@ case class SplitOptions(splitPoint: Point, statusA: LinkStatus, statusB: LinkSta
 case class SplitResult(splitA: ProjectLink, splitB: ProjectLink, terminatedProjectLinks: Seq[ProjectLink], terminatedProjectLink: ProjectLink)
 {
   private def isShorterProjectLinks(pl: ProjectLink) = Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength
-  def toSeqWithAllTerminated: Seq[ProjectLink] = Seq(splitA, splitB) ++ terminatedProjectLinks
-  def toSeqWithMergeTerminated: Seq[ProjectLink] = Seq(splitA, splitB, terminatedProjectLink)
+  def toSeqWithAllTerminated: Seq[ProjectLink] = (Seq(splitA, splitB) ++ terminatedProjectLinks).filter(isShorterProjectLinks)
+  def toSeqWithMergeTerminated: Seq[ProjectLink] = Seq(splitA, splitB, terminatedProjectLink).filter(isShorterProjectLinks)
 }
 
