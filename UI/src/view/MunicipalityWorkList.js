@@ -36,17 +36,23 @@
             '</div>'
         );
         var showApp = function () {
+          if(window.location.href.indexOf("work-list/municipality") === -1) {
             $('.container').show();
             $('#work-list').hide();
             $('body').removeClass('scrollable').scrollTop(0);
             $(window).off('hashchange', showApp);
+          }
         };
 
-        $('#closebtn').click(function () {
-            showApp();
+        $(window).on('hashchange', showApp);
+
+        $("#closebtn").on("click", function () {
+         var link = !_.isUndefined(window.applicationModel.getSelectedLayer()) ? window.applicationModel.getSelectedLayer() : '';
+         window.location.href='index.html#' + link;
         });
 
-        listP.then(function (limits) {
+
+      listP.then(function (limits) {
             var element = $('#work-list .work-list');
             if (limits.length == 1)
                 window.location = hrefDir + _.map(limits, function(limit) {return limit.id;});

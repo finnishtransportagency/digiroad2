@@ -82,7 +82,7 @@
           '<div class="municipality-page">' +
             '<div class="municipality-content-box">' +
               '<header>' + "Kuntatarkistus" +
-                '<input id="closebtn2" type="button" class="btn header-link-btn" value="Sulje lista"/>' +
+                '<input id="closebtn" type="button" class="btn header-link-btn" value="Sulje lista"/>' +
                '<a class="header-link" href="#work-list/municipality">Kuntavalinta</a>' +
               '</header>' +
             '<div class="municipality-work-list">' +
@@ -92,15 +92,21 @@
         '</div>'
       );
       var showApp = function () {
-        $('.container').show();
-        $('#municipality-work-list').hide();
-        $('body').removeClass('scrollable').scrollTop(0);
-        $(window).off('hashchange', showApp);
+        if(window.location.href.indexOf("work-list/municipality") === -1) {
+          $('.container').show();
+          $('#work-list').hide();
+          $('body').removeClass('scrollable').scrollTop(0);
+          $(window).off('hashchange', showApp);
+        }
       };
 
-      $('#closebtn2').click(function () {
-        showApp();
+      $(window).on('hashchange', showApp);
+
+      $("#closebtn").on("click", function () {
+        var link = !_.isUndefined(window.applicationModel.getSelectedLayer()) ? window.applicationModel.getSelectedLayer() : '';
+        window.location.href='index.html#' + link;
       });
+
 
       listP.then(function (assetTypes) {
         var assetTypesListed = _.map(assetTypes, _.partial(municipalityValidationTable));
