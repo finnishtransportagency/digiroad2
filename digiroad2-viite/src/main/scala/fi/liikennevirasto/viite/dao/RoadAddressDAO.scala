@@ -1206,7 +1206,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         where t.id < t2.id and
-          (valid_from is null or valid_from <= sysdate) and
+          valid_from <= sysdate and
           (valid_to is null or valid_to > sysdate) and terminated = 0 and end_date is null and floating = 0 $road"""
     queryList(query)
   }
