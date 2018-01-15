@@ -938,15 +938,24 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "sysdate" else "null"
-    val verifiedDate =
-      if(verifiedDateFromUpdate.getOrElse("") != ""){
-        verifiedDateFromUpdate
-      } else if(verifiedBy.getOrElse("") == ""){
-        "null"
-      } else "sysdate"
+    val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
 
     if (fromUpdate) {
-      sqlu"""
+      if(verifiedDateFromUpdate.getOrElse("") != ""){
+        sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, ${verifiedBy.getOrElse("")}, $verifiedDateFromUpdate)
+
+        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+      }else {
+        sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, ${verifiedBy.getOrElse("")}, #$verifiedDate)
@@ -958,6 +967,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         values ($id, $lrmPositionId)
       select * from dual
     """.execute
+      }
     } else {
       sqlu"""
       insert all

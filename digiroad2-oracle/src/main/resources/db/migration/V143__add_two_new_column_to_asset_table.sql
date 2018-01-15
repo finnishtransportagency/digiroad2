@@ -20,6 +20,6 @@ UPDATE ASSET A
   SET VERIFIED_BY = CREATED_BY
      ,VERIFIED_DATE = CREATED_DATE
 WHERE MODIFIED_DATE IS NOT NULL
-  AND MODIFIED_BY IS IN ('dr1_conversion', 'vvh_generated', 'dr1conversion')
+  AND MODIFIED_BY IN ('dr1_conversion', 'vvh_generated', 'dr1conversion')
   AND ASSET_TYPE_ID IN (30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
   AND CREATED_BY NOT IN ('dr1_conversion', 'vvh_generated', 'dr1conversion');
