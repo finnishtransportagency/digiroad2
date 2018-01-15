@@ -773,7 +773,6 @@
       });
 
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function(eventData){
-        eventbus.trigger('linkProperties:deselectFeaturesSelected');
 
         draw();
         _.defer(function(){
@@ -795,9 +794,11 @@
           var fetchedLinksInSelection = _.filter(groups, function(group) {
             return _.contains(_.pluck(fetchedDataInSelection, 'linkId'), group.getData().linkId);
           });
-
-          selectedLinkProperty.setCurrent(fetchedLinksInSelection);
-          eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
+          if(fetchedLinksInSelection.length > 0){
+            eventbus.trigger('linkProperties:deselectFeaturesSelected');
+            selectedLinkProperty.setCurrent(fetchedLinksInSelection);
+            eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
+          }
         });
       });
       eventListener.listenTo(eventbus, 'suravageRoadLinks:fetched', function(suravageRoads){
