@@ -6,7 +6,11 @@ import slick.jdbc.StaticQuery.interpolation
 object RoadNetworkDAO {
 
   def createPublishedRoadNetwork: Unit = {
-    sqlu"""INSERT INTO published_road_network (id, created) VALUES (published_road_network_key_seq.NEXTVAL, sysdate)"""
+    sqlu"""INSERT INTO published_road_network (id, created) VALUES (published_road_network_key_seq.NEXTVAL, sysdate)""".execute
+  }
+
+  def expireRoadNetwork: Unit = {
+    sqlu"""UPDATE published_road_network SET valid_to = sysdate WHERE id = (SELECT MAX(ID) FROM published_road_network)""".execute
   }
 
   def createPublishedRoadAddress(roadAddressId: Long): Unit = {

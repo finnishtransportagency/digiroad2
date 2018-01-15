@@ -17,7 +17,7 @@ class RoadNetworkService {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  def checkRoadAddressNetwork(roadNumber: Option[Long]): Unit = {
+  def checkRoadAddressNetwork(options: RoadCheckOptions): Unit = {
 
     def checkCalibrationPoints(road1: RoadAddress, road2: RoadAddress): Boolean = {
       road1.track != road2.track && road1.calibrationPoints._1.isEmpty && road1.calibrationPoints._2.isEmpty &&
@@ -47,7 +47,7 @@ class RoadNetworkService {
         ExportLockDAO.insert
         RoadAddressDAO.lockRoadAddressWriting
         RoadNetworkDAO.removeNetworkErrors
-        val allRoads = RoadAddressDAO.fetchAllCurrentRoads(roadNumber).groupBy(_.roadNumber).flatMap(road => {
+        val allRoads = RoadAddressDAO.fetchAllCurrentRoads(options).groupBy(_.roadNumber).flatMap(road => {
           val groupedRoadParts = road._2.groupBy(_.roadPartNumber).toSeq.sortBy(_._1)
           val lastRoadAddress = groupedRoadParts.last._2.sortBy(g => (g.track.value, g.startAddrMValue)).last
           groupedRoadParts.map(roadPart => {
@@ -63,6 +63,7 @@ class RoadNetworkService {
           })
         })
         if (!RoadNetworkDAO.hasRoadNetworkErrors) {
+          RoadNetworkDAO.expireRoadNetwork
           RoadNetworkDAO.createPublishedRoadNetwork
           allRoads.foreach(r => r._2.foreach(p => RoadNetworkDAO.createPublishedRoadAddress(p.id)))
         }
@@ -70,10 +71,11 @@ class RoadNetworkService {
       } catch {
         case e: SQLIntegrityConstraintViolationException => logger.info("A road network check is already running")
         case _: Exception => {
-          logger.error("Error during road address network check")
+            logger.error("Error during road address network check")
           ExportLockDAO.delete
         }
       }
     }
   }
 }
+case class RoadCheckOptions(roadNumbers: Seq[Long])

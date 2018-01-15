@@ -16,7 +16,7 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.{NewRoadAddress, RoadType}
+import fi.liikennevirasto.viite.{NewRoadAddress, RoadCheckOptions, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
@@ -1204,9 +1204,9 @@ object RoadAddressDAO {
     create(roadAddresses.map(ra => ra.copy(id = NewRoadAddress, terminated = Subsequent)))
   }
 
-  def fetchAllCurrentRoads(roadNumber: Option[Long]): List[RoadAddress] = {
-    val road = if (roadNumber.nonEmpty) {
-      s"AND ROAD_NUMBER = $roadNumber"
+  def fetchAllCurrentRoads(options: RoadCheckOptions): List[RoadAddress] = {
+    val road = if (options.roadNumbers.nonEmpty) {
+      s"AND ROAD_NUMBER in (${options.roadNumbers.mkString(",")})"
     } else ""
 
     val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
