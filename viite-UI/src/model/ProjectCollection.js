@@ -185,6 +185,8 @@
         backend.revertChangesRoadlink(data, function (response) {
           if (response.success) {
             dirtyProjectLinkIds = [];
+            publishableProject = response.publishable;
+            projectErrors = response.projectErrors;
             eventbus.trigger('projectLink:revertedChanges');
           }
           else if (response.status == INTERNAL_SERVER_ERROR_500 || response.status == BAD_REQUEST_400) {
@@ -282,6 +284,7 @@
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
+              projectErrors = successObject.projectErrors;
               eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
             }
           });
@@ -607,6 +610,10 @@
 
     this.pushCoordinates = function(button) {
       coordinateButtons.push(button);
+    };
+
+    this.clearCoordinates = function(button) {
+      coordinateButtons = [];
     };
 
     this.setTmpDirty = function(editRoadLinks){

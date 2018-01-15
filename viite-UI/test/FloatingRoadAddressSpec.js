@@ -1,32 +1,33 @@
 /*jshint expr: true*/
 define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers) {
+  console.log = function() {};
   var expect = chai.expect;
 
   var floatingsLinkIds = [1718152, 1718151];
   var unknownRoadLinkId = 500130202;
 
   describe('when loading application', function() {
-    this.timeout(1500000);
+    this.timeout(3000000);
     var openLayersMap;
     before(function(done) {
-      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
+      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0, 'Project Two');
 
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         testHelpers.clickVisibleEditModeButton();
-        eventbus.once('roadLayer:featuresLoaded', function() {
+        eventbus.on('roadLayer:featuresLoaded', function() {
           done();
         });
       }, backend);
     });
 
     describe('Selecting the first floating', function() {
-      //Do this before
-
       before(function(done){
-        var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadLayerName(), floatingsLinkIds[Math.round(Math.random())]);
+        var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadLayerName(), floatingsLinkIds[0]);
         testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
-        done();
+        setTimeout(function () {
+          done();
+        }, 2000);
       });
 
       it('check if the form opened for the correct floatings', function() {
@@ -43,27 +44,30 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     describe('Clicking the \"Valinta\" button',function(){
       before(function(done) {
         testHelpers.clickValintaButton();
-        setTimeout(function(){
+        setTimeout(function () {
           done();
-        },150);
+        },2000);
       });
 
       it('check that the \"Valinta\" was pressed and the unknowns are \"forward\"', function () {
-        var isValintaButtonDisabled = $('.link-properties button.continue').is(":disabled");
-        expect(isValintaButtonDisabled).to.be.true;
-        var pickFeatures = testHelpers.getFeatures(openLayersMap, 'pickRoadsLayer');
-        expect(pickFeatures).to.be.not.empty;
+        //setTimeout(function () {
+          var isValintaButtonDisabled = $('.link-properties button.continue').is(":disabled");
+          expect(isValintaButtonDisabled).to.be.true;
+          var pickFeatures = testHelpers.getFeatures(openLayersMap, 'pickRoadsLayer');
+          expect(pickFeatures).to.be.not.empty;
+        //}, 1000);
       });
     });
 
+
     describe('Selecting a unknown road to transfer the floatings', function(){
-      before(function(done){
+      before(function (done) {
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
         expect(ol3Feature).to.not.be.undefined;
         testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
-        setTimeout(function(){
+        setTimeout(function () {
           done();
-        },1000);
+        }, 2000);
       });
 
       it('Check if the unknown road was selected via form',function(){
@@ -132,6 +136,5 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         expect(_.first(roadLinkData).roadLinkType).to.not.equals(-1);
       });
     });
-
   });
 });

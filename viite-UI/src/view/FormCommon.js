@@ -248,6 +248,7 @@
     var getProjectErrors = function (projectErrors, links, projectCollection) {
       var buttonIndex = 0;
       var errorLines = '';
+      projectCollection.clearCoordinates();
       _.each(projectErrors, function (error) {
         var button = '';
         var coordinates = getErrorCoordinates(error, links);
@@ -258,7 +259,7 @@
         }
         errorLines += '<div class="form-project-errors-list">' +
           addSmallLabel('LINKIDS: ') + ' ' + addSmallLabel(error.linkIds) + '</br>' +
-          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.message: 'N/A')) + '</br>' +
+          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabel((error.info ? error.info: 'N/A')) + '</br>' +
           (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
           '</div>';

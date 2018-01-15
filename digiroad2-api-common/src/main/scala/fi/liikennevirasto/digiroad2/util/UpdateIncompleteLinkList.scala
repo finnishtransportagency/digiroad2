@@ -22,10 +22,10 @@ object UpdateIncompleteLinkList {
     val municipalities: Seq[Int] = OracleDatabase.withDynSession {
       Queries.getMunicipalities
     }
-    Digiroad2Context.roadLinkService.clearCache()
+    Digiroad2Context.roadLinkOTHService.clearCache()
     municipalities.foreach { municipality =>
       println("*** Processing municipality: " + municipality)
-      val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVVH(municipality)
+      val roadLinks = Digiroad2Context.roadLinkOTHService.getRoadLinksFromVVH(municipality)
       println("*** Processed " + roadLinks.length + " road links")
     }
   }

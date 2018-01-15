@@ -392,7 +392,7 @@ object NumericalLimitFiller {
       val mValueChanges = alteredSegments.filter(isChanged).
         map(s => MValueAdjustment(s.id, s.linkId, s.startMeasure, s.endMeasure))
 
-      val expiredIds = segments.map(_.id).toSet -- alteredSegments.map(_.id) ++ changeSet.expiredAssetIds
+      val expiredIds = segments.map(_.id).filterNot(_ == 0).toSet -- alteredSegments.map(_.id) ++ changeSet.expiredAssetIds
       (sortedSegments,
         changeSet.copy(adjustedMValues = (changeSet.adjustedMValues ++ mValueChanges).filterNot(mvc => expiredIds.contains(mvc.assetId)),
           expiredAssetIds = expiredIds))
@@ -468,7 +468,7 @@ object NumericalLimitFiller {
     }
   }
 
-  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       dropShortSegments,
@@ -483,14 +483,21 @@ object NumericalLimitFiller {
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
     )
 
-    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil, Set.empty)) { case (acc, roadLink) =>
+    val changeSet = changedSet match {
+      case Some(change) => change
+      case None => ChangeSet( droppedAssetIds = Set.empty[Long],
+                              expiredAssetIds = Set.empty[Long],
+                              adjustedMValues = Seq.empty[MValueAdjustment],
+                              adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+    }
+
+    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-
       (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }
   }
@@ -525,7 +532,7 @@ object NumericalLimitFiller {
     }
   }
 
-  def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection) = {
+  def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection, changedSet: ChangeSet) : (PersistedLinearAsset, ChangeSet)= {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {
       case to.linkId => asset.id
@@ -533,11 +540,15 @@ object NumericalLimitFiller {
     }
     val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(asset, projection, to.length)
 
-    PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,
+    val changeSet = assetId match {
+      case 0 => changedSet
+      case _ => changedSet.copy(adjustedMValues =  changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode))))
+    }
+
+    (PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,
       value = asset.value, startMeasure = newStart, endMeasure = newEnd,
       createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
-      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource
-    )
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource), changeSet)
   }
 }

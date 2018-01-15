@@ -30,6 +30,8 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 sealed trait Discontinuity {
   def value: Int
   def description: String
+
+  override def toString: String = s"$value - $description"
 }
 object Discontinuity {
   val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
@@ -46,10 +48,10 @@ object Discontinuity {
     values.find(_.description.equalsIgnoreCase(s)).getOrElse(Continuous)
   }
 
-  case object EndOfRoad extends Discontinuity { def value = 1; def description="Tien loppu" }
+  case object EndOfRoad extends Discontinuity { def value = 1; def description="Tien loppu"}
   case object Discontinuous extends Discontinuity { def value = 2 ; def description = "Epäjatkuva"}
   case object ChangingELYCode extends Discontinuity { def value = 3 ; def description = "ELY:n raja"}
-  case object MinorDiscontinuity extends Discontinuity { def value = 4 ; def description= "Lievä epäjatkuvuus" }
+  case object MinorDiscontinuity extends Discontinuity { def value = 4 ; def description= "Lievä epäjatkuvuus"}
   case object Continuous extends Discontinuity { def value = 5 ; def description = "Jatkuva"}
 }
 
@@ -517,11 +519,12 @@ object RoadAddressDAO {
          from project pro,
          road_address ra
          join lrm_position pos on ra.lrm_position_id = pos.id
-         where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
-         (ra.START_DATE>=pro.START_DATE or ra.END_DATE>pro.START_DATE) AND
-         ra.VALID_TO is null
-         )
-      """
+         where  pro.id = $projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
+         (ra.START_DATE >= pro.START_DATE or ra.END_DATE > pro.START_DATE) AND
+         ra.VALID_TO is null) OR EXISTS (
+         SELECT 1 FROM project_reserved_road_part pro, road_address ra JOIN lrm_position pos ON ra.lrm_position_id = pos.id
+          WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number
+           AND pro.road_number = $roadNumber AND pro.road_part_number = $roadPartNumber AND ra.end_date IS NULL)"""
     Q.queryNA[Int](query).firstOption.nonEmpty
   }
 
@@ -638,7 +641,7 @@ object RoadAddressDAO {
           SELECT * FROM (
             SELECT ra.road_number
             FROM road_address ra
-            WHERE floating = '0' and road_number > $current AND (end_date < sysdate OR end_date IS NULL)
+            WHERE and road_number > $current AND (valid_to > sysdate OR valid_to IS NULL)
             ORDER BY road_number ASC
           ) WHERE ROWNUM < 2
       """
@@ -651,7 +654,7 @@ object RoadAddressDAO {
           SELECT * FROM (
             SELECT ra.road_part_number
             FROM road_address ra
-            WHERE floating = '0' and road_number = $roadNumber  AND road_part_number > $current AND (end_date < sysdate OR end_date IS NULL)
+            WHERE and road_number = $roadNumber  AND road_part_number > $current AND (valid_to > sysdate OR valid_to IS NULL)
             ORDER BY road_part_number ASC
           ) WHERE ROWNUM < 2
       """
@@ -872,7 +875,16 @@ object RoadAddressDAO {
     sql"""
        select distinct road_part_number
               from road_address ra
-              where road_number = $roadNumber AND ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
+              where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL)
+      """.as[Long].list
+  }
+
+  def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
+    sql"""
+       select distinct road_part_number
+              from road_address ra
+              where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL) AND START_DATE <= $startDate
+              AND (END_DATE IS NULL OR END_DATE > $startDate)
       """.as[Long].list
   }
 

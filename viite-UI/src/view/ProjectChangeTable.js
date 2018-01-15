@@ -38,29 +38,28 @@
       '<table class="change-table-dimensions">' +
       '<tr>' +
       '<td class="project-change-table-dimension-first-h"></td>' +
-      '<td class="project-change-table-dimension">TIE</td>' +
-      '<td class="project-change-table-dimension">AJR</td>' +
-      '<td class="project-change-table-dimension">AOSA</td>' +
-      '<td class="project-change-table-dimension">AET</td>' +
-      '<td class="project-change-table-dimension">LOSA</td>' +
-      '<td class="project-change-table-dimension">LET</td>' +
-      '<td class="project-change-table-dimension">JATKUU</td>' +
-      '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
-      '<td class="project-change-table-dimension">ELY</td>' +
-      '<td class="project-change-table-dimension">&nbsp;KÄÄNTÖ</td>' +
-      '<td class="project-change-table-dimension">TIE</td>' +
-      '<td class="project-change-table-dimension">AJR</td>' +
-      '<td class="project-change-table-dimension">AOSA</td>' +
-      '<td class="project-change-table-dimension">AET</td>' +
-      '<td class="project-change-table-dimension">LOSA</td>' +
-      '<td class="project-change-table-dimension">LET</td>' +
-      '<td class="project-change-table-dimension">JATKUU</td>' +
-      '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
-      '<td class="project-change-table-dimension dimension-last">ELY</td>' +
+      '<td class="project-change-table-dimension-h">TIE</td>' +
+      '<td class="project-change-table-dimension-h">AJR</td>' +
+      '<td class="project-change-table-dimension-h">OSA</td>' +
+      '<td class="project-change-table-dimension-h">AET</td>' +
+      '<td class="project-change-table-dimension-h">LET</td>' +
+      '<td class="project-change-table-dimension-h">PIT</td>' +
+      '<td class="project-change-table-dimension-h">JATK</td>' +
+      '<td class="project-change-table-dimension-h dimension-road-type">TIETY</td>' +
+      '<td class="project-change-table-dimension-h">ELY</td>' +
+      '<td class="project-change-table-dimension-h dimension-reversed">&nbsp;KÄÄNTÖ</td>' +
+      '<td class="project-change-table-dimension-h">TIE</td>' +
+      '<td class="project-change-table-dimension-h">AJR</td>' +
+      '<td class="project-change-table-dimension-h">OSA</td>' +
+      '<td class="project-change-table-dimension-h">AET</td>' +
+      '<td class="project-change-table-dimension-h">LET</td>' +
+      '<td class="project-change-table-dimension-h">PIT</td>' +
+      '<td class="project-change-table-dimension-h">JATK</td>' +
+      '<td class="project-change-table-dimension-h dimension-road-type-h">TIETY</td>' +
+      '<td class="project-change-table-dimension-h dimension-last-h">ELY</td>' +
       '</tr>' +
       '</table>' +
       '</div>');
-    changeTable.append('<div class="project-changes"></div>');
 
     function show(){
       $('.container').append(changeTable.toggle());
@@ -84,36 +83,37 @@
     }
 
     function bindEvents(){
-      eventbus.once('projectChanges:fetched', function(projectChangeData){
-        var htmlTable ='<table class="change-table">';
-        if(!_.isUndefined(projectChangeData) && projectChangeData !== null){
-          _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
+      $('.row-changes').remove();
+      eventbus.once('projectChanges:fetched', function(projectChangeData) {
+        var htmlTable = "";
+        if (!_.isUndefined(projectChangeData) && projectChangeData !== null) {
+          _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq) {
             if (changeInfoSeq.changetype === newLinkStatus) {
-              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += '<tr class="row-changes">';
               htmlTable += getEmptySource(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
-              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getEmptyTarget();
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === unchangedStatus) {
-              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === transferredLinkStatus) {
-              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === numberingLinkStatus) {
-              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
@@ -121,8 +121,17 @@
             }
           });
         }
-        htmlTable += '</table>';
-        $('.project-changes').html($(htmlTable));
+        $('.row-changes').remove();
+        $('.change-table-dimensions').append($(htmlTable));
+        if (projectChangeData.validationErrors.length === 0){
+          $('.change-table-header').html($('<div>Validointi ok. Alla näet muutokset projektissa.</div>'));
+          if($('.change-table-frame').css('display')==="block")
+            $('#send-button').attr('disabled',false); //enables send button if changetable is open
+        }
+        else
+        {
+          $('.change-table-header').html($('<div>Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
+        }
       });
 
       changeTable.on('click', 'button.close', function (){
@@ -131,31 +140,31 @@
     }
 
     function getReversed(changeInfoSeq){
-      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-data-cell">&#9745</td>': '<td class="project-change-table-data-cell">&#9744</td>');
+      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#9745</td>': '<td class="project-change-table-dimension">&#9744</td>');
     }
 
     function getEmptySource(changeInfoSeq) {
       return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
-        '<td class="project-change-table-data-cell"></td>';
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>';
     }
     function getEmptyTarget() {
-      return'<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell"></td>' +
-        '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
-        '<td class="project-change-table-data-cell"></td>';
+      return '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>' +
+        '<td class="project-change-table-dimension"></td>';
     }
 
     function getTargetInfo(changeInfoSeq){
@@ -186,7 +195,6 @@
     changeTable.on('click', 'button.max', function (){
       if(windowMaximized) {
         $('.change-table-frame').height('260px');
-        $('.project-changes').height('110px');
         $('[id=change-table-borders-target]').height('180px');
         $('[id=change-table-borders-source]').height('180px');
         $('[id=change-table-borders-reversed]').height('180px');
@@ -196,7 +204,6 @@
         windowMaximized=false;
       } else {
         $('.change-table-frame').height('80%');
-        $('.project-changes').height('560px');
         $('[id=change-table-borders-target]').height('670px');
         $('[id=change-table-borders-source]').height('670px');
         $('[id=change-table-borders-reversed]').height('670px');

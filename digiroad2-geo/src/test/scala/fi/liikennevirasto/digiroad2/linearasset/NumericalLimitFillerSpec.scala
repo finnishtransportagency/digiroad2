@@ -138,14 +138,18 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
       ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
     )
+
     val output = changes map { change =>
       NumericalLimitFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
+
+
     output.length should be(3)
-    output.head.sideCode should be (SideCode.BothDirections.value)
-    output.head.startMeasure should be(0.0)
-    output.head.endMeasure should be(3.0)
-    output.last.endMeasure should be(3.0)
+    output.head._1.sideCode should be (SideCode.BothDirections.value)
+    output.head._1.startMeasure should be(0.0)
+    output.head._1.endMeasure should be(3.0)
+    output.last._1.endMeasure should be(3.0)
   }
 
   test("project paved road to new geometry, one side paved, should switch the last turned link segment") {
@@ -168,24 +172,26 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
     val output = changes map { change =>
       NumericalLimitFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
-    output.head.sideCode should be (SideCode.TowardsDigitizing.value)
-    output.last.sideCode should be (SideCode.AgainstDigitizing.value)
-    output.head.startMeasure should be(0.0)
-    output.head.endMeasure should be(3.0)
-    output.last.startMeasure should be(0.0)
-    output.last.endMeasure should be(3.0)
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
+    output.head._1.sideCode should be (SideCode.TowardsDigitizing.value)
+    output.last._1.sideCode should be (SideCode.AgainstDigitizing.value)
+    output.head._1.startMeasure should be(0.0)
+    output.head._1.endMeasure should be(3.0)
+    output.last._1.startMeasure should be(0.0)
+    output.last._1.endMeasure should be(3.0)
 
     val output2 = changes map { change =>
       NumericalLimitFiller.projectLinearAsset(assets.last, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
     output2.length should be(3)
-    output2.head.sideCode should be (SideCode.AgainstDigitizing.value)
-    output2.last.sideCode should be (SideCode.TowardsDigitizing.value)
-    output2.head.startMeasure should be(0.0)
-    output2.head.endMeasure should be(3.0)
-    output2.last.startMeasure should be(0.0)
-    output2.last.endMeasure should be(3.0)
+    output2.head._1.sideCode should be (SideCode.AgainstDigitizing.value)
+    output2.last._1.sideCode should be (SideCode.TowardsDigitizing.value)
+    output2.head._1.startMeasure should be(0.0)
+    output2.head._1.endMeasure should be(3.0)
+    output2.last._1.startMeasure should be(0.0)
+    output2.last._1.endMeasure should be(3.0)
   }
 
   test("project thawing asset to new geometry, cuts short") {
@@ -207,7 +213,8 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     val output = changes flatMap { change =>
       assets.map(
         NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty) )._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.head.sideCode should be (SideCode.TowardsDigitizing.value)
     output.last.sideCode should be (SideCode.AgainstDigitizing.value)
@@ -270,7 +277,8 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     val output = changes flatMap { change =>
       assets.map(
         NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.filter(o => o.linkId == 1 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
     output.filter(o => o.linkId == 1 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.startMeasure == 0.0) should be (true)

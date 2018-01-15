@@ -305,7 +305,7 @@
           disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
           jQuery('.modal-overlay').remove();
           if (!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses, result.project);
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
           rootElement.html(selectedProjectLinkTemplate(currentProject));
@@ -359,9 +359,7 @@
         applicationModel.setOpenProject(true);
         activeLayer = true;
         projectCollection.clearRoadAddressProjects();
-        _.defer(function () {
-          $('#generalNext').prop('disabled', true);
-        });
+        $('#generalNext').prop('disabled', true);
       });
 
       eventbus.on('roadAddress:openProject', function (result) {
@@ -655,10 +653,6 @@
         rootElement.find('.project-form button.next').attr('disabled', formIsInvalid(rootElement));
         rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
         rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
-      });
-
-      rootElement.on('click', '.projectErrorButton', function (event) {
-        eventbus.trigger('projectCollection:clickCoordinates', event, map);
       });
     };
     bindEvents();
