@@ -269,6 +269,7 @@
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
               new ModalConfirm(successObject.errormessage);
+              eventbus.trigger("roadAddressProject:roadCreationFailed", successObject.errormessage);
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
