@@ -82,7 +82,7 @@
           '<div class="municipality-page">' +
             '<div class="municipality-content-box">' +
               '<header>' + "Kuntatarkistus" +
-                '<input id="closebtn" type="button" class="btn header-link-btn" value="Sulje lista"/>' +
+                '<input id="close-form-btn" type="button" class="btn header-link-btn" value="Sulje lista"/>' +
                '<a class="header-link" href="#work-list/municipality">Kuntavalinta</a>' +
               '</header>' +
             '<div class="municipality-work-list">' +
@@ -102,7 +102,7 @@
 
       $(window).on('hashchange', showApp);
 
-      $("#closebtn").on("click", function () {
+      $("#close-form-btn").on("click", function () {
         var link = !_.isUndefined(window.applicationModel.getSelectedLayer()) ? window.applicationModel.getSelectedLayer() : '';
         window.location.href='index.html#' + link;
       });
