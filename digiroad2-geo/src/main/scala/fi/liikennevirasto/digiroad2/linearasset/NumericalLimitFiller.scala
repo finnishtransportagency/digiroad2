@@ -537,7 +537,7 @@ object NumericalLimitFiller {
       value = asset.value, startMeasure = newStart, endMeasure = newEnd,
       createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
-      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource, None, None
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource, verifiedBy = asset.verifiedBy, verifiedDate = asset.verifiedDate
     )
   }
 }

@@ -934,11 +934,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
-                        verifiedBy: Option[String] = None): Long = {
+                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "sysdate" else "null"
-    val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
+    val verifiedDate =
+      if(verifiedDateFromUpdate.getOrElse("") != ""){
+        verifiedDateFromUpdate
+      } else if(verifiedBy.getOrElse("") == ""){
+        "null"
+      } else "sysdate"
 
     if (fromUpdate) {
       sqlu"""

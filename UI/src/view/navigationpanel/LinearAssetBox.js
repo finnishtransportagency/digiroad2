@@ -77,7 +77,7 @@
         }
     });
 
-    eventbus.on(layerName + ':checkComplementaryLinkCheckBox', function() {
+    eventbus.on(layerName + ':activeComplementaryLayer', function() {
         elements.expanded.find('#complementaryLinkCheckBox').prop('checked', true);
     });
 

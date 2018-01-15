@@ -398,7 +398,7 @@
       }
     });
 
-    eventbus.on('maintenanceRoad:checkComplementaryLinkCheckBox', function() {
+    eventbus.on('maintenanceRoad:activeComplementaryLayer', function() {
       elements.expanded.find('#complementaryLinkCheckBox').prop('checked', true);
     });
 

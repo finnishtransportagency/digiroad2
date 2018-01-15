@@ -60,7 +60,7 @@ trait LinearAssetOperations {
   }
 
   val logger = LoggerFactory.getLogger(getClass)
-
+  val verifiableAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
 
   def getMunicipalityCodeByAssetId(assetId: Int): Int = {
     withDynTransaction {
@@ -152,8 +152,7 @@ trait LinearAssetOperations {
 
   def getUnverifiedLinearAssets(typeId: Int, municipalityCodes: Set[Int]): Map[String, Map[String,List[Long]]] = {
     withDynTransaction {
-      val allowedAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
-      if (!allowedAssetType.contains(typeId)) throw new IllegalStateException("Asset type not allowed")
+      if (!verifiableAssetType.contains(typeId)) throw new IllegalStateException("Asset type not allowed")
 
       val unVerifiedAssets = dao.getUnVerifiedLinearAsset(typeId)
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unVerifiedAssets.map(_._2).toSet, false)
@@ -176,10 +175,9 @@ trait LinearAssetOperations {
   }
 
   protected def getVerifiedBy(userName: String, assetType: Int): Option[String] = {
-    val allowedAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
     val notVerifiedUser = Set("vvh_generated", "dr1_conversion", "dr1conversion")
 
-    if (!notVerifiedUser.contains(userName) && allowedAssetType.contains(assetType)) Some(userName) else None
+    if (!notVerifiedUser.contains(userName) && verifiableAssetType.contains(assetType)) Some(userName) else None
   }
 
   protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
@@ -526,7 +524,7 @@ trait LinearAssetOperations {
             case (Some(createdBy), Some(createdDateTime)) =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), true, Some(createdBy), Some(createdDateTime))
+                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate)
             case _ =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,

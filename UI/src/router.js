@@ -31,7 +31,7 @@
             fetchLinearAssetEvent(asset, result);
           }else if(result.source === 2) {
              eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
-              eventbus.trigger(layerName + ':checkComplementaryLinkCheckBox');
+              eventbus.trigger(layerName + ':activeComplementaryLayer');
               eventbus.trigger('complementaryLinks:show');
                fetchLinearAssetEvent(asset, result);
              });
