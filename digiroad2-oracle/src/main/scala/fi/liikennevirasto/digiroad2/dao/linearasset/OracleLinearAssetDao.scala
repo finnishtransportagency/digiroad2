@@ -941,8 +941,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
 
     if (fromUpdate) {
-      if(verifiedDateFromUpdate.getOrElse("") != ""){
-        sqlu"""
+      verifiedDateFromUpdate match {
+        case Some(value) => sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, ${verifiedBy.getOrElse("")}, $verifiedDateFromUpdate)
@@ -954,8 +954,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         values ($id, $lrmPositionId)
       select * from dual
     """.execute
-      }else {
-        sqlu"""
+        case None => sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, ${verifiedBy.getOrElse("")}, #$verifiedDate)
