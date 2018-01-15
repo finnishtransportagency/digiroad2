@@ -245,7 +245,7 @@ object Digiroad2Context {
   val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
-  val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadAddressService), name = "roadNetworkChecker")
+  val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
@@ -254,6 +254,10 @@ object Digiroad2Context {
 
   lazy val projectService: ProjectService = {
     new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+  }
+
+  lazy val roadNetworkService: RoadNetworkService = {
+    new RoadNetworkService
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {

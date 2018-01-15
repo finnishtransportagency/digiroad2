@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao._
 import org.slf4j.LoggerFactory
 
 
-class RoadNetworkService(eventbus: DigiroadEventBus) {
+class RoadNetworkService {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
