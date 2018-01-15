@@ -2,6 +2,7 @@
   root.FormCommon = function(prefix) {
     var ProjectStatus = LinkValues.ProjectStatus;
     var LinkStatus = LinkValues.LinkStatus;
+    var Track = LinkValues.Track;
 
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
@@ -33,7 +34,7 @@
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
         addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
-        addTrackCodeDropdown((track !== 99 ? track :
+        addTrackCodeDropdown((track !== Track.Unknown.value ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
@@ -103,7 +104,7 @@
 
     var addTrackCodeDropdown = function (trackDefaultValue, properties){
       if(trackDefaultValue === ''){
-        trackDefaultValue = 99;
+        trackDefaultValue = Track.Unknown.value;
       }
 
       return '<select class="form-select-small-control" id="trackCodeDropdown" size="1" '+properties+'>' +

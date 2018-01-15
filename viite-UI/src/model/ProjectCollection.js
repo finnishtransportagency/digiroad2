@@ -16,6 +16,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var ProjectStatus = LinkValues.ProjectStatus;
     var LinkGeomSource = LinkValues.LinkGeomSource;
+    var Track = LinkValues.Track;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -254,7 +255,7 @@
         coordinates:coordinates
       };
 
-      if(dataJson.trackCode === 99){
+      if(dataJson.trackCode === Track.Unknown.value){
         new ModalConfirm("Tarkista ajoratakoodi");
         applicationModel.removeSpinner();
         return false;
@@ -398,7 +399,7 @@
         coordinates:coordinates
       };
 
-      if(dataJson.trackCode === 99){
+      if(dataJson.trackCode === Track.Unknown.value){
         new ModalConfirm("Tarkista ajoratakoodi");
         applicationModel.removeSpinner();
         return false;
