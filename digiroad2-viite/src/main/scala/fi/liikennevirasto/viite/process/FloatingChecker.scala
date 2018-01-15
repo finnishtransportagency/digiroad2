@@ -82,7 +82,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     }
     )
     val checkMaxMovedDistance = Math.abs(roadAddresses.maxBy(_.endMValue).endMValue - GeometryUtils.geometryLength(roadLink.geometry)) > MaxMoveDistanceBeforeFloating
-    if(movedAddresses.size != 0) {
+    if(!movedAddresses.isEmpty) {
       println(s"The following road addresses (${movedAddresses.map(_.id).mkString(", ")}) deviate by a factor of ${MaxMoveDistanceBeforeFloating} of the RoadLink: ${roadLink.linkId}")
       println(s"Proceeding to check if the addresses are a result of automatic merging and if they overlap.")
     }
