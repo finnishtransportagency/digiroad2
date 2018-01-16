@@ -20,8 +20,10 @@ class RoadNetworkService {
   def checkRoadAddressNetwork(options: RoadCheckOptions): Unit = {
 
     def checkCalibrationPoints(road1: RoadAddress, road2: RoadAddress): Boolean = {
-      road1.track != road2.track && road1.calibrationPoints._1.isEmpty && road1.calibrationPoints._2.isEmpty &&
-        road2.calibrationPoints._1.isEmpty && road2.calibrationPoints._2.isEmpty
+      (road1.track != road2.track && road1.calibrationPoints._1.isEmpty && road1.calibrationPoints._2.isEmpty &&
+        road2.calibrationPoints._1.isEmpty && road2.calibrationPoints._2.isEmpty) ||
+        (road1.startAddrMValue == 0 && road1.calibrationPoints._1.isEmpty && road1.calibrationPoints._2.isEmpty ||
+          road2.startAddrMValue == 0 && road2.calibrationPoints._1.isEmpty && road2.calibrationPoints._2.isEmpty )
     }
 
     def checkOverlapping(road1: RoadAddress, road2: RoadAddress) = {
@@ -32,9 +34,9 @@ class RoadNetworkService {
     }
 
     def checkTopology(road1: RoadAddress, road2: RoadAddress) = {
-      !GeometryUtils.areAdjacent(road1.geometry, road2.geometry) &&
-        (road1.discontinuity != Discontinuity.MinorDiscontinuity || road1.discontinuity != Discontinuity.Discontinuous ||
-          road1.discontinuity != Discontinuity.MinorDiscontinuity || road1.discontinuity != Discontinuity.Discontinuous) &&
+      (!GeometryUtils.areAdjacent(road1.geometry, road2.geometry) &&
+        (road1.discontinuity != Discontinuity.MinorDiscontinuity && road1.discontinuity != Discontinuity.Discontinuous ||
+          road2.discontinuity != Discontinuity.MinorDiscontinuity && road2.discontinuity != Discontinuity.Discontinuous)) ||
         checkCalibrationPoints(road1, road2)
       match {
         case true => RoadNetworkDAO.addRoadNetworkError(road1.id, InconsistentTopology.value)
@@ -65,7 +67,7 @@ class RoadNetworkService {
         if (!RoadNetworkDAO.hasRoadNetworkErrors) {
           RoadNetworkDAO.expireRoadNetwork
           RoadNetworkDAO.createPublishedRoadNetwork
-          allRoads.foreach(r => r._2.foreach(p => RoadNetworkDAO.createPublishedRoadAddress(p.id)))
+          allRoads.foreach(r => r._2.foreach(p => RoadNetworkDAO.createPublishedRoadAddress(RoadNetworkDAO.getLatestRoadNetworkVersion, p.id)))
         }
         ExportLockDAO.delete
       } catch {

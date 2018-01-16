@@ -13,8 +13,8 @@ object RoadNetworkDAO {
     sqlu"""UPDATE published_road_network SET valid_to = sysdate WHERE id = (SELECT MAX(ID) FROM published_road_network)""".execute
   }
 
-  def createPublishedRoadAddress(roadAddressId: Long): Unit = {
-    sqlu"""INSERT INTO published_road_address (network_id, road_address_id) VALUES (published_road_network_key_seq.NEXTVAL, $roadAddressId)""".execute
+  def createPublishedRoadAddress(networkVersion: Long, roadAddressId: Long): Unit = {
+    sqlu"""INSERT INTO published_road_address (network_id, road_address_id) VALUES ($networkVersion, $roadAddressId)""".execute
   }
 
   def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
