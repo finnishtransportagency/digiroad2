@@ -601,7 +601,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       if(canBeDeleted) {
         ProjectDAO.removeProjectLinksByProject(projectId)
         ProjectDAO.removeReservedRoadPartsByProject(projectId)
-        RoadAddressChangesDAO.clearRoadChangeTable(projectId)
         ProjectDAO.updateProjectStatus(projectId, ProjectState.Deleted)
         ProjectDAO.updateProjectStateInfo(ProjectState.Deleted.description, projectId)
       }
@@ -1092,8 +1091,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def recalculateChangeTable(projectId: Long): Boolean = {
-    val delta = ProjectDeltaCalculator.delta(projectId)
-    setProjectDeltaToDB(delta, projectId)
+    val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
+    if (projectOpt.isEmpty)
+      throw new IllegalArgumentException("Project not found")
+    val project = projectOpt.get
+    project.status match {
+      case ProjectState.Saved2TR => true
+      case _ =>
+        val delta = ProjectDeltaCalculator.delta(project)
+        setProjectDeltaToDB(delta, projectId)
+
+    }
   }
 
   /**

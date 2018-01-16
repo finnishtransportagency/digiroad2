@@ -17,12 +17,8 @@ object ProjectDeltaCalculator {
   val checker = new ContinuityChecker(null) // We don't need road link service here
   lazy private val logger = LoggerFactory.getLogger(getClass)
 
-  def delta(projectId: Long): Delta = {
-    val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
-    if (projectOpt.isEmpty)
-      throw new IllegalArgumentException("Project not found")
-    val project = projectOpt.get
-    val projectLinksFetched = ProjectDAO.getProjectLinks(projectId)
+  def delta(project: RoadAddressProject): Delta = {
+    val projectLinksFetched = ProjectDAO.getProjectLinks(project.id)
     val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
     val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadAddressId).toSet,
       includeFloating = true).map(ra => ra.id -> ra).toMap
