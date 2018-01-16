@@ -2,11 +2,13 @@ package fi.liikennevirasto.viite
 
 import java.sql.SQLIntegrityConstraintViolationException
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.{InconsistentTopology, OverlappingRoadAddresses}
 import fi.liikennevirasto.viite.dao._
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+
 
 
 class RoadNetworkService {
@@ -77,6 +79,12 @@ class RoadNetworkService {
           ExportLockDAO.delete
         }
       }
+    }
+  }
+
+  def getLatestPublishedNetworkDate : Option[DateTime] = {
+    withDynSession {
+      RoadNetworkDAO.getLatestPublishedNetworkDate
     }
   }
 }

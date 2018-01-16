@@ -42,7 +42,7 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.assetService
     ), "/api/municipality/*")
     context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.vvhClient,
-      Digiroad2Context.roadAddressService, Digiroad2Context.projectService), "/api/viite/*")
+      Digiroad2Context.roadAddressService, Digiroad2Context.projectService, Digiroad2Context.roadNetworkService), "/api/viite/*")
     context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkOTHService ), "/api/livi/*")
     if (Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
       val url = Digiroad2Context.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
