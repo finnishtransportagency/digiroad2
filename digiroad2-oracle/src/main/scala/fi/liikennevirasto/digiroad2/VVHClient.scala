@@ -1172,4 +1172,8 @@ class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vv
   def fetchSuravageByLinkIdsF(linkIds: Set[Long] = Set()): Future[Seq[VVHRoadlink]] = {
     Future(queryByLinkIds(linkIds, None, true, extractRoadLinkFeature, withLinkIdFilter))
   }
+
+  def fetchSuravageByMunicipality(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipality(municipality))
+  }
 }
