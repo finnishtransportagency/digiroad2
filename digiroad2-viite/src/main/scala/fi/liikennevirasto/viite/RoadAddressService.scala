@@ -440,6 +440,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  /**
+    * Returns all road address errors that are represented on ROAD_ADDRESS table and are valid (excluding history)
+    *
+    * @param includesHistory - default value = false to exclude history values
+    * @return Seq[RoadAddress]
+    */
+  def getRoadAddressErrors(includesHistory: Boolean = false) = {
+    withDynSession{
+      RoadAddressDAO.fetchAllRoadAddressErrors(includesHistory)
+    }
+  }
+
   def getTargetRoadLink(linkId: Long): RoadAddressLink = {
     val (roadLinks, _) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(linkId),frozenTimeVVHAPIServiceEnabled)
     if (roadLinks.isEmpty) {
@@ -693,13 +705,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String): Unit = {
-    withDynTransaction {
+    val hasFloatings = withDynTransaction {
       val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true, includeHistory = true,
         includeTerminated = false)
       RoadAddressDAO.expireById(currentRoadAddresses.map(_.id).toSet)
       RoadAddressDAO.create(roadAddresses, Some(username))
       recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
+      RoadAddressDAO.fetchAllFloatingRoadAddresses(false).isEmpty
     }
+    if (!hasFloatings)
+      eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
@@ -757,6 +772,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
     false
   }
+
   def prettyPrint(changes: Seq[ChangeInfo]) = {
     def setPrecision(d: Double) = {
       BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
@@ -794,4 +810,26 @@ case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val currentSegments: Seq[RoadAddress] = v._1
   val historySegments: Seq[RoadAddress] = v._2
   val allSegments: Seq[RoadAddress] = currentSegments ++ historySegments
+}
+
+object AddressConsistencyValidator {
+
+  sealed trait AddressError {
+    def value: Int
+    def message: String
+  }
+
+  object AddressError {
+    val values = Set(OverlappingRoadAddresses, InconsistentTopology)
+    case object OverlappingRoadAddresses extends AddressError {def value = 1
+      def message = ErrorOverlappingRoadAddress}
+    case object InconsistentTopology extends AddressError {def value = 2
+      def message = ErrorInconsistentTopology}
+
+    def apply(intValue: Int): AddressError = {
+      values.find(_.value == intValue).get
+    }
+  }
+
+  case class AddressErrorDetails(id: Long, linkId: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
 }

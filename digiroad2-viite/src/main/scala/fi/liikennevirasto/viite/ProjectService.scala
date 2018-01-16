@@ -1313,8 +1313,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       try {
         withDynTransaction {
           logger.info(s"Checking status for $project")
-          val newStatus = checkAndUpdateProjectStatus(project)
-          logger.info(s"new status is $newStatus")
+          checkAndUpdateProjectStatus(project)
+        } match {
+          case true => eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
+          case _ => logger.info(s"Not going to check road network (status != Saved2TR)")
         }
       } catch {
         case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
@@ -1323,7 +1325,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  private def checkAndUpdateProjectStatus(projectID: Long): ProjectState = {
+  private def checkAndUpdateProjectStatus(projectID: Long): Boolean = {
     ProjectDAO.getRotatingTRProjectId(projectID).headOption match {
       case Some(trId) =>
         ProjectDAO.getProjectStatus(projectID).map { currentState =>
@@ -1335,12 +1337,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
           if (updatedStatus == Saved2TR)
             updateRoadAddressWithProjectLinks(updatedStatus, projectID)
-          updatedStatus
-        }.getOrElse(ProjectState.Unknown)
+        }
+        RoadAddressDAO.fetchAllFloatingRoadAddresses(false).isEmpty
       case None =>
         logger.info(s"During status checking VIITE wasnt able to find TR_ID to project $projectID")
         appendStatusInfo(ProjectDAO.getRoadAddressProjectById(projectID).head, " Failed to find TR-ID ")
-        ProjectState.Unknown
+        false
     }
   }
 
