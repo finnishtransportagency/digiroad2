@@ -18,7 +18,12 @@
 
     bindEvents();
 
+    eventbus.on('returnFormBtn:visible', function(value) {
+      showReturnFormBtn = value;
+    });
+
     var municipalityCode;
+    var showReturnFormBtn;
 
     function verifyMunicipalityAssets(selectedAssets, municipalityCode) {
       backend.verifyMunicipalityAssets(selectedAssets, municipalityCode);
@@ -56,7 +61,7 @@
 
       var oldAsset = function (asset) {
         return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
-          "<td headers='name'>" + asset.assetName + "    <img src='images/oldAsset.png'" + "</td>" +
+          "<td headers='name'>" + asset.assetName + "    <img src='images/oldAsset.png' title='Tarkistus Vanhentumassa'" + "</td>" +
           "<td style='color:red' headers='date'>" + asset.verified_date + "</td>" +
           "<td style='color:red' headers='verifier'>" + asset.verified_by + "</td></tr>";
       };
@@ -83,7 +88,7 @@
             '<div class="municipality-content-box">' +
               '<header>' + "Kuntatarkistus" +
                 '<input id="close-form-btn" type="button" class="btn header-link-btn" value="Sulje lista"/>' +
-               '<a class="header-link" href="#work-list/municipality">Kuntavalinta</a>' +
+                '' + (showReturnFormBtn ? '<a class="header-link" href="#work-list/municipality">Kuntavalinta</a>' : '') +
               '</header>' +
             '<div class="municipality-work-list">' +
             '</div>' +

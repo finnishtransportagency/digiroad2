@@ -5,7 +5,7 @@
   var rectangleToolIcon = '<img src="images/rectangle-tool.svg"/>';
   var polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
   var terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
-  var checkIcon = '<img src="images/check-icon.png"/>';
+  var checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän Todentama"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();

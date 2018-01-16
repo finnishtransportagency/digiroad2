@@ -1,6 +1,6 @@
 (function(root) {
   root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, allowComplementaryLinks, hasTrafficSignReadOnlyLayer) {
-    var checkIcon = '<img src="images/check-icon.png"/>';
+    var checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän Todentama"/>';
 
     var legendTemplate = _.map(legendValues, function(value, idx) {
       return value ? '<div class="legend-entry">' +

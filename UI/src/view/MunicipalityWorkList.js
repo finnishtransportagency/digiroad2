@@ -53,9 +53,12 @@
 
 
       listP.then(function (limits) {
+            var returnFormBtnVisible = true;
             var element = $('#work-list .work-list');
-            if (limits.length == 1)
+            if (limits.length == 1){
                 window.location = hrefDir + _.map(limits, function(limit) {return limit.id;});
+                returnFormBtnVisible = false;
+            }
 
             var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
             element.html($('<div class="municipality-list">').append(unknownLimits));
@@ -69,6 +72,8 @@
                 var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, currentInput]))();
                 $('#tableData tbody').html(unknownLimits);
             });
+
+            eventbus.trigger('returnFormBtn:visible', returnFormBtnVisible);
         });
     };
 
