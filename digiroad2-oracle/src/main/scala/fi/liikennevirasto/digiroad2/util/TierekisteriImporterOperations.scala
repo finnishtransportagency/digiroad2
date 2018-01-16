@@ -595,9 +595,10 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
           //Creates assets on side Expired
           expiredAssetSides.foreach {
             expiredAssetSide =>
-              val trAssets = getAllTierekisteriAssets(roadNumber).filter(_.roadSide == expiredAssetSide)
+              val trTelematicSpeedAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber).filter(_.track.value == expiredAssetSide.value)
               //Get Urban Areas from Tierekisteri
               val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber).filter(_.track.value == expiredAssetSide.value)
+              val trAssets = getAllTierekisteriAssets(roadNumber).filter(_.roadSide == expiredAssetSide) ++ trTelematicSpeedAssets
               expiredAssetSide match {
                 case RoadSide.Right =>
                   println("\nCreate Speed Limits at Road Number: " + roadNumber + ", on Side: " + RoadSide.Right.toString())

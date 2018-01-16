@@ -261,7 +261,7 @@ case class TierekisteriLightingData(roadNumber: Long, startRoadPartNumber: Long,
                                 track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
 
 case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
+                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TRTrafficSignType, assetValue: String, liikvast: Option[Int] = None) extends TierekisteriAssetData
 
 case class TierekisteriPavedRoadData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: TRPavedRoadType) extends TierekisteriAssetData
@@ -876,9 +876,12 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   private val trLMNUMERO = "LMNUMERO"
   private val trLMTEKSTI = "LMTEKSTI"
   private val trPUOLI = "PUOLI"
+  private val trLIIKVAST = "LIIKVAST"
+  private val trNOPRA506 = "NOPRA506"
+  private val wrongSideOfTheRoad = "1"
 
   override def mapFields(data: Map[String, Any]): TierekisteriTrafficSignData = {
-    val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
+
     //TODO remove the orElse and ignrore the all row when we give support for that on TierekisteriClient base implementation
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
@@ -887,7 +890,17 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
-    TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue)
+    getFieldValue(data, trLIIKVAST) match {
+      case Some(info) =>
+        val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
+        if (info == wrongSideOfTheRoad && Seq(TRTrafficSignType.SpeedLimit, TRTrafficSignType.SpeedLimitZone, TRTrafficSignType.UrbanArea).contains(TRTrafficSignType.apply(assetNumber)))
+          TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.Unknown, assetValue)
+        else
+          TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue)
+      case _ =>
+        val assetValue = getFieldValue(data, trNOPRA506).getOrElse("").trim
+        TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue)
+    }
   }
 }
 
