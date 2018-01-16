@@ -59,13 +59,13 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
     collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
-        eventbus.trigger('layer:speedLimit:' + event);
-      });
-    };
+      eventbus.trigger('layer:speedLimit:' + event);
+    });
     if (isActive) {
       showSpeedLimitsHistory();
     }
     trafficSignReadOnlyLayer.refreshView();
+  };
 
   this.removeLayerFeatures = function() {
       vectorLayer.getSource().clear();

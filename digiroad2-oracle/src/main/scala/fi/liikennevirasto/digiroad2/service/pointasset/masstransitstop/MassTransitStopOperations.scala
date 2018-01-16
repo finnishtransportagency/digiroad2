@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimpleProperty, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.FloatingReason
+import fi.liikennevirasto.digiroad2.{EventBusMassTransitStop, FloatingReason}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -197,5 +197,12 @@ object MassTransitStopOperations {
         parameter
 
     }
+  }
+
+  def eventBusMassTransitStop(stop: PersistedMassTransitStop, municipalityName: String) = {
+    EventBusMassTransitStop(municipalityNumber = stop.municipalityCode, municipalityName = municipalityName,
+      nationalId = stop.nationalId, lon = stop.lon, lat = stop.lat, bearing = stop.bearing,
+      validityDirection = stop.validityDirection, created = stop.created, modified = stop.modified,
+      propertyData = stop.propertyData)
   }
 }

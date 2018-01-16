@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.viite.LinkRoadAddressHistory
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.slf4j.LoggerFactory
 
@@ -138,24 +139,27 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     }
   }
 
-  def resolveChangesToMap(roadAddresses: Map[Long, Seq[RoadAddress]], changedRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Map[Long, Seq[RoadAddress]] = {
-    val sections = partition(roadAddresses.values.toSeq.flatten)
-    val originalAddressSections = groupByRoadSection(sections, roadAddresses.values.toSeq.flatten)
+  def resolveChangesToMap(roadAddresses: Map[Long, LinkRoadAddressHistory], changedRoadLinks: Seq[RoadLink],
+                          changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
+    val current = roadAddresses.flatMap(_._2.currentSegments).toSeq
+    val sections = partition(current)
+    val originalAddressSections = groupByRoadSection(sections, roadAddresses.values)
     preTransferCheckBySection(originalAddressSections)
     val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
-    val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses)
-    val result = postTransferCheckBySection(groupByRoadSection(sections, appliedChanges.values.toSeq.flatten), originalAddressSections)
-    result.values.toSeq.flatten.groupBy(_.linkId)
+    val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses.mapValues(_.allSegments))
+    val result = postTransferCheckBySection(groupByRoadSection(sections, appliedChanges.values.map(
+      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))), originalAddressSections)
+    result.values.flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
   }
 
   private def groupByRoadSection(sections: Seq[RoadAddressSection],
-                                 roadAddresses: Seq[RoadAddress]): Map[RoadAddressSection, Seq[RoadAddress]] = {
-    sections.map(section => section -> roadAddresses.filter(section.includes)).toMap
+                                 roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
+    sections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).toSeq).toMap
   }
 
   // TODO: Don't try to apply changes to invalid sections
-  private def preTransferCheckBySection(sections: Map[RoadAddressSection, Seq[RoadAddress]]) = {
-    sections.values.map( seq =>
+  private def preTransferCheckBySection(sections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) = {
+    sections.map(_._2.flatMap(_.currentSegments)).map( seq =>
       try {
         preTransferChecks(seq)
         true
@@ -166,15 +170,15 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       })
   }
 
-  private def postTransferCheckBySection(sections: Map[RoadAddressSection, Seq[RoadAddress]],
-                                         original: Map[RoadAddressSection, Seq[RoadAddress]]): Map[RoadAddressSection, Seq[RoadAddress]] = {
+  private def postTransferCheckBySection(sections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]],
+                                         original: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
     sections.map(s =>
       try {
-        postTransferChecks(s)
+        postTransferChecksWithHistory(s)
         s
       } catch {
         case ex: InvalidAddressDataException =>
-          logger.info(s"Invalid address data after transfer on ${s._1}, not applying changes")
+          logger.info(s"Invalid address data after transfer on ${s._1}, not applying changes (${ex.getMessage})")
           s._1 -> original(s._1)
       }
     )

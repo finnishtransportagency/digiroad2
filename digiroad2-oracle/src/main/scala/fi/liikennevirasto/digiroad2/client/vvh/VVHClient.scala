@@ -27,6 +27,7 @@ object FeatureClass {
   case object TractorRoad extends FeatureClass
   case object DrivePath extends FeatureClass
   case object CycleOrPedestrianPath extends FeatureClass
+  case object WinterRoads extends FeatureClass
   case object AllOthers extends FeatureClass
 }
 
@@ -73,7 +74,9 @@ case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, cha
 }
 
 case class VVHHistoryRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
-                              trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate:BigInt, endDate: BigInt, attributes: Map[String, Any] = Map())
+                              trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate:BigInt, endDate: BigInt, attributes: Map[String, Any] = Map()) {
+  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
+}
 
 case class VVHRoadNodes(objectId: Long, geometry: Point, nodeId: Long, formOfNode: NodeType, municipalityCode: Int, subtype: Int)
 
@@ -747,7 +750,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
-    12314 -> FeatureClass.CycleOrPedestrianPath
+    12314 -> FeatureClass.CycleOrPedestrianPath,
+    12312 -> FeatureClass.WinterRoads
   )
 
   protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(

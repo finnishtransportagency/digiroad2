@@ -6,9 +6,18 @@
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
-      return {
-        url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
-      };
+      var withHistory = params.withHistory;
+      var day = params.day;
+      var month = params.month;
+      var year = params.year;
+      if(!withHistory)
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+        };
+      else
+        return {
+          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
+        };
     });
 
     this.abortLoadingProject=(function() {
@@ -121,6 +130,18 @@
       });
     }, 1000);
 
+    this.deleteRoadAddressProject = _.throttle(function(projectId, success, failure){
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/viite/roadlinks/roadaddress/project",
+        data: JSON.stringify(projectId),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    });
+
     this.sendProjectToTR = _.throttle(function(projectID, success, failure) {
       var Json = {
         projectID: projectID
@@ -165,6 +186,18 @@
         contentType: "application/json",
         type: "PUT",
         url: "api/viite/roadlinks/roadaddress/project/links",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: error
+      });
+    }, 1000);
+
+    this.getCutLine = _.throttle(function(data, success, error) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/project/getCutLine",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -252,6 +285,17 @@
       });
     };
 
+    this.getPreSplitedData = _.throttle(function(data, linkId, success, errorCallback){
+        $.ajax({
+          contentType: "application/json",
+          type: "PUT",
+          url: "api/viite/project/presplit/" + linkId,
+          data: JSON.stringify(data),
+          dataType: "json",
+          success: success,
+          error: errorCallback
+        });
+      }, 1000);
 
     this.saveProjectLinkSplit = _.throttle(function(data, linkId, success, errorCallback){
      $.ajax({
@@ -263,8 +307,11 @@
        success: success,
        error: errorCallback
      });
-    },
-      1000);
+    }, 1000);
+
+    this.getFloatingRoadAddresses = function() {
+      return $.getJSON('api/viite/floatingRoadAddresses');
+    };
 
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
@@ -289,6 +336,63 @@
     }
 
     //Methods for the UI Integrated Tests
+    var mockedRoadLinkModel = function(data) {
+      var selected = false;
+      var original = _.clone(data);
+
+      var getId = function() {
+        return data.roadLinkId || data.linkId;
+      };
+
+      var getData = function() {
+        return data;
+      };
+
+      var getPoints = function() {
+        return _.cloneDeep(data.points);
+      };
+
+      var setLinkProperty = function(name, value) {
+        if (value != data[name]) {
+          data[name] = value;
+        }
+      };
+
+      var select = function() {
+        selected = true;
+      };
+
+      var unselect = function() {
+        selected = false;
+      };
+
+      var isSelected = function() {
+        return selected;
+      };
+
+      var isCarTrafficRoad = function() {
+        return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21, 99], data.linkType);
+      };
+
+      var cancel = function() {
+        data.trafficDirection = original.trafficDirection;
+        data.functionalClass = original.functionalClass;
+        data.linkType = original.linkType;
+      };
+
+      return {
+        getId: getId,
+        getData: getData,
+        getPoints: getPoints,
+        setLinkProperty: setLinkProperty,
+        isSelected: isSelected,
+        isCarTrafficRoad: isCarTrafficRoad,
+        select: select,
+        unselect: unselect,
+        cancel: cancel
+      };
+    };
+
     var afterSave = false;
 
     var resetAfterSave = function(){
@@ -303,13 +407,21 @@
     };
 
     this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
+
+      var fetchedRoadLinkModels = function(fetchedRoadLinks) {
+       return _.map(fetchedRoadLinks, function (roadLinkGroup) {
+          return _.map(roadLinkGroup, function (roadLink) {
+            return new mockedRoadLinkModel(roadLink);
+          });
+        });
+      };
       self.getRoadLinks = function(boundingBox, callback) {
         if(afterSave){
           callback(afterSaveRoadLinkData);
         } else {
           callback(roadLinkData);
         }
-        eventbus.trigger('roadLinks:fetched', afterSave ? afterSaveRoadLinkData : roadLinkData);
+        eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveRoadLinkData) : fetchedRoadLinkModels(roadLinkData));
       };
       return self;
     };
@@ -411,6 +523,14 @@
 
     this.withGetTargetAdjacent = function(returnData){
       self.getTargetAdjacent = function(linkId, callback){
+        callback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
+    this.withPreSplitData = function(returnData) {
+      self.getPreSplitedData = function (data, linkId, callback) {
         callback(returnData);
         return returnData;
       };

@@ -44,7 +44,7 @@
 
     eventbus.on('layer:enableButtons', enableButtons);
     function enableButtons(value) {
-      navigationPanel.find(':button, :input').prop('disabled', !value);
+      navigationPanel.find(':button').not('#executeSearch, #clearSearch').prop('disabled', !value);
     }
 
   }

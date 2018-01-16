@@ -1,15 +1,12 @@
 (function (root) {
-  root.ProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
+  root.ProjectEditForm = function(map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErroredInTR.value, LinkValues.ProjectStatus.Unknown.value];
-
-    var currentProject = false;
     var selectedProjectLink = false;
     var formCommon = new FormCommon('');
 
     var endDistanceOriginalValue = '--';
-    var options =['Valitse'];
 
     var showProjectChangeButton = function() {
       return '<div class="project-form form-controls">' +
@@ -40,11 +37,16 @@
         return transitionModifiers(targetLinkStatus, linkStatus);
     };
 
-    var selectedProjectLinkTemplate = function(project, optionTags, selected) {
+    var selectedProjectLinkTemplate = function(project, selected) {
+      var road = {
+        roadNumber: selected[0].roadNumber,
+        roadPartNumber: selected[0].roadPartNumber,
+        trackCode: selected[0].trackCode
+      };
       var selection = formCommon.selectedData(selected);
       return _.template('' +
         '<header>' +
-        formCommon.titleWithProjectName(project.name, currentProject) +
+        formCommon.titleWithProjectName(project.name, projectCollection.getCurrentProject()) +
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
@@ -53,7 +55,7 @@
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
-        selectionForm(selection, selected, 0) +
+        selectionForm(selection, selected, road) +
         formCommon.changeDirection(selected) +
         formCommon.actionSelectedField()+
         '</div>'+
@@ -63,7 +65,7 @@
         '<footer>' + formCommon.actionButtons('project-', projectCollection.isDirty()) + '</footer>');
     };
 
-    var selectionForm = function(selection, selected){
+    var selectionForm = function(selection, selected, road){
       var defaultOption = (selected[0].status === LinkStatus.NotHandled.value ? LinkStatus.NotHandled.description : LinkStatus.Undefined.description);
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
@@ -78,7 +80,7 @@
         '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
-        formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
+        formCommon.newRoadAddressInfo(selected, selectedProjectLink, road) +
         '</form>';
     };
 
@@ -97,21 +99,19 @@
         '</div></div>';
     };
 
-    var directionChangedInfo = function (selected, isPartialReversed) {
-      if (isPartialReversed) {
-        return '<label class="split-form-group">Osittain käännetty</label>';
-      } else if (selected[0].reversed) {
-        return '<label class="split-form-group">&#9745; Käännetty</label>';
-      } else {
-        return '<label class="split-form-group">&#9744; Käännetty</label>';
-      }
-    };
-
     var emptyTemplate = function(project) {
+      formCommon.toggleAdditionalControls();
       return _.template('' +
         '<header>' +
-        formCommon.titleWithProjectName(project.name, currentProject) +
+        formCommon.titleWithProjectName(project.name, projectCollection.getCurrentProject()) +
         '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<label>TARKASTUSILMOITUKSET:</label>' +
+        '<div id ="projectErrors">' +
+        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
+        '</div></div></div></div></br></br>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
     };
 
@@ -201,12 +201,11 @@
 
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
-        currentProject = projectCollection.getCurrentProject();
+        var currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         checkInputs('.project-');
-        formCommon.toggleAdditionalControls();
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
@@ -240,6 +239,7 @@
         projectCollection.setDirty([]);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
+        rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         } else {
@@ -305,7 +305,7 @@
       };
 
       var saveChanges = function(){
-        currentProject = projectCollection.getCurrentProject();
+        var currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         var statusDropdown_0 =$('#dropdown_0').val();
         var statusDropdown_1 = $('#dropdown_1').val();
@@ -364,6 +364,7 @@
           projectCollection.setTmpDirty([]);
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
+          formCommon.toggleAdditionalControls();
           eventbus.trigger('roadAddress:projectLinksEdited');
           eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
           eventbus.trigger('roadAddressProject:reOpenCurrent');
@@ -468,8 +469,31 @@
       });
 
       rootElement.on('click', '.project-form button.send', function(){
-        projectCollection.publishProject();
+        new GenericConfirmPopup("Haluatko lähettää muutosilmoituksen Tierekisteriin?", {
+          successCallback: function () {
+            projectCollection.publishProject();
+            closeProjectMode(true, true);
+          },
+          closeCallback: function () {
+          }
+        });
+
       });
+
+      var closeProjectMode = function (changeLayerMode, noSave) {
+        eventbus.trigger("roadAddressProject:startAllInteractions");
+        eventbus.trigger('projectChangeTable:hide');
+        applicationModel.setOpenProject(false);
+        rootElement.find('header').toggle();
+        rootElement.find('.wrapper').toggle();
+        rootElement.find('footer').toggle();
+        projectCollection.clearRoadAddressProjects();
+        eventbus.trigger('layer:enableButtons', true);
+        if (changeLayerMode) {
+          eventbus.trigger('roadAddressProject:clearOnClose');
+          applicationModel.selectLayer('linkProperty', true, noSave);
+        }
+      };
 
       rootElement.on('click', '.project-form button.show-changes', function(){
         $(this).empty();
@@ -486,6 +510,14 @@
       rootElement.on('keyup','.form-control.small-input', function () {
         checkInputs('.project-');
         setFormDirty();
+      });
+
+      eventbus.on('projectLink:mapClicked', function () {
+        rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
+      });
+
+      rootElement.on('click', '.projectErrorButton', function (event) {
+        eventbus.trigger('projectCollection:clickCoordinates', event, map);
       });
 
     };

@@ -240,6 +240,18 @@
       };
     });
 
+    this.getReadOnlyLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/linearassets/massLimitation?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
+    this.getReadOnlyLinearAssetsComplementaries = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/linearassets/massLimitation/complementary/?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",

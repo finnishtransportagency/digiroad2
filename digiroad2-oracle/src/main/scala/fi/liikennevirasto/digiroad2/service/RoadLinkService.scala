@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{Track, VVHRoadLinkHistoryProcessor, VVHSerializer}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
@@ -69,6 +70,26 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  /**
+    * ATENTION Use this method always with transation not with session
+    * This method returns a road link by link id.
+    *
+    * @param linkId
+    * @param newTransaction
+    * @return Road link
+    */
+  def getRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadsLinksFromVVH(Set(linkId), newTransaction: Boolean).headOption
+
+  def getRoadsLinksFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinks(linkId)
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(vvhRoadLinks)
+      }
+    else
+      enrichRoadLinksFromVVH(vvhRoadLinks)
+  }
+
   def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksAndComplementariesFromVVH(Set(linkId), newTransaction: Boolean).headOption
 
   def getRoadLinksAndComplementariesFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
@@ -78,7 +99,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         enrichRoadLinksFromVVH(vvhRoadLinks)
       }
     else
-        enrichRoadLinksFromVVH(vvhRoadLinks)
+      enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
   /**
@@ -121,6 +142,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
+    *
     * @param linkIds
     * @return Road links
     */
@@ -304,14 +326,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadLinksAndChangesFromVVHWithFrozenTimeAPI(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), frozenTimeVVHAPIServiceEnabled:Boolean = false): (Seq[RoadLink], Seq[ChangeInfo])= {
-   if (frozenTimeVVHAPIServiceEnabled) {
-     val (changes, links) =
-       Await.result(Future(Seq.empty[ChangeInfo]).zip(vvhClient.frozenTimeRoadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
-     withDynTransaction {
-       (enrichRoadLinksFromVVH(links, changes), changes)
-     }
-   } else
-       getRoadLinksAndChangesFromVVH(bounds,municipalities)
+    if (frozenTimeVVHAPIServiceEnabled) {
+      val (changes, links) =
+        Await.result(Future(Seq.empty[ChangeInfo]).zip(vvhClient.frozenTimeRoadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
+      withDynTransaction {
+        (enrichRoadLinksFromVVH(links, changes), changes)
+      }
+    } else
+      getRoadLinksAndChangesFromVVH(bounds,municipalities)
   }
 
   def getRoadLinksAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
@@ -649,18 +671,23 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       Nil
   }
 
-  def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long], frozenTimeVVHAPIServiceEnabled : Boolean = false): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
+  def getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds: Set[Long],
+                                                useFrozenVVHLinks: Boolean = false): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
     val fut = for{
-      f1Result <- vvhClient.historyData.fetchVVHRoadLinkByLinkIdsF(roadAddressesLinkIds)
-      f2Result <- if(frozenTimeVVHAPIServiceEnabled)vvhClient.frozenTimeRoadLinkData.fetchByLinkIdsF(roadAddressesLinkIds) else {vvhClient.roadLinkData.fetchByLinkIdsF(roadAddressesLinkIds)}
-      f3Result <- vvhClient.complementaryData.fetchByLinkIdsF(roadAddressesLinkIds)
+      f1Result <- vvhClient.historyData.fetchVVHRoadLinkByLinkIdsF(linkIds)
+      f2Result <- if(useFrozenVVHLinks)vvhClient.frozenTimeRoadLinkData.fetchByLinkIdsF(linkIds) else {vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)}
+      f3Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
     } yield (f1Result, f2Result, f3Result)
 
     val (historyData, currentData, complementaryData) = Await.result(fut, Duration.Inf)
     val uniqueHistoryData = historyData.groupBy(_.linkId).mapValues(_.maxBy(_.endDate)).values.toSeq
 
-    withDynTransaction {
+    if (OracleDatabase.isWithinSession)
       (enrichRoadLinksFromVVH(currentData ++ complementaryData, Seq()), uniqueHistoryData)
+    else {
+      withDynTransaction {
+        (enrichRoadLinksFromVVH(currentData ++ complementaryData, Seq()), uniqueHistoryData)
+      }
     }
   }
 
@@ -784,6 +811,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else
       Some(roadLinks.minBy(roadlink => minimumDistance(point, roadlink.geometry)))
   }
+
+  def getClosestRoadlinkForCarTrafficFromVVH(user: User, point: Point): Seq[VVHRoadlink] = {
+    val diagonal = Vector3d(10, 10, 0)
+
+    val roadLinks = user.isOperator() match {
+        case true =>  getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+        case false => getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+      }
+
+    roadLinks.isEmpty match {
+      case true => Seq.empty[VVHRoadlink]
+      case false => roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0).filter(_.featureClass != FeatureClass.CycleOrPedestrianPath)
+    }
+  }
+
 
   protected def removeIncompleteness(linkId: Long) = {
     sqlu"""delete from incomplete_link where link_id = $linkId""".execute
@@ -1533,7 +1575,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             JOIN LRM_POSITION pos on ra.LRM_POSITION_ID = pos.ID
             JOIN $idTableName i on i.ID = pos.LINK_ID
             WHERE (VALID_FROM IS NULL OR VALID_FROM <= sysdate) AND
-              (VALID_TO IS NULL OR VALID_TO >= sysdate) AND
+              (VALID_TO IS NULL OR VALID_TO > sysdate) AND
               (START_DATE IS NULL OR START_DATE <= sysdate) AND
               (END_DATE IS NULL OR END_DATE >= sysdate)
             GROUP BY LINK_ID, ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE, SIDE_CODE"""
@@ -1579,4 +1621,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+}
+
+
+class RoadLinkOTHService(vvhClient: VVHClient, eventbus: DigiroadEventBus, vvhSerializer: VVHSerializer) extends RoadLinkService(vvhClient, eventbus, vvhSerializer){
+
+  override protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
+    super.enrichRoadLinksFromVVH( vvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads), changes)
+  }
 }

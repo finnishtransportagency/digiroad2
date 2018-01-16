@@ -124,7 +124,7 @@ object TRRoadSide {
   case object Right extends TRRoadSide { def value = "oikea"; def propertyValues = Set(1) }
   case object Left extends TRRoadSide { def value = "vasen"; def propertyValues = Set(2) }
   case object Off extends TRRoadSide { def value = "paassa"; def propertyValues = Set(99) } // Not supported by OTH
-  case object Unknown extends TRRoadSide { def value = "ei_tietoa"; def propertyValues = Set(0) }
+  case object Unknown extends TRRoadSide { def value = "ei tietoa"; def propertyValues = Set(0) }
 }
 
 
@@ -485,7 +485,14 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
   private val trUser = "kayttajatunnus"
   private val trInventoryDate = "inventointipvm"
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
+
   private def serviceUrl(id: String) : String = serviceUrl + id
+  private def serviceUrl(replaceIdOption: Option[String]) : String = {
+    replaceIdOption match {
+      case Some(replaceId) => serviceUrl + "?replace=" + replaceId
+      case _ => serviceUrl
+    }
+  }
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
@@ -543,9 +550,9 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
     *
     * @param trMassTransitStop
     */
-  def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+  def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop, replaceLiviId: Option[String] = None): Unit ={
     logger.info("Creating stop %s in Tierekisteri".format(trMassTransitStop.liviId))
-    post(serviceUrl, trMassTransitStop, createJson) match {
+    post(serviceUrl(replaceLiviId), trMassTransitStop, createJson) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ; // do nothing
     }

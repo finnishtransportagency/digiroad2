@@ -22,7 +22,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
   def clearCache() = {
-    roadLinkService.clearCache()
+    roadLinkOTHService.clearCache()
   }
 
   before() {
@@ -42,13 +42,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .getOrElse(""))
   }
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
-    def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
+    def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any), mapName: Option[String] = None): (String, Any) = {
       val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
         property.values.map { value =>
           value.propertyValue
         }
       }
-      key -> transformation(values)
+      mapName.getOrElse(key) -> transformation(values)
     }
     def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
     def propertyValuesToString(values: Seq[String]): String = { values.mkString }
@@ -113,7 +113,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
             extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liitetty_terminaaliin", massTransitStop.propertyData, propertyValuesToString)))
+            extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
+            extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString)
+          ))
       })
   }
 
@@ -219,9 +221,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
     def getLinearAssetService(typeId: Int): LinearAssetOperations = {
       typeId match {
-        case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
-        case LinearAssetTypes.PavingAssetTypeId => pavingService
-        case LinearAssetTypes.RoadWidthAssetTypeId => roadWidthService
+        case MaintenanceRoadAsset.typeId => maintenanceRoadService
+        case PavedRoad.typeId => pavingService
+        case RoadWidth.typeId => roadWidthService
         case _ => linearAssetService
       }
     }
@@ -466,10 +468,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
         case "european_roads" => linearAssetsToApi(260, municipalityNumber)
         case "exit_numbers" => linearAssetsToApi(270, municipalityNumber)
-        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
+        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkOTHService.withRoadAddress(roadLinkOTHService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
+        case "road_nodes" => roadNodesToApi(roadLinkOTHService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

@@ -65,13 +65,6 @@ class VVHClientSpec extends FunSuite with Matchers{
     val result= vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(BoundingRectangle(Point(532578.3338013917,6993401.605560873,0.0),Point(532978.3338013917,6994261.605560873,0.0)), Set.empty[Int])
     result.size should be >1
   }
-  /**
-    * Test for Suravage API
-    */
-  ignore("Fetch suravage by boundingbox"){ //When writing this test no test area was provided in VVH documentation, so area might fail because area has no links anymore
-    val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    Await.result(vvhClient.suravageData.fetchSuravageByMunicipalitiesAndBoundsF(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)), Set(931)), Duration.Inf).size should be > 0
-  }
 
   /**
     * Test for frozen december 15.12.2016 VVH API: No test cases writen to documentation so test might fail for not having any links

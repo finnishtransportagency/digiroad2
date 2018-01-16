@@ -48,8 +48,8 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
-  lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkOTHService = {
+    new RoadLinkOTHService(vvhClient, eventbus, new DummySerializer)
   }
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(roadLinkService)
@@ -342,7 +342,7 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
     val batchSize = 1000
     var obstaclesFound = true
     var lastIdUpdate : Long = 0
@@ -388,7 +388,7 @@ object DataFixture {
 
   def checkUnknownSpeedlimits(): Unit = {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
     val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
     val unknowns = speedLimitService.getUnknown(None)
     unknowns.foreach { case (_, mapped) =>
@@ -637,7 +637,7 @@ object DataFixture {
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
     val assetTypeId = 110
 
     lazy val linearAssetService: LinearAssetService = {
@@ -797,7 +797,7 @@ object DataFixture {
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
@@ -907,7 +907,7 @@ object DataFixture {
     println(DateTime.now())
 
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {
       new RoadWidthService(roadLinkService, new DummyEventBus)
@@ -952,9 +952,8 @@ object DataFixture {
 
         val expiredAssetsIds = changedAssets.flatMap {
           case (_, changeInfo, assets) =>
-            assets.filter(asset =>
-              asset.createdBy.contains("dr1_conversion") ||
-              (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default"))
+              assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
+                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default")
             ).map(_.id)
         }.toSet
 

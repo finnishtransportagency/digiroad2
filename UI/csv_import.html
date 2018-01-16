@@ -2,7 +2,7 @@
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
-    <script type="text/javascript" src="bower_components/lodash/lodash.min.js"></script>
+    <script type="text/javascript" src="node_modules/lodash/index.js"></script>
     <!-- Google Analytics loaded asynchronously -->
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -15,12 +15,18 @@
 <body>
 <div class="page csv-import">
     <div class="content-box form-box">
-        <header>Päivitä täydentävät tielinkit CSV-tiedostosta</header>
+        <header>Päivitä tietolajit CSV-tiedostosta</header>
         <form class="form form-horizontal" role="form" method="post" action="api/import/data/csv" enctype="multipart/form-data">
-            <div class="form-group">
-                <label class="control-label">Valitse CSV-tiedosto</label>
-                <input type="file" name="csv-file" class="form-control">
+            <div class="file-upload">
+                <span>Valitse CSV-tiedosto</span>
+                <input id="upload-btn" type="file" class="upload" name="csv-file"/>
             </div>
+            <input id="uploaded-file" placeholder="Ei valittua tiedostoa" disabled="disabled" />
+            <select id="asset-selection" name="asset-type">
+                <option selected disabled>Valitse ladattava tietolajityyppi</option>
+                <option value="roadlinks">Tielinkit</option>
+                <option value="trafficsigns">Liikennemerkit</option>
+            </select>
             <div class="form-group form-controls">
                 <button type="submit" class="btn btn-primary btn-lg">Lataa tiedot</button>
             </div>
@@ -31,6 +37,14 @@
 <script type="text/javascript" src="src/analytics.js"></script>
 <script type="application/javascript">
     Analytics.start();
+</script>
+<script type="text/javascript">
+  document.getElementById("upload-btn").onchange = function () {
+    document.getElementById("uploaded-file").value = this.value;
+  };
+  $('#asset-selection').on('change', function () {
+    $('.btn.btn-primary.btn-lg').prop('disabled', !$(this).val());
+  }).trigger('change');
 </script>
 </body>
 </html>

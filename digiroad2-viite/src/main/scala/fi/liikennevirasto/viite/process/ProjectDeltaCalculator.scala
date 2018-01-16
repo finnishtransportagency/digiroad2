@@ -17,12 +17,8 @@ object ProjectDeltaCalculator {
   val checker = new ContinuityChecker(null) // We don't need road link service here
   lazy private val logger = LoggerFactory.getLogger(getClass)
 
-  def delta(projectId: Long): Delta = {
-    val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
-    if (projectOpt.isEmpty)
-      throw new IllegalArgumentException("Project not found")
-    val project = projectOpt.get
-    val projectLinksFetched = ProjectDAO.getProjectLinks(projectId)
+  def delta(project: RoadAddressProject): Delta = {
+    val projectLinksFetched = ProjectDAO.getProjectLinks(project.id)
     val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
     val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadAddressId).toSet,
       includeFloating = true).map(ra => ra.id -> ra).toMap
@@ -46,13 +42,16 @@ object ProjectDeltaCalculator {
           case Transfer =>
             val termAddress = connectedLink.map(l => (l.startAddrMValue, l.endAddrMValue))
             termAddress.map{ case (st, en) =>
-              address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
-                startAddrMValue = if (st == address.startAddrMValue) en else address.startAddrMValue,
-                endAddrMValue = if (en == address.endAddrMValue) st else address.endAddrMValue, geometry = geom)
+              address.copy(startAddrMValue = if (st == address.startAddrMValue) en else address.startAddrMValue,
+                endAddrMValue = if (en == address.endAddrMValue) st else address.endAddrMValue, startMValue = pl.startMValue,
+                endMValue = pl.endMValue, geometry = geom)
             }.getOrElse(address)
-          case UnChanged | Terminated =>
-            address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
-              startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, geometry = geom)
+          case Terminated =>
+            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
+              endMValue = pl.endMValue, geometry = geom)
+          case UnChanged =>
+            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
+              endMValue = pl.endMValue, geometry = geom)
           case _ =>
             address
         }
@@ -105,15 +104,15 @@ object ProjectDeltaCalculator {
       (!pl1.reversed && pl1.discontinuity == Discontinuity.Continuous)
     if (matchAddr && matchContinuity &&
       ra1.endAddrMValue == ra2.startAddrMValue && ra1.discontinuity == Discontinuity.Continuous &&
-    pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
+      ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
-          case x: RoadAddress => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
+          case x: RoadAddress => x.copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R]
           case x: ProjectLink if x.reversed => x.copy(startAddrMValue = ra2.startAddrMValue, discontinuity = ra1.discontinuity).asInstanceOf[R]
           case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
       },
         pl1 match {
-          case x: RoadAddress => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
+          case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue).asInstanceOf[P]
           case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity).asInstanceOf[P]
           case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
       }))
@@ -125,7 +124,7 @@ object ProjectDeltaCalculator {
   private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
     if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
       r1 match {
-        case x: RoadAddress => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+        case x: RoadAddress => Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue).asInstanceOf[T])
         case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
       }
     else
@@ -226,26 +225,30 @@ object ProjectDeltaCalculator {
   /**
     * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
     * It is impossible to tell afterwards the exact mapping unless done at this point
+    * Deprecated: Use partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection]
+    * instead! To be removed in December
+    *
     * @param roadAddresses Road Addresses that were the source
     * @param projectLinks Project Links that have the transfer address values
     * @return Map between the sections old -> new
     */
   @Deprecated
+  //TODO: Remove method
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
-    partition(pair(roadAddresses, projectLinks.groupBy(_.roadAddressId)))
+    throw new RuntimeException("This method does not work properly and is not used - remove from all test use as well")
   }
 
   def partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection] = {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
-      o.sortBy(_.startAddrMValue).map(ra =>
+      o.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed))
     }
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue)))
       .mapValues(v => {
-        val x = v.unzip
-        toRoadAddressSection(x._1) -> toRoadAddressSection(x._2)
+        val (from, to) = v.unzip
+        toRoadAddressSection(from) -> toRoadAddressSection(to)
       })
     sectioned.flatMap { case (key, (src, target)) =>
       val matches = matchingTracks(sectioned, key)

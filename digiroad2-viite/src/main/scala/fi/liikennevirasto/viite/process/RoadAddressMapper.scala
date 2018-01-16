@@ -10,10 +10,10 @@ trait RoadAddressMapper {
 
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
     def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
-      val startM = Math.max(Math.min(d1, d2), 0.0)
+      // When operating with fake geometries (automatic change tables) the geometry may not have correct length
+      val startM = Math.min(Math.max(Math.min(d1, d2), 0.0), GeometryUtils.geometryLength(geometry))
       val endM = Math.min(Math.max(d1, d2), GeometryUtils.geometryLength(geometry))
-      GeometryUtils.truncateGeometry3D(geometry,
-        startM, endM)
+      GeometryUtils.truncateGeometry3D(geometry, startM, endM)
     }
 
     // When mapping contains a larger span (sourceStart, sourceEnd) than the road address then split the mapping
@@ -54,10 +54,10 @@ trait RoadAddressMapper {
         case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
-      ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
-        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), floating = false,
-        sideCode = sideCode, startMValue = startM, endMValue = endM, geometry = mappedGeom, calibrationPoints = (startCP, endCP),
-        adjustedTimestamp = VVHClient.createVVHTimeStamp())
+      ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
+        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
+        startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
+        calibrationPoints = (startCP, endCP), floating = false, geometry = mappedGeom)
     })
   }
 
@@ -90,39 +90,45 @@ trait RoadAddressMapper {
     commonPostTransferChecks(seq, section.startMAddr, section.endMAddr)
   }
 
+  def postTransferChecksWithHistory(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
+    postTransferChecks((s._1, s._2.flatMap(_.currentSegments)))
+  }
+
   protected def commonPostTransferChecks(seq: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
-    calibrationPointCountCheck(false, seq)
-    seq.find(_.startCalibrationPoint.nonEmpty) match {
+    val nonHistoric = seq.filter(_.endDate.isEmpty)
+    calibrationPointCountCheck(false, nonHistoric)
+    nonHistoric.find(_.startCalibrationPoint.nonEmpty) match {
       case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, seq)
       case _ =>
     }
-    seq.find(_.endCalibrationPoint.nonEmpty) match {
+    nonHistoric.find(_.endCalibrationPoint.nonEmpty) match {
       case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, seq)
       case _ =>
     }
-    checkSingleSideCodeForLink(false, seq.groupBy(_.linkId))
-    if (!seq.exists(_.startAddrMValue == addrMin))
+    checkSingleSideCodeForLink(false, nonHistoric.groupBy(_.linkId))
+    if (!nonHistoric.exists(_.startAddrMValue == addrMin))
       throw new InvalidAddressDataException(s"Generated address list does not start at $addrMin but ${seq.map(_.startAddrMValue).min}")
-    if (!seq.exists(_.endAddrMValue == addrMax))
+    if (!nonHistoric.exists(_.endAddrMValue == addrMax))
       throw new InvalidAddressDataException(s"Generated address list does not end at $addrMax but ${seq.map(_.endAddrMValue).max}")
-    if (!seq.forall(ra => ra.startAddrMValue == addrMin || seq.exists(_.endAddrMValue == ra.startAddrMValue)))
+    if (!nonHistoric.forall(ra => ra.startAddrMValue == addrMin || seq.exists(_.endAddrMValue == ra.startAddrMValue)))
       throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-    if (!seq.forall(ra => ra.endAddrMValue == addrMax || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
+    if (!nonHistoric.forall(ra => ra.endAddrMValue == addrMax || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
       throw new InvalidAddressDataException(s"Generated address list was non-continuous")
 
   }
 
   def preTransferChecks(seq: Seq[RoadAddress]): Unit = {
+    val nonHistoric = seq.filter(_.endDate.isEmpty)
     calibrationPointCountCheck(true, seq)
-    seq.find(_.startCalibrationPoint.nonEmpty) match {
+    nonHistoric.find(_.startCalibrationPoint.nonEmpty) match {
       case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, seq)
       case _ =>
     }
-    seq.find(_.endCalibrationPoint.nonEmpty) match {
+    nonHistoric.find(_.endCalibrationPoint.nonEmpty) match {
       case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, seq)
       case _ =>
     }
-    checkSingleSideCodeForLink(false, seq.groupBy(_.linkId))
+    checkSingleSideCodeForLink(false, nonHistoric.groupBy(_.linkId))
     val tracks = seq.map(_.track).toSet
     if (tracks.size > 1)
       throw new IllegalArgumentException(s"Multiple track codes found ${tracks.mkString(", ")}")
@@ -142,7 +148,7 @@ trait RoadAddressMapper {
     if (addr.endAddrMValue != cp.addressMValue)
       throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
     if (seq.exists(_.endAddrMValue > cp.addressMValue))
-      throw new IllegalArgumentException("Start calibration point not in the last link of source")
+      throw new IllegalArgumentException(s"End calibration point not in the last link of source in linkId ${addr.linkId}")
     if (Math.abs(cp.segmentMValue -
       (addr.sideCode match {
         case SideCode.AgainstDigitizing => 0.0
@@ -215,10 +221,10 @@ trait RoadAddressMapper {
     * @param roadAddresses
     * @return
     */
-  protected def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
+  protected def partition(roadAddresses: Iterable[RoadAddress]): Seq[RoadAddressSection] = {
     def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
       if (r1.endAddrMValue == r2.startAddrMValue && r1.endCalibrationPoint.isEmpty)
-        Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity))
+        Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue))
       else
         Seq(r2, r1)
     }
@@ -231,7 +237,7 @@ trait RoadAddressMapper {
         combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
     }
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-    grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+    grouped.mapValues(v => combine(v.toSeq.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown, ra.ely, ra.reversed)
     ).toSeq

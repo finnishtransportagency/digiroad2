@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, Point}
 import org.joda.time.DateTime
 import org.mockito.Matchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -360,14 +360,18 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedProhibitions = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
-      service.persistProjectedLinearAssets(projectedProhibitions)
+      val changeSet = projectedProhibitions.foldLeft(ChangeSet(Set.empty, Nil, Nil, Set.empty)) {
+        case (acc, proj) =>
+          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode))))
+      }
+
+      service.updateChangeSet(changeSet)
       val all = service.dao.fetchProhibitionsByIds(assetTypeId, Set(asset1,asset2,asset3), false)
       all.size should be (3)
       val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
       persisted.size should be (1)
       val head = persisted.head
       head.id should be (original.id)
-      head.vvhTimeStamp should be (vvhTimeStamp)
       head.startMeasure should be (0.1)
       head.endMeasure should be (10.1)
       head.expired should be (false)
@@ -473,6 +477,62 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
     val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
     prohibition1 == prohibition2 should be (false)
+  }
+
+  test("Adjust projected asset with creation"){
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+
+    val service = new ProhibitionService(mockRoadLinkService, mockEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId = 5000
+    val newLinkId = 6000
+    val municipalityCode = 444
+    val functionalClass = 1
+    val assetTypeId = 170
+    val geom = List(Point(0, 0), Point(300, 0))
+    val len = GeometryUtils.geometryLength(geom)
+
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+
+    val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+    val changeInfo = Seq(
+      ChangeInfo(Some(oldLinkId), Some(newLinkId), 1204467577, 1, Some(0), Some(150), Some(100), Some(200), 1461970812000L))
+
+    OracleDatabase.withDynTransaction {
+      val (lrm1) = (Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1) = (Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
+
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
+      service.getByMunicipality(assetTypeId, municipalityCode)
+
+      verify(mockEventBus, times(1))
+        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
+
+      val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
+      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("prohibition:saveProjectedProhibition"), captor.capture())
+      val projectedAssets = captor.getValue
+      projectedAssets.length should be(1)
+      projectedAssets.foreach { proj =>
+        proj.id should be (0)
+        proj.linkId should be (6000)
+      }
+      dynamicSession.rollback()
+    }
   }
 
   test("get unVerified prohibition assets") {

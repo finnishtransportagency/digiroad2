@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -114,6 +115,35 @@ object OracleTrafficSignDao {
     }
   }
 
+  def createFloating(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource, floating: Boolean = false): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
+        values ($id, 300, $username, sysdate, $municipality, ${trafficSign.bearing}, $floating)
+
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
+        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+
+      select * from dual
+    """.execute
+    updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
+
+    trafficSign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
+    id
+  }
+
   def create(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -124,6 +154,35 @@ object OracleTrafficSignDao {
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+
+      select * from dual
+    """.execute
+    updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
+
+    trafficSign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
+    id
+  }
+
+  def create(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime]): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
+        values ($id, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $username, sysdate)
+
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code, modified_date)
+        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection}, sysdate)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

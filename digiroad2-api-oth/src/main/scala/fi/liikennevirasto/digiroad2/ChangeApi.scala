@@ -34,7 +34,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(70, since, until))
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
-      case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
+      case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkOTHService.getChanged(since, until))
       case "road_numbers"                => roadNumberToGeoJson(since, roadAddressesService.getChanged(since, until))
     }
   }

@@ -39,6 +39,24 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
   }
 
+  def buildSimpleLink(roadAddress: RoadAddress): RoadAddressLink = {
+    val roadLinkType = NormalRoadLinkType
+
+    val geom = roadAddress.geometry
+    val length = GeometryUtils.geometryLength(geom)
+    val roadName = ""
+    val municipalityCode = 0
+    val roadType = roadAddress.roadType
+    RoadAddressLink(roadAddress.id, roadAddress.linkId, geom,
+      length, AdministrativeClass.apply(1), LinkType.apply(99), roadLinkType, ConstructionType.apply(0), LinkGeomSource.apply(1), roadType, roadName, municipalityCode, Some(""), Some("vvh_modified"),
+      Map(), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, 0, roadAddress.discontinuity.value,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.sideCode,
+      roadAddress.calibrationPoints._1,
+      roadAddress.calibrationPoints._2,Anomaly.None, roadAddress.lrmPositionId)
+
+  }
+
   def build(roadLink: RoadLinkLike, missingAddress: MissingRoadAddress): RoadAddressLink = {
     roadLink match {
       case rl: RoadLink => buildRoadLink(rl, missingAddress)

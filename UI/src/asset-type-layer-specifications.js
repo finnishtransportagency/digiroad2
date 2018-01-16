@@ -43,9 +43,11 @@
       unit: 'kg',
       isSeparable: false,
       allowComplementaryLinks: true,
-      editControlLabels: { title: 'Rajoitus',
+      editControlLabels: {
+        title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
+        massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
       label: new LinearAssetLabel(),
@@ -66,6 +68,7 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
+        massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
       label: new LinearAssetLabel(),
@@ -86,6 +89,7 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
+        massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
       label: new LinearAssetLabel(),
@@ -106,6 +110,7 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
+        massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
       label: new LinearAssetLabel(),
