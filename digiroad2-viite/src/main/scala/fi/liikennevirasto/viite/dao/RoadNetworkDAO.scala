@@ -29,4 +29,8 @@ object RoadNetworkDAO {
     sql"""SELECT COUNT(*) FROM road_network_errors """.as[Long].first > 0
   }
 
+  def getLatestRoadNetworkVersion: Long = {
+    sql"""SELECT MAX(id) FROM published_road_network""".as[Long].first
+  }
+
 }

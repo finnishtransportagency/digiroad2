@@ -8,7 +8,8 @@ CREATE TABLE road_network_errors
 CREATE TABLE published_road_network
   (
     id      NUMERIC NOT NULL PRIMARY KEY,
-    created TIMESTAMP NOT NULL
+    created TIMESTAMP NOT NULL,
+    valid_to TIMESTAMP
   );
 CREATE TABLE published_road_address
   (
