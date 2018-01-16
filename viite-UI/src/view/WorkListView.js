@@ -37,8 +37,8 @@
       return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
     };
 
-    var floatingDescription = function(desc, value){
-      return $('<td align=left style="width: 100px;"> <b>'+desc +'</b>: '+value + '</td>');
+    var floatingDescription = function(desc, value) {
+      return $('<td align=left style="width: 100px;"> <b>' + desc + '</b>: ' + value + '</td>');
     };
 
     var tableToDisplayFloatings = function(floatingLinks) {
@@ -72,8 +72,8 @@
       return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
     };
 
-    var errorsDescription = function(desc, value){
-      return $('<td align=left style="width: 100px;"> <b>'+desc +'</b>: '+value + '</td>');
+    var errorsDescription = function(desc, value) {
+      return $('<td align=left style="width: 100px;"> <b>' + desc + '</b>: ' + value + '</td>');
     };
 
     var tableToDisplayErrors = function(addressErrors) {
@@ -112,10 +112,9 @@
     listP.then(function(floatings) {
       counter = 0;
       var floatingLinks = _.map(floatings, _.partial(floatingLinksTable, layerName));
-      if(counter === 0){
+      if (counter === 0) {
         $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
-      }
-      else {
+      } else {
         $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html(" " + counter + " tieosoitetta on irti geometriasta")).append(floatingLinks);
       }
       removeSpinner();
@@ -149,7 +148,7 @@
     listP.then(function(errors) {
       counter = 0;
       var roadAddressErrors = _.map(errors, _.partial(roadAddressErrorsTable, layerName));
-      if(counter === 0){
+      if (counter === 0) {
         $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
       }
       else {
