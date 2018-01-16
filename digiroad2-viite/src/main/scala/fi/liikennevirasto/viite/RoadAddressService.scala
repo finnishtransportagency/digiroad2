@@ -593,7 +593,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet, includeFloating = false, includeHistory = false).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkIdToApi(roadLinksWithComplimentary.map(_.linkId).toSet).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
