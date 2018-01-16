@@ -358,12 +358,20 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
       HttpClientBuilder.create().build())
   }
 
-  private val speedlimitDao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val tierekisteriClientTelematicSpeedLimit: TierekisteriTelematicSpeedLimitClient = {
+    new TierekisteriTelematicSpeedLimitClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+//  private val speedlimitDao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
 
   private val urbanAreaSpeedLimit = 50
   private val defaultSpeedLimit = 80
-  private val startSpeedLimitSigns = Set(TrafficSignType.SpeedLimit, TrafficSignType.SpeedLimitZone, TrafficSignType.UrbanArea)
-  private val endSpeedLimitSigns = Set(TrafficSignType.EndSpeedLimit, TrafficSignType.EndSpeedLimitZone, TrafficSignType.EndUrbanArea)
+  private val defaultMotorwaySpeedLimit = 120
+  private val defaultCarriageOrFreewaySpeedLimit = 100
+//  private val startSpeedLimitSigns = Set(TrafficSignType.SpeedLimit, TrafficSignType.SpeedLimitZone, TrafficSignType.UrbanArea)
+//  private val endSpeedLimitSigns = Set(TrafficSignType.EndSpeedLimit, TrafficSignType.EndSpeedLimitZone, TrafficSignType.EndUrbanArea)
   private val notUrbanArea = "9"
 
   protected override def filterViiteRoadAddress(roadLink: VVHRoadlink): Boolean = {
@@ -379,7 +387,7 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     }
   }
 
-  private def getSpeedLimitValue(trAsset: TierekisteriAssetData) = {
+  private def getSpeedLimitValue(trAsset: TierekisteriAssetData, roadLink: VVHRoadlink) = {
     trAsset.assetType.trafficSignType match {
       case TrafficSignType.SpeedLimit  =>
         toInt(trAsset.assetValue)
@@ -393,6 +401,12 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
         Some(urbanAreaSpeedLimit)
       case TrafficSignType.EndUrbanArea =>
         Some(defaultSpeedLimit)
+      case TrafficSignType.TelematicSpeedLimit =>
+        if (roadLink.attributes("MTKCLASS").asInstanceOf[BigInt] == 12345)
+          Some(defaultMotorwaySpeedLimit)
+        else
+          Some(defaultMotorwaySpeedLimit)
+
       case _ =>
         None
     }
@@ -515,7 +529,8 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    val municipalities = getAllMunicipalities()
+    //val municipalities = getAllMunicipalities()
+    val municipalities = Set(10)
     municipalities.foreach { municipality =>
       withDynTransaction{
         expireAssets(municipality, Some(State))
@@ -527,9 +542,12 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     roadNumbers.foreach {
       roadNumber =>
         withDynTransaction{
-          val trAssets = getAllTierekisteriAssets(roadNumber)
           //Get Urban Areas from Tierekisteri
           val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber)
+          //Get all TelematicSpeedLimit
+          val trTelematicSpeedLimitAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber)
+          val trAssets = getAllTierekisteriAssets(roadNumber) ++ trTelematicSpeedLimitAssets
+
           //Generate all speed limits of the right side of the road
           generateOneSideSpeedLimits(roadNumber, RoadSide.Right, trAssets, trUrbanAreaAssets)
           //Generate all speed limits of the left side of the road
@@ -539,7 +557,7 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
   }
 
   override protected def createLinearAsset(roadLink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData) = {
-    val speedLimit = getSpeedLimitValue(trAssetData)
+    val speedLimit = getSpeedLimitValue(trAssetData, roadLink)
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, roadLink.linkId, false, getSideCode(roadAddress.sideCode, trAssetData.roadSide).value,
         measures, s"batch_process_$assetName", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink.linkSource.value))

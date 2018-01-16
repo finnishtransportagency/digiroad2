@@ -138,12 +138,12 @@ object TRTrafficSignType {
     ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations, NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoVehiclesWithDangerGoods,
     NoBuses, NoMopeds, NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback, NoEntry, OvertakingProhibited, EndProhibitionOfOvertaking,
     MaxWidthExceeding, MaxHeightExceeding, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding, WRightBend, WLeftBend,
-    WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren)
+    WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit)
 
   def apply(value: Int): TRTrafficSignType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
-
+  case object TelematicSpeedLimit extends TRTrafficSignType { def value = 0;  def trafficSignType = TrafficSignType.SpeedLimit; }
   case object SpeedLimit extends TRTrafficSignType { def value = 361;  def trafficSignType = TrafficSignType.SpeedLimit; }
   case object EndSpeedLimit extends TRTrafficSignType { def value = 362;  def trafficSignType = TrafficSignType.EndSpeedLimit; }
   case object SpeedLimitZone extends TRTrafficSignType { def value = 363;  def trafficSignType = TrafficSignType.SpeedLimitZone; }
@@ -278,12 +278,8 @@ case class TierekisteriEuropeanRoadData(roadNumber: Long, startRoadPartNumber: L
 case class TierekisteriSpeedLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                       track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int, roadSide: RoadSide) extends TierekisteriAssetData
 
-
 case class TierekisteriUrbanAreaData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: String) extends TierekisteriAssetData
-
-case class TierekisteriTelematicSpeedLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                               track: Track, startAddressMValue: Long, endAddressMValue: Long, tecPointType: Int) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -921,20 +917,26 @@ class TierekisteriTelematicSpeedLimitClient(trEndPoint: String, trEnable: Boolea
   override def tierekisteriRestApiEndPoint: String = trEndPoint
   override def tierekisteriEnabled: Boolean = trEnable
   override def client: CloseableHttpClient = httpClient
-  type TierekisteriType = TierekisteriAssetDataClient
+  type TierekisteriType = TierekisteriTrafficSignData
 
   override val trAssetType = "tl523"
   private val trTecPointType = "TEKTYYPPI"
+  private val trPUOLI = "PUOLI"
+  private val trTelematicSpeedLimitAsset = "34"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriTelematicSpeedLimitData = {
+  override def mapFields(data: Map[String, Any]): TierekisteriTrafficSignData = {
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val tecPointType = convertToInt(getMandatoryFieldValue(data, trTecPointType)).get
+    val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
-    TierekisteriTelematicSpeedLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, endMValue, tecPointType)
+    getMandatoryFieldValue(data, trTecPointType) match {
+      case Some(tecType) if tecType == trTelematicSpeedLimitAsset =>
+        TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.TelematicSpeedLimit,"")
+      case _ =>
+        TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.Unknown,"")
+    }
   }
 }
 
