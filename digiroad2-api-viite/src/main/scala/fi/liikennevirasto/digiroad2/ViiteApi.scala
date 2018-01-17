@@ -253,8 +253,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
       val firstAddress: Map[String, Any] =
         fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
-      Map("project" -> roadAddressProjectToApi(fetched),"publishedNetworkDate" -> latestPublishedNetwork.map {
-        date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss"))},
+      Map("project" -> roadAddressProjectToApi(fetched),"publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
         "formInfo" ->
         fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
     } catch {
@@ -318,7 +317,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
   }
 
-
   put("/project/reverse") {
     val user = userProvider.getCurrentUser()
     try {
@@ -356,9 +354,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
         Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
           "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
-          "publishedNetworkDate" -> latestPublishedNetwork.map {
-            date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss"))
-          })
+          "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
       case _ => halt(NotFound("Project not found"))
     }
   }
@@ -928,6 +924,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formattedDate = new SimpleDateFormat("dd.MM.yyyy").format(date)
     formattedDate
   }
+
+  private def formatDateTimeToString(dateOption: Option[DateTime]) : Option[String] =
+    dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
     calibrationPoint match {
