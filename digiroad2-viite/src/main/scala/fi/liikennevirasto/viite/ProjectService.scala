@@ -1562,6 +1562,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def validateLinkTrack(track: Int): Boolean = {
+    Track.values.filterNot(_.value == Track.Unknown.value).exists(_.value == track)
+  }
+
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
 
 }

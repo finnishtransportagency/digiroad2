@@ -44,7 +44,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
         expect($('#dropdown_2')[0].value).to.be.a('String', 'Terminated');
         expect($('#tie')[0].value).to.equal('16081');
         expect($('#osa')[0].value).to.equal('1');
-        expect($('#ajr')[0].value).to.equal('0');
+        expect($('#trackCodeDropdown')[0].value).to.equal('0');
         expect($('#discontinuityDropdown')[0].value).to.equal('5');
         expect($('#roadTypeDropDown')[0].value).to.equal('3');
       });
