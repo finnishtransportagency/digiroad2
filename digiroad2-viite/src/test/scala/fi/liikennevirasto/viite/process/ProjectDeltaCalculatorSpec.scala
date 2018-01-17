@@ -295,7 +295,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY)
             values (${ids(3)},${project.id},'0','5','6591','1','62','85',${lrms(3)},'silari',null,
             to_date('20.10.2017','DD.MM.RRRR'),null,'5','2','9',${ids(0)},'499972936','')""".execute
-      val delta = ProjectDeltaCalculator.delta(project.id)
+      val delta = ProjectDeltaCalculator.delta(project)
       delta.terminations should have size (1)
       delta.unChanged.mapping should have size (1)
       delta.newRoads should have size (1)
