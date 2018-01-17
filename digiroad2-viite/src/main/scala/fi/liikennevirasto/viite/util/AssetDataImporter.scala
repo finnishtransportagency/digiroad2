@@ -7,7 +7,7 @@ import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import org.joda.time.format.{DateTimeFormat, PeriodFormat}
+import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
@@ -20,6 +20,9 @@ import org.joda.time._
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
+import org.joda.time.DateTime
+import slick.driver.JdbcDriver.backend.Database
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 object
 AssetDataImporter {
