@@ -1,35 +1,24 @@
 package fi.liikennevirasto.viite.util
 
-import java.text.{DecimalFormat, SimpleDateFormat}
+import java.text.{DecimalFormat}
 import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, PeriodFormat}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import org.joda.time.format.{DateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.process.{RoadAddressChangeInfoMapper, RoadAddressMapping}
 import org.joda.time._
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
-
-import scala.collection.mutable
-import scala.math.BigDecimal.RoundingMode
 
 object
 AssetDataImporter {
@@ -353,7 +342,11 @@ class AssetDataImporter {
           a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
         }
         else {
-          val endDate = Some(DateTime.parse(a.endDate.get, DateTimeFormat.forPattern("yyyy-MM-dd")).plusDays(1).toString)
+          println(s"End date: ${a.endDate}")
+          println(s"Formated date: ${DateTime.parse(a.endDate.get)}")
+          println(s"After add 1 day: ${DateTime.parse(a.endDate.get).plusDays(1).toString}")
+
+          val endDate = Some(DateTime.parse(a.endDate.get).plusDays(1).toString)
           currentRoadHistory.find(curr => {
              curr.roadNumber == a.roadNumber &&
                curr.roadPartNumber == a.roadPartNumber &&
