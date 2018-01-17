@@ -7,7 +7,7 @@ import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import org.joda.time.format.PeriodFormat
+import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
@@ -60,6 +60,7 @@ class AssetDataImporter {
   lazy val ds: DataSource = initDataSource
 
   val Modifier = "dr1conversion"
+  val dateFormatter = ISODateTimeFormat.basicDate()
 
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -320,10 +321,19 @@ class AssetDataImporter {
             addressPS.setLong(5, address.discontinuity)
             addressPS.setLong(6, Math.abs(startAddrM))
             addressPS.setLong(7, Math.abs(endAddrM))
-            addressPS.setDate(8, new Date(address.startDate.get.getMillis))
-            addressPS.setDate(9, new Date(address.endDate.get.getMillis))
+            addressPS.setString(8, address.startDate match {
+              case Some(dt) => dateFormatter.print(dt)
+              case None => ""
+            })
+            addressPS.setString(9, address.endDate match {
+              case Some(dt) => dateFormatter.print(dt)
+              case None => ""
+            })
             addressPS.setString(10, address.userId)
-            addressPS.setDate(11, new Date(address.validFrom.get.getMillis))
+            addressPS.setString(11, address.validFrom match {
+              case Some(dt) => dateFormatter.print(dt)
+              case None => ""
+            })
             addressPS.setDouble(12, x1.get)
             addressPS.setDouble(13, y1.get)
             addressPS.setDouble(14, x2.get)
@@ -346,7 +356,6 @@ class AssetDataImporter {
           a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
         }
         else {
-          println(s"Date: ${a.endDate.get.plusDays(1)}")
           val endDate = Some(a.endDate.get.plusDays(1))
           currentRoadHistory.find(curr => {
              curr.roadNumber == a.roadNumber &&
