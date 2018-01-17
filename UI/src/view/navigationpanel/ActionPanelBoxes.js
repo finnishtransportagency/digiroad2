@@ -199,6 +199,95 @@
     };
   };
 
+  ActionPanelBoxes.TRSpeedLimitBox = function(asset) {
+    var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
+    var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
+      return '<div class="legend-entry">' +
+        '<div class="label">' + speedLimit + '</div>' +
+        '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
+        '</div>';
+    }).join('');
+
+    var speedLimitSignsCheckBox = [
+      '<div class="check-box-container">' +
+      '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
+      '</div>' +
+      '</div>'
+    ].join('');
+
+    var expandedTemplate = [
+      '<div class="panel">',
+      '  <header class="panel-header expanded">',
+      '    ' + asset.title + (asset.editControlLabels.showUnit ? ' ('+asset.unit+')': ''),
+      '  </header>',
+      '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
+      speedLimitLegendTemplate,
+      speedLimitSignsCheckBox,
+      '  </div>',
+      '</div>'].join('');
+
+    var elements = {
+      expanded: $(expandedTemplate)
+    };
+
+    var toolSelection = new ToolSelection([
+      new Tool('Select', selectToolIcon,  asset.selectedLinearAsset),
+      new Tool('Cut', cutToolIcon,  asset.selectedLinearAsset)
+    ]);
+    var editModeToggle = new EditModeToggleButton(toolSelection);
+    var userRoles;
+
+    var bindExternalEventHandlers = function() {
+      eventbus.on('roles:fetched', function(roles) {
+        userRoles = roles;
+        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+          toolSelection.reset();
+          elements.expanded.append(toolSelection.element);
+          elements.expanded.append(editModeToggle.element);
+        }
+      });
+      eventbus.on('application:readOnly', function(readOnly) {
+        elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
+      });
+    };
+
+    bindExternalEventHandlers();
+
+    var element = $('<div class="panel-group tr-speed-limits"/>')
+      .append(elements.expanded)
+      .hide();
+
+    function show() {
+      if (editModeToggle.hasNoRolesPermission(userRoles)) {
+        editModeToggle.reset();
+      } else {
+        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      }
+      element.show();
+    }
+
+    function hide() {
+      element.hide();
+    }
+
+    elements.expanded.find('#signsCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger(asset.layerName + ':showReadOnlyTrafficSigns');
+      } else {
+        eventbus.trigger(asset.layerName + ':hideReadOnlyTrafficSigns');
+      }
+    });
+
+    return {
+      title:  asset.title,
+      layerName:  asset.layerName,
+      element: element,
+      show: show,
+      hide: hide
+    };
+  };
+
+
   ActionPanelBoxes.WinterSpeedLimitBox = function(asset) {
     var speedLimits = [100, 80, 70, 60];
     var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
@@ -294,7 +383,6 @@
       hide: hide
     };
   };
-
 
   var executeOrShowConfirmDialog = function(f) {
     if (applicationModel.isDirty()) {

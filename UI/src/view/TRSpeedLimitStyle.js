@@ -1,8 +1,7 @@
 (function(root) {
-  root.WinterSpeedLimitStyle = function() {
+  root.TRSpeedLimitStyle = function() {
     AssetStyle.call(this);
     var me = this;
-
     var createZoomAndTypeDependentRule = function (type, zoomLevel, style) {
       return new StyleRule().where('type').is(type).and('zoomLevel').is(zoomLevel).use(style);
     };
@@ -46,12 +45,20 @@
       createZoomDependentOneWayRule(14, {stroke: {width: 8}}),
       createZoomDependentOneWayRule(15, {stroke: {width: 8}})
     ];
+
     var speedLimitStyleRules = [
-      new StyleRule().where('value').is(60).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/60.svg'}}),
-      new StyleRule().where('value').is(70).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src:  'images/speed-limits/70.svg'}}),
-      new StyleRule().where('value').is(80).use({ stroke: { color: '#ff0000', fill: '#ff0000'}, icon: {src:  'images/speed-limits/80.svg'}}),
-      new StyleRule().where('value').is(100).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/100.svg'}})
+      new StyleRule().where('value').isBetween([20,30]).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}}),
+      new StyleRule().where('value').isBetween([30,40]).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}}),
+      new StyleRule().where('value').isBetween([40,50]).use({ stroke: { color: '#11bb00', fill: '#11bb00'}}),
+      new StyleRule().where('value').isBetween([50,60]).use({ stroke: { color: '#ff0000', fill: '#11bb00'}}),
+      new StyleRule().where('value').isBetween([60,70]).use({ stroke: { color: '#0011bb', fill: '#0011bb'}}),
+      new StyleRule().where('value').isBetween([70,80]).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}}),
+      new StyleRule().where('value').isBetween([80,90]).use({ stroke: { color: '#ff0000', fill: '#ff0000'}}),
+      new StyleRule().where('value').isBetween([90,100]).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}}),
+      new StyleRule().where('value').isBetween([100,120]).use({ stroke: { color: '#11bb00', fill: '#11bb00'}}),
+      new StyleRule().where('value').isBetween([120,130]).use({ stroke: { color: '#0011bb', fill: '#0011bb'}})
     ];
+
 
     var speedLimitFeatureSizeRules = [
       new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 3}, pointRadius: 0}),
@@ -63,16 +70,6 @@
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 14}, pointRadius: 22})
     ];
 
-    var speedLimitImageSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).and('type').isNot('unknown').use({ icon: {scale: 0.8}}),
-      new StyleRule().where('zoomLevel').is(10).and('type').isNot('unknown').use({ icon: {scale: 1}}),
-      new StyleRule().where('zoomLevel').is(11).and('type').isNot('unknown').use({ icon: {scale: 1.3}}),
-      new StyleRule().where('zoomLevel').is(12).and('type').isNot('unknown').use({ icon: {scale: 1.6}}),
-      new StyleRule().where('zoomLevel').is(13).and('type').isNot('unknown').use({ icon: {scale: 1.8}}),
-      new StyleRule().where('zoomLevel').is(14).and('type').isNot('unknown').use({ icon: {scale: 2}}),
-      new StyleRule().where('zoomLevel').is(15).and('type').isNot('unknown').use({ icon: {scale: 2.2}})
-    ];
-
 
     var typeSpecificStyleRules = [
       new StyleRule().where('type').is('overlay').use({stroke: {opacity: 1.0}}),
@@ -81,6 +78,8 @@
       new StyleRule().where('type').is('cutter').use({icon: {src: 'images/cursor-crosshair.svg'}})
     ];
 
+
+
     me.browsingStyleProvider = new StyleRuleProvider({});
     me.browsingStyleProvider.addRules(speedLimitStyleRules);
     me.browsingStyleProvider.addRules(speedLimitFeatureSizeRules);
@@ -88,33 +87,9 @@
     me.browsingStyleProvider.addRules(overlayStyleRules);
     me.browsingStyleProvider.addRules(validityDirectionStyleRules);
     me.browsingStyleProvider.addRules(oneWayOverlayStyleRules);
-    me.browsingStyleProvider.addRules(speedLimitImageSizeRules);
 
-
-    this.renderOverlays = function(linearAssets){
-      var speedLimitsWithType = _.map(linearAssets, function(linearAsset) { return _.merge({}, linearAsset, { type: 'other' }); });
-      var offsetBySideCode = function(linearAsset) {
-        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
-      };
-      var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
-      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(linearAsset) { return linearAsset.value >= 70; });
-      return me.dottedLineFeatures(speedLimitsSplitAt70kmh[true]).concat(me.limitSigns(speedLimitsWithAdjustments));
-    };
-
-    this.limitSigns = function(speedLimits) {
-      return _.map(speedLimits, function(speedLimit) {
-        var points = _.map(speedLimit.points, function(point) {
-          return [point.x, point.y];
-        });
-        var road = new ol.geom.LineString(points);
-        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
-        var type = me.isUnknown(speedLimit) ? { type: 'unknown' } : {};
-        var attributes = _.merge(_.cloneDeep(_.omit(speedLimit, "geometry")), type);
-
-        var feature = new ol.Feature(new ol.geom.Point([signPosition.x, signPosition.y]));
-        feature.setProperties(attributes);
-        return feature;
-      });
+    this.isUnknown = function(linearAsset) {
+      return !_.isNumber(linearAsset.value);
     };
 
     this.dottedLineFeatures = function(linearAssets) {
@@ -123,13 +98,19 @@
       return solidLines.concat(dottedOverlay);
     };
 
-    this.isUnknown = function(linearAsset) {
-      return !_.isNumber(linearAsset.value);
+    this.renderOverlays = function(linearAssets){
+      var speedLimitsWithType = _.map(linearAssets, function(linearAsset) { return _.merge({}, linearAsset, { type: 'other' }); });
+      var offsetBySideCode = function(linearAsset) {
+        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+      };
+      var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
+      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(linearAsset) { return linearAsset.value >= 70 && linearAsset.value <= 120; });
+      return me.dottedLineFeatures(speedLimitsSplitAt70kmh[true]);
     };
 
     me.renderFeatures = function(linearAssets) {
       return me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.renderOverlays(linearAssets));
     };
-
   };
+
 })(this);

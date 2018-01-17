@@ -341,6 +341,7 @@
     var manoeuvreBox = new ManoeuvreBox();
     var winterSpeedLimits = new ActionPanelBoxes.WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
     var serviceRoadBox = new ActionPanelBoxes.ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
+    var trSpeedLimitBox = new ActionPanelBoxes.TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}));
 
     return [
       [roadLinkBox],
@@ -351,7 +352,7 @@
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers))
-          .concat(getLinearAsset(assetType.trSpeedLimits)),
+          .concat([trSpeedLimitBox]),
       [speedLimitBox].concat(
       [winterSpeedLimits]),
       [massTransitBox]

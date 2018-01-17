@@ -110,6 +110,16 @@
             return this;
         };
 
+      this.isBetween = function(values){
+        var expression = expressionFn[expressionFn.length-1];
+        if(!expression || expression.compare)
+          throw 'You must have on of the following functions ["where", "and", "or"] before use the "isBetween".';
+        expression.compare = function(propertyValue){
+            return values[0] <= propertyValue  && propertyValue < values[1];
+        };
+        return this;
+      };
+
         this.use = function(obj){
             styles.push(obj);
             return this;
