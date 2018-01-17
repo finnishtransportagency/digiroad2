@@ -1041,7 +1041,18 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def queryByIdMassQuery(ids: Set[Long]): List[RoadAddress] = {
+  def queryByIdMassQuery(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false): List[RoadAddress] = {
+    val terminatedFilter = if (!includeTerminated) {
+      "AND ra.terminated = 0"
+    } else {
+      ""
+    }
+
+    val historyFilter = if (includeHistory)
+      "AND end_date is null"
+    else
+      ""
+
     MassQuery.withIds(ids) {
       idTableName =>
         val query =
@@ -1055,7 +1066,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = ra.id
-        where t.id < t2.id and
+        where t.id < t2.id $historyFilter $terminatedFilter and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
