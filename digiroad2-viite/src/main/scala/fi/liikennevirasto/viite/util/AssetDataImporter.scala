@@ -353,7 +353,7 @@ class AssetDataImporter {
           a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
         }
         else {
-          val endDate = Some(DateTime.parse(a.endDate.get, DateTimeFormat.forPattern("yyyy.MM.dd")).plusDays(1).toString)
+          val endDate = Some(DateTime.parse(a.endDate.get, DateTimeFormat.forPattern("yyyy-MM-dd")).plusDays(1).toString)
           currentRoadHistory.find(curr => {
              curr.roadNumber == a.roadNumber &&
                curr.roadPartNumber == a.roadPartNumber &&
@@ -362,7 +362,7 @@ class AssetDataImporter {
                curr.startAddrM == a.startAddrM &&
                curr.endAddrM == a.endAddrM &&
                curr.startDate.getOrElse("") == a.startDate.getOrElse("") &&
-               curr.endDate.getOrElse("") == a.endDate.getOrElse("") &&
+               curr.endDate.getOrElse("") == endDate.getOrElse("") &&
                curr.ely == a.ely &&
                curr.roadType == a.roadType &&
                curr.linkId == a.linkId
