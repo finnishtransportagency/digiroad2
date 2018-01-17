@@ -216,7 +216,9 @@ object RoadAddressDAO {
         where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
           terminated = '0' and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to > sysdate)
+          (valid_to is null or valid_to > sysdate) and
+          (end_date is null or end_date > sysdate) and
+          (start_date is null or start_date <= sysdate)
       """
     queryList(query)
   }
