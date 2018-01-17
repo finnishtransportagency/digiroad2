@@ -21,6 +21,7 @@
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
+    var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.05;
 
     var projectLinks = function() {
       return _.flatten(fetchedProjectLinks);
@@ -230,7 +231,58 @@
       }
     };
 
+    var createOrUpdate = function(dataJson, changedLinks){
+      if(!_.isEmpty(dataJson.linkIds) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0){
+        var ids = _.chain(changedLinks).map(function (cl) {
+          return cl.id;
+        }).uniq().value();
+        if(dataJson.linkStatus == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
+          backend.createProjectLinks(dataJson, function(successObject) {
+            if (!successObject.success) {
+              new ModalConfirm(successObject.errorMessage);
+              eventbus.trigger("roadAddressProject:roadCreationFailed", successObject.errorMessage);
+              applicationModel.removeSpinner();
+            } else {
+              publishableProject = successObject.publishable;
+              projectErrors = successObject.projectErrors;
+              eventbus.trigger('projectLink:projectLinksCreateSuccess');
+              eventbus.trigger('roadAddress:projectLinksCreateSuccess');
+              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+            }
+          });
+        }
+        else {
+          backend.updateProjectLinks(dataJson, function (successObject) {
+            if (!successObject.success) {
+              new ModalConfirm(successObject.errorMessage);
+              applicationModel.removeSpinner();
+            } else {
+              publishableProject = successObject.publishable;
+              projectErrors = successObject.projectErrors;
+              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+            }
+          });
+        }
+      } else {
+        eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
+      }
+    };
+
     this.saveProjectLinks = function(changedLinks, statusCode) {
+      var validUserGivenAddrMValues = function(linkId, userEndAddr){
+        if(_.isUndefined(userEndAddr))
+          return false;
+          var roadPartIds = self.getMultiSelectIds(linkId);
+          var roadPartLinks = self.getByLinkId(roadPartIds);
+          var roadPartGeometries = _.map(roadPartLinks, function(roadPart){
+            return roadPart.getData().points;
+          });
+          var roadPartLength = _.reduce((roadPartGeometries), function(length, geom){
+            return GeometryUtils.geometryLength(geom) + length;
+          }, 0.0);
+        return (userEndAddr >= (roadPartLength * (1 - ALLOWED_ADDR_M_VALUE_PERCENTAGE))) && (userEndAddr <= (roadPartLength * (1 + ALLOWED_ADDR_M_VALUE_PERCENTAGE)));
+      };
+
       applicationModel.addSpinner();
       var linkIds = _.unique(_.map(changedLinks,function (t){
         if(!_.isUndefined(t.linkId)){
@@ -268,38 +320,18 @@
       if(!isNaN(endDistance) && !isNaN(originalEndDistance) && originalEndDistance !== endDistance){
         dataJson.userDefinedEndAddressM = endDistance;
       }
-      if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
-        var ids = _.chain(changedLinks).map(function (cl) {
-          return cl.id;
-        }).uniq().value();
-        if(statusCode == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
-          backend.createProjectLinks(dataJson, function(successObject) {
-            if (!successObject.success) {
-              new ModalConfirm(successObject.errorMessage);
-              applicationModel.removeSpinner();
-            } else {
-              publishableProject = successObject.publishable;
-              projectErrors = successObject.projectErrors;
-              eventbus.trigger('projectLink:projectLinksCreateSuccess');
-              eventbus.trigger('roadAddress:projectLinksCreateSuccess');
-              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-            }
-          });
-        }
-        else {
-          backend.updateProjectLinks(dataJson, function (successObject) {
-            if (!successObject.success) {
-              new ModalConfirm(successObject.errorMessage);
-              applicationModel.removeSpinner();
-            } else {
-              publishableProject = successObject.publishable;
-              projectErrors = successObject.projectErrors;
-              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-            }
-          });
-        }
-      } else {
-        eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
+
+      if(!validUserGivenAddrMValues(_.first(dataJson.linkIds), dataJson.userDefinedEndAddressM)){
+        new GenericConfirmPopup("Antamasi pituus eroaa yli 5% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
+          successCallback: function () {
+            createOrUpdate(dataJson, changedLinks);
+          },
+          closeCallback: function () {
+            applicationModel.removeSpinner();
+          }
+        });
+      } else{
+        createOrUpdate(dataJson, changedLinks);
       }
       return true;
     };
