@@ -235,7 +235,7 @@
         var ids = _.chain(changedLinks).map(function (cl) {
           return cl.id;
         }).uniq().value();
-        if(statusCode == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
+        if(dataJson.linkStatus == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
               new ModalConfirm(successObject.errormessage);
