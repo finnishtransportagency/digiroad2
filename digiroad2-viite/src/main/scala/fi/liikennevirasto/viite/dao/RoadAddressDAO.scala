@@ -459,7 +459,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        join published_road_network net on net.id = (select network_id from published_road_address where ra.id = road_address_id)
+        join published_road_network net on net.id = (select max(network_id) from published_road_address where ra.id = road_address_id)
         where t.id < t2.id and
           valid_from <= sysdate and
           (valid_to is null or valid_to > sysdate)
