@@ -62,7 +62,68 @@
         };
     };
 
-    root.LinearAssetLabelMultiValues = function(){
+
+    root.TRSpeedLimitAssetLabel = function () {
+      LinearAssetLabel.call(this);
+      var me = this;
+
+      var backgroundStyle = function (value) {
+        return new ol.style.Style({
+          image: new ol.style.Icon(({
+            src: getImageConfiguration(value).image,
+            scale : getImageConfiguration(value).scale
+          }))
+        });
+      };
+
+      this.getStyle = function(value){
+        return [backgroundStyle(value), new ol.style.Style({
+          text : new ol.style.Text({
+            text : textStyle(value),
+            fill: new ol.style.Fill({
+              color: '#ffffff'
+            }),
+            font : '12px sans-serif'
+          })
+        })];
+      };
+
+
+      this.isValidValue = function(value) {
+        return value && value >= 20 && value <= 120;
+      };
+
+      var getImageConfiguration = function (value) {
+
+        var imagesConfig = [
+          {range : [{min: 60, max: 70}, {min: 120, max: 121}] , image: 'images/speed-limits/blueCircle.svg', scale: 1.6 },
+          {range : [{min: 40, max: 50}, {min: 100, max: 120}]  , image: 'images/speed-limits/greenCircle.svg', scale: 1.6  },
+          {range : [{min: 20, max: 30}, {min: 70, max: 80}] , image: 'images/speed-limits/lightBlueCircle.svg', scale: 1.6  },
+          {range : [{min: 50, max: 60}, {min: 80, max: 90}] , image: 'images/speed-limits/redCircle.svg', scale: 1.6 },
+          {range : [{min: 30, max: 40}, {min: 90, max: 100}], image: 'images/speed-limits/pinkCircle.svg' , scale: 1.6 }
+        ];
+
+
+        var config = imagesConfig.find ( function(config) {
+          return _.some(config.range, function(range) { return range.min <= value && range.max > value; });
+        });
+
+        if(config)
+          return config;
+
+        return {image: 'images/warningLabel.png', scale: 1};
+      };
+
+      var textStyle = function(value) {
+        if (!me.isValidValue(value))
+          return '';
+        return "" + value;
+      };
+
+    };
+
+
+  root.LinearAssetLabelMultiValues = function(){
 
         AssetLabel.call(this);
 

@@ -240,7 +240,7 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
         userRoles = roles;
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+        if ( !asset.readOnly && _.contains(roles, 'operator') || _.contains(roles, 'premium')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
