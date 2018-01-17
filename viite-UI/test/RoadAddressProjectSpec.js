@@ -106,9 +106,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         $('#dropDown_0').val('New').change();
         expect($('#tie')).to.not.be.undefined;
         expect($('#osa')).to.not.be.undefined;
-        expect($('#ajr')).to.not.be.undefined;
+        expect($('#trackCodeDropdown')).to.not.be.undefined;
         console.log($('#tie'));
-        var inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#ajr').val().length === 0);
+        var inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#trackCodeDropdown').val().length === 0);
         expect(inputsEmpty).to.be.true;
         //Check if Tallenna is disabled
         expect($('.update.btn.btn-save').is(':disabled')).to.be.true;
@@ -125,7 +125,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         expect(feature.projectLinkData.linkId).to.be.equal(1717395);
         expect($('#dropdown').val('uusi').is(':disabled')).to.be.false;
         $('#dropDown').val('uusi').change();
-        inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#ajr').val().length === 0);
+        inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#trackCodeDropdown').val().length === 0);
         expect(inputsEmpty).to.be.false;
         //Check if Tallenna is enabled
         expect($('.update.btn.btn-save').is(':disabled')).to.be.false;

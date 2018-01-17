@@ -320,7 +320,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       checkSplit(projectLinks, 25.3, 0, 25, 87, 123.0)
       val options2 = SplitOptions(Point(0, 65.3), LinkStatus.Transfer, LinkStatus.New, 1, 1, Track.Combined,
         Discontinuity.Continuous, 1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
-      val preSplitData = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options2)._1.getOrElse(Seq())
+      val preSplitData = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options2)._1.map(rs => rs.toSeqWithMergeTerminated).getOrElse(Seq())
       preSplitData should have size (3)
       // Test that the transfer is not returned back in pre-split for already split suravage but the old values are
       preSplitData.exists(_.status == Transfer) should be (false)
