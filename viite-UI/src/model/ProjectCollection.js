@@ -254,7 +254,7 @@
         else {
           backend.updateProjectLinks(dataJson, function (successObject) {
             if (!successObject.success) {
-              new ModalConfirm(successObject.errormessage);
+              new ModalConfirm(successObject.errorMessage);
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;

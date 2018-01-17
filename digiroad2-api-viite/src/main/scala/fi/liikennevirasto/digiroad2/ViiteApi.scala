@@ -443,7 +443,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
             links.roadType, links.discontinuity, Some(links.roadEly)) match {
-            case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
+            case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
               Map("success" -> true, "id" -> links.projectId,
