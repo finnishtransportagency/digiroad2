@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.util
 
-import java.text.{DecimalFormat}
+import java.sql.Date
+import java.text.DecimalFormat
 import java.util.Properties
 import javax.sql.DataSource
 
@@ -89,8 +90,8 @@ class AssetDataImporter {
 
   case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double)
   case class RoadAddressHistory(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
-                                startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[String], endDate: Option[String],
-                                validFrom: Option[String], validTo: Option[String], ely: Long, roadType: Long,
+                                startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[DateTime], endDate: Option[DateTime],
+                                validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
                                 terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
                                 x2: Option[Double], y2: Option[Double], lrmId: Long)
   case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType, elyCode: Long)
@@ -316,10 +317,10 @@ class AssetDataImporter {
             addressPS.setLong(5, address.discontinuity)
             addressPS.setLong(6, Math.abs(startAddrM))
             addressPS.setLong(7, Math.abs(endAddrM))
-            addressPS.setString(8, address.startDate.get)
-            addressPS.setString(9, address.endDate.getOrElse(""))
+            addressPS.setDate(8, new Date(address.startDate.get.getMillis))
+            addressPS.setDate(9, new Date(address.endDate.get.getMillis))
             addressPS.setString(10, address.userId)
-            addressPS.setString(11, address.validFrom.get)
+            addressPS.setDate(11, new Date(address.validFrom.get.getMillis))
             addressPS.setDouble(12, x1.get)
             addressPS.setDouble(13, y1.get)
             addressPS.setDouble(14, x2.get)
@@ -342,11 +343,8 @@ class AssetDataImporter {
           a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
         }
         else {
-          println(s"End date: ${a.endDate}")
-          println(s"Formated date: ${DateTime.parse(a.endDate.get)}")
-          println(s"After add 1 day: ${DateTime.parse(a.endDate.get).plusDays(1).toString}")
-
-          val endDate = Some(DateTime.parse(a.endDate.get).plusDays(1).toString)
+          println(s"Date: ${a.endDate.get.plusDays(1)}")
+          val endDate = Some(a.endDate.get.plusDays(1))
           currentRoadHistory.find(curr => {
              curr.roadNumber == a.roadNumber &&
                curr.roadPartNumber == a.roadPartNumber &&
@@ -378,10 +376,9 @@ class AssetDataImporter {
     //Get current roadHistory
     val currentHistory =
       sql"""SELECT RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.DISCONTINUITY, RA.START_ADDR_M, RA.END_ADDR_M, LR.START_MEASURE, LR.END_MEASURE,
-         TO_CHAR(RA.START_DATE,'YYYY-MM-DD'), TO_CHAR(RA.END_DATE,'YYYY-MM-DD'), TO_CHAR(RA.VALID_FROM,'YYYY-MM-DD'),
-         TO_CHAR(RA.VALID_TO,'YYYY-MM-DD'), RA.ELY, RA.ROAD_TYPE, RA.TERMINATED, LR.LINK_ID, RA.CREATED_BY, LR.ID FROM ROAD_ADDRESS RA, LRM_POSITION LR
+         RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO, RA.ELY, RA.ROAD_TYPE, RA.TERMINATED, LR.LINK_ID, RA.CREATED_BY, LR.ID FROM ROAD_ADDRESS RA, LRM_POSITION LR
          WHERE RA.END_DATE IS NOT NULL AND RA.LRM_POSITION_ID = LR.ID AND RA.ELY = $ely""".
-        as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Option[String], Long, Long, Long, Long, String, Long)].list.map {
+        as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[DateTime], Option[DateTime], Option[DateTime], Option[DateTime], Long, Long, Long, Long, String, Long)].list.map {
         case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
         startDate, endDate, validFrom, validTo, ely, roadType, terminated, linkId, createdBy, lrmId) =>
           RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
@@ -392,15 +389,15 @@ class AssetDataImporter {
     println("Got %d current road addresses history".format(currentHistory.size))
     val roadHistory = conversionDatabase.withDynSession {
       if (importDate != "") {
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
+        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, alkupvm, loppupvm, muutospvm,
                ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
             from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND aet >= 0 AND LET >= 0 AND loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """
-          .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
+          .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[DateTime], Option[DateTime], Option[DateTime], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
       } else {
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
+        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, alkupvm, loppupvm, muutospvm,
                ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
             from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND aet >= 0 AND LET >= 0 AND loppupvm IS NOT NULL """
-          .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
+          .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[DateTime], Option[DateTime], Option[DateTime], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
       }
     }.map {
       case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDate, validFrom, elyCode, roadType, linkId, createdBy, x1, y1, x2, y2, lrmId) =>
