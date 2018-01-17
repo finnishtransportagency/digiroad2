@@ -239,18 +239,11 @@
   };
 
   root.geometryLength = function (geometry) {
-    if (geometry.size < 2) {
-      return 0.0;
-    } else {
       return _.reduce(geometry , function (length, point, index, array) {
-        if (index < array.length - 1) {
+        if (index < array.length - 1)
           return length + distanceBetweenPoints(point, array[index+1]);
-        }
-        else {
-          return length;
-        }
+        return length;
       }, 0.0);
-    }
   };
 
 })(window.GeometryUtils = window.GeometryUtils || {});
