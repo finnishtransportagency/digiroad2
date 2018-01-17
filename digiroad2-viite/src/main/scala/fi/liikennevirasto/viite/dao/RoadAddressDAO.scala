@@ -1030,7 +1030,7 @@ object RoadAddressDAO {
   }
 
   def queryByIdMassQuery(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false): List[RoadAddress] = {
-    val terminatedFilter = if(!includeTerminated) {
+    val terminatedFilter = if (!includeTerminated) {
       "AND ra.terminated = 0"
     } else {
       ""
