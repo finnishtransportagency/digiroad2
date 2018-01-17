@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
-import org.joda.time.format.PeriodFormat
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
@@ -353,7 +353,7 @@ class AssetDataImporter {
           a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
         }
         else {
-          val endDate = Some(DateTime.parse(a.endDate.get).plusDays(1).toString)
+          val endDate = Some(DateTime.parse(a.endDate.get, DateTimeFormat.forPattern("yyyy.MM.dd")).plusDays(1).toString)
           currentRoadHistory.find(curr => {
              curr.roadNumber == a.roadNumber &&
                curr.roadPartNumber == a.roadPartNumber &&
