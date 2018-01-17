@@ -16,6 +16,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var ProjectStatus = LinkValues.ProjectStatus;
     var LinkGeomSource = LinkValues.LinkGeomSource;
+    var Track = LinkValues.Track;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -246,7 +247,7 @@
         projectId: projectId,
         roadNumber: Number($('#roadAddressProjectForm').find('#tie')[0].value),
         roadPartNumber: Number($('#roadAddressProjectForm').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProjectForm').find('#ajr')[0].value),
+        trackCode: Number($('#roadAddressProjectForm').find('#trackCodeDropdown')[0].value),
         discontinuity: Number($('#roadAddressProjectForm').find('#discontinuityDropdown')[0].value),
         roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
@@ -254,6 +255,12 @@
         userDefinedEndAddressM: null,
         coordinates:coordinates
       };
+
+      if(dataJson.trackCode === Track.Unknown.value){
+        new ModalConfirm("Tarkista ajoratakoodi");
+        applicationModel.removeSpinner();
+        return false;
+      }
 
       var endDistance = parseInt($('#endDistance').val());
       var originalEndDistance = _.chain(changedLinks).uniq().sortBy(function(cl){
@@ -269,7 +276,7 @@
         if(statusCode == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
-              new ModalConfirm(successObject.errormessage);
+              new ModalConfirm(successObject.errorMessage);
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
@@ -283,7 +290,7 @@
         else {
           backend.updateProjectLinks(dataJson, function (successObject) {
             if (!successObject.success) {
-              new ModalConfirm(successObject.errormessage);
+              new ModalConfirm(successObject.errorMessage);
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
@@ -295,6 +302,7 @@
       } else {
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
       }
+      return true;
     };
 
     this.preSplitProjectLinks = function(suravage, nearestPoint){
@@ -383,7 +391,7 @@
         statusB: objectB.value,
         roadNumber: Number(form.find('#tie')[0].value),
         roadPartNumber: Number(form.find('#osa')[0].value),
-        trackCode: Number(form.find('#ajr')[0].value),
+        trackCode: Number(form.find('#trackCodeDropdown')[0].value),
         discontinuity: Number(form.find('#discontinuityDropdown')[0].value),
         ely: Number(form.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
@@ -391,6 +399,12 @@
         projectId: projectId,
         coordinates:coordinates
       };
+
+      if(dataJson.trackCode === Track.Unknown.value){
+        new ModalConfirm("Tarkista ajoratakoodi");
+        applicationModel.removeSpinner();
+        return false;
+      }
 
       backend.saveProjectLinkSplit(dataJson, linkId, function(successObject){
         if (!successObject.success) {
@@ -404,6 +418,7 @@
           new ModalConfirm(failureObject.reason);
           applicationModel.removeSpinner();
       });
+      return true;
     };
 
     this.createProject = function (data, resolution) {

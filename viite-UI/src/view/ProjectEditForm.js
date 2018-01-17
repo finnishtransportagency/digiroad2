@@ -107,12 +107,23 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
-        '<div class="form-group">' +
-        '<label>TARKASTUSILMOITUKSET:</label>' +
-        '<div id ="projectErrors">' +
-        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
-        '</div></div></div></div></br></br>' +
+        errorsList()+
+        '</div></div></br></br>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
+    };
+
+    var errorsList = function(){
+      if (projectCollection.getProjectErrors().length > 0){
+        return '<div class="form-group">' +
+          '<label>TARKASTUSILMOITUKSET:</label>' +
+          '<div id ="projectErrors">' +
+          formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
+          '</div>' +
+          '</div>' ;
+      }
+      else
+        return '';
+
     };
 
     var isProjectPublishable = function(){
@@ -307,6 +318,7 @@
       };
 
       var saveChanges = function(){
+        var successSavingChanges = true;
         var currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         var statusDropdown_0 =$('#dropdown_0').val();
@@ -314,48 +326,51 @@
         switch (statusDropdown_0){
           case LinkStatus.Unchanged.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
             }
             else if(_.isUndefined(statusDropdown_1)){
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
+              successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
             }
             break;
           }
           case LinkStatus.New.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Unchanged.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
+              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
             }
 
             else if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Transfer.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
+              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
             }
             else if(_.isUndefined(statusDropdown_1)) {
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
+              successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
             }
             break;
           }
           case LinkStatus.Transfer.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
             }
             else if(_.isUndefined(statusDropdown_1)){
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
+              successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
             }
             break;
           }
           case LinkStatus.Numbering.description : {
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value); break;
+            successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value); break;
           }
           case LinkStatus.Terminated.description: {
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value); break;
+            successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value); break;
           }
           case LinkStatus.Revert.description : {
             projectCollection.revertChangesRoadlink(selectedProjectLink); break;
           }
         }
-        selectedProjectLinkProperty.setDirty(false);
-        rootElement.html(emptyTemplate(currentProject.project));
-        formCommon.toggleAdditionalControls();
+
+        if(successSavingChanges){
+          selectedProjectLinkProperty.setDirty(false);
+          rootElement.html(emptyTemplate(currentProject.project));
+          formCommon.toggleAdditionalControls();
+        }
       };
 
       var cancelChanges = function() {
@@ -400,7 +415,7 @@
       rootElement.on('change', '#roadAddressProjectForm #dropdown_0', function() {
         $('#tie').prop('disabled',false);
         $('#osa').prop('disabled',false);
-        $('#ajr').prop('disabled',false);
+        $('#trackCodeDropdown').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropDown').prop('disabled',false);
         if(this.value == LinkStatus.Terminated.description) {
@@ -426,7 +441,7 @@
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled',true);
           $('#osa').prop('disabled',true);
-          $('#ajr').prop('disabled',true);
+          $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
@@ -444,7 +459,7 @@
         }
         else if(this.value == LinkStatus.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
-          $('#ajr').prop('disabled',true);
+          $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',true);
           $('#roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {

@@ -18,7 +18,7 @@ import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.{ProjectService, RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite._
 import org.apache.http.impl.client.HttpClientBuilder
 
 import scala.concurrent.duration.FiniteDuration
@@ -166,6 +166,13 @@ class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
   }
 }
 
+class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
+  def receive = {
+    case w: RoadCheckOptions =>  roadNetworkService.checkRoadAddressNetwork(w)
+    case _ => println("roadAddressChecker: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -238,12 +245,19 @@ object Digiroad2Context {
   val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
+  val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
+  eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
+
   lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {
     new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+  }
+
+  lazy val roadNetworkService: RoadNetworkService = {
+    new RoadNetworkService
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
