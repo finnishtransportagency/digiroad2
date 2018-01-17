@@ -275,8 +275,8 @@
         if(statusCode == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
-              new ModalConfirm(successObject.errormessage);
-              eventbus.trigger("roadAddressProject:roadCreationFailed", successObject.errormessage);
+              new ModalConfirm(successObject.errorMessage);
+              eventbus.trigger("roadAddressProject:roadCreationFailed", successObject.errorMessage);
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
