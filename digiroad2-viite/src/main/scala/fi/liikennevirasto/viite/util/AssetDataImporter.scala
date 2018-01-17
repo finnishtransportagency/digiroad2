@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import java.text.DecimalFormat
+import java.text.{DecimalFormat, SimpleDateFormat}
 import java.util.Properties
 import javax.sql.DataSource
 
@@ -353,7 +353,7 @@ class AssetDataImporter {
           a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
         }
         else {
-          val presentInHistory = currentRoadHistory.find(curr => {
+          currentRoadHistory.find(curr => {
              curr.roadNumber == a.roadNumber &&
                curr.roadPartNumber == a.roadPartNumber &&
                curr.trackCode == a.trackCode &&
@@ -365,17 +365,18 @@ class AssetDataImporter {
                curr.ely == a.ely &&
                curr.roadType == a.roadType &&
                curr.linkId == a.linkId
-          })
-          if (presentInHistory.isEmpty) {
-            RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
+          }) match {
+            case presentInHistory if presentInHistory.isEmpty => {
+              RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
               a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
-          } else {
-            if (presentInHistory.get.terminated >= 1)
-              RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
+            }
+            case presentInHistory if presentInHistory.get.terminated >= 1 => {
+              val endDate = Some(DateTime.parse(a.endDate.get).plusDays(1).toString)
+              RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, endDate, a.validFrom,
                 a.validTo, a.ely, a.roadType, 2, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
-            else
-              RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
-                a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
+            }
+            case _ => RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
+              a.validTo, a.ely, a.roadType, 0, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
           }
         }
       })
