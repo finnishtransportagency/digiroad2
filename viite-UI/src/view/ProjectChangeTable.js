@@ -130,7 +130,7 @@
         }
         else
         {
-          $('.change-table-header').html($('<div>Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
+          $('.change-table-header').html($('<div><font color="yellow">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</font></div>'));
         }
       });
 
