@@ -4,15 +4,10 @@ import java.io.InputStream
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{Digiroad2ServerOriginatedResponseHeader, userProvider}
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter.ImportResult
-import fi.liikennevirasto.digiroad2.Digiroad2Context
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, LinearAssetOperations, VVHClient}
-import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.oracle.ImportLogService
 import org.json4s.{DefaultFormats, Extraction, Formats}
 import org.scalatra._
-import org.scalatra.servlet.{FileItem, FileUploadSupport}
+import org.scalatra.servlet.FileUploadSupport
 import org.scalatra.json.JacksonJsonSupport
 
 class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJsonSupport with RequestHeaderAuthentication {

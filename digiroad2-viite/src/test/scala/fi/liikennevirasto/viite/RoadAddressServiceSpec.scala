@@ -2,8 +2,8 @@ package fi.liikennevirasto.viite
 
 import java.util.{Date, Properties}
 
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{Unknown => _, _}
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.service.RoadLinkType.{FloatingRoadLinkType, NormalRoadLinkType}
 import fi.liikennevirasto.digiroad2.{_}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
@@ -11,19 +11,18 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.Unknown
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.viite.util._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{ChangeType, _}
-import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.TerminationCode._
+import fi.liikennevirasto.viite.dao.Discontinuity._
+import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressFiller}

@@ -4,11 +4,10 @@ import java.io.{ByteArrayInputStream, InputStream}
 import javax.sql.DataSource
 
 import fi.liikennevirasto.digiroad2.asset.{Municipality, State, TrafficDirection}
-import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHComplementaryClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, RoadLinkServiceDAO}
-import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
+import fi.liikennevirasto.digiroad2.dao.{RoadLinkServiceDAO}
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -16,6 +15,7 @@ import org.scalatest.{BeforeAndAfter, Tag}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import fi.liikennevirasto.digiroad2.Digiroad2Context.{userProvider}
 
 object sTestTransactions {
   def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
@@ -38,7 +38,7 @@ object sTestTransactions {
 
 class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val MunicipalityKauniainen = 235
-  val testUserProvider = new OracleUserProvider
+  val testUserProvider = userProvider
   val roadLinkCsvImporter = importerWithNullService()
   val trafficSignCsvImporter : TrafficSignCsvImporter = new TrafficSignCsvImporter
 

@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficVolum
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, Queries, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.asset._

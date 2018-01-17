@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, OracleLinearAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -232,7 +232,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = createService()
 
     val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(4000)), 0, 20,  Some("test"), None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface, None, None))
-    val expiredAssets = Seq(PersistedLinearAsset(2, 5001, 1, Some(NumericValue(2000)), 0, 20, Some("test"), None, Some("test2"), None, true, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface, None, None))
+    val expiredAssets = Seq(AssetLastModification(2, 5001, Some("test2"), None))
 
     runWithRollback {
       val changeInfo = createChangeInfo(roadLinks, 11L)

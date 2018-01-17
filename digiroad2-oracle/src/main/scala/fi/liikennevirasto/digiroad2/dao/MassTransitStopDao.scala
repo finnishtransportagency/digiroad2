@@ -9,12 +9,9 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
-import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
@@ -617,5 +614,9 @@ class MassTransitStopDao {
     Q.queryNA[(Long, Long)](queryFilter(query)).list
   }
 
-
+  def getMunicipalityNameByCode(code: Int): String = {
+    sql"""
+      select name_fi from municipality where id = $code
+    """.as[String].first
+  }
 }

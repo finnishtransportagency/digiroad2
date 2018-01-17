@@ -1,8 +1,10 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.service.RoadLinkType
-import fi.liikennevirasto.viite.dao.{BaseRoadAddress, ProjectLink, RoadAddress}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.digiroad2.util.Track
 
 /**
   * Created by venholat on 14.6.2017.

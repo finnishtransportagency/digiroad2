@@ -7,11 +7,12 @@ import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.DirectionalTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStop, MassTransitStopService, MassTransitStopWithProperties}
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
@@ -153,9 +154,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testNumericValueService = new NumericValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testProhibitionService = new ProhibitionService(mockRoadLinkService, new DummyEventBus)
   val testTextValueService = new TextValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
-
-  addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testMaintenanceRoadServiceService,
-    testPavingService, testRoadWidthService, testProhibitionService, testTextValueService, testNumericValueService), "/*")
+  
   addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
     testPavingService, testRoadWidthService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")

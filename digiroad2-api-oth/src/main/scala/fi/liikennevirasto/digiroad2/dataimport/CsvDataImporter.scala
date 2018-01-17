@@ -8,14 +8,14 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.RoadLinkServiceDAO
-import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, TRTrafficSignType, TrafficSignService, VVHClient}
+import fi.liikennevirasto.digiroad2.Digiroad2Context
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 
 import scala.util.Try
 

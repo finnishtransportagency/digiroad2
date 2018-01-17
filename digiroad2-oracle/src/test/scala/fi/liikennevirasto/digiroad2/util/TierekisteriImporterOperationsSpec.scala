@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoad
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import org.joda.time.DateTime
 import org.mockito.Matchers.{any, _}

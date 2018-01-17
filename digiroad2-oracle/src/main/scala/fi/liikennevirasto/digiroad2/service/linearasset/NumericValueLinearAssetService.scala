@@ -35,7 +35,7 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
     }.filterNot(_.expired)
   }
 
-  override protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  override protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
@@ -48,14 +48,6 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
     def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
       !persistedLinearAsset.exists(_.value == assetToPersist.value)
     }
-    def mValueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(pl => pl.startMeasure == assetToPersist.startMeasure &&
-        pl.endMeasure == assetToPersist.endMeasure &&
-        pl.vvhTimeStamp == assetToPersist.vvhTimeStamp)
-    }
-    def sideCodeChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(_.sideCode == assetToPersist.sideCode)
-    }
     toUpdate.foreach { linearAsset =>
       val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
       val id = linearAsset.id
@@ -66,8 +58,6 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
           case _ => None
         }
       }
-      if (mValueChanged(linearAsset, persistedLinearAsset)) dao.updateMValues(linearAsset.id, (linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.vvhTimeStamp)
-      if (sideCodeChanged(linearAsset, persistedLinearAsset)) dao.updateSideCode(linearAsset.id, SideCode(linearAsset.sideCode))
     }
   }
 

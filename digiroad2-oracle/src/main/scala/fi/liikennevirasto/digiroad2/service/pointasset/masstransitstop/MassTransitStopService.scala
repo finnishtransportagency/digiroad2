@@ -494,6 +494,13 @@ trait MassTransitStopService extends PointAssetOperations {
       propertyData = persistedStop.propertyData), floatingReason)
   }
 
+  private def eventBusMassTransitStop(stop: PersistedMassTransitStop, municipalityName: String) = {
+    EventBusMassTransitStop(municipalityNumber = stop.municipalityCode, municipalityName = municipalityName,
+      nationalId = stop.nationalId, lon = stop.lon, lat = stop.lat, bearing = stop.bearing,
+      validityDirection = stop.validityDirection, created = stop.created, modified = stop.modified,
+      propertyData = stop.propertyData)
+  }
+
   private def deleteFloatingReasonValue(assetId: Long): Unit = {
     massTransitStopDao.deleteNumberPropertyValue(assetId, "kellumisen_syy")
   }

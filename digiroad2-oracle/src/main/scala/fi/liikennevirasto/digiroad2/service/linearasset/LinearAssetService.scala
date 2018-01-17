@@ -190,12 +190,8 @@ trait LinearAssetOperations {
     if (!notVerifiedUser.contains(userName) && verifiableAssetType.contains(assetType)) Some(userName) else None
   }
 
-  protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
-    val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
-
-    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-
     val existingAssets =
       withDynTransaction {
          dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
@@ -205,11 +201,11 @@ trait LinearAssetOperations {
 
   protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
+    val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
-    val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, changes, removedLinkIds)
+    val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, removedLinkIds)
 
     val timing = System.currentTimeMillis
-
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
     val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
@@ -546,8 +542,6 @@ trait LinearAssetOperations {
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
           case Some(TextualValue(textValue)) =>
             dao.insertValue(id, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), textValue)
-          case Some(prohibitions: Prohibitions) =>
-            dao.insertProhibitionValue(id, prohibitions)
           case _ => None
         }
       }

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import java.util.{Date, NoSuchElementException}
 
-import fi.liikennevirasto.digiroad2.{AbstractPublishInfo, _}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, PointAssetOperations}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{Equipment, TierekisteriBusStopMarshaller, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}

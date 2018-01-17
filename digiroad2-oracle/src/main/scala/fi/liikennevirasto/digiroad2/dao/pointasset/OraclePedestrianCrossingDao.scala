@@ -7,8 +7,10 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
+import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
 case class PedestrianCrossing(id: Long, linkId: Long,

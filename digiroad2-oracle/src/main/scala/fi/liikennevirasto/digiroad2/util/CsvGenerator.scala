@@ -11,7 +11,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new RoadLinkOTHService(new VVHClient(vvhServiceHost), new DummyEventBus, new DummySerializer)
