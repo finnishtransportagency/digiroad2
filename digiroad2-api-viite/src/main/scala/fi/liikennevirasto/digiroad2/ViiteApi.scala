@@ -268,7 +268,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val firstLink = projectService.getFirstProjectLink(projectSaved)
       Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
         projectSaved.reservedParts.map(reservedRoadPartToApi),
-        "success" -> true)
+        "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
@@ -405,7 +405,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val retVal = writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
         Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username)
       writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
-      retVal
+      retVal + ("projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case e: MappingException =>

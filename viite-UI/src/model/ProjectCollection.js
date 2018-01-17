@@ -157,6 +157,7 @@
             startDate: result.project.startDate,
             publishable: false
           };
+          projectErrors = result.projectErrors;
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadPartList = result.formInfo;
           currentProject = result;
@@ -272,8 +273,10 @@
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
+              projectErrors = successObject.projectErrors;
               eventbus.trigger('projectLink:projectLinksCreateSuccess');
               eventbus.trigger('roadAddress:projectLinksCreateSuccess');
+              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
             }
           });
         }

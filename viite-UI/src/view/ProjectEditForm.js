@@ -240,6 +240,8 @@
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
+        $('[id^=editProject]').css('visibility', 'visible');
+        $('#closeProjectSpan').css('visibility', 'visible');
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         } else {
