@@ -1,11 +1,16 @@
 package fi.liikennevirasto.viite
+import java.util.Properties
+
+import fi.liikennevirasto.digiroad2.service.RoadLinkType.UnknownRoadLinkType
 
 import java.net.ConnectException
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._

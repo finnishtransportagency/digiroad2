@@ -398,6 +398,10 @@
       }
     });
 
+    eventbus.on('maintenanceRoad:activeComplementaryLayer', function() {
+      elements.expanded.find('#complementaryLinkCheckBox').prop('checked', true);
+    });
+
     return {
       title: asset.title,
       layerName: asset.layerName,

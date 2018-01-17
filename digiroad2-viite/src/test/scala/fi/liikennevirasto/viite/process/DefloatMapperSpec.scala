@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import java.util.Date
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
+import fi.liikennevirasto.digiroad2.service.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
