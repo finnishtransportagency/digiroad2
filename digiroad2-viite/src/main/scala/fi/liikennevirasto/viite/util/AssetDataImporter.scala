@@ -132,7 +132,7 @@ class AssetDataImporter {
 
   private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, ely: Int, importOptions: ImportOptions,
                                     vvhClientProd: Option[VVHClient]): Unit = {
-    def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)): String = {
+    def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double, Long)): String = {
       s"""linkid: %d, alku: %d, loppu: %d, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s""".
         format(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15)
     }
@@ -149,8 +149,8 @@ class AssetDataImporter {
             jatkuu, aet, let,
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
-            alkux, alkuy, loppux, loppuy
-            from vvh_tieosoite_taydentava WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
+            alkux, alkuy, loppux, loppuy, ajorataid
+            from vvh_tieosoite_taydentava WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double, Long)].list
       else
         sql"""select linkid, alku, loppu,
             tie, aosa, ajr,
@@ -158,14 +158,14 @@ class AssetDataImporter {
             jatkuu, aet, let,
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), linkid * 10000 + ajr*1000 + aet as id,
-            alkux, alkuy, loppux, loppuy
-            from vvh_tieosoite_nyky WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)].list
+            alkux, alkuy, loppux, loppuy, ajorataid
+            from vvh_tiehistoria_heina2017 WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double, Long)].list
     }
 
     print(s"\n${DateTime.now()} - ")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
     val lrmList = roads.map(r => LRMPos(r._16, r._1, r._2.toDouble, r._3.toDouble, LinkGeomSource.Unknown)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
-    val addressList = roads.map(r => r._16 -> (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15, r._17, r._18, r._19, r._20)).toMap
+    val addressList = roads.map(r => r._16 -> (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15, r._17, r._18, r._19, r._20, r._21)).toMap
 
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(lrmList.keys.size))
@@ -202,9 +202,12 @@ class AssetDataImporter {
 
     val lrmListWithLinkSources = if (roadLinks.nonEmpty) lrmList.map(x => x.copy(x._1, x._2.map(
       pos => pos.copy(
-        pos.id, pos.linkId, pos.startM, pos.endM, roadLinks.find(
-          roadLink => roadLink.linkId == pos.linkId
-        ).get.linkSource
+        pos.id, pos.linkId, pos.startM, pos.endM, {
+          val roadLinkOpt = roadLinks.find(
+            roadLink => roadLink.linkId == pos.linkId
+          )
+          if (roadLinkOpt.nonEmpty) roadLinkOpt.get.linkSource else LinkGeomSource.Unknown
+        }
       )
     )
     )) else lrmList
@@ -245,6 +248,10 @@ class AssetDataImporter {
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmPositions.size}""".as[Long].list
     assert(ids.size == lrmPositions.size || lrmPositions.isEmpty)
+
+    // Cache for inserted lrm_positions
+    var lrmPosCache = collection.mutable.Map[(Long, Long), Long]().withDefaultValue(-1)
+
     lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
       assert(addressList.get(pos.id).size == 1)
       val address = addressList.get(pos.id).head
@@ -259,16 +266,22 @@ class AssetDataImporter {
         (address._15, address._16, address._13, address._14)
       val linkSource = pos.linkSource
 
-      lrmPositionPS.setLong(1, lrmId)
-      // TODO: link id mapping, see above
-//      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
-      lrmPositionPS.setLong(2, pos.linkId)
-      lrmPositionPS.setLong(3, sideCode)
-      lrmPositionPS.setDouble(4, pos.startM)
-      lrmPositionPS.setDouble(5, pos.endM)
-      lrmPositionPS.setLong(6, linkSource.value)
-      lrmPositionPS.addBatch()
-      addressPS.setLong(1, lrmId)
+      val lrmPosCacheKey = (pos.linkId, address._17) // linkid, ajorataid
+      val cachedLrmId = lrmPosCache(lrmPosCacheKey)
+      if (cachedLrmId < 0) {
+        lrmPosCache += (lrmPosCacheKey -> lrmId)
+        lrmPositionPS.setLong(1, lrmId)
+        // TODO: link id mapping, see above
+        //      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
+        lrmPositionPS.setLong(2, pos.linkId)
+        lrmPositionPS.setLong(3, sideCode)
+        lrmPositionPS.setDouble(4, pos.startM)
+        lrmPositionPS.setDouble(5, pos.endM)
+        lrmPositionPS.setLong(6, linkSource.value)
+        lrmPositionPS.addBatch()
+      }
+
+      addressPS.setLong(1, if (cachedLrmId < 0) lrmId else cachedLrmId)
       addressPS.setLong(2, address._1)
       addressPS.setLong(3, address._2)
       addressPS.setLong(4, address._3)
