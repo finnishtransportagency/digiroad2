@@ -95,7 +95,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def calculateMeasuresTest(roadAddress: ViiteRoadAddress, section: AddressSection) = super.calculateMeasures(roadAddress, section)
 
     def createSpeedLimitTest(roadAddress: ViiteRoadAddress, addressSection: AddressSection,
-                             trAssetOption: Option[TierekisteriAssetData], roadLinkOption: Option[VVHRoadlink]) = super.createSpeedLimit(roadAddress, addressSection, trAssetOption, roadLinkOption)
+                             trAssetOption: Option[TierekisteriAssetData], roadLinkOption: Option[VVHRoadlink]) = super.createSpeedLimit(roadAddress, addressSection, trAssetOption, roadLinkOption, UnknownLinkType)
 
     override def createUrbanTrafficSign(roadLink: Option[VVHRoadlink], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData],
                                         addressSection: AddressSection, roadAddress: ViiteRoadAddress,
