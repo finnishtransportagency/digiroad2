@@ -314,14 +314,16 @@
       }
 
       var endDistance = parseInt($('#endDistance').val());
-      var originalEndDistance = _.chain(changedLinks).uniq().sortBy(function(cl){
+      var changedLink = _.chain(changedLinks).uniq().sortBy(function(cl){
         return cl.endAddressM;
-      }).last().value().endAddressM;
+      }).last().value();
+      var originalEndDistance = changedLink.endAddressM;
+      var isNewEndAddrMValue = (originalEndDistance != dataJson.userDefinedEndAddressM) && changedLink.status == LinkStatus.New.value;
       if(!isNaN(endDistance) && !isNaN(originalEndDistance) && originalEndDistance !== endDistance){
         dataJson.userDefinedEndAddressM = endDistance;
       }
 
-      if(!validUserGivenAddrMValues(_.first(dataJson.linkIds), dataJson.userDefinedEndAddressM)){
+      if(isNewEndAddrMValue && !validUserGivenAddrMValues(_.first(dataJson.linkIds), dataJson.userDefinedEndAddressM)){
         new GenericConfirmPopup("Antamasi pituus eroaa yli 5% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
             createOrUpdate(dataJson, changedLinks);
