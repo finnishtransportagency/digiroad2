@@ -49,10 +49,10 @@
     };
   };
 
-  var validatePlatformNumberMaxSize = function (target) {
+  var validateTextElementMaxSize = function (target, numCharacterMax) {
     var propertyValue = target.currentTarget.value;
-    if (propertyValue.length > 3) {
-      target.currentTarget.value = propertyValue.substring(0, 3);
+    if (propertyValue.length > numCharacterMax) {
+      target.currentTarget.value = propertyValue.substring(0, numCharacterMax);
     }
   };
 
@@ -288,9 +288,9 @@
           elementType = property.propertyType === 'long_text' ?
             $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
           element = elementType.bind('input', function(target){
-            if (property.publicId === 'laiturinumero')
-              validatePlatformNumberMaxSize(target);
-            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required);
+            if(property.numCharacterMax)
+              validateTextElementMaxSize(target, property.numCharacterMax);
+            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required, property.numCharacterMax);
           });
 
           if(property.values[0]) {
@@ -566,6 +566,7 @@
           'yllapitajan_koodi',
           'matkustajatunnus',
           'laiturinumero', //Platform Number
+          'vyöhyketieto', //Information Zone
           'alternative_link_id',
           'liitetty_terminaaliin',
           'maastokoordinaatti_x',
