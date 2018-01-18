@@ -7,9 +7,11 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.AddressChangeType.{Termination, Transfer}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
@@ -318,7 +320,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       checkSplit(projectLinks, 25.3, 0, 25, 87, 123.0)
       val options2 = SplitOptions(Point(0, 65.3), LinkStatus.Transfer, LinkStatus.New, 1, 1, Track.Combined,
         Discontinuity.Continuous, 1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
-      val preSplitData = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options2)._1.getOrElse(Seq())
+      val preSplitData = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options2)._1.map(rs => rs.toSeqWithMergeTerminated).getOrElse(Seq())
       preSplitData should have size (3)
       // Test that the transfer is not returned back in pre-split for already split suravage but the old values are
       preSplitData.exists(_.status == Transfer) should be (false)

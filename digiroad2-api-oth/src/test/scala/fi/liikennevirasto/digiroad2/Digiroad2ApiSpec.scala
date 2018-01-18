@@ -3,12 +3,18 @@ package fi.liikennevirasto.digiroad2
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.linearasset.{AssetTypes, RoadLink, Value}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
+import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.DirectionalTrafficSign
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.service.pointasset._
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStop, MassTransitStopService, MassTransitStopWithProperties}
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
 import org.joda.time.DateTime
 import org.json4s._
@@ -75,11 +81,11 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinkFromVVH(1l))
+  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1l))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkFromVVH(2l))
+  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(2l))
     .thenReturn(Some(toRoadLink(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkFromVVH(7478l))
+  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(7478l))
     .thenReturn(Some(toRoadLink(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1l))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
@@ -95,9 +101,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean]))
     .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
-  when(mockRoadLinkService.getRoadLinkFromVVH(1611071l))
+  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1611071l))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkFromVVH(1611353))
+  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1611353))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611353))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
@@ -125,13 +131,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1l))
     .thenReturn(Some(RoadLink(1l, Nil, 0, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
 
-//  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(Set(1611071l, 1611070l, 1611069l))).thenReturn(Seq(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))),
-//    RoadLink(1611070l,  List(Point(117.318, 0.0), Point(127.239, 0.0)), 127.239, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))),
-//    RoadLink(1611069l, List(Point(127.239, 0.0), Point(146.9, 0.0)), 146.9, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611071l)).thenReturn(Some(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
-
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH((1611071l))).thenReturn(Some(RoadLink(1611071l,  List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
-
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)
   val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockRoadLinkService)
@@ -141,6 +141,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val roadLinkService: RoadLinkService = mockRoadLinkService
   }
@@ -150,7 +151,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new OracleMassLimitationDao)
   val testPavingService = new PavingService(mockRoadLinkService, new DummyEventBus)
   val testRoadWidthService = new RoadWidthService(mockRoadLinkService, new DummyEventBus)
-
+  val testNumericValueService = new NumericValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
+  val testProhibitionService = new ProhibitionService(mockRoadLinkService, new DummyEventBus)
+  val testTextValueService = new TextValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
+  
   addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
     testPavingService, testRoadWidthService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")

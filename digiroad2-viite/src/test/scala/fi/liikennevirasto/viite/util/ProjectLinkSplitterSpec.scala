@@ -10,8 +10,10 @@ import fi.liikennevirasto.digiroad2.util.Track.{Combined, Unknown}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
@@ -442,11 +444,12 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(toRoadLink(suravageAddressLink)))
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
       val splitOptions = SplitOptions(Point(0, 45.3), LinkStatus.Transfer, LinkStatus.New, 0, 0, Track.Combined, Discontinuity.Continuous, 0, LinkGeomSource.Unknown, RoadType.Unknown, projectId, ProjectCoordinates(0, 45.3, 10))
-      val (splitedLinks, errorMessage, vector) = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId,  "TestUser", splitOptions)
+      val (splitedResult, errorMessage, vector) = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId,  "TestUser", splitOptions)
       errorMessage.isEmpty should be (true)
-      splitedLinks.nonEmpty should be (true)
-      splitedLinks.get.size should be (3)
-      val (sl, tl) = splitedLinks.get.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      splitedResult.nonEmpty should be (true)
+      val splitedLinks = splitedResult.get.toSeqWithMergeTerminated
+      splitedLinks.size should be (3)
+      val (sl, tl) = splitedLinks.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
       val (splitA, splitB) = sl.partition(_.status != LinkStatus.New)
       splitA.size should be (1)
       splitB.size should be (1)

@@ -2,19 +2,21 @@ package fi.liikennevirasto.viite
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
 import fi.liikennevirasto.viite.ProjectValidator.{ValidationError, ValidationErrorDetails}
 import fi.liikennevirasto.viite.ProjectValidator.ValidationError.MissingEndOfRoad
 import fi.liikennevirasto.viite.RoadType.PublicRoad
@@ -655,10 +657,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value} Where PROJECT_ID = ${saved.id}""".execute
-      val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
+      val terminations = ProjectDeltaCalculator.delta(saved).terminations
       terminations should have size (projectLinks.size)
       sqlu"""UPDATE Project_link set status = ${LinkStatus.New.value} Where PROJECT_ID = ${saved.id}""".execute
-      val newCreations = ProjectDeltaCalculator.delta(saved.id).newRoads
+      val newCreations = ProjectDeltaCalculator.delta(saved).newRoads
       newCreations should have size (projectLinks.size)
       val sections = ProjectDeltaCalculator.partition(terminations)
       sections should have size (2)
@@ -689,7 +691,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value} where project_id = ${saved.id}""".execute
-      val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
+      val terminations = ProjectDeltaCalculator.delta(saved).terminations
       terminations should have size (projectLinks.size)
       val modTerminations = terminations.map(t =>
         if (t.endAddrMValue == 4529)

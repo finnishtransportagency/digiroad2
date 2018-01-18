@@ -106,12 +106,18 @@
             return new RoadLinkModel(roadLink);
           });
         });
-        roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
-          return _.some(roadLinkGroup, function(roadLink) {
-            _.contains(selectedIds, roadLink.getId());
-          });
-        }).concat(getSelectedRoadLinks());
+        roadLinkGroups = fetchedRoadLinkModels;
 
+        if(!_.isEmpty(getSelectedRoadLinks())){
+          var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinks(), function(selected) {
+            var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function(group){
+              return group.getData();
+            });
+            return _.contains(_.pluck(allGroups, 'linkId'), selected.getData().linkId);
+          });
+          roadLinkGroups.concat(nonFetchedLinksInSelection);
+        }
+        
         historicRoadLinks = _.filter(roadLinkGroups, function(group) {
           return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
         });

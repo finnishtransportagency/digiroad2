@@ -2,15 +2,15 @@ package db.migration
 
 import com.googlecode.flyway.core.api.migration.jdbc.JdbcMigration
 import java.sql.Connection
+
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{LocalizationDao, MassTransitStopDao, Queries}
-import Queries._
+import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 import Q.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.asset.LocalizedString
+import fi.liikennevirasto.digiroad2.dao.LocalizationDao
 
 class V2_6__move_property_names extends JdbcMigration {
   def migrate(connection: Connection) {

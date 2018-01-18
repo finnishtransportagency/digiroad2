@@ -152,7 +152,7 @@ object NumericalLimitFiller {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
     val generated = remainders.map { segment =>
-      PersistedLinearAsset(0L, roadLink.linkId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource)
+      PersistedLinearAsset(0L, roadLink.linkId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource, None, None)
     }
     (segments ++ generated, changeSet)
   }
@@ -164,7 +164,7 @@ object NumericalLimitFiller {
         .map { x => (x.startMeasure, x.endMeasure) }
       val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5 }
       remainders.map { segment =>
-        PersistedLinearAsset(0L, roadLink.linkId, sideCode.value, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource)
+        PersistedLinearAsset(0L, roadLink.linkId, sideCode.value, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource, None, None)
       }
     } else {
       Nil
@@ -326,10 +326,10 @@ object NumericalLimitFiller {
       val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
       PieceWiseLinearAsset(
-        dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired,
-        dbAsset.startMeasure, dbAsset.endMeasure,
-        Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime,
-        dbAsset.createdBy, dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection, dbAsset.vvhTimeStamp, dbAsset.geomModifiedDate, dbAsset.linkSource, roadLink.administrativeClass)
+        dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired, dbAsset.startMeasure,
+        dbAsset.endMeasure, Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime, dbAsset.createdBy,
+        dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection, dbAsset.vvhTimeStamp, dbAsset.geomModifiedDate,
+        dbAsset.linkSource, roadLink.administrativeClass,  verifiedBy = dbAsset.verifiedBy, verifiedDate = dbAsset.verifiedDate)
     }
   }
 
@@ -549,6 +549,6 @@ object NumericalLimitFiller {
       value = asset.value, startMeasure = newStart, endMeasure = newEnd,
       createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
-      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource), changeSet)
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource, verifiedBy = asset.verifiedBy, verifiedDate = asset.verifiedDate), changeSet)
   }
 }

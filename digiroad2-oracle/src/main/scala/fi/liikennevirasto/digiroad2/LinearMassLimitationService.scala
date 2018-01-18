@@ -4,6 +4,8 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 
 case class MassLimitationAsset(geometry: Seq[Point], sideCode: Int, value: Option[Value])
 
