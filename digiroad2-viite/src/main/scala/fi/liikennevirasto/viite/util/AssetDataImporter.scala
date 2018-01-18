@@ -161,6 +161,30 @@ class AssetDataImporter {
             alkux, alkuy, loppux, loppuy, ajorataid
             from vvh_tiehistoria_heina2017 WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double, Long)].list
     }
+    /*
+     * roads:
+     * 1: linkid (linkId)
+     * 2: alku (startM, start_measure)
+     * 3: loppu (endM, end_measure)
+     * 4: tie (roadNumber)
+     * 5: aosa (roadPartNumber)
+     * 6: ajr (trackCode)
+     * 7: ely (ely)
+     * 8: tietyyppi (roadType)
+     * 9: jatkuu (discontinuity)
+     * 10: aet (start_addr_m)
+     * 11: let (end_addr_m)
+     * 12: alkupvm (startDate)
+     * 13: loppupvm (endDate)
+     * 14: kayttaja (modifiedBy)
+     * 15: muutospvm / rekisterointipvm
+     * 16: id (linkid * 10000 + ajr * 1000 + aet)
+     * 17: alkux
+     * 18: alkuy
+     * 19: loppux
+     * 20: loppuy
+     * 21: ajorataid
+     */
 
     print(s"\n${DateTime.now()} - ")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
