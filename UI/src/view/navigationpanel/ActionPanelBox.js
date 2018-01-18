@@ -79,27 +79,32 @@
       }
     };
 
-    this.elements = function (){
-      return { expanded: $([ '<div class="panel ' + me.layerName() +'">',
-              '  <header class="panel-header expanded">',
-              me.header() ,
-              '  </header>',
-              '   <div class="panel-section panel-legend linear-asset-legend '+ me.legendName() + '-legend">',
-              me.labeling(),
-              me.checkboxPanel(),
-              me.assetTools(),
-              '  </div>',
-              '</div>'].join(''))  };
-    };
-
     var renderTemplate = function () {};
     var header = function () {};
     var title = function () {};
     var layerName = function () {};
-    var legendName = function () {};
     var labeling = function () {};
     var checkboxPanel = function () {};
     var assetTools = function () {};
+    this.legendName = function () {};
+
+    this.elements = function (){
+      return { expanded: $([
+        me.panel(),
+        me.labeling(),
+        me.checkboxPanel(),
+        me.assetTools(),
+        '  </div>',
+        '</div>'].join(''))  };
+    };
+
+    this.panel = function () {
+      return [ '<div class="panel ' + me.layerName() +'">',
+               '  <header class="panel-header expanded">',
+                me.header() ,
+               '  </header>',
+               '   <div class="panel-section panel-legend linear-asset-legend '+ me.legendName() + '-legend">'].join('');
+    };
 
 
     this.bindExternalEventHandlers = function(readOnly) {
@@ -112,7 +117,7 @@
         }
       });
       eventbus.on('application:readOnly', function(readOnly) {
-        $(expanded).find('.panel-header').toggleClass('edit', !readOnly);
+        $(me.expanded).find('.panel-header').toggleClass('edit', !readOnly);
       });
     };
 
@@ -122,7 +127,6 @@
       header: header,
       title: title,
       layerName: layerName,
-      legendName: legendName,
       labeling: labeling,
       checkboxPanel: checkboxPanel,
       assetTools: assetTools

@@ -64,7 +64,6 @@
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
     var element = $('<div class="panel-group speed-limit"/>');
-    this.expanded = {};
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;
@@ -117,7 +116,6 @@
           eventbus.trigger('speedLimit:hideReadOnlyTrafficSigns');
         }
       });
-
     };
 
     return {

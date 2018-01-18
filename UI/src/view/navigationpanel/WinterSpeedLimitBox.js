@@ -52,7 +52,6 @@
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
     var element = $('<div class="panel-group winter-speed-limits"/>');
-    this.expanded = {};
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;

@@ -336,7 +336,7 @@
                        selectedSpeedLimit,
                        selectedMassTransitStopModel) {
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
-    var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
+    var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
     var speedLimitBox = new SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
     var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));

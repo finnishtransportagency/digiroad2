@@ -34,8 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/StyleRule.js', 'UI/src/view/TrafficSignLabel.js', 'UI/src/view/AssetStyle.js', 'UI/src/view/ServiceRoadLabel.js', 'UI/src/view/MaintenanceRoadStyle.js', 'UI/src/view/WinterSpeedLimitStyle.js',
-           'UI/src/view/TRSpeedLimitStyle.js','UI/src/view/AssetLabel.js', 'UI/src/view/LinearAssetLabel.js', 'UI/src/model/TrafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
+          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/StyleRule.js', 'UI/src/view/TrafficSignLabel.js', 'UI/src/view/AssetStyle.js', 'UI/src/view/ServiceRoadLabel.js', 'UI/src/view/ServiceRoadStyle.js', 'UI/src/view/WinterSpeedLimitStyle.js', 'UI/src/view/AssetLabel.js', 'UI/src/view/LinearAssetLabel.js', 'UI/src/model/TrafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
           'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
@@ -94,8 +93,8 @@ module.exports = function(grunt) {
           },
           {
               context: '/maasto',
-              host: '172.17.204.46',
-            /*host: '172.17.206.180',*/
+              // host: '172.17.204.46',
+              host: '172.17.206.180',
               port: '8080',
               https: false,
               changeOrigin: true,
