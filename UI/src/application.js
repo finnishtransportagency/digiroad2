@@ -337,11 +337,11 @@
                        selectedMassTransitStopModel) {
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
     var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
-    var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
+    var speedLimitBox = new SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
-    var winterSpeedLimits = new ActionPanelBoxes.WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
-    var serviceRoadBox = new ActionPanelBoxes.ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
-    var trSpeedLimitBox = new ActionPanelBoxes.TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}));
+    var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
+    var serviceRoadBox = new ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
+    var trSpeedLimitBox = new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}));
 
     return [
       [roadLinkBox],
