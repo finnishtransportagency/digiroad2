@@ -555,16 +555,15 @@ class SpeedLimitsTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-//    val municipalities = getAllMunicipalities()
-    val municipalities = Set(235)
+    val municipalities = getAllMunicipalities()
     municipalities.foreach { municipality =>
       withDynTransaction{
         expireAssets(municipality, Some(State))
       }
     }
 
-//    val roadNumbers = getAllViiteRoadNumbers()
-    val roadNumbers = Seq(1)
+  val roadNumbers = getAllViiteRoadNumbers()
+
     roadNumbers.foreach {
       roadNumber =>
         withDynTransaction{
