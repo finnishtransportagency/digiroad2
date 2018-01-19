@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.importer.{LitRoadTierekisteriImporter, RoadWidthTierekisteriImporter}
 import fi.liikennevirasto.digiroad2.util._
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
