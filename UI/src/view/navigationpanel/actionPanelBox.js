@@ -1,7 +1,7 @@
 (function(root) {
   root.ActionPanelBox = function() {
     var me = this;
-    this.userRoles = {};
+    this.roles = {};
 
     this.selectToolIcon = '<img src="images/select-tool.svg"/>';
     this.cutToolIcon = '<img src="images/cut-tool.svg"/>';
@@ -85,7 +85,8 @@
     var layerName = function () {};
     var labeling = function () {};
     var checkboxPanel = function () {};
-    var assetTools = function () {};
+    var predicate = function () {};
+
     this.legendName = function () {};
 
     this.elements = function (){
@@ -93,7 +94,7 @@
         me.panel(),
         me.labeling(),
         me.checkboxPanel(),
-        me.assetTools(),
+        me.bindExternalEventHandlers(),
         '  </div>',
         '</div>'].join(''))  };
     };
@@ -107,10 +108,10 @@
     };
 
 
-    this.bindExternalEventHandlers = function(readOnly) {
+    this.bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
-        me.userRoles = roles;
-        if (!readOnly && _.contains(roles, 'operator') || _.contains(roles, 'premium') ) {
+        me.roles = roles;
+        if (me.predicate()) {
           me.toolSelection.reset();
           $(me.expanded).append(me.toolSelection.element);
           $(me.expanded).append(me.editModeToggle.element);
@@ -118,6 +119,29 @@
       });
       eventbus.on('application:readOnly', function(readOnly) {
         $(me.expanded).find('.panel-header').toggleClass('edit', !readOnly);
+      });
+    };
+
+    this.eventHandler = function(){
+      $(me.expanded).find('#complementaryLinkCheckBox').on('change', function (event) {
+        if ($(event.currentTarget).prop('checked')) {
+          eventbus.trigger(me.layerName() + '-complementaryLinks:show');
+        } else {
+          if (applicationModel.isDirty()) {
+            $(event.currentTarget).prop('checked', true);
+            new Confirm();
+          } else {
+            eventbus.trigger(me.layerName() +'-complementaryLinks:hide');
+          }
+        }
+      });
+
+      $(me.expanded).find('#trafficSignsCheckbox').on('change', function (event) {
+        if ($(event.currentTarget).prop('checked')) {
+          eventbus.trigger(me.layerName() + '-readOnlyTrafficSigns:show');
+        } else {
+          eventbus.trigger(me.layerName() + '-readOnlyTrafficSigns:hide');
+        }
       });
     };
 
@@ -129,7 +153,8 @@
       layerName: layerName,
       labeling: labeling,
       checkboxPanel: checkboxPanel,
-      assetTools: assetTools
+      predicate: predicate,
+      executeOrShowConfirmDialog: executeOrShowConfirmDialog
     };
   };
 })(this);

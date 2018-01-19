@@ -750,8 +750,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'massTransitStop:movementPermission', function(movementPermission){
       movementPermissionConfirmed = movementPermission;
     });
-    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:show', showWithComplementary);
-    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:hide', hideComplementary);
+    eventListener.listenTo(eventbus, 'massTransitStop-complementaryLinks:show', showWithComplementary);
+    eventListener.listenTo(eventbus, 'massTransitStop-complementaryLinks:hide', hideComplementary);
     eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);

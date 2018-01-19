@@ -66,8 +66,8 @@
         me.removeLayerFeatures();
     };
 
-    eventbus.on(parentLayerName + ':hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
-    eventbus.on(parentLayerName + ':showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
+    eventbus.on(parentLayerName + '-readOnlyTrafficSigns:show', hideReadOnlyTrafficSigns);
+    eventbus.on(parentLayerName + '-readOnlyTrafficSigns:hide', showReadOnlyTrafficSigns);
     eventbus.on('readOnlyLayer:' + parentLayerName + ':shown', function (layerName) {
       showLayer(layerName);
     }, this);

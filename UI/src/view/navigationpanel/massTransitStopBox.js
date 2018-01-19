@@ -106,7 +106,6 @@
       return icon.replace('/>', ' title="'+title+'"/>');
     }
 
-
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
     var element = $('<div class="panel-group mass-transit-stops"/>');
@@ -145,7 +144,6 @@
       eventbus.on('road-type:selected', toggleRoadType);
     };
 
-
     var toggleRoadType = function(bool) {
       var expandedRoadTypeCheckboxSelector = $(me.expanded).find('.road-type-checkbox').find('input[type=checkbox]');
 
@@ -154,9 +152,37 @@
       expandedRoadTypeCheckboxSelector.prop("checked", bool);
     };
 
+    var bindDOMEventHandlers = function() {
+      var validityPeriodChangeHandler = function(event) {
+        me.executeOrShowConfirmDialog(function() {
+          var el = $(event.currentTarget);
+          var validityPeriod = el.prop('name');
+          massTransitStopsCollection.selectValidityPeriod(validityPeriod, el.prop('checked'));
+        });
+      };
+
+      $(me.expanded).find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
+      $(me.expanded).find('.checkbox').find('input[type=checkbox]').click(function(event) {
+        if (applicationModel.isDirty()) {
+          event.preventDefault();
+        }
+      });
+
+      var expandedRoadTypeCheckboxSelector = $(me.expanded).find('.road-type-checkbox').find('input[type=checkbox]');
+
+      var roadTypeSelected = function(e) {
+        var checked = e.currentTarget.checked;
+        applicationModel.setRoadTypeShown(checked);
+      };
+
+      expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
+    };
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;
+      me.eventHandler();
+      bindDOMEventHandlers();
+      me.bindExternalEventHandlers();
       toggleRoadType(true);
       return element
         .append(this.expanded)

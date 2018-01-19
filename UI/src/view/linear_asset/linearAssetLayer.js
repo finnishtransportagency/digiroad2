@@ -398,8 +398,8 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var startListeningExtraEvents = function(){
-    extraEventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
-    extraEventListener.listenTo(eventbus, 'complementaryLinks:hide', hideComplementary);
+    extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:show', showWithComplementary);
+    extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:hide', hideComplementary);
   };
 
   var stopListeningExtraEvents = function(){

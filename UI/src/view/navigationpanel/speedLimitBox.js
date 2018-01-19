@@ -37,13 +37,13 @@
 
       var speedLimitComplementaryCheckBox = [
         '<div class="check-box-container">' +
-        '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+        '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
         '</div>'
       ].join('');
 
       var speedLimitSignsCheckBox = [
         '<div class="check-box-container">' +
-        '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
+        '<input id="trafficSignsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
         '</div>' +
         '</div>'
       ].join('');
@@ -52,8 +52,8 @@
 
     };
 
-    this.assetTools = function () {
-      me.bindExternalEventHandlers(false);
+    this.predicate = function () {
+      return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium');
     };
 
     this.toolSelection = new me.ToolSelection([
@@ -74,7 +74,7 @@
     };
 
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.userRoles)) {
+      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
         me.editModeToggle.reset();
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
@@ -87,33 +87,13 @@
     }
 
     var myEvents = function() {
+      me.eventHandler();
       $(me.expanded).find('#historyCheckbox').on('change', function (event) {
         var eventTarget = $(event.currentTarget);
         if (eventTarget.prop('checked')) {
           eventbus.trigger('speedLimits:showSpeedLimitsHistory');
         } else {
           eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
-        }
-      });
-
-      $(me.expanded).find('#compCheckbox').on('change', function (event) {
-        if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger('speedLimits:showSpeedLimitsComplementary');
-        } else {
-          if (applicationModel.isDirty()) {
-            $(event.currentTarget).prop('checked', true);
-            new Confirm();
-          } else {
-            eventbus.trigger('speedLimits:hideSpeedLimitsComplementary');
-          }
-        }
-      });
-
-      $(me.expanded).find('#signsCheckbox').on('change', function (event) {
-        if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger('speedLimit:showReadOnlyTrafficSigns');
-        } else {
-          eventbus.trigger('speedLimit:hideReadOnlyTrafficSigns');
         }
       });
     };

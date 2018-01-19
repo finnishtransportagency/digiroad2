@@ -312,8 +312,8 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var startListeningExtraEvents = function(){
-    extraEventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsComplementary', hideSpeedLimitsComplementary);
-    extraEventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsComplementary', showSpeedLimitsComplementary);
+    extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:hide', hideSpeedLimitsComplementary);
+    extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:show', showSpeedLimitsComplementary);
   };
 
   var stopListeningExtraEvents = function(){

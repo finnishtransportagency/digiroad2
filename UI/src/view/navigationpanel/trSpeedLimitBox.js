@@ -32,14 +32,14 @@
     this.checkboxPanel = function () {
       return [
         '<div class="check-box-container">' +
-        '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
+        '<input id="trafficSignsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
         '</div>' +
         '</div>'
       ].join('');
     };
 
-    this.assetTools = function () {
-      me.bindExternalEventHandlers(assetConfig.readOnly);
+    this.predicate = function () {
+      return (!assetConfig.readOnly && _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'));
     };
 
     this.toolSelection = new me.ToolSelection([
@@ -53,14 +53,14 @@
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;
-      myEvents();
+      me.eventHandler();
       return element
         .append(this.expanded)
         .hide();
     };
 
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.userRoles)) {
+      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
         me.editModeToggle.reset();
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
@@ -71,16 +71,6 @@
     function hide() {
       element.hide();
     }
-
-    var myEvents = function() {
-      $(me.expanded).find('#signsCheckbox').on('change', function (event) {
-        if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger(assetConfig.layerName + ':showReadOnlyTrafficSigns');
-        } else {
-          eventbus.trigger(assetConfig.layerName + ':hideReadOnlyTrafficSigns');
-        }
-      });
-    };
 
     return {
       title: me.title(),

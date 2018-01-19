@@ -45,8 +45,8 @@
         ].join('') : '';
     };
 
-    this.assetTools = function () {
-      me.bindExternalEventHandlers(assetConfig.readOnly);
+    this.predicate = function () {
+      return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium')  || _.contains(me.roles, 'serviceRoadMaintainer');
     };
 
     this.toolSelection = new me.ToolSelection([
@@ -62,14 +62,14 @@
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;
-      myEvents();
+      me.eventHandler();
       return element
         .append(this.expanded)
         .hide();
     };
 
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.userRoles)) {
+      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
         me.editModeToggle.reset();
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
@@ -80,22 +80,6 @@
     function hide() {
       element.hide();
     }
-
-    var myEvents = function() {
-
-      $(me.expanded).find('#complementaryLinkCheckBox').on('change', function (event) {
-        if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger('complementaryLinks:show');
-        } else {
-          if (applicationModel.isDirty()) {
-            $(event.currentTarget).prop('checked', true);
-            new Confirm();
-          } else {
-            eventbus.trigger('complementaryLinks:hide');
-          }
-        }
-      });
-    };
 
     return {
       title: me.title(),
