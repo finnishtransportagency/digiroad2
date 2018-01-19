@@ -423,42 +423,4 @@ object TierekisteriBusStopMarshaller {
     properties.find(p =>
       p.publicId.equals(liviIdPublicId) && p.values.nonEmpty).map(_.values.head.propertyValue)
   }
-
-  private def mapEquipmentProperties(equipments: Map[Equipment, Existence], allProperties: Seq[Property]): Seq[Property] = {
-    equipments.map {
-      case (equipment, existence) =>
-        val equipmentProperties = allProperties.find(p => p.publicId.equals(equipment.publicId)).get
-        Property(equipmentProperties.id, equipment.publicId, equipmentProperties.propertyType, equipmentProperties.required, Seq(PropertyValue(existence.propertyValue.toString)))
-    }.toSeq
-  }
-
-  private def mapStopTypeProperties(stopType: StopType, isExpress: Boolean, allProperties: Seq[Property]): Seq[Property] = {
-    var propertyValues = stopType.propertyValues.map { value =>
-      PropertyValue(value.toString)
-    }
-    if (isExpress)
-      propertyValues += PropertyValue(expressPropertyValue.toString)
-
-    val stopTypeProperties = allProperties.find(p => p.publicId.equals(stopTypePublicId)).get
-
-    Seq (Property(stopTypeProperties.id, stopTypePublicId, stopTypeProperties.propertyType, stopTypeProperties.required, propertyValues.toSeq))
-  }
-
-  private def mapLiViIdProperties(liViId: String, allProperties: Seq[Property]): Seq[Property] = {
-    val liViIdProperties = allProperties.find(p => p.publicId.equals(liviIdPublicId)).get
-
-    Seq(Property(liViIdProperties.id, liviIdPublicId, liViIdProperties.propertyType, liViIdProperties.required, Seq(PropertyValue(liViId))))
-  }
-
-  private def mapNameFiProperties(nameFi: String, allProperties: Seq[Property]): Seq[Property] = {
-    val nameFiProperties = allProperties.find(p => p.publicId.equals(nameFiPublicId)).get
-
-    Seq(Property(nameFiProperties.id, nameFiPublicId, nameFiProperties.propertyType, nameFiProperties.required, Seq(PropertyValue(nameFi))))
-  }
-
-  private def mapNameSeProperties(nameSe: String, allProperties: Seq[Property]): Seq[Property] = {
-    val nameSeProperties = allProperties.find(p => p.publicId.equals(nameSePublicId)).get
-
-    Seq(Property(nameSeProperties.id, nameSePublicId, nameSeProperties.propertyType, nameSeProperties.required, Seq(PropertyValue(nameSe))))
-  }
 }

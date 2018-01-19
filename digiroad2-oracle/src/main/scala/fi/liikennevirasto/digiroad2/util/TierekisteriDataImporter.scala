@@ -15,8 +15,6 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Lin
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
-
-
 object TierekisteriDataImporter {
 
   lazy val properties: Properties = {
@@ -90,11 +88,11 @@ object TierekisteriDataImporter {
   lazy val speedLimitTierekisteriImporter: SpeedLimitTierekisteriImporter = {
     new SpeedLimitTierekisteriImporter()
   }
-  //TODO uncomment clients when they are implemented
-  /*
-  lazy val winterSpeedLimitImporterOperations: WinterSpeedLimitTierekisteriImporter = {
-    new WinterSpeedLimitTierekisteriImporter()
-  }
+
+//TODO this was never tested just imported from DROTH-810
+//  lazy val winterSpeedLimitImporterOperations: WinterSpeedLimitTierekisteriImporter = {
+//    new WinterSpeedLimitTierekisteriImporter()
+//  }
 
   lazy val totalWeightLimitTierekisteriImporter: TotalWeightLimitTierekisteriImporter = {
     new TotalWeightLimitTierekisteriImporter()
@@ -119,7 +117,6 @@ object TierekisteriDataImporter {
   lazy val widthLimitTierekisteriImporter: WidthLimitTierekisteriImporter = {
     new WidthLimitTierekisteriImporter()
   }
-  */
 
   def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriAssetImporterOperations): Option[DateTime] = {
     OracleDatabase.withDynSession{
@@ -194,15 +191,14 @@ object TierekisteriDataImporter {
     "damagedByThaw" -> damagedByThawImporterOperations,
     "europeanRoad" -> europeanRoadImporterOperations,
     "stateSpeedLimit" -> stateSpeedLimitTierekisteriImporter,
-    "speedLimit" -> speedLimitTierekisteriImporter
-    //TODO add this after the add the import operations and check here is the winterSpeedLimitImporterOperations
-    /*"winterSpeedLimit" -> winterSpeedLimitImporterOperations,
+    "speedLimit" -> speedLimitTierekisteriImporter,
+    //"winterSpeedLimit" -> winterSpeedLimitImporterOperations,
     "totalWeightLimit" -> totalWeightLimitTierekisteriImporter,
     "trailerTruckWeightLimit" -> trailerTruckWeightLimitTierekisteriImporter,
     "axleWeightLimit" -> axleWeightLimitTierekisteriImporter,
     "bogieWeightLimit" -> bogieWeightLimitTierekisteriImporter,
     "heightLimit" -> heightLimitTierekisteriImporter,
-    "widthLimit" -> widthLimitTierekisteriImporter*/
+    "widthLimit" -> widthLimitTierekisteriImporter
   )
 
   private def importAssets(tierekisteriAssetImporter: TierekisteriAssetImporterOperations): Unit = {
