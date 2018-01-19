@@ -38,7 +38,7 @@
 
     /**
      * Sets up indicator layer for adjacent markers. Attaches event handlers to events listened by the eventListener.
-     * Overrides the Layer.js layerStarted method
+     * Overrides the layer.js layerStarted method
      */
     this.layerStarted = function(eventListener) {
       indicatorLayer.setZIndex(1000);
@@ -60,14 +60,14 @@
 
     /**
      * Fetches the road links and manoeuvres again on the layer.
-     * Overrides the Layer.js refreshView method
+     * Overrides the layer.js refreshView method
      */
     this.refreshView = function() {
       manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), draw);
     };
 
     /**
-     * Overrides the Layer.js removeLayerFeatures method
+     * Overrides the layer.js removeLayerFeatures method
      */
     this.removeLayerFeatures = function() {
       indicatorLayer.getSource().clear();
