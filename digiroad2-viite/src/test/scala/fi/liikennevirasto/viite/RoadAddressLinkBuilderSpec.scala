@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.{FeatureClass, GeometryUtils, Point, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination, Subsequent}
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
@@ -266,6 +266,33 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
         SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination)
     )
     RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (2)
+  }
+
+  test("RoadAddressBuilder should correctly build a road address from a suravage road link source") {
+    val roadLinkGeom = List(Point(642357.37,6946486.267,0.0), Point(642416.887,6946751.966,0.0),
+      Point(642439.702,6946868.15,0.0), Point(642441.166,6946878.412,0.0), Point(642442.096,6946888.737,0.0),
+      Point(642442.49,6946899.096,0.0), Point(642442.347,6946909.461,0.0), Point(642439.463,6946981.961,0.0),
+      Point(642438.564,6946997.224,0.0), Point(642437.082,6947012.441,0.0), Point(642435.019,6947027.591,0.0),
+      Point(642432.378,6947042.65,0.0), Point(642429.165,6947057.598,0.0), Point(642425.382,6947072.411,0.0),
+      Point(642423.045,6947082.137,0.0), Point(642421.362,6947091.997,0.0), Point(642420.432,6947101.047,0.0))
+
+    val roadLink = VVHRoadlink(7519921, 167, roadLinkGeom, State, TrafficDirection.UnknownDirection,
+      FeatureClass.CycleOrPedestrianPath, None,
+      Map.empty[String, Any], ConstructionType.Planned, SuravageLinkInterface, 625.547)
+
+    val roadAddress = RoadAddress(411482, 70006, 561, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 626,
+      Some(DateTime.parse("2018-01-16T00:00:00.000+02:00")), None, Some("silari"), 70411513, 7519921, 0.0, 625.547, SideCode.TowardsDigitizing,
+      1515766393000L, (Some(CalibrationPoint(7519921, 0.0, 0)), Some(CalibrationPoint(7519921, 625.547, 626))), false,
+      List(Point(642357.37, 6946486.267, 0.0),  Point(642420.432, 6947101.047, 0.0)), SuravageLinkInterface, 8, NoTermination)
+
+    val supposedRoadAddressGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val buildRoadAddressLink = RoadAddressLinkBuilder.build(roadLink, roadAddress)
+    buildRoadAddressLink.geometry should be (supposedRoadAddressGeom)
+    buildRoadAddressLink.linkId should be (roadLink.linkId)
+    buildRoadAddressLink.municipalityCode should be (roadLink.municipalityCode)
+    buildRoadAddressLink.trackCode should be (roadAddress.track.value)
+    buildRoadAddressLink.roadNumber should be (roadAddress.roadNumber)
+    buildRoadAddressLink.roadPartNumber should be (roadAddress.roadPartNumber)
   }
 
 }
