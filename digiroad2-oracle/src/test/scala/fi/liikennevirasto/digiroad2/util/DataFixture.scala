@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -12,12 +13,11 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
+import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.digiroad2._
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -65,9 +65,6 @@ object DataFixture {
   lazy val linearAssetService: LinearAssetService = {
     new LinearAssetService(roadLinkService, new DummyEventBus)
   }
-  lazy val tierekisteriDataImporter: TierekisteriDataImporter = {
-    new TierekisteriDataImporter(vvhClient, oracleLinearAssetDao, roadAddressDao, linearAssetService)
-  }
   lazy val speedLimitService: SpeedLimitService = {
     new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
   }
@@ -91,12 +88,6 @@ object DataFixture {
   }
   lazy val roadAddressDao : RoadAddressDAO = {
     new RoadAddressDAO()
-  }
-
-  lazy val tierekisteriTrafficVolumeAsset : TierekisteriTrafficVolumeAssetClient = {
-    new TierekisteriTrafficVolumeAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-      HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriLightingAsset : TierekisteriLightingAssetClient = {
@@ -248,6 +239,7 @@ object DataFixture {
     println()
   }
 
+  @Deprecated
   def importRoadAddresses(): Unit = {
     println("\nDeprecated! Use \nsbt \"project digiroad2-viite\" \"test:run-main fi.liikennevirasto.viite.util.DataFixture import_road_addresses\"\n instead")
     println()
@@ -1006,151 +998,6 @@ object DataFixture {
     println(DateTime.now())
   }
 
-  def importAllTrafficVolumeDataFromTR() {
-    println("\nStart TrafficVolume import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset)
-
-    println("TrafficVolume import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importAllLitRoadDataFromTR() {
-    println("\nStart LitRoad import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importLitRoadAsset
-
-    println("LitRoad import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importAllRoadWidthDataFromTR() {
-    println("\nStart RoadWidth import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importRoadWidthAsset
-
-    println("RoadWidth import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importAllTrafficSignDataFromTR(): Unit ={
-    println("\nStart Traffic Signs import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importTrafficSigns
-
-    println("Traffic signs import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importAllSpeedLimitDataFromTR(): Unit ={
-    println("\nStart Speed Limits import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importSpeedLimits()
-
-    println("Speed Limits import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importAllPavedRoadDataFromTR(): Unit ={
-    println("\nStart PavedRoad import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importPavedRoadAsset
-
-    println("PavedRoad import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importAllMassTransitLaneDataFromTR(): Unit ={
-    println("\nStart MassTransitLane import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importMassTransitLaneAsset
-
-    println("MassTransitLane import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importAllDamagedByThawDataFromTR(): Unit ={
-    println("\nStart DamagedByThaw import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importDamagedByThawAsset
-
-    println("DamagedByThaw import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importAllEuropeanRoadDataFromTR(): Unit ={
-    println("\nStart EuropeanRoad import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importEuropeanRoadAsset
-
-    println("EuropeanRoad import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importSpeedLimitAssetFromTR(): Unit ={
-    println("\nStart Speed limit import at time: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.importSpeedLimitAsset()
-
-    println("Speed limit import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-
-  }
-
-  def updateLitRoadDataFromTR(): Unit ={
-    println("\nStart lighting update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updateLitRoadAsset()
-
-    println("lLighting update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-
-  }
-
-  def updateRoadWidthDataFromTR(): Unit = {
-    println("\nStart roadWidth update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updateRoadWidthAsset()
-
-    println("RoadWidth update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def updateTrafficSignDataFromTR(): Unit ={
-    println("\nStart Traffic Signs update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updateTrafficSigns
-
-    println("Traffic Signs update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
   def updateAreasOnAsset(): Unit = {
     println("\nStart Update areas on Asset at time ")
     println(DateTime.now())
@@ -1192,77 +1039,6 @@ object DataFixture {
     println("\nEnd Update areas on Asset at time: ")
     println(DateTime.now())
     println("\n")
-  }
-
-  def updateSpeedLimitDataFromTR(): Unit = {
-    println("\nStart Speed Limits update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updateSpeedLimits()
-
-    println("Speed Limits update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def updatePavedRoadDataFromTR(): Unit ={
-    println("\nStart PavedRoad update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updatePavedRoadAsset()
-
-    println("PavedRoad update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-
-  }
-
-  def updateMassTransitLaneAssetDataFromTR(): Unit ={
-    println("\nStart MassTransitLane update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updateMassTransitLaneAsset()
-
-    println("MassTransitLane update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-
-  }
-
-  def updateDamagedByThawAssetDataFromTR(): Unit ={
-    println("\nStart DamagedByThaw update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updateDamagedByThawAsset()
-
-    println("DamagedByThaw update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-
-  }
-
-  def updateEuropeanRoadDataFromTR(): Unit ={
-    println("\nStart EuropeanRoad update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updateEuropeanRoadAsset()
-
-    println("EuropeanRoad update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-
-  }
-
-  def updateSpeedLimitAssetFromTR(): Unit ={
-    println("\nStart Speed limit update at: ")
-    println(DateTime.now())
-
-    tierekisteriDataImporter.updateSpeedLimitAssets()
-
-    println("Speed limit import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-
   }
 
   def updateOTHBusStopWithTRInfo(): Unit = {
@@ -1453,60 +1229,18 @@ object DataFixture {
         fillLaneAmountsMissingInRoadLink()
       case Some("fill_roadWidth_in_road_links") =>
         fillRoadWidthInRoadLink()
-      case Some("import_all_trafficVolume_from_TR_to_OTH") =>
-        importAllTrafficVolumeDataFromTR()
-      case Some("import_all_litRoad_from_TR_to_OTH") =>
-        importAllLitRoadDataFromTR()
-      case Some("import_all_roadWidth_from_TR_to_OTH") =>
-        importAllRoadWidthDataFromTR()
-      case Some("import_all_trafficSigns_from_TR_to_OTH") =>
-        importAllTrafficSignDataFromTR()
-      case Some("import_all_pavedRoad_from_TR_to_OTH") =>
-        importAllPavedRoadDataFromTR()
-      case Some("import_all_massTransitLane_from_TR_to_OTH") =>
-        importAllMassTransitLaneDataFromTR()
-      case Some("import_all_damagedByThaw_from_TR_to_OTH") =>
-        importAllDamagedByThawDataFromTR()
-      case Some("import_all_europeanRoad_from_TR_to_OTH") =>
-        importAllEuropeanRoadDataFromTR()
-      case Some("update_litRoad_from_TR_to_OTH") =>
-        updateLitRoadDataFromTR()
-      case Some("update_roadWidth_from_TR_to_OTH") =>
-        updateRoadWidthDataFromTR()
-      case Some("update_trafficSigns_from_TR_to_OTH") =>
-        updateTrafficSignDataFromTR()
-      case Some("update_pavedRoad_from_TR_to_OTH") =>
-        updatePavedRoadDataFromTR()
-      case Some("update_massTransitLane_from_TR_to_OTH") =>
-        updateMassTransitLaneAssetDataFromTR()
-      case Some("update_damagedByThaw_from_TR_to_OTH") =>
-        updateDamagedByThawAssetDataFromTR()
-      case Some("import_all_speedLimits_from_TR_to_OTH") =>
-        importAllSpeedLimitDataFromTR()
-      case Some("update_speedLimits_from_TR_to_OTH") =>
-        updateSpeedLimitDataFromTR()
-      case Some("update_europeanRoad_from_TR_to_OTH") =>
-        updateEuropeanRoadDataFromTR()
       case Some("update_areas_on_asset") =>
         updateAreasOnAsset()
       case Some("update_OTH_BS_with_TR_info") =>
         updateOTHBusStopWithTRInfo()
-      case Some("import_speed_limit_asset_from_TR_to_OTH") =>
-        importSpeedLimitAssetFromTR()
-      case Some("update_speed_limit_asset_from_TR_to_OTH") =>
-        updateSpeedLimitAssetFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
-        " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
+        " prohibitions | hazmat_prohibitions | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
-        " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_massTransitLane_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
-        " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH" +
-        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_speedLimits_from_TR_to_OTH | " +
-        " update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
     }
   }
 }

@@ -1,24 +1,58 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import java.util.Properties
+
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficVolumeAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, Queries, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, RoadAddressDAO}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.asset._
+import org.joda.time.format.DateTimeFormat
 
 
-class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: OracleLinearAssetDao,
-                               roadAddressDao: RoadAddressDAO, linearAssetService: LinearAssetService) {
 
+object TierekisteriDataImporter {
 
-  val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+  lazy val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/bonecp.properties"))
+    props
+  }
+
+  lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+
+  lazy val vvhClient: VVHClient = {
+    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+  }
+
+  lazy val roadLinkService : RoadLinkService = {
+    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+  }
+
+  lazy val linearAssetService: LinearAssetService = {
+    new LinearAssetService(roadLinkService, new DummyEventBus)
+  }
+
+  lazy val assetDao : OracleAssetDao = {
+    new OracleAssetDao()
+  }
+
+  lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
+    new OracleLinearAssetDao(vvhClient, roadLinkService)
+  }
+
+  lazy val roadAddressDao : RoadAddressDAO = {
+    new RoadAddressDAO()
+  }
 
   lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
     new LitRoadTierekisteriImporter()
@@ -40,7 +74,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     new MassTransitLaneTierekisteriImporter()
   }
 
-  lazy val damagedByThawAssetImporterOperations: DamagedByThawTierekisteriImporter = {
+  lazy val damagedByThawImporterOperations: DamagedByThawTierekisteriImporter = {
     new DamagedByThawTierekisteriImporter()
   }
 
@@ -48,28 +82,58 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     new EuropeanRoadTierekisteriImporter()
   }
 
-  lazy val speedLimitTierekisteriImporter: SpeedLimitsTierekisteriImporter = {
-    new SpeedLimitsTierekisteriImporter()
+  lazy val stateSpeedLimitTierekisteriImporter: StateSpeedLimitTierekisteriImporter = {
+    new StateSpeedLimitTierekisteriImporter()
   }
 
-  lazy val speedLimitAssetTierekisteriImporter: SpeedLimitAssetTierekisteriImporter = {
-    new SpeedLimitAssetTierekisteriImporter()
+  lazy val speedLimitTierekisteriImporter: SpeedLimitTierekisteriImporter = {
+    new SpeedLimitTierekisteriImporter()
+  }
+  //TODO uncomment clients when they are implemented
+  /*
+  lazy val winterSpeedLimitImporterOperations: WinterSpeedLimitTierekisteriImporter = {
+    new WinterSpeedLimitTierekisteriImporter()
   }
 
-  lazy val assetDao : OracleAssetDao = {
-    new OracleAssetDao()
+  lazy val totalWeightLimitTierekisteriImporter: TotalWeightLimitTierekisteriImporter = {
+    new TotalWeightLimitTierekisteriImporter()
   }
 
-  def obtainLastExecutionDate(assetName: String, assetId: Int): Option[DateTime] = {
+  lazy val trailerTruckWeightLimitTierekisteriImporter: TrailerTruckWeightLimitTierekisteriImporter = {
+    new TrailerTruckWeightLimitTierekisteriImporter()
+  }
+
+  lazy val axleWeightLimitTierekisteriImporter: AxleWeightLimitTierekisteriImporter = {
+    new AxleWeightLimitTierekisteriImporter()
+  }
+
+  lazy val bogieWeightLimitTierekisteriImporter: BogieWeightLimitTierekisteriImporter = {
+    new BogieWeightLimitTierekisteriImporter()
+  }
+
+  lazy val heightLimitTierekisteriImporter: HeightLimitTierekisteriImporter = {
+    new HeightLimitTierekisteriImporter()
+  }
+
+  lazy val widthLimitTierekisteriImporter: WidthLimitTierekisteriImporter = {
+    new WidthLimitTierekisteriImporter()
+  }
+  */
+
+  def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriAssetImporterOperations): Option[DateTime] = {
     OracleDatabase.withDynSession{
+      val assetId = tierekisteriAssetImporter.getAssetTypeId
+      val assetName = tierekisteriAssetImporter.getAssetName
       assetDao.getLastExecutionDate(assetId, s"batch_process_$assetName")
     }
   }
 
+  //TODO migrate this import asset to TierekisteriImporterOperations
   def importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient) = {
+    val trafficVolumeId = 170
     println("\nExpiring Traffic Volume From OTH Database")
     OracleDatabase.withDynSession {
-      oracleLinearAssetDao.expireAllAssetsByTypeId(TrafficVolume.typeId)
+      oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId)
     }
     println("\nTraffic Volume data Expired")
 
@@ -106,7 +170,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
             roadAddresses
               .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId))
               .foreach { ra =>
-                val assetId = linearAssetService.dao.createLinearAsset(TrafficVolume.typeId, ra.linkId, false, SideCode.BothDirections.value,
+                val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
                   Measures(ra.startMValue, ra.endMValue), "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
                 println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
@@ -120,84 +184,114 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     println("\nEnd of creation OTH traffic volume assets form TR data")
   }
 
-  def importLitRoadAsset(): Unit = {
-    litRoadImporterOperations.importAssets()
+  val tierekisteriDataImporters = Map[String, TierekisteriAssetImporterOperations](
+    "litRoad" -> litRoadImporterOperations,
+    "roadWidth" -> roadWidthImporterOperations,
+    "trafficSign" -> trafficSignTierekisteriImporter,
+    "pavedRoad" -> pavedRoadImporterOperations,
+    "massTransitLane" -> massTransitLaneImporterOperations,
+    "damagedByThaw" -> damagedByThawImporterOperations,
+    "europeanRoad" -> europeanRoadImporterOperations,
+    "stateSpeedLimit" -> stateSpeedLimitTierekisteriImporter,
+    "speedLimit" -> speedLimitTierekisteriImporter
+    //TODO add this after the add the import operations and check here is the winterSpeedLimitImporterOperations
+    /*"winterSpeedLimit" -> winterSpeedLimitImporterOperations,
+    "totalWeightLimit" -> totalWeightLimitTierekisteriImporter,
+    "trailerTruckWeightLimit" -> trailerTruckWeightLimitTierekisteriImporter,
+    "axleWeightLimit" -> axleWeightLimitTierekisteriImporter,
+    "bogieWeightLimit" -> bogieWeightLimitTierekisteriImporter,
+    "heightLimit" -> heightLimitTierekisteriImporter,
+    "widthLimit" -> widthLimitTierekisteriImporter*/
+  )
+
+  private def importAssets(tierekisteriAssetImporter: TierekisteriAssetImporterOperations): Unit = {
+    val assetType = tierekisteriAssetImporter.getAssetName
+
+    println()
+    println(s"Start $assetType import at: ")
+    println(DateTime.now())
+
+    tierekisteriAssetImporter.importAssets()
+
+    println(s"$assetType import complete at time: ")
+    println(DateTime.now())
+    println("\n")
   }
 
-  def importRoadWidthAsset(): Unit = {
-    roadWidthImporterOperations.importAssets()
+  private def updateAssets(tierekisteriAssetImporter: TierekisteriAssetImporterOperations, lastExecutionDateOption: Option[DateTime] = None): Unit = {
+    val assetType = tierekisteriAssetImporter.getAssetName
+
+    println()
+    println(s"Start $assetType update at: ")
+    println(DateTime.now())
+
+    val lastExecutionDate = lastExecutionDateOption.
+      getOrElse(getLastExecutionDate(tierekisteriAssetImporter).
+      getOrElse(throw new Exception("Any last execution, was found")))
+
+    println(s"Last execution date: $lastExecutionDate")
+
+    tierekisteriAssetImporter.updateAssets(lastExecutionDate)
+
+    println(s"$assetType update complete at time: ")
+    println(DateTime.now())
+    println("\n")
   }
 
-  def updateLitRoadAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(litRoadImporterOperations.assetName, LitRoad.typeId)
-    litRoadImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
+  private def convertStringToDate(dateFormat: String, str: Option[String]): Option[DateTime] = {
+    if(str.exists(_.trim.nonEmpty))
+      Some(DateTimeFormat.forPattern(dateFormat).parseDateTime(str.get))
+    else
+      None
   }
 
-  def updateRoadWidthAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(roadWidthImporterOperations.assetName, RoadWidth.typeId)
-    roadWidthImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
+  private def getDateFromArgs(args:Array[String]): Option[DateTime] = {
+    if(args.size >= 4)
+      convertStringToDate("yyyy-MM-dd hh:mm:ss", Some(args(2) + " " + args(3)))
+    else if(args.size >= 3)
+      convertStringToDate("yyyy-MM-dd", Some(args(2)))
+    else
+      None
   }
 
-  def importTrafficSigns(): Unit = {
-    trafficSignTierekisteriImporter.importAssets()
-  }
+  def main(args:Array[String]) : Unit = {
+    import scala.util.control.Breaks._
+    val username = properties.getProperty("bonecp.username")
+    if (!username.startsWith("dr2dev")) {
+      println("*******************************************************************************************")
+      println("YOU ARE RUNNING TIEREKISTERI IMPORT AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+      println("*******************************************************************************************")
+      breakable {
+        while (true) {
+          val input = Console.readLine()
+          if (input.trim() == "YES") {
+            break()
+          }
+        }
+      }
+    }
 
-  def updateTrafficSigns(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(trafficSignTierekisteriImporter.assetName, TrafficSigns.typeId)
-    trafficSignTierekisteriImporter.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
-  }
+    if(args.size < 2){
+      println("Usage: TierekisteriDataImporter <operation> <assetType> [<args>]")
+    }else{
+      val operation = args(0)
+      val assetType = args(1)
 
-  def importSpeedLimits(): Unit = {
-    speedLimitTierekisteriImporter.importAssets()
-  }
+      val availableAssetTypes = tierekisteriDataImporters.keySet ++ Set("trafficVolume")
 
-  def updateSpeedLimits(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(speedLimitTierekisteriImporter.assetName, StateSpeedLimit.typeId)
-    speedLimitTierekisteriImporter.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
-  }
-
-  def importPavedRoadAsset(): Unit = {
-    pavedRoadImporterOperations.importAssets()
-  }
-
-  def updatePavedRoadAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(pavedRoadImporterOperations.assetName, PavedRoad.typeId)
-    pavedRoadImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
-  }
-
-  def importMassTransitLaneAsset(): Unit = {
-    massTransitLaneImporterOperations.importAssets()
-  }
-
-  def updateMassTransitLaneAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(massTransitLaneImporterOperations.assetName, MassTransitLane.typeId)
-    massTransitLaneImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
-  }
-
-  def importDamagedByThawAsset(): Unit = {
-    damagedByThawAssetImporterOperations.importAssets()
-  }
-
-  def updateDamagedByThawAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(damagedByThawAssetImporterOperations.assetName, DamagedByThaw.typeId)
-    damagedByThawAssetImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
-  }
-
-  def importEuropeanRoadAsset(): Unit = {
-    europeanRoadImporterOperations.importAssets()
-  }
-
-  def updateEuropeanRoadAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(europeanRoadImporterOperations.assetName, EuropeanRoads.typeId)
-    europeanRoadImporterOperations.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
-  }
-
-  def importSpeedLimitAsset(): Unit = {
-    speedLimitAssetTierekisteriImporter.importAssets()
-  }
-
-  def updateSpeedLimitAssets(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(speedLimitAssetTierekisteriImporter.assetName, SpeedLimitAsset.typeId)
-    speedLimitAssetTierekisteriImporter.updateAssets(lastUpdate.getOrElse(throw new RuntimeException(s"Last Execution Date Missing")))
+      if(availableAssetTypes.contains(assetType)){
+        operation match {
+          case "import" =>
+            importAssets(tierekisteriDataImporters.get(assetType).get)
+          case "update" =>
+            val lastExecutionDate = getDateFromArgs(args)
+            updateAssets(tierekisteriDataImporters.get(assetType).get, lastExecutionDate)
+        }
+      }else{
+        println(s"The asset type $assetType is not supported")
+        println()
+        println("Supported asset types: " + availableAssetTypes.mkString(" | "))
+      }
+    }
   }
 }

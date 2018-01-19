@@ -2,20 +2,18 @@ package fi.liikennevirasto.digiroad2.util
 
 
 import java.util.Properties
-import javax.naming.OperationNotSupportedException
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -231,6 +229,14 @@ trait TierekisteriAssetImporterOperations {
     println("\nEnd assets expiration in municipality %d".format(municipality))
   }
 
+  def getAssetTypeId() = {
+    typeId
+  }
+
+  def getAssetName() = {
+    assetName
+  }
+
   def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
     val municipalities = getAllMunicipalities()
@@ -344,7 +350,7 @@ trait PointAssetTierekisteriImporterOperations extends TierekisteriAssetImporter
   }
 }
 
-class SpeedLimitsTierekisteriImporter extends TierekisteriAssetImporterOperations {
+class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOperations {
   override def typeId: Int = 310
   override def assetName: String = "speedLimitState"
   override type TierekisteriClientType = TierekisteriTrafficSignAssetClient
@@ -858,7 +864,7 @@ class EuropeanRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOp
   }
 }
 
-class SpeedLimitAssetTierekisteriImporter extends LinearAssetTierekisteriImporterOperations{
+class SpeedLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOperations{
 
   lazy val speedLimitService: SpeedLimitService = new SpeedLimitService(eventbus, vvhClient, roadLinkService)
 
