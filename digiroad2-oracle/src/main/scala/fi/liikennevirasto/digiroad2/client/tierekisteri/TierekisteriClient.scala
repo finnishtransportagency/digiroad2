@@ -139,9 +139,6 @@ object TRLaneArrangementType {
 case class TierekisteriRoadWidthData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int) extends TierekisteriAssetData
 
-case class TierekisteriLightingData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
-
 case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
 
@@ -333,27 +330,6 @@ trait TierekisteriClient{
     if (fieldValue.isEmpty)
       throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
     fieldValue
-  }
-}
-
-class TierekisteriLightingAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
-  override def tierekisteriRestApiEndPoint: String = trEndPoint
-  override def tierekisteriEnabled: Boolean = trEnable
-  override def client: CloseableHttpClient = httpClient
-  type TierekisteriType = TierekisteriLightingData
-
-  override val trAssetType = "tl167"
-
-  override def mapFields(data: Map[String, Any]): Option[TierekisteriLightingData] = {
-    //Mandatory field
-    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
-    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
-    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
-    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-
-    Some(TierekisteriLightingData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue))
   }
 }
 
