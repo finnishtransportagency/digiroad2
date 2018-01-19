@@ -6,7 +6,7 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignType, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpRequestBase, _}
@@ -127,7 +127,6 @@ object TRRoadSide {
   case object Unknown extends TRRoadSide { def value = "ei tietoa"; def propertyValues = Set(0) }
 }
 
-
 /**
   * Values for traffic sign types enumeration
   */
@@ -145,51 +144,51 @@ object TRTrafficSignType {
   def apply(value: Int): TRTrafficSignType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
-  case object TelematicSpeedLimit extends TRTrafficSignType { def value = 0;  def trafficSignType = TrafficSignType.TelematicSpeedLimit; }
-  case object SpeedLimit extends TRTrafficSignType { def value = 361;  def trafficSignType = TrafficSignType.SpeedLimit; }
-  case object EndSpeedLimit extends TRTrafficSignType { def value = 362;  def trafficSignType = TrafficSignType.EndSpeedLimit; }
-  case object SpeedLimitZone extends TRTrafficSignType { def value = 363;  def trafficSignType = TrafficSignType.SpeedLimitZone; }
-  case object EndSpeedLimitZone extends TRTrafficSignType { def value = 364;  def trafficSignType = TrafficSignType.EndSpeedLimitZone; }
-  case object UrbanArea extends TRTrafficSignType { def value = 571;  def trafficSignType = TrafficSignType.UrbanArea; }
-  case object EndUrbanArea extends TRTrafficSignType { def value = 572;  def trafficSignType = TrafficSignType.EndUrbanArea; }
-  case object PedestrianCrossing extends TRTrafficSignType { def value = 511;  def trafficSignType = TrafficSignType.PedestrianCrossing; }
-  case object MaximumLength extends TRTrafficSignType { def value = 343;  def trafficSignType = TrafficSignType.MaximumLength; }
-  case object Warning extends TRTrafficSignType { def value = 189;  def trafficSignType = TrafficSignType.Warning; }
-  case object NoLeftTurn extends TRTrafficSignType { def value = 332;  def trafficSignType = TrafficSignType.NoLeftTurn; }
-  case object NoRightTurn extends TRTrafficSignType { def value = 333;  def trafficSignType = TrafficSignType.NoRightTurn; }
-  case object NoUTurn extends TRTrafficSignType { def value = 334;  def trafficSignType = TrafficSignType.NoUTurn; }
-  case object ClosedToAllVehicles extends TRTrafficSignType { def value = 311;  def trafficSignType = TrafficSignType.ClosedToAllVehicles; }
-  case object NoPowerDrivenVehicles extends TRTrafficSignType { def value = 312;  def trafficSignType = TrafficSignType.NoPowerDrivenVehicles; }
-  case object NoLorriesAndVans extends TRTrafficSignType { def value = 313;  def trafficSignType = TrafficSignType.NoLorriesAndVans; }
-  case object NoVehicleCombinations extends TRTrafficSignType { def value = 314;  def trafficSignType = TrafficSignType.NoVehicleCombinations; }
-  case object NoAgriculturalVehicles extends TRTrafficSignType { def value = 315;  def trafficSignType = TrafficSignType.NoAgriculturalVehicles; }
-  case object NoMotorCycles extends TRTrafficSignType { def value = 316;  def trafficSignType = TrafficSignType.NoMotorCycles; }
-  case object NoMotorSledges extends TRTrafficSignType { def value = 317;  def trafficSignType = TrafficSignType.NoMotorSledges; }
-  case object NoVehiclesWithDangerGoods extends TRTrafficSignType { def value = 318;  def trafficSignType = TrafficSignType.NoVehiclesWithDangerGoods; }
-  case object NoBuses extends TRTrafficSignType { def value = 319;  def trafficSignType = TrafficSignType.NoBuses; }
-  case object NoMopeds extends TRTrafficSignType { def value = 321;  def trafficSignType = TrafficSignType.NoMopeds; }
-  case object NoCyclesOrMopeds extends TRTrafficSignType { def value = 322;  def trafficSignType = TrafficSignType.NoCyclesOrMopeds; }
-  case object NoPedestrians extends TRTrafficSignType { def value = 323;  def trafficSignType = TrafficSignType.NoPedestrians; }
-  case object NoPedestriansCyclesMopeds extends TRTrafficSignType { def value = 324;  def trafficSignType = TrafficSignType.NoPedestriansCyclesMopeds; }
-  case object NoRidersOnHorseback extends TRTrafficSignType { def value = 325;  def trafficSignType = TrafficSignType.NoRidersOnHorseback; }
-  case object NoEntry extends TRTrafficSignType { def value = 331;  def trafficSignType = TrafficSignType.NoEntry; }
-  case object OvertakingProhibited extends TRTrafficSignType { def value = 351;  def trafficSignType = TrafficSignType.OvertakingProhibited; }
-  case object EndProhibitionOfOvertaking extends TRTrafficSignType { def value = 352;  def trafficSignType = TrafficSignType.EndProhibitionOfOvertaking; }
-  case object MaxWidthExceeding extends TRTrafficSignType { def value = 341;  def trafficSignType = TrafficSignType.NoWidthExceeding; }
-  case object MaxHeightExceeding extends TRTrafficSignType { def value = 342;  def trafficSignType = TrafficSignType.MaxHeightExceeding; }
-  case object MaxLadenExceeding extends TRTrafficSignType { def value = 344;  def trafficSignType = TrafficSignType.MaxLadenExceeding; }
-  case object MaxMassCombineVehiclesExceeding extends TRTrafficSignType { def value = 345;  def trafficSignType = TrafficSignType.MaxMassCombineVehiclesExceeding; }
-  case object MaxTonsOneAxleExceeding extends TRTrafficSignType { def value = 346;  def trafficSignType = TrafficSignType.MaxTonsOneAxleExceeding; }
-  case object MaxTonsOnBogieExceeding extends TRTrafficSignType { def value = 347;  def trafficSignType = TrafficSignType.MaxTonsOnBogieExceeding; }
-  case object WRightBend extends TRTrafficSignType { def value = 111;  def trafficSignType = TrafficSignType.WRightBend; }
-  case object WLeftBend extends TRTrafficSignType { def value = 112;  def trafficSignType = TrafficSignType.WLeftBend; }
-  case object WSeveralBendsRight extends TRTrafficSignType { def value = 113;  def trafficSignType = TrafficSignType.WSeveralBendsRight ; }
-  case object WSeveralBendsLeft extends TRTrafficSignType { def value = 114;  def trafficSignType = TrafficSignType.WSeveralBendsLeft; }
-  case object WDangerousDescent extends TRTrafficSignType { def value = 115;  def trafficSignType = TrafficSignType.WDangerousDescent; }
-  case object WSteepAscent extends TRTrafficSignType { def value = 116;  def trafficSignType = TrafficSignType.WSteepAscent; }
-  case object WUnevenRoad extends TRTrafficSignType { def value = 141;  def trafficSignType = TrafficSignType.WUnevenRoad; }
-  case object WChildren extends TRTrafficSignType { def value = 152;  def trafficSignType = TrafficSignType.WChildren; }
-  case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; }
+  case object TelematicSpeedLimit extends TRTrafficSignType { def value = 0;  def trafficSignType = TrafficSignType.TelematicSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object SpeedLimit extends TRTrafficSignType { def value = 361;  def trafficSignType = TrafficSignType.SpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object EndSpeedLimit extends TRTrafficSignType { def value = 362;  def trafficSignType = TrafficSignType.EndSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object SpeedLimitZone extends TRTrafficSignType { def value = 363;  def trafficSignType = TrafficSignType.SpeedLimitZone; def group = TrafficSignTypeGroup.SpeedLimits;}
+  case object EndSpeedLimitZone extends TRTrafficSignType { def value = 364;  def trafficSignType = TrafficSignType.EndSpeedLimitZone; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object UrbanArea extends TRTrafficSignType { def value = 571;  def trafficSignType = TrafficSignType.UrbanArea; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object EndUrbanArea extends TRTrafficSignType { def value = 572;  def trafficSignType = TrafficSignType.EndUrbanArea; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object PedestrianCrossing extends TRTrafficSignType { def value = 511;  def trafficSignType = TrafficSignType.PedestrianCrossing; def group = TrafficSignTypeGroup.PedestrianCrossing; }
+  case object MaximumLength extends TRTrafficSignType { def value = 343;  def trafficSignType = TrafficSignType.MaximumLength; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object Warning extends TRTrafficSignType { def value = 189;  def trafficSignType = TrafficSignType.Warning; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object NoLeftTurn extends TRTrafficSignType { def value = 332;  def trafficSignType = TrafficSignType.NoLeftTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoRightTurn extends TRTrafficSignType { def value = 333;  def trafficSignType = TrafficSignType.NoRightTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoUTurn extends TRTrafficSignType { def value = 334;  def trafficSignType = TrafficSignType.NoUTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object ClosedToAllVehicles extends TRTrafficSignType { def value = 311;  def trafficSignType = TrafficSignType.ClosedToAllVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoPowerDrivenVehicles extends TRTrafficSignType { def value = 312;  def trafficSignType = TrafficSignType.NoPowerDrivenVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoLorriesAndVans extends TRTrafficSignType { def value = 313;  def trafficSignType = TrafficSignType.NoLorriesAndVans; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoVehicleCombinations extends TRTrafficSignType { def value = 314;  def trafficSignType = TrafficSignType.NoVehicleCombinations; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoAgriculturalVehicles extends TRTrafficSignType { def value = 315;  def trafficSignType = TrafficSignType.NoAgriculturalVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoMotorCycles extends TRTrafficSignType { def value = 316;  def trafficSignType = TrafficSignType.NoMotorCycles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoMotorSledges extends TRTrafficSignType { def value = 317;  def trafficSignType = TrafficSignType.NoMotorSledges; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoVehiclesWithDangerGoods extends TRTrafficSignType { def value = 318;  def trafficSignType = TrafficSignType.NoVehiclesWithDangerGoods; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoBuses extends TRTrafficSignType { def value = 319;  def trafficSignType = TrafficSignType.NoBuses; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoMopeds extends TRTrafficSignType { def value = 321;  def trafficSignType = TrafficSignType.NoMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoCyclesOrMopeds extends TRTrafficSignType { def value = 322;  def trafficSignType = TrafficSignType.NoCyclesOrMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoPedestrians extends TRTrafficSignType { def value = 323;  def trafficSignType = TrafficSignType.NoPedestrians; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoPedestriansCyclesMopeds extends TRTrafficSignType { def value = 324;  def trafficSignType = TrafficSignType.NoPedestriansCyclesMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoRidersOnHorseback extends TRTrafficSignType { def value = 325;  def trafficSignType = TrafficSignType.NoRidersOnHorseback; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoEntry extends TRTrafficSignType { def value = 331;  def trafficSignType = TrafficSignType.NoEntry; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object OvertakingProhibited extends TRTrafficSignType { def value = 351;  def trafficSignType = TrafficSignType.OvertakingProhibited; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object EndProhibitionOfOvertaking extends TRTrafficSignType { def value = 352;  def trafficSignType = TrafficSignType.EndProhibitionOfOvertaking; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object MaxWidthExceeding extends TRTrafficSignType { def value = 341;  def trafficSignType = TrafficSignType.NoWidthExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxHeightExceeding extends TRTrafficSignType { def value = 342;  def trafficSignType = TrafficSignType.MaxHeightExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxLadenExceeding extends TRTrafficSignType { def value = 344;  def trafficSignType = TrafficSignType.MaxLadenExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxMassCombineVehiclesExceeding extends TRTrafficSignType { def value = 345;  def trafficSignType = TrafficSignType.MaxMassCombineVehiclesExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxTonsOneAxleExceeding extends TRTrafficSignType { def value = 346;  def trafficSignType = TrafficSignType.MaxTonsOneAxleExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxTonsOnBogieExceeding extends TRTrafficSignType { def value = 347;  def trafficSignType = TrafficSignType.MaxTonsOnBogieExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object WRightBend extends TRTrafficSignType { def value = 111;  def trafficSignType = TrafficSignType.WRightBend; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WLeftBend extends TRTrafficSignType { def value = 112;  def trafficSignType = TrafficSignType.WLeftBend; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WSeveralBendsRight extends TRTrafficSignType { def value = 113;  def trafficSignType = TrafficSignType.WSeveralBendsRight; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WSeveralBendsLeft extends TRTrafficSignType { def value = 114;  def trafficSignType = TrafficSignType.WSeveralBendsLeft; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WDangerousDescent extends TRTrafficSignType { def value = 115;  def trafficSignType = TrafficSignType.WDangerousDescent; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WSteepAscent extends TRTrafficSignType { def value = 116;  def trafficSignType = TrafficSignType.WSteepAscent; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WUnevenRoad extends TRTrafficSignType { def value = 141;  def trafficSignType = TrafficSignType.WUnevenRoad; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WChildren extends TRTrafficSignType { def value = 152;  def trafficSignType = TrafficSignType.WChildren; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; def group = TrafficSignTypeGroup.Unknown; }
 }
 
 /**
@@ -878,9 +877,26 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   type TierekisteriType = TierekisteriTrafficSignData
 
   override val trAssetType = "tl506"
-  private val trLMNUMERO = "LMNUMERO"
-  private val trLMTEKSTI = "LMTEKSTI"
-  private val trPUOLI = "PUOLI"
+  protected val trLMNUMERO = "LMNUMERO"
+  protected val trLMTEKSTI = "LMTEKSTI"
+  protected val trPUOLI = "PUOLI"
+
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
+    val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
+    //TODO remove the orElse and ignrore the all row when we give support for that on TierekisteriClient base implementation
+    val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+    val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+
+      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
+  }
+}
+
+class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriTrafficSignAssetClient(trEndPoint, trEnable, httpClient) {
+
   private val trLIIKVAST = "LIIKVAST"
   private val trNOPRA506 = "NOPRA506"
   private val wrongSideOfTheRoad = "1"
@@ -895,17 +911,11 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
-//    if (Seq(TRTrafficSignType.SpeedLimit, TRTrafficSignType.SpeedLimitZone, TRTrafficSignType.UrbanArea).contains(TRTrafficSignType.apply(assetNumber)))
-//    getFieldValue(data, trLIIKVAST) match {
-//      case Some(info) if !(info == wrongSideOfTheRoad) =>
-//        Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
-//      case None =>
-//        val assetValue = getFieldValue(data, trNOPRA506).getOrElse("").trim
-//        Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
-//      case _ => None
-//    } else
+    //Check if the traffic sign is in SpeedLimits group
+    if (TRTrafficSignType.apply(assetNumber).trafficSignType.group == TrafficSignTypeGroup.SpeedLimits)
       Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
-
+    else
+      None
   }
 }
 
