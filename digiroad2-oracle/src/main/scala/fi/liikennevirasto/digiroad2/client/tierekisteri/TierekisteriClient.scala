@@ -136,9 +136,6 @@ object TRLaneArrangementType {
   case object Unknown extends TRLaneArrangementType { def value = 99; }
 }
 
-case class TierekisteriRoadWidthData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int) extends TierekisteriAssetData
-
 case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
 
@@ -330,29 +327,6 @@ trait TierekisteriClient{
     if (fieldValue.isEmpty)
       throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
     fieldValue
-  }
-}
-
-class TierekisteriRoadWidthAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
-  override def tierekisteriRestApiEndPoint: String = trEndPoint
-  override def tierekisteriEnabled: Boolean = trEnable
-  override def client: CloseableHttpClient = httpClient
-  type TierekisteriType = TierekisteriRoadWidthData
-
-  override val trAssetType = "tl136"
-  private val trALEV = "ALEV"
-
-  override def mapFields(data: Map[String, Any]): Option[TierekisteriRoadWidthData] = {
-    //Mandatory field
-    val assetValue = convertToInt(getMandatoryFieldValue(data, trALEV)).get * 10 //To convert to cm
-    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
-    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
-    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
-    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-
-    Some(TierekisteriRoadWidthData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue))
   }
 }
 
