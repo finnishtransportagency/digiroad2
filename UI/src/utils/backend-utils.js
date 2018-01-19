@@ -524,6 +524,10 @@
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };
+      self.getRoadLinksWithComplementary = function(boundingBox, callback) {
+        callback(roadLinkData);
+        eventbus.trigger('roadLinks:fetched');
+      };
       return self;
     };
 
