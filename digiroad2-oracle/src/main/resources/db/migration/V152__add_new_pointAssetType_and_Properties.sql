@@ -1,19 +1,25 @@
 --Create New Point Assets Types
+--TR weight limit
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
     VALUES (320, 'Tierekisteri Suurin sallittu massa', 'point', 'db_migration_v152');
 
+--TR trailer truck weight limit
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
     VALUES (330, 'Tierekisteri Yhdistelmän suurin sallittu massa', 'point', 'db_migration_v152');
 
+--TR axle weight limit
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
     VALUES (340, 'Tierekisteri Suurin sallittu akselimassa', 'point', 'db_migration_v152');
 
+--TR bogie weight limit
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
     VALUES (350, 'Tierekisteri Suurin sallittu telimassa', 'point', 'db_migration_v152');
 
+--TR height limit
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
     VALUES (360, 'Tierekisteri Suurin sallittu korkeus', 'point', 'db_migration_v152');
 
+--TR width limit
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
     VALUES (370, 'Tierekisteri Suurin sallittu leveys', 'point', 'db_migration_v152');
 
