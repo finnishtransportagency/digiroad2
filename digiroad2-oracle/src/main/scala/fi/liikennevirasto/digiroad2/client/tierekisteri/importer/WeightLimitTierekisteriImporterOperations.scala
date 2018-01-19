@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWeightLimitAssetClient
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
@@ -22,7 +22,7 @@ trait WeightLimitTierekisteriImporterOperations extends LinearAssetTierekisteriI
 
 class TotalWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporterOperations {
 
-  override def typeId: Int = 30
+  override def typeId: Int = TrWeightLimit.typeId
   override def assetName = "totalWeightLimit"
 
   override protected def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
@@ -40,7 +40,7 @@ class TotalWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
 
 class TrailerTruckWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporterOperations {
 
-  override def typeId: Int = 40
+  override def typeId: Int = TrTrailerTruckWeightLimit.typeId
   override def assetName = "trailerTruckWeightLimit"
 
   override protected def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
@@ -58,7 +58,7 @@ class TrailerTruckWeightLimitTierekisteriImporter extends WeightLimitTierekister
 
 class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporterOperations {
 
-  override def typeId: Int = 50
+  override def typeId: Int = TrAxleWeightLimit.typeId
   override def assetName = "axleWeightLimit"
 
   override protected def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
@@ -76,7 +76,7 @@ class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporte
 
 class BogieWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporterOperations {
 
-  override def typeId: Int = 60
+  override def typeId: Int = TrBogieWeightLimit.typeId
   override def assetName = "bogieWeightLimit"
 
   override protected def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
