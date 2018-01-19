@@ -141,8 +141,8 @@ trait TierekisteriAssetImporterOperations {
 
   protected def getAllViiteRoadAddress(section: AddressSection) = {
     val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressSinglePart(section.roadNumber, section.roadPartNumber, section.track.value, section.startAddressMValue, section.endAddressMValue))
-    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(addresses.map(ra => ra.linkId).toSet).filter(_.administrativeClass == State).filter(filterViiteRoadAddress)
-    addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
+    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(addresses.map(ra => ra.linkId).toSet).filter(_.administrativeClass == State).filter(filterViiteRoadAddress).groupBy(_.linkId)
+    addresses.map(ra => (ra, vvhRoadLinks.get(ra.linkId).map(_.head))).filter(_._2.isDefined)
   }
 
   protected def getAllViiteRoadAddress(roadNumber: Long, tracks: Seq[Track]) = {
@@ -155,8 +155,8 @@ trait TierekisteriAssetImporterOperations {
   protected def getAllViiteRoadAddress(roadNumber: Long, roadPart: Long) = {
     val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, roadPart))
     val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
-    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State).filter(filterViiteRoadAddress)
-    addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
+    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State).filter(filterViiteRoadAddress).groupBy(_.linkId)
+    addresses.map(ra => (ra, vvhRoadLinks.get(ra.linkId).map(_.head))).filter(_._2.isDefined)
   }
 
   protected def getAllTierekisteriAddressSections(roadNumber: Long) = {
@@ -483,31 +483,21 @@ class SpeedLimitsTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   private def generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData]): Unit = {
     def getViiteRoadAddress(roadSide: RoadSide) = {
-      roadSide match {
+      val allViiteRoadAddress = roadSide match {
         case RoadSide.Left =>
-          val allViiteRoadAddress = getAllViiteRoadAddress(roadNumber, Seq(Track.LeftSide, Track.Combined)).sortBy(r => (-r._1.roadPartNumber, -r._1.startAddrMValue))
-          val linkTypes = roadLinkService.getAllLinkType(allViiteRoadAddress.flatMap(_._2).map(_.linkId))
-
-          allViiteRoadAddress.map {
-            case (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink]) =>
-              (roadAddress, roadLink, roadLink match {
-                case Some(road) => LinkType.apply(linkTypes.get(road.linkId).map(_.head._2).getOrElse(99))
-                case _ => UnknownLinkType
-              }
-                )
-          }
+          getAllViiteRoadAddress(roadNumber, Seq(Track.LeftSide, Track.Combined)).sortBy(r => (-r._1.roadPartNumber, -r._1.startAddrMValue))
         case _ =>
-          val allViiteRoadAddress = getAllViiteRoadAddress(roadNumber, Seq(Track.RightSide, Track.Combined)).sortBy(r => (r._1.roadPartNumber, r._1.startAddrMValue))
-          val linkTypes = roadLinkService.getAllLinkType(allViiteRoadAddress.flatMap(_._2).map(_.linkId))
+          getAllViiteRoadAddress(roadNumber, Seq(Track.RightSide, Track.Combined)).sortBy(r => (r._1.roadPartNumber, r._1.startAddrMValue))
+      }
+      val linkTypes = roadLinkService.getAllLinkType(allViiteRoadAddress.flatMap(_._2).map(_.linkId))
 
-          allViiteRoadAddress.map {
-            case (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink]) =>
-              (roadAddress, roadLink, roadLink match {
-                case Some(road) => LinkType.apply(linkTypes.get(road.linkId).map(_.head._2).getOrElse(99))
-                case _ => UnknownLinkType
-              }
-                )
+      allViiteRoadAddress.map {
+        case (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink]) =>
+          val linkType = roadLink match {
+            case Some(road) => LinkType.apply(linkTypes.get(road.linkId).map(_.head._2).getOrElse(99))
+            case _ => UnknownLinkType
           }
+          (roadAddress, roadLink, linkType)
       }
     }
 

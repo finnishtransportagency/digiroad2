@@ -4,6 +4,7 @@ import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType.{SpeedLimit, SpeedLimitZone, UrbanArea}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignType, TrafficSignTypeGroup}
@@ -714,7 +715,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
       case Left(content) => {
         content("Data").flatMap{
           asset => mapFields(asset)
-        }
+      }
       }
       case Right(null) => Seq()
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
@@ -902,19 +903,24 @@ class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Bool
   private val wrongSideOfTheRoad = "1"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
-    val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
-    //TODO remove the orElse and ignrore the all row when we give support for that on TierekisteriClient base implementation
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
-    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
-    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
     //Check if the traffic sign is in SpeedLimits group
-    if (TRTrafficSignType.apply(assetNumber).trafficSignType.group == TrafficSignTypeGroup.SpeedLimits)
-      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
-    else
+    if (TRTrafficSignType.apply(assetNumber).trafficSignType.group == TrafficSignTypeGroup.SpeedLimits) {
+      val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+      val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+      val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+      val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+      val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+      val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse(getFieldValue(data, trNOPRA506).getOrElse("")).trim
+
+      getFieldValue(data, trLIIKVAST) match {
+        case Some(sideInfo) if sideInfo == wrongSideOfTheRoad && Seq(SpeedLimit, SpeedLimitZone, UrbanArea).contains(TRTrafficSignType.apply(assetNumber)) =>
+          None
+        case _ =>
+          Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
+      }
+    }else
       None
   }
 }
