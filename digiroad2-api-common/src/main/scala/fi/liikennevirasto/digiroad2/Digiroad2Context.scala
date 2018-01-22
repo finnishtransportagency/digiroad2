@@ -390,6 +390,22 @@ object Digiroad2Context {
     new ManoeuvreService(roadLinkOTHService)
   }
 
+  lazy val weightLimitService: WeightLimitService = {
+    new WeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val axelWeightLimitService: AxelWeightLimitService = {
+    new AxelWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val bogieWeightLimitService: BogieWeightLimitService = {
+    new BogieWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = {
+    new TrailerTruckWeightLimitService(roadLinkOTHService)
+  }
+
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
   val env = System.getProperty("env")
