@@ -159,6 +159,7 @@
             startDate: result.project.startDate,
             publishable: false
           };
+          projectErrors = result.projectErrors;
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadPartList = result.formInfo;
           currentProject = result;

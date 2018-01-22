@@ -281,7 +281,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val firstLink = projectService.getFirstProjectLink(projectSaved)
       Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
         projectSaved.reservedParts.map(reservedRoadPartToApi),
-        "success" -> true)
+        "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
