@@ -406,6 +406,10 @@ object Digiroad2Context {
     new TrailerTruckWeightLimitService(roadLinkOTHService)
   }
 
+  lazy val trailerHeightLimitService: HeightLimitService = {
+    new HeightLimitService(roadLinkOTHService)
+  }
+
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
   val env = System.getProperty("env")
