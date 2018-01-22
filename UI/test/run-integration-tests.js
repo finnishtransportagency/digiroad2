@@ -4,14 +4,14 @@ require.config({
     chai:                             '../../node_modules/chai/chai',
     'chai-jquery':                    '../../node_modules/chai-jquery/chai-jquery',
     eventbus:                         '../src/utils/eventbus',
-    AssetsTestData:                   '../test_data/AssetsTestData',
-    RoadLinkTestData:                 '../test_data/RoadLinkTestData',
-    UserRolesTestData:                '../test_data/UserRolesTestData',
-    EnumeratedPropertyValuesTestData: '../test_data/EnumeratedPropertyValuesTestData',
-    AssetPropertyNamesTestData:       '../test_data/AssetPropertyNamesTestData',
-    SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData',
-    SpeedLimitSplitTestData:          '../test_data/SpeedLimitSplitTestData',
-    AssetTypePropertiesTestData:      '../test_data/AssetTypePropertiesTestData'
+    AssetsTestData:                   '../test_data/assetsTestData',
+    RoadLinkTestData:                 '../test_data/roadLinkTestData',
+    UserRolesTestData:                '../test_data/userRolesTestData',
+    EnumeratedPropertyValuesTestData: '../test_data/enumeratedPropertyValuesTestData',
+    AssetPropertyNamesTestData:       '../test_data/assetPropertyNamesTestData',
+    SpeedLimitsTestData:              '../test_data/speedLimitsTestData',
+    SpeedLimitSplitTestData:          '../test_data/speedLimitSplitTestData',
+    AssetTypePropertiesTestData:      '../test_data/assetTypePropertiesTestData'
   },
   shim: {
     'chai-jquery': ['jquery', 'chai'],
@@ -29,16 +29,16 @@ require.config({
 });
 require(['chai',
          'chai-jquery',
-         'TestHelpers',
-         'GroupingByValidityPeriodSpec',
-         'MassTransitStopCreationSpec',
-         'MassTransitStopMoveSpec',
-         'SpeedLimitVisualizationSpec',
-         'RegroupingMassTransitStopsSpec',
-         'GroupingInCreationSpec',
-         'SingleSegmentSpeedLimitSpec',
-         'SpeedLimitSplitSpec',
-         'MultiSegmentSpeedLimitSpec'
+         'testHelpers',
+         'integration-tests/groupingByValidityPeriodSpec',
+         'integration-tests/massTransitStopCreationSpec',
+         'integration-tests/massTransitStopMoveSpec',
+         'integration-tests/speedLimitVisualizationSpec',
+         'integration-tests/regroupingMassTransitStopsSpec',
+         'integration-tests/groupingInCreationSpec',
+         'integration-tests/singleSegmentSpeedLimitSpec',
+         'integration-tests/speedLimitSplitSpec',
+         'integration-tests/multiSegmentSpeedLimitSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
