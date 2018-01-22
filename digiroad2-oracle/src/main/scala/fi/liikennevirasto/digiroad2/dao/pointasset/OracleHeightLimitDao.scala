@@ -2,22 +2,12 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
+import fi.liikennevirasto.digiroad2.service.pointasset.HeightLimit
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
-case class HeightLimit(id: Long, linkId: Long,
-                               lon: Double, lat: Double,
-                               mValue: Double, floating: Boolean,
-                               vvhTimeStamp: Long,
-                               municipalityCode: Int,
-                               createdBy: Option[String] = None,
-                               createdAt: Option[DateTime] = None,
-                               modifiedBy: Option[String] = None,
-                               modifiedAt: Option[DateTime] = None,
-                               linkSource: LinkGeomSource,
-                               limit: Double)
 object OracleHeightLimitDao {
 
   def fetchByFilter(queryFilter: String => String): Seq[HeightLimit] = {
