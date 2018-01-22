@@ -341,7 +341,7 @@
           rootElement.html(newProjectTemplate());
           addDatePicker();
         } else {
-          rootElement.html(openProjectTemplate(currentProject, writeHtmlList(currParts), writeHtmlList(newParts)));
+          rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, writeHtmlList(currParts), writeHtmlList(newParts)));
         }
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
