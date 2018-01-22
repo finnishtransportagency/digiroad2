@@ -61,7 +61,8 @@
         pointAssets,
         linkPropertiesModel,
         selectedSpeedLimit,
-        selectedMassTransitStopModel);
+        selectedMassTransitStopModel,
+        isExperimental);
 
     var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
       onSelect: function(layerName) {
@@ -334,14 +335,17 @@
                        pointAssets,
                        linkPropertiesModel,
                        selectedSpeedLimit,
-                       selectedMassTransitStopModel) {
+                       selectedMassTransitStopModel,
+                       isExperimental) {
+
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
     var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
     var speedLimitBox = new SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
     var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
     var serviceRoadBox = new ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
-    var trSpeedLimitBox = new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}));
+    var trSpeedLimitBox = isExperimental ? [new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}))] : [];
+
 
     return [
       [roadLinkBox],
@@ -352,7 +356,7 @@
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers))
-          .concat([trSpeedLimitBox]),
+          .concat(trSpeedLimitBox),
       [speedLimitBox].concat(
       [winterSpeedLimits]),
       [massTransitBox]
@@ -391,7 +395,7 @@
     function getPointAsset(typeId) {
       var asset = _.find(pointAssets, {typeId: typeId});
       if (asset) {
-        return [PointAssetBox(asset)];
+        return [new PointAssetBox(asset)];
       }
       return [];
     }

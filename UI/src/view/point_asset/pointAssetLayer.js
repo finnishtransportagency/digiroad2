@@ -251,8 +251,8 @@
     };
 
     var startListeningExtraEvents = function(){
-      extraEventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
-      extraEventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
+      extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:show', showWithComplementary);
+      extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:hide', hideComplementary);
     };
 
     var stopListeningExtraEvents = function(){
