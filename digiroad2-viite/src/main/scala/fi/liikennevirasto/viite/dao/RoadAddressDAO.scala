@@ -1096,20 +1096,24 @@ object RoadAddressDAO {
       "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
       "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,?,?,?,0.0,?)), ?, ?, ? ,?, ?)")
-    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
+    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.filter(x => x.lrmPositionId <= 0).size}""".as[Long].list
     val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
     val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
     val createAddresses = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
     )
     val savedIds = createAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
-      createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue,
-        address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
+      if (address.lrmPositionId <= 0) {
+        createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue,
+          address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
+        addressPS.setLong(2, lrmId)
+      } else {
+        addressPS.setLong(2, address.lrmPositionId)
+      }
       val nextId = if (address.id == NewRoadAddress)
         Sequences.nextViitePrimaryKeySeqValue
       else address.id
       addressPS.setLong(1, nextId)
-      addressPS.setLong(2, lrmId)
       addressPS.setLong(3, address.roadNumber)
       addressPS.setLong(4, address.roadPartNumber)
       addressPS.setLong(5, address.track.value)

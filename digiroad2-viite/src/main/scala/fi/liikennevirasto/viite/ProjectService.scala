@@ -1496,13 +1496,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination)
     pl.status match {
       case UnChanged =>
-        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)
-      case Transfer | Numbering =>
+        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, lrmPositionId = source.get.lrmPositionId)
+      case Transfer =>
         roadAddress.copy(startDate = Some(project.startDate))
+      case Numbering =>
+        roadAddress.copy(startDate = Some(project.startDate),  lrmPositionId = source.get.lrmPositionId)
       case New =>
         roadAddress.copy(startDate = Some(project.startDate))
       case Terminated =>
-        roadAddress.copy(startDate = source.get.startDate, endDate = Some(project.startDate), terminated = Termination)
+        roadAddress.copy(startDate = source.get.startDate, endDate = Some(project.startDate), terminated = Termination, lrmPositionId = source.get.lrmPositionId)
       case _ =>
         logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
         throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
