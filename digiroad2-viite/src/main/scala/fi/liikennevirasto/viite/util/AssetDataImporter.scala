@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -30,6 +29,7 @@ import slick.jdbc._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 
 object
 AssetDataImporter {
