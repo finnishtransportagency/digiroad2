@@ -2,24 +2,27 @@ package fi.liikennevirasto.viite
 
 import java.util.{Date, Properties}
 
-import fi.liikennevirasto.digiroad2.ChangeType.{Unknown => _, _}
-import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, NormalRoadLinkType}
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
+import fi.liikennevirasto.digiroad2.service.RoadLinkType.{FloatingRoadLinkType, NormalRoadLinkType}
+import fi.liikennevirasto.digiroad2.{_}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.Unknown
+import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{ChangeType, _}
-import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.TerminationCode._
+import fi.liikennevirasto.viite.dao.Discontinuity._
+import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressFiller}
@@ -167,6 +170,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadLink = RoadLink(linkId, Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0)), 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       when(mockRoadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.getSuravageLinksFromVVHByMunicipality(municipalityId)).thenReturn(Seq())
       val roadAddressLink = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityId)
 
       roadAddressLink.isInstanceOf[Seq[RoadAddressLink]] should be(true)

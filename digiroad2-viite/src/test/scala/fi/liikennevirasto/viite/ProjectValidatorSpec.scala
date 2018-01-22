@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
@@ -151,8 +151,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       connectedError.head.validationError should be (ConnectedDiscontinuousLink)
     }
   }
-
-  test("Project Links must have a ely change discontinuity code if next part is on different ely") {
+  //TODO to be done/changed in a more detailed story
+  ignore("Project Links must have a ely change discontinuity code if next part is on different ely") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
