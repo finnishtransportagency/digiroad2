@@ -29,8 +29,23 @@ class HeightLimitTierekisteriImporter extends PointAssetTierekisteriImporterOper
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
   }
   */
+  private def generateProperties(trAssetData: TierekisteriAssetData) = {
+
+
+    Set()
+  }
+
   override protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
-    throw new NotImplementedError
+/*
+    GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+      point =>
+        val trafficSign = IncomingHeightLimit(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),
+          getSideCode(roadAddress.sideCode, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+        OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
+          VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+    }*/
+
+    //throw new NotImplementedError
   }
 }
 

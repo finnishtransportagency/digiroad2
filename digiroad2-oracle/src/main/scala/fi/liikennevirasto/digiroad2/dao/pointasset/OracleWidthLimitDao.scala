@@ -1,28 +1,32 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import org.joda.time.DateTime
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 
 sealed trait WidthLimitReason {
   def value: Int
 }
 object WidthLimitReason {
-  val values = Set(BridgeReason, FullPortalReason, HalfPortalReason, RailingReason, LampReason, FenceReason, AbutmentReason, TrafficLightPostReason, OtherReason, Unknown)
+  val values = Set(Bridge, FullPortal, HalfPortal, Railing, Lamp, Fence, Abutment, TrafficLightPost, Other, Unknown)
 
   def apply(intValue: Int): WidthLimitReason = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
-  case object BridgeReason extends WidthLimitReason { def value = 1 }
-  case object FullPortalReason extends WidthLimitReason { def value = 2 }
-  case object HalfPortalReason extends WidthLimitReason { def value = 3 }
-  case object RailingReason extends WidthLimitReason { def value = 4 }
-  case object LampReason extends WidthLimitReason { def value = 5 }
-  case object FenceReason extends WidthLimitReason { def value = 6 }
-  case object AbutmentReason extends WidthLimitReason { def value = 7 }
-  case object TrafficLightPostReason extends WidthLimitReason { def value = 8 }
-  case object OtherReason extends WidthLimitReason { def value = 9 }
+  case object Bridge extends WidthLimitReason { def value = 1 }
+  case object FullPortal extends WidthLimitReason { def value = 2 }
+  case object HalfPortal extends WidthLimitReason { def value = 3 }
+  case object Railing extends WidthLimitReason { def value = 4 }
+  case object Lamp extends WidthLimitReason { def value = 5 }
+  case object Fence extends WidthLimitReason { def value = 6 }
+  case object Abutment extends WidthLimitReason { def value = 7 }
+  case object TrafficLightPost extends WidthLimitReason { def value = 8 }
+  case object Other extends WidthLimitReason { def value = 9 }
   case object Unknown extends WidthLimitReason { def value = 99 }
 }
 
@@ -40,5 +44,39 @@ case class WidthLimit(id: Long, linkId: Long,
                        reason: WidthLimitReason)
 
 object OracleWidthLimitDao {
+  def fetchByFilter(queryFilter: String => String): Seq[WidthLimit] = {
 
+    val query =
+      """
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
+        pos.link_source
+        from asset a
+        join asset_link al on a.id = al.asset_id
+        join lrm_position pos on al.position_id = pos.id
+        left join number_property_value npv on npv.asset_id = a.id
+      """
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    StaticQuery.queryNA[WidthLimit](queryWithFilter).iterator.toSeq
+  }
+
+  implicit val getPointAsset = new GetResult[WidthLimit] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+      val point = r.nextBytesOption().map(bytesToPoint).get
+      val mValue = r.nextDouble()
+      val floating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
+      val municipalityCode = r.nextInt()
+      val createdBy = r.nextStringOption()
+      val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val modifiedBy = r.nextStringOption()
+      val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = r.nextInt()
+      val limit = r.nextDouble()
+      val reason =  WidthLimitReason.apply(r.nextInt())
+
+      WidthLimit(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit, reason)
+    }
+  }
 }

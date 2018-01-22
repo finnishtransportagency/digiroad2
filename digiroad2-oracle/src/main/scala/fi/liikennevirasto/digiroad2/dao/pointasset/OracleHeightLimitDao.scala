@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import org.joda.time.DateTime
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 case class HeightLimit(id: Long, linkId: Long,
