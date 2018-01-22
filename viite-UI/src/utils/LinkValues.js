@@ -86,5 +86,12 @@
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
 
+    root.Track = {
+        Combined:                   {value: 0, description: "Combined"},
+        RightSide:                  {value: 1, description: "RightSide"},
+        LeftSide:                   {value: 2, description: "LeftSide"},
+        Unknown:                    {value: 99, description: "Unknown"}
+    };
+
 })(window.LinkValues = window.LinkValues || {});
 

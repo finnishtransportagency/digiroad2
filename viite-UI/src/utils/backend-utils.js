@@ -49,13 +49,13 @@
 
     this.getRoadLinkByLinkId = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/roadlinks/' + linkId, function (data) {
-        return _.isfunction (callback) && callback(data);
+        return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefillfromvvh/' + linkId, function (data) {
-        return _.isfunction (callback) && callback(data);
+        return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 

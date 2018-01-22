@@ -6,9 +6,11 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
@@ -19,7 +21,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, 
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter, SplitOptions}
+import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter, SplitOptions, SplitResult}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -499,7 +501,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           splitOptions
       val r = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
       dynamicSession.rollback()
-      r
+      (r._1.map(rs => rs.toSeqWithMergeTerminated), r._2, r._3)
     }
   }
 
@@ -511,7 +513,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def preSplitSuravageLinkInTX(linkId: Long, username: String,
-                               splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Option[String], Option[(Point, Vector3d)]) = {
+                               splitOptions: SplitOptions): (Option[SplitResult], Option[String], Option[(Point, Vector3d)]) = {
     val projectId = splitOptions.projectId
     val sOption = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(linkId)), false).headOption
     val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
@@ -527,7 +529,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val rightTop = Point(x._2, endPoints._2.y)
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
-      val projectLinksConnected = projectLinks.filter(l =>
+      val (projectLinksConnected, projectLinksDisconnected) = projectLinks.partition(l =>
         GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
       //we rank template links near suravage link by how much they overlap with suravage geometry
       val commonSections = projectLinksConnected.map(x =>
@@ -537,22 +539,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
       else {
         val bestFit = commonSections.maxBy(_._2)._1
-        val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, splitOptions)
-        (Some(splitLinks), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
+        val splitResult = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinksDisconnected, splitOptions)
+        (Some(splitResult), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
   }
 
-  def splitSuravageLinkInTX(linkId: Long, username: String,
-                            splitOptions: SplitOptions): Option[String] = {
-    val (splitLinks, errorMessage, _) = preSplitSuravageLinkInTX(linkId, username, splitOptions)
+  def splitSuravageLinkInTX(linkId: Long, username: String, splitOptions: SplitOptions): Option[String] = {
+    val (splitResultOption, errorMessage, _) = preSplitSuravageLinkInTX(linkId, username, splitOptions)
     if(errorMessage.nonEmpty){
       errorMessage
     } else {
-      ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.get.map(_.linkId).toSet)
-      ProjectDAO.create(splitLinks.get.map(x => x.copy(modifiedBy = Some(username))))
-      ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
-      recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
+      splitResultOption.map{
+        splitResult =>
+          val splitLinks = splitResult.toSeqWithAllTerminated
+          ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.map(_.linkId).toSet)
+          ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
+          ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
+          recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
+      }
       None
     }
   }
@@ -1560,6 +1565,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynSession {
       ProjectValidator.validateProject(ProjectDAO.getRoadAddressProjectById(projectId).get, ProjectDAO.getProjectLinks(projectId))
     }
+  }
+
+  def validateLinkTrack(track: Int): Boolean = {
+    Track.values.filterNot(_.value == Track.Unknown.value).exists(_.value == track)
   }
 
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])

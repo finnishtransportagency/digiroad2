@@ -4,16 +4,18 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 import javax.naming.OperationNotSupportedException
 
-import fi.liikennevirasto.digiroad2.TRLaneArrangementType.MassTransitLane
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
-import fi.liikennevirasto.digiroad2.{TierekisteriUrbanAreaClient, _}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+import fi.liikennevirasto.digiroad2.client.tierekisteri._
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleTrafficSignDao
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddressDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType, TrafficSignTypeGroup}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -32,6 +34,7 @@ trait TierekisteriAssetImporterOperations {
 
   lazy val assetDao: OracleAssetDao = new OracleAssetDao
   lazy val roadAddressDao : RoadAddressDAO = new RoadAddressDAO
+  lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
 
   def typeId: Int
 
@@ -74,7 +77,7 @@ trait TierekisteriAssetImporterOperations {
 
   protected def getAllMunicipalities(): Seq[Int] = {
     withDynSession {
-      assetDao.getMunicipalities
+      municipalityDao.getMunicipalities
     }
   }
 
@@ -695,7 +698,7 @@ class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperati
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
-        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
+        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), verifiedBy = Some("batch_process_" + assetName))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
@@ -718,7 +721,7 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
-        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
+        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), verifiedBy = Some("batch_process_" + assetName))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.assetValue)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
@@ -792,7 +795,7 @@ class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporte
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
 
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, roadAddress.sideCode.value,
-        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
+        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), verifiedBy = Some("batch_process_" + assetName))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
