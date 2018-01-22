@@ -38,23 +38,23 @@ INSERT INTO LOCALIZED_STRING  (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
 
 --Create New Properties for New Assets
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 320, 'text', 0, 'db_migration_v152', 'suurin_sallittu_massa_mittarajoitus', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
+    VALUES (primary_key_seq.nextval, 320, 'number', 0, 'db_migration_v152', 'suurin_sallittu_massa_mittarajoitus', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 330, 'text', 0, 'db_migration_v152', 'yhdistelman_suurin_sallittu_massa', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
+    VALUES (primary_key_seq.nextval, 330, 'number', 0, 'db_migration_v152', 'yhdistelman_suurin_sallittu_massa', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 340, 'text', 0, 'db_migration_v152', 'suurin_sallittu_akselimassa', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
+    VALUES (primary_key_seq.nextval, 340, 'number', 0, 'db_migration_v152', 'suurin_sallittu_akselimassa', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 350, 'text', 0, 'db_migration_v152', 'suurin_sallittu_telimassa', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
+    VALUES (primary_key_seq.nextval, 350, 'number', 0, 'db_migration_v152', 'suurin_sallittu_telimassa', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 360, 'text', 0, 'db_migration_v152', 'suurin_sallittu_korkeus', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
+    VALUES (primary_key_seq.nextval, 360, 'number', 0, 'db_migration_v152', 'suurin_sallittu_korkeus', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 370, 'text', 0, 'db_migration_v152', 'suurin_sallittu_leveys', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
+    VALUES (primary_key_seq.nextval, 370, 'number', 0, 'db_migration_v152', 'suurin_sallittu_leveys', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 370, 'text', 0, 'db_migration_v152', 'suurin_sallittu_leveys_syy', (select id from LOCALIZED_STRING where VALUE_FI = 'Syy'));
+    VALUES (primary_key_seq.nextval, 370, 'number', 0, 'db_migration_v152', 'suurin_sallittu_leveys_syy', (select id from LOCALIZED_STRING where VALUE_FI = 'Syy'));
 
