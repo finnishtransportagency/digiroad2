@@ -63,7 +63,7 @@
 
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
-    var element = $('<div class="panel-group speed-limit"/>');
+    var element = $('<div class="panel-group speed-limits"/>');
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;

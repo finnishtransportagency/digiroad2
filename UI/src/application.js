@@ -405,9 +405,9 @@
     });
   }
 
-  application.restart = function(backend, withTileMaps) {
+  application.restart = function(backend, withTileMaps, isExperimental) {
     localizedStrings = undefined;
-    this.start(backend, withTileMaps);
+    this.start(backend, withTileMaps, isExperimental);
   };
 
 }(window.Application = window.Application || {}));

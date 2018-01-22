@@ -17,7 +17,6 @@
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
-    var assetPosition;
 
     var close = function() {
       assetHasBeenModified = false;

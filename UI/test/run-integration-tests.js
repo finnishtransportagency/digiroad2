@@ -59,6 +59,6 @@ require(['chai',
     else { mocha.run(); }
   });
 
-  Application.start(testHelpers.defaultBackend(), false);
+  Application.start(testHelpers.defaultBackend(), false, true);
 });
 

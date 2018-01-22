@@ -13,7 +13,7 @@
     this.Tool = function (toolName, icon) {
       var className = toolName.toLowerCase();
       var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function () {
-        executeOrShowConfirmDialog(function () {
+        me.executeOrShowConfirmDialog(function () {
           applicationModel.setSelectedTool(toolName);
         });
       });
@@ -71,7 +71,7 @@
       };
     };
 
-    var executeOrShowConfirmDialog = function(f) {
+    this.executeOrShowConfirmDialog = function(f) {
       if (applicationModel.isDirty()) {
         new Confirm();
       } else {
@@ -79,14 +79,13 @@
       }
     };
 
-    var renderTemplate = function () {};
-    var header = function () {};
-    var title = function () {};
-    var layerName = function () {};
-    var labeling = function () {};
-    var checkboxPanel = function () {};
-    var predicate = function () {};
-
+    this.renderTemplate = function () {};
+    this.header = function () {};
+    this.title = function () {};
+    this.layerName = function () {};
+    this.labeling = function () {};
+    this.checkboxPanel = function () {};
+    this.predicate = function () {};
     this.legendName = function () {};
 
     this.elements = function (){
@@ -143,18 +142,6 @@
           eventbus.trigger(me.layerName() + '-readOnlyTrafficSigns:hide');
         }
       });
-    };
-
-
-    return {
-      renderTemplate: renderTemplate,
-      header: header,
-      title: title,
-      layerName: layerName,
-      labeling: labeling,
-      checkboxPanel: checkboxPanel,
-      predicate: predicate,
-      executeOrShowConfirmDialog: executeOrShowConfirmDialog
     };
   };
 })(this);

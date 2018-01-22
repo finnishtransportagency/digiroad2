@@ -81,8 +81,8 @@
     }
 
     return {
-      title: assetConfig.title,
-      layerName: assetConfig.layerName,
+      title: me.title(),
+      layerName: me.layerName(),
       element: me.renderTemplate(),
       show: show,
       hide: hide

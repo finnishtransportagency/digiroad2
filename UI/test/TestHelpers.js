@@ -44,7 +44,7 @@ define(['AssetsTestData',
       applicationModel.assetDragDelay = 0;
       callback(map);
     });
-    Application.restart(backend || defaultBackend(), false);
+    Application.restart(backend || defaultBackend(), false, true);
   };
 
   var defaultBackend = function() {
