@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.sql.{SQLSyntaxErrorException, BatchUpdateException}
+import java.sql.{BatchUpdateException, SQLSyntaxErrorException}
 
-import fi.liikennevirasto.digiroad2.VVHClient
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Queries
 
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)

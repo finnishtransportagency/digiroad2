@@ -1043,6 +1043,10 @@
       suravageCutter.addTerminatedFeature(terminatedLink);
     });
 
+    eventbus.on('roadAddressProject:roadCreationFailed', function (errorMessage) {
+      clearHighlights();
+    });
+
     vectorLayer.setVisible(true);
     suravageRoadProjectLayer.setVisible(true);
     calibrationPointLayer.setVisible(true);

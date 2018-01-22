@@ -4,10 +4,9 @@ import java.net.URLEncoder
 import java.util
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d, dao}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import fi.liikennevirasto.digiroad2.dao.RoadAddressDAO
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -16,8 +15,7 @@ import org.apache.http.message.BasicNameValuePair
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress => RoadAddressDTO}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -143,7 +141,7 @@ class GeometryTransform {
     (address, roadSide )
   }
 
-  def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[ fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress] = {
+  def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[RoadAddressDTO] = {
     val roadAddress = roadAddressDao.getByLinkIdAndMeasures(linkId, startM, endM)
     roadAddress
       .filter( road => compareSideCodes(sideCode, road))
@@ -153,7 +151,7 @@ class GeometryTransform {
     }.toSeq
   }
 
-  def compareSideCodes(sideCode: SideCode, roadAddress: fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress): Boolean = {
+  def compareSideCodes(sideCode: SideCode, roadAddress: RoadAddressDTO): Boolean = {
     (sideCode == SideCode.BothDirections || sideCode == SideCode.Unknown || roadAddress.sideCode == SideCode.BothDirections || roadAddress.sideCode == SideCode.Unknown) || sideCode == roadAddress.sideCode
   }
 }

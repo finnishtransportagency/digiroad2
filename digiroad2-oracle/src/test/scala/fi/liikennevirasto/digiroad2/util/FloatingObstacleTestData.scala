@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{IncomingObstacle, Point}
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import org.joda.time.LocalDate
 
 /**

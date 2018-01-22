@@ -2,7 +2,8 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.{Point, RoadLinkType}
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.service.RoadLinkType
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.RoadType
 

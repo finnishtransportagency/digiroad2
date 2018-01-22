@@ -199,12 +199,6 @@
       };
     });
 
-    this.getLinearAssetById = latestResponseRequestor(function(id, endPointName) {
-      return {
-        url: 'api/linearAsset/unchecked/' + id
-      };
-    });
-
     this.createPointAsset = function(asset, endPointName) {
       return $.ajax({
         contentType: "application/json",
@@ -318,6 +312,18 @@
       });
     };
 
+    this.verifyLinearAssets = function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/linearassets/verified",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.deleteAllMassTransitStopData = function(assetId,success, failure){
       $.ajax({
         contentType: "application/json",
@@ -393,9 +399,19 @@
       return $.getJSON('api/trafficSigns/floating');
     };
 
-    this.getLinearAssetUnchecked = function(typeId) {
+    this.getUncheckedLinearAsset = function(typeId) {
       return $.getJSON('api/linearAsset/unchecked?typeId=' + typeId);
     };
+
+    this.getUnverifiedLinearAssets = function(typeId) {
+      return $.getJSON('api/linearassets/unverified?typeId=' + typeId);
+    };
+
+    this.getLinearAssetMidPoint = latestResponseRequestor(function(typeId, id){
+      return {
+        url: 'api/linearassets/midpoint?typeId=' + typeId + '&id=' + id
+      };
+    });
 
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
@@ -505,6 +521,10 @@
 
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function(boundingBox, callback) {
+        callback(roadLinkData);
+        eventbus.trigger('roadLinks:fetched');
+      };
+      self.getRoadLinksWithComplementary = function(boundingBox, callback) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };
