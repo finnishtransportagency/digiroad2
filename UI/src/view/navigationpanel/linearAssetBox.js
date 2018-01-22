@@ -16,7 +16,7 @@
     };
 
     this.legendName = function () {
-      return assetConfig.layerName;
+      return 'limit';
     };
 
     this.labeling = function () {

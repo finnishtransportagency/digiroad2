@@ -103,7 +103,7 @@
                '  <header class="panel-header expanded">',
                 me.header() ,
                '  </header>',
-               '   <div class="panel-section panel-legend linear-asset-legend '+ me.legendName() + '-legend">'].join('');
+               '   <div class="panel-section panel-legend '+ me.legendName() + '-legend">'].join('');
     };
 
 

@@ -8,7 +8,7 @@
     };
 
     this.legendName = function () {
-      return 'service-road';
+      return 'linear-asset-legend service-road';
     };
 
     this.labeling = function () {

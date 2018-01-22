@@ -16,7 +16,7 @@
     };
 
     this.legendName = function () {
-      return 'speed-limit';
+      return 'linear-asset-legend speed-limit';
     };
 
     this.labeling = function () {
