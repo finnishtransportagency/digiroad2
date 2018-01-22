@@ -1,24 +1,12 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import fi.liikennevirasto.digiroad2.PersistedPointAsset
 import fi.liikennevirasto.digiroad2.dao.Queries._
+import fi.liikennevirasto.digiroad2.service.pointasset.WeightLimit
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-
-case class WeightLimit(id: Long, linkId: Long,
-                              lon: Double, lat: Double,
-                              mValue: Double, floating: Boolean,
-                              vvhTimeStamp: Long,
-                              municipalityCode: Int,
-                              createdBy: Option[String] = None,
-                              createdAt: Option[DateTime] = None,
-                              modifiedBy: Option[String] = None,
-                              modifiedAt: Option[DateTime] = None,
-                              linkSource: LinkGeomSource,
-                              limit: Double) extends PersistedPointAsset
 
 object OracleWeightLimitDao {
   def fetchByFilter(queryFilter: String => String): Seq[WeightLimit] = {
