@@ -1,9 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Weekday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
+import fi.liikennevirasto.digiroad2.service.pointasset.{ObstacleService, PavingService}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -20,6 +24,10 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   val mockOnOffLinearAssetService = MockitoSugar.mock[OnOffLinearAssetService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0,0), Point(0,500))))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
   val mocklinearAssetService = MockitoSugar.mock[LinearAssetService]
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockAssetService = MockitoSugar.mock[AssetService]
@@ -33,39 +41,39 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
 
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(TotalWeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(TrailerTruckWeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TrailerTruckWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TrailerTruckWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(AxleWeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, AxleWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, AxleWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(BogieWeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, BogieWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, BogieWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(HeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, HeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, HeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(LengthLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, LengthLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, LengthLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(WidthLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, WidthLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(TotalWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(TrailerTruckWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(AxleWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(BogieWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, BogieWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(HeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, HeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(LengthLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LengthLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(WidthLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, WidthLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(TotalWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(TrailerTruckWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(AxleWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(BogieWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, BogieWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(HeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, HeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(LengthLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LengthLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(WidthLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, WidthLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, WidthLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(TotalWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(TrailerTruckWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(AxleWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(BogieWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, BogieWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(HeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, HeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(LengthLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LengthLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(WidthLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, WidthLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(TotalWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(TrailerTruckWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(AxleWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(BogieWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, BogieWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(HeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, HeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(LengthLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LengthLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(WidthLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, WidthLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
 
-  when(mocklinearAssetService.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(2)), 0, 10, None, None, None, None, false, NumberOfLanes.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(2)), 0, 10, None, None, None, None, false, NumberOfLanes.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(2)), 0, 10, None, None, None, None, false, NumberOfLanes.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(2)), 0, 10, None, None, None, None, false, NumberOfLanes.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
 
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(NumberOfLanes.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(2)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, NumberOfLanes.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(2)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, NumberOfLanes.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
 
   when(mocklinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
   when(mocklinearAssetService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
@@ -77,15 +85,15 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(3))).thenReturn(Seq(SpeedLimit(3, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 2, None, false, LinkGeomSource.NormalLinkInterface, Map())))
 
   when(mockOnOffLinearAssetService.getByMunicipalityAndRoadLinks(any[Int], any[Int])).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality), roadLink)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(LitRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LitRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(LitRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LitRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0, 0), Point(0, 500))))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
   when(mockOnOffLinearAssetService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.updateWithTimeStamp(Seq(any[Long]), any[Value], any[String], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1.toLong))
-  when(mockOnOffLinearAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
+  when(mockOnOffLinearAssetService.getMunicipalityById(any[Int])).thenReturn(Seq(235))
   when(mockAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
 
   val manoeuvreElement = Seq(ManoeuvreElement(10L, 1000L, 1001L, ElementTypes.FirstElement),
@@ -375,7 +383,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("encode lighting limit") {
-    municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface), roadLink))) should be(Seq(Map(
+    municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be(Seq(Map(
       "id" -> 1,
       "properties" -> Seq(Map("value" -> Some(1), "name" -> "hasLighting")),
       "linkId" -> 2000,
@@ -404,19 +412,19 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     ))
 
     withClue("assetName TotalWeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TotalWeightLimit.typeId , 0, None, linkSource = NormalLinkInterface), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TotalWeightLimit.typeId , 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName TrailerTruckWeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName AxleWeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, AxleWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, AxleWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName BogieWeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName HeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, HeightLimit.typeId, 0, None, linkSource = NormalLinkInterface), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, HeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName LengthLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, LengthLimit.typeId, 0, None, linkSource = NormalLinkInterface), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, LengthLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName WidthLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, WidthLimit.typeId, 0, None, linkSource = NormalLinkInterface), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, WidthLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
   }
 
   test("encode speed Limit Asset") {

@@ -1,11 +1,16 @@
 package fi.liikennevirasto.viite
+import java.util.Properties
+
+import fi.liikennevirasto.digiroad2.service.RoadLinkType.UnknownRoadLinkType
 
 import java.net.ConnectException
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
@@ -601,11 +606,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         Seq.empty[RoadLink]
       else tempComplimentary
     }
+    val suravageLinks = roadLinkService.getSuravageLinksFromVVHByMunicipality(municipality).map(s => RoadAddressLinkBuilder.buildSuravageRoadAddressLink(s))
     val roadLinksWithComplimentary = roadLinks ++ complimentaryLinks
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet, includeFloating = false, includeHistory = false).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkIdToApi(roadLinksWithComplimentary.map(_.linkId).toSet).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
@@ -622,7 +628,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     publishChangeSet(changeSet)
 
-    filledTopology
+    filledTopology ++ suravageLinks
   }
 
   def saveAdjustments(addresses: Seq[LRMValueAdjustment]): Unit = {

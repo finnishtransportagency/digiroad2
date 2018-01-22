@@ -1,7 +1,7 @@
 (function(root) {
   root.MassTransitStopsCollection = function(backend) {
     var assets = {};
-    var isComplementaryActive = false;
+    var isComplementaryActive = true;
     var validityPeriods = {
       current: true,
       future: false,

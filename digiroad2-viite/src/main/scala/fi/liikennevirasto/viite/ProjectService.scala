@@ -6,9 +6,11 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint

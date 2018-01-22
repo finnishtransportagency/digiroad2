@@ -245,8 +245,9 @@ object ProjectValidator {
             else
               RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
                 .filter(_.startAddrMValue == 0L)
-          if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
-            return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
+          //TODO to be done/changed in a more detailed story
+//          if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
+//            return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
           val isConnected = lastProjectLinks.forall(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
             connected(lpl, nl)))
           val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
@@ -335,8 +336,9 @@ object ProjectValidator {
           else
             RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
               .filter(_.startAddrMValue == 0L)
-        if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
-          return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
+        //TODO to be done/changed in a more detailed story
+//        if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
+//          return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
         val isConnected = lastProjectLinks.forall(lpl => nextLinks.exists(nl => connected(lpl, nl)))
         val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => connected(lpl, nl)))
         if (isDisConnected) {

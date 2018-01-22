@@ -3,10 +3,12 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
+import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
-import fi.liikennevirasto.digiroad2.pointasset.oracle._
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, LinearAssetTypes, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport

@@ -4,7 +4,9 @@ import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
@@ -443,7 +445,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
             links.roadType, links.discontinuity, Some(links.roadEly)) match {
-            case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
+            case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
               Map("success" -> true, "id" -> links.projectId,

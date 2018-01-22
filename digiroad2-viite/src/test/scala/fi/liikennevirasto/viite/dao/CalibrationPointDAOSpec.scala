@@ -3,10 +3,11 @@ package fi.liikennevirasto.viite.dao
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous

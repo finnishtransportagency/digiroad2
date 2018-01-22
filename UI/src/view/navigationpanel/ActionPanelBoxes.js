@@ -398,6 +398,10 @@
       }
     });
 
+    eventbus.on('maintenanceRoad:activeComplementaryLayer', function() {
+      elements.expanded.find('#complementaryLinkCheckBox').prop('checked', true);
+    });
+
     return {
       title: asset.title,
       layerName: asset.layerName,
@@ -453,7 +457,7 @@
     var roadLinkComplementaryCheckBox = [
       '  <div class="panel-section roadLink-complementary-checkbox">',
           '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+            '<input id="complementaryCheckbox" type="checkbox" checked/> <lable>Näytä täydentävä geometria</lable>' +
           '</div>' +
       '</div>'
     ].join('');
