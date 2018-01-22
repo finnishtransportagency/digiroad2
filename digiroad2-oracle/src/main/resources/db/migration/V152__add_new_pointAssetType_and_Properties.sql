@@ -56,5 +56,34 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PU
     VALUES (primary_key_seq.nextval, 370, 'number', 0, 'db_migration_v152', 'suurin_sallittu_leveys', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Rajoitus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 370, 'number', 0, 'db_migration_v152', 'suurin_sallittu_leveys_syy', (select id from LOCALIZED_STRING where VALUE_FI = 'Syy'));
+    VALUES (primary_key_seq.nextval, 370, 'single_choice', 0, 'db_migration_v152', 'suurin_sallittu_leveys_syy', (select id from LOCALIZED_STRING where VALUE_FI = 'Syy'));
 
+
+
+--Create default Values for the field Reason(Syy)
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 1, 'Silta', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 2, 'Kokoportaali, muodostaa esteen koko ajoradalle', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 3, 'Puoliportaali, esteenä vain toiseen suuntaan tai ajoradalle', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 4, 'Kaide', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 5, 'Valaisin', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 6, 'Aita', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 7, 'Maatuki', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 8, 'Liikennevalopylväs', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 9, 'Muu Alikulkueste', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
