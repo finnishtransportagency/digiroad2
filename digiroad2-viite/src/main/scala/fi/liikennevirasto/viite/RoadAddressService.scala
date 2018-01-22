@@ -606,6 +606,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         Seq.empty[RoadLink]
       else tempComplimentary
     }
+    val suravageLinks = roadLinkService.getSuravageLinksFromVVHByMunicipality(municipality).map(s => RoadAddressLinkBuilder.buildSuravageRoadAddressLink(s))
     val roadLinksWithComplimentary = roadLinks ++ complimentaryLinks
 
     val addresses =
@@ -627,7 +628,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     publishChangeSet(changeSet)
 
-    filledTopology
+    filledTopology ++ suravageLinks
   }
 
   def saveAdjustments(addresses: Seq[LRMValueAdjustment]): Unit = {
