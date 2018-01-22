@@ -42,6 +42,8 @@
           '     <lable>Näytä täydentävä geometria</lable>' +
           '   </div>'
         ].join('') : '';
+
+      return trafficSignsCheckbox.concat(complementaryLinkCheckBox);
     };
 
     this.predicate = function () {
@@ -62,7 +64,7 @@
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;
       me.eventHandler();
-      return element
+      return me.getElement()
         .append(this.expanded)
         .hide();
     };
@@ -79,6 +81,10 @@
     function hide() {
       element.hide();
     }
+
+    this.getElement = function () {
+      return element;
+    };
 
     return {
       title: me.title(),

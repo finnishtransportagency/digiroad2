@@ -1,19 +1,7 @@
 (function(root) {
   root.WinterSpeedLimitBox = function (assetConfig) {
-    ActionPanelBox.call(this);
+    LinearAssetBox.call(this, assetConfig);
     var me = this;
-
-    this.header = function () {
-      return assetConfig.title;
-    };
-
-    this.title = function (){
-      return assetConfig.title;
-    };
-
-    this.layerName = function () {
-      return assetConfig.layerName;
-    };
 
     this.legendName = function () {
       return 'speed-limit';
@@ -29,37 +17,11 @@
       }).join('');
     };
 
-    this.checkboxPanel = function () {
-      return assetConfig.allowComplementaryLinks ? [
-          '<div class="check-box-container">' +
-          '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
-          '</div>' +
-          '</div>'
-        ].join('') : '';
-    };
-
     this.predicate = function () {
       return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium');
     };
 
-    this.toolSelection = new me.ToolSelection([
-      new me.Tool('Select', me.selectToolIcon, assetConfig.selectedLinearAsset),
-      new me.Tool('Cut',  me.cutToolIcon, assetConfig.selectedLinearAsset),
-      new me.Tool('Rectangle',  me.rectangleToolIcon, assetConfig.selectedLinearAsset),
-      new me.Tool('Polygon',  me.polygonToolIcon, assetConfig.selectedLinearAsset)
-    ]);
-
-    this.editModeToggle = new EditModeToggleButton(me.toolSelection);
-
     var element = $('<div class="panel-group winter-speed-limits"/>');
-
-    this.renderTemplate = function () {
-      this.expanded = me.elements().expanded;
-      me.eventHandler();
-      return element
-        .append(this.expanded)
-        .hide();
-    };
 
     function show() {
       if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
@@ -73,6 +35,10 @@
     function hide() {
       element.hide();
     }
+
+    this.getElement = function () {
+      return element;
+    };
 
     return {
       title: me.title(),

@@ -1,19 +1,7 @@
 (function(root) {
   root.TRSpeedLimitBox = function (assetConfig) {
-    ActionPanelBox.call(this);
+    LinearAssetBox.call(this, assetConfig);
     var me = this;
-
-    this.header = function () {
-      return assetConfig.title + (assetConfig.editControlLabels.showUnit ? ' ('+assetConfig.unit+')': '');
-    };
-
-    this.title = function (){
-      return assetConfig.title;
-    };
-
-    this.layerName = function () {
-      return assetConfig.layerName;
-    };
 
     this.legendName = function () {
       return 'speed-limit';
@@ -29,15 +17,6 @@
       }).join('');
     };
 
-    this.checkboxPanel = function () {
-      return [
-        '<div class="check-box-container">' +
-        '<input id="trafficSignsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
-        '</div>' +
-        '</div>'
-      ].join('');
-    };
-
     this.predicate = function () {
       return (!assetConfig.readOnly && _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'));
     };
@@ -51,14 +30,6 @@
 
     var element = $('<div class="panel-group tr-speed-limits"/>');
 
-    this.renderTemplate = function () {
-      this.expanded = me.elements().expanded;
-      me.eventHandler();
-      return element
-        .append(this.expanded)
-        .hide();
-    };
-
     function show() {
       if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
         me.editModeToggle.reset();
@@ -71,6 +42,10 @@
     function hide() {
       element.hide();
     }
+
+    this.getElement = function () {
+      return element;
+    };
 
     return {
       title: me.title(),

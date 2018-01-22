@@ -1,18 +1,10 @@
 (function(root) {
   root.ServiceRoadBox = function (assetConfig) {
-    ActionPanelBox.call(this);
+    LinearAssetBox.call(this, assetConfig);
     var me = this;
 
     this.header = function () {
-      return assetConfig.title + (assetConfig.editControlLabels.showUnit ? ' ('+assetConfig.unit+')': '');
-    };
-
-    this.title = function (){
       return assetConfig.title;
-    };
-
-    this.layerName = function () {
-      return assetConfig.layerName;
     };
 
     this.legendName = function () {
@@ -49,24 +41,7 @@
       return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium')  || _.contains(me.roles, 'serviceRoadMaintainer');
     };
 
-    this.toolSelection = new me.ToolSelection([
-      new me.Tool('Select', me.selectToolIcon, assetConfig.selectedLinearAsset),
-      new me.Tool('Cut',  me.cutToolIcon, assetConfig.selectedLinearAsset),
-      new me.Tool('Rectangle',  me.rectangleToolIcon, assetConfig.selectedLinearAsset),
-      new me.Tool('Polygon',  me.polygonToolIcon, assetConfig.selectedLinearAsset)
-    ]);
-
-    this.editModeToggle = new EditModeToggleButton(me.toolSelection);
-
     var element = $('<div class="panel-group service-road"/>');
-
-    this.renderTemplate = function () {
-      this.expanded = me.elements().expanded;
-      me.eventHandler();
-      return element
-        .append(this.expanded)
-        .hide();
-    };
 
     function show() {
       if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
@@ -80,6 +55,10 @@
     function hide() {
       element.hide();
     }
+
+    this.getElement = function () {
+      return element;
+    };
 
     return {
       title: me.title(),
