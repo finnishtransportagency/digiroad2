@@ -1120,7 +1120,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = ra.id
         where t.id < t2.id $historyFilter $terminatedFilter and
-          (valid_from is null or valid_from <= sysdate) and
+          valid_from <= sysdate and
           (valid_to is null or valid_to > sysdate)
       """
         queryList(query)
