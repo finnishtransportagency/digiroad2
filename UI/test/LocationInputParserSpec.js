@@ -1,4 +1,4 @@
-define(['chai', '../src/utils/locationInputParser.js'], function(chai, LocationInputParser) {
+define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
   var expect = chai.expect;
 
   it('parses coordinate pairs', function() {

@@ -1,4 +1,4 @@
-define(['chai', '../src/model/selectedMassTransitStop.js'], function (chai) {
+define(['chai', 'SelectedMassTransitStop'], function (chai) {
   var assert = chai.assert;
   describe('SelectedMassTransitStop', function () {
     var confirmDialogShown = false;
