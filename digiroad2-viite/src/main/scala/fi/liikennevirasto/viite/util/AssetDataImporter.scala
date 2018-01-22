@@ -5,19 +5,20 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
 import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
@@ -98,7 +99,7 @@ class AssetDataImporter {
     }
   }
 
-  case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double)
+  case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double, linkSource: LinkGeomSource)
   case class RoadAddressHistory(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
                                 startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[String], endDate: Option[String],
                                 validFrom: Option[String], validTo: Option[String], ely: Long, roadType: Long,
@@ -163,7 +164,7 @@ class AssetDataImporter {
 
     print(s"\n${DateTime.now()} - ")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
-    val lrmList = roads.map(r => LRMPos(r._16, r._1, r._2.toDouble, r._3.toDouble)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM)
+    val lrmList = roads.map(r => LRMPos(r._16, r._1, r._2.toDouble, r._3.toDouble, LinkGeomSource.Unknown)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
     val addressList = roads.map(r => r._16 -> (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15, r._17, r._18, r._19, r._20)).toMap
 
     print(s"${DateTime.now()} - ")
@@ -177,7 +178,7 @@ class AssetDataImporter {
         // Import only complementary links
         vvhClientProd.getOrElse(vvhClient).complementaryData.fetchByLinkIds(group)
       } else {
-        vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
+        vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group) ++ vvhClient.suravageData.fetchSuravageByLinkIds(group)
       }
     ).toSeq
 
@@ -199,8 +200,17 @@ class AssetDataImporter {
 
     val allLinkLengths = linkLengths ++ floatingLinks.mapValues(x => GeometryUtils.geometryLength(x.geometry))
 
+    val lrmListWithLinkSources = if (roadLinks.nonEmpty) lrmList.map(x => x.copy(x._1, x._2.map(
+      pos => pos.copy(
+        pos.id, pos.linkId, pos.startM, pos.endM, roadLinks.find(
+          roadLink => roadLink.linkId == pos.linkId
+        ).get.linkSource
+      )
+    )
+    )) else lrmList
+
     val lrmPositions = allLinkLengths.flatMap {
-      case (linkId, length) => adjust(lrmList.getOrElse(linkId, List()), length)
+      case (linkId, length) => adjust(lrmListWithLinkSources.getOrElse(linkId, List()), length)
     }
 
     print(s"${DateTime.now()} - ")
@@ -227,7 +237,7 @@ class AssetDataImporter {
 //    print(s"${DateTime.now()} - ")
 //    println("Link mapping contains %d entries".format(linkIdMapping.size))
 
-    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, link_source) values (?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
       "VALID_FROM, geometry, floating, road_type, ely) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
@@ -247,6 +257,7 @@ class AssetDataImporter {
         (address._13, address._14, address._15, address._16)
       else
         (address._15, address._16, address._13, address._14)
+      val linkSource = pos.linkSource
 
       lrmPositionPS.setLong(1, lrmId)
       // TODO: link id mapping, see above
@@ -255,6 +266,7 @@ class AssetDataImporter {
       lrmPositionPS.setLong(3, sideCode)
       lrmPositionPS.setDouble(4, pos.startM)
       lrmPositionPS.setDouble(5, pos.endM)
+      lrmPositionPS.setLong(6, linkSource.value)
       lrmPositionPS.addBatch()
       addressPS.setLong(1, lrmId)
       addressPS.setLong(2, address._1)
@@ -418,7 +430,7 @@ class AssetDataImporter {
     print(s"\n${DateTime.now()} - ")
     println("Read %d rows from conversion database for ELY %d".format(roadHistory.size, ely))
 
-    val lrmList = adjustedTermination.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM)) // linkId -> (id, linkId, startM, endM)
+    val lrmList = adjustedTermination.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown)) // linkId -> (id, linkId, startM, endM, linkSource = 99 (not used anywhere))
     val (checkCompliantAddresses, nonCheckingAddresses) = adjustedTermination.partition(rh => {
       !currentHistory.exists(ch => {
         rh.roadNumber == ch.roadNumber &&
@@ -559,9 +571,9 @@ class AssetDataImporter {
             case Left(roadType) =>
               sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType.value}, ELY= $ely where ID = ${address.id}""".execute
             case Right((addrM, roadTypeBefore, roadTypeAfter)) =>
-              val roadLinkFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(Set(address.linkId), false)
+              val roadLinkFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(Set(address.linkId), false)
               if (roadLinkFromVVH.isEmpty)
-                println(s"WARNING! LinkId ${address.linkId} not found in current or complementary links list, using address geometry")
+                println(s"WARNING! LinkId ${address.linkId} not found in current, complementary or suravage links list, using address geometry")
               val splittedRoadAddresses = splitRoadAddresses(address.copy(geometry = roadLinkFromVVH.headOption.map(_.geometry).getOrElse(address.geometry)), addrM, roadTypeBefore, roadTypeAfter, ely)
               println(s"Split ${address.id} ${address.startMValue}-${address.endMValue} (${address.startAddrMValue}-${address.endAddrMValue}) into")
               println(s"  ${splittedRoadAddresses.head.startMValue}-${splittedRoadAddresses.head.endMValue} (${splittedRoadAddresses.head.startAddrMValue}-${splittedRoadAddresses.head.endAddrMValue}) and")
@@ -637,7 +649,7 @@ class AssetDataImporter {
         counter += 1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
         val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds, false)
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds, false)
         val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
 
         roadLinksFromVVH.foreach(roadLink => {

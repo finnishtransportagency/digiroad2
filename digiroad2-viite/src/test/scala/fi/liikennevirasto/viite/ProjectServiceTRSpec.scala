@@ -4,7 +4,8 @@ import java.net.ConnectException
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectDAO, ProjectState, RoadAddressProject}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet

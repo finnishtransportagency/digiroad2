@@ -78,6 +78,10 @@
         }
     });
 
+    eventbus.on(layerName + ':activeComplementaryLayer', function() {
+        elements.expanded.find('#complementaryLinkCheckBox').prop('checked', true);
+    });
+
     elements.expanded.find('#signsCheckbox').on('change', function (event) {
       if ($(event.currentTarget).prop('checked')) {
         eventbus.trigger(layerName + ':showReadOnlyTrafficSigns');

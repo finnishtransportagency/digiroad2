@@ -110,7 +110,7 @@ module.exports = function(grunt) {
             changeOrigin: true,
             xforward: false,
             rewrite: {
-                '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms?apikey=<%= app ? app.vioniceApiKey : "" %>&'
+              '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms?apikey=<%= app ? app.vioniceApiKey : "" %>&'
             },
             headers: { Host: 'map.vionice.io:443' }
           },
@@ -256,6 +256,7 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
           run: false,
           log: true,
+          timeout: 10000,
           timeout: 50000,
           reporter: 'Spec'
         }
@@ -365,14 +366,14 @@ module.exports = function(grunt) {
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 
   grunt.registerTask('save_deploy_info',
-      function() {
-        var options = this.options({
-          file: 'revision.properties'
-        });
+    function() {
+      var options = this.options({
+        file: 'revision.properties'
+      });
 
-        var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
-        grunt.file.write(options.file, data);
+      var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
+      grunt.file.write(options.file, data);
 
-      }
+    }
   );
 };

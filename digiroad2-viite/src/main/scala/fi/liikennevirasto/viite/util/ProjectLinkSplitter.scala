@@ -88,17 +88,65 @@ object ProjectLinkSplitter {
     )
   }
 
-  def split(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions): Seq[ProjectLink] = {
+  /**
+    * ***Recursive***
+    * Connect all the project link templates that are adjacents of the terminated project link,
+    * so they can be shown in the user interface after the split and/or when the split is being saved
+    * @param splitA The "transfered" part of the splited project link template
+    * @param splitB The "new" part of the splited project link template
+    * @param terminatedLink The terminated part of the the splited project link template
+    * @param templateLink The project link template
+    * @param disconnectedProjectLinks All the links not relevant for the going on spliting
+    * @return Returns all the project links splited and a merged project link with the all terminated geometry and address values
+    */
+  private def connectTerminatedProjectLinks(splitA: ProjectLink, splitB: ProjectLink, terminatedLink: ProjectLink, templateLink: ProjectLink, disconnectedProjectLinks: Seq[ProjectLink]) = {
+    def concat(geo1: Seq[Point], geo2: Seq[Point]) = {
+      //check first here where is adjacent to know if it's needed to prepend or append
+      GeometryUtils.areAdjacent(geo1.last, geo2.head) match {
+        case true => geo1 ++ geo2
+        case false => geo2 ++ geo1
+      }
+    }
+    def copy(pProjectLink: ProjectLink, nProjectLink: ProjectLink, result: SplitResult) = {
+      result.copy(
+        terminatedProjectLinks = result.terminatedProjectLinks ++ Seq(pProjectLink),
+        terminatedProjectLink = result.terminatedProjectLink.copy(
+          endAddrMValue = Math.max(result.terminatedProjectLink.endAddrMValue, nProjectLink.endAddrMValue),
+          startAddrMValue = Math.min(result.terminatedProjectLink.startAddrMValue, nProjectLink.startAddrMValue),
+          geometry = concat(nProjectLink.geometry, result.terminatedProjectLink.geometry)
+        )
+      )
+    }
+    def merge(pProjectLink: ProjectLink, nProjectLinks: Seq[ProjectLink], result: SplitResult) : SplitResult = {
+      nProjectLinks.headOption match {
+        case Some(nProjectLink) =>
+          GeometryUtils.areAdjacent(pProjectLink.geometry, nProjectLink.geometry) match {
+            case true => merge(nProjectLink.copy(status = LinkStatus.Terminated), nProjectLinks.tail, copy(pProjectLink, nProjectLink, result))
+            case false => result.copy(terminatedProjectLinks = result.terminatedProjectLinks ++ Seq(pProjectLink))
+          }
+        case _ => result.copy(terminatedProjectLinks = result.terminatedProjectLinks ++ Seq(pProjectLink))
+      }
+    }
+    val sortedDisconnectedLinks = disconnectedProjectLinks.
+      filter(pl => pl.linkId == terminatedLink.linkId && pl.endMValue >= templateLink.startMValue).
+      sortBy(_.startMValue)
+
+    merge(terminatedLink, sortedDisconnectedLinks, SplitResult(splitA, splitB, Seq(), terminatedLink))
+  }
+
+  def split(suravage: ProjectLink, templateLink: ProjectLink, splitOptions: SplitOptions): Seq[ProjectLink] =
+    split(suravage, templateLink, Seq(), splitOptions).toSeqWithAllTerminated
+
+  def split(suravage: ProjectLink, templateLink: ProjectLink, disconnectedProjectLinks: Seq[ProjectLink], split: SplitOptions): SplitResult = {
     def movedFromStart(suravageM: Double, templateM: Double, splitAddressM: Long, isReversed: Boolean) = {
       val keptGeom = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM)
       val termGeom = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength)
       val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM, templateM, isReversed, keptGeom)
       val splitT = templateLink.copy(
         startMValue = templateM,
-        endMValue = templateLink.geometryLength,
-        geometryLength = templateLink.geometryLength - templateM,
-        startAddrMValue = Math.min(splitAddressM, templateLink.addrAt(templateLink.geometryLength)),
-        endAddrMValue = Math.max(splitAddressM, templateLink.addrAt(templateLink.geometryLength)),
+        geometryLength = templateLink.endMValue - templateM,
+        startAddrMValue = Math.min(splitAddressM, templateLink.addrAt(templateLink.endMValue)),
+        endAddrMValue = Math.max(splitAddressM, templateLink.addrAt(templateLink.endMValue)),
         status = LinkStatus.Terminated,
         geometry = termGeom,
         connectedLinkId = Some(suravage.linkId)
@@ -110,11 +158,10 @@ object ProjectLinkSplitter {
       val keptGeom = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength)
       val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM, templateM, isReversed, keptGeom)
       val splitT = templateLink.copy(
-        startMValue = 0.0,
         endMValue = templateM,
         geometryLength = templateM,
-        startAddrMValue = Math.min(splitAddressM, templateLink.addrAt(0.0)),
-        endAddrMValue = Math.max(splitAddressM, templateLink.addrAt(0.0)),
+        startAddrMValue = Math.min(splitAddressM, templateLink.addrAt(templateLink.startMValue)),
+        endAddrMValue = Math.max(splitAddressM, templateLink.addrAt(templateLink.startMValue)),
         status = LinkStatus.Terminated,
         geometry = termGeom,
         connectedLinkId = Some(suravage.linkId))
@@ -130,9 +177,6 @@ object ProjectLinkSplitter {
         ),
         splitT)
     }
-    def toSeq(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
-      Seq(splits._1, splits._2, splits._3).filter(pl => Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength)
-    }
     //Discontinuity of splits should be the given only for the part with the biggest M Address Value
     //The rest of them should be 5 (Continuous)
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
@@ -144,11 +188,10 @@ object ProjectLinkSplitter {
         movedFromEnd(suravageM, templateM, splitAddressM, isReversed)
       else
         movedFromStart(suravageM, templateM, splitAddressM, isReversed)
-    toSeq(
-      if (isReversed)
-        switchDigitization(splits)
-      else
-        splits)
+
+    val normalizedSplits = if (isReversed) switchDigitization(splits) else splits
+
+    connectTerminatedProjectLinks(normalizedSplits._1, normalizedSplits._2, normalizedSplits._3, templateLink, disconnectedProjectLinks)
   }
 
   def findMatchingGeometrySegment(suravage: PolyLine, template: PolyLine): Option[Seq[Point]] = {
@@ -250,4 +293,11 @@ object ProjectLinkSplitter {
 case class SplitOptions(splitPoint: Point, statusA: LinkStatus, statusB: LinkStatus,
                         roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, ely: Long,
                         roadLinkSource: LinkGeomSource, roadType: RoadType, projectId: Long, coordinates: ProjectCoordinates)
+
+case class SplitResult(splitA: ProjectLink, splitB: ProjectLink, terminatedProjectLinks: Seq[ProjectLink], terminatedProjectLink: ProjectLink)
+{
+  private def isShorterProjectLinks(pl: ProjectLink) = Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength
+  def toSeqWithAllTerminated: Seq[ProjectLink] = (Seq(splitA, splitB) ++ terminatedProjectLinks).filter(isShorterProjectLinks)
+  def toSeqWithMergeTerminated: Seq[ProjectLink] = Seq(splitA, splitB, terminatedProjectLink).filter(isShorterProjectLinks)
+}
 
