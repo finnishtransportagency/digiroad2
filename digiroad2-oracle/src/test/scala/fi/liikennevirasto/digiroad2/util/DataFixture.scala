@@ -169,7 +169,6 @@ object DataFixture {
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
       "kauniainen_traffic_signs.sql",
-      "kauniainen_maximum_x7_restrictions.sql",
 //      "siilijarvi_functional_classes.sql",
 //      "siilijarvi_link_types.sql",
 //      "siilijarvi_traffic_directions.sql",
@@ -177,7 +176,8 @@ object DataFixture {
 //      "siilinjarvi_linear_assets.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
-      "insert_project_link_data.sql"
+      "insert_project_link_data.sql",
+      "kauniainen_maximum_x7_restrictions.sql"
     ))
   }
 
