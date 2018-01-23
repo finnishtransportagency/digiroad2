@@ -1091,6 +1091,7 @@ object RoadAddressDAO {
 
   def create(roadAddresses: Iterable[RoadAddress], createdBy : Option[String] = None): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
+    val lrmPositionUpdatePS = dynamicSession.prepareStatement("update lrm_position set link_id = ?, SIDE_CODE = ?, start_measure = ?, end_measure = ?, adjusted_timestamp = ?, link_source = ?) where id = ?")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
       "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
@@ -1108,6 +1109,9 @@ object RoadAddressDAO {
           address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
         addressPS.setLong(2, lrmId)
       } else {
+        // TODO What about split? How to recognize split? Update for the other and insert for the other?
+        updateLRMPosition(lrmPositionUpdatePS, address.lrmPositionId, address.linkId, address.sideCode.value, address.startMValue,
+          address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
         addressPS.setLong(2, address.lrmPositionId)
       }
       val nextId = if (address.id == NewRoadAddress)
@@ -1145,8 +1149,10 @@ object RoadAddressDAO {
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
+    lrmPositionUpdatePS.executeBatch()
     addressPS.executeBatch()
     lrmPositionPS.close()
+    lrmPositionUpdatePS.close()
     addressPS.close()
     createAddresses.map(_.id).toSeq
   }
@@ -1160,6 +1166,18 @@ object RoadAddressDAO {
     lrmPositionPS.setDouble(5, endM)
     lrmPositionPS.setDouble(6, adjustedTimestamp)
     lrmPositionPS.setInt(7, geomSource)
+    lrmPositionPS.addBatch()
+  }
+
+  def updateLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
+                        startM: Double, endM: Double, adjustedTimestamp : Long, geomSource: Int): Unit = {
+    lrmPositionPS.setLong(1, linkId)
+    lrmPositionPS.setLong(2, sideCode)
+    lrmPositionPS.setDouble(3, startM)
+    lrmPositionPS.setDouble(4, endM)
+    lrmPositionPS.setDouble(5, adjustedTimestamp)
+    lrmPositionPS.setInt(6, geomSource)
+    lrmPositionPS.setLong(7, id)
     lrmPositionPS.addBatch()
   }
 
