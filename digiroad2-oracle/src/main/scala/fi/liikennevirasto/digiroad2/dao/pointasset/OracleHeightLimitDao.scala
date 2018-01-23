@@ -14,7 +14,7 @@ object OracleHeightLimitDao {
     val query =
       s"""
         select a.id, lrm.link_id, a.geometry, lrm.start_measure, a.floating, lrm.adjusted_timestamp, a.municipality_code, lrm.side_code,
-        a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, lrm.link_source, npv.value,
+        a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, lrm.link_source, npv.value
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lrm on al.position_id = lrm.id
