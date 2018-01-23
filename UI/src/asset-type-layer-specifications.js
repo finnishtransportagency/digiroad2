@@ -28,7 +28,10 @@
     trafficLights: 280,
     maintenanceRoad: 290,
     trafficSigns: 300,
-    trSpeedLimits: 310
+    trSpeedLimits: 310,
+    trWeightLimits: 320,
+    trHeightLimits: 360,
+    trWidthLimits: 370
   };
 
   root.linearAssetSpecs = [
@@ -621,6 +624,58 @@
        // check if administrative class is State
           return selectedAsset.getAdministrativeClass(linkId) === "State";
      }
+    },
+    {
+      typeId: assetType.trHeightLimits,
+      layerName: 'trHeightLimits',
+      title: 'TR suurin sallittu korkeus',
+      allowComplementaryLinks: true,
+      legendValues: [
+      ],
+      formLabels: {
+        title: 'Rajoitus',
+        showUnit: true
+      },
+      editConstrains : function() {
+        return true;
+      },
+      hasTrafficSignReadOnlyLayer: true
+    },
+    {
+      typeId: assetType.trWidthLimits,
+      layerName: 'trWidthLimits',
+      title: 'TR suurin sallittu leveys',
+      allowComplementaryLinks: true,
+      legendValues: [
+      ],
+      formLabels: {
+        title: 'Rajoitus',
+        showUnit: true
+      },
+      editConstrains : function() {
+        return true;
+      },
+      hasTrafficSignReadOnlyLayer: true
+    }
+
+  ];
+
+  root.groupedPointAssetSpecs = [
+    {
+      typeId: assetType.trWeightLimits,
+      layerName: 'trWeightLimits',
+      title: 'TR painorajoitukset',
+      allowComplementaryLinks: true,
+      allowGrouping: true,
+      legendValues: [
+      ],
+      formLabels: {
+        title: 'Painorajoitus',
+        showUnit: true
+      },
+      editConstrains : function() {
+        return true;
+      }
     }
   ];
 })(this);
