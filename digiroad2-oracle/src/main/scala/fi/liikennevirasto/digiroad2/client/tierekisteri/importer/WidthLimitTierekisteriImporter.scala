@@ -1,17 +1,17 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.TrWidthLimit
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWidthLimitAssetClient
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingWidthLimit, OracleWidthLimitDao}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 
-//TODO change this to point asset importer operations
-class WidthLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
+class WidthLimitTierekisteriImporter extends PointAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 90
+  override def typeId: Int = TrWidthLimit.typeId
   override def assetName = "widthLimits"
   override type TierekisteriClientType = TierekisteriWidthLimitAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -21,11 +21,13 @@ class WidthLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOper
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
-      measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
-
-    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.width)
-    println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+      GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+        point =>
+          val widthLimit = IncomingWidthLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.width, trAssetData.reason,
+            getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          OracleWidthLimitDao.create(widthLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+            VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+      }
   }
 }

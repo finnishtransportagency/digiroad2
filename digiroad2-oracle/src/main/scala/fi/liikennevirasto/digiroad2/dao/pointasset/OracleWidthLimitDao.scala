@@ -32,7 +32,7 @@ object WidthLimitReason {
   case object Unknown extends WidthLimitReason { def value = 99 }
 }
 
-case class IncomingWidthLimit(lon: Double, lat: Double, linkId: Long, limit: Double, reason: WidthLimitReason) extends IncomingPointAsset
+case class IncomingWidthLimit(lon: Double, lat: Double, linkId: Long, limit: Double, reason: WidthLimitReason, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
 case class WidthLimit(id: Long, linkId: Long,
                        lon: Double, lat: Double,

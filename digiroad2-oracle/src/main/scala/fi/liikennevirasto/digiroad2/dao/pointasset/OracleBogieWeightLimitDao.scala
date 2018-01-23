@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingWeightLimit, WeightLimit}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingBogieWeightLimit, WeightLimit}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -28,7 +28,7 @@ object OracleBogieWeightLimitDao {
     StaticQuery.queryNA[WeightLimit](queryWithFilter).iterator.toSeq
   }
 
-  def create(asset: IncomingWeightLimit, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {
+  def create(asset: IncomingBogieWeightLimit, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""

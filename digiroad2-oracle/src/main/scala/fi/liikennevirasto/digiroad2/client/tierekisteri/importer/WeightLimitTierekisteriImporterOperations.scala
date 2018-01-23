@@ -1,15 +1,16 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWeightLimitAssetClient
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleAxleWeightLimitDao, OracleBogieWeightLimitDao, OracleTrailerTruckWeightLimitDao, OracleWeightLimitDao}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingAxelWeightLimit, IncomingBogieWeightLimit, IncomingTrailerTruckWeightLimit, IncomingWeightLimit}
 import org.apache.http.impl.client.HttpClientBuilder
 
-//TODO change this to point asset importer operations
-trait WeightLimitTierekisteriImporterOperations extends LinearAssetTierekisteriImporterOperations {
+trait WeightLimitTierekisteriImporterOperations extends PointAssetTierekisteriImporterOperations {
 
   override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -29,12 +30,14 @@ class TotalWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
     tierekisteriAssetData.totalWeight.isDefined
   }
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
-      measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
-
-    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.totalWeight.get)
-    println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+    GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+      point =>
+        val weightLimit = IncomingWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.totalWeight.get,
+          getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+        OracleWeightLimitDao.create(weightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+          VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+    }
   }
 }
 
@@ -47,12 +50,14 @@ class TrailerTruckWeightLimitTierekisteriImporter extends WeightLimitTierekister
     tierekisteriAssetData.trailerTruckWeight.isDefined
   }
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
-      measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
-
-    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.trailerTruckWeight.get)
-    println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+    GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+      point =>
+        val trailerTruckWeightLimit = IncomingTrailerTruckWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.trailerTruckWeight.get,
+          getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+        OracleTrailerTruckWeightLimitDao.create(trailerTruckWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+          VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+    }
   }
 }
 
@@ -65,12 +70,14 @@ class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporte
     tierekisteriAssetData.axleWeight.isDefined
   }
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
-      measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
-
-    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.axleWeight.get)
-    println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+    GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+      point =>
+        val axleWeightLimit = IncomingAxelWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.axleWeight.get,
+          getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+        OracleAxleWeightLimitDao.create(axleWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+          VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+    }
   }
 }
 
@@ -83,11 +90,13 @@ class BogieWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
     tierekisteriAssetData.bogieWeight.isDefined
   }
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
-      measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
-
-    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.bogieWeight.get)
-    println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+    GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+      point =>
+        val bogieWeightLimit = IncomingBogieWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.bogieWeight.get,
+          getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+        OracleBogieWeightLimitDao.create(bogieWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+          VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+    }
   }
 }
