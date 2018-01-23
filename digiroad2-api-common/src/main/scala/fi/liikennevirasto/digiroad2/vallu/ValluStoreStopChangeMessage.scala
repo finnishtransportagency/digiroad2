@@ -56,6 +56,7 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
         <MunicipalityName>{stop.municipalityName}</MunicipalityName>
         <Comments>{if (propertyIsDefined(stop, "lisatiedot")) extractPropertyValue(stop, "lisatiedot") }</Comments>
         <PlatformCode>{if (propertyIsDefined(stop, "laiturinumero")) extractPropertyValue(stop, "laiturinumero")}</PlatformCode>
+        <InfoZone>{if (propertyIsDefined(stop, "vyöhyketieto")) extractPropertyValue(stop, "vyöhyketieto")}</InfoZone>
         <ConnectedToTerminal>{extractPropertyValueOption(stop, "liitetty_terminaaliin_ulkoinen_tunnus").getOrElse("")}</ConnectedToTerminal>
         <ContactEmails>
           <Contact>pysakit@digiroad.fi</Contact>
