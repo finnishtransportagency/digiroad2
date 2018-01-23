@@ -147,11 +147,10 @@ class AssetDataImporter {
 
     val roads = conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      val dateFilter = if(importDate!="") s""" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate""" else ""
-      val filter =  s""" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL $dateFilter)) """
+      val dateFilter = if(importDate!="") s""" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= ${importDate})) """ else ""
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
             ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id, ajorataid
-            from #tableName WHERE ely=$ely AND aet >= 0 AND LET >= 0 $filter """
+            from #tableName WHERE ely=$ely AND aet >= 0 AND let >= 0 $dateFilter """
         .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[DateTime], Option[DateTime], Option[DateTime], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long, Long)].list
     }.map {
       case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDate, validFrom, elyCode, roadType, linkId, createdBy, x1, y1, x2, y2, lrmId, ajorataId) =>
