@@ -464,7 +464,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       Seq(
         RoadAddress(Sequences.nextViitePrimaryKeySeqValue, 8888, 1, RoadType.PublicRoad, Track.Combined,
           Discontinuity.Continuous, 0, 35, startDate, endDate,
-          Option("TestUser"), Sequences.nextLrmPositionPrimaryKeySeqValue, 8888888, 0, 35, SideCode.TowardsDigitizing,
+          Option("TestUser"), -1, 8888888, 0, 35, SideCode.TowardsDigitizing,
           0, (None, None), false, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8)))
   }
 
@@ -474,7 +474,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       Seq(
         RoadAddress(roadAddressId, 7777, 1, RoadType.PublicRoad, Track.Combined,
           Discontinuity.Continuous, 0, 35, startDate, Option.apply(DateTime.parse("2000-01-01")),
-          Option("TestUser"), Sequences.nextLrmPositionPrimaryKeySeqValue, 7777777, 0, 35, SideCode.TowardsDigitizing,
+          Option("TestUser"), -1, 7777777, 0, 35, SideCode.TowardsDigitizing,
           0, (None, None), false, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8)))
     sqlu"""UPDATE ROAD_ADDRESS SET Terminated = 1 Where ID = ${roadAddressId}""".execute
   }
