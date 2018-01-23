@@ -39,7 +39,22 @@ class HeightLimitServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
-      result.id should equal(600070)
+      result.id should equal(600074)
+      result.linkId should equal(1611387)
+      result.lon should equal(374101.60105163435)
+      result.lat should equal(6677437.872017591)
+      result.mValue should equal(16.592)
+    }
+  }
+
+  test("Can fetch by municipality") {
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
+      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+
+    runWithRollback {
+      val result = service.getByMunicipality(235).find(_.id == 600074).get
+
+      result.id should equal(600074)
       result.linkId should equal(1611387)
       result.lon should equal(374101.60105163435)
       result.lat should equal(6677437.872017591)
