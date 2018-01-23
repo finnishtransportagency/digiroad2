@@ -1091,7 +1091,7 @@ object RoadAddressDAO {
 
   def create(roadAddresses: Iterable[RoadAddress], createdBy : Option[String] = None): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
-    val lrmPositionUpdatePS = dynamicSession.prepareStatement("update lrm_position set link_id = ?, SIDE_CODE = ?, start_measure = ?, end_measure = ?, adjusted_timestamp = ?, link_source = ?) where id = ?")
+    val lrmPositionUpdatePS = dynamicSession.prepareStatement("update lrm_position set link_id = ?, SIDE_CODE = ?, start_measure = ?, end_measure = ?, adjusted_timestamp = ?, link_source = ? where id = ?")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
       "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
