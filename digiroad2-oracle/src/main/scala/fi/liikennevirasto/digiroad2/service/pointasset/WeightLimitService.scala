@@ -35,7 +35,9 @@ class WeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def update(id: Long, updatedAsset: IncomingWeightLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
+  override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = {
+    persistedAsset
+  }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
     OracleWeightLimitDao.fetchByFilter(queryFilter)
