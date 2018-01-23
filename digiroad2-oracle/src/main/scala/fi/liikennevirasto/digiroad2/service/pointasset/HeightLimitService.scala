@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
-case class IncomingHeightLimit(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
+case class IncomingHeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double) extends IncomingPointAsset
 
 case class HeightLimit(id: Long, linkId: Long,
                        lon: Double, lat: Double,
@@ -41,7 +41,9 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingHeightLimit] = {
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      point => IncomingHeightLimit(point.x, point.y, link.linkId)
+
+      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingHeightLimit and then get the value
+      point => IncomingHeightLimit(point.x, point.y, link.linkId, 0)
     }
   }
 }

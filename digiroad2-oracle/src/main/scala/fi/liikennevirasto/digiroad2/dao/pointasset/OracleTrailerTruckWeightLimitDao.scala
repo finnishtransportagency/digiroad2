@@ -6,13 +6,13 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, TrWeightLimit}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, TrTrailerTruckWeightLimit}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
-object OracleWeightLimitDao {
-  val typeId = TrWeightLimit.typeId
+object OracleTrailerTruckWeightLimitDao {
+  val typeId = TrTrailerTruckWeightLimit.typeId
 
   def fetchByFilter(queryFilter: String => String): Seq[WeightLimit] = {
     val query =
@@ -50,7 +50,7 @@ object OracleWeightLimitDao {
   }
 
   private def getLimitPropertyId: Long = {
-    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("suurin_sallittu_massa_mittarajoitus").first
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("yhdistelman_suurin_sallittu_massa").first
   }
 
   implicit val getPointAsset = new GetResult[WeightLimit] {

@@ -7,10 +7,10 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
-case class IncomingWeightLimit(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
-case class IncomingAxelWeightLimit(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
-case class IncomingBogieWeightLimit(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
-case class IncomingTrailerTruckWeightLimit(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
+case class IncomingWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double) extends IncomingPointAsset
+case class IncomingAxelWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double) extends IncomingPointAsset
+case class IncomingBogieWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double) extends IncomingPointAsset
+case class IncomingTrailerTruckWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double) extends IncomingPointAsset
 
 case class WeightLimit(id: Long, linkId: Long,
                        lon: Double, lat: Double,
@@ -45,7 +45,8 @@ class WeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingWeightLimit] = {
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      point => IncomingWeightLimit(point.x, point.y, link.linkId)
+      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingWeightLimit and then get the value
+      point => IncomingWeightLimit(point.x, point.y, link.linkId, 0)
     }
   }
 }
@@ -71,7 +72,8 @@ class AxelWeightLimitService(val roadLinkService: RoadLinkService) extends Point
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingAxelWeightLimit] = {
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      point => IncomingAxelWeightLimit(point.x, point.y, link.linkId)
+      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingAxelWeightLimit and then get the value
+      point => IncomingAxelWeightLimit(point.x, point.y, link.linkId, 0)
     }
   }
 }
@@ -97,7 +99,8 @@ class BogieWeightLimitService(val roadLinkService: RoadLinkService) extends Poin
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingBogieWeightLimit] = {
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      point => IncomingBogieWeightLimit(point.x, point.y, link.linkId)
+      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingBogieWeightLimit and then get the value
+      point => IncomingBogieWeightLimit(point.x, point.y, link.linkId, 0)
     }
   }
 }
@@ -123,7 +126,8 @@ class TrailerTruckWeightLimitService(val roadLinkService: RoadLinkService) exten
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingTrailerTruckWeightLimit] = {
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      point => IncomingTrailerTruckWeightLimit(point.x, point.y, link.linkId)
+      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingTrailerTruckWeightLimit and then get the value
+      point => IncomingTrailerTruckWeightLimit(point.x, point.y, link.linkId, 0)
     }
   }
 }
