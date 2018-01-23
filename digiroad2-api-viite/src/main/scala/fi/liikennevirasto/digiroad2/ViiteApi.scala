@@ -4,9 +4,12 @@ import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
@@ -49,6 +52,7 @@ case class CutLineExtractor(linkId: Long, splitedPoint: Point)
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
+               val roadNetworkService: RoadNetworkService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date
               )
@@ -123,6 +127,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
       g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.startAddrMValue))
         .map(floatingRoadAddressToApi))
+  }
+
+  get("/roadAddressErrors") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+    roadAddressService.getRoadAddressErrors().groupBy(_.ely).map(
+      g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber))
+        .map(roadAddressErrorsToApi))
   }
 
   get("/roadlinks/:linkId") {
@@ -241,9 +252,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
       projectService.saveProjectCoordinates(projectSaved.id, projectService.calculateProjectCoordinates(projectSaved.id, project.resolution))
       val fetched = projectService.getRoadAddressSingleProject(projectSaved.id).get
+      val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
       val firstAddress: Map[String, Any] =
         fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
-      Map("project" -> roadAddressProjectToApi(fetched), "formInfo" ->
+      Map("project" -> roadAddressProjectToApi(fetched),"publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
+        "formInfo" ->
         fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
     } catch {
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
@@ -268,7 +281,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val firstLink = projectService.getFirstProjectLink(projectSaved)
       Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
         projectSaved.reservedParts.map(reservedRoadPartToApi),
-        "success" -> true)
+        "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
@@ -306,7 +319,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
   }
 
-
   put("/project/reverse") {
     val user = userProvider.getCurrentUser()
     try {
@@ -335,13 +347,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
-    val project = projectService.getRoadAddressSingleProject(projectId).get
-    val projectMap = roadAddressProjectToApi(project)
-    val parts = project.reservedParts.map(reservedRoadPartToApi)
-    val errorParts = projectService.validateProjectById(project.id)
-    val publishable = projectService.isProjectPublishable(projectId)
-    Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-      "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi))
+    projectService.getRoadAddressSingleProject(projectId) match {
+      case Some(project) =>
+        val projectMap = roadAddressProjectToApi(project)
+        val parts = project.reservedParts.map(reservedRoadPartToApi)
+        val errorParts = projectService.validateProjectById(project.id)
+        val publishable = projectService.isProjectPublishable(projectId)
+        val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
+        Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
+          "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
+          "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
+      case _ => halt(NotFound("Project not found"))
+    }
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/") {
@@ -400,12 +417,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-      logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-      val writableProject = projectWritable(links.projectId)
-      val retVal = writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-        Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username)
-      writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
-      retVal
+      projectService.validateLinkTrack(links.trackCode) match {
+        case true => {
+          logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
+          val writableProject = projectWritable(links.projectId)
+          val retVal = writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
+            Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username)
+          writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
+          Map("success" -> true,
+            "publishable" -> projectService.isProjectPublishable(links.projectId),
+            "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
+        }
+        case _ => Map("success" -> false, "errorMessage" -> "Invalid track code")
+      }
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case e: MappingException =>
@@ -422,16 +446,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-      val writableProject = projectWritable(links.projectId)
-      writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet, LinkStatus.apply(links.linkStatus),
-        user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-        links.roadType, links.discontinuity, Some(links.roadEly)) match {
-        case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
-        case None =>
-          writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
-          Map("success" -> true, "id" -> links.projectId,
-            "publishable" -> projectService.isProjectPublishable(links.projectId),
-            "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
+      projectService.validateLinkTrack(links.trackCode) match {
+        case true => {
+          val writableProject = projectWritable(links.projectId)
+          writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet, LinkStatus.apply(links.linkStatus),
+            user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
+            links.roadType, links.discontinuity, Some(links.roadEly)) match {
+            case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
+            case None =>
+              writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
+              Map("success" -> true, "id" -> links.projectId,
+                "publishable" -> projectService.isProjectPublishable(links.projectId),
+                "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
+          }
+        }
+        case _ => Map("success" -> false, "errorMessage" -> "Invalid track code")
       }
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
@@ -579,10 +608,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case Some(link) =>
         try {
           val options = parsedBody.extract[SplitOptions]
-          val writableProject = projectWritable(options.projectId)
-          val splitError = writableProject.splitSuravageLink(link, user.username, options)
-          writableProject.saveProjectCoordinates(options.projectId, options.coordinates)
-          Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
+          projectService.validateLinkTrack(options.trackCode.value) match {
+            case true => {
+              val writableProject = projectWritable(options.projectId)
+              val splitError = writableProject.splitSuravageLink(link, user.username, options)
+              writableProject.saveProjectCoordinates(options.projectId, options.coordinates)
+              Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
+            }
+            case _ => Map("success" -> false, "errorMessage" -> "Invalid track code")
+          }
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")
@@ -751,6 +785,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
+  def roadAddressErrorsToApi(addressError: AddressErrorDetails): Map[String, Long] = {
+    Map(
+      "id" -> addressError.id,
+      "linkId" -> addressError.linkId,
+      "roadNumber" -> addressError.roadNumber,
+      "roadPartNumber" -> addressError.roadPartNumber,
+      "errorCode" -> addressError.addressError.value,
+      "ely" -> addressError.ely
+    )
+  }
+
   def roadAddressLinkToApi(roadAddressLink: RoadAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(roadAddressLink) ++
       Map(
@@ -898,6 +943,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formattedDate = new SimpleDateFormat("dd.MM.yyyy").format(date)
     formattedDate
   }
+
+  private def formatDateTimeToString(dateOption: Option[DateTime]) : Option[String] =
+    dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
     calibrationPoint match {

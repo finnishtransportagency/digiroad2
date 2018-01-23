@@ -2,6 +2,7 @@
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
     //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
     var currentProject = false;
+    var currentPublishedNetworkDate;
     var formCommon = new FormCommon('');
     var activeLayer = false;
     var hasReservedRoadParts = false;
@@ -96,7 +97,7 @@
         '<footer>' + actionButtons(false) + '</footer>');
     };
 
-    var openProjectTemplate = function (project, reservedRoads, newReservedRoads) {
+    var openProjectTemplate = function (project, publishedNetworkDate, reservedRoads, newReservedRoads) {
       return _.template('' +
         '<header>' +
         titleWithDeletingTool(project.name) +
@@ -104,6 +105,7 @@
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
         '<div class="edit-control-group project-choice-group">' +
+        staticField('VIITEn julkaisukelpoinen tieosoiteverkko', publishedNetworkDate ? publishedNetworkDate : '-') +
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate) +
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
@@ -148,12 +150,23 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
-        '<div class="form-group">' +
-        '<label>TARKASTUSILMOITUKSET:</label>' +
-        '<div id ="projectErrors">' +
-        formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
-        '</div></div></div></div></br></br>' +
+        errorsList()+
+        '</div></div></br></br>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
+    };
+
+    var errorsList = function(){
+      if (projectCollection.getProjectErrors().length > 0){
+        return '<div class="form-group">' +
+          '<label>TARKASTUSILMOITUKSET:</label>' +
+          '<div id ="projectErrors">' +
+          formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
+          '</div>' +
+          '</div>' ;
+      }
+      else
+        return '';
+
     };
 
     var showProjectChangeButton = function () {
@@ -261,6 +274,7 @@
         eventbus.once('roadAddress:projectSaved', function (result) {
           hasReservedRoadParts = false;
           currentProject = result.project;
+          currentPublishedNetworkDate = result.publishedNetworkDate;
           currentProject.isDirty = false;
           disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
           var text = '';
@@ -272,7 +286,7 @@
               addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
               '</div>';
           });
-          rootElement.html(openProjectTemplate(currentProject, text, ''));
+          rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, text, ''));
 
           jQuery('.modal-overlay').remove();
           addDatePicker();
@@ -327,7 +341,7 @@
           rootElement.html(newProjectTemplate());
           addDatePicker();
         } else {
-          rootElement.html(openProjectTemplate(currentProject, writeHtmlList(currParts), writeHtmlList(newParts)));
+          rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, writeHtmlList(currParts), writeHtmlList(newParts)));
         }
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
@@ -364,6 +378,7 @@
 
       eventbus.on('roadAddress:openProject', function (result) {
         currentProject = result.project;
+        currentPublishedNetworkDate = result.publishedNetworkDate;
         projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
@@ -386,7 +401,7 @@
             addSmallLabel(line.roadPartNumber) + addSmallLabel(line.newLength) + addSmallLabel(line.newDiscontinuity) + addSmallLabel(line.newEly) +
             '</div>';
         });
-        rootElement.html(openProjectTemplate(currentProject, currentReserved, newReserved));
+        rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('.modal-overlay').remove();
         setTimeout(function () {
         }, 0);
