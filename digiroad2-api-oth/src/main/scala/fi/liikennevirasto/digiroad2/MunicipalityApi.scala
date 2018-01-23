@@ -887,7 +887,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Missing municipality code."))
 
     val municipalityCode = params("municipalityCode").toInt
-    if(linearAssetService.getMunicipalityById(municipalityCode).isEmpty)
+    if(assetService.getMunicipalityById(municipalityCode).isEmpty)
       halt(NotFound("Municipality code not found."))
 
     val assetType = getAssetTypeId(params("assetType"))

@@ -642,7 +642,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assets.size should not be (0)
   }
 
-  test("Don't map SpeedLimit, SpeedLimitZone, UrbanArea in 'wrong' side of the road (LIIKVAST = 1)") {
+  test("When in 'wrong' side of the road (LIIKVAST = 1), don't map SpeedLimit, SpeedLimitZone and UrbanArea") {
     val assetsTypeSpeedLimit = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLIIKVAST = "1"))
     val assetsTypeSpeedLimitZone = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(SpeedLimitZone, fldLIIKVAST = "1"))
     val assetsTypeUrbanArea = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(UrbanArea, fldLIIKVAST = "1"))
