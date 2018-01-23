@@ -100,7 +100,6 @@
     };
 
     var emptyTemplate = function(project) {
-      formCommon.toggleAdditionalControls();
       return _.template('' +
         '<header>' +
         formCommon.titleWithProjectName(project.name, projectCollection.getCurrentProject()) +
