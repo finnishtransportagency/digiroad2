@@ -31,13 +31,17 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def update(id: Long, updatedAsset: IncomingHeightLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def setFloating(persistedAsset: HeightLimit, floating: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
+  override def setFloating(persistedAsset: HeightLimit, floating: Boolean) = {
+    persistedAsset
+  }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[HeightLimit] = {
     OracleHeightLimitDao.fetchByFilter(queryFilter)
   }
 
   override def create(asset: IncomingHeightLimit, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
+
+  override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingHeightLimit] = {
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
