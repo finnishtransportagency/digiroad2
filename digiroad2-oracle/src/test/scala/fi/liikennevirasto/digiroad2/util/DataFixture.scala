@@ -176,8 +176,8 @@ object DataFixture {
 //      "siilinjarvi_linear_assets.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
-      "insert_project_link_data.sql",
-      "kauniainen_maximum_x7_restrictions.sql"
+      "insert_project_link_data.sql"
+//      "kauniainen_maximum_x7_restrictions.sql"
     ))
   }
 
