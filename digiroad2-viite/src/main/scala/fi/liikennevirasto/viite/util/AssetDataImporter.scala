@@ -5,7 +5,7 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -105,7 +105,7 @@ class AssetDataImporter {
   case class RoadAddressHistory(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
                                 startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                 validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
-                                termination: TerminationCode, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
+                                linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
                                 x2: Option[Double], y2: Option[Double], lrmId: Long, ajrId: Long)
   case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType, elyCode: Long)
 
@@ -132,6 +132,38 @@ class AssetDataImporter {
 
   }
 
+  implicit val getRoadAddressHistory = new GetResult[RoadAddressHistory] {
+    def apply(r: PositionedResult) = {
+
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val trackCode = r.nextLong()
+      val discontinuity = r.nextLong()
+      val startAddrM = r.nextLong()
+      val endAddrM = r.nextLong()
+      val startM = r.nextDouble()
+      val endM = r.nextDouble()
+      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val validTo = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val ely = r.nextLong()
+      val roadType = r.nextLong()
+      val linkId = r.nextLong()
+      val userId =r.nextString
+      val x1 = r.nextDouble()
+      val y1 = r.nextDouble()
+      val x2 = r.nextDouble()
+      val y2 = r.nextDouble()
+      val lrmId = r.nextLong()
+      val ajrId = r.nextLong()
+
+      RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDate, validFrom, validTo, ely, roadType,
+        linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, ajrId)
+
+    }
+  }
+
   private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, ely: Int, importOptions: ImportOptions,
                                     vvhClientProd: Option[VVHClient], importDate: String): Unit = {
 
@@ -147,19 +179,18 @@ class AssetDataImporter {
 
     val roads = conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
+      val dateFilter = if(importDate!="") s" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate)) " else s""
+      println(s"date filter -> $dateFilter")
+      val test =
+        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
+             TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+             loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName WHERE ely=$ely AND aet >= 0 AND let >= 0 #$dateFilter """
+        println(test)
 
-      val dateFilter = if(importDate!="") s""" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate)) """ else ""
-      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
-            ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id, ajorataid
-            from vvh_tiehistoria_heina2017 WHERE ely=$ely AND aet >= 0 AND let >= 0 $dateFilter """
-        .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[DateTime], Option[DateTime], Option[DateTime], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long, Long)].list
-    }.map {
-      case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDate, validFrom, elyCode, roadType, linkId, createdBy, x1, y1, x2, y2, lrmId, ajorataId) =>
-        RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
-          startDate, endDate, validFrom, None, elyCode, roadType, TerminationCode.NoTermination, linkId, createdBy, x1, y1, x2, y2, lrmId, ajorataId)
+        test.as[RoadAddressHistory].list
     }
 
-    print(s"\n${DateTime.now()} - ")
+    print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
     val lrmList = roads.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
     val addressList = roads.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.x1, r.y1, r.x2, r.y2, r.ajrId)).toMap
