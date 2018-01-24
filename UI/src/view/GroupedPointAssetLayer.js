@@ -13,7 +13,8 @@
       editConstrains = params.editConstrains,
       assetLabel = params.assetLabel,
       allowGrouping = params.allowGrouping,
-      assetGrouping = params.assetGrouping;
+      assetGrouping = params.assetGrouping,
+      assetTypeIds = params.assetTypeIds;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;

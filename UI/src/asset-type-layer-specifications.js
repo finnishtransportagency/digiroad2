@@ -30,8 +30,15 @@
     trafficSigns: 300,
     trSpeedLimits: 310,
     trWeightLimits: 320,
+    trTrailerTruckWeightLimits: 330,
+    trAxleWeightLimits: 340,
+    trBogieWeightLimits: 350,
     trHeightLimits: 360,
     trWidthLimits: 370
+  };
+
+  root.assetGroups = {
+    trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
   };
 
   root.linearAssetSpecs = [
@@ -662,11 +669,11 @@
 
   root.groupedPointAssetSpecs = [
     {
-      typeId: assetType.trWeightLimits,
+      typeIds: assetGroups.trWeightGroup,
       layerName: 'trWeightLimits',
       title: 'TR painorajoitukset',
       allowComplementaryLinks: true,
-      allowGrouping: true,
+      allowGrouping: false,
       legendValues: [
       ],
       formLabels: {

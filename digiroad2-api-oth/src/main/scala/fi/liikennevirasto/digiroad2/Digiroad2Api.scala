@@ -59,7 +59,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
                    val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
-                   val weightLimitService: WeightLimitService = Digiroad2Context.weightLimitService)
+                   val weightLimitService: WeightLimitService = Digiroad2Context.weightLimitService,
+                   val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = Digiroad2Context.trailerTruckWeightLimitService,
+                   val axleWeightLimitService: AxleWeightLimitService = Digiroad2Context.axleWeightLimitService,
+                   val bogieWeightLimitService: BogieWeightLimitService = Digiroad2Context.bogieWeightLimitService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1207,7 +1210,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   put("/trafficSigns/:id")(updatePointAsset(trafficSignService))
   delete("/trafficSigns/:id")(deletePointAsset(trafficSignService))
 
-  get("/trWeightLimits")(getPointAssets(weightLimitService))
+  get("/groupedPointAssets")(getGroupedPointAssets)
+
+  private def getGroupedPointAssets: Seq[PersistedPointAsset] = {
+    val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    val typeIds = params.get("typeIds").getOrElse(halt(BadRequest("type Id parameters missing")))
+    validateBoundingBox(bbox)
+    //request takes a long time now because of separate getByBoundingBox - will be fixed
+    typeIds.split(",").map(_.toInt).flatMap(asset => getPointAssetService(asset).getByBoundingBox(user,bbox))
+  }
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
@@ -1221,6 +1235,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     if (user.isServiceRoadMaintainer())
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
+
     val asset = service.getById(params("id").toLong)
     asset match {
       case None => halt(NotFound("Asset with given id not found"))
@@ -1286,6 +1301,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService
       case _ => linearAssetService
+    }
+  }
+
+  private def getPointAssetService(typeId: Int): PointAssetOperations = {
+    typeId match {
+      case TrTrailerTruckWeightLimit.typeId => trailerTruckWeightLimitService
+      case TrAxleWeightLimit.typeId => axleWeightLimitService
+      case TrBogieWeightLimit.typeId => bogieWeightLimitService
+      case TrWeightLimit.typeId => weightLimitService
+      case _ => halt(BadRequest("invalid asset type"))
     }
   }
 

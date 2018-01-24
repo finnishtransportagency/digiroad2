@@ -199,6 +199,12 @@
       };
     });
 
+    this.getGroupedPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeIds) {
+      return {
+        url: 'api/groupedPointAssets?bbox=' + boundingBox + '&typeIds=' + typeIds
+      };
+    });
+
     this.createPointAsset = function(asset, endPointName) {
       return $.ajax({
         contentType: "application/json",

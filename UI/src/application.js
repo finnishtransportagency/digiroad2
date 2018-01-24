@@ -31,7 +31,7 @@
     });
 
     var groupedPointAssets = _.map(groupedPointAssetSpecs, function(spec) {
-      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec.layerName, spec.allowComplementaryLinks) : new spec.collection(backend, spec.layerName, spec.allowComplementaryLinks) ;
+      var collection = _.isUndefined(spec.collection ) ?  new GroupedPointAssetsCollection(backend, spec.layerName, spec.allowComplementaryLinks, spec.typeIds) : new spec.collection(backend, spec.layerName, spec.allowComplementaryLinks) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
       return _.merge({}, spec, {
         collection: collection,
@@ -330,7 +330,8 @@
         assetGrouping: new AssetGrouping(asset.groupingDistance),
         hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
         trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
-        editConstrains : asset.editConstrains || function() {return false;}
+        editConstrains : asset.editConstrains || function() {return false;},
+        assetTypeIds: asset.typeIds
       });
       return acc;
     }, {});
@@ -431,7 +432,7 @@
       [].concat([serviceRoadBox]),
       [].concat(getPointAsset(assetType.trHeightLimits))
         .concat(getPointAsset(assetType.trWidthLimits))
-        .concat(getGroupedPointAsset(assetType.trWeightLimits))
+        .concat(getGroupedPointAsset(assetGroups.trWeightGroup))
 
     ];
 
@@ -452,8 +453,8 @@
       return [];
     }
 
-    function getGroupedPointAsset(typeId) {
-      var asset = _.find(groupedPointAssets, {typeId: typeId});
+    function getGroupedPointAsset(typeIds) {
+      var asset = _.find(groupedPointAssets, {typeIds: typeIds.sort()});
       if (asset) {
         return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues, asset.allowComplementaryLinks)];
       }
