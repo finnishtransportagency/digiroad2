@@ -1,5 +1,5 @@
 (function (root) {
-  root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues, allowComplementaryLinks) {
+  root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues, allowComplementaryLinks, nonModifiableBox) {
     var className = _.kebabCase(layerName);
     var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
 
@@ -52,7 +52,7 @@
 
     eventbus.on('roles:fetched', function(roles) {
       userRoles = roles;
-      if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+      if ((_.contains(roles, 'operator') || _.contains(roles, 'premium')) && (nonModifiableBox == false || _.isUndefined(nonModifiableBox))) {
         panel.append(editModeToggle.element);
       }
     });

@@ -219,46 +219,10 @@
 
     }
 
-    function handleMapClick(coordinates) {
-      if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
-        createNewAsset(coordinates);
-      } else if (selectedAsset.isDirty()) {
+    function handleMapClick() {
+      if (selectedAsset.isDirty()) {
         me.displayConfirmMessage();
       }
-    }
-
-    function createNewAsset(coordinates) {
-      var selectedLon = coordinates.x;
-      var selectedLat = coordinates.y;
-      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), selectedLon, selectedLat);
-      var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
-      var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-      var administrativeClass = obtainAdministrativeClass(nearestLine);
-
-      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
-
-      vectorLayer.getSource().addFeature(createFeature(asset));
-      selectedAsset.place(asset);
-      mapOverlay.show();
-    }
-
-    function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass) {
-      var isServicePoint = newAsset.services;
-
-      return _.merge({}, newAsset, isServicePoint ? {
-          lon: selectedLon,
-          lat: selectedLat,
-          id: 0
-        } : {
-          lon: projectionOnNearestLine.x,
-          lat: projectionOnNearestLine.y,
-          floating: false,
-          linkId: nearestLine.linkId,
-          id: 0,
-          geometry: [nearestLine.start, nearestLine.end],
-          bearing: bearing,
-          administrativeClass: administrativeClass
-        });
     }
 
     function showWithComplementary() {

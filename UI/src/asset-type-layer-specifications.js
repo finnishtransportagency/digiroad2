@@ -646,7 +646,7 @@
       editConstrains : function() {
         return true;
       },
-      hasTrafficSignReadOnlyLayer: true
+      nonModifiableBox: true
     },
     {
       typeId: assetType.trWidthLimits,
@@ -662,7 +662,7 @@
       editConstrains : function() {
         return true;
       },
-      hasTrafficSignReadOnlyLayer: true
+      nonModifiableBox: true
     }
 
   ];
@@ -682,7 +682,8 @@
       },
       editConstrains : function() {
         return true;
-      }
+      },
+      nonModifiableBox: true
     }
   ];
 })(this);
