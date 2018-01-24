@@ -410,6 +410,10 @@ object Digiroad2Context {
     new HeightLimitService(roadLinkOTHService)
   }
 
+  lazy val widthLimitService: WidthLimitService = {
+    new WidthLimitService(roadLinkOTHService)
+  }
+
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
   val env = System.getProperty("env")

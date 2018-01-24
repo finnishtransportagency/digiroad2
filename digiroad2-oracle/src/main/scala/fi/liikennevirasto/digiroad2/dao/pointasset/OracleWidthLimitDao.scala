@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, TrWidthLimit}
 import fi.liikennevirasto.digiroad2.dao.Queries.{bytesToPoint, insertNumberProperty, insertSingleChoiceProperty, updateAssetGeometry}
+import fi.liikennevirasto.digiroad2.service.pointasset.{WidthLimitReason, IncomingWidthLimit, WidthLimit}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -9,43 +10,6 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.{IncomingPointAsset, PersistedPointAsset, Point}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-
-sealed trait WidthLimitReason {
-  def value: Int
-}
-object WidthLimitReason {
-  val values = Set(Bridge, FullPortal, HalfPortal, Railing, Lamp, Fence, Abutment, TrafficLightPost, Other, Unknown)
-
-  def apply(intValue: Int): WidthLimitReason = {
-    values.find(_.value == intValue).getOrElse(Unknown)
-  }
-
-  case object Bridge extends WidthLimitReason { def value = 1 }
-  case object FullPortal extends WidthLimitReason { def value = 2 }
-  case object HalfPortal extends WidthLimitReason { def value = 3 }
-  case object Railing extends WidthLimitReason { def value = 4 }
-  case object Lamp extends WidthLimitReason { def value = 5 }
-  case object Fence extends WidthLimitReason { def value = 6 }
-  case object Abutment extends WidthLimitReason { def value = 7 }
-  case object TrafficLightPost extends WidthLimitReason { def value = 8 }
-  case object Other extends WidthLimitReason { def value = 9 }
-  case object Unknown extends WidthLimitReason { def value = 99 }
-}
-
-case class IncomingWidthLimit(lon: Double, lat: Double, linkId: Long, limit: Double, reason: WidthLimitReason, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-
-case class WidthLimit(id: Long, linkId: Long,
-                       lon: Double, lat: Double,
-                       mValue: Double, floating: Boolean,
-                       vvhTimeStamp: Long,
-                       municipalityCode: Int,
-                       createdBy: Option[String] = None,
-                       createdAt: Option[DateTime] = None,
-                       modifiedBy: Option[String] = None,
-                       modifiedAt: Option[DateTime] = None,
-                       linkSource: LinkGeomSource,
-                       limit: Double,
-                       reason: WidthLimitReason) extends PersistedPointAsset
 
 object OracleWidthLimitDao {
   val typeId = TrWidthLimit.typeId
