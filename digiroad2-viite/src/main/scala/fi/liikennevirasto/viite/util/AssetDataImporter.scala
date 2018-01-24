@@ -188,15 +188,6 @@ class AssetDataImporter {
     print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
 
-    roads.groupBy { road => (
-     road.roadNumber, road.roadPartNumber, road.startAddrM, road.endAddrM, road.trackCode, road.discontinuity, road.startDate, road.endDate, road.validFrom, road.validTo, road.ely, road.roadType
-      )}.foreach{ group =>
-      if (group._2.size > 1){
-        group._2.foreach(i => print(s"\nWARNING!!!: Encountered duplicated road in this group with linkId ${i.linkId}"))
-      }
-    }
-
-
     val lrmList = roads.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
     val addressList = roads.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.validTo, r.x1, r.y1, r.x2, r.y2, r.ajrId)).toMap
 
@@ -223,6 +214,15 @@ class AssetDataImporter {
 
     roads.filterNot(r => linkLengths.get(r.linkId).isDefined || floatingLinks.get(r.linkId).nonEmpty).foreach {
       row => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(row.lrmId, printRow(row)))
+    }
+
+    roads.groupBy { road => (
+      road.roadNumber, road.roadPartNumber, road.startAddrM, road.endAddrM, road.trackCode, road.discontinuity, road.startDate, road.endDate, road.validFrom, road.validTo, road.ely, road.roadType
+      )}.foreach{ group =>
+      if (group._2.size > 1){
+        group._2.foreach(i => print(s"\nWARNING!!!: Encountered duplicated road in this group with linkId ${i.linkId}, number ${i.roadNumber}, part ${i.roadPartNumber}" +
+          s", track ${i.trackCode}, discontinuity ${i.discontinuity}, startAddrM ${i.startAddrM}, endAddrM ${i.endAddrM}, startDate ${i.startDate}, endDate ${i.endDate}, validFrom ${i.validFrom}, validTo ${i.validTo}, ely ${i.ely}, roadType ${i.roadType} "))
+      }
     }
 
     val allLinkLengths = linkLengths ++ floatingLinks.mapValues(x => GeometryUtils.geometryLength(x.geometry))
