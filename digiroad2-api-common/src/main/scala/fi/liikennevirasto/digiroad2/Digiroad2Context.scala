@@ -394,8 +394,8 @@ object Digiroad2Context {
     new WeightLimitService(roadLinkOTHService)
   }
 
-  lazy val axelWeightLimitService: AxelWeightLimitService = {
-    new AxelWeightLimitService(roadLinkOTHService)
+  lazy val axleWeightLimitService: AxleWeightLimitService = {
+    new AxleWeightLimitService(roadLinkOTHService)
   }
 
   lazy val bogieWeightLimitService: BogieWeightLimitService = {
