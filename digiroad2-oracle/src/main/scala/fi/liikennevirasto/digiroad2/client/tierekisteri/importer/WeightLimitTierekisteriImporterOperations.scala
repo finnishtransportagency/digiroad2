@@ -34,7 +34,7 @@ class TotalWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val weightLimit = IncomingWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.totalWeight.get,
-          getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          SideCode.BothDirections.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
         OracleWeightLimitDao.create(weightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
@@ -54,7 +54,7 @@ class TrailerTruckWeightLimitTierekisteriImporter extends WeightLimitTierekister
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val trailerTruckWeightLimit = IncomingTrailerTruckWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.trailerTruckWeight.get,
-          getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          SideCode.BothDirections.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
         OracleTrailerTruckWeightLimitDao.create(trailerTruckWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
@@ -74,7 +74,7 @@ class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporte
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val axleWeightLimit = IncomingAxleWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.axleWeight.get,
-          getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          SideCode.BothDirections.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
         OracleAxleWeightLimitDao.create(axleWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
@@ -94,7 +94,7 @@ class BogieWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val bogieWeightLimit = IncomingBogieWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.bogieWeight.get,
-          getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          SideCode.BothDirections.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
         OracleBogieWeightLimitDao.create(bogieWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }

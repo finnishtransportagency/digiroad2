@@ -22,12 +22,10 @@ class TierekisteriHeightLimitAssetClient(trEndPoint: String, trEnable: Boolean, 
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val roadSide = convertToInt(getMandatoryFieldValue(data, trRoadSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
-    Some(TierekisteriHeightLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, roadSide, heightValue))
+    Some(TierekisteriHeightLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, heightValue))
   }
 }

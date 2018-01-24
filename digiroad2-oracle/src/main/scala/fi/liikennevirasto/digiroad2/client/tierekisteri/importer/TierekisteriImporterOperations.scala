@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
-import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
@@ -54,24 +53,23 @@ trait TierekisteriAssetImporterOperations {
 
   protected def getSideCode(roadAddress: ViiteRoadAddress, trAssetTrack: Track, trAssetRoadSide: RoadSide): SideCode = {
     val trTrack = trAssetTrack match {
-      case Combined =>
+      case Track.Combined =>
         trAssetRoadSide match {
-          case RoadSide.Right => RightSide
-          case RoadSide.Left => LeftSide
-          case _ => throw new UnsupportedOperationException("Tierekisteri track code with combined and road side diferente of left and right")
+          case RoadSide.Right => Track.RightSide
+          case _ => Track.LeftSide
         }
       case _ =>
         trAssetTrack
     }
 
-    if(trTrack != roadAddress.track || (roadAddress.track == Combined && trTrack == LeftSide)) {
-      roadAddress.sideCode match {
+    trTrack match {
+      case Track.RightSide => roadAddress.sideCode
+      case Track.LeftSide => roadAddress.sideCode match {
         case TowardsDigitizing => SideCode.AgainstDigitizing
         case AgainstDigitizing => SideCode.TowardsDigitizing
         case _ => SideCode.BothDirections
       }
-    } else {
-      roadAddress.sideCode
+      case _ => SideCode.BothDirections
     }
   }
 

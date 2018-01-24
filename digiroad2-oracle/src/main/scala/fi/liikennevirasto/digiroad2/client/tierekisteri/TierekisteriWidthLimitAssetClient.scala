@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri
 
-import fi.liikennevirasto.digiroad2.dao.pointasset.WidthLimitReason
+import fi.liikennevirasto.digiroad2.service.pointasset.WidthLimitReason
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import org.apache.http.impl.client.CloseableHttpClient
 
@@ -24,13 +24,11 @@ class TierekisteriWidthLimitAssetClient(trEndPoint: String, trEnable: Boolean, h
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val roadSide = convertToInt(getMandatoryFieldValue(data, trRoadSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
     val reason = convertToInt(getMandatoryFieldValue(data, trReason)).map(WidthLimitReason.apply).getOrElse(WidthLimitReason.Unknown)
 
-    Some(TierekisteriWidthLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, roadSide, widthValue, reason))
+    Some(TierekisteriWidthLimitData(roadNumber, roadPartNumber, roadNumber, track, startMValue, startMValue, roadSide, widthValue, reason))
   }
 }
