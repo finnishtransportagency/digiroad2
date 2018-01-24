@@ -192,7 +192,7 @@ class AssetDataImporter {
     print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
     val lrmList = roads.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
-    val addressList = roads.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.x1, r.y1, r.x2, r.y2, r.ajrId)).toMap
+    val addressList = roads.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.validTo, r.x1, r.y1, r.x2, r.y2, r.ajrId)).toMap
 
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(lrmList.keys.size))
@@ -264,8 +264,8 @@ class AssetDataImporter {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, link_source) values (?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-      "VALID_FROM, geometry, floating, road_type, ely) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
-      "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
+      "VALID_FROM, VALID_TO, geometry, floating, road_type, ely) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?)") // add one ? for the ajorata_id
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmPositions.size}""".as[Long].list
     assert(ids.size == lrmPositions.size || lrmPositions.isEmpty)
@@ -282,12 +282,12 @@ class AssetDataImporter {
         (address._8, address._7, SideCode.AgainstDigitizing.value)
       }
       val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
-        (address._13, address._14, address._15, address._16)
+        (address._14, address._15, address._16, address._17)
       else
-        (address._15, address._16, address._13, address._14)
+        (address._16, address._17, address._14, address._15)
       val linkSource = pos.linkSource
 
-      val lrmPosCacheKey = (pos.linkId, address._17) // linkid, ajorataid
+      val lrmPosCacheKey = (pos.linkId, address._18) // linkid, ajorataid
       val cachedLrmId = lrmPosCache(lrmPosCacheKey)
       if (cachedLrmId < 0) {
         lrmPosCache += (lrmPosCacheKey -> lrmId)
@@ -322,15 +322,19 @@ class AssetDataImporter {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setDouble(12, x1.get)
-      addressPS.setDouble(13, y1.get)
-      addressPS.setDouble(14, x2.get)
-      addressPS.setDouble(15, y2.get)
-      addressPS.setDouble(16, endAddrM - startAddrM)
-      addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)
-      addressPS.setLong(18, address._5)
-      addressPS.setLong(19, address._4)
-//      addressPS.setLong(20, address._17) //ajorata id
+      addressPS.setString(12, address._13 match {
+        case Some(dt) => dateFormatter.print(dt)
+        case None => ""
+      })
+      addressPS.setDouble(13, x1.get)
+      addressPS.setDouble(14, y1.get)
+      addressPS.setDouble(15, x2.get)
+      addressPS.setDouble(16, y2.get)
+      addressPS.setDouble(17, endAddrM - startAddrM)
+      addressPS.setInt(18, if (floatingLinks.contains(pos.linkId)) 1 else 0)
+      addressPS.setLong(19, address._5)
+      addressPS.setLong(20, address._4)
+//      addressPS.setLong(21, address._18) //ajorata id
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
@@ -340,167 +344,6 @@ class AssetDataImporter {
     lrmPositionPS.close()
     addressPS.close()
   }
-
-//  private def importRoadAddressHistoryData(conversionDatabase: DatabaseDef, ely: Long, importDate: String): Unit = {
-//
-//    //Setting statements
-//    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
-//    val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
-//      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-//      "VALID_FROM, geometry, floating, road_type, ely, terminated) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
-//      "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-//      "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
-//
-//    def fillStatements(lrmAddresses: List[LRMPos], roadList: List[RoadAddressHistory]) = {
-//      if (roadList.nonEmpty) {
-//        val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmAddresses.size}""".as[Long].list
-//        val df = new DecimalFormat("#.###")
-//        assert(ids.size == lrmAddresses.size || lrmAddresses.isEmpty)
-//        lrmAddresses.zip(ids).foreach { case ((pos), (lrmId)) =>
-//          val addr = roadList.find(r => r.lrmId == pos.id && r.startM == pos.startM && r.endM == pos.endM)
-//          if (addr.isDefined) {
-//            val address = addr.get
-//            val (startAddrM, endAddrM, sideCode) = if (address.startAddrM < address.endAddrM) {
-//              (address.startAddrM, address.endAddrM, SideCode.TowardsDigitizing.value)
-//            } else {
-//              (address.endAddrM, address.startAddrM, SideCode.AgainstDigitizing.value)
-//            }
-//            val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
-//              (address.x1, address.y1, address.x2, address.y2)
-//            else
-//              (address.x2, address.y2, address.x1, address.y1)
-//
-//            lrmPositionPS.setLong(1, lrmId)
-//            lrmPositionPS.setLong(2, pos.linkId)
-//            lrmPositionPS.setLong(3, sideCode)
-//            lrmPositionPS.setDouble(4, pos.startM)
-//            lrmPositionPS.setDouble(5, pos.endM)
-//            lrmPositionPS.addBatch()
-//            addressPS.setLong(1, lrmId)
-//            addressPS.setLong(2, address.roadNumber)
-//            addressPS.setLong(3, address.roadPartNumber)
-//            addressPS.setLong(4, address.trackCode)
-//            addressPS.setLong(5, address.discontinuity)
-//            addressPS.setLong(6, Math.abs(startAddrM))
-//            addressPS.setLong(7, Math.abs(endAddrM))
-//            addressPS.setString(8, address.startDate.get)
-//            addressPS.setString(9, address.endDate.getOrElse(""))
-//            addressPS.setString(10, address.userId)
-//            addressPS.setString(11, address.validFrom.get)
-//            addressPS.setDouble(12, x1.get)
-//            addressPS.setDouble(13, y1.get)
-//            addressPS.setDouble(14, x2.get)
-//            addressPS.setDouble(15, y2.get)
-//            addressPS.setDouble(16, Math.abs(endAddrM) - Math.abs(startAddrM))
-//            addressPS.setInt(17, 0)
-//            addressPS.setLong(18, address.roadType)
-//            addressPS.setLong(19, address.ely)
-//            addressPS.setInt(20, address.termination.value)
-//            addressPS.addBatch()
-//          }
-//        }
-//      }
-//    }
-//
-//    def mapTerminations(fetchedHistory: List[RoadAddressHistory], currentRoadHistory: List[RoadAddressHistory]): List[RoadAddressHistory] = {
-//      fetchedHistory.map(a => {
-//        if (a.endDate.isEmpty) {
-//          RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
-//          a.validTo, a.ely, a.roadType, a.termination, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
-//        }
-//        else {
-//          val presentInHistory = currentRoadHistory.find(curr => {
-//             curr.roadNumber == a.roadNumber &&
-//               curr.roadPartNumber == a.roadPartNumber &&
-//               curr.trackCode == a.trackCode &&
-//               curr.discontinuity == a.discontinuity &&
-//               curr.startAddrM == a.startAddrM &&
-//               curr.endAddrM == a.endAddrM &&
-//               curr.startDate.getOrElse("") == a.startDate.getOrElse("") &&
-//               curr.endDate.getOrElse("") == a.endDate.getOrElse("") &&
-//               curr.ely == a.ely &&
-//               curr.roadType == a.roadType &&
-//               curr.linkId == a.linkId
-//          })
-//          if (presentInHistory.isEmpty) {
-//            RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
-//              a.validTo, a.ely, a.roadType, TerminationCode.NoTermination, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
-//          } else {
-//            if (presentInHistory.get.termination.value >= 1)
-//              RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
-//                a.validTo, a.ely, a.roadType, TerminationCode.Subsequent, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
-//            else
-//              RoadAddressHistory(a.roadNumber, a.roadPartNumber, a.trackCode, a.discontinuity, a.startAddrM, a.endAddrM, a.startM, a.endM, a.startDate, a.endDate, a.validFrom,
-//                a.validTo, a.ely, a.roadType, TerminationCode.NoTermination, a.linkId, a.userId, a.x1, a.y1, a.x2, a.y2, a.lrmId)
-//          }
-//        }
-//      })
-//    }
-//
-//    //Get current roadHistory
-//    val currentHistory =
-//      sql"""SELECT RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.DISCONTINUITY, RA.START_ADDR_M, RA.END_ADDR_M, LR.START_MEASURE, LR.END_MEASURE,
-//         TO_CHAR(RA.START_DATE,'YYYY-MM-DD'), TO_CHAR(RA.END_DATE,'YYYY-MM-DD'), TO_CHAR(RA.VALID_FROM,'YYYY-MM-DD'),
-//         TO_CHAR(RA.VALID_TO,'YYYY-MM-DD'), RA.ELY, RA.ROAD_TYPE, RA.TERMINATED, LR.LINK_ID, RA.CREATED_BY, LR.ID FROM ROAD_ADDRESS RA, LRM_POSITION LR
-//         WHERE RA.END_DATE IS NOT NULL AND RA.LRM_POSITION_ID = LR.ID AND RA.ELY = $ely""".
-//        as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Option[String], Long, Long, Int, Long, String, Long)].list.map {
-//        case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
-//        startDate, endDate, validFrom, validTo, ely, roadType, termination, linkId, createdBy, lrmId) =>
-//          RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
-//            startDate, endDate, validFrom, validTo, ely, roadType, TerminationCode.apply(termination), linkId, createdBy, Some(0), Some(0), Some(0), Some(0), lrmId)
-//      }
-//
-//    print(s"\n${DateTime.now()} - ")
-//    println("Got %d current road addresses history".format(currentHistory.size))
-//    val roadHistory = conversionDatabase.withDynSession {
-//      val dateFilter = if(importDate!="") s""" AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= $importDate """ else ""
-//        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'), TO_CHAR(muutospvm, 'YYYY-MM-DD'),
-//               ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux, loppuy, linkid * 10000 + ajr*1000 + aet as id
-//            from VVH_TIEHISTORIA_HEINA2017 WHERE ely=$ely AND aet >= 0 AND LET >= 0 AND loppupvm IS NOT NULL $dateFilter """
-//          .as[(Long, Long, Long, Long, Long, Long, Double, Double, Option[String], Option[String], Option[String], Long, Long, Long, String, Option[Double], Option[Double], Option[Double], Option[Double], Long)].list
-//
-//    }.map {
-//      case (roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDate, validFrom, elyCode, roadType, linkId, createdBy, x1, y1, x2, y2, lrmId) =>
-//        RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
-//          startDate, endDate, validFrom, None, elyCode, roadType, TerminationCode.Subsequent, linkId, createdBy, x1, y1, x2, y2, lrmId)
-//    }
-//    val adjustedTermination = mapTerminations(roadHistory, currentHistory)
-//
-//    print(s"\n${DateTime.now()} - ")
-//    println("Read %d rows from conversion database for ELY %d".format(roadHistory.size, ely))
-//
-//    val lrmList = adjustedTermination.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown)) // linkId -> (id, linkId, startM, endM, linkSource = 99 (not used anywhere))
-//    val (checkCompliantAddresses, nonCheckingAddresses) = adjustedTermination.partition(rh => {
-//      !currentHistory.exists(ch => {
-//        rh.roadNumber == ch.roadNumber &&
-//        rh.roadPartNumber == ch.roadPartNumber &&
-//        rh.trackCode == ch.trackCode &&
-//        rh.discontinuity == ch.discontinuity &&
-//        ((rh.startAddrM < rh.endAddrM && rh.startAddrM == ch.startAddrM) ||  (rh.startAddrM > rh.endAddrM && rh.startAddrM == ch.endAddrM)) &&
-//        ((rh.startAddrM < rh.endAddrM && rh.endAddrM == ch.endAddrM) ||  (rh.startAddrM > rh.endAddrM && rh.endAddrM == ch.startAddrM)) &&
-//        rh.startDate.getOrElse("") == ch.startDate.getOrElse("") &&
-//        rh.endDate.getOrElse("") == ch.endDate.getOrElse("") &&
-//        rh.validFrom.getOrElse("") == ch.validFrom.getOrElse("") &&
-//        rh.validTo.getOrElse("") == ch.validTo.getOrElse("") &&
-//        rh.ely == ch.ely &&
-//        rh.roadType == ch.roadType &&
-//        rh.linkId == ch.linkId
-//      })
-//    })
-//
-//    val lrmAddresses = lrmList.filterNot( lrm=> nonCheckingAddresses.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).distinct
-//    print(s"${DateTime.now()} - ")
-//    println("%d segments with invalid link id removed".format(lrmList.count(_.linkId == 0)))
-//
-//    fillStatements(lrmAddresses, checkCompliantAddresses.filter(_.linkId != 0).distinct)
-//
-//    lrmPositionPS.executeBatch()
-//    println(s"${DateTime.now()} - LRM Positions saved")
-//    addressPS.executeBatch()
-//    println(s"${DateTime.now()} - Road addresses saved")
-//    lrmPositionPS.close()
-//    addressPS.close()
-//  }
 
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient],
                             importOptions: ImportOptions, importDate: String): Unit = {
@@ -547,18 +390,6 @@ class AssetDataImporter {
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
     }
   }
-
-//  def importRoadAddressHistory(conversionDatabase: DatabaseDef, importDate: String): Unit = {
-//
-//    print(s"\n${DateTime.now()} - ")
-//    println("Starting to import history data %s ".format(importDate))
-//
-//    OracleDatabase.withDynTransaction{
-//      sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
-//      roadMaintainerElys.map(ely => importRoadAddressHistoryData(conversionDatabase, ely, importDate))
-//      sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
-//    }
-//  }
 
   def updateRoadAddressesValues(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
     val eventBus = new DummyEventBus
