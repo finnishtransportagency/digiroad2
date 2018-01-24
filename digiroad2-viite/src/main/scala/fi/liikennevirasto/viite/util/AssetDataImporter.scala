@@ -180,17 +180,23 @@ class AssetDataImporter {
     val roads = conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       val dateFilter = if(importDate!="") s" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate')) " else s""
-      val test =
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
              TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-             loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName WHERE ely=$ely AND aet >= 0 AND let >= 0 #$dateFilter """
-//        println(test)
-
-        test.as[RoadAddressHistory].list
+             loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName WHERE ely=$ely AND aet >= 0 AND let >= 0 #$dateFilter """.as[RoadAddressHistory].list
     }
 
     print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
+
+    roads.groupBy { road => (
+     road.roadNumber, road.roadPartNumber, road.startAddrM, road.endAddrM, road.trackCode, road.discontinuity, road.startDate, road.endDate, road.validFrom, road.validTo, road.ely, road.roadType
+      )}.foreach{ group =>
+      if (group._2.size > 1){
+        group._2.foreach(i => print(s"\nWARNING!!!: Encountered duplicated road in this group with linkId ${i.linkId}"))
+      }
+    }
+
+
     val lrmList = roads.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
     val addressList = roads.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.validTo, r.x1, r.y1, r.x2, r.y2, r.ajrId)).toMap
 
