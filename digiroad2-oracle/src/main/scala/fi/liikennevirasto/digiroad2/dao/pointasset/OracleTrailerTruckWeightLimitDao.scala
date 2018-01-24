@@ -18,7 +18,7 @@ object OracleTrailerTruckWeightLimitDao {
     val query =
       """
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
-        pos.link_source
+        pos.link_source, npv.value
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id

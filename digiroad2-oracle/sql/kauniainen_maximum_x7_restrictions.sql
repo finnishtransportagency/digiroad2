@@ -37,7 +37,7 @@ UPDATE asset
                                     MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
                                     MDSYS.SDO_ORDINATE_ARRAY(374101.60105163435, 6677437.872017591, 0, 0)
                                    )
-  WHERE id = 600076
+  WHERE id = 600076;
 
 
 

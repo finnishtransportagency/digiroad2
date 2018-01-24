@@ -61,7 +61,9 @@ class AxleWeightLimitService(val roadLinkService: RoadLinkService) extends Point
 
   override def update(id: Long, updatedAsset: IncomingAxleWeightLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
+  override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = {
+    persistedAsset
+  }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
     OracleAxleWeightLimitDao.fetchByFilter(queryFilter)
@@ -85,7 +87,9 @@ class BogieWeightLimitService(val roadLinkService: RoadLinkService) extends Poin
 
   override def update(id: Long, updatedAsset: IncomingBogieWeightLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
+  override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = {
+    persistedAsset
+  }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
     OracleBogieWeightLimitDao.fetchByFilter(queryFilter)
@@ -109,7 +113,9 @@ class TrailerTruckWeightLimitService(val roadLinkService: RoadLinkService) exten
 
   override def update(id: Long, updatedAsset: IncomingTrailerTruckWeightLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
+  override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = {
+    persistedAsset
+  }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
     OracleTrailerTruckWeightLimitDao.fetchByFilter(queryFilter)
