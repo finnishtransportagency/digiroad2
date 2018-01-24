@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleAxleWeightLimitDao, OracleBogieWeightLimitDao, OracleTrailerTruckWeightLimitDao, OracleWeightLimitDao}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingAxelWeightLimit, IncomingBogieWeightLimit, IncomingTrailerTruckWeightLimit, IncomingWeightLimit}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingAxleWeightLimit, IncomingBogieWeightLimit, IncomingTrailerTruckWeightLimit, IncomingWeightLimit}
 import org.apache.http.impl.client.HttpClientBuilder
 
 trait WeightLimitTierekisteriImporterOperations extends PointAssetTierekisteriImporterOperations {
@@ -73,7 +73,7 @@ class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporte
   protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
-        val axleWeightLimit = IncomingAxelWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.axleWeight.get,
+        val axleWeightLimit = IncomingAxleWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.axleWeight.get,
           getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
         OracleAxleWeightLimitDao.create(axleWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)

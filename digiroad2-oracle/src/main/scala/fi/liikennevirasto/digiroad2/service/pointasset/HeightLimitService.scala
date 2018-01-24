@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.{TrHeightLimit, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleHeightLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -25,7 +25,7 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
   type IncomingAsset = IncomingHeightLimit
   type PersistedAsset = HeightLimit
 
-  override def typeId: Int = 360
+  override def typeId: Int = TrHeightLimit.typeId
 
   override def setAssetPosition(asset: IncomingHeightLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
@@ -43,13 +43,7 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingHeightLimit] = {
-    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-
-      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingHeightLimit and then get the value
-      point => IncomingHeightLimit(point.x, point.y, link.linkId, 0, 0, Some(0))
-    }
-  }
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 }
 
 

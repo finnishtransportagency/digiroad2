@@ -1,14 +1,14 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.dao.pointasset.OracleWeightLimitDao
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrailerTruckWeightLimitDao, OracleBogieWeightLimitDao, OracleAxleWeightLimitDao, OracleWeightLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
 case class IncomingWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-case class IncomingAxelWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingAxleWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class IncomingBogieWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class IncomingTrailerTruckWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
@@ -29,7 +29,7 @@ class WeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
   type IncomingAsset = IncomingWeightLimit
   type PersistedAsset = WeightLimit
 
-  override def typeId: Int = 320
+  override def typeId: Int = TrWeightLimit.typeId
 
   override def setAssetPosition(asset: IncomingWeightLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
@@ -45,39 +45,33 @@ class WeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def create(asset: IncomingWeightLimit, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingWeightLimit] = {
-    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingWeightLimit and then get the value
-      point => IncomingWeightLimit(point.x, point.y, link.linkId, 0, 0, Some(0))
-    }
-  }
+  override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 }
 
 
-class AxelWeightLimitService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
-  type IncomingAsset = IncomingAxelWeightLimit
+class AxleWeightLimitService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
+  type IncomingAsset = IncomingAxleWeightLimit
   type PersistedAsset = WeightLimit
 
-  override def typeId: Int = 340
+  override def typeId: Int = TrAxleWeightLimit.typeId
 
-  override def setAssetPosition(asset: IncomingAxelWeightLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
+  override def setAssetPosition(asset: IncomingAxleWeightLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def update(id: Long, updatedAsset: IncomingAxelWeightLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
+  override def update(id: Long, updatedAsset: IncomingAxleWeightLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
-    OracleWeightLimitDao.fetchByFilter(queryFilter)
+    OracleAxleWeightLimitDao.fetchByFilter(queryFilter)
   }
 
-  override def create(asset: IncomingAxelWeightLimit, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
+  override def create(asset: IncomingAxleWeightLimit, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingAxelWeightLimit] = {
-    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingAxelWeightLimit and then get the value
-      point => IncomingAxelWeightLimit(point.x, point.y, link.linkId, 0, 0, Some(0))
-    }
-  }
+  override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 }
 
 
@@ -85,7 +79,7 @@ class BogieWeightLimitService(val roadLinkService: RoadLinkService) extends Poin
   type IncomingAsset = IncomingBogieWeightLimit
   type PersistedAsset = WeightLimit
 
-  override def typeId: Int = 350
+  override def typeId: Int = TrBogieWeightLimit.typeId
 
   override def setAssetPosition(asset: IncomingBogieWeightLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
@@ -94,17 +88,14 @@ class BogieWeightLimitService(val roadLinkService: RoadLinkService) extends Poin
   override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
-    OracleWeightLimitDao.fetchByFilter(queryFilter)
+    OracleBogieWeightLimitDao.fetchByFilter(queryFilter)
   }
 
   override def create(asset: IncomingBogieWeightLimit, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingBogieWeightLimit] = {
-    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingBogieWeightLimit and then get the value
-      point => IncomingBogieWeightLimit(point.x, point.y, link.linkId, 0, 0, Some(0))
-    }
-  }
+  override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 }
 
 
@@ -112,7 +103,7 @@ class TrailerTruckWeightLimitService(val roadLinkService: RoadLinkService) exten
   type IncomingAsset = IncomingTrailerTruckWeightLimit
   type PersistedAsset = WeightLimit
 
-  override def typeId: Int = 330
+  override def typeId: Int = TrTrailerTruckWeightLimit.typeId
 
   override def setAssetPosition(asset: IncomingTrailerTruckWeightLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
@@ -121,17 +112,14 @@ class TrailerTruckWeightLimitService(val roadLinkService: RoadLinkService) exten
   override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
-    OracleWeightLimitDao.fetchByFilter(queryFilter)
+    OracleTrailerTruckWeightLimitDao.fetchByFilter(queryFilter)
   }
 
   override def create(asset: IncomingTrailerTruckWeightLimit, username: String, roadLink: RoadLink): Long = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink): Option[IncomingTrailerTruckWeightLimit] = {
-    GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      //TODO remove hard coded zero, probably we have to cast IncomePointAsset to IncomingTrailerTruckWeightLimit and then get the value
-      point => IncomingTrailerTruckWeightLimit(point.x, point.y, link.linkId, 0, 0, Some(0))
-    }
-  }
+  override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
+
+  override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 }
 
 
