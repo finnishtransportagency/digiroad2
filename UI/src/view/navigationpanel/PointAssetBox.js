@@ -52,7 +52,7 @@
 
     eventbus.on('roles:fetched', function(roles) {
       userRoles = roles;
-      if ((_.contains(roles, 'operator') || _.contains(roles, 'premium')) && (nonModifiableBox == false || _.isUndefined(nonModifiableBox))) {
+      if ((_.contains(roles, 'operator') || _.contains(roles, 'premium')) && (nonModifiableBox === false || _.isUndefined(nonModifiableBox))) {
         panel.append(editModeToggle.element);
       }
     });
