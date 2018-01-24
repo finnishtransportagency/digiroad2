@@ -181,7 +181,7 @@ class AssetDataImporter {
       val tableName = importOptions.conversionTable
       val dateFilter = if(importDate!="") s" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate')) " else s""
       val test =
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
+        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
              TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
              loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName WHERE ely=$ely AND aet >= 0 AND let >= 0 #$dateFilter """
 //        println(test)
