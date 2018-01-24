@@ -39,10 +39,15 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
+  val trailerTruckWeightLimitService = new TrailerTruckWeightLimitService(mockRoadLinkService) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
+  }
 
   def runWithRollbackWeightLimit(test: => Unit): Unit = TestTransactions.runWithRollback(weightLimitService.dataSource)(test)
   def runWithRollbackAxleWeightLimit(test: => Unit): Unit = TestTransactions.runWithRollback(axleWeightLimitService.dataSource)(test)
   def runWithRollbackBogieWeightLimit(test: => Unit): Unit = TestTransactions.runWithRollback(bogieWeightLimitService.dataSource)(test)
+  def runWithRollbackTrailerTruckWeightLimit(test: => Unit): Unit = TestTransactions.runWithRollback(trailerTruckWeightLimitService.dataSource)(test)
 
   test("Can fetch by bounding box WeightLimit Asset") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(List())
@@ -240,6 +245,72 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
       beforeUpdate.modifiedAt should equal(None)
 
       an[UnsupportedOperationException] should be thrownBy bogieWeightLimitService.update(id = 600078, IncomingBogieWeightLimit(100, 0, 123, 20, 0, Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+    }
+  }
+
+  test("Can fetch by bounding box TrailerTruckWeightLimit Asset") {
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(List())
+
+    runWithRollbackTrailerTruckWeightLimit {
+      val result = trailerTruckWeightLimitService.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
+      result.id should equal(600079)
+      result.linkId should equal(1611387)
+      result.lon should equal(374101.60105163435)
+      result.lat should equal(6677437.872017591)
+      result.mValue should equal(16.592)
+    }
+  }
+
+  test("Can fetch by municipality TrailerTruckWeightLimit Asset") {
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
+      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+
+    runWithRollbackTrailerTruckWeightLimit {
+      val result = trailerTruckWeightLimitService.getByMunicipality(235).find(_.id == 600079).get
+
+      result.id should equal(600079)
+      result.linkId should equal(1611387)
+      result.lon should equal(374101.60105163435)
+      result.lat should equal(6677437.872017591)
+      result.mValue should equal(16.592)
+    }
+  }
+
+  test("Expire TrailerTruckWeightLimit") {
+    runWithRollbackTrailerTruckWeightLimit {
+      trailerTruckWeightLimitService.getPersistedAssetsByIds(Set(600079)).length should be(1)
+    }
+    an[UnsupportedOperationException] should be thrownBy trailerTruckWeightLimitService.expire(600079, testUser.username)
+  }
+
+  test("Create new TrailerTruckWeightLimit Asset") {
+    val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    an[UnsupportedOperationException] should be thrownBy trailerTruckWeightLimitService.create(IncomingTrailerTruckWeightLimit(2, 0.0, 388553075, 10, 0, Some(0)), "test", roadLink)
+  }
+
+  test("Update TrailerTruckWeight Limit") {
+    val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
+
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
+      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(91)).thenReturn(Seq(
+      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+
+    runWithRollbackTrailerTruckWeightLimit {
+      val beforeUpdate = trailerTruckWeightLimitService.getByMunicipality(235).find(_.id == 600079).get
+      beforeUpdate.id should equal(600079)
+      beforeUpdate.lon should equal(374101.60105163435)
+      beforeUpdate.lat should equal(6677437.872017591)
+      beforeUpdate.mValue should equal(16.592)
+      beforeUpdate.linkId should equal(1611387)
+      beforeUpdate.municipalityCode should equal(235)
+      beforeUpdate.createdBy should equal(Some("dr2_test_data"))
+      beforeUpdate.createdAt.isDefined should equal(true)
+      beforeUpdate.modifiedBy should equal(None)
+      beforeUpdate.modifiedAt should equal(None)
+
+      an[UnsupportedOperationException] should be thrownBy trailerTruckWeightLimitService.update(id = 600079, IncomingTrailerTruckWeightLimit(100, 0, 123, 20, 0, Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
     }
   }
 }
