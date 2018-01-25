@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.{IncomingPointAsset, PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.Point
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
@@ -18,11 +18,13 @@ object OracleWidthLimitDao {
     val query =
       """
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
-        pos.link_source
+        pos.link_source, npv.value, ev.value as reason_value
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
         left join number_property_value npv on npv.asset_id = a.id
+        join single_choice_value scv on a.id = scv.asset_id
+        left join enumerated_value ev on ev.id = scv.enumerated_value_id
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
     StaticQuery.queryNA[WidthLimit](queryWithFilter).iterator.toSeq

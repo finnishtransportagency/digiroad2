@@ -83,3 +83,34 @@ UPDATE asset
                                     MDSYS.SDO_ORDINATE_ARRAY(374101.60105163435, 6677437.872017591, 0, 0)
                                    )
   WHERE id = 600079;
+
+
+
+-- Assets Created for Unit Test of WidthLimit Service (Tierekisterin suurin sallittu leveys)
+insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600080,370,'dr2_test_data',235);
+INSERT INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (70000687, 1611387, 388553548, 16.592, 16.592, 1);
+insert into asset_link (ASSET_ID, POSITION_ID) values (600080, 70000687);
+UPDATE asset
+  SET geometry = MDSYS.SDO_GEOMETRY(4401,
+                                    3067,
+                                    NULL,
+                                    MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                                    MDSYS.SDO_ORDINATE_ARRAY(374101.60105163435, 6677437.872017591, 0, 0)
+                                   )
+  WHERE id = 600080;
+
+
+  INSERT INTO SINGLE_CHOICE_VALUE (ASSET_ID, ENUMERATED_VALUE_ID, PROPERTY_ID)
+        VALUES (
+                  600080,
+                  (SELECT id
+                     FROM enumerated_value
+                    WHERE     VALUE = 3
+                          AND property_id =
+                                 (SELECT id
+                                    FROM property
+                                   WHERE public_id =
+                                            'suurin_sallittu_leveys_syy')),
+                  (SELECT id
+                     FROM property
+                    WHERE public_id = 'suurin_sallittu_leveys_syy'));
