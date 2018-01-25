@@ -93,20 +93,14 @@ object DataFixture {
       val importOptions = ImportOptions(
         onlyComplementaryLinks = false,
         useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
-        geometryAdjustedTimeStamp.toLong, conversionTable)
-      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions, importDate)
+        geometryAdjustedTimeStamp.toLong, conversionTable,
+        importDate,
+        onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
+      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
   }
-
-//  def importRoadAddressesHistory(): Unit = {
-//    println(s"\nCommencing road address history import from conversion at time: ${DateTime.now()}")
-//    val importDate = dr2properties.getProperty("digiroad2.viite.historyImportDate", "")
-//    dataImporter.importRoadAddressHistory(Conversion.database(), importDate)
-//    println(s"Road address history import complete at time: ${DateTime.now()}")
-//    println()
-//  }
 
   def updateRoadAddressesValues(vVHClient: VVHClient): Unit = {
     println(s"\nStarting road address update values from conversion at time: ${DateTime.now()}")

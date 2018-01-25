@@ -165,7 +165,7 @@ class AssetDataImporter {
   }
 
   private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, ely: Int, importOptions: ImportOptions,
-                                    vvhClientProd: Option[VVHClient], importDate: String): Unit = {
+                                    vvhClientProd: Option[VVHClient]): Unit = {
 
     def printRow(r: RoadAddressHistory): String = {
       s"""linkid: %d, alku: %.2f, loppu: %.2f, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s, ajorataId: %s""".
@@ -179,17 +179,23 @@ class AssetDataImporter {
 
     val roads = conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      val dateFilter = if(importDate!="") s" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$importDate')) " else s""
+      val where = s" WHERE ely=$ely AND aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL "
+      val filter = (importOptions.onlyCurrentRoads, importOptions.importDate) match{
+        case (true, _) =>  s" AND loppupvm IS NULL "
+        case (false, "") => ""
+        case (false, date) => s" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$date')) "
+      }
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
-             TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-             loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName WHERE ely=$ely AND aet >= 0 AND let >= 0 #$dateFilter """.as[RoadAddressHistory].list
+             TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+             loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName #$where #$filter """
+        .as[RoadAddressHistory].list
     }
 
     print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
 
     val lrmList = roads.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
-    val addressList = roads.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.validTo, r.x1, r.y1, r.x2, r.y2, r.ajrId)).toMap
+    val addressList = roads.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.x1, r.y1, r.x2, r.y2, r.ajrId)).toMap
 
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(lrmList.keys.size))
@@ -270,9 +276,9 @@ class AssetDataImporter {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, link_source) values (?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-      "VALID_FROM, VALID_TO, geometry, floating, road_type, ely) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "VALID_FROM, VALID_TO, geometry, floating, road_type, ely, COMMON_HISTORY_ID) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-      "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?)") // add one ? for the ajorata_id
+      "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmPositions.size}""".as[Long].list
     assert(ids.size == lrmPositions.size || lrmPositions.isEmpty)
 
@@ -288,12 +294,12 @@ class AssetDataImporter {
         (address._8, address._7, SideCode.AgainstDigitizing.value)
       }
       val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
-        (address._14, address._15, address._16, address._17)
+        (address._13, address._14, address._15, address._16)
       else
-        (address._16, address._17, address._14, address._15)
+        (address._15, address._16, address._13, address._14)
       val linkSource = pos.linkSource
 
-      val lrmPosCacheKey = (pos.linkId, address._18) // linkid, ajorataid
+      val lrmPosCacheKey = (pos.linkId, address._17) // linkid, ajorataid
       val cachedLrmId = lrmPosCache(lrmPosCacheKey)
       if (cachedLrmId < 0) {
         lrmPosCache += (lrmPosCacheKey -> lrmId)
@@ -328,19 +334,15 @@ class AssetDataImporter {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setString(12, address._13 match {
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
-      addressPS.setDouble(13, x1.get)
-      addressPS.setDouble(14, y1.get)
-      addressPS.setDouble(15, x2.get)
-      addressPS.setDouble(16, y2.get)
-      addressPS.setDouble(17, endAddrM - startAddrM)
-      addressPS.setInt(18, if (floatingLinks.contains(pos.linkId)) 1 else 0)
-      addressPS.setLong(19, address._5)
-      addressPS.setLong(20, address._4)
-//      addressPS.setLong(21, address._18) //ajorata id
+      addressPS.setDouble(12, x1.get)
+      addressPS.setDouble(13, y1.get)
+      addressPS.setDouble(14, x2.get)
+      addressPS.setDouble(15, y2.get)
+      addressPS.setDouble(16, endAddrM - startAddrM)
+      addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)
+      addressPS.setLong(18, address._5)
+      addressPS.setLong(19, address._4)
+      addressPS.setLong(20, address._17) //ajorata id
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
@@ -352,7 +354,7 @@ class AssetDataImporter {
   }
 
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient],
-                            importOptions: ImportOptions, importDate: String): Unit = {
+                            importOptions: ImportOptions): Unit = {
 
     OracleDatabase.withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
@@ -363,7 +365,7 @@ class AssetDataImporter {
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println (s"${DateTime.now ()} - Old address data removed")
 
-      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd, importDate))
+      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
       sqlu"""UPDATE LRM_POSITION
@@ -564,6 +566,6 @@ class AssetDataImporter {
 
 }
 
-case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String)
+case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String, importDate: String, onlyCurrentRoads: Boolean)
 case class RoadPart(roadNumber: Long, roadPart: Long, ely: Long)
 
