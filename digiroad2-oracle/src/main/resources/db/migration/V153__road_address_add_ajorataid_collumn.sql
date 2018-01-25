@@ -1,1 +1,1 @@
-Alter Table ROAD_ADDRESS Add COMMON_HISTORY_ID NUMBER(38) NOT NULL;
+Alter Table ROAD_ADDRESS Add COMMON_HISTORY_ID NUMBER(38) DEFAULT 0; --for now is 0. Should be not null
