@@ -115,11 +115,12 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val roadName = roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
     val municipalityCode = roadLink.municipalityCode
     val anomalyType= {if (roadLinkRoadNumber!=0 && roadLinkRoadPartNumber!=0) Anomaly.None else Anomaly.NoAddressGiven}
+    val trackValue=roadLink.attributes.getOrElse("TRACK_CODE",Track.Unknown.value).toString.toInt
     RoadAddressLink(0, roadLink.linkId, geom,
       length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLink, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes,roadLinkRoadNumber,
-      roadLinkRoadPartNumber, Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
+      roadLinkRoadPartNumber, trackValue, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }
 
