@@ -45,7 +45,6 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "SpecialNeeds").text must equal("")
     (xml \ "Comments").text must equal("")
     (xml \ "PlatformCode").text must equal("")
-    (xml \ "InfoZone").text must equal("")
     (xml \ "ConnectedToTerminal").text must equal("")
   }
 
