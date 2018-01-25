@@ -217,11 +217,12 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println(floatingLinks.size + " links can be saved as floating addresses")
 
-    roads.filterNot(r => linkLengths.get(r.linkId).isDefined || floatingLinks.get(r.linkId).nonEmpty).foreach {
+    val (inVVHLinks, notInVVHLinks) = roads.partition(r => r.linkId != 0 && (linkLengths.get(r.linkId).isDefined || floatingLinks.get(r.linkId).nonEmpty))
+    notInVVHLinks.foreach {
       row => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(row.lrmId, printRow(row)))
     }
 
-    roads.groupBy { road => (
+    inVVHLinks.groupBy { road => (
       road.roadNumber, road.roadPartNumber, road.startAddrM, road.endAddrM, road.trackCode, road.discontinuity, road.startDate, road.endDate, road.validFrom, road.validTo, road.ely, road.roadType
       )}.foreach{ group =>
       if (group._2.size > 1){
