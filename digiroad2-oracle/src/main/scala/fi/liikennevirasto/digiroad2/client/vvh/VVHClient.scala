@@ -698,7 +698,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
       "OBJECTID",
       "STARTNODE",
       "ENDNODE",
-      "TRACK_CODE", //used only in suravage in viite
+      "TRACK_CODE", //used only with suravage in viite
       "CUST_OWNER").contains(x)
     }.filter { case (_, value) =>
       value != null
