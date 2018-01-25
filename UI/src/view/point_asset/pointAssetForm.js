@@ -13,7 +13,7 @@
     eventbus.on('application:readOnly', function(readOnly) {
       if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
         toggleMode(rootElement, (editConstrains && editConstrains(selectedAsset)) || readOnly);
-        //TODO: add form configurations to asset-type-layer-specifications.js to avoid if-clauses
+        //TODO: add form configurations to assetTypeConfiguration.js to avoid if-clauses
         if (layerName == 'servicePoints' && isSingleService(selectedAsset)){
           rootElement.find('button.delete').hide();
         }
