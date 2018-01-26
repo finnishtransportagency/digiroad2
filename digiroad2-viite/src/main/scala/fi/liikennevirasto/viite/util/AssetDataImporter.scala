@@ -1,13 +1,11 @@
 package fi.liikennevirasto.viite.util
 
 import java.sql.SQLException
-import java.text.DecimalFormat
 import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset._
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -16,20 +14,14 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter._
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import org.joda.time._
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
-
-import scala.collection.mutable
-import scala.math.BigDecimal.RoundingMode
 
 object
 AssetDataImporter {
@@ -318,7 +310,10 @@ class AssetDataImporter {
     }.groupBy(_.linkId)
 
     val lrmPositions = linkLengths.flatMap {
-      case (linkId, length) => adjust(lrmListWithLinkSources.getOrElse(linkId, List()), length)
+      case (linkId, length) =>
+        lrmListWithLinkSources.get(linkId).map {
+          list => adjust(list, length)
+        }
     }
 
     print(s"${DateTime.now()} - ")
