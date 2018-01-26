@@ -366,7 +366,7 @@ class AssetDataImporter {
           lrmPositionPS.setDouble(5, pos.endM)
           lrmPositionPS.setLong(6, pos.linkSource.value)
           lrmPositionPS.addBatch()
-
+          println("Working on lrm -> " + pos.linkId + " " + pos.ajrId)
           addresses.foreach{ case(id, address)=>
             val (startAddrM, endAddrM, sideCode) = assignAddrMValues(address._7, address._8)
             val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
