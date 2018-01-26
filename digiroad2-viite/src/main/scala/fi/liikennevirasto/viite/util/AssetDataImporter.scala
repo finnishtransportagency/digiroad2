@@ -483,7 +483,7 @@ class AssetDataImporter {
             NOT EXISTS (SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE LRM_POSITION_ID=LRM_POSITION.ID) AND
             NOT EXISTS (SELECT LRM_POSITION_ID FROM PROJECT_LINK_HISTORY WHERE LRM_POSITION_ID=LRM_POSITION.ID) AND
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
-      println (s"${DateTime.now ()} - Old address data removed")
+      println(s"${DateTime.now()} - Old address data removed")
 
       roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
       // If running in DEV environment then include some testing complementary links
@@ -518,15 +518,17 @@ class AssetDataImporter {
                 NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
               )
             )""".execute
+      commonhistoryReseter()
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
     }
   }
+
   def commonhistoryReseter(): Unit = {
     val sequenceReseter = new SequenceReseterDAO()
     sql"""select MAX(common_history_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
       case Some(commonHistoryId) =>
-        sequenceReseter.resetSequenceToNumber("common_history_id",commonHistoryId+1)
-      case _=> sequenceReseter.resetSequenceToNumber("common_history_id",1)
+        sequenceReseter.resetSequenceToNumber("common_history", commonHistoryId + 1)
+      case _ => sequenceReseter.resetSequenceToNumber("common_history", 1)
     }
   }
 
@@ -541,6 +543,7 @@ class AssetDataImporter {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
       roadMaintainerElys.map(ely => importRoadAddressHistoryData(conversionDatabase, ely, importDate))
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
+      commonhistoryReseter()
     }
   }
 
