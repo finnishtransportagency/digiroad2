@@ -353,7 +353,7 @@ class AssetDataImporter {
     // Cache for inserted lrm_positions
     var lrmPosCache = collection.mutable.Map[(Long, Long), Long]().withDefaultValue(-1)
 
-    try{
+
     lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
         val addresses = addressList.filter(addr => pos.ajrId == addr._2._17 && pos.linkId == addr._2._18)
         if(addresses.nonEmpty){
@@ -407,21 +407,17 @@ class AssetDataImporter {
             addressPS.setLong(20, address._17)                                      //ajorata id
 
             addressPS.addBatch()
-            println(address)
-            lrmPositionPS.executeBatch()
-            addressPS.executeBatch()
+            //println(address)
         }
       }
     }
 
+    lrmPositionPS.executeBatch()
     println(s"${DateTime.now()} - LRM Positions saved")
     addressPS.executeBatch()
     println(s"${DateTime.now()} - Road addresses saved")
     lrmPositionPS.close()
     addressPS.close()
-    } catch {
-      case ex: SQLException => println("Error" + ex.getMessage + " State" + ex.getSQLState)
-    }
   }
 
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient],
