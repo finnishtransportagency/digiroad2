@@ -270,6 +270,9 @@ class AssetDataImporter {
     }
 
     val (checkCompliantAddresses, nonCheckingAddresses) = inVVHLinks.partition(rh => {
+      if(rh.startAddrM >= rh.endAddrM){
+        print("test.....")
+      }
       !currentHistory.exists(ch => {
         rh.roadNumber == ch.roadNumber &&
           rh.roadPartNumber == ch.roadPartNumber &&
