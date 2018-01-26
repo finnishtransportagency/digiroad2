@@ -355,60 +355,62 @@ class AssetDataImporter {
 
     try{
     lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
-      val addresses = addressList.filter(addr => pos.ajrId == addr._2._17 && pos.linkId == addr._2._18)
-      val (startAddrM, endAddrM, sideCode) = assignAddrMValues(addresses.maxBy(a => a._2._9.get.getMillis)._2._7, addresses.maxBy(a => a._2._9.get.getMillis)._2._8)
-      lrmPositionPS.setLong(1, lrmId)
-      // TODO: link id mapping, see above
-      //      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
-      lrmPositionPS.setLong(2, pos.linkId)
-      lrmPositionPS.setLong(3, sideCode)
-      lrmPositionPS.setDouble(4, pos.startM)
-      lrmPositionPS.setDouble(5, pos.endM)
-      lrmPositionPS.setLong(6, pos.linkSource.value)
-      lrmPositionPS.addBatch()
+        val addresses = addressList.filter(addr => pos.ajrId == addr._2._17 && pos.linkId == addr._2._18)
+        if(addresses.nonEmpty){
+          val (startAddrM, endAddrM, sideCode) = assignAddrMValues(addresses.maxBy(a => a._2._9.get.getMillis)._2._7, addresses.maxBy(a => a._2._9.get.getMillis)._2._8)
+          lrmPositionPS.setLong(1, lrmId)
+          // TODO: link id mapping, see above
+          //      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
+          lrmPositionPS.setLong(2, pos.linkId)
+          lrmPositionPS.setLong(3, sideCode)
+          lrmPositionPS.setDouble(4, pos.startM)
+          lrmPositionPS.setDouble(5, pos.endM)
+          lrmPositionPS.setLong(6, pos.linkSource.value)
+          lrmPositionPS.addBatch()
 
-      addresses.foreach{ case(id, address)=>
-        val (startAddrM, endAddrM, sideCode) = assignAddrMValues(address._7, address._8)
-        val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
-          (address._13, address._14, address._15, address._16)
-        else
-          (address._15, address._16, address._13, address._14)
+          addresses.foreach{ case(id, address)=>
+            val (startAddrM, endAddrM, sideCode) = assignAddrMValues(address._7, address._8)
+            val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
+              (address._13, address._14, address._15, address._16)
+            else
+              (address._15, address._16, address._13, address._14)
 
-        //sequence.nextval                                                      //id
-        addressPS.setLong(1, lrmId)                                             //lrm_id
-        addressPS.setLong(2, address._1)                                        //road_number
-        addressPS.setLong(3, address._2)                                        //road_part_number
-        addressPS.setLong(4, address._3)                                        //track_code
-        addressPS.setLong(5, address._6)                                        //discontinuity
-        addressPS.setLong(6, startAddrM)                                        //start_addr_m
-        addressPS.setLong(7, endAddrM)                                          //end_addr_m
-        addressPS.setString(8, address._9 match {                               //start_date
-          case Some(dt) => dateFormatter.print(dt)
-          case None => ""
-        })
-        addressPS.setString(9, address._10 match {                              //end_date
-          case Some(dt) => dateFormatter.print(dt)
-          case None => ""
-        })
-        addressPS.setString(10, address._11)                                    //created_by
-        addressPS.setString(11, address._12 match {                             //valid_from
-          case Some(dt) => dateFormatter.print(dt)
-          case None => ""
-        })
-        addressPS.setDouble(12, x1.get)                                         //start geometry
-        addressPS.setDouble(13, y1.get)
-        addressPS.setDouble(14, x2.get)
-        addressPS.setDouble(15, y2.get)
-        addressPS.setDouble(16, endAddrM - startAddrM)                          //end geometry
-        addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)  //floating
-        addressPS.setLong(18, address._5)                                       //road_type
-        addressPS.setLong(19, address._4)                                       //ely
-        addressPS.setLong(20, address._17)                                      //ajorata id
+            //sequence.nextval                                                      //id
+            addressPS.setLong(1, lrmId)                                             //lrm_id
+            addressPS.setLong(2, address._1)                                        //road_number
+            addressPS.setLong(3, address._2)                                        //road_part_number
+            addressPS.setLong(4, address._3)                                        //track_code
+            addressPS.setLong(5, address._6)                                        //discontinuity
+            addressPS.setLong(6, startAddrM)                                        //start_addr_m
+            addressPS.setLong(7, endAddrM)                                          //end_addr_m
+            addressPS.setString(8, address._9 match {                               //start_date
+              case Some(dt) => dateFormatter.print(dt)
+              case None => ""
+            })
+            addressPS.setString(9, address._10 match {                              //end_date
+              case Some(dt) => dateFormatter.print(dt)
+              case None => ""
+            })
+            addressPS.setString(10, address._11)                                    //created_by
+            addressPS.setString(11, address._12 match {                             //valid_from
+              case Some(dt) => dateFormatter.print(dt)
+              case None => ""
+            })
+            addressPS.setDouble(12, x1.get)                                         //start geometry
+            addressPS.setDouble(13, y1.get)
+            addressPS.setDouble(14, x2.get)
+            addressPS.setDouble(15, y2.get)
+            addressPS.setDouble(16, endAddrM - startAddrM)                          //end geometry
+            addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)  //floating
+            addressPS.setLong(18, address._5)                                       //road_type
+            addressPS.setLong(19, address._4)                                       //ely
+            addressPS.setLong(20, address._17)                                      //ajorata id
 
-        addressPS.addBatch()
-        println(address)
-        lrmPositionPS.executeBatch()
-        addressPS.executeBatch()
+            addressPS.addBatch()
+            println(address)
+            lrmPositionPS.executeBatch()
+            addressPS.executeBatch()
+        }
       }
     }
 
