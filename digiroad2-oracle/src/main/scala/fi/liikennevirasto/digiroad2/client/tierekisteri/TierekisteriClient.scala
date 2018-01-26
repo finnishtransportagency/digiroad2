@@ -916,10 +916,9 @@ class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Bool
 
       getFieldValue(data, trLIIKVAST) match {
         case Some(sideInfo) if sideInfo == wrongSideOfTheRoad && Seq(SpeedLimit, SpeedLimitZone, UrbanArea).contains(TRTrafficSignType.apply(assetNumber)) =>
-          println("wrongSide -> " + roadNumber + "/" + roadPartNumber + "/" + startMValue + "/" + track + "/" + roadSide + "/" + assetValue)
           None
         case _ =>
-          println("SpeedLimit map -> " + roadNumber + "/" + roadPartNumber + "/" + startMValue + "/" + track + "/" + roadSide + "/" + assetValue)
+          println(s"SpeedLimit ${TRTrafficSignType.apply(assetNumber)} -> " + roadNumber + "/" + roadPartNumber + "/" + startMValue + "/" + track + "/" + roadSide + "/" + assetValue)
           Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
       }
     }else
@@ -969,7 +968,7 @@ class TierekisteriTelematicSpeedLimitClient(trEndPoint: String, trEnable: Boolea
 
     getMandatoryFieldValue(data, trTecPointType) match {
       case Some(tecType) if tecType == trTelematicSpeedLimitAsset =>
-        println("Telematic map -> " + roadNumber + "/" + roadPartNumber + "/" + startMValue + "/" + track + "/" + roadSide)
+        println("Telematic -> " + roadNumber + "/" + roadPartNumber + "/" + startMValue + "/" + track + "/" + roadSide)
         Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.TelematicSpeedLimit,""))
       case _ =>
         None
