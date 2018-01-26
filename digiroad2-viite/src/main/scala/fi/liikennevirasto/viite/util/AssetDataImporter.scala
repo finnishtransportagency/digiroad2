@@ -246,7 +246,7 @@ class AssetDataImporter {
     print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
     val adjustedTerminations = mapTerminations(roads, currentHistory)
-    val lrmList = adjustedTerminations.groupBy(_.ajrId).map(ra => ra._2.maxBy(a => a.startDate.get.getMillis)).map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown, r.ajrId)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
+    val lrmList = adjustedTerminations.groupBy(a => (a.ajrId, a.linkId)).map(ra => ra._2.head).map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown, r.ajrId)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
 
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(roads.map(_.linkId).size))
