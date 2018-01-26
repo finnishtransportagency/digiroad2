@@ -13,7 +13,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceReseterDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -519,6 +519,14 @@ class AssetDataImporter {
               )
             )""".execute
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
+    }
+  }
+  def commonhistoryReseter(): Unit = {
+    val sequenceReseter = new SequenceReseterDAO()
+    sql"""select MAX(common_history_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
+      case Some(commonHistoryId) =>
+        sequenceReseter.resetSequenceToNumber("common_history_id",commonHistoryId+1)
+      case _=> sequenceReseter.resetSequenceToNumber("common_history_id",1)
     }
   }
 

@@ -90,6 +90,7 @@ object DataFixture {
         useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
         geometryAdjustedTimeStamp.toLong)
       dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
+
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
