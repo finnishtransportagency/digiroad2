@@ -254,7 +254,7 @@ class AssetDataImporter {
     print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
     val adjustedTerminations = mapTerminations(roads, currentHistory)
-    val lrmList = adjustedTerminations.groupBy(_.ajrId).map(ra => ra._2.maxBy(_.startDate.get)).map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown, r.ajrId)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
+    val lrmList = adjustedTerminations.groupBy(_.ajrId).map(ra => ra._2.maxBy(a => a.startDate.get.getMillis)).map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown, r.ajrId)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
 
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(lrmList.keys.size))
@@ -362,7 +362,7 @@ class AssetDataImporter {
     try{
     lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
       val addresses = addressList.filter(addr => pos.ajrId == addr._2._17)
-      val (startAddrM, endAddrM, sideCode) = assignAddrMValues(addresses.maxBy(_._2._9.get)._2._7, addresses.maxBy(_._2._9.get)._2._8)
+      val (startAddrM, endAddrM, sideCode) = assignAddrMValues(addresses.maxBy(a => a._2._9.get.getMillis)._2._7, addresses.maxBy(a => a._2._9.get.getMillis)._2._8)
       lrmPositionPS.setLong(1, lrmId)
       // TODO: link id mapping, see above
       //      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
