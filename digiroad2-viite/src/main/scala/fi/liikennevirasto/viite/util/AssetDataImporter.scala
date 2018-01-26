@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.SQLException
 import java.util.Properties
 import javax.sql.DataSource
 
@@ -432,7 +431,9 @@ class AssetDataImporter {
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println (s"${DateTime.now ()} - Old address data removed")
 
-      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
+
+      //roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
+      Seq(1).foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
       sqlu"""UPDATE LRM_POSITION
