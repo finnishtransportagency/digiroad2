@@ -257,8 +257,8 @@ class AssetDataImporter {
     val lrmList = adjustedTerminations.groupBy(_.ajrId).map(ra => ra._2.maxBy(a => a.startDate.get.getMillis)).map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown, r.ajrId)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
 
     print(s"${DateTime.now()} - ")
-    println("Total of %d link ids".format(lrmList.keys.size))
-    val linkIdSet = lrmList.keys.toSet // Mapping LinkId -> Id
+    println("Total of %d link ids".format(roads.map(_.linkId).size))
+    val linkIdSet = roads.map(_.linkId).toSet // Mapping LinkId -> Id
 
     val vvhRoadLinkClient = if (importOptions.useFrozenLinkService) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
     val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
