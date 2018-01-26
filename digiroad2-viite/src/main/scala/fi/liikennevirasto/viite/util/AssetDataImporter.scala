@@ -311,8 +311,9 @@ class AssetDataImporter {
 
     val lrmPositions = linkLengths.flatMap {
       case (linkId, length) =>
-        lrmListWithLinkSources.get(linkId).map {
-          list => adjust(list, length)
+        lrmListWithLinkSources.get(linkId) match {
+          case Some(l) => adjust(l, length)
+          case _ => Seq()
         }
     }
 
