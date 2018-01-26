@@ -1113,6 +1113,9 @@ object RoadAddressDAO {
         updateLRMPosition(lrmPositionUpdatePS, address.lrmPositionId, address.linkId, address.sideCode.value, address.startMValue,
           address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
         addressPS.setLong(2, address.lrmPositionId)
+        if (address.lrmPositionId <= 0) {
+          logger.error(s"LRM_POSITION_ID = ${address.lrmPositionId} for (address.roadNumber = ${address.roadNumber}, address.roadPartNumber = ${address.roadPartNumber})")
+        }
       }
       val nextId = if (address.id == NewRoadAddress)
         Sequences.nextViitePrimaryKeySeqValue

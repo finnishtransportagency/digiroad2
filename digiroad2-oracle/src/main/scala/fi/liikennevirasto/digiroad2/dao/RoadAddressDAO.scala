@@ -11,6 +11,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
+@deprecated("Use fi.liikennevirasto.viite.RoadAddressDAO instead")
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long,
                        startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false, geom: Seq[Point],
@@ -30,10 +31,12 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   private val lrmLength: Double = Math.abs(endMValue - startMValue)
 }
 
+@deprecated("Use fi.liikennevirasto.viite.RoadAddressDAO instead")
 case class RoadAddressRow(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                           endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false,
                           geom: Seq[Point], expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime])
 
+@deprecated("Use fi.liikennevirasto.viite.RoadAddressDAO instead")
 class RoadAddressDAO {
 
   def getRoadAddress(queryFilter: String => String): Seq[RoadAddress] = {

@@ -1117,17 +1117,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val suravageLinkId = 5774839L
       val user = Some("user")
       val roadAddress = RoadAddress(NewRoadAddress, road, roadPart, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM, origStartD,
-        None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L,
+        None, None, NewLrmPosition, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L,
         (Some(CalibrationPoint(linkId, 0.0, origStartM)), Some(CalibrationPoint(linkId, endM, origEndM))),
         false, Seq(Point(1024.0, 0.0), Point(1024.0, 102.04)),
         LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination)
       val roadAddressHistory = RoadAddress(NewRoadAddress, road, roadPart + 1, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM,
         origStartD.map(_.minusYears(5)), origStartD.map(_.minusYears(15)),
-        None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+        None, NewLrmPosition, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
         LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination)
       val roadAddressHistory2 = RoadAddress(NewRoadAddress, road, roadPart + 2, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM,
         origStartD.map(_.minusYears(15)), origStartD.map(_.minusYears(20)),
-        None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+        None, NewLrmPosition, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
         LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination)
       val id = RoadAddressDAO.create(Seq(roadAddress)).head
       RoadAddressDAO.create(Seq(roadAddressHistory, roadAddressHistory2))
