@@ -102,7 +102,7 @@ class AssetDataImporter {
     }
   }
 
-  case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double, linkSource: LinkGeomSource)
+  case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double, linkSource: LinkGeomSource, ajrId: Long)
   case class RoadAddressHistory(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
                                 startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                 validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
@@ -254,7 +254,7 @@ class AssetDataImporter {
     print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
     val adjustedTerminations = mapTerminations(roads, currentHistory)
-    val lrmList = adjustedTerminations.map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
+    val lrmList = adjustedTerminations.groupBy(_.ajrId).map(ra => ra._2.maxBy(_.startDate.get)).map(r => LRMPos(r.lrmId, r.linkId, r.startM, r.endM, LinkGeomSource.Unknown, r.ajrId)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM, linkSource)
 
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(lrmList.keys.size))
@@ -361,66 +361,61 @@ class AssetDataImporter {
 
     try{
     lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
-      assert(addressList.get(pos.id).size == 1)
-      val address = addressList.get(pos.id).head
-      val (startAddrM, endAddrM, sideCode) = assignAddrMValues(address._7, address._8)
-      val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
-        (address._13, address._14, address._15, address._16)
-      else
-        (address._15, address._16, address._13, address._14)
-      val linkSource = pos.linkSource
+      val addresses = addressList.filter(addr => pos.ajrId == addr._2._17)
+      val (startAddrM, endAddrM, sideCode) = assignAddrMValues(addresses.maxBy(_._2._9.get)._2._7, addresses.maxBy(_._2._9.get)._2._8)
+      lrmPositionPS.setLong(1, lrmId)
+      // TODO: link id mapping, see above
+      //      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
+      lrmPositionPS.setLong(2, pos.linkId)
+      lrmPositionPS.setLong(3, sideCode)
+      lrmPositionPS.setDouble(4, pos.startM)
+      lrmPositionPS.setDouble(5, pos.endM)
+      lrmPositionPS.setLong(6, pos.linkSource.value)
+      lrmPositionPS.addBatch()
 
-      val lrmPosCacheKey = (pos.linkId, address._17) // linkid, ajorataid
-      val cachedLrmId = lrmPosCache(lrmPosCacheKey)
-      if (cachedLrmId < 0) {
-        lrmPosCache += (lrmPosCacheKey -> lrmId)
-        lrmPositionPS.setLong(1, lrmId)
-        // TODO: link id mapping, see above
-        //      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
-        lrmPositionPS.setLong(2, pos.linkId)
-        lrmPositionPS.setLong(3, sideCode)
-        lrmPositionPS.setDouble(4, pos.startM)
-        lrmPositionPS.setDouble(5, pos.endM)
-        lrmPositionPS.setLong(6, linkSource.value)
-        lrmPositionPS.addBatch()
+      addresses.foreach{ case(id, address)=>
+        val (startAddrM, endAddrM, sideCode) = assignAddrMValues(address._7, address._8)
+        val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
+          (address._13, address._14, address._15, address._16)
+        else
+          (address._15, address._16, address._13, address._14)
+
+        //sequence.nextval                                                      //id
+        addressPS.setLong(1, lrmId)                                             //lrm_id
+        addressPS.setLong(2, address._1)                                        //road_number
+        addressPS.setLong(3, address._2)                                        //road_part_number
+        addressPS.setLong(4, address._3)                                        //track_code
+        addressPS.setLong(5, address._6)                                        //discontinuity
+        addressPS.setLong(6, startAddrM)                                        //start_addr_m
+        addressPS.setLong(7, endAddrM)                                          //end_addr_m
+        addressPS.setString(8, address._9 match {                               //start_date
+          case Some(dt) => dateFormatter.print(dt)
+          case None => ""
+        })
+        addressPS.setString(9, address._10 match {                              //end_date
+          case Some(dt) => dateFormatter.print(dt)
+          case None => ""
+        })
+        addressPS.setString(10, address._11)                                    //created_by
+        addressPS.setString(11, address._12 match {                             //valid_from
+          case Some(dt) => dateFormatter.print(dt)
+          case None => ""
+        })
+        addressPS.setDouble(12, x1.get)                                         //start geometry
+        addressPS.setDouble(13, y1.get)
+        addressPS.setDouble(14, x2.get)
+        addressPS.setDouble(15, y2.get)
+        addressPS.setDouble(16, endAddrM - startAddrM)                          //end geometry
+        addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)  //floating
+        addressPS.setLong(18, address._5)                                       //road_type
+        addressPS.setLong(19, address._4)                                       //ely
+        addressPS.setLong(20, address._17)                                      //ajorata id
+
+        addressPS.addBatch()
+        println(address)
+        lrmPositionPS.executeBatch()
+        addressPS.executeBatch()
       }
-
-      //sequence.nextval                                                      //id
-      addressPS.setLong(1, if (cachedLrmId < 0) lrmId else cachedLrmId)       //lrm_id
-      addressPS.setLong(2, address._1)                                        //road_number
-      addressPS.setLong(3, address._2)                                        //road_part_number
-      addressPS.setLong(4, address._3)                                        //track_code
-      addressPS.setLong(5, address._6)                                        //discontinuity
-      addressPS.setLong(6, startAddrM)                                        //start_addr_m
-      addressPS.setLong(7, endAddrM)                                          //end_addr_m
-      addressPS.setString(8, address._9 match {                               //start_date
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
-      addressPS.setString(9, address._10 match {                              //end_date
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
-      addressPS.setString(10, address._11)                                    //created_by
-      addressPS.setString(11, address._12 match {                             //valid_from
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
-      addressPS.setDouble(12, x1.get)                                         //start geometry
-      addressPS.setDouble(13, y1.get)
-      addressPS.setDouble(14, x2.get)
-      addressPS.setDouble(15, y2.get)
-      addressPS.setDouble(16, endAddrM - startAddrM)                          //end geometry
-      addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)  //floating
-      addressPS.setLong(18, address._5)                                       //road_type
-      addressPS.setLong(19, address._4)                                       //ely
-      addressPS.setLong(20, address._17)                                      //ajorata id
-
-      addressPS.addBatch()
-      //println(s"\nWARNING!!!: Encountered duplicated road in this group with linkId ${pos.linkId}, number ${address._1}, part ${address._2}, track ${address._3}, discontinuity ${address._6}, startAddrM ${startAddrM}, endAddrM ${endAddrM}, startDate ${dateFormatter.print(dt)}, endDate ${i.endDate}, validFrom ${i.validFrom}, ely ${i.ely}, roadType ${i.roadType}, terminated ${i.terminated}")
-      println(address)
-      lrmPositionPS.executeBatch()
-      addressPS.executeBatch()
     }
 
     println(s"${DateTime.now()} - LRM Positions saved")
