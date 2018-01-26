@@ -415,9 +415,14 @@ class AssetDataImporter {
       addressPS.setLong(18, address._5)                                       //road_type
       addressPS.setLong(19, address._4)                                       //ely
       addressPS.setLong(20, address._17)                                      //ajorata id
+
       addressPS.addBatch()
+      //println(s"\nWARNING!!!: Encountered duplicated road in this group with linkId ${pos.linkId}, number ${address._1}, part ${address._2}, track ${address._3}, discontinuity ${address._6}, startAddrM ${startAddrM}, endAddrM ${endAddrM}, startDate ${dateFormatter.print(dt)}, endDate ${i.endDate}, validFrom ${i.validFrom}, ely ${i.ely}, roadType ${i.roadType}, terminated ${i.terminated}")
+      println(address)
+      lrmPositionPS.executeBatch()
+      addressPS.executeBatch()
     }
-    lrmPositionPS.executeBatch()
+
     println(s"${DateTime.now()} - LRM Positions saved")
     addressPS.executeBatch()
     println(s"${DateTime.now()} - Road addresses saved")
