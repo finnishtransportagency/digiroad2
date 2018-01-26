@@ -312,14 +312,12 @@ class AssetDataImporter {
 
     val lrmAddresses: Seq[LRMPos] = lrmList.flatMap(_._2).filterNot( lrm=> nonCheckingAddresses.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).toSeq
 
-    val allLinkLengths = linkLengths ++ floatingLinks.mapValues(x => GeometryUtils.geometryLength(x.geometry))
-
     val lrmListWithLinkSources = lrmAddresses.map{ pos =>
       val roadLinkOpt = roadLinks.find(roadLink => roadLink.linkId == pos.linkId)
       pos.copy(linkSource = if (roadLinkOpt.nonEmpty) roadLinkOpt.get.linkSource else LinkGeomSource.Unknown)
     }.groupBy(_.linkId)
 
-    val lrmPositions = allLinkLengths.flatMap {
+    val lrmPositions = linkLengths.flatMap {
       case (linkId, length) => adjust(lrmListWithLinkSources.getOrElse(linkId, List()), length)
     }
 
