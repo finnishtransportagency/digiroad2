@@ -300,7 +300,7 @@ class AssetDataImporter {
           s", track ${i.trackCode}, discontinuity ${i.discontinuity}, startAddrM ${i.startAddrM}, endAddrM ${i.endAddrM}, startDate ${i.startDate}, endDate ${i.endDate}, validFrom ${i.validFrom}, ely ${i.ely}, roadType ${i.roadType}, terminated ${i.terminated} "))
       }
     }
-    val addressList = checkCompliantAddresses.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.x1, r.y1, r.x2, r.y2, r.ajrId)).toMap
+    val addressList = checkCompliantAddresses.map(r => r.lrmId -> (r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.x1, r.y1, r.x2, r.y2, r.ajrId, r.linkId)).toMap
 
     val lrmAddresses: Seq[LRMPos] = lrmList.flatMap(_._2).filterNot( lrm=> nonCheckingAddresses.map(_.lrmId).contains(lrm.id)).filterNot(_.linkId == 0).toSeq
 
@@ -355,7 +355,7 @@ class AssetDataImporter {
 
     try{
     lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
-      val addresses = addressList.filter(addr => pos.ajrId == addr._2._17)
+      val addresses = addressList.filter(addr => pos.ajrId == addr._2._17 && pos.linkId == addr._2._18)
       val (startAddrM, endAddrM, sideCode) = assignAddrMValues(addresses.maxBy(a => a._2._9.get.getMillis)._2._7, addresses.maxBy(a => a._2._9.get.getMillis)._2._8)
       lrmPositionPS.setLong(1, lrmId)
       // TODO: link id mapping, see above
