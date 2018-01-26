@@ -269,9 +269,13 @@ class AssetDataImporter {
     println(floatingLinks.size + " links can be saved as floating addresses")
 
     val (inVVHLinks, notInVVHLinks) = adjustedTerminations.partition(r => r.linkId != 0 && (linkLengths.get(r.linkId).isDefined || floatingLinks.get(r.linkId).nonEmpty))
-    notInVVHLinks.foreach {
-      row => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(row.lrmId, printRow(row)))
-    }
+//    notInVVHLinks.foreach {
+//      row => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(row.lrmId, printRow(row)))
+//    }
+
+    println("Number of Suppressed rows with reason 1: LINK-ID is 0 -> " + adjustedTerminations.count(_.linkId == 0))
+    println("Number of Suppressed rows with reason 2: LINK-ID is not found in the VVH Interface -> " + adjustedTerminations.filterNot(r => linkLengths.get(r.linkId).isDefined || floatingLinks.get(r.linkId).nonEmpty).size)
+
 
     val (checkCompliantAddresses, nonCheckingAddresses) = inVVHLinks.partition(rh => {
       !currentHistory.exists(ch => {
@@ -366,8 +370,7 @@ class AssetDataImporter {
           lrmPositionPS.setDouble(5, pos.endM)
           lrmPositionPS.setLong(6, pos.linkSource.value)
           lrmPositionPS.addBatch()
-          println("Working on lrm -> " + pos.linkId + " " + pos.ajrId)
-          addresses.foreach{ case(id, address)=>
+          addresses.foreach{ case(id, address) =>
             val (startAddrM, endAddrM, sideCode) = assignAddrMValues(address._7, address._8)
             val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
               (address._13, address._14, address._15, address._16)
@@ -404,9 +407,7 @@ class AssetDataImporter {
             addressPS.setLong(18, address._5)                                       //road_type
             addressPS.setLong(19, address._4)                                       //ely
             addressPS.setLong(20, address._17)                                      //ajorata id
-
             addressPS.addBatch()
-            //println(address)
         }
       }
     }
@@ -431,9 +432,8 @@ class AssetDataImporter {
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println (s"${DateTime.now ()} - Old address data removed")
 
-
-      //roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
       Seq(1).foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
+//      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
       sqlu"""UPDATE LRM_POSITION
