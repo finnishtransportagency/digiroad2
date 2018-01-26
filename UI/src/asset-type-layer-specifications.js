@@ -683,7 +683,8 @@
       editConstrains : function() {
         return true;
       },
-      nonModifiableBox: true
+      nonModifiableBox: true,
+      label: new WeightLimitLabel()
     }
   ];
 })(this);

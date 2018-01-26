@@ -62,7 +62,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val weightLimitService: WeightLimitService = Digiroad2Context.weightLimitService,
                    val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = Digiroad2Context.trailerTruckWeightLimitService,
                    val axleWeightLimitService: AxleWeightLimitService = Digiroad2Context.axleWeightLimitService,
-                   val bogieWeightLimitService: BogieWeightLimitService = Digiroad2Context.bogieWeightLimitService)
+                   val bogieWeightLimitService: BogieWeightLimitService = Digiroad2Context.bogieWeightLimitService,
+                   val pointMassLimitationService: PointMassLimitationService =
+                    Digiroad2Context.pointMassLimitationService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1219,8 +1221,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     val typeIds = params.get("typeIds").getOrElse(halt(BadRequest("type Id parameters missing")))
     validateBoundingBox(bbox)
-    //request takes a long time now because of separate getByBoundingBox - will be fixed
-    typeIds.split(",").map(_.toInt).flatMap(asset => getPointAssetService(asset).getByBoundingBox(user,bbox))
+    pointMassLimitationService.getByBoundingBox(user,bbox)
   }
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
