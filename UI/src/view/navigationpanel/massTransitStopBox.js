@@ -86,7 +86,7 @@
       return [
         '  <div class="panel-section roadLink-complementary-checkbox">',
         '<div class="check-box-container">' +
-        '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+        '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
         '</div>' +
         '</div>'
       ].join('');
