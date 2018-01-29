@@ -481,6 +481,21 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def trWidthLimitsToApi(widthLimits: Seq[WidthLimit]): Seq[Map[String, Any]] = {
+    widthLimits.filterNot(_.floating).map { widthLimit =>
+      Map("id" -> widthLimit.id,
+        "linkId" -> widthLimit.linkId,
+        "point" -> Point(widthLimit.lon, widthLimit.lat),
+        geometryWKTForPoints(widthLimit.lon, widthLimit.lat),
+        "m_value" -> widthLimit.mValue,
+        "value" -> widthLimit.limit,
+        "reason" -> widthLimit.reason.value,
+        latestModificationTime(widthLimit.createdAt, widthLimit.modifiedAt),
+        lastModifiedBy(widthLimit.createdBy, widthLimit.modifiedBy),
+        "linkSource" -> widthLimit.linkSource.value)
+    }
+  }
+
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {
       "Remove"
@@ -548,6 +563,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "tr_axle_weight_limits" => trAxleWeightLimitsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_bogie_weight_limits" => trBogieWeightLimitsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
