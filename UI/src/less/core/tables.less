@@ -33,3 +33,25 @@ th {
     }
   }
 }
+
+#formTable {
+  width: 100%;
+  .table{
+    > thead,
+    > tbody {
+      font-size: 12px;
+      border-bottom: 1px solid #cbcbc9;
+    }
+    > tfoot {
+      > tr {
+        > th,
+        > td {
+          vertical-align: middle;
+          padding-left: @line-height-modifier * 2;
+          padding-right: @line-height-modifier * 2;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}

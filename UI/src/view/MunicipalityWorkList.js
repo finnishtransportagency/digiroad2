@@ -140,7 +140,7 @@
       '<div class="page">' +
       '<div class="content-box">' +
       '<header id="work-list-header">' + title +
-      '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje lista</a>' +
+      '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
       '</header>' +
       '<div class="work-list">' +
       '</div>' +
