@@ -1,8 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService, VerificationService}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, VerificationService}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.verification.oracle.VerificationDao
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar

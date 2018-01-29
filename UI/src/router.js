@@ -243,12 +243,11 @@
       },
 
       maintenanceRoadWorkList: function () {
-        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getLinearAssetUnchecked(290));
+        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedLinearAsset(290));
       },
 
       municipalityWorkList: function () {
         eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities());
-        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedLinearAsset(290));
       },
 
       maintenanceRoad: function (id) {

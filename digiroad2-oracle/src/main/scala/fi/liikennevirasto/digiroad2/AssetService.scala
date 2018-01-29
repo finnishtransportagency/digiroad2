@@ -13,9 +13,7 @@ trait AssetOperations {
       assetDao.getMunicipalityById(id)
     }
   }
-
-  //this should be moved to municipalityDAO
-  def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): (List[Map[String, Any]]) = {
+    def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): (List[Map[String, Any]]) = {
     val municipalities = withDynTransaction {
       assetDao.getMunicipalitiesNameByCode(municipalityCodes)
     }
