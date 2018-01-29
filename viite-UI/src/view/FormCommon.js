@@ -2,6 +2,7 @@
   root.FormCommon = function(prefix) {
     var ProjectStatus = LinkValues.ProjectStatus;
     var LinkStatus = LinkValues.LinkStatus;
+    var Track = LinkValues.Track;
 
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
@@ -15,7 +16,7 @@
 
     var projectButtons = function() {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-      '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
+      '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
     var newRoadAddressInfo = function(selected, links, road){
@@ -33,7 +34,7 @@
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
         addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
-        addSmallInputNumber('ajr',(track !== 99 ? track :
+        addTrackCodeDropdown((track !== Track.Unknown.value ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
@@ -51,7 +52,7 @@
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
-              $('#ajr').val("0");
+              $('#trackCodeDropdown').val("0");
           }
         });
       }
@@ -59,10 +60,10 @@
 
     var roadTypeDropdown = function() {
       return '<select class="'+prefix+'form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "1">1 Yleinen tie</option>'+
-        '<option value = "2">2 Lauttaväylä yleisellä tiellä</option>'+
+        '<option value = "1">1 Maantie</option>'+
+        '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
-        '<option value = "4">4 Yleisen tien työmaa</option>'+
+        '<option value = "4">4 Maantien työmaa</option>'+
         '<option value = "5">5 Yksityistie</option>'+
         '<option value = "9">9 Omistaja selvittämättä</option>' +
         '<option value = "99">99 Ei määritelty</option>' +
@@ -99,6 +100,20 @@
           '<option value="5" >5 Jatkuva</option>' +
           '</select>';
       }
+    };
+
+    var addTrackCodeDropdown = function (trackDefaultValue, properties){
+      if(trackDefaultValue === ''){
+        trackDefaultValue = Track.Unknown.value;
+      }
+
+      return '<select class="form-select-small-control" id="trackCodeDropdown" size="1" '+properties+'>' +
+        '<option value = "'+trackDefaultValue+'" selected hidden>'+trackDefaultValue+'</option>' +
+        '<option value="0" >0</option>' +
+        '<option value="1" >1</option>' +
+        '<option value="2" >2</option>' +
+        '</select>';
+
     };
 
     var directionChangedInfo = function (selected, isPartialReversed) {
@@ -197,7 +212,7 @@
       var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
       return '<div class="'+localPrefix+'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var distanceValue = function() {
@@ -248,6 +263,7 @@
     var getProjectErrors = function (projectErrors, links, projectCollection) {
       var buttonIndex = 0;
       var errorLines = '';
+      projectCollection.clearCoordinates();
       _.each(projectErrors, function (error) {
         var button = '';
         var coordinates = getErrorCoordinates(error, links);
@@ -258,7 +274,7 @@
         }
         errorLines += '<div class="form-project-errors-list">' +
           addSmallLabel('LINKIDS: ') + ' ' + addSmallLabel(error.linkIds) + '</br>' +
-          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.message: 'N/A')) + '</br>' +
+          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabel((error.info ? error.info: 'N/A')) + '</br>' +
           (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
           '</div>';

@@ -4,17 +4,20 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
+import fi.liikennevirasto.digiroad2.client.tierekisteri._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao._
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.masstransitstop.{MassTransitStopOperations, TierekisteriBusStopStrategy, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.digiroad2.{MassTransitStopService, asset, _}
+import fi.liikennevirasto.digiroad2._
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -45,8 +48,8 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
-  lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkOTHService = {
+    new RoadLinkOTHService(vvhClient, eventbus, new DummySerializer)
   }
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(roadLinkService)
@@ -75,6 +78,7 @@ object DataFixture {
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+      override val municipalityDao: MunicipalityDao = new MunicipalityDao
     }
     new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
   }
@@ -338,7 +342,7 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
     val batchSize = 1000
     var obstaclesFound = true
     var lastIdUpdate : Long = 0
@@ -384,7 +388,7 @@ object DataFixture {
 
   def checkUnknownSpeedlimits(): Unit = {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
     val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
     val unknowns = speedLimitService.getUnknown(None)
     unknowns.foreach { case (_, mapped) =>
@@ -633,7 +637,7 @@ object DataFixture {
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
     val assetTypeId = 110
 
     lazy val linearAssetService: LinearAssetService = {
@@ -760,7 +764,7 @@ object DataFixture {
       persistedStop.foreach { stop =>
         val massTransitStopDirectionValue = stop.validityDirection
 
-        val roadLinkOfMassTransitStop = roadLinkService.getRoadLinkFromVVH(stop.linkId)
+        val roadLinkOfMassTransitStop = roadLinkService.getRoadLinkByLinkIdFromVVH(stop.linkId)
         val roadLinkDirectionValue = roadLinkOfMassTransitStop.map(rl => rl.trafficDirection).headOption
 
         roadLinkDirectionValue match {
@@ -793,7 +797,7 @@ object DataFixture {
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
@@ -903,7 +907,7 @@ object DataFixture {
     println(DateTime.now())
 
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {
       new RoadWidthService(roadLinkService, new DummyEventBus)
@@ -970,7 +974,7 @@ object DataFixture {
             val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < minAllowedLength}
             pieces.flatMap { measures =>
               Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-                measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
+                measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, Some("vvh_mtkclass_default"), None))
             }.filterNot(a =>
               assets.
               exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)

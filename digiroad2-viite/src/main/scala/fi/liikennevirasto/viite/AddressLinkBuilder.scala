@@ -1,7 +1,8 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{FeatureClass, GeometryUtils, Point, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, MunicipalityDAO, RoadAddress}

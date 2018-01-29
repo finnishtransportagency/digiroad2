@@ -15,8 +15,8 @@ window.GenericConfirmPopup = function(message, options) {
     var confirmDiv =
         '<div class="modal-overlay confirm-modal">' +
             '<div class="modal-dialog">' +
-                '<div class="content" style="white-space: pre;">' +
-                  message +   
+                '<div class="content">' +
+                  message +
                 '</div>' +
                 '<div class="actions">' +
                     '<button class = "btn btn-primary yes">' + options.yesButtonLbl + '</button>' +

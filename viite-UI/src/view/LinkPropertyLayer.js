@@ -730,9 +730,10 @@
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
 
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
+        var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
         var features = [];
-        _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
-          _.each(link, function (featureLink){
+        _.each(selectedLink, function (featureLink){
+         _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
             if(featureLink.linkId !== 0 && feature.roadLinkData.linkId === featureLink.linkId){
               return features.push(feature);
             }
@@ -772,6 +773,7 @@
       });
 
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function(eventData){
+
         draw();
         _.defer(function(){
           var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
@@ -783,6 +785,19 @@
           });
           if(featuresToReSelect.length !== 0){
             addFeaturesToSelection(featuresToReSelect);
+          }
+          var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function(feature){
+            return _.contains(_.pluck(selectedLinkProperty.get(), 'linkId'), feature.roadLinkData.linkId);
+          }), function(feat){return feat.roadLinkData;});
+
+          var groups = _.flatten(eventData);
+          var fetchedLinksInSelection = _.filter(groups, function(group) {
+            return _.contains(_.pluck(fetchedDataInSelection, 'linkId'), group.getData().linkId);
+          });
+          if(fetchedLinksInSelection.length > 0){
+            eventbus.trigger('linkProperties:deselectFeaturesSelected');
+            selectedLinkProperty.setCurrent(fetchedLinksInSelection);
+            eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
           }
         });
       });
@@ -1100,12 +1115,14 @@
     });
 
     eventbus.on('linkProperties:highlightReservedRoads', function(reservedOL3Features){
-     var styledFeatures = _.map(reservedOL3Features,function(feature) {
+      var styledFeatures = _.map(reservedOL3Features,function(feature) {
         feature.setStyle(projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: map.getView().getZoom()}));
-       return feature;
+        return feature;
       });
-      reservedRoadLayer.setZIndex(10000);
-      reservedRoadLayer.getSource().addFeatures(styledFeatures);
+      if (applicationModel.getSelectedLayer()==="linkProperty"){ //check if user is still in reservation form
+        reservedRoadLayer.setZIndex(10000);
+        reservedRoadLayer.getSource().addFeatures(styledFeatures);
+      }
     });
 
     eventbus.on('linkProperties:deselectFeaturesSelected', function(){

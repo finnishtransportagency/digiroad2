@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
+import fi.liikennevirasto.digiroad2.dao.OracleAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
 trait AssetOperations {

@@ -143,7 +143,7 @@
       var fireChange = _.isUndefined(triggerChange) ? true : triggerChange;
       var rootElement = $('#feature-attributes');
       var link = _.first(_.filter(selectedProjectLink, function (l) {
-        return !_.isUndefined(l.status);
+        return !_.isUndefined(l.status) && l.status == statusCode;
       }));
       if (statusCode === LinkStatus.Unchanged.value) {
         $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").prop('disabled', false).prop('hidden', false);
@@ -169,8 +169,11 @@
           $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected').change();
         else $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected');
       }
-      $('#discontinuityDropdown').val(link.discontinuity);
-      $('#roadTypeDropDown').val(link.roadTypeId);
+      // Set discontinuity from A/B unless it is continuous (defaults to Continuous if both are Continuous)
+      if (!_.isUndefined(link.discontinuity) && link.discontinuity !== 5 && (link.marker == 'A' || link.marker == 'B'))
+        $('#discontinuityDropdown').val(link.discontinuity);
+      if (!_.isUndefined(link.marker) && (link.marker == 'A' || link.marker == 'B'))
+        $('#roadTypeDropDown').val(link.roadTypeId);
     };
 
     var disableFormInputs = function () {
@@ -330,7 +333,7 @@
           disabled = true;
           $('#tie').val(currentSplitData.roadNumber);
           $('#osa').val(currentSplitData.roadPartNumber);
-          $('#ajr').val(currentSplitData.trackCode);
+          $('#trackCodeDropdown').val(currentSplitData.trackCode);
         }
         else if (this.value == LinkStatus.Transfer.description) {
           $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
@@ -338,7 +341,7 @@
         }
         $('#tie').prop('disabled', disabled);
         $('#osa').prop('disabled', disabled);
-        $('#ajr').prop('disabled', disabled);
+        $('#trackCodeDropdown').prop('disabled', disabled);
         $('#discontinuityDropdown').prop('disabled', false);
         $('#roadTypeDropDown').prop('disabled', false);
       });

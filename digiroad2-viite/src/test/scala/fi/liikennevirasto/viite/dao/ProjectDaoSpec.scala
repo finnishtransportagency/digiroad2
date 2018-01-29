@@ -4,7 +4,7 @@ import java.sql.SQLException
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
@@ -254,7 +254,6 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       val reserved = ProjectDAO.fetchReservedRoadPart(5, 203)
       reserved.nonEmpty should be(true)
       ProjectDAO.fetchReservedRoadParts(id) should have size (1)
-      ProjectDAO.fetchReservedRoadParts(id, Seq(NotHandled.value)) should have size (0)
       ProjectDAO.removeReservedRoadPart(id, reserved.get)
       val projectAfter = ProjectDAO.roadPartReservedByProject(5, 203)
       projectAfter should be(None)

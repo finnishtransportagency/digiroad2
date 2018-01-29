@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, SpeedLimit}
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.ChangedRoadAddress
+import fi.liikennevirasto.digiroad2.service.{ChangedRoadAddress, ChangedVVHRoadlink}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
@@ -33,7 +34,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(70, since, until))
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
-      case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
+      case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkOTHService.getChanged(since, until))
       case "road_numbers"                => roadNumberToGeoJson(since, roadAddressesService.getChanged(since, until))
     }
   }

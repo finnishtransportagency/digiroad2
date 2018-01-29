@@ -2,9 +2,15 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.pointasset.oracle._
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacleAsset, IncomingPedestrianCrossingAsset, IncomingRailwayCrossingtAsset, PavingService}
 import org.joda.time.DateTime
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
@@ -165,7 +171,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     } else None
   }
 
-  def updateLinearAsset(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): (PersistedLinearAsset, RoadLink) = {
+  def updateLinearAsset(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): Seq[(PersistedLinearAsset, RoadLink)] = {
     val usedService = verifyLinearServiceToUse(assetTypeId)
     val oldAsset = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired).headOption.
       getOrElse(halt(NotFound("Asset not found.")))
@@ -175,7 +181,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
     val updatedId = usedService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
-    getLinearAssetsAndRoadLinks(assetTypeId, updatedId.toSet).getOrElse(halt(InternalServerError("Asset not Updated"))).head
+    updatedId match {
+      case Seq(0L) => Seq.empty
+      case _ => getLinearAssetsAndRoadLinks(assetTypeId, updatedId.toSet).getOrElse(halt(InternalServerError("Asset not Updated")))
+    }
   }
 
   def updatePointAssets(parsedBody: JValue, typeId: Int, assetId: Int): PersistedPointAsset = {
@@ -859,7 +868,13 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           case "linear" =>
             (parsedBody \ "sideCode").extractOrElse[Int](halt(BadRequest("Missing mandatory 'sideCode' parameter")))
             if (assetTypeId == SpeedLimitAsset.typeId) speedLimitAssetToApi(updateSpeedLimitAsset(assetId, parsedBody, linkId))
-            else linearAssetToApi(updateLinearAsset(assetTypeId, assetId, parsedBody, linkId))
+            else{
+              val asset = updateLinearAsset(assetTypeId, assetId, parsedBody, linkId)
+              asset.nonEmpty match {
+                case true => linearAssetToApi(asset.head)
+                case false =>
+              }
+            }
           case "point" => pointAssetToApi(updatePointAssets(parsedBody, assetTypeId, assetId), assetTypeId)
           case _ =>
         }

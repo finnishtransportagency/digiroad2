@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, MassTransitStopDao}
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -22,10 +22,10 @@ object UpdateIncompleteLinkList {
     val municipalities: Seq[Int] = OracleDatabase.withDynSession {
       Queries.getMunicipalities
     }
-    Digiroad2Context.roadLinkService.clearCache()
+    Digiroad2Context.roadLinkOTHService.clearCache()
     municipalities.foreach { municipality =>
       println("*** Processing municipality: " + municipality)
-      val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVVH(municipality)
+      val roadLinks = Digiroad2Context.roadLinkOTHService.getRoadLinksFromVVH(municipality)
       println("*** Processed " + roadLinks.length + " road links")
     }
   }

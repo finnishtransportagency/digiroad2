@@ -4,9 +4,15 @@ import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
+import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
-import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
+import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.pointasset._
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
@@ -44,13 +50,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val maintenanceRoadService: MaintenanceService,
                    val pavingService: PavingService,
                    val roadWidthService: RoadWidthService,
+                   val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
+                   val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
+                   val numericValueLinearAssetService: NumericValueLinearAssetService = Digiroad2Context.numericValueLinearAssetService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
+                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService)
                    val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
-                   val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
                    val assetService: AssetService = Digiroad2Context.assetService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService)
   extends ScalatraServlet
@@ -756,6 +765,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "modifiedAt" -> link.modifiedDateTime,
           "createdBy" -> link.createdBy,
           "createdAt" -> link.createdDateTime,
+          "verifiedBy" -> link.verifiedBy,
+          "verifiedAt" -> link.verifiedDate,
           "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
           "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
           "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
@@ -856,6 +867,37 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     } catch {
       case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
     }
+  }
+
+  put("/linearassets/verified") {
+    val user = userProvider.getCurrentUser()
+    val ids = (parsedBody \ "ids").extract[Set[Long]]
+    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    val usedService = getLinearAssetService(typeId)
+    val linkIds = usedService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
+    roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
+      .map(_.municipalityCode)
+      .foreach(validateUserMunicipalityAccess(user))
+
+    usedService.updateVerifiedInfo(ids, user.username, typeId)
+  }
+
+  get("/linearassets/unverified"){
+      val user = userProvider.getCurrentUser()
+      val includedMunicipalities = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+      val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    val usedService = getLinearAssetService(typeId)
+    usedService.getUnverifiedLinearAssets(typeId, includedMunicipalities.toSet)
+  }
+
+  get("/linearassets/midpoint"){
+    val typeId = params("typeId").toInt
+    val service = getLinearAssetService(typeId)
+    val (id, pointInfo, source) = service.getLinearMiddlePointAndSourceById(typeId, params("id").toLong)
+    pointInfo.map {
+      case middlePoint => Map("success" -> true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source)}
+      .getOrElse(Map("success" -> false, "Reason" -> "Id not found or invalid input"))
   }
 
   delete("/linearassets") {
@@ -1292,7 +1334,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case Some(typeId) => validateAdministrativeClass(typeId)(link.administrativeClass)
         case _ => None
       }
-      service.create(asset, user.username, link)
+     service.create(asset, user.username, link)
     }
   }
 

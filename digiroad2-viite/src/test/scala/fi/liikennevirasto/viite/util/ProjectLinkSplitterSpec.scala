@@ -10,11 +10,13 @@ import fi.liikennevirasto.digiroad2.util.Track.{Combined, Unknown}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.MaxSuravageToleranceToGeometry
@@ -194,7 +196,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
-      LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.EndOfRoad, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     val (splitA, splitB) = sl.partition(_.status != LinkStatus.New)
     sl should have size (2)
@@ -204,6 +206,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
     terminatedLink.startAddrMValue should be (splitB.head.startAddrMValue)
     splitA.head.endAddrMValue should be (splitB.head.startAddrMValue)
+    splitB.head.discontinuity should be (Discontinuity.EndOfRoad)
+    splitA.head.discontinuity should be (Continuous)
     sl.foreach { l =>
       l.endAddrMValue == terminatedLink.startAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue should be(true)
       l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
@@ -253,11 +257,11 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 5, false, None, 85088L)
-    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.EndOfRoad, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
-      LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.MinorDiscontinuity, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
@@ -267,6 +271,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
     terminatedLink.startAddrMValue should be (splitA.head.endAddrMValue)
     terminatedLink.startAddrMValue should be (splitB.head.startAddrMValue)
+    splitA.head.discontinuity should be (Continuous)
+    splitB.head.discontinuity should be (MinorDiscontinuity)
     GeometryUtils.minimumDistance(terminatedLink.geometry.head, splitA.head.geometry) should be < MaxSuravageToleranceToGeometry
     GeometryUtils.areAdjacent(terminatedLink.geometry, template.geometry) should be (true)
     sl.foreach { l =>
@@ -438,11 +444,12 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(toRoadLink(suravageAddressLink)))
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
       val splitOptions = SplitOptions(Point(0, 45.3), LinkStatus.Transfer, LinkStatus.New, 0, 0, Track.Combined, Discontinuity.Continuous, 0, LinkGeomSource.Unknown, RoadType.Unknown, projectId, ProjectCoordinates(0, 45.3, 10))
-      val (splitedLinks, errorMessage, vector) = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId,  "TestUser", splitOptions)
+      val (splitedResult, errorMessage, vector) = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId,  "TestUser", splitOptions)
       errorMessage.isEmpty should be (true)
-      splitedLinks.nonEmpty should be (true)
-      splitedLinks.get.size should be (3)
-      val (sl, tl) = splitedLinks.get.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      splitedResult.nonEmpty should be (true)
+      val splitedLinks = splitedResult.get.toSeqWithMergeTerminated
+      splitedLinks.size should be (3)
+      val (sl, tl) = splitedLinks.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
       val (splitA, splitB) = sl.partition(_.status != LinkStatus.New)
       splitA.size should be (1)
       splitB.size should be (1)
