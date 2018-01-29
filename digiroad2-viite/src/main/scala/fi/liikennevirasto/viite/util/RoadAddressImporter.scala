@@ -161,7 +161,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   def importRoadAddress(): Unit ={
     //TODO the chunck count should be configurable
-    fetchChunckLinkIdsFromConversionTable(20000).foreach {
+    println("start processing chuncks")
+
+    val chunks = fetchChunckLinkIdsFromConversionTable(20000)
+
+    println("chuncks -> " + chunks)
+
+    chunks.foreach {
       case (min, max) =>
 
         val conversionRoadAddress = fetchRoadAddressFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
