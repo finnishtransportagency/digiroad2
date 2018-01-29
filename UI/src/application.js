@@ -87,8 +87,7 @@
     RoadAddressInfoDataInitializer.initialize(isExperimental);
     MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
-    VerificationListView.initialize(backend);
-
+    new VerificationWorkList().initialize();
     new WorkListView().initialize();
     new MunicipalityWorkList().initialize(backend);
 

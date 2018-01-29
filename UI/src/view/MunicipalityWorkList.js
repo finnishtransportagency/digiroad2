@@ -1,8 +1,4 @@
 (function (root) {
-  var backend;
-  var municipalityList;
-  var showFormBtnVisible = true;
-
   root.MunicipalityWorkList = function(){
     WorkListView.call(this);
     this.initialize = function(mapBackend){
@@ -11,12 +7,13 @@
       bindEvents();
     };
   };
+
   this.bindExternalEventHandlers = function() {
     eventbus.on('roles:fetched', function(roles) {
       userRoles = roles;
     });
   };
-  this.bindEvents = function () {
+  var bindEvents = function () {
     eventbus.on('municipality:select', function(listP) {
       $('.container').hide();
       $('#work-list').show();
@@ -25,12 +22,14 @@
       generateWorkList(listP);
     });
   };
-  var userRoles;
 
+  var backend;
+  var municipalityList;
+  var showFormBtnVisible = true;
+  var userRoles;
   var hrefDir = "#work-list/municipality";
   var municipalityId;
   var municipalityName;
-
 
   var municipalityTable = function (municipalities, filter) {
     var municipalityValues =
@@ -59,17 +58,16 @@
     reloadForm();
   };
 
-
   var reloadForm = function(){
     $('#formTable').remove();
     backend.getAssetTypesByMunicipality(municipalityId).then(function(assets){
-      $('#work-list .work-list').append(_.map(assets, _.partial(municipalityValidationTable, _ , municipalityName, municipalityId)));
+      $('#work-list .work-list').append(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
     });
   };
 
   eventbus.on('municipality:verified', reloadForm);
 
-  var municipalityValidationTable = function (workListItems, municipalityName, municipalityId) {
+  var unknownLimitsTable = function (workListItems, municipalityName, municipalityId) {
     var selected = [];
     var municipalityHeader = function (municipalityName) {
       return $('<h2/>').html(municipalityName);
