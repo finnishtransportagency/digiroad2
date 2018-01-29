@@ -1,10 +1,9 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
@@ -215,11 +214,18 @@ object ProjectValidator {
       ))
     }
     def checkNotConnectedHaveMinorDiscontinuity = {
-      error(ValidationError.MinorDiscontinuityFound)(seq.filterNot{pl =>
+      val possibleDiscontinuous = seq.filterNot{pl =>
         // Check that pl has discontinuity or after it the project links are connected (except last, where forall is true for empty list)
         pl.discontinuity == MinorDiscontinuity ||
           seq.filter(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track)).forall(pl2 => connected(pl2, pl))
+      }
+      val adjacentRoadAddresses = possibleDiscontinuous.filterNot(pd => {
+        val roadsDiscontinuity = RoadAddressDAO.fetchByRoadPart(pd.roadNumber, pd.roadPartNumber)
+        val sameDiscontinuity = roadsDiscontinuity.map(_.discontinuity).distinct.contains(pd.discontinuity)
+        val overlapping = roadsDiscontinuity.exists(p => GeometryUtils.overlaps((p.startMValue, p.endMValue), (pd.startMValue, pd.endMValue)))
+        sameDiscontinuity && overlapping
       })
+      error(ValidationError.MinorDiscontinuityFound)(adjacentRoadAddresses)
     }
     def checkRoadPartEnd(lastProjectLinks: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
       if (lastProjectLinks.exists(_.discontinuity != lastProjectLinks.head.discontinuity))
@@ -234,7 +240,7 @@ object ProjectValidator {
         val nextProjectPart = projectNextRoadParts.filter(_.newLength.getOrElse(0L) > 0L)
           .map(_.roadPartNumber).sorted.headOption
         val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
-          .filterNot(p => p == part || projectNextRoadParts.exists(_.roadPartNumber == p)).sorted.headOption
+          .filterNot(p => p == part || (!projectNextRoadParts.isEmpty && projectNextRoadParts.exists(_.roadPartNumber == p))).sorted.headOption
         if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
           if (discontinuity != EndOfRoad)
             return error(ValidationError.MissingEndOfRoad)(lastProjectLinks)
