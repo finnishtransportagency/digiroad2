@@ -25,6 +25,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   object ServiceWithDao extends VerificationService(mockEventBus, mockRoadLinkService){
     override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
     override def dao: VerificationDao = new VerificationDao
   }
 
