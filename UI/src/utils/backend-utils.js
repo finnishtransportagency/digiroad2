@@ -397,8 +397,7 @@
       return $.getJSON('api/linearAsset/unchecked?typeId=' + typeId);
     };
 
-
-    this.getUncheckedMunicipalities = function() {
+    this.getUnverifiedMunicipalities = function() {
       return $.getJSON('api/municipalities/unverified');
     };
 

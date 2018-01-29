@@ -1,4 +1,25 @@
 (function (root) {
+  root.WorkListView = function(){
+    var me = this;
+    this.initialize = function() {
+      bindEvents();
+      $(window).on('hashchange', this.showApp);
+    };
+    this.showApp = function() {
+      $('.container').show();
+      $('#work-list').hide();
+      $('body').removeClass('scrollable').scrollTop(0);
+    };
+  };
+  var bindEvents = function() {
+    eventbus.on('workList:select', function(layerName, listP) {
+      $('.container').hide();
+      $('#work-list').show();
+      $('body').addClass('scrollable');
+      generateWorkList(layerName, listP);
+    });
+  };
+
   var unknownLimitsTable = function(layerName, workListItems, municipalityName) {
     var municipalityHeader = function(municipalityName, totalCount) {
       var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
@@ -75,33 +96,10 @@
         '</div>' +
       '</div>'
     );
-    var showApp = function() {
-      $('.container').show();
-      $('#work-list').hide();
-      $('body').removeClass('scrollable').scrollTop(0);
-      $(window).off('hashchange', showApp);
-    };
-    $(window).on('hashchange', showApp);
     listP.then(function(limits) {
       var unknownLimits = _.map(limits, _.partial(unknownLimitsTable, layerName));
       $('#work-list .work-list').html(unknownLimits);
     });
-  };
-
-  var bindEvents = function() {
-    eventbus.on('workList:select', function(layerName, listP) {
-      $('.container').hide();
-      $('#work-list').show();
-      $('body').addClass('scrollable');
-
-      generateWorkList(layerName, listP);
-    });
-  };
-
-  root.WorkListView = {
-    initialize: function() {
-      bindEvents();
-    }
   };
 
 })(this);

@@ -47,7 +47,6 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
-        'work-list/municipality/:municipalityId': 'municipalityVerificationForm'
       },
 
       massTransitStop: function (id) {
@@ -217,13 +216,8 @@
       },
 
       municipalityWorkList: function () {
-        eventbus.trigger('municipality:select', backend.getUncheckedMunicipalities());
-      },
-
-      municipalityVerificationForm: function(id) {
-        eventbus.trigger('municipalityForm:open', id, backend.getAssetTypesByMunicipality(id));
+        eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities());
       }
-
     });
 
     var router = new Router();

@@ -87,9 +87,10 @@
     RoadAddressInfoDataInitializer.initialize(isExperimental);
     MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
-    WorkListView.initialize(backend);
-    MunicipalityWorkList.initialize(backend);
-    MunicipalityVerificationForm.initialize(backend);
+
+    new WorkListView().initialize();
+    new MunicipalityWorkList().initialize(backend);
+
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
@@ -136,8 +137,8 @@
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
-  var indicatorOverlayForVerification = function() {
-    jQuery('#municipality-work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+  var indicatorOverlayForWorklist= function() {
+    jQuery('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
   var bindEvents = function(linearAssetSpecs, pointAssetSpecs, roadCollection) {
@@ -150,28 +151,16 @@
     });
 
     eventbus.on('municipality:verifying', function() {
-      indicatorOverlayForVerification();
-    });
-
-    eventbus.on('municipality:verified', function() {
-      jQuery('.spinner-overlay').remove();
-      window.location.reload();
-    });
-
-    eventbus.on('municipality:verificationFailed', function() {
-      jQuery('.spinner-overlay').remove();
-      if(confirm(assetUpdateFailedMessage)){
-        window.location.reload();
-      }
+      indicatorOverlayForWorklist();
     });
 
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched ' + fetchedEventNames, function() {
+    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched municipality:verified ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 
     var massUpdateFailedEventNames = _.map(multiElementEventNames, function(name) { return name + ':massUpdateFailed'; }).join(' ');
-    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed ' + massUpdateFailedEventNames, function() {
+    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed municipality:verificationFailed ' + massUpdateFailedEventNames, function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
     });
