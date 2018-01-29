@@ -115,10 +115,10 @@
     }, true);
     
     map.on('singleclick', function(event) {
-      eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
+      eventbus.trigger('map:clicked', { x: event.coordinate[0], y: event.coordinate[1] });
     });
     map.on('dblclick', function(event) {
-      eventbus.trigger('map:dblclicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
+      eventbus.trigger('map:dblclicked', { x: event.coordinate[0], y: event.coordinate[1] });
     });
 
     addCenterMarkerLayerToMap(map);
