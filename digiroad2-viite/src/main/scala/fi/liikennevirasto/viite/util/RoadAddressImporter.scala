@@ -141,7 +141,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list.
-        grouped(chunck).map(linkIds => (linkIds.min, linkIds.max)).toSeq
+        grouped(chunck).map(linkIds => (linkIds.min, linkIds.max)).toSeq.toArray
     }
   }
 
@@ -163,21 +163,20 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   def importRoadAddress(): Unit ={
     //TODO the chunck count should be configurable
-    println("start processing chuncks")
-
     val chunks = fetchChunckLinkIdsFromConversionTable(20000)
-
-    println("chuncks -> " + chunks)
 
     chunks.foreach {
       case (min, max) =>
 
-        val conversionRoadAddress = fetchRoadAddressFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
+        print(s"${DateTime.now()} - ")
+        println(s"Processing chunck ($min, $max)")
 
-        print(s"\n${DateTime.now()} - ")
-        println("Read %d rows from conversion database".format(conversionRoadAddress.size))
+        //val conversionRoadAddress = fetchRoadAddressFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
 
-        importRoadAddress(conversionRoadAddress)
+        //print(s"\n${DateTime.now()} - ")
+        //println("Read %d rows from conversion database".format(conversionRoadAddress.size))
+
+        //importRoadAddress(conversionRoadAddress)
     }
   }
 
