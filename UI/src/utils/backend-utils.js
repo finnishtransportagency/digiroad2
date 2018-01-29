@@ -402,7 +402,7 @@
     };
 
     this.getAssetTypesByMunicipality = function(municipalityCode) {
-      return $.getJSON('api/municipalities/assetTypes/' + municipalityCode);
+      return $.getJSON('api/municipalities/' + municipalityCode + '/assetTypes' );
     };
 
     this.verifyMunicipalityAssets = function(typeIds, municipalityCode) {
@@ -410,7 +410,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/municipalities/assetVerification/" + municipalityCode,
+        url: "api/municipalities/" + municipalityCode + "/assetVerification" ,
         data: JSON.stringify({typeId:typeIds}),
         dataType: "json",
         success: function(){
@@ -427,7 +427,7 @@
       $.ajax({
         contentType: "application/json",
         type: "DELETE",
-        url: "api/municipalities/removeVerification/" + municipalityCode,
+        url: "api/municipalities/" + municipalityCode + "/removeVerification" ,
         data: JSON.stringify({typeId:typeIds}),
         dataType: "json",
         success: function(){

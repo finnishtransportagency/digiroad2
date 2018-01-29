@@ -10,28 +10,29 @@ case class VerificationInfo(municipalityCode: Int, municipalityName: String, ass
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def dao: VerificationDao = new VerificationDao
 
   def getAssetTypesByMunicipality(municipalityCode: Int): List[VerificationInfo] = {
-    withDynTransaction {
+    withDynSession {
       dao.getVerifiedAssetTypes(municipalityCode)
     }
   }
 
   def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Seq[VerificationInfo] = {
-    withDynTransaction{
+    withDynSession {
       dao.getAssetVerification(municipalityCode, assetTypeId)
     }
   }
 
   def getAssetVerificationById(id: Long, assetTypeId: Int): Option[VerificationInfo] = {
-    withDynTransaction{
+    withDynSession {
       dao.getAssetVerificationById(id)
     }
   }
 
   def verifyAssetType(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
-    withDynTransaction {
+    withDynSession {
       if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
         throw new IllegalStateException("Asset type not allowed")
 

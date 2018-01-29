@@ -14,12 +14,6 @@ trait AssetOperations {
     }
   }
 
-  def getVerifiableAssets: Seq[String] = {
-    withDynTransaction {
-      assetDao.getVerifiableAssetTypes
-    }
-  }
-
   //this should be moved to municipalityDAO
   def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): (List[Map[String, Any]]) = {
     val municipalities = withDynTransaction {

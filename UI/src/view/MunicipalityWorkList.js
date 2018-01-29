@@ -53,9 +53,7 @@
   var createVerificationForm = function(municipality) {
     $('#tableData').hide();
     $('.filter-box').hide();
-    (showFormBtnVisible) ? $('#work-list-header').append($('<a class="header-link"></a>').attr('href', hrefDir).html('Kuntavalinta').click(function(){
-        generateWorkList(municipalityList);
-      })) : $('#work-list-header').append('');
+    if (showFormBtnVisible) $('#work-list-header').append($('<a class="header-link"></a>').attr('href', hrefDir).html('Kuntavalinta').click(function(){generateWorkList(municipalityList);}));
     municipalityId = municipality.id;
     municipalityName = municipality.name;
     reloadForm();
@@ -155,7 +153,6 @@
       if (limits.length == 1){
         showFormBtnVisible = false;
         createVerificationForm(_.first(limits));
-        // window.location = hrefDir + _.map(limits, function(limit) {return limit.id;});
       }else{
         var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
         element.html($('<div class="municipality-list">').append(unknownLimits));

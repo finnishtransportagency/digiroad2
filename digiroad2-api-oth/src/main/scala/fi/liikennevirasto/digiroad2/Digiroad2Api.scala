@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
 import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
-//import fi.liikennevirasto.digiroad2.AssetService
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
@@ -1221,7 +1220,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   }
 
-  get("/municipalities/assetTypes/:municipalityCode") {
+  get("/municipalities/:municipalityCode/assetTypes") {
     val id = params("municipalityCode").toInt
     val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
@@ -1233,13 +1232,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                              "verified"   -> assetType.verified)))
   }
 
-  get("/municipalities/assetVerification/:municipalityCode/:assetTypeId") {
-    val municipalityCode = params("municipalityCode").toInt
-    val assetTypeId = params("assetTypeId").toInt
-    verificationService.getAssetVerification(municipalityCode, assetTypeId)
-  }
-
-  post("/municipalities/assetVerification/:municipalityCode") {
+  post("/municipalities/:municipalityCode/assetVerification") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = params("municipalityCode").toInt
     validateUserMunicipalityAccess(user)(municipalityCode)
@@ -1247,7 +1240,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.verifyAssetType(municipalityCode, assetTypeId, user.username)
   }
 
-  delete("/municipalities/removeVerification/:municipalityCode") {
+  delete("/municipalities/:municipalityCode/removeVerification") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = params("municipalityCode").toInt
     validateUserMunicipalityAccess(user)(municipalityCode)
