@@ -444,7 +444,8 @@ class AssetDataImporter {
       println (s"${DateTime.now ()} - Old address data removed")
 
       val roadAddressImporter = new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
-      roadMaintainerElys.foreach(ely => roadAddressImporter.importRoadAddress(ely))
+      //roadMaintainerElys.foreach(ely => roadAddressImporter.importRoadAddress(ely))
+      roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
       sqlu"""UPDATE LRM_POSITION

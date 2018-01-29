@@ -116,13 +116,31 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def fetchRoadAddressFromConversionTable(ely: Long, filter: String): Seq[ConversionRoadAddress] ={
     conversionDatabase.withDynSession {
         val tableName = importOptions.conversionTable
-        val where = s" WHERE ely=$ely AND aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL "
         sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
                TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
                loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName
                WHERE ely=$ely AND aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL #$filter """
           .as[ConversionRoadAddress].list
     }
+  }
+
+  //TODO this method is duplicated (or almost)
+  private def fetchRoadAddressFromConversionTable(minLinkId:Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] ={
+    conversionDatabase.withDynSession {
+      val tableName = importOptions.conversionTable
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
+               TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+               loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName
+               WHERE linkid >= $minLinkId AND linkid <= $maxLinkId AND  aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL #$filter """
+        .as[ConversionRoadAddress].list
+    }
+  }
+
+  private def fetchChunckLinkIdsFromConversionTable(chunck: Int): Seq[(Long, Long)] = {
+    //TODO Try to do the group in the query
+    val tableName = importOptions.conversionTable
+    sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list.
+      grouped(chunck).map(linkIds => (linkIds.min, linkIds.max)).toSeq
   }
 
   private val withOnlyCurrentRoadAddress: String = " AND loppupvm IS NULL "
@@ -139,6 +157,20 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
     importRoadAddress(conversionRoadAddress)
 
+  }
+
+  def importRoadAddress(): Unit ={
+    //TODO the chunck count should be configurable
+    fetchChunckLinkIdsFromConversionTable(20000).foreach {
+      case (min, max) =>
+
+        val conversionRoadAddress = fetchRoadAddressFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
+
+        print(s"\n${DateTime.now()} - ")
+        println("Read %d rows from conversion database".format(conversionRoadAddress.size))
+
+        importRoadAddress(conversionRoadAddress)
+    }
   }
 
   private def importRoadAddress(conversionRoadAddress: Seq[ConversionRoadAddress]): Unit = {
