@@ -19,6 +19,7 @@ import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import org.joda.time._
 import org.slf4j.LoggerFactory
+import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
@@ -52,6 +53,12 @@ AssetDataImporter {
     PeriodFormat.getDefault.print(new Period(startTime, DateTime.now()))
   }
 }
+
+protected case class RoadAddressHistory(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
+                                        startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
+                                        validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
+                                        terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
+                                        x2: Option[Double], y2: Option[Double], lrmId: Long, ajrId: Long)
 
 class AssetDataImporter {
   val logger = LoggerFactory.getLogger(getClass)
@@ -94,11 +101,6 @@ class AssetDataImporter {
   }
 
   case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double, linkSource: LinkGeomSource, ajrId: Long)
-  case class RoadAddressHistory(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
-                                startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[DateTime], endDate: Option[DateTime],
-                                validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
-                                terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
-                                x2: Option[Double], y2: Option[Double], lrmId: Long, ajrId: Long)
   case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType, elyCode: Long)
 
   /**
@@ -228,19 +230,7 @@ class AssetDataImporter {
             startDate, endDate, validFrom, validTo, ely, roadType, terminated, linkId, createdBy, Some(0), Some(0), Some(0), Some(0), lrmId, ajrId)
       }
 
-    val roads = conversionDatabase.withDynSession {
-      val tableName = importOptions.conversionTable
-      val where = s" WHERE ely=$ely AND aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL "
-      val filter = (importOptions.onlyCurrentRoads, importOptions.importDate) match{
-        case (true, _) =>  s" AND loppupvm IS NULL "
-        case (false, "") => ""
-        case (false, date) => s" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$date')) "
-      }
-      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
-             TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-             loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName #$where #$filter """
-        .as[RoadAddressHistory].list
-    }
+    val roads = fetchRoadAddressHistory(conversionDatabase, ely, importOptions)
 
     print(s"\nFinished at ${DateTime.now()}")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
@@ -418,6 +408,22 @@ class AssetDataImporter {
     println(s"${DateTime.now()} - Road addresses saved")
     lrmPositionPS.close()
     addressPS.close()
+  }
+
+  protected def fetchRoadAddressHistory(conversionDatabase: JdbcDriver.backend.DatabaseDef, ely: Int, importOptions: ImportOptions): List[RoadAddressHistory] = {
+    conversionDatabase.withDynSession {
+      val tableName = importOptions.conversionTable
+      val where = s" WHERE ely=$ely AND aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL "
+      val filter = (importOptions.onlyCurrentRoads, importOptions.importDate) match {
+        case (true, _) => s" AND loppupvm IS NULL "
+        case (false, "") => ""
+        case (false, date) => s" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$date')) "
+      }
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
+             TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+             loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName #$where #$filter """
+        .as[RoadAddressHistory].list
+    }
   }
 
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient],
