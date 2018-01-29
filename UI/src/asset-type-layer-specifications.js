@@ -646,7 +646,8 @@
       editConstrains : function() {
         return true;
       },
-      nonModifiableBox: true
+      nonModifiableBox: true,
+      label: new HeightLimitLabel()
     },
     {
       typeId: assetType.trWidthLimits,
@@ -662,7 +663,8 @@
       editConstrains : function() {
         return true;
       },
-      nonModifiableBox: true
+      nonModifiableBox: true,
+      label: new WidthLimitLabel()
     }
 
   ];
