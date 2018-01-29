@@ -141,7 +141,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list.
-        grouped(chunck).map(linkIds => (linkIds.min, linkIds.max)).toSeq.toArray
+        grouped(chunck).map(linkIds => (linkIds.min, linkIds.max)).toSeq
     }
   }
 
