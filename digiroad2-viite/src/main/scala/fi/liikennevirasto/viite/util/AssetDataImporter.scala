@@ -443,7 +443,8 @@ class AssetDataImporter {
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println (s"${DateTime.now ()} - Old address data removed")
 
-      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
+      val roadAddressImporter = new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
+      roadMaintainerElys.foreach(ely => roadAddressImporter.importRoadAddress(ely))
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
       sqlu"""UPDATE LRM_POSITION
