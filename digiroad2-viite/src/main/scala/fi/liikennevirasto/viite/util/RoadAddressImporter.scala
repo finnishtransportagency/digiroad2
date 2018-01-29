@@ -158,7 +158,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     print(s"${DateTime.now()} - ")
     println("Read %d road links history from vvh".format(mappedHistoryRoadLinks.size))
 
-    val suppressedRoadLinks = conversionRoadAddress.filter(ra => ra.linkId == 0 || mappedRoadLinks.get(ra.linkId).isEmpty || mappedHistoryRoadLinks.get(ra.linkId).isEmpty)
+    val suppressedRoadLinks = conversionRoadAddress.filter(ra => ra.linkId == 0 || (mappedRoadLinks.get(ra.linkId).isEmpty && mappedHistoryRoadLinks.get(ra.linkId).isEmpty))
     suppressedRoadLinks.foreach {
       ra => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(ra.lrmId, printConversionRoadAddress(ra)))
     }
@@ -197,7 +197,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     lrmPositions.zip(lrmIds).foreach {
       case ((lrmPosition), (lrmId)) =>
         val roadAddresses = mappedConversionRoadAddress.getOrElse((lrmPosition.linkId, lrmPosition.commonHistoryId), Seq())
-        assert(roadAddresses.size == 1)
+        assert(roadAddresses.size >= 1)
         insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
         roadAddresses.foreach{
           roadAddress =>
