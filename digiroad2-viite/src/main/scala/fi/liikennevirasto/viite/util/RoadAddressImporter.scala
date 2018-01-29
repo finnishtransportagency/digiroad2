@@ -138,9 +138,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def fetchChunckLinkIdsFromConversionTable(chunck: Int): Seq[(Long, Long)] = {
     //TODO Try to do the group in the query
-    val tableName = importOptions.conversionTable
-    sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list.
-      grouped(chunck).map(linkIds => (linkIds.min, linkIds.max)).toSeq
+    conversionDatabase.withDynSession {
+      val tableName = importOptions.conversionTable
+      sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list.
+        grouped(chunck).map(linkIds => (linkIds.min, linkIds.max)).toSeq
+    }
   }
 
   private val withOnlyCurrentRoadAddress: String = " AND loppupvm IS NULL "
