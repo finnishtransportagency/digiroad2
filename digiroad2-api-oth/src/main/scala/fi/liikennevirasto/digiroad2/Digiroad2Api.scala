@@ -59,17 +59,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
                    val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
-                   val weightLimitService: WeightLimitService = Digiroad2Context.weightLimitService,
-                   val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = Digiroad2Context.trailerTruckWeightLimitService,
-                   val axleWeightLimitService: AxleWeightLimitService = Digiroad2Context.axleWeightLimitService,
-                   val bogieWeightLimitService: BogieWeightLimitService = Digiroad2Context.bogieWeightLimitService,
+                   val heightLimitService: HeightLimitService = Digiroad2Context.heightLimitService,
+                   val widthLimitService: WidthLimitService = Digiroad2Context.widthLimitService,
                    val pointMassLimitationService: PointMassLimitationService =
-                    Digiroad2Context.pointMassLimitationService)
+                   Digiroad2Context.pointMassLimitationService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
-    with GZipSupport {
+    with GZipSupport  {
     val serviceRoadTypeid=290
     val trafficVolumeTypeid=170
     val roadWidthTypeId = 120
@@ -1212,6 +1210,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   put("/trafficSigns/:id")(updatePointAsset(trafficSignService))
   delete("/trafficSigns/:id")(deletePointAsset(trafficSignService))
 
+  get("/trHeightLimits")(getPointAssets(heightLimitService))
+  get("/trHeightLimits/:id")(getPointAssetById(heightLimitService))
+
+  get("/trWidthLimits")(getPointAssets(widthLimitService))
+  get("/trWidthLimits/:id")(getPointAssetById(widthLimitService))
+
   get("/groupedPointAssets")(getGroupedPointAssets)
 
   private def getGroupedPointAssets: Seq[PersistedPointAsset] = {
@@ -1302,16 +1306,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService
       case _ => linearAssetService
-    }
-  }
-
-  private def getPointAssetService(typeId: Int): PointAssetOperations = {
-    typeId match {
-      case TrTrailerTruckWeightLimit.typeId => trailerTruckWeightLimitService
-      case TrAxleWeightLimit.typeId => axleWeightLimitService
-      case TrBogieWeightLimit.typeId => bogieWeightLimitService
-      case TrWeightLimit.typeId => weightLimitService
-      case _ => halt(BadRequest("invalid asset type"))
     }
   }
 

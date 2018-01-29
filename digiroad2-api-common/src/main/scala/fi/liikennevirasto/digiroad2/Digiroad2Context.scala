@@ -407,7 +407,7 @@ object Digiroad2Context {
     new TrailerTruckWeightLimitService(roadLinkOTHService)
   }
 
-  lazy val trailerHeightLimitService: HeightLimitService = {
+  lazy val heightLimitService: HeightLimitService = {
     new HeightLimitService(roadLinkOTHService)
   }
 
