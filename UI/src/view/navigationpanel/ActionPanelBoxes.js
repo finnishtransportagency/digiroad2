@@ -295,7 +295,6 @@
     };
   };
 
-
   var executeOrShowConfirmDialog = function(f) {
     if (applicationModel.isDirty()) {
       new Confirm();
@@ -609,7 +608,6 @@
     var className = _.kebabCase(asset.layerName);
     var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
 
-
     var complementaryCheckBox = asset.allowComplementaryLinks ?
       '<div class="panel-section">' +
       '<div class="check-box-container">' +
@@ -624,11 +622,11 @@
     }).join('');
 
     var label = labeling ? labeling : [
-      {index :1 , labeling: 'suurin sallittu massa'},
-      {index :2 , labeling: 'suurin sallittu akselimassa'},
-      {index :3 , labeling: 'suurin sallittu telimassa'},
-      {index :4 , labeling: 'yhdistelmän suurin sallittu massa'}
-    ];
+      {index : 0,  labeling: 'yhdistelmän suurin sallittu massa'},
+      {index : 1 , labeling: 'suurin sallittu akselimassa'},
+      {index : 2,  labeling: 'suurin sallittu massa'},
+      {index : 3 , labeling: 'suurin sallittu telimassa'}
+      ];
 
     var labelingTemplate = _(label).map(function (value) {
       return '<div class="labeling-entry">' +
@@ -695,16 +693,15 @@
 
   ActionPanelBoxes.HeightLimitationBox = function (asset){
     var label = [
-      {index :4 , labeling: 'suurin sallittu korkeus'}
+      {index: 0 , labeling: 'suurin sallittu korkeus'}
     ];
 
     return new ActionPanelBoxes.LimitationBox(asset, label);
   };
 
-
   ActionPanelBoxes.WidthLimitationBox = function (asset) {
     var label = [
-      {index :4 , labeling: '  suurin sallittu leveys'}
+      {index: 0 , labeling: 'suurin sallittu leveys'}
     ];
 
     return new ActionPanelBoxes.LimitationBox(asset, label);
