@@ -136,12 +136,30 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
   }
 
+  private def generateChuncks(linkIds: Seq[Long], chunckNumber: Long) : Seq[(Long, Long)] = {
+    var (chuncks, _) = linkIds.foldLeft((Seq[Long](), 0)) {
+      case ((fchuncks, index), linkId) =>
+        if(index % chunckNumber == 0){
+          (fchuncks ++ Seq(linkId), index+1)
+        } else {
+          (fchuncks, index+1)
+        }
+    }
+    val result = if(chuncks.last == linkIds.last){
+      chuncks
+    } else {
+      chuncks ++ Seq(linkIds.last)
+    }
+
+    result.zip(result.tail)
+  }
+
   private def fetchChunckLinkIdsFromConversionTable(chunck: Int): Seq[(Long, Long)] = {
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list.
-        grouped(chunck).map(linkIds => (linkIds.min, linkIds.max)).toSeq
+      val linkIds = sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list.
+      generateChuncks(linkIds, 25000)
     }
   }
 
