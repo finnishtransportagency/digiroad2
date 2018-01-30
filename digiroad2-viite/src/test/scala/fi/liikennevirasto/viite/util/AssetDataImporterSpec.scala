@@ -47,7 +47,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       }
       assetDataImporter.importRoadAddressData(null, vvhClient, None, importOptions)
 
-      val insertedRoadAddresses = RoadAddressDAO.fetchByLinkId(Set(6656730))
+      val insertedRoadAddresses = RoadAddressDAO.fetchByLinkId(Set(6656730), true, true, true)
 
       insertedRoadAddresses.size should be(14)
     }
