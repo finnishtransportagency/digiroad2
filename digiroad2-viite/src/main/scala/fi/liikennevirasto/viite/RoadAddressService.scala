@@ -613,22 +613,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     Kalpa-API methods
   */
   def getRoadAddressesLinkByMunicipality(municipality: Int, roadLinkDataTempAPI:Boolean=false): Seq[RoadAddressLink] = {
-    //TODO: Remove null checks and make sure no nulls are generated
-    //TODO: All this request to VVH can be done using asynchronous
-    val roadLinks = {
-      val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality,frozenTimeVVHAPIServiceEnabled)
-      if (tempRoadLinks == null)
-        Seq.empty[RoadLink]
-      else tempRoadLinks
-    }
-    val complimentaryLinks = {
-      val tempComplimentary = roadLinkService.getComplementaryRoadLinksFromVVH(municipality)
-      if (tempComplimentary == null)
-        Seq.empty[RoadLink]
-      else tempComplimentary
-    }
+
+    val (roadLinksWithComplementary, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality)
-    val allRoadLinks = roadLinks ++ complimentaryLinks ++ suravageLinks
+    val allRoadLinks = roadLinksWithComplementary ++ suravageLinks
 
     val addresses =
       withDynTransaction {
