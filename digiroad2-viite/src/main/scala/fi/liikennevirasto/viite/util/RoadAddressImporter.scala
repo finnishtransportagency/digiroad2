@@ -13,6 +13,12 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 
+protected case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
+                                 startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[DateTime], endDate: Option[DateTime],
+                                 validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
+                                 terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
+                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode)
+
 class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) {
 
   case class IncomingLrmPosistion(id: Long, linkId: Long, startM: Double, endM: Double, sideCode: SideCode, linkSource: LinkGeomSource, commonHistoryId: Long)
@@ -20,12 +26,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                                          startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime],
                                          createdBy: String, validFrom: Option[DateTime], x1: Option[Double], y1: Option[Double],
                                          x2: Option[Double], y2: Option[Double], roadType: Long, ely: Long, commonHistoryId: Long)
-
-  case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
-                                           startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[DateTime], endDate: Option[DateTime],
-                                           validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
-                                           terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
-                                           x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode)
 
   val dateFormatter = ISODateTimeFormat.basicDate()
 
@@ -125,7 +125,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   //TODO this method is duplicated (or almost)
-  private def fetchRoadAddressFromConversionTable(minLinkId:Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] ={
+  protected def fetchRoadAddressFromConversionTable(minLinkId:Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] ={
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
@@ -154,7 +154,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     result.zip(result.tail)
   }
 
-  private def fetchChunckLinkIdsFromConversionTable(chunck: Int): Seq[(Long, Long)] = {
+  protected def fetchChunckLinkIdsFromConversionTable(chunck: Int): Seq[(Long, Long)] = {
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable

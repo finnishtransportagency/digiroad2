@@ -23,6 +23,7 @@ import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
+
 object
 AssetDataImporter {
   sealed trait ImportDataSet {
@@ -443,7 +444,7 @@ class AssetDataImporter {
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println (s"${DateTime.now ()} - Old address data removed")
 
-      val roadAddressImporter = new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
+      val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
       //roadMaintainerElys.foreach(ely => roadAddressImporter.importRoadAddress(ely))
       roadAddressImporter.importRoadAddress()
 
@@ -477,6 +478,10 @@ class AssetDataImporter {
             )""".execute
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
     }
+  }
+
+  protected def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
+    new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
   }
 
   def updateRoadAddressesValues(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
