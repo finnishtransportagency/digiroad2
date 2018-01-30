@@ -1,26 +1,15 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.Date
-import java.text.DecimalFormat
 import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset._
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceReseterDAO}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
 import org.joda.time._
 import org.slf4j.LoggerFactory
@@ -28,17 +17,11 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceReseterDAO}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.oracle.{OracleDatabase}
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import slick.driver.JdbcDriver
 
@@ -492,8 +475,8 @@ class AssetDataImporter {
                 NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
               )
             )""".execute
-      commonhistoryReseter()
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
+      commonhistoryReseter()
     }
   }
 
