@@ -174,11 +174,12 @@ object DataFixture {
     println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
   }
 
-  private def ImportRoadNames() {
+  private def importRoadNames() {
     SqlScriptRunner.runViiteScripts(List(
       "roadnames.sql"
     ))
   }
+
   private def importRoadAddressChangeTestData(): Unit ={
     println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
@@ -355,7 +356,7 @@ object DataFixture {
       case Some ("update_project_link_geom") =>
         updateProjectLinkGeom()
       case Some ("import_road_names") =>
-        ImportRoadNames()
+        importRoadNames()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
       case Some("import_road_address_history") =>
