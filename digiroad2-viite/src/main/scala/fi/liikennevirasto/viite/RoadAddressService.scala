@@ -1,8 +1,4 @@
 package fi.liikennevirasto.viite
-import java.util.Properties
-
-import fi.liikennevirasto.digiroad2.service.RoadLinkType.UnknownRoadLinkType
-
 import java.net.ConnectException
 
 import fi.liikennevirasto.digiroad2._
@@ -616,9 +612,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   /*
     Kalpa-API methods
   */
-
   def getRoadAddressesLinkByMunicipality(municipality: Int, roadLinkDataTempAPI:Boolean=false): Seq[RoadAddressLink] = {
     //TODO: Remove null checks and make sure no nulls are generated
+    //TODO: All this request to VVH can be done using asynchronous
     val roadLinks = {
       val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality,frozenTimeVVHAPIServiceEnabled)
       if (tempRoadLinks == null)
@@ -631,16 +627,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         Seq.empty[RoadLink]
       else tempComplimentary
     }
-    val suravageLinks = roadLinkService.getSuravageLinksFromVVHByMunicipality(municipality).map(s => RoadAddressLinkBuilder.buildSuravageRoadAddressLink(s))
-    val roadLinksWithComplimentary = roadLinks ++ complimentaryLinks
+    val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality)
+    val allRoadLinks = roadLinks ++ complimentaryLinks ++ suravageLinks
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkIdToApi(roadLinksWithComplimentary.map(_.linkId).toSet).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
-    val knownRoadLinks = roadLinksWithComplimentary.filter(rl => {
+    val knownRoadLinks = allRoadLinks.filter(rl => {
       addresses.contains(rl.linkId)
     })
 
@@ -649,11 +645,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
     }.toMap
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinksWithComplimentary, viiteRoadLinks)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks, viiteRoadLinks)
 
     publishChangeSet(changeSet)
 
-    filledTopology ++ suravageLinks
+    filledTopology
   }
 
   def saveAdjustments(addresses: Seq[LRMValueAdjustment]): Unit = {
