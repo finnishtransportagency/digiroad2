@@ -137,7 +137,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def generateChuncks(linkIds: Seq[Long], chunckNumber: Long) : Seq[(Long, Long)] = {
-    var (chuncks, _) = linkIds.foldLeft((Seq[Long](), 0)) {
+    val (chuncks, _) = linkIds.foldLeft((Seq[Long](), 0)) {
       case ((fchuncks, index), linkId) =>
         if(index % chunckNumber == 0){
           (fchuncks ++ Seq(linkId), index+1)
@@ -158,8 +158,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      val linkIds = sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list.
-      generateChuncks(linkIds, 25000)
+      val linkIds = sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list
+      generateChuncks(linkIds, 25000l)
     }
   }
 
