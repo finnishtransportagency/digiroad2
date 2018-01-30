@@ -14,7 +14,7 @@ import slick.jdbc._
 
 
 case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
-                                 startAddrM: Long, endAddrM: Long, startM: Double, endM : Double, startDate: Option[DateTime], endDate: Option[DateTime],
+                                 startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                  validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
                                  terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
                                  x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode)
@@ -66,7 +66,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
 
   private def insertRoadAddress(roadAddressStatement: PreparedStatement, roadAddress: ConversionRoadAddress, lrmPosition: IncomingLrmPosistion, lrmId: Long): Unit ={
-    def datePrinter(date: Option[DateTime]): String ={
+    def datePrinter(date: Option[DateTime]): String = {
       date match {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
@@ -113,19 +113,19 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     lrmPos.map(lrm => lrm.copy(startM = lrm.startM * coefficient, endM = lrm.endM * coefficient))
   }
 
-  private def fetchRoadAddressFromConversionTable(ely: Long, filter: String): Seq[ConversionRoadAddress] ={
+  private def fetchRoadAddressFromConversionTable(ely: Long, filter: String): Seq[ConversionRoadAddress] = {
     conversionDatabase.withDynSession {
-        val tableName = importOptions.conversionTable
-        sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
+      val tableName = importOptions.conversionTable
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
                TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
                loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName
                WHERE ely=$ely AND aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL #$filter """
-          .as[ConversionRoadAddress].list
+        .as[ConversionRoadAddress].list
     }
   }
 
   //TODO this method is duplicated (or almost)
-  protected def fetchRoadAddressFromConversionTable(minLinkId:Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] ={
+  protected def fetchRoadAddressFromConversionTable(minLinkId: Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
@@ -136,30 +136,30 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
   }
 
-  private def generateChuncks(linkIds: Seq[Long], chunckNumber: Long) : Seq[(Long, Long)] = {
-    val (chuncks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
-      case ((fchuncks, index), linkId) =>
-        if(index > 0 && index % chunckNumber == 0){
-          (fchuncks ++ Seq(linkId), index+1)
+  private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
+    val (chunks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
+      case ((fchunks, index), linkId) =>
+        if (index > 0 && index % chunkNumber == 0) {
+          (fchunks ++ Seq(linkId), index + 1)
         } else {
-          (fchuncks, index+1)
+          (fchunks, index + 1)
         }
     }
-    val result = if(chuncks.last == linkIds.last){
-      chuncks
+    val result = if (chunks.last == linkIds.last) {
+      chunks
     } else {
-      chuncks ++ Seq(linkIds.last)
+      chunks ++ Seq(linkIds.last)
     }
 
     result.zip(result.tail)
   }
 
-  protected def fetchChunckLinkIdsFromConversionTable(chunck: Int): Seq[(Long, Long)] = {
+  protected def fetchChunkLinkIdsFromConversionTable(chunk: Int): Seq[(Long, Long)] = {
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       val linkIds = sql"""select distinct linkid from #$tableName where linkid is not null order by linkid""".as[Long].list
-      generateChuncks(linkIds, 25000l)
+      generateChunks(linkIds, 25000l)
     }
   }
 
@@ -180,14 +180,14 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   def importRoadAddress(): Unit ={
-    //TODO the chunck count should be configurable
-    val chunks = fetchChunckLinkIdsFromConversionTable(20000)
+    //TODO the chunk count should be configurable
+    val chunks = fetchChunkLinkIdsFromConversionTable(20000)
 
     chunks.foreach {
       case (min, max) =>
 
         print(s"${DateTime.now()} - ")
-        println(s"Processing chunck ($min, $max)")
+        println(s"Processing chunk ($min, $max)")
 
         val conversionRoadAddress = fetchRoadAddressFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
 
