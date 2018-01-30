@@ -27,7 +27,7 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
-  val weightLimitService = new WeightLimitService(mockRoadLinkService) {
+  val weightLimitService = new TotalWeightLimitService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
