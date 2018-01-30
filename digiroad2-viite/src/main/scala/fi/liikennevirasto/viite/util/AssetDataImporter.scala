@@ -25,6 +25,7 @@ import fi.liikennevirasto.digiroad2.oracle.{OracleDatabase}
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import slick.driver.JdbcDriver
 
+
 object
 AssetDataImporter {
   sealed trait ImportDataSet {
@@ -445,7 +446,9 @@ class AssetDataImporter {
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println(s"${DateTime.now()} - Old address data removed")
 
-      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
+      val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
+      //roadMaintainerElys.foreach(ely => roadAddressImporter.importRoadAddress(ely))
+      roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
       sqlu"""UPDATE LRM_POSITION
@@ -487,6 +490,10 @@ class AssetDataImporter {
         sequenceReseter.resetSequenceToNumber("common_history", commonHistoryId + 1)
       case _ => sequenceReseter.resetSequenceToNumber("common_history", 1)
     }
+  }
+
+  protected def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
+    new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
   }
 
   def updateRoadAddressesValues(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
