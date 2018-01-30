@@ -81,18 +81,18 @@
     var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
       return '<div class="legend-entry">' +
-               '<div class="label">' + speedLimit + '</div>' +
-               '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
-             '</div>';
+        '<div class="label">' + speedLimit + '</div>' +
+        '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
+        '</div>';
     }).join('');
     var speedLimitHistoryCheckBox = [
       '<div class="check-box-container">',
-          '<input id="historyCheckbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
-    '</div>'].join('');
+      '<input id="historyCheckbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+      '</div>'].join('');
 
     var speedLimitComplementaryCheckBox = [
       '<div class="check-box-container">' +
-        '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+      '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
       '</div>'
     ].join('');
 
@@ -109,10 +109,10 @@
       '    Nopeusrajoitukset',
       '  </header>',
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
-            speedLimitLegendTemplate,
-            speedLimitHistoryCheckBox,
-            speedLimitComplementaryCheckBox,
-            speedLimitSignsCheckBox,
+      speedLimitLegendTemplate,
+      speedLimitHistoryCheckBox,
+      speedLimitComplementaryCheckBox,
+      speedLimitSignsCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -420,24 +420,24 @@
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var roadTypeLegend = [
-        '  <div class="panel-section panel-legend road-link-legend">',
-        '    <div class="legend-entry">',
-        '      <div class="label">Valtion omistama</div>',
-        '      <div class="symbol linear road"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Kunnan omistama</div>',
-        '     <div class="symbol linear street"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Yksityisen omistama</div>',
-        '     <div class="symbol linear private-road"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>',
-        '     <div class="symbol linear unknown"/>',
-        '   </div>',
-        '  </div>'
+      '  <div class="panel-section panel-legend road-link-legend">',
+      '    <div class="legend-entry">',
+      '      <div class="label">Valtion omistama</div>',
+      '      <div class="symbol linear road"/>',
+      '   </div>',
+      '   <div class="legend-entry">',
+      '     <div class="label">Kunnan omistama</div>',
+      '     <div class="symbol linear street"/>',
+      '   </div>',
+      '   <div class="legend-entry">',
+      '     <div class="label">Yksityisen omistama</div>',
+      '     <div class="symbol linear private-road"/>',
+      '   </div>',
+      '   <div class="legend-entry">',
+      '     <div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>',
+      '     <div class="symbol linear unknown"/>',
+      '   </div>',
+      '  </div>'
     ].join('');
 
     var constructionTypeLegend = [
@@ -455,9 +455,9 @@
 
     var roadLinkComplementaryCheckBox = [
       '  <div class="panel-section roadLink-complementary-checkbox">',
-          '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
-          '</div>' +
+      '<div class="check-box-container">' +
+      '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+      '</div>' +
       '</div>'
     ].join('');
 
@@ -622,37 +622,37 @@
     }).join('');
 
     var label = labeling ? labeling : [
-      {index : 0,  labeling: 'yhdistelmän suurin sallittu massa'},
-      {index : 1 , labeling: 'suurin sallittu akselimassa'},
-      {index : 2,  labeling: 'suurin sallittu massa'},
-      {index : 3 , labeling: 'suurin sallittu telimassa'}
+        {index : 0,  labeling: 'suurin sallittu massa'},
+        {index : 1,  labeling: 'yhdistelmän suurin sallittu massa'},
+        {index : 2 , labeling: 'suurin sallittu akselimassa'},
+        {index : 3 , labeling: 'suurin sallittu telimassa'}
       ];
 
     var labelingTemplate = _(label).map(function (value) {
       return '<div class="labeling-entry">' +
-             '  <div class="limitation-'+value.index+'">' +
-                  value.labeling +
-             '  </div>' +
-             '</div>';
+        '  <div class="limitation-'+value.index+'">' +
+        value.labeling +
+        '  </div>' +
+        '</div>';
     }).join('');
 
 
     var labelTemplate =   '<div class="panel-section">' +
-                          '<div class="labelTemplate">' +
-                          labelingTemplate +
-                          '</div>' + '</div>' ;
+      '<div class="labelTemplate">' +
+      labelingTemplate +
+      '</div>' + '</div>' ;
 
 
     var panel = $('<div class="panel limitation-label-legend">' +
-                  '   <header class="panel-header expanded">' +
-                        asset.title +
-                  '   </header>' +
-                  '   <div class="panel-section panel-legend limit-legend">' +
-                        legendTemplate  +
-                  '   </div>' +
-                        labelTemplate +
-                        complementaryCheckBox +
-                  '</div>');
+      '   <header class="panel-header expanded">' +
+      asset.title +
+      '   </header>' +
+      '   <div class="panel-section panel-legend limit-legend">' +
+      legendTemplate  +
+      '   </div>' +
+      labelTemplate +
+      complementaryCheckBox +
+      '</div>');
 
     element.append(panel);
 
@@ -693,7 +693,7 @@
 
   ActionPanelBoxes.HeightLimitationBox = function (asset){
     var label = [
-      {index: 0 , labeling: 'suurin sallittu korkeus'}
+      {index: 1 , labeling: 'suurin sallittu korkeus'}
     ];
 
     return new ActionPanelBoxes.LimitationBox(asset, label);
@@ -701,7 +701,7 @@
 
   ActionPanelBoxes.WidthLimitationBox = function (asset) {
     var label = [
-      {index: 0 , labeling: 'suurin sallittu leveys'}
+      {index: 1 , labeling: 'suurin sallittu leveys'}
     ];
 
     return new ActionPanelBoxes.LimitationBox(asset, label);

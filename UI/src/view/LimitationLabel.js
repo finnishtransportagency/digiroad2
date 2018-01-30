@@ -40,7 +40,7 @@
       if (!me.isVisibleZoom(zoomLevel))
         return [];
 
-      var sortedAssets = _.sortBy(assets, function(asset) { return asset.typeId; });
+      var sortedAssets = _.sortBy(assets, function(asset) { return asset.typeId; }).reverse();
       return _.chain(sortedAssets).
       map(function(asset, index){
         var style = me.getStyle(asset, index);
