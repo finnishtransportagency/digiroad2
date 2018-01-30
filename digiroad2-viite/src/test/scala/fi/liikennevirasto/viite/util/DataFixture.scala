@@ -363,7 +363,7 @@ object DataFixture {
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+
-        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | ")
+        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names ")
     }
   }
 }
