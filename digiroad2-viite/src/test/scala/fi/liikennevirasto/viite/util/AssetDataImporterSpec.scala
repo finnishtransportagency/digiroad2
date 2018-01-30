@@ -8,6 +8,10 @@ import org.joda.time.format.DateTimeFormat
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
+import Database.dynamicSession
+import fi.liikennevirasto.viite.dao.RoadAddressDAO
+
 
 class AssetDataImporterSpec extends FunSuite with Matchers {
 
@@ -38,13 +42,14 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
         override def withDynTransaction(f: => Unit): Unit = f
         override def withDynSession[T](f: => T): T = f
         override def fetchRoadAddressHistory(conversionDatabase: JdbcDriver.backend.DatabaseDef, ely: Int, importOptions: ImportOptions): List[RoadAddressHistory] = {
-          roadsToBeConverted
+          if (ely == 1) roadsToBeConverted else List[RoadAddressHistory]()
         }
       }
       assetDataImporter.importRoadAddressData(null, vvhClient, None, importOptions)
 
-      val roadAddressCount = sql"""select count(r.*) from road_address r, lrm_position l where r.lrm_position_id = l.id and l.link_id = 6656730""".as[Long]
-      roadAddressCount should be(14)
+      val insertedRoadAddresses = RoadAddressDAO.fetchByLinkId(Set(6656730))
+
+      insertedRoadAddresses.size should be(14)
     }
   }
 
