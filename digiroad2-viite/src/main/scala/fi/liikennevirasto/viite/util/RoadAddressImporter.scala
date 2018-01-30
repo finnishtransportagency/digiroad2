@@ -137,9 +137,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def generateChuncks(linkIds: Seq[Long], chunckNumber: Long) : Seq[(Long, Long)] = {
-    val (chuncks, _) = linkIds.foldLeft((Seq[Long](), 0)) {
+    val (chuncks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
       case ((fchuncks, index), linkId) =>
-        if(index % chunckNumber == 0){
+        if(index > 0 && index % chunckNumber == 0){
           (fchuncks ++ Seq(linkId), index+1)
         } else {
           (fchuncks, index+1)
