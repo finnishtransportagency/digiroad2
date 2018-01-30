@@ -158,7 +158,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      val linkIds = sql"""select distinct linkid from #$tableName order by linkid""".as[Long].list
+      val linkIds = sql"""select distinct linkid from #$tableName where linkid is not null order by linkid""".as[Long].list
       generateChuncks(linkIds, 25000l)
     }
   }
@@ -189,12 +189,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         print(s"${DateTime.now()} - ")
         println(s"Processing chunck ($min, $max)")
 
-        //val conversionRoadAddress = fetchRoadAddressFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
+        val conversionRoadAddress = fetchRoadAddressFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
 
-        //print(s"\n${DateTime.now()} - ")
-        //println("Read %d rows from conversion database".format(conversionRoadAddress.size))
+        print(s"\n${DateTime.now()} - ")
+        println("Read %d rows from conversion database".format(conversionRoadAddress.size))
 
-        //importRoadAddress(conversionRoadAddress)
+        importRoadAddress(conversionRoadAddress)
     }
   }
 
