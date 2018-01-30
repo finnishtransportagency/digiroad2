@@ -1,23 +1,47 @@
 package fi.liikennevirasto.viite.util
 
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.SideCode.Unknown
+import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import fi.liikennevirasto.viite.util.DataFixture.dr2properties
+import fi.liikennevirasto.viite.dao.RoadAddressDAO
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.mockito.Matchers.any
+import org.mockito.Mockito.when
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver
-import slick.jdbc.StaticQuery.interpolation
-import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
-import Database.dynamicSession
-import fi.liikennevirasto.viite.dao.RoadAddressDAO
+import slick.driver.JdbcDriver.backend.DatabaseDef
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
-import fi.liikennevirasto.digiroad2.asset.SideCode.Unknown
 
 
 class AssetDataImporterSpec extends FunSuite with Matchers {
 
+  val vvhRoadLinks = List(
+    VVHRoadlink(6656730L, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  )
+
+
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+  val mockVVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
+  val mockVVHHistoryClient = MockitoSugar.mock[VVHHistoryClient]
+  val mockVVHFrozenTimeRoadLinkClient = MockitoSugar.mock[VVHFrozenTimeRoadLinkClientServicePoint]
+
   test("Should not have missing road addresses") {
+    when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.suravageData).thenReturn(mockVVHSuravageClient)
+    when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
+    when(mockVVHClient.frozenTimeRoadLinkData)thenReturn(mockVVHFrozenTimeRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
+    when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
+    when(mockVVHFrozenTimeRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
+    when(mockVVHSuravageClient.fetchSuravageByLinkIds(any[Set[Long]])).thenReturn(Seq())
+    when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIds(any[Set[Long]])).thenReturn(Seq())
+
     TestTransactions.runWithRollback() {
       val roadsToBeConverted = Seq(
         //                    TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                LOPPUPVM               MUUTOSPVM              -     ELY TIETYYPPI -, LINKID    KAYTTAJA      ALKUX             ALKUY              LOPPUX            LOPPUY             (LRMID)        AJORATAID  SIDE_CODE
@@ -38,14 +62,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       )
 
       val importOptions = ImportOptions(false, false, 1510790400000L, "MOCK_CONVERSION", "2017-11-19", false)
-      val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
 
-      val roadAddressImporter = new RoadAddressImporter(null, vvhClient, importOptions) {
+      val roadAddressImporter = new RoadAddressImporter(null, mockVVHClient, importOptions) {
         override def fetchChunckLinkIdsFromConversionTable(chunk: Int): Seq[(Long, Long)] = {
           Seq((0, 6656730))
         }
         override def fetchRoadAddressFromConversionTable(minLinkId: Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] = {
-          if (minLinkId < 6656730 && 6656730 < maxLinkId) roadsToBeConverted else List[ConversionRoadAddress]()
+          roadsToBeConverted
         }
       }
 
@@ -59,7 +82,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
           roadAddressImporter
         }
       }
-      assetDataImporter.importRoadAddressData(null, vvhClient, None, importOptions)
+      assetDataImporter.importRoadAddressData(null, mockVVHClient, None, importOptions)
 
       val insertedRoadAddresses = RoadAddressDAO.fetchByLinkId(Set(6656730), true, true, true)
 
