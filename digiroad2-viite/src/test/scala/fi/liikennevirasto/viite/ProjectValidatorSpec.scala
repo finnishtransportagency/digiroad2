@@ -7,8 +7,8 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorTrait$
-import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorTrait._
+import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorList._
+import fi.liikennevirasto.viite.ProjectValidator._
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
@@ -74,8 +74,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       val brokenContinuity = endOfRoadSet.tail :+ endOfRoadSet.head.copy(geometry = projectLinks.head.geometry.map(_ + Vector3d(1.0, 1.0, 0.0)))
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, brokenContinuity)
       errors should have size(1)
-      errors.head.validationError should be (ValidationErrorTrait.MinorDiscontinuityFound
-      )
+      errors.head.validationError should be (MinorDiscontinuityFound)
     }
   }
 
@@ -85,8 +84,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
       errors should have size(1)
-      errors.head.validationError should be (ValidationErrorTrait.MissingEndOfRoad
-      )
+      errors.head.validationError should be (MissingEndOfRoad)
     }
   }
 
@@ -317,7 +315,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       val validationErrors = ProjectValidator.validateProject(project, ProjectDAO.getProjectLinks(project.id))
 
       validationErrors.size shouldNot be (0)
-      validationErrors.count(_.validationError.value == ValidationErrorTrait.ErrorInValidationOfUnchangedLinks.value) should be (1)
+      validationErrors.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be (1)
     }
   }
 }

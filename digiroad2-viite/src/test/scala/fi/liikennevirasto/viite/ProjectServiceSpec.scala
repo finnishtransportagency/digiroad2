@@ -2,12 +2,10 @@ package fi.liikennevirasto.viite
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData}
+
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -15,13 +13,10 @@ import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
-import fi.liikennevirasto.viite.ProjectValidator._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
-import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao._

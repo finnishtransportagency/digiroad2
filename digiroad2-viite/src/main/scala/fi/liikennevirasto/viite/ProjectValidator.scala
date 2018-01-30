@@ -11,68 +11,114 @@ import fi.liikennevirasto.viite.process.TrackSectionOrder
 
 object ProjectValidator {
 
-  sealed trait ValidationErrorTrait {
+  sealed trait ValidationError {
     def value: Int
     def message: String
     def notification: Boolean
-    def alterMessage(newMsg:String): ValidationErrorTrait
-  }
-
-  case class ValidationError(value: Int, message: String, notification: Boolean) extends ValidationErrorTrait {
-    def alterMessage(newMsg: String): ValidationError = {
-      this.copy(message = newMsg)
-    }
   }
 
   object ValidationErrorList {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad, HasNotHandledLinks, ConnectedDiscontinuousLink,
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp,
-      RoadNotEndingInElyBorder, RoadContinuesInAnotherEly, ErrorInValidationOfUnchangedLinks)
+      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly)
 
     //Viite-942
-    case object MissingEndOfRoad extends ValidationError (0 ,MissingEndOfRoadMessage, false)
+    case object MissingEndOfRoad extends ValidationError {def value = 0
+      def message = MissingEndOfRoadMessage
+      def notification = false}
     //Viite-453
     //There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
-    case object MinorDiscontinuityFound extends ValidationError (1, MinorDiscontinuityFoundMessage, true)
+    case object MinorDiscontinuityFound extends ValidationError {
+      def value = 1
+      def message = MinorDiscontinuityFoundMessage
+      def notification = true}
     //Viite-453
     //There must be a major discontinuity if the jump is longer than 50 meters
-    case object MajorDiscontinuityFound extends ValidationError (2, MajorDiscontinuityFoundMessage, false)
+    case object MajorDiscontinuityFound extends ValidationError {
+      def value = 2
+      def message = MajorDiscontinuityFoundMessage
+      def notification = false}
     //Viite-453
     //For every track 1 there must exist track 2 that covers the same address span and vice versa
-    case object InsufficientTrackCoverage extends ValidationError (3, InsufficientTrackCoverageMessage, false)
+    case object InsufficientTrackCoverage extends ValidationError {
+      def value = 3
+      def message = InsufficientTrackCoverageMessage
+      def notification = false}
     //Viite-453
     //There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
-    case object DiscontinuousAddressScheme extends ValidationError (4, DiscontinuousAddressSchemeMessage, false)
+    case object DiscontinuousAddressScheme extends ValidationError {
+      def value = 4
+      def message = DiscontinuousAddressSchemeMessage
+      def notification = false}
     //Viite-453
     //There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
-    case object SharedLinkIdsExist extends ValidationError (5, SharedLinkIdsExistMessage, false)
+    case object SharedLinkIdsExist extends ValidationError {
+      def value = 5
+      def message = SharedLinkIdsExistMessage
+      def notification = false}
     //Viite-453
     //Continuity codes are given for end of road
-    case object NoContinuityCodesAtEnd extends ValidationError (6, NoContinuityCodesAtEndMessage, false)
+    case object NoContinuityCodesAtEnd extends ValidationError {
+      def value = 6
+      def message = NoContinuityCodesAtEndMessage
+      def notification = false}
     //Viite-453
     //Recalculation of M values and delta calculation are both unsuccessful for every road part in project
-    case object UnsuccessfulRecalculation extends ValidationError (7, UnsuccessfulRecalculationMessage, false)
+    case object UnsuccessfulRecalculation extends ValidationError {
+      def value = 7
+      def message = UnsuccessfulRecalculationMessage
+      def notification = false}
 
-    case object HasNotHandledLinks extends ValidationError(8, "", false)
+    case object HasNotHandledLinks extends ValidationError{
+      def value = 8
+      def message = ""
+      def notification = false
+    }
 
-    case object ConnectedDiscontinuousLink extends ValidationError (9, ConnectedDiscontinuousMessage, false)
+    case object ConnectedDiscontinuousLink extends ValidationError {
+      def value = 9
+      def message = ConnectedDiscontinuousMessage
+      def notification = false}
 
-    case object IncompatibleDiscontinuityCodes extends ValidationError (10, DifferingDiscontinuityCodesForTracks, false)
+    case object IncompatibleDiscontinuityCodes extends ValidationError {
+      def value = 10
+      def message = DifferingDiscontinuityCodesForTracks
+      def notification = false}
 
-    case object EndOfRoadNotOnLastPart extends ValidationError (11, EndOfRoadNotOnLastPartMessage, false)
+    case object EndOfRoadNotOnLastPart extends ValidationError {
+      def value = 11
+      def message = EndOfRoadNotOnLastPartMessage
+      def notification = false}
 
-    case object ElyCodeChangeDetected extends ValidationError (12, ElyCodeChangeNotPresent, false)
+    case object ElyCodeChangeDetected extends ValidationError {
+      def value = 12
+      def message = ElyCodeChangeNotPresent
+      def notification = false}
 
-    case object DiscontinuityOnRamp extends ValidationError (13, RampDiscontinuityFoundMessage, true)
-
-    case object RoadNotEndingInElyBorder extends ValidationError (14, RoadNotEndingInElyBorderMessage, true)
-
-    case object RoadContinuesInAnotherEly extends ValidationError (15, RoadContinuesInAnotherElyMessage, true)
+    case object DiscontinuityOnRamp extends ValidationError {
+      def value = 13
+      def message = RampDiscontinuityFoundMessage
+      def notification = true}
 
     //Viite-473
     // Unchanged project links cannot have any other operation (transfer, termination) previously on the same number and part
-    case object ErrorInValidationOfUnchangedLinks extends ValidationError (16, ErrorInValidationOfUnchangedLinksMessage, false)
+    case object ErrorInValidationOfUnchangedLinks extends ValidationError {
+      def value = 14
+      def message = ErrorInValidationOfUnchangedLinksMessage
+      def notification = false}
+
+    case object RoadNotEndingInElyBorder extends ValidationError {
+      def value = 15
+      def message = RoadNotEndingInElyBorderMessage
+      def notification = true
+    }
+
+    case object RoadContinuesInAnotherEly extends ValidationError {
+      def value = 16
+      def message = RoadContinuesInAnotherElyMessage
+      def notification = true
+    }
 
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
@@ -174,6 +220,7 @@ object ProjectValidator {
     * 4) If a part that contained end of road discontinuity is terminated / renumbered / transferred,
     *    there must be a new end of road link for that road at the last part
     * 5) If the next road part has differing ely code then there must be a discontinuity code 3 at the end
+    *
     * @param project
     * @param seq
     * @return
@@ -274,6 +321,7 @@ object ProjectValidator {
     * 4) If a part that contained end of road discontinuity is terminated / renumbered / transferred,
     *    there must be a new end of road link for that road at the last part
     * 5) If the next road part has differing ely code then there must be a discontinuity code 3 at the end
+    *
     * @param project
     * @param seq
     * @return
@@ -414,8 +462,8 @@ object ProjectValidator {
         links.map(l => (l.linkId, zoomPoint, l.ely))
       }).unzip3
       if(gLinkIds.nonEmpty)
-        Some(ValidationErrorDetails(project.id, validationError.alterMessage(validationError.message.format(gEly.mkString(", "))), gLinkIds.toSeq,
-          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq, None))
+        Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq,
+          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq, Some(RoadContinuesInAnotherElyMessage.format(gEly.mkString(", ")))))
       else
         Option.empty[ValidationErrorDetails]
     }
