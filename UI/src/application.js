@@ -456,7 +456,7 @@
     function getGroupedPointAsset(typeIds) {
       var asset = _.find(groupedPointAssets, {typeIds: typeIds.sort()});
       if (asset) {
-        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues, asset.allowComplementaryLinks, asset.nonModifiableBox)];
+        return [ActionPanelBoxes.LimitationBox(asset)];
       }
       return [];
     }

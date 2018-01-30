@@ -602,5 +602,92 @@
       hide: hide
     };
   };
+
+  ActionPanelBoxes.LimitationBox = function (asset) {
+
+    var className = _.kebabCase(asset.layerName);
+    var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
+
+
+    var complementaryCheckBox = asset.allowComplementaryLinks ?
+      '<div class="panel-section">' +
+      '<div class="check-box-container">' +
+      '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+      '</div>' +
+      '</div>' : '';
+
+    var legendTemplate = _(asset.legendValues).map(function (val) {
+      return '<div class="legend-entry">' +
+        '<div class="label"><span>' + val.label + '</span> <img class="symbol" src="' + val.symbolUrl + '"/></div>' +
+        '</div>';
+    }).join('');
+
+
+    var labeling = [
+      {index :1 , labeling: 'suurin sallittu massa'},
+      {index :2 , labeling: 'suurin sallittu akselimassa'},
+      {index :3 , labeling: 'suurin sallittu telimassa'},
+      {index :4 , labeling: 'yhdistelmän suurin sallittu massa'}
+    ];
+
+    var labelingTemplate = _(labeling).map(function (value) {
+      return '<div class="labeling-entry">' +
+             '  <div class="limitation-'+value.index+'">' +
+                  value.labeling +
+             '  </div>' +
+             '</div>';
+    }).join('');
+
+
+    var labelTemplate =   '<div class="panel-section">' +
+                          '<div class="labelTemplate">' +
+                          labelingTemplate +
+                          '</div>' + '</div>' ;
+
+
+    var panel = $('<div class="panel limitation-label-legend">' +
+                  '   <header class="panel-header expanded">' +
+                        asset.title +
+                  '   </header>' +
+                  '   <div class="panel-section panel-legend limit-legend">' +
+                        legendTemplate  +
+                  '   </div>' +
+                        labelTemplate +
+                        complementaryCheckBox +
+                  '</div>');
+
+    element.append(panel);
+
+    element.find('#complementaryCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('withComplementary:show');
+      } else {
+        if (applicationModel.isDirty()) {
+          $(event.currentTarget).prop('checked', true);
+          new Confirm();
+        } else {
+          eventbus.trigger('withComplementary:hide');
+        }
+      }
+    });
+
+    function show() {
+      element.show();
+    }
+
+    function hide() {
+      element.hide();
+    }
+
+    return {
+      title: asset.title,
+      layerName: asset.layerName,
+      element: element,
+      allowComplementaryLinks: asset.allowComplementaryLinks,
+      show: show,
+      hide: hide
+    };
+  };
+
 })(window.ActionPanelBoxes = window.ActionPanelBoxes || {});
 
