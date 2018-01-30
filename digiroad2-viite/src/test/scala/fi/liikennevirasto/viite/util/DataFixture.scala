@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -173,6 +174,11 @@ object DataFixture {
     println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
   }
 
+  private def ImportRoadNames() {
+    SqlScriptRunner.runViiteScripts(List(
+      "roadnames.sql"
+    ))
+  }
   private def importRoadAddressChangeTestData(): Unit ={
     println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
@@ -348,6 +354,8 @@ object DataFixture {
         updateRoadAddressGeometrySource()
       case Some ("update_project_link_geom") =>
         updateProjectLinkGeom()
+      case Some ("import_road_names") =>
+        ImportRoadNames()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
       case Some("import_road_address_history") =>
@@ -355,7 +363,7 @@ object DataFixture {
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+
-        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects")
+        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | ")
     }
   }
 }
