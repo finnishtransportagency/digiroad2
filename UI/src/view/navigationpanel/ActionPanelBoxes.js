@@ -603,7 +603,8 @@
     };
   };
 
-  ActionPanelBoxes.LimitationBox = function (asset) {
+  //TODO: Refactoring when UD 1080 is merged
+  ActionPanelBoxes.LimitationBox = function (asset, labeling) {
 
     var className = _.kebabCase(asset.layerName);
     var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
@@ -622,15 +623,14 @@
         '</div>';
     }).join('');
 
-
-    var labeling = [
+    var label = labeling ? labeling : [
       {index :1 , labeling: 'suurin sallittu massa'},
       {index :2 , labeling: 'suurin sallittu akselimassa'},
       {index :3 , labeling: 'suurin sallittu telimassa'},
       {index :4 , labeling: 'yhdistelmän suurin sallittu massa'}
     ];
 
-    var labelingTemplate = _(labeling).map(function (value) {
+    var labelingTemplate = _(label).map(function (value) {
       return '<div class="labeling-entry">' +
              '  <div class="limitation-'+value.index+'">' +
                   value.labeling +
@@ -679,6 +679,10 @@
       element.hide();
     }
 
+    this.getElement = function () {
+      return element;
+    };
+
     return {
       title: asset.title,
       layerName: asset.layerName,
@@ -688,6 +692,25 @@
       hide: hide
     };
   };
+
+  ActionPanelBoxes.HeightLimitationBox = function (asset){
+    var label = [
+      {index :4 , labeling: 'suurin sallittu korkeus'}
+    ];
+
+    return new ActionPanelBoxes.LimitationBox(asset, label);
+  };
+
+
+  ActionPanelBoxes.WidthLimitationBox = function (asset) {
+    var label = [
+      {index :4 , labeling: '  suurin sallittu leveys'}
+    ];
+
+    return new ActionPanelBoxes.LimitationBox(asset, label);
+  };
+
+
 
 })(window.ActionPanelBoxes = window.ActionPanelBoxes || {});
 
