@@ -6,14 +6,17 @@ import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddressDAO}
-import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.DatabaseDef
-import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.StaticQuery.{interpolation, _}
+import slick.jdbc.{StaticQuery => Q}
 
 class AssetDataImporterSpec extends FunSuite with Matchers {
 
@@ -193,7 +196,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       insertedRoadAddresses.size should be(16)
 
       val roadAddressIds = insertedRoadAddresses.map(_.id).mkString(", ")
-      val calibrationPoints = sql"""select start_addr_m, calibration_points from road_address where id in (#${roadAddressIds})""".as[(Long, Long)].toMap
+      val calibrationPoints = sql"""select start_addr_m, calibration_points from road_address where id in (#${roadAddressIds})""".as[(Long, Long)].list
       calibrationPoints should equal(expectedCalibrationPointValuesForAET)
 
       insertedRoadAddresses.foldLeft(Map.empty[Long, (Option[CalibrationPoint], Option[CalibrationPoint])])((map, ra) => map + (ra.startAddrMValue -> ra.calibrationPoints)) should equal(expectedCalibrationPointsForAET)
