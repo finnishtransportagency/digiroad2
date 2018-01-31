@@ -248,9 +248,8 @@
      PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
     });
 
-    //TODO: initialize form for grouped assets
-    _.forEach(groupedPointAssets, function(pointAsset ) {
-      PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
+    _.forEach(groupedPointAssets, function(pointAsset) {
+      GroupedPointAssetForm.initialize(pointAsset.typeIds, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
     });
 
 
