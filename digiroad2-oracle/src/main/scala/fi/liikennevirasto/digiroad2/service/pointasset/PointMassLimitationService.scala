@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, Value}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
@@ -46,16 +45,13 @@ class PointMassLimitationService(roadLinkService: RoadLinkService, dao: OraclePo
 
       assets.foldLeft(Seq.empty[MassLimitationPointAsset]) {
         (prev, asset) =>
-          if(prev.exists( x => x.assets.exists(c => c.id == asset.id))) {
-            prev
+          prev.exists( massLimitationSeq => massLimitationSeq.assets.exists(persisted => persisted.id == asset.id)) match {
+            case true => prev
+            case false =>
+              val assetsOnRange = assets.filter( weighGroup => GeometryUtils.geometryLength(Seq(Point(asset.lon, asset.lat), Point(weighGroup.lon, weighGroup.lat))) < 1 )
+              prev ++ Seq(MassLimitationPointAsset(asset.lon, asset.lat, assetsOnRange))
           }
-          else
-         {
-           val a = assets.filter( assetx => GeometryUtils.geometryLength(Seq(Point(asset.lon, asset.lat), Point(assetx.lon, assetx.lat))) < 1 )
-           prev ++ Seq(MassLimitationPointAsset(asset.lon, asset.lat, a))
-         }
       }
-
     }
   }
 
