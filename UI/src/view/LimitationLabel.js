@@ -40,18 +40,19 @@
       if (!me.isVisibleZoom(zoomLevel))
         return [];
 
-      var sortedAssets = _.sortBy(assets, function(asset) { return asset.typeId; }).reverse();
-      return _.chain(sortedAssets).
-      map(function(asset, index){
-        var style = me.getStyle(asset, index);
-        var feature = me.createFeature(getPoint(asset));
-        feature.setStyle(style);
-        return feature;
-      }).
-      filter(function(feature){
+      var unmappedAssets = _.map(assets, function(asset) {return asset.assets;});
+      var sortedAssets = _.map(unmappedAssets, function(unmapped) { return _.sortBy(unmapped, function(asset) { return asset.typeId; }).reverse(); });
+
+      return [].concat.apply([], _.chain(sortedAssets).map(function (asset) {
+        return _.map(asset, function (assetValues, index) {
+          var style = me.getStyle(assetValues, index);
+          var feature = me.createFeature(getPoint(assetValues));
+          feature.setStyle(style);
+          return feature;
+        });
+      }).filter(function (feature) {
         return !_.isUndefined(feature);
-      }).
-      value();
+      }).value());
     };
   };
 })(this);
