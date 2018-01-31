@@ -110,7 +110,7 @@ trait AddressLinkBuilder {
 
 
   /**
-    * Fuses roada ddresses that do not contain history.
+    * Fuses road addresses that do not contain history.
     * We will later have to refactor this so that we check if history is fusable and figure out rules for fusing.
     *
     * @param roadAddresses roadaddress seq
