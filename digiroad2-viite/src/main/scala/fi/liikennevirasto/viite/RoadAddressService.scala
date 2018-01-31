@@ -614,7 +614,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   */
   def getRoadAddressesLinkByMunicipality(municipality: Int, roadLinkDataTempAPI:Boolean=false): Seq[RoadAddressLink] = {
 
-    val (roadLinksWithComplementary, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val (roadLinksWithComplementary, _) =
+      if (frozenTimeVVHAPIServiceEnabled) {
+        val roadLinks = {
+          val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality, frozenTimeVVHAPIServiceEnabled)
+          if (tempRoadLinks == null)
+            Seq.empty[RoadLink]
+          else tempRoadLinks
+        }
+        val complimentaryLinks = {
+          val tempComplimentary = roadLinkService.getComplementaryRoadLinksFromVVH(municipality)
+          if (tempComplimentary == null)
+            Seq.empty[RoadLink]
+          else tempComplimentary
+        }
+        (roadLinks ++ complimentaryLinks, Seq())
+      } else {
+        roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+      }
     val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality)
     val allRoadLinks = roadLinksWithComplementary ++ suravageLinks
 
