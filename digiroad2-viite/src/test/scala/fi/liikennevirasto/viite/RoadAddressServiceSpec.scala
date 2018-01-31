@@ -168,7 +168,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
                                 Order By ra.id asc""".as[Long].firstOption.get
       val roadLink = RoadLink(linkId, Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0)), 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      when(mockRoadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityId)).thenReturn((Seq(roadLink),Seq()))
+      when(mockRoadLinkService.getSuravageRoadLinks(municipalityId)).thenReturn(Seq())
       val roadAddressLink = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityId)
 
       roadAddressLink.isInstanceOf[Seq[RoadAddressLink]] should be(true)
@@ -1004,7 +1005,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
-                                    endCalibrationPoint: Boolean = false,lrmposition:Long=0) = {
+                                    endCalibrationPoint: Boolean = false, lrmposition: Long = 0) = {
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(id, linkId, geom, length, State, LinkType.apply(1), NormalRoadLinkType,
       ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad,"Vt5", BigInt(0), None, None, Map(), roadNumber, roadPartNumber,

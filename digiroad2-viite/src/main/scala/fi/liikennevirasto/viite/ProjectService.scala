@@ -221,29 +221,36 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         seq
     }
 
-    val linkId = linkIds.head
-    val roadLinks = (if (roadLinkSource != LinkGeomSource.SuravageLinkInterface) {
-      roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds.toSet, true, useFrozenVVHLinks)
-    } else {
-      roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIds.toSet)
-    }).map(l => l.linkId -> l).toMap
-    if (roadLinks.keySet != linkIds.toSet)
-      return Map("success" -> false,
-        "errormessage" -> (linkIds.toSet - roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
-    val project = withDynSession {
-      ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
-    }
-    val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
-      newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity,
-        roadType, roadEly)
-    }
-    setProjectEly(projectId, roadEly) match {
-      case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
-      case None => {
-        addNewLinksToProject(sortRamps(projectLinks), projectId, user, linkId) match {
-          case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
-          case None => Map("success" -> true, "publishable" -> isProjectPublishable(projectId))
+    validateLinkTrack(track.value) match {
+      case true => {
+        val linkId = linkIds.head
+        val roadLinks = (if (roadLinkSource != LinkGeomSource.SuravageLinkInterface) {
+          roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds.toSet, true, useFrozenVVHLinks)
+        } else {
+          roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIds.toSet)
+        }).map(l => l.linkId -> l).toMap
+        if (roadLinks.keySet != linkIds.toSet)
+          return Map("success" -> false,
+            "errorMessage" -> (linkIds.toSet - roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
+        val project = withDynSession {
+          ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
         }
+        val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
+          newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity,
+            roadType, roadEly)
+        }
+        setProjectEly(projectId, roadEly) match {
+          case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
+          case None => {
+            addNewLinksToProject(sortRamps(projectLinks), projectId, user, linkId) match {
+              case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
+              case None => Map("success" -> true, "publishable" -> isProjectPublishable(projectId))
+            }
+          }
+        }
+      }
+      case _ => {
+        Map("success" -> false, "errorMessage" -> "Invalid track code")
       }
     }
   }

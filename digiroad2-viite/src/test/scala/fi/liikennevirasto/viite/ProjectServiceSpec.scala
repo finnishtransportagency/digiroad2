@@ -1196,7 +1196,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(newLink.map(toRoadLink))
       val response = projectService.createProjectLinks(Seq(12345L), project.id, 5, 203, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test")
       response.get("success").get.asInstanceOf[Boolean] should be (false)
-      response.get("errormessage").get.asInstanceOf[String] should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
+      response.get("errorMessage").get.asInstanceOf[String] should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
     }
   }
 

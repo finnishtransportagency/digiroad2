@@ -235,6 +235,7 @@
             3 - Express bus stop
             4 - Non-stop express bus stop
             5 - Virtual stop
+		    6 - Terminal stop
           </xs:documentation>
         </xs:annotation>
       </xs:element>

@@ -2,12 +2,13 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
+import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -97,6 +98,7 @@ object DataFixture {
         importDate,
         onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
       dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
+
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
@@ -170,6 +172,12 @@ object DataFixture {
       })
     }
     println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
+  }
+
+  private def importRoadNames() {
+    SqlScriptRunner.runViiteScripts(List(
+      "roadnames.sql"
+    ))
   }
 
   private def importRoadAddressChangeTestData(): Unit ={
@@ -315,8 +323,6 @@ object DataFixture {
         findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
         importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"))
-//      case Some("import_road_address_history") =>
-//        importRoadAddressesHistory()
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
       case Some("update_road_addresses_ely_and_road_type") =>
@@ -349,12 +355,14 @@ object DataFixture {
         updateRoadAddressGeometrySource()
       case Some ("update_project_link_geom") =>
         updateProjectLinkGeom()
+      case Some ("import_road_names") =>
+        importRoadNames()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+
-        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects")
+        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names ")
     }
   }
 }

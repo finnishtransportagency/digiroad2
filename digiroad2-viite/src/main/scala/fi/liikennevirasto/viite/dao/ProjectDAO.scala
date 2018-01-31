@@ -318,11 +318,12 @@ object ProjectDAO {
     Q.queryNA[Long](query).firstOption
   }
 
-  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None, currentAddressFilter: Boolean = false): Seq[ProjectLink] = {
     val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
+    val currentFilter = if (currentAddressFilter) s"PROJECT_LINK.END_DATE IS NULL AND PROJECT_LINK.VALID_TO IS NULL " else s""
     val query =
       s"""$projectLinkQueryBase
-                where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where $filter $currentFilter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     listQuery(query)
   }
 
