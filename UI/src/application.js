@@ -407,9 +407,8 @@
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers))
-          .concat(getLinearAsset(assetType.trSpeedLimits)),
-      [speedLimitBox].concat(
-      [winterSpeedLimits]),
+      .concat([speedLimitBox])
+      .concat([winterSpeedLimits]),
       [massTransitBox]
           .concat(getPointAsset(assetType.obstacles))
           .concat(getPointAsset(assetType.railwayCrossings))
@@ -434,7 +433,8 @@
       [].concat([serviceRoadBox]),
       [].concat([heightBox])
         .concat([widthBox])
-        .concat(getGroupedPointAsset(assetGroups.trWeightGroup))
+        .concat(getGroupedPointAsset(assetGroups.trWeightGroup)),
+      [].concat(getLinearAsset(assetType.trSpeedLimits))
 
     ];
 

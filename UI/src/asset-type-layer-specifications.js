@@ -495,7 +495,7 @@
       singleElementEventCategory: 'trSpeedLimit',
       multiElementEventCategory: 'trSpeedLimits',
       layerName: 'trSpeedLimits',
-      title: 'Tierekisteri nopeusrajoitus',
+      title: 'TR nopeusrajoitus',
       newTitle: 'Uusi nopeusrajoitus',
       className: 'tr-speed-limits',
       unit: 'km/h',

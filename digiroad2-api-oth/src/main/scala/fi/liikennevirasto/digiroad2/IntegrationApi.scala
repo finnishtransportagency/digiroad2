@@ -411,49 +411,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def trTotalWeightLimitsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
-    weightLimits.filterNot(_.floating).map { weightLimit =>
-      Map("id" -> weightLimit.id,
-        "linkId" -> weightLimit.linkId,
-        "point" -> Point(weightLimit.lon, weightLimit.lat),
-        geometryWKTForPoints(weightLimit.lon, weightLimit.lat),
-        "m_value" -> weightLimit.mValue,
-        "value" -> weightLimit.limit,
-        latestModificationTime(weightLimit.createdAt, weightLimit.modifiedAt),
-        lastModifiedBy(weightLimit.createdBy, weightLimit.modifiedBy),
-        "linkSource" -> weightLimit.linkSource.value)
-    }
-  }
-
-  def trTrailerTruckWeightLimitsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
-    weightLimits.filterNot(_.floating).map { weightLimit =>
-      Map("id" -> weightLimit.id,
-        "linkId" -> weightLimit.linkId,
-        "point" -> Point(weightLimit.lon, weightLimit.lat),
-        geometryWKTForPoints(weightLimit.lon, weightLimit.lat),
-        "m_value" -> weightLimit.mValue,
-        "value" -> weightLimit.limit,
-        latestModificationTime(weightLimit.createdAt, weightLimit.modifiedAt),
-        lastModifiedBy(weightLimit.createdBy, weightLimit.modifiedBy),
-        "linkSource" -> weightLimit.linkSource.value)
-    }
-  }
-
-  def trAxleWeightLimitsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
-    weightLimits.filterNot(_.floating).map { weightLimit =>
-      Map("id" -> weightLimit.id,
-        "linkId" -> weightLimit.linkId,
-        "point" -> Point(weightLimit.lon, weightLimit.lat),
-        geometryWKTForPoints(weightLimit.lon, weightLimit.lat),
-        "m_value" -> weightLimit.mValue,
-        "value" -> weightLimit.limit,
-        latestModificationTime(weightLimit.createdAt, weightLimit.modifiedAt),
-        lastModifiedBy(weightLimit.createdBy, weightLimit.modifiedBy),
-        "linkSource" -> weightLimit.linkSource.value)
-    }
-  }
-
-  def trBogieWeightLimitsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
+  def trWeightLimitationsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
     weightLimits.filterNot(_.floating).map { weightLimit =>
       Map("id" -> weightLimit.id,
         "linkId" -> weightLimit.linkId,
@@ -558,10 +516,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
         case "road_nodes" => roadNodesToApi(roadLinkOTHService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
-        case "tr_total_weight_limits" => trTotalWeightLimitsToApi(weightLimitService.getByMunicipality(municipalityNumber))
-        case "tr_trailer_truck_weight_limits" => trTrailerTruckWeightLimitsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
-        case "tr_axle_weight_limits" => trAxleWeightLimitsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
-        case "tr_bogie_weight_limits" => trBogieWeightLimitsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
