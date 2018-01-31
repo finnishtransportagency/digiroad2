@@ -615,6 +615,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressesLinkByMunicipality(municipality: Int, roadLinkDataTempAPI:Boolean=false): Seq[RoadAddressLink] = {
 
     val (roadLinksWithComplementary, _) =
+      // TODO This if statement will be removed after the frozen links are no longer needed and jut use the cache
       if (frozenTimeVVHAPIServiceEnabled) {
         val roadLinks = {
           val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality, frozenTimeVVHAPIServiceEnabled)
