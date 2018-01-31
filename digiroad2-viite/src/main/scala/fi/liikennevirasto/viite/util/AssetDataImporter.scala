@@ -8,7 +8,7 @@ import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceResetterDAO}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -18,14 +18,12 @@ import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
-import slick.driver.JdbcDriver
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 
-object
-AssetDataImporter {
+object AssetDataImporter {
   sealed trait ImportDataSet {
     def database(): DatabaseDef
   }
@@ -54,12 +52,6 @@ AssetDataImporter {
     PeriodFormat.getDefault.print(new Period(startTime, DateTime.now()))
   }
 }
-
-protected case class RoadAddressHistory(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
-                                        startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
-                                        validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
-                                        terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
-                                        x2: Option[Double], y2: Option[Double], lrmId: Long, ajrId: Long)
 
 class AssetDataImporter {
   val logger = LoggerFactory.getLogger(getClass)
@@ -94,7 +86,6 @@ class AssetDataImporter {
     }
   }
 
-  case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double, linkSource: LinkGeomSource, ajrId: Long)
   case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType, elyCode: Long)
 
   /**
@@ -120,53 +111,6 @@ class AssetDataImporter {
 
   }
 
-  implicit val getRoadAddressHistory = new GetResult[RoadAddressHistory] {
-    def apply(r: PositionedResult) = {
-
-      val roadNumber = r.nextLong()
-      val roadPartNumber = r.nextLong()
-      val trackCode = r.nextLong()
-      val discontinuity = r.nextLong()
-      val startAddrM = r.nextLong()
-      val endAddrM = r.nextLong()
-      val startM = r.nextDouble()
-      val endM = r.nextDouble()
-      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val ely = r.nextLong()
-      val roadType = r.nextLong()
-      val linkId = r.nextLong()
-      val userId = r.nextString
-      val x1 = r.nextDouble()
-      val y1 = r.nextDouble()
-      val x2 = r.nextDouble()
-      val y2 = r.nextDouble()
-      val lrmId = r.nextLong()
-      val ajrId = r.nextLong()
-
-      RoadAddressHistory(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDate, validFrom, None, ely, roadType, 0,
-        linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, ajrId)
-
-    }
-  }
-
-  protected def fetchRoadAddressHistory(conversionDatabase: JdbcDriver.backend.DatabaseDef, ely: Int, importOptions: ImportOptions): List[RoadAddressHistory] = {
-    conversionDatabase.withDynSession {
-      val tableName = importOptions.conversionTable
-      val where = s" WHERE ely=$ely AND aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL "
-      val filter = (importOptions.onlyCurrentRoads, importOptions.importDate) match {
-        case (true, _) => s" AND loppupvm IS NULL "
-        case (false, "") => ""
-        case (false, date) => s" AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$date')) "
-      }
-      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
-             TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-             loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName #$where #$filter """
-        .as[RoadAddressHistory].list
-    }
-  }
-
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient],
                             importOptions: ImportOptions): Unit = {
 
@@ -185,7 +129,6 @@ class AssetDataImporter {
       println(s"${DateTime.now()} - Old address data removed")
 
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
-      //roadMaintainerElys.foreach(ely => roadAddressImporter.importRoadAddress(ely))
       roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
@@ -225,8 +168,8 @@ class AssetDataImporter {
     val sequenceResetter = new SequenceResetterDAO()
     sql"""select MAX(common_history_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
       case Some(commonHistoryId) =>
-        sequenceResetter.resetSequenceToNumber("common_history", commonHistoryId + 1)
-      case _ => sequenceResetter.resetSequenceToNumber("common_history", 1)
+        sequenceResetter.resetSequenceToNumber("common_history_seq", commonHistoryId + 1)
+      case _ => sequenceResetter.resetSequenceToNumber("common_history_seq", 1)
     }
   }
 
