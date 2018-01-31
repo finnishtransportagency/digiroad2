@@ -2,12 +2,12 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
@@ -30,6 +30,10 @@ object DataFixture {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
+
+  lazy val konvTableNameProd = "vvh_tiehistoria_heina2017"
+
+  lazy val konvTableNameDev = konvTableNameProd // TODO change to for e.g. "vvh_tiehistoria_heina2017_devview"
 
   val dataImporter = new AssetDataImporter
   lazy val vvhClient: VVHClient = {
@@ -77,30 +81,26 @@ object DataFixture {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
+    val importDate = dr2properties.getProperty("digiroad2.viite.historyImportDate", "")
     if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
       println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
     } else {
       println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      val vvhClientProd = if (isDevDatabase) {
-        Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+      val (vvhClientProd, conversionTable) = if(isDevDatabase) {
+        (Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/"))), konvTableNameDev)
       } else {
-        None
+        (None, konvTableNameProd)
       }
       val importOptions = ImportOptions(
         onlyComplementaryLinks = false,
         useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
-        geometryAdjustedTimeStamp.toLong)
+        geometryAdjustedTimeStamp.toLong, conversionTable,
+        importDate,
+        onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
       dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
+
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importRoadAddressesHistory(): Unit = {
-    println(s"\nCommencing road address history import from conversion at time: ${DateTime.now()}")
-    val importDate = dr2properties.getProperty("digiroad2.viite.historyImportDate", "")
-    dataImporter.importRoadAddressHistory(Conversion.database(), importDate)
-    println(s"Road address history import complete at time: ${DateTime.now()}")
     println()
   }
 
@@ -359,8 +359,6 @@ object DataFixture {
         importRoadNames()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
-      case Some("import_road_address_history") =>
-        importRoadAddressesHistory()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+
