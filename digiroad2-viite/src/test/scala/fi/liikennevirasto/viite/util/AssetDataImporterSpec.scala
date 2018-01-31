@@ -13,7 +13,6 @@ import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.DatabaseDef
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 
 class AssetDataImporterSpec extends FunSuite with Matchers {
@@ -75,9 +74,6 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val assetDataImporter = new AssetDataImporter {
         override def withDynTransaction(f: => Unit): Unit = f
         override def withDynSession[T](f: => T): T = f
-        override def fetchRoadAddressHistory(conversionDatabase: DatabaseDef, ely: Int, importOptions: ImportOptions): List[RoadAddressHistory] = {
-          throw new NotImplementedException()
-        }
         override def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
           roadAddressImporter
         }
