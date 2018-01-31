@@ -21,7 +21,7 @@ case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCo
 
 class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) {
 
-  case class IncomingLrmPosistion(id: Long, linkId: Long, startM: Double, endM: Double, sideCode: SideCode, linkSource: LinkGeomSource, commonHistoryId: Long)
+  case class IncomingLrmPosition(id: Long, linkId: Long, startM: Double, endM: Double, sideCode: SideCode, linkSource: LinkGeomSource, commonHistoryId: Long)
   case class IncomingRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
                                          startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime],
                                          createdBy: String, validFrom: Option[DateTime], x1: Option[Double], y1: Option[Double],
@@ -48,7 +48,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def lrmPositionStatement() =
     dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, link_source) values (?, ?, ?, ?, ?, ?)")
 
-  private def insertLrmPosition(lrmPositionStatement: PreparedStatement, lrmPosition: IncomingLrmPosistion, lrmId: Long): Unit ={
+  private def insertLrmPosition(lrmPositionStatement: PreparedStatement, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit ={
     lrmPositionStatement.setLong(1, lrmId)
     lrmPositionStatement.setLong(2, lrmPosition.linkId)
     lrmPositionStatement.setLong(3, lrmPosition.sideCode.value)
@@ -65,7 +65,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
 
-  private def insertRoadAddress(roadAddressStatement: PreparedStatement, roadAddress: ConversionRoadAddress, lrmPosition: IncomingLrmPosistion, lrmId: Long): Unit ={
+  private def insertRoadAddress(roadAddressStatement: PreparedStatement, roadAddress: ConversionRoadAddress, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit ={
     def datePrinter(date: Option[DateTime]): String = {
       date match {
         case Some(dt) => dateFormatter.print(dt)
@@ -108,7 +108,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     vvhClient.historyData.fetchVVHRoadLinkByLinkIds(linkIds).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
 
 
-  private def adjustLrmPosition(lrmPos: Seq[IncomingLrmPosistion], length: Double): Seq[IncomingLrmPosistion] = {
+  private def adjustLrmPosition(lrmPos: Seq[IncomingLrmPosition], length: Double): Seq[IncomingLrmPosition] = {
     val coefficient: Double = length / (lrmPos.maxBy(_.endM).endM - lrmPos.minBy(_.startM).startM)
     lrmPos.map(lrm => lrm.copy(startM = lrm.startM * coefficient, endM = lrm.endM * coefficient))
   }
@@ -227,11 +227,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       case(ra) =>
         mappedRoadLinks.getOrElse(ra.linkId, Seq()).headOption match {
           case Some(rl) =>
-            Some(IncomingLrmPosistion(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, rl.linkSource, ra.commonHistoryId))
+            Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, rl.linkSource, ra.commonHistoryId))
           case _ =>
             mappedHistoryRoadLinks.get(ra.linkId) match {
               case Some(rl) =>
-                Some(IncomingLrmPosistion(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, LinkGeomSource.HistoryLinkInterface, ra.commonHistoryId))
+                Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, LinkGeomSource.HistoryLinkInterface, ra.commonHistoryId))
               case _ => None
             }
         }
