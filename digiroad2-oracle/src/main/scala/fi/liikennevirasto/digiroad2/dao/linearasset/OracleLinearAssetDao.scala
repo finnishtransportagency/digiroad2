@@ -773,11 +773,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case None => "NULL"
     }
 
+    val latestModifiedBy = modifiedBy match {
+      case Some(modifier) => s"""'$modifier'"""
+      case None => null
+    }
+
     val insertAll =
       s"""
        insert all
          into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
-         values ($assetId, $typeId, '$creator', $creationDate, '${modifiedBy.getOrElse("NULL")}', $modifiedDate)
+         values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate)
 
          into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
          values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, SYSDATE, ${linkSource.value})
