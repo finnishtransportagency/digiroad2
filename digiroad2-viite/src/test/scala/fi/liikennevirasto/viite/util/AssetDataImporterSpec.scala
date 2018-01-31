@@ -65,7 +65,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val importOptions = ImportOptions(false, false, 1510790400000L, "MOCK_CONVERSION", "2017-11-19", false)
 
       val roadAddressImporter = new RoadAddressImporter(null, mockVVHClient, importOptions) {
-        override def fetchChunkLinkIdsFromConversionTable(chunk: Int): Seq[(Long, Long)] = {
+        override def fetchChunkLinkIdsFromConversionTable(): Seq[(Long, Long)] = {
           Seq((0, 6656730))
         }
         override def fetchRoadAddressFromConversionTable(minLinkId: Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] = {
@@ -171,7 +171,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val importOptions = ImportOptions(false, false, 1510790400000L, "MOCK_CONVERSION", "2017-11-19", false)
 
       val roadAddressImporter = new RoadAddressImporter(null, mockVVHClient, importOptions) {
-        override def fetchChunkLinkIdsFromConversionTable(chunk: Int): Seq[(Long, Long)] = {
+        override def fetchChunkLinkIdsFromConversionTable(): Seq[(Long, Long)] = {
           Seq((0, 1000))
         }
         override def fetchRoadAddressFromConversionTable(minLinkId: Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] = {
