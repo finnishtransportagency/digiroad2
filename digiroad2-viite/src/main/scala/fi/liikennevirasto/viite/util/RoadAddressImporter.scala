@@ -113,18 +113,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     lrmPos.map(lrm => lrm.copy(startM = lrm.startM * coefficient, endM = lrm.endM * coefficient))
   }
 
-  private def fetchRoadAddressFromConversionTable(ely: Long, filter: String): Seq[ConversionRoadAddress] = {
-    conversionDatabase.withDynSession {
-      val tableName = importOptions.conversionTable
-      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
-               TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-               loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName
-               WHERE ely=$ely AND aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL #$filter """
-        .as[ConversionRoadAddress].list
-    }
-  }
-
-  //TODO this method is duplicated (or almost)
   protected def fetchRoadAddressFromConversionTable(minLinkId: Long, maxLinkId: Long, filter: String): Seq[ConversionRoadAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
@@ -164,17 +152,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private val withCurrentAndHistoryRoadAddress: String = ""
-
-  def importRoadAddress(ely: Long): Unit = {
-
-    val conversionRoadAddress = fetchRoadAddressFromConversionTable(ely, withCurrentAndHistoryRoadAddress)
-
-    print(s"\n${DateTime.now()} - ")
-    println("Read %d rows from conversion database for ELY %d".format(conversionRoadAddress.size, ely))
-
-    importRoadAddress(conversionRoadAddress)
-
-  }
 
   def importRoadAddress(): Unit = {
     val chunks = fetchChunkLinkIdsFromConversionTable()
