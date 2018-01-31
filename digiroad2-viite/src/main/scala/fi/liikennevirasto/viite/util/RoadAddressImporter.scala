@@ -65,7 +65,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
 
-  private def insertRoadAddress(roadAddressStatement: PreparedStatement, roadAddress: ConversionRoadAddress, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit ={
+  private def insertRoadAddress(roadAddressStatement: PreparedStatement, roadAddress: ConversionRoadAddress, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit = {
     def datePrinter(date: Option[DateTime]): String = {
       date match {
         case Some(dt) => dateFormatter.print(dt)
@@ -97,7 +97,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadAddressStatement.addBatch()
   }
 
-  private def fetchRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, Seq[VVHRoadlink]] ={
+  private def fetchRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, Seq[VVHRoadlink]] = {
     val vvhRoadLinkClient = if (importOptions.useFrozenLinkService) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
     linkIds.grouped(4000).flatMap(group =>
       vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group) ++ vvhClient.suravageData.fetchSuravageByLinkIds(group)
@@ -179,8 +179,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   }
 
-  def importRoadAddress(): Unit ={
-    //TODO the chunk count should be configurable
+  def importRoadAddress(): Unit = {
     val chunks = fetchChunkLinkIdsFromConversionTable(20000)
 
     chunks.foreach {
