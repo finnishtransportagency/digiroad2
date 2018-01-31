@@ -92,6 +92,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   /**
+    * TODO Take this test in use when calibration points are calculated correctly.
+    * TODO Fix this so that the database changes are rolled back.
+    *
     * Calibration point 1   2   0   1   2   1   3   2
     * Road address      --o---+---+---o---+---o---o--
     * Common history    0   1   1   1   2   2   3   4
@@ -112,23 +115,23 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHSuravageClient.fetchSuravageByLinkIds(any[Set[Long]])).thenReturn(Seq())
     when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIds(any[Set[Long]])).thenReturn(Seq())
 
-    val expectedCalibrationPointValuesForAET = Map(
-      1000 -> 1,
-      1100 -> 2,
-      1200 -> 0,
-      1300 -> 1,
-      1400 -> 2,
-      1500 -> 1,
-      1600 -> 3,
-      1700 -> 2,
-      1001 -> 1,
-      1101 -> 2,
-      1201 -> 0,
-      1301 -> 1,
-      1401 -> 2,
-      1501 -> 1,
-      1601 -> 3,
-      1701 -> 2
+    val expectedCalibrationPointValuesForAET = List(
+      (1000, 1),
+      (1001, 1),
+      (1100, 2),
+      (1101, 2),
+      (1200, 0),
+      (1201, 0),
+      (1300, 1),
+      (1301, 1),
+      (1400, 2),
+      (1401, 2),
+      (1500, 1),
+      (1501, 1),
+      (1600, 3),
+      (1601, 3),
+      (1700, 2),
+      (1701, 2)
     )
 
     val expectedCalibrationPointsForAET = Map(
@@ -196,7 +199,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       insertedRoadAddresses.size should be(16)
 
       val roadAddressIds = insertedRoadAddresses.map(_.id).mkString(", ")
-      val calibrationPoints = sql"""select start_addr_m, calibration_points from road_address where id in (#${roadAddressIds})""".as[(Long, Long)].list
+      val calibrationPoints = sql"""select start_addr_m, calibration_points from road_address where id in (#${roadAddressIds}) order by start_addr_m""".as[(Long, Long)].list
       calibrationPoints should equal(expectedCalibrationPointValuesForAET)
 
       insertedRoadAddresses.foldLeft(Map.empty[Long, (Option[CalibrationPoint], Option[CalibrationPoint])])((map, ra) => map + (ra.startAddrMValue -> ra.calibrationPoints)) should equal(expectedCalibrationPointsForAET)
