@@ -14,7 +14,6 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.DatabaseDef
 import slick.jdbc.StaticQuery.interpolation
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 class AssetDataImporterSpec extends FunSuite with Matchers {
 

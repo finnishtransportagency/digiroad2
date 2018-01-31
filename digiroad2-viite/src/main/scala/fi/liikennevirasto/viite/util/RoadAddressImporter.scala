@@ -48,7 +48,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def lrmPositionStatement() =
     dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, link_source) values (?, ?, ?, ?, ?, ?)")
 
-  private def insertLrmPosition(lrmPositionStatement: PreparedStatement, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit ={
+  private def insertLrmPosition(lrmPositionStatement: PreparedStatement, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit = {
     lrmPositionStatement.setLong(1, lrmId)
     lrmPositionStatement.setLong(2, lrmPosition.linkId)
     lrmPositionStatement.setLong(3, lrmPosition.sideCode.value)
@@ -154,7 +154,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     result.zip(result.tail)
   }
 
-  protected def fetchChunkLinkIdsFromConversionTable(chunk: Int): Seq[(Long, Long)] = {
+  protected def fetchChunkLinkIdsFromConversionTable(): Seq[(Long, Long)] = {
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
@@ -163,12 +163,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
   }
 
-  private val withOnlyCurrentRoadAddress: String = " AND loppupvm IS NULL "
-  private val withOnlyHistoryRoadAddress: String = " AND loppupvm IS NOT NULL "
-  private val withCurrentAndHistoryRoadAddressFromDate: String = " AND (loppupvm IS NULL OR (loppupvm IS NOT NULL AND TO_CHAR(loppupvm, 'YYYY-MM-DD') <= '$date')) "
   private val withCurrentAndHistoryRoadAddress: String = ""
 
-  def importRoadAddress(ely: Long): Unit ={
+  def importRoadAddress(ely: Long): Unit = {
 
     val conversionRoadAddress = fetchRoadAddressFromConversionTable(ely, withCurrentAndHistoryRoadAddress)
 
@@ -180,7 +177,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   def importRoadAddress(): Unit = {
-    val chunks = fetchChunkLinkIdsFromConversionTable(20000)
+    val chunks = fetchChunkLinkIdsFromConversionTable()
 
     chunks.foreach {
       case (min, max) =>
@@ -253,9 +250,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     lrmPositions.zip(lrmIds).foreach {
       case ((lrmPosition), (lrmId)) =>
         val roadAddresses = mappedConversionRoadAddress.getOrElse((lrmPosition.linkId, lrmPosition.commonHistoryId), Seq())
-        assert(roadAddresses.size >= 1)
+        assert(roadAddresses.nonEmpty)
         insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
-        roadAddresses.foreach{
+        roadAddresses.foreach {
           roadAddress =>
             insertRoadAddress(roadAddressPs, roadAddress, lrmPosition, lrmId)
         }
@@ -285,7 +282,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val ely = r.nextLong()
       val roadType = r.nextLong()
       val linkId = r.nextLong()
-      val userId =r.nextString
+      val userId = r.nextString
       val x1 = r.nextDouble()
       val y1 = r.nextDouble()
       val x2 = r.nextDouble()
