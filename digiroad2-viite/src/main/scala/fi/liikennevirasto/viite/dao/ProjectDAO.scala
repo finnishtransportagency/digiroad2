@@ -101,7 +101,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     RoadAddress(NewRoadAddress, roadNumber, this.roadPartNumber, roadType, track, discontinuity, startAddrMValue,
       endAddrMValue, startDate, endDate, modifiedBy, 0L, linkId, startMValue, endMValue, sideCode, linkGeometryTimeStamp,
       calibrationPoints, floating, Seq(GeometryUtils.geometryEndpoints(geometry)._1, GeometryUtils.geometryEndpoints(geometry)._2),
-      linkGeomSource, ely, if (LinkStatus.Terminated == status) TerminationCode.Termination else TerminationCode.NoTermination)
+      linkGeomSource, ely, if (LinkStatus.Terminated == status) TerminationCode.Termination else TerminationCode.NoTermination, NewCommonHistoryId)
   }
 
   def addrAt(a: Double) = {

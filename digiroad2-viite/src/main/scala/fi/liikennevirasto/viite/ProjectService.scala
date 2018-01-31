@@ -1399,7 +1399,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
             pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), 0L, pl.linkId,
             pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false,
-            pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination))
+            pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination, 0))
         case Transfer =>
           val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
           Seq(
@@ -1500,7 +1500,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
       pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination)
+      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, 0)
     pl.status match {
       case UnChanged =>
         roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)

@@ -33,6 +33,8 @@ package object viite {
 
   val NewRoadAddress: Long = -1000L
 
+  val NewCommonHistoryId: Long = -1000L
+
   val MaxDistanceForConnectedLinks = 0.1
 
   /* Used for small jumps on discontinuity or self-crossing tracks */

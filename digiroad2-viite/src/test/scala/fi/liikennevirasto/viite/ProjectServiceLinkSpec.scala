@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.AddressChangeType.{Termination, Transfer}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectSectionCalculator
@@ -437,7 +438,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       val projectLink = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
       ProjectDAO.createRoadAddressProject(rap)
       mockForProject(id, Seq(projectLink))
       projectService.addNewLinksToProject(Seq(projectLink), id, "U", projectLink.linkId)
@@ -462,10 +463,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       ProjectDAO.createRoadAddressProject(rap)
 
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 5175306L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965)), LinkGeomSource.NormalLinkInterface, 5))
+        Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
 
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr2, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 1610976L, 0.0, 5.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(535605.272, 6982204.22, 85.90899999999965), Point(535608.555, 6982204.33, 86.90)), LinkGeomSource.NormalLinkInterface, 5))
+        Seq(Point(535605.272, 6982204.22, 85.90899999999965), Point(535608.555, 6982204.33, 86.90)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
 
 
       val p1 = ProjectAddressLink(idr1, projectLink1.linkId, projectLink1.geometry,

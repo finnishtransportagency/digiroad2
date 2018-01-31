@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import org.joda.time.DateTime
@@ -177,6 +178,6 @@ class DefloatMapperSpec extends FunSuite with Matchers{
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode, l.attributes.getOrElse("ADJUSTED_TIMESTAMP", 0L).asInstanceOf[Long],
-      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, l.roadLinkSource, l.elyCode)
+      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, l.roadLinkSource, l.elyCode, NoTermination, 0)
   }
 }

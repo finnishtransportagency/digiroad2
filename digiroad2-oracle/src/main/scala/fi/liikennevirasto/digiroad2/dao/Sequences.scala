@@ -21,7 +21,7 @@ object Sequences {
     fetchViitePrimaryKeyId(len)
   }
 
-  def nextCommonHistorySeqValue() = {
+  def nextCommonHistorySeqValue = {
     nextCommonHistoryValue.as[Long].first
   }
 }
