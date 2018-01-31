@@ -974,8 +974,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         RoadLink(linkId2, geom2, endM2, State, 99, BothDirections, UnknownLinkType, Some("25.11.2013 02:00:00"), Some("vvh_modified"), attributes),
         RoadLink(linkId3, geom3, endM3, State, 99, BothDirections, UnknownLinkType, Some("25.11.2013 02:00:00"), Some("vvh_modified"), attributes)
       )
+
       when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(linkId1), false)).thenReturn(
-        (Seq[RoadLink](), roadLinksSeq.filter(_.linkId == linkId1).map(toHistoryLink)))
+        (Seq[RoadLink](), roadLinksSeq.filter(x => x.linkId == linkId1).map(toHistoryLink)))
       when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(linkId2), false)).thenReturn(
         (Seq[RoadLink](), roadLinksSeq.filter(_.linkId == linkId2).map(toHistoryLink)))
       when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(linkId3), false)).thenReturn(
