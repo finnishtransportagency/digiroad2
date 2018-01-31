@@ -1218,7 +1218,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/groupedPointAssets")(getGroupedPointAssets)
 
-  private def getGroupedPointAssets: Seq[PersistedPointAsset] = {
+  private def getGroupedPointAssets: Seq[Seq[PersistedPointAsset]] = {
     val user = userProvider.getCurrentUser()
     if (user.isServiceRoadMaintainer())
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
