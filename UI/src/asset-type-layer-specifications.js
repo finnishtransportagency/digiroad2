@@ -691,8 +691,8 @@
       editConstrains : function() {
         return true;
       },
-      nonModifiableBox: true,
-      label: new WeightLimitLabel()
+      nonModifiableBox: true/*,
+      label: new WeightLimitLabel()*/
     }
   ];
 })(this);
