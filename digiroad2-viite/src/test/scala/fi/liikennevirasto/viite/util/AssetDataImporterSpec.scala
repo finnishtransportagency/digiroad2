@@ -183,9 +183,6 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val assetDataImporter = new AssetDataImporter {
         override def withDynTransaction(f: => Unit): Unit = f
         override def withDynSession[T](f: => T): T = f
-        override def fetchRoadAddressHistory(conversionDatabase: DatabaseDef, ely: Int, importOptions: ImportOptions): List[RoadAddressHistory] = {
-          throw new NotImplementedException()
-        }
         override def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
           roadAddressImporter
         }
