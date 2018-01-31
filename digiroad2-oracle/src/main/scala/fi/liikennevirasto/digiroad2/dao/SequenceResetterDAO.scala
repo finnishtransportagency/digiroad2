@@ -4,7 +4,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
-class SequenceReseterDAO {
+class SequenceResetterDAO {
 
   def resetSequenceToNumber(seqName: String, seqNumber: Long): Unit = {
     sqlu"""DROP SEQUENCE #$seqName """.execute
