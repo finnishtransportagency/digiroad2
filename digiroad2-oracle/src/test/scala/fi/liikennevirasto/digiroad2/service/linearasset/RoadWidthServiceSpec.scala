@@ -4,16 +4,20 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, OracleLinearAssetDao}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
+import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+
+import scala.collection.immutable.Stream.Empty
 
 class RoadWidthServiceSpec extends FunSuite with Matchers {
   val RoadWidthAssetTypeId = 120
@@ -35,6 +39,11 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+
+  val initChangeSet: ChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
+                                           expiredAssetIds = Set.empty[Long],
+                                           adjustedMValues = Seq.empty[MValueAdjustment],
+                                           adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
   object ServiceWithDao extends RoadWidthService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -63,6 +72,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def vvhClient: VVHClient = mockVVHClient
+      override def dao: OracleLinearAssetDao = mockLinearAssetDao
     }
     service
   }
@@ -143,8 +153,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None))
     runWithRollback {
       val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (expiredIds, newAssets) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => Seq())
-      expiredIds should have size 0
+      val (newAssets, changeSet) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => Seq(), initChangeSet )
+      changeSet.expiredAssetIds should have size 0
       newAssets.filter(_.linkId == 5000) should have size 0
       newAssets.filter(_.linkId == 5001) should have size 1
       newAssets.filter(_.linkId == 5001).head.value should be(Some(NumericValue(650)))
@@ -172,8 +182,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val service = createService()
 
       val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo, (_) => Seq())
-      expiredIds should have size 0
+      val (newAsset, changeSet) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo, (_) => Seq(), initChangeSet)
+      changeSet.expiredAssetIds should have size 0
       newAsset should have size 0
     }
   }
@@ -200,8 +210,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val service = createService()
 
       val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo, (_) => Seq())
-      expiredIds should have size 0
+      val (newAsset, changeSet) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo, (_) => Seq(), initChangeSet)
+      changeSet.expiredAssetIds should have size 0
       newAsset should have size 0
     }
   }
@@ -215,9 +225,9 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       PersistedLinearAsset(2, 5001, 1, Some(NumericValue(2000)), 0, 20, None, None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface, None, None))
     runWithRollback {
       val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => Seq())
-      expiredIds should have size 1
-      expiredIds should be(Set(1))
+      val (newAsset, changeSet) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => Seq(), initChangeSet)
+      changeSet.expiredAssetIds should have size 1
+      changeSet.expiredAssetIds should be(Set(1))
       newAsset.forall(_.vvhTimeStamp == 11L) should be(true)
       newAsset.forall(_.value.isDefined) should be(true)
       newAsset should have size 1
@@ -236,52 +246,9 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => expiredAssets)
-      expiredIds should have size 0
+      val (newAsset, changeSet) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => expiredAssets, initChangeSet)
+      changeSet.expiredAssetIds should have size 0
       newAsset should have size 0
-    }
-  }
-
-  test("Create linear asset on a road link that has changed previously"){
-    val oldLinkId1 = 5000
-    val linkId1 = 5001
-    val newLinkId = 6000
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val service = createService()
-
-    val roadLinks = Seq(
-      RoadLink(linkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))),
-      RoadLink(newLinkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
-
-    val changeInfo = Seq(
-      ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
-      ChangeInfo(Some(linkId1), Some(newLinkId), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
-    )
-
-    OracleDatabase.withDynTransaction {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
-      val newAsset1 = NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)
-      val id1 = service.create(Seq(newAsset1), RoadWidthAssetTypeId, "KX2")
-
-      val newAsset = NewLinearAsset(newLinkId, 0.0, 120, NumericValue(4779), 1, 234567, None)
-      val id = service.create(Seq(newAsset), RoadWidthAssetTypeId, "KX2")
-
-      id should have size (1)
-      id.head should not be (0)
-
-      val assets = service.getPersistedAssetsByIds(RoadWidthAssetTypeId, Set(1L, id.head, id1.head))
-      assets should have size (2)
-      assets.forall(_.vvhTimeStamp > 0L) should be (true)
-
-      val after = service.getByBoundingBox(RoadWidthAssetTypeId, BoundingRectangle(Point(0.0, 0.0), Point(120.0, 120.0)), Set(municipalityCode))
-      after should have size(2)
-      after.flatten.forall(_.id != 0) should be (true)
-      dynamicSession.rollback()
     }
   }
 
