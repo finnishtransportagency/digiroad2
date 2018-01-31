@@ -29,7 +29,7 @@ trait WeightLimitService extends PointAssetOperations {
   type IncomingAsset = IncomingPointAsset
   type PersistedAsset = WeightLimit
 
-  override def typeId: Int = TrWeightLimit.typeId
+  override def typeId: Int
 
   override def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
@@ -52,12 +52,16 @@ trait WeightLimitService extends PointAssetOperations {
 
 class TotalWeightLimitService(val roadLinkService: RoadLinkService) extends WeightLimitService {
 
+  override def typeId: Int = TrWeightLimit.typeId
+
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
     OracleWeightLimitDao.fetchByFilter(queryFilter)
   }
 }
 
 class AxleWeightLimitService(val roadLinkService: RoadLinkService) extends WeightLimitService {
+
+  override def typeId: Int = TrAxleWeightLimit.typeId
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
     OracleAxleWeightLimitDao.fetchByFilter(queryFilter)
@@ -66,12 +70,16 @@ class AxleWeightLimitService(val roadLinkService: RoadLinkService) extends Weigh
 
 class BogieWeightLimitService(val roadLinkService: RoadLinkService) extends WeightLimitService {
 
+  override def typeId: Int = TrBogieWeightLimit.typeId
+
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
     OracleBogieWeightLimitDao.fetchByFilter(queryFilter)
   }
 }
 
 class TrailerTruckWeightLimitService(val roadLinkService: RoadLinkService) extends WeightLimitService {
+
+  override def typeId: Int = TrTrailerTruckWeightLimit.typeId
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
     OracleTrailerTruckWeightLimitDao.fetchByFilter(queryFilter)
