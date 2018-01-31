@@ -116,14 +116,14 @@ class AssetDataImporter {
 
     withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
-      sqlu"""DELETE FROM ROAD_ADDRESS""".execute
-      sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
       sqlu"""DELETE FROM PROJECT""".execute
       sqlu"""DELETE FROM ROAD_NETWORK_ERRORS""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
       sqlu"""DELETE FROM LRM_POSITION WHERE
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println(s"${DateTime.now()} - Old address data removed")
