@@ -38,7 +38,7 @@ class MassTransitStopDao {
     val query = """
         select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
-        lrm.adjusted_timestamp, p.id, p.public_id, p.property_type, p.required, e.value,
+        lrm.adjusted_timestamp, p.id, p.public_id, p.property_type, p.required, p.max_value_length, e.value,
         case
           when e.name_fi is not null then e.name_fi
           when tp.value_fi is not null then tp.value_fi
@@ -125,6 +125,7 @@ class MassTransitStopDao {
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
       val propertyRequired = r.nextBoolean
+      val propertyMaxCharacters = r.nextIntOption()
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
       val property = new PropertyRow(
@@ -133,7 +134,8 @@ class MassTransitStopDao {
         propertyType = propertyType,
         propertyRequired = propertyRequired,
         propertyValue = propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString,
-        propertyDisplayValue = propertyDisplayValue.orNull)
+        propertyDisplayValue = propertyDisplayValue.orNull,
+        propertyMaxCharacters = propertyMaxCharacters)
       val lrmId = r.nextLong
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -198,7 +200,8 @@ class MassTransitStopDao {
           PropertyValue(
             assetRow.property.propertyValue,
             propertyDisplayValueFromAssetRow(assetRow))
-        ).filter(_.propertyDisplayValue.isDefined).toSeq)
+        ).filter(_.propertyDisplayValue.isDefined).toSeq,
+        numCharacterMax = row.property.propertyMaxCharacters)
     }.toSeq
   }
 
