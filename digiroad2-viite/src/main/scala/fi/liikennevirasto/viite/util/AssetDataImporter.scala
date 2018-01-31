@@ -114,7 +114,7 @@ class AssetDataImporter {
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient],
                             importOptions: ImportOptions): Unit = {
 
-    OracleDatabase.withDynTransaction {
+    withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
