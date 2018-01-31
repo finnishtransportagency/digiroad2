@@ -254,7 +254,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  ignore("get available properties for asset type", Tag("db")) {
+  test("get available properties for asset type", Tag("db")) {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
