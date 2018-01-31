@@ -349,7 +349,12 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def fetchByLinkIdToApi(linkIds: Set[Long]): List[RoadAddress] = {
+  def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true): List[RoadAddress] = {
+    val networkWhere =
+      if (useLatestNetwork) {
+        "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = road_address_id)"
+      } else ""
+
     if (linkIds.size > 1000) {
       return fetchByLinkIdMassQueryToApi(linkIds)
     }
@@ -369,7 +374,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = road_address_id)
+        $networkWhere
         $where and t.id < t2.id and
           ra.valid_from <= sysdate and
           (ra.valid_to is null or ra.valid_to > sysdate)
