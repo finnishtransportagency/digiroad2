@@ -58,13 +58,20 @@ trait TierekisteriAssetImporterOperations {
       throw new RuntimeException(s"cannot find property $name")
   }
 
-  protected def getSideCode(raSideCode: SideCode, roadSide: RoadSide): SideCode = {
-    roadSide match {
-      case RoadSide.Right => println(RoadSide.Right)
-        raSideCode
-      case RoadSide.Left =>
-        println(RoadSide.Left)
-        raSideCode match {
+  def getSideCode(roadAddress: ViiteRoadAddress, trAssetTrack: Track, trAssetRoadSide: RoadSide): SideCode = {
+    val trTrack = trAssetTrack match {
+      case Track.Combined =>
+        trAssetRoadSide match {
+          case RoadSide.Right => Track.RightSide
+          case _ => Track.LeftSide
+        }
+      case _ =>
+        trAssetTrack
+    }
+
+    trTrack match {
+      case Track.RightSide => roadAddress.sideCode
+      case Track.LeftSide => roadAddress.sideCode match {
         case TowardsDigitizing => SideCode.AgainstDigitizing
         case AgainstDigitizing => SideCode.TowardsDigitizing
         case _ => SideCode.BothDirections
@@ -72,9 +79,6 @@ trait TierekisteriAssetImporterOperations {
       case _ => SideCode.BothDirections
     }
   }
-
-
-
 
   protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit
 
@@ -384,30 +388,6 @@ class SpeedLimitsTierekisteriImporter extends TierekisteriAssetImporterOperation
   private val defaultMotorwaySpeedLimit = 120
   private val defaultCarriageOrFreewaySpeedLimit = 100
   private val notUrbanArea = "9"
-
-
-  def getSideCode(roadAddress: ViiteRoadAddress, trAssetTrack: Track, trAssetRoadSide: RoadSide): SideCode = {
-    val trTrack = trAssetTrack match {
-      case Track.Combined =>
-        trAssetRoadSide match {
-          case RoadSide.Right => Track.RightSide
-          case _ => Track.LeftSide
-        }
-      case _ =>
-        trAssetTrack
-    }
-
-    trTrack match {
-      case Track.RightSide => roadAddress.sideCode
-      case Track.LeftSide => roadAddress.sideCode match {
-        case TowardsDigitizing => SideCode.AgainstDigitizing
-        case AgainstDigitizing => SideCode.TowardsDigitizing
-        case _ => SideCode.BothDirections
-      }
-      case _ => SideCode.BothDirections
-    }
-  }
-
 
   protected override def filterViiteRoadAddress(roadLink: VVHRoadlink): Boolean = {
     roadLink.featureClass != FeatureClass.CycleOrPedestrianPath
@@ -767,7 +747,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
       GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
         point =>
           val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),
-            getSideCode(roadAddress.sideCode, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+            getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
           OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
       }
@@ -935,7 +915,7 @@ class SpeedLimitAssetTierekisteriImporter extends LinearAssetTierekisteriImporte
 
   protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
-      val assetId = speedLimitService.dao.createSpeedLimit("batch_process_speedlimit", vvhRoadlink.linkId, measures, getSideCode(roadAddress.sideCode, trAssetData.roadSide),
+      val assetId = speedLimitService.dao.createSpeedLimit("batch_process_speedlimit", vvhRoadlink.linkId, measures, getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide),
         trAssetData.assetValue, Some(vvhClient.roadLinkData.createVVHTimeStamp()), None, None, None, vvhRoadlink.linkSource)
 
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
