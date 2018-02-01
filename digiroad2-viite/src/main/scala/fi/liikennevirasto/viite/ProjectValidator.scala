@@ -180,19 +180,7 @@ object ProjectValidator {
           Some("TIE : %d, OSA: %d, AET: %d".format(projectLink.roadNumber, projectLink.roadPartNumber, projectLink.startAddrMValue))))
     }
 
-    def checkProjectElyCodes:Seq[ValidationErrorDetails] = {
-      val workedProjectLinks = projectLinks.filterNot(_.status == LinkStatus.NotHandled)
-      if (workedProjectLinks.nonEmpty) {
-        val grouped = workedProjectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).map(group => group._1 -> group._2.sortBy(_.endAddrMValue))
-        val projectLinksDiscontinuity = workedProjectLinks.map(_.discontinuity.value).distinct.toList
-        if(projectLinksDiscontinuity.contains(Discontinuity.ChangingELYCode.value))
-          firstElyBorderCheck(project, grouped)
-        else
-          secondElyBorderCheck(project, grouped)
-      } else Seq.empty[ValidationErrorDetails]
-    }
-
-    val elyCodesResults = checkProjectElyCodes
+    val elyCodesResults = checkProjectElyCodes(project, projectLinks)
 
     checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
       checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ elyCodesResults
@@ -212,6 +200,18 @@ object ProjectValidator {
           Seq(), Some(s"TIE ${rrp.roadNumber} OSA ${project.reservedParts.filter(p => p.roadNumber == rrp.roadNumber &&
           p.newLength.getOrElse(0L) > 0L).map(_.roadPartNumber).max}"))
       }
+  }
+
+  def checkProjectElyCodes(project: RoadAddressProject, projectLinks: Seq[ProjectLink]):Seq[ValidationErrorDetails] = {
+    val workedProjectLinks = projectLinks.filterNot(_.status == LinkStatus.NotHandled)
+    if (workedProjectLinks.nonEmpty) {
+      val grouped = workedProjectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).map(group => group._1 -> group._2.sortBy(_.endAddrMValue))
+      val projectLinksDiscontinuity = workedProjectLinks.map(_.discontinuity.value).distinct.toList
+      if(projectLinksDiscontinuity.contains(Discontinuity.ChangingELYCode.value))
+        firstElyBorderCheck(project, grouped)
+      else
+        secondElyBorderCheck(project, grouped)
+    } else Seq.empty[ValidationErrorDetails]
   }
 
   /**

@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorList._
 import fi.liikennevirasto.viite.ProjectValidator._
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
@@ -20,6 +21,7 @@ import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.viite.util._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
+import org.scalatest.mock.MockitoSugar
 
 class ProjectValidatorSpec extends FunSuite with Matchers{
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -32,22 +34,24 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
     }
   }
 
-  private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled) = {
-    ProjectLink(NewRoadAddress, 19999L, 1L, track, Discontinuity.Continuous, startAddrM, endAddrM, None, None,
+  private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
+                          roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L ) = {
+    ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
       Some("User"), 0L, startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
       false, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
-      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, 0L, 8L, false, None, 0L)
+      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, 0L, ely, false, None, 0L)
   }
 
-  private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
+  private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], roadNumber: Long = 19999L,
+                                    roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L) = {
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(8), None)
     ProjectDAO.createRoadAddressProject(project)
     val links = addrM.init.zip(addrM.tail).map{ case (st, en) =>
-      projectLink(st, en, Combined, id, linkStatus)
+      projectLink(st, en, Combined, id, linkStatus, roadNumber, roadPartNumber, discontinuity, ely)
     }
-    ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
+    ProjectDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
     ProjectDAO.create(links)
     project
   }
@@ -63,6 +67,20 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
     ProjectDAO.reserveRoadPart(id, 39999L, 1L, "u")
     ProjectDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
     project
+  }
+
+  private def testDataForElyTest01() = {
+    sqlu"""
+       |Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID) values ('227771','16320','2','0','5','1270','1309','70131744',to_date('82.09.01','RR.MM.DD'),null,'TR',to_date('09.12.14','RR.MM.DD'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(525621.588,7028822.403,0,0,525658.969,7028813.116,0,39)),null,'8','1','0','56009');
+       |Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('70131744',null,'3','0','38,517',null,'2583382','1476392565000',to_timestamp('18.01.31 18:10:26,071227000','RR.MM.DD HH24:MI:SSXFF'),'1');
+      """
+  }
+
+  private def testDataForElyTest02() = {
+    sqlu"""
+       |Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID) values ('190200','27','20','0','5','4278','4387','70107880',to_date('96.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(468091.153,7061440.566,0,0,468190.85,7061398.364,0,109)),null,'8','1','0','54940');
+       |Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('70107880',null,'3','0','108,261',null,'1817196','1476392565000',to_timestamp('18.01.31 18:09:37,765367000','RR.MM.DD HH24:MI:SSXFF'),'1');
+      """
   }
 
   test("Project Links should be continuous if geometry is continuous") {
@@ -316,6 +334,30 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
 
       validationErrors.size shouldNot be (0)
       validationErrors.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be (1)
+    }
+  }
+
+  test("validator should return errors if discontinuity is 3 and next road part ely is equal") {
+    runWithRollback {
+      testDataForElyTest01()
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), 16320L, 1L, Discontinuity.ChangingELYCode)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+
+      val validationErrors = ProjectValidator.checkProjectElyCodes(project,projectLinks)
+      validationErrors.size should be (1)
+      validationErrors.head.validationError.value should be (RoadNotEndingInElyBorder.value)
+    }
+  }
+
+  test("validator should return errors if discontinuity is anything BUT 3 and next road part ely is different") {
+    runWithRollback {
+      testDataForElyTest02()
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), 27L, 19L, Discontinuity.Continuous,12L)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+
+      val validationErrors = ProjectValidator.checkProjectElyCodes(project,projectLinks)
+      validationErrors.size should be (1)
+      validationErrors.head.validationError.value should be (RoadContinuesInAnotherEly.value)
     }
   }
 }
