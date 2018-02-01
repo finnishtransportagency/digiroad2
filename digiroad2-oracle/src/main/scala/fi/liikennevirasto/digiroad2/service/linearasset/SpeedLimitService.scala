@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
+import java.util
+
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -52,11 +54,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   private def getFilledTopologyAndRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false) = {
     val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks, showSpeedLimitsHistory)
-    val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(change, roadLinks)
+    val mappedChanges = LinearAssetUtils.getMappedChanges(change)
+    val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet))
 
     // filter those road links that have already been projected earlier from being reprojected
-    val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, change))
+    val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, mappedChanges))
 
     val projectableTargetRoadLinks = roadLinks.filter(
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)

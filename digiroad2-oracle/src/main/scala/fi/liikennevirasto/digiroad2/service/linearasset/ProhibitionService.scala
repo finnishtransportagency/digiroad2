@@ -36,7 +36,8 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     val linkIds = roadLinks.map(_.linkId)
-    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
+    val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
+    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     withDynTransaction {
           dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
     }.filterNot(_.expired)
