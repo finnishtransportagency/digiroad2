@@ -438,7 +438,7 @@ object ProjectValidator {
     def checkValidation(roads: Seq[BaseRoadAddress]) = {
       val existingElyCodes = roads.map(_.ely).distinct
       val addresses = RoadAddressDAO.fetchByRoad(roads.head.roadNumber).groupBy(_.roadPartNumber).filterNot(_._1 <= roads.head.roadPartNumber).toSeq.sortBy(_._1)
-      if(addresses.head._2.map(_.ely).distinct.head != existingElyCodes.distinct.head)
+      if(addresses.head._2.map(_.ely).distinct.head == existingElyCodes.distinct.head)
         error(ValidationErrorList.RoadNotEndingInElyBorder)(roads)
       else
         Option.empty[ValidationErrorDetails]
