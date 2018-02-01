@@ -1089,7 +1089,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startAddress = 0L
       val endAddress = 250L
       val assetValue = "9"
-      val roadSide = RoadSide.Left
 
       val trUrbanArea = TierekisteriUrbanAreaData(roadNumber, roadPart, roadPart, Track.RightSide, startAddress, endAddress, assetValue)
       val addressSection = AddressSection(roadNumber, roadPart, Track.RightSide, startAddress, Some(endAddress))
@@ -1105,7 +1104,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001), LinearAssetTypes.numericValuePropertyId)
       asset.size should be (1)
       asset.head.linkId should be(5001)
-      asset.head.sideCode should be(roadSide.value)
+      asset.head.sideCode should be(SideCode.AgainstDigitizing.value)
       asset.head.value should be(Some(NumericValue(80)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
@@ -1164,7 +1163,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val trUrbanArea = TierekisteriUrbanAreaData(roadNumber, roadPart, roadPart, Track.RightSide, 230, 250, assetValue)
       val addressSection = AddressSection(roadNumber, roadPart, Track.RightSide, startAddressMValue, Some(endAddressMValue))
 
-      val ra = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val ra = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
