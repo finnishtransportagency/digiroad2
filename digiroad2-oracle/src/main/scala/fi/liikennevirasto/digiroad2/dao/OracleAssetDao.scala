@@ -76,18 +76,8 @@ class OracleAssetDao {
     sql"""select ID, ASSET_TYPE_ID from ASSET where ID in (#${ids.mkString(",")})""".as[(Long, Int)].list
   }
 
-
   def getVerifiableAssetTypes: Seq[String] = {
     val assetTypes = sql"""select name from asset_type where verifiable = 1""".as[(String)].list
     assetTypes
-  }
-
-  def getMunicipalitiesNameByCode(codes: Set[Int]): List[(Int, String)] = {
-    val filter = if (codes.nonEmpty) {"where id in (" + codes.mkString(",") + ")" } else ""
-
-    sql"""
-      select id, name_fi from municipality
-      #$filter
-    """.as[(Int, String)].list
   }
 }
