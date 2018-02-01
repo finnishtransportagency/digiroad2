@@ -1274,7 +1274,6 @@ object RoadAddressDAO {
     Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 
-  //TODO this can be removed in future. initial history import runs once -> There will be no more Subsequent terminations
   def setSubsequentTermination(linkIds: Set[Long]): Unit = {
     val roadAddresses = fetchByLinkId(linkIds, true, true).filter(_.terminated == NoTermination)
     expireById(roadAddresses.map(_.id).toSet)

@@ -1424,16 +1424,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def updateTerminationForHistory(terminatedLinkIds: Set[Long], splitReplacements: Seq[ProjectLink]): Unit = {
-    //TODO this can be removed in future. initial history import runs once -> There will be no more Subsequent terminations
     RoadAddressDAO.setSubsequentTermination(terminatedLinkIds)
-
     val mapping = RoadAddressSplitMapper.createAddressMap(splitReplacements)
     val splitTerminationLinkIds = mapping.map(_.sourceLinkId).toSet
     val splitCurrentRoadAddressIds = splitReplacements.map(_.roadAddressId).toSet
     val linkGeomSources = splitReplacements.map(pl => pl.linkId -> pl.linkGeomSource).toMap
     val addresses = RoadAddressDAO.fetchByLinkId(splitTerminationLinkIds, includeFloating = true, includeHistory = true,
       includeTerminated = false, splitCurrentRoadAddressIds) // Do not include current ones as they're created separately with other project links
-    //TODO this copy Subsequent can be removed in future -> There will be no more Subsequent terminations
     val splitAddresses = addresses.flatMap(RoadAddressSplitMapper.mapRoadAddresses(mapping)).map(ra =>
       ra.copy(terminated = if (splitTerminationLinkIds.contains(ra.linkId)) Subsequent else NoTermination,
         linkGeomSource = linkGeomSources(ra.linkId)))
