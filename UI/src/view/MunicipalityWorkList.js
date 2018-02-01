@@ -1,26 +1,26 @@
 (function (root) {
   root.MunicipalityWorkList = function(){
     WorkListView.call(this);
+    var me = this;
     this.initialize = function(mapBackend){
       backend = mapBackend;
-      bindExternalEventHandlers();
-      bindEvents();
+      me.bindExternalEventHandlers();
+      me.bindEvents();
     };
-  };
-
-  this.bindExternalEventHandlers = function() {
-    eventbus.on('roles:fetched', function(roles) {
-      userRoles = roles;
-    });
-  };
-  var bindEvents = function () {
-    eventbus.on('municipality:select', function(listP) {
-      $('.container').hide();
-      $('#work-list').show();
-      $('body').addClass('scrollable');
-      municipalityList = listP;
-      generateWorkList(listP);
-    });
+    this.bindExternalEventHandlers = function() {
+      eventbus.on('roles:fetched', function(roles) {
+        userRoles = roles;
+      });
+    };
+    this.bindEvents = function () {
+      eventbus.on('municipality:select', function(listP) {
+        $('.container').hide();
+        $('#work-list').show();
+        $('body').addClass('scrollable');
+        municipalityList = listP;
+        generateWorkList(listP);
+      });
+    };
   };
 
   var backend;

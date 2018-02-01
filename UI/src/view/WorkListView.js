@@ -2,7 +2,7 @@
   root.WorkListView = function(){
     var me = this;
     this.initialize = function() {
-      bindEvents();
+      me.bindEvents();
       $(window).on('hashchange', this.showApp);
     };
     this.showApp = function() {
@@ -11,7 +11,7 @@
       $('body').removeClass('scrollable').scrollTop(0);
     };
 
-    var bindEvents = function() {
+    this.bindEvents = function() {
       eventbus.on('workList:select', function(layerName, listP) {
         $('.container').hide();
         $('#work-list').show();
@@ -19,6 +19,8 @@
         me.generateWorkList(layerName, listP);
       });
     };
+
+    this.bindExternalEventHandlers = function() {};
 
     this.workListItemTable = function(layerName, workListItems, municipalityName) {
       var municipalityHeader = function(municipalityName, totalCount) {

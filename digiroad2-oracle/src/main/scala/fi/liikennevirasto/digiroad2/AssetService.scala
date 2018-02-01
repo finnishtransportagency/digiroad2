@@ -13,16 +13,6 @@ trait AssetOperations {
       assetDao.getMunicipalityById(id)
     }
   }
-    def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): (List[Map[String, Any]]) = {
-    val municipalities = withDynTransaction {
-      assetDao.getMunicipalitiesNameByCode(municipalityCodes)
-    }
-
-    municipalities.sortBy(_._2).map { municipality =>
-      Map("id" -> municipality._1,
-          "name" -> municipality._2)
-    }
-  }
 }
 
 class AssetService(eventbus: DigiroadEventBus) extends AssetOperations {

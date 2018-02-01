@@ -29,7 +29,7 @@ class MunicipalityDao {
     """.as[String].list
   }
 
-  def getMunicipalitiesNameandIdByCode(codes: Set[Int]): List[(Int, String)] = {
+  def getMunicipalitiesNameAndIdByCode(codes: Set[Int]): List[(Int, String)] = {
     val filter = if (codes.nonEmpty) {"where id in (" + codes.mkString(",") + ")" } else ""
 
     sql"""

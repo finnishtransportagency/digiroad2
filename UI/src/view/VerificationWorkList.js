@@ -1,13 +1,12 @@
 (function (root) {
   root.VerificationWorkList = function(){
-    var me = this;
     WorkListView.call(this);
-
+    var me = this;
     this.initialize = function(){
-      bindEvents();
+      me.bindEvents();
     };
 
-    var bindEvents = function() {
+    this.bindEvents = function() {
       eventbus.on('verificationList:select', function(layerName, listP) {
         $('.container').hide();
         $('#work-list').show();

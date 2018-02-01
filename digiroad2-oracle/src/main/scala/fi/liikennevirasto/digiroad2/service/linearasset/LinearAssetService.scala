@@ -789,11 +789,10 @@ trait LinearAssetOperations {
     }
   }
 
-  def getMunicipalitiesNameByCode(municipalityCodes: Set[Int]): Map[String, Seq[String]] = {
-    val municipalities = withDynTransaction {
-      municipalityDao.getMunicipalitiesNameByCode(municipalityCodes)
+  def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[(Int, String)] = {
+    withDynSession {
+      municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
     }
-    Map("municipality" -> municipalities)
   }
 }
 

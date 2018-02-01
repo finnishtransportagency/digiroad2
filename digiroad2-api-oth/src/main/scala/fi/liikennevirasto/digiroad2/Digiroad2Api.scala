@@ -697,8 +697,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val usedService =  getLinearAssetService(typeId)
-          verificationService.getMunicipalityInfo(typeId, boundingRectangle)
+      verificationService.getMunicipalityInfo(typeId, boundingRectangle)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -1244,8 +1243,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/municipalities/unverified") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-    assetService.getMunicipalitiesNameByCode(municipalities)
-
+    linearAssetService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_._2).map { municipality =>
+      Map("id" -> municipality._1,
+        "name" -> municipality._2)
+    }
   }
 
   get("/municipalities/:municipalityCode/assetTypes") {
