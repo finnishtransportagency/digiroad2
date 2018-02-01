@@ -282,6 +282,8 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
 
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
 
+  lazy val speedLimitService: SpeedLimitService = new SpeedLimitService(eventbus, vvhClient, roadLinkService)
+
   protected def calculateMeasures(roadAddress: ViiteRoadAddress, section: AddressSection): Option[Measures] = {
     val startAddrMValueCandidate = calculateStartLrmByAddress(roadAddress, section)
     val endAddrMValueCandidate = calculateEndLrmByAddress(roadAddress, section)
@@ -544,10 +546,10 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
   override protected def createLinearAsset(roadLink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData) = {
     val speedLimit = getSpeedLimitValue(trAssetData)
     if (measures.startMeasure != measures.endMeasure) {
-      val assetId = linearAssetService.dao.createLinearAsset(typeId, roadLink.linkId, false, getSideCode(roadAddress.sideCode, trAssetData.roadSide).value,
+      val assetId = speedLimitService.dao.createLinearAsset(typeId, roadLink.linkId, false, getSideCode(roadAddress.sideCode, trAssetData.roadSide).value,
         measures, s"batch_process_$assetName", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink.linkSource.value))
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, speedLimit.getOrElse(-1))
+      speedLimitService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, speedLimit.getOrElse(-1))
       println(s"Created OTH Speed Limit assets for road ${roadLink.linkId} from TR data with assetId $assetId")
     }
   }
@@ -830,9 +832,6 @@ class EuropeanRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOp
 }
 
 class SpeedLimitAssetTierekisteriImporter extends LinearAssetTierekisteriImporterOperations{
-
-  lazy val speedLimitService: SpeedLimitService = new SpeedLimitService(eventbus, vvhClient, roadLinkService)
-
   override def typeId: Int = 20
   override def assetName = "speedlimit"
   override type TierekisteriClientType = TierekisteriSpeedLimitAssetClient

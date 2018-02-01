@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleSpeedLimitDao, OracleLinearAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
 import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
@@ -27,6 +27,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val speedLimitDao = new OracleSpeedLimitDao(mockVVHClient, mockRoadLinkService)
   val oracleAssetDao = new OracleAssetDao
   val mockTrImporter: TierekisteriDataImporter = MockitoSugar.mock[TierekisteriDataImporter]
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
@@ -1018,7 +1019,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadLinkService.getVVHRoadLinksF(any[Int])).thenReturn(Seq(vvhRoadLink))
 
       testSpeedLimit.importAssets()
-      val asset = linearAssetDao.getCurrentSpeedLimitsByLinkIds(Some(Set(5001))).head
+      val asset = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(5001))).head
 
       asset.linkId should be (5001)
       asset.value should be (Some(NumericValue(assetValue)))
@@ -1064,10 +1065,10 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
 
       testSpeedLimit.importAssets()
-      val assetI = linearAssetDao.getCurrentSpeedLimitsByLinkIds(Some(Set(5001))).head
+      val assetI = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(5001))).head
 
       testSpeedLimit.updateAssets(DateTime.now())
-      val assetU = linearAssetDao.getCurrentSpeedLimitsByLinkIds(Some(Set(5001))).head
+      val assetU = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(5001))).head
 
       assetU.startMeasure should not be (assetI.startMeasure)
       assetU.endMeasure should be (assetI.endMeasure)
