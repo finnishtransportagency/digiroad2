@@ -249,7 +249,7 @@
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
-      GroupedPointAssetForm.initialize(pointAsset.typeIds, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
+      GroupedPointAssetForm.initialize(pointAsset.typeIds, pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, roadCollection, pointAsset.propertyData);
     });
 
 

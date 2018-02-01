@@ -692,7 +692,13 @@
         return true;
       },
       nonModifiableBox: true,
-      label: new WeightLimitLabel()
+      label: new WeightLimitLabel(),
+      propertyData: [
+        {'propertyTypeId': 320, 'propertyType': 'number', 'publicId': "suurin_sallittu_massa_mittarajoitus", values: []},
+        {'propertyTypeId': 330, 'propertyType': 'number', 'publicId': "yhdistelman_suurin_sallittu_massa", values: []},
+        {'propertyTypeId': 340, 'propertyType': 'number', 'publicId': "suurin_sallittu_akselimassa", values: []},
+        {'propertyTypeId': 350, 'propertyType': 'number', 'publicId': "suurin_sallittu_telimassa", values: []}
+      ]
     }
   ];
 })(this);

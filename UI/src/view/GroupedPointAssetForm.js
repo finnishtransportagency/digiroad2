@@ -3,22 +3,13 @@
         initialize: bindEvents
     };
 
-    var enumeratedPropertyValues = null;
-
-    function bindEvents(typeIds, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
+    function bindEvents(typeIds, selectedAsset, layerName, localizedTexts, roadCollection, propertiesData) {
         var rootElement = $('#feature-attributes');
-
-        //backend.getAssetEnumeratedPropertyValues(typeId);
 
         eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function () {
             if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-                renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection, collection, typeIds);
+                renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData);
             }
-        });
-
-        eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
-            if(event.assetType == typeId)
-                enumeratedPropertyValues = event.enumeratedPropertyValues;
         });
 
         eventbus.on(layerName + ':unselected', function() {
@@ -26,43 +17,43 @@
         });
     }
 
-    function renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection, collection, typeIds) {
-        var id = selectedAsset.getId();
-
+    function renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData) {
         var title = localizedTexts.title;
         var header = '<header><span>' + title + '</span></header>';
         var form = '';
+        var propertyData;
+
         _.forEach(typeIds, function(typeId) {
-            form += renderAssetFormElements(selectedAsset, localizedTexts, collection, typeId);
+            propertyData = _.filter(propertiesData, function (property) {
+                return property.propertyTypeId == typeId;
+            });
+
+            form += renderAssetFormElements(selectedAsset, typeId, propertyData);
         });
 
         rootElement.html(header + '<div class="wrapper">' + form + '</div>');
     }
 
-    function renderAssetFormElements(selectedAsset, localizedTexts, collection, typeId) {
-        var asset = selectedAsset.get();
+    function renderAssetFormElements(selectedAsset, typeId, propertyData) {
+        var asset = _.filter(selectedAsset.get().assets, function (assets) {
+            return assets.typeId == typeId;
+        });
+
         return '' +
             '  <div class="form form-horizontal form-dark form-pointasset">' +
             '    <div class="form-group">' +
             '      <p class="form-control-static asset-type-info">' + weightLimitsTypes[typeId] + '</p>' +
+            '      <p class="form-control-static asset-type-info">' + ('ID: ' + asset[0].id || '') + '</p>' +
             '    </div>' +
             '    <div class="form-group">' +
-            '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
+            '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset[0].createdBy || '-') + ' ' + (asset[0].createdAt || '') + '</p>' +
             '    </div>' +
             '    <div class="form-group">' +
-            '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
+            '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset[0].modifiedBy || '-') + ' ' + (asset[0].modifiedAt || '') + '</p>' +
             '    </div>' +
-            //renderValueElement(asset, collection) +
+            renderValueElement(asset[0], propertyData) +
             '  </div>';
     }
-
-    var safetyEquipments = {
-        1: 'Rautatie ei käytössä',
-        2: 'Ei turvalaitetta',
-        3: 'Valo/äänimerkki',
-        4: 'Puolipuomi',
-        5: 'Kokopuomi'
-    };
 
     var weightLimitsTypes = {
         320: 'SUURIN SALLITTU MASSA',
@@ -71,36 +62,25 @@
         350: 'SUURIN SALLITTU TELIMASSA'
     };
 
-    //var textHandler = function (property) {
-    //    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
-    //    return '' +
-    //        '    <div class="form-group editable form-traffic-sign">' +
-    //        '        <label class="control-label">' + property.localizedName + '</label>' +
-    //        '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-    //        '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
-    //        '    </div>';
-    //};
+    var numberHandler = function (value, property) {
+        return '' +
+            '    <div class="form-group editable form-grouped-point">' +
+            '        <label class="control-label-grouped-point">' + property.localizedName + '</label>' +
+            '        <p class="form-control-static-grouped-point">' + ( (value > 0) ? (value + ' kg') : '-') + '</p>' +
+            '    </div>';
+    };
 
-    function renderValueElement(asset) {
-         if (asset.safetyEquipment) {
-            return '' +
-                '    <div class="form-group editable form-railway-crossing">' +
-                '      <label class="control-label">Turvavarustus</label>' +
-                '      <p class="form-control-static">' + safetyEquipments[asset.safetyEquipment] + '</p>' +
-                '      <select class="form-control" style="display:none">  ' +
-                '        <option value="1" '+ (asset.safetyEquipment === 1 ? 'selected' : '') +'>Rautatie ei käytössä</option>' +
-                '        <option value="2" '+ (asset.safetyEquipment === 2 ? 'selected' : '') +'>Ei turvalaitetta</option>' +
-                '        <option value="3" '+ (asset.safetyEquipment === 3 ? 'selected' : '') +'>Valo/äänimerkki</option>' +
-                '        <option value="4" '+ (asset.safetyEquipment === 4 ? 'selected' : '') +'>Puolipuomi</option>' +
-                '        <option value="5" '+ (asset.safetyEquipment === 5 ? 'selected' : '') +'>Kokopuomi</option>' +
-                '      </select>' +
-                '    </div>' +
-                '    <div class="form-group editable form-railway-crossing">' +
-                '        <label class="control-label">' + 'Nimi' + '</label>' +
-                '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
-                '    </div>';
-        } else {
-            return '';
-        }
+    function renderValueElement(asset, propertyData) {
+        var allGroupedPointAssetProperties = propertyData;
+        var components = _.reduce(_.map(allGroupedPointAssetProperties, function (feature) {
+            feature.localizedName = window.localizedStrings[feature.publicId];
+            var propertyType = feature.propertyType;
+
+            if (propertyType === "number")
+                return numberHandler(asset.limit, feature);
+
+        }), function(prev, curr) { return prev + curr; }, '');
+
+        return components;
     }
 })(this);
