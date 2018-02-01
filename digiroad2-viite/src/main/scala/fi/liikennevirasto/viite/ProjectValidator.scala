@@ -181,19 +181,21 @@ object ProjectValidator {
     }
 
     def checkProjectElyCodes:Seq[ValidationErrorDetails] = {
-      val grouped = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).map(group => group._1 -> group._2.sortBy(_.endAddrMValue))
-      project.ely.get match {
-        case 3 => {
-            firstElyBorderCheck(project, grouped)
-        }
-        case _ => {
-            secondElyBorderCheck(project, grouped)
-        }
-      }
+      val workedProjectLinks = projectLinks.filterNot(_.status == LinkStatus.NotHandled)
+      if (workedProjectLinks.nonEmpty) {
+        val grouped = workedProjectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).map(group => group._1 -> group._2.sortBy(_.endAddrMValue))
+        val projectLinksDiscontinuity = workedProjectLinks.map(_.discontinuity.value).distinct.toList
+        if(projectLinksDiscontinuity.contains(Discontinuity.ChangingELYCode.value))
+          firstElyBorderCheck(project, grouped)
+        else
+          secondElyBorderCheck(project, grouped)
+      } else Seq.empty[ValidationErrorDetails]
     }
 
+    val elyCodesResults = checkProjectElyCodes
+
     checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ elyCodesResults
   }
 
   def checkRemovedEndOfRoadParts(project: RoadAddressProject): Seq[ValidationErrorDetails] = {
@@ -428,27 +430,22 @@ object ProjectValidator {
     def error(validationError: ValidationError)(pl: Seq[BaseRoadAddress]):Option[ValidationErrorDetails] = {
       val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
       if (linkIds.nonEmpty)
-        Some(ValidationErrorDetails(project.id, validationError, linkIds,
-          points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
+        Some(ValidationErrorDetails(project.id, validationError, linkIds.distinct,
+          points.map(p => ProjectCoordinates(p.x, p.y, 12)).distinct, None))
       else
         None
     }
     def checkValidation(roads: Seq[BaseRoadAddress]) = {
-      if(roads.forall(_.ely == 3))
+      val existingElyCodes = roads.map(_.ely).distinct
+      val addresses = RoadAddressDAO.fetchByRoad(roads.head.roadNumber).groupBy(_.roadPartNumber).filterNot(_._1 <= roads.head.roadPartNumber).toSeq.sortBy(_._1)
+      if(addresses.head._2.map(_.ely).distinct.head != existingElyCodes.distinct.head)
         error(ValidationErrorList.RoadNotEndingInElyBorder)(roads)
       else
         Option.empty[ValidationErrorDetails]
     }
+
     val validationProblems = groupedProjectLinks.flatMap(group => {
-      //Possibility to search for road addresses
-      val roadNumber = group._1._1
-      val roadPartNumber = group._1._2
-
-      val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
-      val invalidAddresses = checkValidation(addresses)
-      val invalidProjectLinks = checkValidation(group._2)
-
-      invalidProjectLinks ++ invalidAddresses
+      checkValidation(group._2)
     })
      validationProblems.toSeq
   }
@@ -461,31 +458,26 @@ object ProjectValidator {
         val zoomPoint = GeometryUtils.midPointGeometry(links.minBy(_.endAddrMValue).geometry)
         links.map(l => (l.linkId, zoomPoint, l.ely))
       }).unzip3
+
       if(gLinkIds.nonEmpty)
-        Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq,
-          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq, Some(RoadContinuesInAnotherElyMessage.format(gEly.mkString(", ")))))
+        Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq.distinct,
+          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Some(RoadContinuesInAnotherElyMessage.format(gEly.toSet.mkString(", ")))))
       else
         Option.empty[ValidationErrorDetails]
     }
     def checkValidation(roads: Seq[BaseRoadAddress]) = {
-      val (sameEly, diffEly) = roads.partition(_.ely != project.ely.get)
-      if(diffEly.nonEmpty){
-        error(ValidationErrorList.RoadContinuesInAnotherEly)(diffEly)
+      val existingElyCodes = roads.map(_.ely).distinct
+      val addresses = RoadAddressDAO.fetchByRoad(roads.head.roadNumber).groupBy(_.roadPartNumber).filterNot(_._1 <= roads.head.roadPartNumber).toSeq.sortBy(_._1)
+      if(addresses.head._2.map(_.ely).distinct.head != existingElyCodes.head) {
+        error(ValidationErrorList.RoadContinuesInAnotherEly)(roads)
       } else {
         Option.empty[ValidationErrorDetails]
       }
     }
     val validationProblems = groupedProjectLinks.flatMap(group => {
-      //Possibility to search for road addresses
-      val roadNumber = group._1._1
-      val roadPartNumber = group._1._2
       val projectLink = group._2
-
-      val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
-      val invalidAddresses = checkValidation(addresses)
       val invalidProjectLinks = checkValidation(projectLink)
-
-    invalidAddresses ++ invalidProjectLinks
+      invalidProjectLinks
 
     })
     validationProblems.toSeq
