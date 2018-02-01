@@ -117,12 +117,11 @@ trait AddressLinkBuilder {
     * @return fused roadaddress seq
     */
   def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-    val oldRoadAddresses = roadAddresses.filterNot(x => x.id == (NewRoadAddress))
     if (roadAddresses.size == 1) {
       roadAddresses
     } else {
-      val newAddresses = roadAddresses.filter(x => x.id == (NewRoadAddress)) //addresses that do not yet have roadaddress in db and do not have LRM position yet
-      val historyGrouping = oldRoadAddresses.groupBy(record =>
+      val (newAddresses, oldAddresses) = roadAddresses.partition(_.id == NewRoadAddress)
+      val historyGrouping = oldAddresses.groupBy(record =>
         record.lrmPositionId)
       val linksWithHistoryRemoved = historyGrouping.filterNot(x => x._2.size > 1).flatMap(_._2).toSeq
       //check which addresses contain history and removes them from fusing we might want to create fusing batchjob later with defined rules to fuse links containing history
@@ -225,7 +224,7 @@ trait AddressLinkBuilder {
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, nextSegment.roadType, nextSegment.track,
         discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy,
         nextSegment.lrmPositionId, nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
-        calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated, nextSegment.commonHistoryId))
+        calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated, NewCommonHistoryId))
 
     } else Seq(nextSegment, previousSegment)
 

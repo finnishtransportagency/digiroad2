@@ -1166,10 +1166,12 @@ object RoadAddressDAO {
     val savedIds = createAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue,
         address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
-      val (nextId, nextCommonHistoryId) = (address.id, address.commonHistoryId) match {
-        case (NewRoadAddress, NewCommonHistoryId) => (Sequences.nextViitePrimaryKeySeqValue, Sequences.nextCommonHistorySeqValue)
-        case (_, _) => (address.id, address.commonHistoryId)
-      }
+      val nextId = if (address.id == NewRoadAddress)
+        Sequences.nextViitePrimaryKeySeqValue
+      else address.id
+      val nextCommonHistoryId = if (address.commonHistoryId == NewCommonHistoryId)
+        Sequences.nextCommonHistorySeqValue
+      else address.commonHistoryId
       addressPS.setLong(1, nextId)
       addressPS.setLong(2, lrmId)
       addressPS.setLong(3, address.roadNumber)
@@ -1272,6 +1274,7 @@ object RoadAddressDAO {
     Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 
+  //TODO this can be removed in future. initial history import runs once -> There will be no more Subsequent terminations
   def setSubsequentTermination(linkIds: Set[Long]): Unit = {
     val roadAddresses = fetchByLinkId(linkIds, true, true).filter(_.terminated == NoTermination)
     expireById(roadAddresses.map(_.id).toSet)
