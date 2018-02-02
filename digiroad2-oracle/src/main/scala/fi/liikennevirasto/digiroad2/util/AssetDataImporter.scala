@@ -660,12 +660,12 @@ class AssetDataImporter {
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, linkId, sideCode, value, startMeasure, endMeasure, linkSource) = speedLimitLink
-        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None, LinkGeomSource.apply(linkSource))
+        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", 20, linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None, LinkGeomSource.apply(linkSource))
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
       val speedLimitsToFloat = speedLimitLinks.map(_._1).toSet
-      dao.floatLinearAssets(speedLimitsToFloat)
+      dao.floatSpeedLimits(speedLimitsToFloat)
       println(s"removed ${speedLimitsToFloat.size} multilink speed limits")
     }
   }
