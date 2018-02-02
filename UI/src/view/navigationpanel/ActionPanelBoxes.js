@@ -693,7 +693,7 @@
 
   ActionPanelBoxes.HeightLimitationBox = function (asset){
     var label = [
-      {index: 1 , labeling: 'suurin sallittu korkeus'}
+      {index: 1 , labeling: 'Suurin sallittu korkeus'}
     ];
 
     return new ActionPanelBoxes.LimitationBox(asset, label);
@@ -701,7 +701,7 @@
 
   ActionPanelBoxes.WidthLimitationBox = function (asset) {
     var label = [
-      {index: 1 , labeling: 'suurin sallittu leveys'}
+      {index: 1 , labeling: 'Suurin sallittu leveys'}
     ];
 
     return new ActionPanelBoxes.LimitationBox(asset, label);
