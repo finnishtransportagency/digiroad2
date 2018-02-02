@@ -31,7 +31,7 @@ object DataFixture {
     props
   }
 
-  lazy val konvTableNameProd = "vvh_tiehistoria_heina2017"
+  lazy val konvTableNameProd = "VVH_TIEOSOITE_TAMMI2018"
 
   lazy val konvTableNameDev = konvTableNameProd // TODO change to for e.g. "vvh_tiehistoria_heina2017_devview"
 
@@ -85,17 +85,17 @@ object DataFixture {
       println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
     } else {
       println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      val (vvhClientProd, conversionTable) = if(isDevDatabase) {
-        (Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/"))), konvTableNameDev)
+      val conversionTable = if (isDevDatabase) {
+        konvTableNameDev
       } else {
-        (None, konvTableNameProd)
+        konvTableNameProd
       }
       val importOptions = ImportOptions(
         onlyComplementaryLinks = false,
         useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
         geometryAdjustedTimeStamp.toLong, conversionTable,
         onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
-      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
+      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
 
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
