@@ -83,7 +83,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
           roadAddressImporter
         }
       }
-      assetDataImporter.importRoadAddressData(null, mockVVHClient, None, importOptions)
+      assetDataImporter.importRoadAddressData(null, mockVVHClient, importOptions)
 
       val insertedRoadAddresses = RoadAddressDAO.fetchByLinkId(Set(6656730), true, true, true)
 
@@ -192,7 +192,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
           roadAddressImporter
         }
       }
-      assetDataImporter.importRoadAddressData(null, mockVVHClient, None, importOptions)
+      assetDataImporter.importRoadAddressData(null, mockVVHClient, importOptions)
 
       val insertedRoadAddresses = RoadAddressDAO.fetchByLinkId(Set(1000), true, true, true)
 
