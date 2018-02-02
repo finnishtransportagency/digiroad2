@@ -70,13 +70,20 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
   }
 
   private def testDataForElyTest01() = {
-    sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('70131744',null,'3','0','38,517',null,'2583382','1476392565000',to_timestamp('18.01.31 18:10:26,071227000','RR.MM.DD HH24:MI:SSXFF'),'1')""".execute
-    sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED) values ('227771','16320','2','0','5','1270','1309','70131744',to_date('82.09.01','RR.MM.DD'),null,'TR',to_date('09.12.14','RR.MM.DD'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(525621.588,7028822.403,0,0,525658.969,7028813.116,0,39)),null,'8','1','0')""".execute
+    val roadAddressId = RoadAddressDAO.getNextRoadAddressId
+    val ra = Seq(RoadAddress(roadAddressId, 16320L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 1270L, 1309L,
+      Some(DateTime.parse("1982-09-01")), None, Option("TR"), 0, 2583382, 0.0, 38.517, SideCode.AgainstDigitizing, 1476392565000L, (None, None), false,
+      Seq(Point(525621.588,7028822.403), Point(525658.969,7028813.116)), LinkGeomSource.NormalLinkInterface, 8))
+    RoadAddressDAO.create(ra)
+
   }
 
   private def testDataForElyTest02() = {
-    sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('70107880',null,'3','0','108,261',null,'1817196','1476392565000',to_timestamp('18.01.31 18:09:37,765367000','RR.MM.DD HH24:MI:SSXFF'),'1')""".execute
-    sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED) values ('190200','27','20','0','5','4278','4387','70107880',to_date('96.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(468091.153,7061440.566,0,0,468190.85,7061398.364,0,109)),null,'8','1','0')""".execute
+    val roadAddressId = RoadAddressDAO.getNextRoadAddressId
+    val ra = Seq(RoadAddress(roadAddressId, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 4278L, 4387L,
+      Some(DateTime.parse("1996-01-01")), None, Option("TR"), 0, 1817196, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), false,
+      Seq(Point(468091.153,7061440.566), Point(468190.85,7061398.364)), LinkGeomSource.NormalLinkInterface, 8))
+    RoadAddressDAO.create(ra)
   }
 
   test("Project Links should be continuous if geometry is continuous") {
