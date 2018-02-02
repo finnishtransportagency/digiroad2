@@ -48,7 +48,7 @@ class PointMassLimitationService(roadLinkService: RoadLinkService, dao: OraclePo
           prev.exists( massLimitationSeq => massLimitationSeq.assets.exists(persisted => persisted.id == asset.id)) match {
             case true => prev
             case false =>
-              val assetsOnRange = assets.filter( weighGroup => GeometryUtils.geometryLength(Seq(Point(asset.lon, asset.lat), Point(weighGroup.lon, weighGroup.lat))) < 1 )
+              val assetsOnRange = assets.filter( weighGroup => GeometryUtils.geometryLength(Seq(Point(asset.lon, asset.lat), Point(weighGroup.lon, weighGroup.lat))) < GeometryUtils.getDefaultEpsilon )
               prev ++ Seq(MassLimitationPointAsset(asset.lon, asset.lat, assetsOnRange))
           }
       }

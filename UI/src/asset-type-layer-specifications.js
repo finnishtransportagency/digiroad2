@@ -638,7 +638,7 @@
       title: 'TR suurin sallittu korkeus',
       allowComplementaryLinks: true,
       legendValues: [
-        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
       ],
       formLabels: {
@@ -657,7 +657,7 @@
       title: 'TR suurin sallittu leveys',
       allowComplementaryLinks: true,
       legendValues: [
-        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
       ],
       formLabels: {
@@ -681,7 +681,7 @@
       allowComplementaryLinks: true,
       allowGrouping: false,
       legendValues: [
-        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
       ],
       formLabels: {

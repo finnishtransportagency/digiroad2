@@ -7,6 +7,10 @@ object GeometryUtils {
   // Default value of minimum distance where locations are considered to be same
   final private val DefaultEpsilon = 0.01
 
+  def getDefaultEpsilon(): Double = {
+    DefaultEpsilon
+  }
+
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last

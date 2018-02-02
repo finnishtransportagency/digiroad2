@@ -622,10 +622,10 @@
     }).join('');
 
     var label = labeling ? labeling : [
-        {index : 0,  labeling: 'suurin sallittu massa'},
-        {index : 1,  labeling: 'yhdistelmän suurin sallittu massa'},
-        {index : 2 , labeling: 'suurin sallittu akselimassa'},
-        {index : 3 , labeling: 'suurin sallittu telimassa'}
+        {index : 0,  labeling: 'Suurin sallittu massa'},
+        {index : 1,  labeling: 'Yhdistelmän suurin sallittu massa'},
+        {index : 2 , labeling: 'Suurin sallittu akselimassa'},
+        {index : 3 , labeling: 'Suurin sallittu telimassa'}
       ];
 
     var labelingTemplate = _(label).map(function (value) {
