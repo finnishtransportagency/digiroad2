@@ -467,12 +467,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def getGeometryWithTimestamp(linkId: Long, timeStamp: Long, roadLinks: Seq[RoadLink],
                                  vvhHistoryLinks: Seq[VVHHistoryRoadLink]): Seq[Point] = {
-      val roadLinkMatch = roadLinks.find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
-      val historyMatch = vvhHistoryLinks.find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
-      if (roadLinkMatch.nonEmpty || historyMatch.nonEmpty) {
-        roadLinkMatch.orElse(historyMatch).get
+      val matchingLinksGeometry = (roadLinks++vvhHistoryLinks).find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
+      if (matchingLinksGeometry.nonEmpty) {
+        matchingLinksGeometry.get
       } else {
-        roadLinks.find(rl => rl.linkId == linkId).map(_.geometry).orElse(vvhHistoryLinks.find(_.linkId == linkId).map(_.geometry))
+        (roadLinks++vvhHistoryLinks).find(rl => rl.linkId == linkId).map(_.geometry)
           .getOrElse(throw new InvalidAddressDataException(s"Geometry with linkId $linkId and timestamp $timeStamp not found!"))
       }
     }
@@ -898,8 +897,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
-    RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
+    RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet).foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) if mod.geometry.nonEmpty =>
           val geom = GeometryUtils.truncateGeometry3D(mod.geometry, ra.startMValue, ra.endMValue)
