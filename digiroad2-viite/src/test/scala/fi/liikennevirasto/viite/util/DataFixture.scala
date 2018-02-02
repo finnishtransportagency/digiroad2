@@ -81,7 +81,6 @@ object DataFixture {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
-    val importDate = dr2properties.getProperty("digiroad2.viite.historyImportDate", "")
     if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
       println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
     } else {
@@ -95,7 +94,6 @@ object DataFixture {
         onlyComplementaryLinks = false,
         useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
         geometryAdjustedTimeStamp.toLong, conversionTable,
-        importDate,
         onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
       dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
 

@@ -116,14 +116,14 @@ class AssetDataImporter {
 
     withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
-      sqlu"""DELETE FROM ROAD_ADDRESS""".execute
-      sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
       sqlu"""DELETE FROM PROJECT""".execute
       sqlu"""DELETE FROM ROAD_NETWORK_ERRORS""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
       sqlu"""DELETE FROM LRM_POSITION WHERE
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println(s"${DateTime.now()} - Old address data removed")
@@ -248,7 +248,7 @@ class AssetDataImporter {
             0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue
           else
-            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode)
+            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode, commonHistoryId = fi.liikennevirasto.viite.NewCommonHistoryId)
 
     val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             0.0
@@ -256,7 +256,7 @@ class AssetDataImporter {
             splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue - splitMValue
           else
-            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode)
+            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode, commonHistoryId = fi.liikennevirasto.viite.NewCommonHistoryId)
     Seq(roadAddressA, roadAddressB)
   }
 
@@ -343,6 +343,6 @@ class AssetDataImporter {
 
 }
 
-case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String, importDate: String, onlyCurrentRoads: Boolean)
+case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String, onlyCurrentRoads: Boolean)
 case class RoadPart(roadNumber: Long, roadPart: Long, ely: Long)
 

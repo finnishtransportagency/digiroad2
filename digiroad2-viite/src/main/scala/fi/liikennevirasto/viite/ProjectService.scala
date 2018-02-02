@@ -1399,7 +1399,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
             pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), 0L, pl.linkId,
             pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false,
-            pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination))
+            pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewCommonHistoryId))
         case Transfer =>
           val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
           Seq(
@@ -1410,12 +1410,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
               startDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId,
               startMValue = pl.startMValue, endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp,
-              geometry = pl.geometry)
+              geometry = pl.geometry, commonHistoryId = NewCommonHistoryId)
           )
         case Terminated =>
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
             endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue,
-            endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, terminated = Termination))
+            endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, terminated = Termination, commonHistoryId = NewCommonHistoryId))
         case _ =>
           logger.error(s"Invalid status for split project link: ${pl.status} in project ${pl.projectId}")
           throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
@@ -1500,7 +1500,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
       pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination)
+      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewCommonHistoryId)
     pl.status match {
       case UnChanged =>
         roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, lrmPositionId = source.get.lrmPositionId)
@@ -1532,7 +1532,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case UnChanged | Terminated =>
         None
       case Transfer | Numbering =>
-        Some(roadAddress.copy(id = NewRoadAddress, endDate = pl.startDate))
+        Some(roadAddress.copy(id = NewRoadAddress, endDate = pl.startDate, commonHistoryId = NewCommonHistoryId))
       case _ =>
         logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
         throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
