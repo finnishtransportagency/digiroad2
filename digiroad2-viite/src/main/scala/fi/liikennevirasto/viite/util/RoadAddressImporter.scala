@@ -226,10 +226,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
     conversionRoadAddress.zip(lrmIds).foreach {
       case ((roadAddress), (lrmId)) =>
-        val lrmPosition = lrmPositions.getOrElse((roadAddress.linkId, roadAddress.commonHistoryId), Seq()).headOption
-        assert(lrmPosition.nonEmpty)
-        insertLrmPosition(lrmPositionPs, lrmPosition.get, lrmId)
-        insertRoadAddress(roadAddressPs, roadAddress, lrmPosition.get, lrmId)
+        lrmPositions.getOrElse((roadAddress.linkId, roadAddress.commonHistoryId), Seq()).headOption.foreach {
+          case lrmPosition =>
+            insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
+            insertRoadAddress(roadAddressPs, roadAddress, lrmPosition, lrmId)
+        }
     }
 
     lrmPositionPs.executeBatch()
