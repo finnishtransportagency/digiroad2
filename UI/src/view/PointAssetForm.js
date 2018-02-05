@@ -349,19 +349,29 @@
         '    <div class="form-group editable form-railway-crossing">' +
         '        <label class="control-label">' + 'Nimi' + '</label>' +
         '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
-        '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
+      '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
         '    </div>';
     } else if (asset.validityDirection && !asset.propertyData) {
       return '' +
         '  <div class="form-group editable form-directional-traffic-sign">' +
         '      <label class="control-label">Teksti</label>' +
         '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
-        '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
+        '      <textarea class="form-control large-input">' + (asset.text || '') + '</textarea>' +
         '  </div>' +
         '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
         '      <label class="control-label">Vaikutussuunta</label>' +
         '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
         '    </div>';
+    }else if(asset.limit || asset.limit === 0){
+      return '' +
+        '  <div class="form-group editable form-heigh">' +
+        '      <label class="control-label">Rajoitus</label>' +
+        '      <p class="form-control-static">' + (asset.limit || '–') + '</p>' +
+        '  </div>' + '' +
+        (asset.reason ? '<div class="form-group editable form-width">' +
+        '      <label class="control-label">Syy</label>' +
+        '      <p class="form-control-static">' + (asset.limit || '–') + '</p>' +
+        '  </div>': '');
     } else if (asset.services) {
       var services = _(asset.services)
         .sortByAll('serviceType', 'id')
