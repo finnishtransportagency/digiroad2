@@ -540,7 +540,7 @@ object RoadAddressDAO {
   }
 
   def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false, includeExpired: Boolean = false,
-                      includeHistory: Boolean = false): List[RoadAddress] = {
+                      includeHistory: Boolean = false, includeSuravage: Boolean = true): List[RoadAddress] = {
     val floating = if (!includeFloating)
       "floating='0' AND"
     else
@@ -553,6 +553,9 @@ object RoadAddressDAO {
       "end_date is null AND"
     else
       ""
+    val suravageFilter = if (!includeSuravage)
+      "link_source != 3"
+    else ""
     // valid_to > sysdate because we may expire and query the data again in same transaction
     val query =
       s"""
@@ -564,7 +567,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter $historyFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
+        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
