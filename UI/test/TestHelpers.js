@@ -64,7 +64,8 @@ define(['AssetsTestData',
       .withSpeedLimitsData(speedLimitsTestData)
       .withSpeedLimitUpdate(speedLimitsTestData)
       .withPassThroughAssetCreation()
-      .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate());
+      .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate())
+      .withVerificationInfo();
   };
 
   var clickVisibleEditModeButton = function() {

@@ -567,6 +567,13 @@
       };
     }
 
+    this.withVerificationInfo = function(){
+      self.getVerificationInfo = function(){
+        return $.Deferred().resolve([]);
+      };
+      return self;
+    };
+
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function(boundingBox, callback) {
         callback(roadLinkData);
