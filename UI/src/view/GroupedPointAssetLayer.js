@@ -44,16 +44,21 @@
       }
     });
 
-    function pointAssetOnSelect(feature) {
-      if(feature.selected.length > 0 && feature.deselected.length === 0){
-        var coordinates = feature.selected[0].getGeometry().getCoordinates();
-        var properties = vectorLayer.getSource().getClosestFeatureToCoordinate(coordinates).getProperties();
+    function pointAssetOnSelect(evt) {
+      if(evt.selected.length > 0 && evt.deselected.length === 0){
+        var feature = evt.selected[0];
+        var properties = feature.getProperties();
+        var toSelect = _.filter( vectorLayer.getSource().getFeatures(), function(feature){
+          return feature.getProperties().lon === properties.getProperties().lon && feature.getProperties().lat === properties.getProperties().lat;
+        });
+        selectControl.addSelectionFeatures(toSelect);
+
         var administrativeClass = obtainAdministrativeClass(properties);
         var asset = _.merge({}, properties, {administrativeClass: administrativeClass});
         selectedAsset.open(asset);
       }
       else {
-        if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
+        if(evt.deselected.length > 0 && !selectedAsset.isDirty()) {
           selectedAsset.close();
         }else{
           applySelection();

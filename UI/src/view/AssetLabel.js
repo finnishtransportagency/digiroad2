@@ -33,22 +33,24 @@
         };
 
         this.renderFeatures = function(assets, zoomLevel, getPoint){
-            if(!me.isVisibleZoom(zoomLevel))
-                return [];
+          if(!me.isVisibleZoom(zoomLevel))
+            return [];
 
-            return _.chain(assets).
-                map(function(asset){
-                    var assetValue = me.getValue(asset);
-                    if(assetValue !== undefined){
-                        var style = me.getStyle(assetValue);
-                        var feature = me.createFeature(getPoint(asset));
-                        feature.setStyle(style);
-                        return feature;
-                    }
-                }).
-                filter(function(feature){ return feature !== undefined; }).
-                value();
+          return _.chain(assets).
+          map(function(asset){
+            var assetValue = me.getValue(asset);
+            if(assetValue !== undefined){
+              var style = me.getStyle(assetValue);
+              var feature = me.createFeature(getPoint(asset));
+              feature.setProperties(asset);
+              feature.setStyle(style);
+              return feature;
+            }
+          }).
+          filter(function(feature){ return feature !== undefined; })
+            .value();
         };
+
 
         this.getMarkerOffset = function(zoomLevel){
             if(me.isVisibleZoom(zoomLevel))
