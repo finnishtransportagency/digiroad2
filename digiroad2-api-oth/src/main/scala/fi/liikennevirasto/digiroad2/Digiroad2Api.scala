@@ -1333,6 +1333,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService
       case EuropeanRoads.typeId => textValueLinearAssetService
+      case ExitNumbers.typeId => textValueLinearAssetService
       case _ => linearAssetService
     }
   }
