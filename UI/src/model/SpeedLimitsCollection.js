@@ -1,5 +1,5 @@
 (function(root) {
-  root.SpeedLimitsCollection = function(backend) {
+  root.SpeedLimitsCollection = function(backend, verificationCollection) {
     var speedLimits = [];
     var speedLimitsHistory = [];
     var dirty = false;
@@ -58,6 +58,7 @@
             }) || [];
         speedLimits = knownSpeedLimits.concat(unknownSpeedLimits);
         eventbus.trigger('speedLimits:fetched', self.getAll());
+        verificationCollection.fetch(boundingBox, 20);
       });
     };
 
