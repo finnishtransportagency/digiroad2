@@ -217,22 +217,19 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     val lrmPositions = allLinkGeomLength.flatMap {
       case (linkId, geomLength) =>
         adjustLrmPosition(incomingLrmPositions.filter(lrm => lrm.linkId == linkId).toSeq, geomLength)
-    }
+    }.groupBy(lrm => (lrm.linkId, lrm.commonHistoryId))
 
-    val lrmIds = generateLrmPositionIds(lrmPositions.size)
+    val lrmIds = generateLrmPositionIds(conversionRoadAddress.size)
 
     val lrmPositionPs = lrmPositionStatement()
     val roadAddressPs = roadAddressStatement()
 
-    lrmPositions.zip(lrmIds).foreach {
-      case ((lrmPosition), (lrmId)) =>
-        val roadAddresses = mappedConversionRoadAddress.getOrElse((lrmPosition.linkId, lrmPosition.commonHistoryId), Seq())
-        assert(roadAddresses.nonEmpty)
-        insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
-        roadAddresses.foreach {
-          roadAddress =>
-            insertRoadAddress(roadAddressPs, roadAddress, lrmPosition, lrmId)
-        }
+    conversionRoadAddress.zip(lrmIds).foreach {
+      case ((roadAddress), (lrmId)) =>
+        val lrmPosition = lrmPositions.getOrElse((roadAddress.linkId, roadAddress.commonHistoryId), Seq()).headOption
+        assert(lrmPosition.nonEmpty)
+        insertLrmPosition(lrmPositionPs, lrmPosition.get, lrmId)
+        insertRoadAddress(roadAddressPs, roadAddress, lrmPosition.get, lrmId)
     }
 
     lrmPositionPs.executeBatch()
