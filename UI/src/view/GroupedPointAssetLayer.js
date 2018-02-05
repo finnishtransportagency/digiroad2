@@ -46,7 +46,8 @@
 
     function pointAssetOnSelect(feature) {
       if(feature.selected.length > 0 && feature.deselected.length === 0){
-        var properties = feature.selected[0].getProperties();
+        var coordinates = feature.selected[0].getGeometry().getCoordinates();
+        var properties = vectorLayer.getSource().getClosestFeatureToCoordinate(coordinates).getProperties();
         var administrativeClass = obtainAdministrativeClass(properties);
         var asset = _.merge({}, properties, {administrativeClass: administrativeClass});
         selectedAsset.open(asset);
