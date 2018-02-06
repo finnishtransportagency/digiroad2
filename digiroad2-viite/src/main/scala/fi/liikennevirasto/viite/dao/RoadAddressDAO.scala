@@ -350,7 +350,7 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true): List[RoadAddress] = {
+  def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, ignoreHistory: Boolean = true): List[RoadAddress] = {
     val (networkData, networkWhere) =
       if (useLatestNetwork) {
         (", net.id as road_version, net.created as version_date ",
@@ -365,6 +365,13 @@ object RoadAddressDAO {
       case true => return List()
       case false => s""" where pos.link_id in ($linkIdString)"""
     }
+
+    val historyFilter = if(ignoreHistory) {
+      "AND ra.end_date is null"
+    } else {
+      s""""""
+    }
+
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
@@ -377,7 +384,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         $networkWhere
-        $where and t.id < t2.id and
+        $where $historyFilter and t.id < t2.id and
           ra.valid_from <= sysdate and
           (ra.valid_to is null or ra.valid_to > sysdate)
       """
@@ -452,7 +459,12 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkIdMassQueryToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true): List[RoadAddress] = {
+  def fetchByLinkIdMassQueryToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, ignoreHistory: Boolean = true): List[RoadAddress] = {
+    val historyFilter = if(ignoreHistory) {
+      "AND ra.end_date is null"
+    } else {
+      s""""""
+    }
     val (networkData, networkWhere) =
       if (useLatestNetwork) {
         (", net.id as road_version, net.created as version_date ",
@@ -475,7 +487,7 @@ object RoadAddressDAO {
         $networkWhere
         where t.id < t2.id and
           ra.valid_from <= sysdate and
-          (ra.valid_to is null or ra.valid_to > sysdate)
+          (ra.valid_to is null or ra.valid_to > sysdate) $historyFilter
       """
         queryList(query)
     }
