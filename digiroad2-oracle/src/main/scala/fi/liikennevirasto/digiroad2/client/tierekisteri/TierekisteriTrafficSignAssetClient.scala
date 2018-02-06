@@ -22,7 +22,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   private val trLIIKVAST = "LIIKVAST"
   private val trNOPRA506 = "NOPRA506"
   private val wrongSideOfTheRoad = "1"
-
+  //TODO this code is inconsistent with branch DROTH-1021 the speed limit signs has a specific class and extends from TierekisteriTrafficSignData
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
     //TODO remove the orElse and ignrore the all row when we give support for that on TierekisteriClient base implementation

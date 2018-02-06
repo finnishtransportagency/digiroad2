@@ -87,3 +87,6 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
   VALUES (primary_key_seq.nextval, 9, 'Muu Alikulkueste', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+  VALUES (primary_key_seq.nextval, 99, 'Ei tietoa', ' ', 'db_migration_v152', (select id from property where public_ID = 'suurin_sallittu_leveys_syy'));

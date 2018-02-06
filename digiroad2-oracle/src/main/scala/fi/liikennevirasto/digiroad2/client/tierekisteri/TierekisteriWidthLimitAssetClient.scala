@@ -27,8 +27,8 @@ class TierekisteriWidthLimitAssetClient(trEndPoint: String, trEnable: Boolean, h
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val roadSide = convertToInt(getMandatoryFieldValue(data, trRoadSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
-    val reason = convertToInt(getMandatoryFieldValue(data, trReason)).map(WidthLimitReason.apply).getOrElse(WidthLimitReason.Unknown)
+    val reason = convertToInt(getFieldValue(data, trReason)).map(WidthLimitReason.apply).getOrElse(WidthLimitReason.Unknown)
 
-    Some(TierekisteriWidthLimitData(roadNumber, roadPartNumber, roadNumber, track, startMValue, startMValue, roadSide, widthValue, reason))
+    Some(TierekisteriWidthLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, widthValue, reason))
   }
 }
