@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType._
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, MunicipalityDAO, RoadAddress}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, MunicipalityDAO, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -120,17 +120,13 @@ trait AddressLinkBuilder {
     if (roadAddresses.size == 1) {
       roadAddresses
     } else {
-      val (newAddresses, oldAddresses) = roadAddresses.partition(_.id == NewRoadAddress)
-      val historyGrouping = oldAddresses.groupBy(record =>
-        record.lrmPositionId)
-      val linksWithHistoryRemoved = historyGrouping.filterNot(x => x._2.size > 1).flatMap(_._2).toSeq
-      //check which addresses contain history and removes them from fusing we might want to create fusing batchjob later with defined rules to fuse links containing history
-      val linksContainingHistory = historyGrouping.filter(x => x._2.size > 1).flatMap(_._2).toSeq
-      val groupedRoadAddresses = (linksWithHistoryRemoved ++ newAddresses).groupBy(record =>
-        (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+      val commonhistories=roadAddresses.map(x=>x.commonHistoryId).seq
+      val roadAddessesWithHistory=RoadAddressDAO.fetchByCommonHistoryId(commonhistories)
+      val groupedRoadAddresses = roadAddessesWithHistory.groupBy(record =>
+        (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated, record.commonHistoryId) )
       groupedRoadAddresses.flatMap { case (_, record) =>
         fuseRoadAddressInGroup(record.sortBy(_.startMValue))
-      }.toSeq ++ linksContainingHistory
+      }.toSeq 
     }
   }
 
