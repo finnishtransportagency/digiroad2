@@ -307,8 +307,8 @@ class AssetDataImporter {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
             if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
 
-              if (((segment.geometry.head.distance2DTo(newGeom.head) > 1) && (segment.geometry.head.distance2DTo(newGeom.last) > 1)) ||
-                ((segment.geometry.last.distance2DTo(newGeom.head) > 1) && (segment.geometry.last.distance2DTo(newGeom.last) > 1))) {
+              if (((segment.geometry.head.distance2DTo(newGeom.head) > 0.5) && (segment.geometry.head.distance2DTo(newGeom.last) > 0.5)) ||
+                ((segment.geometry.last.distance2DTo(newGeom.head) > 0.5) && (segment.geometry.last.distance2DTo(newGeom.last) > 0.5))) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1
