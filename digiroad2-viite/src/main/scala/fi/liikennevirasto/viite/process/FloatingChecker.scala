@@ -20,7 +20,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
           GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
           ra.geometry.map(_.copy(z = 0.0))))
     }
-
+    println(s"Checking road $roadNumber part $roadPartNumber")
     val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true, includeSuravage = false)
     assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
     val roadLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(roadAddressList.map(_.linkId).toSet).groupBy(_.linkId)
@@ -46,6 +46,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   def checkRoad(roadNumber: Long): List[RoadAddress] = {
     try {
       val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
+      println(s"Got ${roadPartNumbers.size} part(s) for road $roadNumber")
       roadPartNumbers.flatMap(checkRoadPart(roadNumber))
     } catch {
       case ex: AssertionError =>
