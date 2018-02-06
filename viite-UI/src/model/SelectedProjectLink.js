@@ -29,9 +29,24 @@
     };
 
     var getLinkMarker = function(linkList, statusList){
-      return _.find(linkList, function (link) {
+      var filter =  _.filter(linkList, function (link) {
         return _.contains(statusList,link.status);
       });
+      if(filter.length > 1){
+        var min = _.min(_.map(filter, function (template) {
+          return template.startAddressM;
+        }));
+
+        var max = _.max(_.map(filter, function (template) {
+          return template.endAddressM;
+        }));
+
+        var toReturn = filter[0];
+        toReturn.startAddressM = min;
+        toReturn.endAddressM = max;
+        return toReturn;
+      }
+      return filter[0];
     };
 
     var openSplit = function (linkid, multiSelect) {

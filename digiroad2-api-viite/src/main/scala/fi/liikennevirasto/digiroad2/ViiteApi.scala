@@ -570,7 +570,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         try {
           val options = parsedBody.extract[SplitOptions]
           val writableProject = projectWritable(options.projectId)
-          val (splitLinks, errorMessage, splitLine) = writableProject.preSplitSuravageLink(link, user.username, options)
+          val (splitLinks, allTerminatedLinks, errorMessage, splitLine) = writableProject.preSplitSuravageLink(link, user.username, options)
           val cutGeom = splitLine match {
             case Some(x) => val (p, v) = x
               Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
@@ -586,6 +586,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               "roadNumber" -> roadwithInfo.roadNumber,
               "roadPartNumber" -> roadwithInfo.roadPartNumber,
               "trackCode" -> roadwithInfo.track,
+              "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
               "split" -> Map(
                 "geometry" -> cutGeom
               )
@@ -820,6 +821,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "status" -> projectAddressLink.status.value,
           "reversed" -> projectAddressLink.reversed
         ))
+  }
+
+  def projectLinkToApi(projectLink: ProjectLink): Map[String, Any] = {
+    Map("id" -> projectLink.id,
+      "linkId" -> projectLink.linkId,
+      "geometry" -> projectLink.geometry,
+      "middlePoint" -> GeometryUtils.midPointGeometry(projectLink.geometry),
+      "startAddressM" -> projectLink.startAddrMValue,
+      "endAddressM" -> projectLink.endAddrMValue,
+      "status" -> projectLink.status.value,
+      "roadTypeId" -> projectLink.roadType.value,
+      "discontinuity" -> projectLink.discontinuity.value,
+      "elyCode" -> projectLink.ely)
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {

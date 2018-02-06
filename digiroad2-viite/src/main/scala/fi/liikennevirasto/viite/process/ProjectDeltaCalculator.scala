@@ -42,7 +42,7 @@ object ProjectDeltaCalculator {
           case Transfer =>
             val termAddress = connectedLink.map(l => (l.startAddrMValue, l.endAddrMValue))
             termAddress.map{ case (st, en) =>
-              address.copy(startAddrMValue = if (st == address.startAddrMValue) en else address.startAddrMValue,
+              address.copy(startAddrMValue =  en,
                 endAddrMValue = if (en == address.endAddrMValue) st else address.endAddrMValue, startMValue = pl.startMValue,
                 endMValue = pl.endMValue, geometry = geom)
             }.getOrElse(address)
@@ -77,7 +77,7 @@ object ProjectDeltaCalculator {
     val (split, nonSplit) = projectLinks.filter(_.status == LinkStatus.Transfer).partition(_.isSplit)
     split.map(pl =>
       adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId),
-        projectLinks.find(_.linkId == pl.connectedLinkId.get)).get -> pl) ++
+        projectLinks.sortBy(_.endAddrMValue).reverse.find(_.linkId == pl.connectedLinkId.get)).get -> pl) ++
       nonSplit.map(pl =>
         adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
   }
