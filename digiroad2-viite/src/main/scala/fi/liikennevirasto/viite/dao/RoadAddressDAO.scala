@@ -554,7 +554,7 @@ object RoadAddressDAO {
     else
       ""
     val suravageFilter = if (!includeSuravage)
-      "link_source != 3"
+      "link_source != 3 AND"
     else ""
     // valid_to > sysdate because we may expire and query the data again in same transaction
     val query =
