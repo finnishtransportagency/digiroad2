@@ -413,6 +413,54 @@
       };
     });
 
+    this.getUnverifiedMunicipalities = function() {
+      return $.getJSON('api/municipalities/unverified');
+    };
+
+    this.getAssetTypesByMunicipality = function(municipalityCode) {
+      return $.getJSON('api/municipalities/' + municipalityCode + '/assetTypes' );
+    };
+
+    this.verifyMunicipalityAssets = function(typeIds, municipalityCode) {
+      eventbus.trigger('municipality:verifying');
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/municipalities/" + municipalityCode + "/assetVerification" ,
+        data: JSON.stringify({typeId:typeIds}),
+        dataType: "json",
+        success: function(){
+          eventbus.trigger('municipality:verified');
+        },
+        error: function(){
+          eventbus.trigger('municipality:verificationFailed');
+        }
+      });
+    };
+
+    this.removeMunicipalityVerification = function(typeIds, municipalityCode) {
+      eventbus.trigger('municipality:verifying');
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/municipalities/" + municipalityCode + "/removeVerification" ,
+        data: JSON.stringify({typeId:typeIds}),
+        dataType: "json",
+        success: function(){
+          eventbus.trigger('municipality:verified');
+        },
+        error: function(){
+          eventbus.trigger('municipality:verificationFailed');
+        }
+      });
+    };
+
+    this.getVerificationInfo = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/verificationInfo?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
@@ -518,6 +566,13 @@
         return deferred.promise();
       };
     }
+
+    this.withVerificationInfo = function(){
+      self.getVerificationInfo = function(){
+        return $.Deferred().resolve([]);
+      };
+      return self;
+    };
 
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function(boundingBox, callback) {

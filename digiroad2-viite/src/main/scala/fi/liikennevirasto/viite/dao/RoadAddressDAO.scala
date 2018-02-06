@@ -351,13 +351,14 @@ object RoadAddressDAO {
   }
 
   def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true): List[RoadAddress] = {
-    val networkWhere =
+    val (networkData, networkWhere) =
       if (useLatestNetwork) {
-        "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = road_address_id)"
-      } else ""
+        (", net.id as road_version, net.created as version_date ",
+        "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = road_address_id)")
+      } else ("","")
 
     if (linkIds.size > 1000) {
-      return fetchByLinkIdMassQueryToApi(linkIds)
+      return fetchByLinkIdMassQueryToApi(linkIds, useLatestNetwork)
     }
     val linkIdString = linkIds.mkString(",")
     val where = linkIds.isEmpty match {
@@ -369,8 +370,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id,
-        net.id as road_version, net.created as version_date
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        $networkData
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -451,7 +452,12 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkIdMassQueryToApi(linkIds: Set[Long]): List[RoadAddress] = {
+  def fetchByLinkIdMassQueryToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true): List[RoadAddress] = {
+    val (networkData, networkWhere) =
+      if (useLatestNetwork) {
+        (", net.id as road_version, net.created as version_date ",
+          "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = road_address_id)")
+      } else ("","")
     MassQuery.withIds(linkIds) {
       idTableName =>
         val query =
@@ -459,14 +465,14 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id,
-        net.id as road_version, net.created as version_date
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        $networkData
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        join published_road_network net on net.id = (select max(network_id) from published_road_address where ra.id = road_address_id)
+        $networkWhere
         where t.id < t2.id and
           ra.valid_from <= sysdate and
           (ra.valid_to is null or ra.valid_to > sysdate)
