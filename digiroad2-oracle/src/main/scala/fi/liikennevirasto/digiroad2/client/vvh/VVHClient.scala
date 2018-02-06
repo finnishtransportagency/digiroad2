@@ -698,6 +698,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
       "OBJECTID",
       "STARTNODE",
       "ENDNODE",
+      "TRACK_CODE", //used only with suravage in viite
       "CUST_OWNER").contains(x)
     }.filter { case (_, value) =>
       value != null
@@ -1163,7 +1164,7 @@ class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vv
   protected override val disableGeometry = false
 
   override def defaultOutFields(): String = {
-    "LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH"
+    "LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH,TRACK_CODE"
   }
 
   def fetchSuravageByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
@@ -1176,5 +1177,9 @@ class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vv
 
   def fetchSuravageByLinkIds(linkIds: Set[Long] = Set()): Seq[VVHRoadlink] = {
     queryByLinkIds(linkIds, None, true, extractRoadLinkFeature, withLinkIdFilter)
+  }
+
+  def fetchSuravageByMunicipality(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipality(municipality))
   }
 }

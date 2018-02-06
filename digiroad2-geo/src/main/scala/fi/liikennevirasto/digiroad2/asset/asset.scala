@@ -162,6 +162,7 @@ case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 
 object Asset {
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+  val DatePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
   val DateTimePropertyFormatMs = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss,SSS")
 }
 
@@ -172,7 +173,7 @@ abstract class AbstractProperty {
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue]) extends AbstractProperty
-case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
+case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])

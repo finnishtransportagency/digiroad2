@@ -12,6 +12,7 @@ require.config({
     'GeometryUtils': '../src/utils/GeometryUtils',
     'SpeedLimitsCollection': '../src/model/SpeedLimitsCollection',
     'RoadCollection': '../src/model/RoadCollection',
+    'AssetsVerificationCollection': '../src/model/AssetsVerificationCollection',
     'SelectedSpeedLimit': '../src/model/SelectedSpeedLimit',
     'zoomlevels': '../src/utils/zoom-levels',
     'geometrycalculator': '../src/utils/geometry-calculations',
@@ -49,6 +50,9 @@ require.config({
     },
     'RoadCollection': {
       exports: 'RoadCollection'
+    },
+    'AssetsVerificationCollection': {
+        exports: 'AssetsVerificationCollection'
     },
     'SelectedSpeedLimit': {
       exports: 'SelectedSpeedLimit',

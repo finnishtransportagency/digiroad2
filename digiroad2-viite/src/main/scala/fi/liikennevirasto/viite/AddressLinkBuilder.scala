@@ -109,16 +109,28 @@ trait AddressLinkBuilder {
   }
 
 
+  /**
+    * Fuses road addresses that do not contain history.
+    * We will later have to refactor this so that we check if history is fusable and figure out rules for fusing.
+    *
+    * @param roadAddresses roadaddress seq
+    * @return fused roadaddress seq
+    */
   def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     if (roadAddresses.size == 1) {
       roadAddresses
     } else {
-      val groupedRoadAddresses = roadAddresses.groupBy(record =>
+      val (newAddresses, oldAddresses) = roadAddresses.partition(_.id == NewRoadAddress)
+      val historyGrouping = oldAddresses.groupBy(record =>
+        record.lrmPositionId)
+      val linksWithHistoryRemoved = historyGrouping.filterNot(x => x._2.size > 1).flatMap(_._2).toSeq
+      //check which addresses contain history and removes them from fusing we might want to create fusing batchjob later with defined rules to fuse links containing history
+      val linksContainingHistory = historyGrouping.filter(x => x._2.size > 1).flatMap(_._2).toSeq
+      val groupedRoadAddresses = (linksWithHistoryRemoved ++ newAddresses).groupBy(record =>
         (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
-
       groupedRoadAddresses.flatMap { case (_, record) =>
         fuseRoadAddressInGroup(record.sortBy(_.startMValue))
-      }.toSeq
+      }.toSeq ++ linksContainingHistory
     }
   }
 
@@ -212,7 +224,7 @@ trait AddressLinkBuilder {
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, nextSegment.roadType, nextSegment.track,
         discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy,
         nextSegment.lrmPositionId, nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
-        calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated))
+        calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated, NewCommonHistoryId))
 
     } else Seq(nextSegment, previousSegment)
 

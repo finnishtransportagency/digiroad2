@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.masslimitation.oracle
+package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -6,13 +6,11 @@ import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 
-class OracleMassLimitationDao {
+class MassLimitationDao {
 
   /**
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.

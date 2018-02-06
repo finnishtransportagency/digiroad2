@@ -116,7 +116,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks) should have size(1)
       RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-        false, Seq(Point(0.0,40.0,0.0), Point(0.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination)))
+        false, Seq(Point(0.0,40.0,0.0), Point(0.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)))
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
       errors should have size(0)
       val (starting, last) = projectLinks.splitAt(3)
@@ -133,7 +133,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-        false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination))).head
+        false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))).head
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
       errors should have size(1)
       errors.head.validationError should be (MajorDiscontinuityFound)
@@ -158,7 +158,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-        false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 9L, NoTermination))).head
+        false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 9L, NoTermination, 0))).head
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
       errors should have size(1)
       errors.head.validationError should be (ElyCodeChangeDetected)
@@ -183,11 +183,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
           (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-          false, Seq(Point(10.0,30.0,0.0), Point(10.0, 40.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+          false, Seq(Point(10.0,30.0,0.0), Point(10.0, 40.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
         RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
           (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-          false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination))
+          false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
       val raIds = RoadAddressDAO.create(ra, Some("U"))
       val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -232,15 +232,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
         RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, AgainstDigitizing, 0L,
           (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-          false, Seq(Point(2.0,30.0), Point(0.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+          false, Seq(Point(2.0,30.0), Point(0.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
         RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           10L, 20L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
           (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-          false, Seq(Point(2.0, 30.0), Point(7.0,35.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+          false, Seq(Point(2.0, 30.0), Point(7.0,35.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
         RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           20L, 30L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
           (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-          false, Seq(Point(7.0,35.0), Point(0.0,40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination))
+          false, Seq(Point(7.0,35.0), Point(0.0,40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
       RoadAddressDAO.create(ra)
 
       ProjectDAO.reserveRoadPart(project.id, 39999L, 20L, "u")
@@ -258,11 +258,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
           (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-          false, Seq(Point(10.0,30.0,0.0), Point(10.0, 40.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+          false, Seq(Point(10.0,30.0,0.0), Point(10.0, 40.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
         RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
           (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-          false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination))
+          false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
       val raIds = RoadAddressDAO.create(ra, Some("U"))
       val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -289,11 +289,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
           (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-          false, Seq(Point(10.0,30.0,0.0), Point(10.0, 40.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination),
+          false, Seq(Point(10.0,30.0,0.0), Point(10.0, 40.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           10L, 20L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
           (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-          false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination))
+          false, Seq(Point(10.0,40.0,0.0), Point(10.0, 50.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
       val raId1 = RoadAddressDAO.create(Set(ra.head), Some("U"))
       val raId2 = RoadAddressDAO.create(ra.tail, Some("U"))
       val roadAddress1 = RoadAddressDAO.fetchByIdMassQuery(raId1.toSet).sortBy(_.roadPartNumber)

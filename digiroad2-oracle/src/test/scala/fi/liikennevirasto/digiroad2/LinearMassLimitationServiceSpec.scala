@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.MassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -17,7 +17,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockMassLimitationDao = MockitoSugar.mock[OracleMassLimitationDao]
+  val mockMassLimitationDao = MockitoSugar.mock[MassLimitationDao]
   val TotalWeightLimits = 30
   val TrailerTruckWeightLimits = 40
   val AxleWeightLimits = 50

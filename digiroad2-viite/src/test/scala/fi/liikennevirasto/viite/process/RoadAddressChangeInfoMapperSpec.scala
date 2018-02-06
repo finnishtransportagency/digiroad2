@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.{LinkRoadAddressHistory, NewRoadAddress, RoadType}
 import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
 import fi.liikennevirasto.viite.util.prettyPrint
@@ -16,9 +17,9 @@ import org.scalatest.{FunSuite, Matchers}
 class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
   test("resolve simple case") {
     val roadAddress = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
-      None, 0L, 123L, 0.0, 1000.234, SideCode.AgainstDigitizing, 86400L, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, 123L, 0.0, 1000.234, SideCode.AgainstDigitizing, 86400L, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress2 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 1000, 1400, Some(DateTime.now), None,
-      None, 0L, 124L, 0.0, 399.648, SideCode.AgainstDigitizing, 86400L, (None, None), false, Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, 124L, 0.0, 399.648, SideCode.AgainstDigitizing, 86400L, (None, None), false, Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress, roadAddress2).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       ChangeInfo(Some(123), Some(124), 123L, 2, Some(0.0), Some(1000.234), Some(399.648), Some(1399.882), 96400L),
@@ -43,9 +44,9 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changesVVHTimestamp = 96400L
 
     val roadAddress1 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
-      None, 0L, roadLinkId1, 0.0, 1000.234, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId1, 0.0, 1000.234, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress2 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 1000, 1400, Some(DateTime.now), None,
-      None, 0L, roadLinkId2, 0.0, 399.648, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId2, 0.0, 399.648, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress1, roadAddress2).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       ChangeInfo(Some(roadLinkId1), Some(roadLinkId2), 123L, 2, Some(0.0), Some(1000.234), Some(399.648), Some(1399.882), changesVVHTimestamp),
@@ -75,13 +76,13 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
 
     val roadAddress1 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
       None, 0L, roadLinkId1, 0.0, 1000.234, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false,
-      Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress2 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 1000, 1400, Some(DateTime.now), None,
       None, 0L, roadLinkId2, 0.0, 399.648, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false,
-      Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)), LinkGeomSource.NormalLinkInterface, 8)
+      Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress3 = RoadAddress(367,75,2, RoadType.Unknown, Track.Combined,Discontinuity.Continuous,3532,3598,None,None,
       Some("tr"),70000389,roadLinkId3,0.0,65.259,SideCode.TowardsDigitizing,roadAdjustedTimestamp,(None,None),true,
-      List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress1, roadAddress2, roadAddress3).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       ChangeInfo(Some(roadLinkId1), Some(roadLinkId2), 123L, 2, Some(0.0), Some(1000.234), Some(399.648), Some(1399.882), changesVVHTimestamp),
@@ -112,11 +113,11 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changesVVHTimestamp = 96400L
 
     val roadAddress1 = RoadAddress(2, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 400, 1400, Some(DateTime.now), None,
-      None, 0L, roadLinkId1, 0.0, 1000.234, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId1, 0.0, 1000.234, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress2 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 400, Some(DateTime.now), None,
-      None, 0L, roadLinkId2, 0.0, 399.648, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId2, 0.0, 399.648, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress3 = RoadAddress(367,1,1, RoadType.Unknown, Track.RightSide,Discontinuity.Continuous,1400,1465,None,None,
-      Some("tr"),70000389,roadLinkId3,0.0,65.259,SideCode.TowardsDigitizing,roadAdjustedTimestamp,(None,None), false,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      Some("tr"),70000389,roadLinkId3,0.0,65.259,SideCode.TowardsDigitizing,roadAdjustedTimestamp,(None,None), false,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress1, roadAddress2, roadAddress3).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       //Modifications
@@ -160,7 +161,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changesVVHTimestamp = 96400L
 
     val roadAddress1 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.EndOfRoad, 400, 1400, Some(DateTime.now), None,
-      None, 0L, roadLinkId1, 0.0, 960.434, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId1, 0.0, 960.434, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress1).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       //Remain
@@ -206,11 +207,11 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changesVVHTimestamp = 96400L
 
     val roadAddress1 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 400, 1400, Some(DateTime.now), None,
-      None, 0L, roadLinkId1, 0.0, 960.434, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId1, 0.0, 960.434, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress2 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 1400, 1600, Some(DateTime.now), None,
-      None, 0L, roadLinkId2, 0.0, 201.333, SideCode.TowardsDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 201.333)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId2, 0.0, 201.333, SideCode.TowardsDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 201.333)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress3 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 1600, 1610, Some(DateTime.now), None,
-      None, 0L, roadLinkId3, 0.0, 10.0, SideCode.TowardsDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 201.333), Point(0.0, 211.333)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId3, 0.0, 10.0, SideCode.TowardsDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 201.333), Point(0.0, 211.333)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress1, roadAddress2, roadAddress3).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       //Old parts
@@ -261,11 +262,11 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changesVVHTimestamp = 96400L
 
     val roadAddress1 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 400, 1400, Some(DateTime.now), None,
-      None, 0L, roadLinkId1, 0.0, 960.969, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.969, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId1, 0.0, 960.969, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.969, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress2 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 1400, 1600, Some(DateTime.now), None,
-      None, 0L, roadLinkId2, 0.0, 201.986, SideCode.TowardsDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 201.986)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId2, 0.0, 201.986, SideCode.TowardsDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 201.986)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val roadAddress3 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 1600, 1610, Some(DateTime.now), None,
-      None, 0L, roadLinkId3, 0.0, 11.001, SideCode.TowardsDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 201.333), Point(0.0, 212.334)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId3, 0.0, 11.001, SideCode.TowardsDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 201.333), Point(0.0, 212.334)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress1, roadAddress2, roadAddress3).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       //common parts
@@ -315,7 +316,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changesVVHTimestamp = 96400L
 
     val roadAddress1 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 400, 1400, Some(DateTime.now), None,
-      None, 0L, roadLinkId1, 0.0, 960.434, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId1, 0.0, 960.434, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress1).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(ChangeInfo(Some(roadLinkId1), Some(roadLinkId1), 123L, 11, Some(0.0), Some(960.434), None, None, changesVVHTimestamp))
     val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
@@ -339,7 +340,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changesVVHTimestamp2 = 3*96400L
 
     val roadAddress1 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 400, 1400, Some(DateTime.now), None,
-      None, 0L, roadLinkId1, 0.0, 960.434, AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+      None, 0L, roadLinkId1, 0.0, 960.434, AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val map = Seq(roadAddress1).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       // Extend and turn digitization direction around

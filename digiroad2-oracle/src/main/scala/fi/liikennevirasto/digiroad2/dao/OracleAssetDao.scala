@@ -71,4 +71,8 @@ class OracleAssetDao {
     sql"""select ID, ASSET_TYPE_ID from ASSET where ID in (#${ids.mkString(",")})""".as[(Long, Int)].list
   }
 
+  def getVerifiableAssetTypes: Seq[String] = {
+    val assetTypes = sql"""select name from asset_type where verifiable = 1""".as[(String)].list
+    assetTypes
+  }
 }

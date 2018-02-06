@@ -50,7 +50,6 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true
     },
@@ -71,7 +70,6 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true
     },
@@ -92,7 +90,6 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true
     },
@@ -113,7 +110,6 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true
     },

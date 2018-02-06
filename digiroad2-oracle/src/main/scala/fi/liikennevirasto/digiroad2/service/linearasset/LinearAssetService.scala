@@ -782,6 +782,12 @@ trait LinearAssetOperations {
       }
     }
   }
+
+  def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[(Int, String)] = {
+    withDynSession {
+      municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
+    }
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {

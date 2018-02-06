@@ -58,7 +58,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
-                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService)
+                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
+                   val assetService: AssetService = Digiroad2Context.assetService,
+                   val verificationService: VerificationService = Digiroad2Context.verificationService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -690,6 +692,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/verificationInfo") {
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      verificationService.getMunicipalityInfo(typeId, boundingRectangle)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   get("/linearassets/complementary"){
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
@@ -1227,6 +1240,42 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         foundAsset
     }
   }
+  get("/municipalities/unverified") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    linearAssetService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_._2).map { municipality =>
+      Map("id" -> municipality._1,
+        "name" -> municipality._2)
+    }
+  }
+
+  get("/municipalities/:municipalityCode/assetTypes") {
+    val id = params("municipalityCode").toInt
+    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
+    verifiedAssetTypes.groupBy(_.municipalityName)
+      .mapValues(
+      _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
+                             "assetName" -> assetType.assetTypeName,
+                             "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+                             "verified_by"   -> assetType.verifiedBy.getOrElse(""),
+                             "verified"   -> assetType.verified)))
+  }
+
+  post("/municipalities/:municipalityCode/assetVerification") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = params("municipalityCode").toInt
+    validateUserMunicipalityAccess(user)(municipalityCode)
+    val assetTypeId = (parsedBody \ "typeId").extract[Set[Int]]
+    verificationService.verifyAssetType(municipalityCode, assetTypeId, user.username)
+  }
+
+  delete("/municipalities/:municipalityCode/removeVerification") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = params("municipalityCode").toInt
+    validateUserMunicipalityAccess(user)(municipalityCode)
+    val assetTypeIds = (parsedBody \ "typeId").extract[Set[Int]]
+    verificationService.removeAssetTypeVerification(municipalityCode, assetTypeIds, user.username)
+  }
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
@@ -1283,6 +1332,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService
+      case EuropeanRoads.typeId => textValueLinearAssetService
+      case ExitNumbers.typeId => textValueLinearAssetService
       case _ => linearAssetService
     }
   }
@@ -1335,4 +1386,5 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     transformation(values)
   }
+
 }
