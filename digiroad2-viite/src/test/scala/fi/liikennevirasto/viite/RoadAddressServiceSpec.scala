@@ -792,7 +792,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622953, o5622953Geom, 2825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true) // end calibration point for testing
       )
 
-      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false)).map(i => i.copy(commonHistoryId = 123456))
 
       val newLinks = Seq(
         createRoadAddressLink(0, 499914628, n499914628Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
@@ -814,6 +814,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // Test that this is not accepted as 101-103 is moved to locate after 103-113
       newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet should be (addresses.map(_.id).toSet)
+      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.size should be (1)
     }
   }
 
@@ -858,6 +859,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       // should contain just the 5622953
       newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size (1)
       newAddresses.get(5622953).isEmpty should be (false)
+      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.size should be (1)
     }
   }
 
