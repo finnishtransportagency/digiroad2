@@ -48,11 +48,6 @@
       if(evt.selected.length > 0 && evt.deselected.length === 0){
         var feature = evt.selected[0];
         var properties = feature.getProperties();
-        var toSelect = _.filter( vectorLayer.getSource().getFeatures(), function(feature){
-          return feature.getProperties().lon === properties.getProperties().lon && feature.getProperties().lat === properties.getProperties().lat;
-        });
-        selectControl.addSelectionFeatures(toSelect);
-
         var administrativeClass = obtainAdministrativeClass(properties);
         var asset = _.merge({}, properties, {administrativeClass: administrativeClass});
         selectedAsset.open(asset);
@@ -146,7 +141,10 @@
 
     function applySelection() {
       if (selectedAsset.exists()) {
-        var feature = _.filter(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.getProperties());});
+        var asset = selectedAsset.get();
+        var feature = _.filter(vectorLayer.getSource().getFeatures(), function(feature) {
+          return selectedAsset.isSelected(feature.getProperties()) &&  feature.getProperties().lon === asset.lon && feature.getProperties().lat === asset.lat;
+        });
         if (feature) {
           selectControl.addSelectionFeatures(feature);
         }
