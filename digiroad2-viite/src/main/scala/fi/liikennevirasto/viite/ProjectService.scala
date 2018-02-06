@@ -1410,12 +1410,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
               startDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId,
               startMValue = pl.startMValue, endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp,
-              geometry = pl.geometry, commonHistoryId = NewCommonHistoryId)
+              geometry = pl.geometry)
           )
         case Terminated =>
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
             endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue,
-            endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, terminated = Termination, commonHistoryId = NewCommonHistoryId))
+            endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, terminated = Termination))
         case _ =>
           logger.error(s"Invalid status for split project link: ${pl.status} in project ${pl.projectId}")
           throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
@@ -1530,7 +1530,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case UnChanged | Terminated =>
         None
       case Transfer | Numbering =>
-        Some(roadAddress.copy(id = NewRoadAddress, endDate = pl.startDate, commonHistoryId = NewCommonHistoryId))
+        Some(roadAddress.copy(id = NewRoadAddress, endDate = pl.startDate))
       case _ =>
         logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
         throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
