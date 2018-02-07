@@ -1406,11 +1406,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             // Transferred part, original values
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = startAddr, endAddrMValue = endAddr,
               endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), startMValue = startM, endMValue = endM),
+//              endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), startMValue = startM, endMValue = endM, commonHistoryId = commonHistoryIdDecider(pl, roadAddress)),
             // Transferred part, new values
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
               startDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId,
               startMValue = pl.startMValue, endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp,
               geometry = pl.geometry)
+//              geometry = pl.geometry, commonHistoryId = commonHistoryIdDecider(pl, roadAddress))
           )
         case Terminated => // TODO Check common_history_id
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
@@ -1453,7 +1455,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size){
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
-
     ProjectDAO.moveProjectLinksToHistory(projectID)
 
     try {
@@ -1487,6 +1488,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         setEndDate(roadAddresses(pl.roadAddressId), pl, None))
   }
 
+//  def commonHistoryIdDecider(pl: ProjectLink, source: RoadAddress): Long = {
+//    if(pl.roadType != source.roadType || pl.track != source.track)
+//      NewCommonHistoryId
+//    else
+//      source.commonHistoryId
+//  }
+
   private def convertProjectLinkToRoadAddress(pl: ProjectLink, project: RoadAddressProject,
                                               source: Option[RoadAddress]): RoadAddress = {
     val geom = if (pl.geometry.nonEmpty) {
@@ -1500,14 +1508,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
       pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewCommonHistoryId)
+      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.get.commonHistoryId)
     pl.status match {
       case UnChanged =>
         roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)
       case Transfer | Numbering =>
         roadAddress.copy(startDate = Some(project.startDate))
+//        roadAddress.copy(startDate = Some(project.startDate), commonHistoryId = commonHistoryIdDecider(pl, roadAddress))
       case New =>
         roadAddress.copy(startDate = Some(project.startDate))
+//        roadAddress.copy(startDate = Some(project.startDate), commonHistoryId = NewCommonHistoryId)
       case Terminated =>
         roadAddress.copy(startDate = source.get.startDate, endDate = Some(project.startDate), terminated = Termination)
       case _ =>

@@ -256,7 +256,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.floating should be (true)
     addr3.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr3.sideCode should be (TowardsDigitizing)
-    results.values.flatten.map(_.commonHistoryId).toSet.size should be (2)
+    results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
   }
 
   test("Shortened road links") {
@@ -313,7 +313,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.floating should be (true)
     addr3.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr3.sideCode should be (TowardsDigitizing)
-    results.values.flatten.map(_.commonHistoryId).toSet.size should be (2)
+    results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
   }
 
   test("Removed link") {
