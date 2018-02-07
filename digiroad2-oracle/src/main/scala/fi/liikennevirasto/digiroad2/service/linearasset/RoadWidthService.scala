@@ -142,7 +142,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case _ =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
               Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp,
-              getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
+              getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), verifiedBy = linearAsset.verifiedBy)
         }
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
