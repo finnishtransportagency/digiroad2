@@ -128,9 +128,9 @@ trait AddressLinkBuilder {
     if (roadAddresses.size < 2) {
       roadAddresses
     } else {
-      val roadAddessesWithHistory = getCommonHistoryRoadLinks(roadAddresses.filterNot(y=>y.commonHistoryId==fi.liikennevirasto.viite.NewCommonHistoryId).map(x => x.commonHistoryId).seq)
-      if (roadAddessesWithHistory.isEmpty) {  // in off change that there is no history
-      val  groupedRoadAddresses = roadAddresses.groupBy(record =>
+      val roadAddessesWithHistory = getCommonHistoryRoadLinks(roadAddresses.filterNot(y => y.commonHistoryId == fi.liikennevirasto.viite.NewCommonHistoryId).map(x => x.commonHistoryId).seq)
+      if (roadAddessesWithHistory.isEmpty) { // in off change that there is no history
+        val groupedRoadAddresses = roadAddresses.groupBy(record =>
           (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
         groupedRoadAddresses.flatMap { case (_, record) =>
           fuseRoadAddressInGroup(record.sortBy(_.startMValue))
@@ -145,7 +145,10 @@ trait AddressLinkBuilder {
     }
   }
 
+
   def getCommonHistoryRoadLinks(commonHistoryids: Seq[Long]): Seq[RoadAddress] = {
+    if (commonHistoryids.isEmpty)
+      return Seq.empty[RoadAddress]
     RoadAddressDAO.fetchByCommonHistoryId(commonHistoryids)
   }
 
