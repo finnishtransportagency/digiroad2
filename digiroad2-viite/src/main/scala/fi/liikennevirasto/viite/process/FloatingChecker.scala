@@ -18,7 +18,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
       !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue) ||
         !roadLinks.exists(rl => GeometryUtils.areAdjacent(
           GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
-          ra.geometry.map(_.copy(z = 0.0))))
+          ra.geometry.map(_.copy(z = 0.0)), MaxMoveDistanceBeforeFloating))
     }
     println(s"Checking road $roadNumber part $roadPartNumber")
     val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true, includeSuravage = false)
