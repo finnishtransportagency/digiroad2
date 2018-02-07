@@ -11,7 +11,7 @@
       backend.getChangeTable(projectID,function(changedata) {
         var parsedResult=roadChangeAPIResultParser(changedata);
         if (!_.isUndefined(parsedResult) && parsedResult.discontinuity !== null) {
-          eventbus.trigger('projectChanges:fetched', roadChangeAPIResultParser(parsedResult));
+          eventbus.trigger('projectChanges:fetched', parsedResult);
         }
       });
     }

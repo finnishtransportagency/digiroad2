@@ -86,7 +86,7 @@
       $('.row-changes').remove();
       eventbus.once('projectChanges:fetched', function(projectChangeData) {
         var htmlTable = "";
-        if (!_.isUndefined(projectChangeData) && projectChangeData !== null) {
+        if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
           _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq) {
             if (changeInfoSeq.changetype === newLinkStatus) {
               htmlTable += '<tr class="row-changes">';
