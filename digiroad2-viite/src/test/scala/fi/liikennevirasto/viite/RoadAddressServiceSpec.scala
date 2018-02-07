@@ -170,6 +170,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadLink = RoadLink(linkId, Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0)), 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityId)).thenReturn((Seq(roadLink),Seq()))
+      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(municipalityId)).thenReturn(Seq())
       when(mockRoadLinkService.getSuravageRoadLinks(municipalityId)).thenReturn(Seq())
       val roadAddressLink = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityId)
 
