@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -688,7 +689,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-
   test("Should pass change information through the actor"){
 
     //This test pass if the actors are called even when there are any information changed
@@ -1043,7 +1043,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
 
   }
-
 
   ignore("Projecting and filling should return proper geometry on Integration API calls, too") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -1406,6 +1405,62 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       apeedLimits.length should be(3)
       apeedLimits.head.foreach(_.value should be(Some(NumericValue(80))))
       dynamicSession.rollback()
+    }
+  }
+
+  test("Adjusts created speed limit, and goes through the saveProjectedLinearAssets actor, and not through the save unknowns"){
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val eventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId = 5000
+    val newLinkId1 = 6001
+    val newLinkId2 = 6002
+    val newLinkId3 = 6003
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
+
+
+    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, Municipality, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val newRoadLinks = Seq(
+      RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, Municipality, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
+
+    OracleDatabase.withDynTransaction {
+      val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) values ($asset,$lrm)""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+
+
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((newRoadLinks, changeInfo))
+      val apeedLimits = service.get(boundingBox, Set(municipalityCode)).toList
+
+
+      verify(eventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), List(), List(), Set(asset)))
+      val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
+      verify(eventBus, times(1)).publish(org.mockito.Matchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
+      verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
+      verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
+      apeedLimits.length should be(3)
+      apeedLimits.head.foreach(_.value should be(Some(NumericValue(80))))
+      dynamicSession.rollback()
+
     }
   }
 }
