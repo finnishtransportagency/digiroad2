@@ -2,7 +2,7 @@
   root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues, allowComplementaryLinks) {
     var className = _.kebabCase(layerName);
     var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
-    var checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän Todentama"/>';
+    var checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän todentama"/>';
 
     var toolSelection = new ActionPanelBoxes.ToolSelection([
       new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedPointAsset),
