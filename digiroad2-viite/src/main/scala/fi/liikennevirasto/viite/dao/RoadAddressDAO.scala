@@ -366,7 +366,7 @@ object RoadAddressDAO {
       case false => s""" where pos.link_id in ($linkIdString)"""
     }
 
-    val historyFilter = if(ignoreHistory) {
+    val historyFilter = if (ignoreHistory) {
       "AND ra.end_date is null"
     } else {
       s""""""
@@ -460,7 +460,7 @@ object RoadAddressDAO {
   }
 
   def fetchByLinkIdMassQueryToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, ignoreHistory: Boolean = true): List[RoadAddress] = {
-    val historyFilter = if(ignoreHistory) {
+    val historyFilter = if (ignoreHistory) {
       "AND ra.end_date is null"
     } else {
       s""""""
