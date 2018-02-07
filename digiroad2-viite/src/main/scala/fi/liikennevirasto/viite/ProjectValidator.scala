@@ -387,6 +387,65 @@ object ProjectValidator {
       checkRoadPartEnd(seq.filter(_.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)).toSeq
   }
 
+  def checkTrackCodePairing(project:RoadAddressProject, seq: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    def error(validationError: ValidationError)(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
+      Option.empty[ValidationErrorDetails]
+    }
+    def checkValidation(project: RoadAddressProject,roadNumber: Long, roadPartNumber: Long, projectLinks: Seq[ProjectLink] ) = {
+
+    }
+
+    /**Possible cases
+      * Case 1
+      *  ____
+      * /    \
+      *<      >
+      * \____/
+      *
+      * Case 2
+      *__       ____
+      *  \     /
+      *   >---<
+      *__/     \____
+      *
+      */
+    def findTrackGroups(links: Seq[ProjectLink]) = {
+      val leftSides = links.filter(_.track == Track.LeftSide)
+      val rightSides = links.filter(_.track == Track.RightSide)
+      val combined = links.filter (_.track == Track.Combined)
+
+      if(combined.isEmpty){
+        //Case 1
+        Seq(leftSides, rightSides)
+      } else {
+        //Case 2
+        //Start by finding the "edges" of the track changes
+        val smallerLMValue = leftSides.minBy(_.startAddrMValue).startAddrMValue
+        val smallerRMValue = rightSides.minBy(_.startAddrMValue).startAddrMValue
+        val biggestLMValue = leftSides.maxBy(_.startAddrMValue).startAddrMValue
+        val biggestRMValue = rightSides.maxBy(_.startAddrMValue).startAddrMValue
+        //We then try to remove all the combined roads that are after the edges
+       val intermidiate = combined.filterNot(c => {
+          //Remove the smallest regular
+          (c.startAddrMValue <= smallerLMValue || c.startAddrMValue <= smallerRMValue) ||
+          //Remove the biggest regular
+            (c.endAddrMValue >= biggestLMValue || c.endAddrMValue >= biggestRMValue)
+        })
+        //With all the roads after the edges removed if we still have any combined roads then it means the remaining ones are from Case 2 if not then we are in a presence of case 1
+        if(intermidiate.isEmpty){
+          Seq(leftSides, rightSides)
+        } else {
+          val (smallerLeft, biggerLeft) = leftSides.partition(l => l.endAddrMValue <= intermidiate.minBy(_.startAddrMValue).startAddrMValue)
+          val (smallerRight, biggerRight) = rightSides.partition(l => l.endAddrMValue <= intermidiate.minBy(_.startAddrMValue).startAddrMValue)
+          Seq((smallerLeft,smallerRight), (biggerLeft, biggerRight))
+        }
+      }
+    }
+    val groupedProjectLinks = seq.groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
+    groupedProjectLinks.map(gpl => checkValidation(project, gpl._1._1, gpl._1._2, gpl._2))
+    Seq.empty[ValidationErrorDetails]
+  }
+
   private def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
     GeometryUtils.areAdjacent(pl1.geometry, pl2.geometry, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
