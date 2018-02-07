@@ -631,7 +631,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         }
         (roadLinks ++ complimentaryLinks, Seq())
       } else {
-        roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+        //TODO Add on the cache the all the complementary links, and then filter on the methods used by OTH
+        val (roadlinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+        (roadlinks.filterNot(r => r.linkSource == LinkGeomSource.ComplimentaryLinkInterface) ++ roadLinkService.getComplementaryRoadLinksFromVVH(municipality), changes)
       }
     val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality)
     val allRoadLinks = roadLinksWithComplementary ++ suravageLinks
