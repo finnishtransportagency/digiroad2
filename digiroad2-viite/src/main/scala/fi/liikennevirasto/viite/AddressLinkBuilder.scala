@@ -116,18 +116,37 @@ trait AddressLinkBuilder {
     * @param roadAddresses roadaddress seq
     * @return fused roadaddress seq
     */
+
+  def fuseRoadAddressWithTransaction(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+  OracleDatabase.withDynSession(
+    fuseRoadAddress(roadAddresses)
+  )
+  }
+
+
   def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-    if (roadAddresses.size == 1) {
+    if (roadAddresses.size < 2) {
       roadAddresses
     } else {
-      val commonhistories=roadAddresses.map(x=>x.commonHistoryId).seq
-      val roadAddessesWithHistory=RoadAddressDAO.fetchByCommonHistoryId(commonhistories)
-      val groupedRoadAddresses = roadAddessesWithHistory.groupBy(record =>
-        (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated, record.commonHistoryId) )
-      groupedRoadAddresses.flatMap { case (_, record) =>
-        fuseRoadAddressInGroup(record.sortBy(_.startMValue))
-      }.toSeq 
+      val roadAddessesWithHistory = getCommonHistoryRoadLinks(roadAddresses.filterNot(y=>y.commonHistoryId==fi.liikennevirasto.viite.NewCommonHistoryId).map(x => x.commonHistoryId).seq)
+      if (roadAddessesWithHistory.isEmpty) {  // in off change that there is no history
+      val  groupedRoadAddresses = roadAddresses.groupBy(record =>
+          (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+        groupedRoadAddresses.flatMap { case (_, record) =>
+          fuseRoadAddressInGroup(record.sortBy(_.startMValue))
+        }.toSeq
+      } else { // in most cases we have history, so we will have to combine by history
+        val groupedRoadAddresses = roadAddessesWithHistory.groupBy(record =>
+          (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated, record.commonHistoryId))
+        groupedRoadAddresses.flatMap { case (_, record) =>
+          fuseRoadAddressInGroup(record.sortBy(_.startMValue))
+        }.toSeq
+      }
     }
+  }
+
+  def getCommonHistoryRoadLinks(commonHistoryids: Seq[Long]): Seq[RoadAddress] = {
+    RoadAddressDAO.fetchByCommonHistoryId(commonHistoryids)
   }
 
   /**
