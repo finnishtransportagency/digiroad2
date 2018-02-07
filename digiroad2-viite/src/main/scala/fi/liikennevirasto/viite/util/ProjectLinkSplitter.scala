@@ -199,8 +199,7 @@ object ProjectLinkSplitter {
 
     val normalizedSplits = if (isReversed) switchDigitization(splits) else splits
 
-    SplitResult(normalizedSplits._1, normalizedSplits._2, projectLinksToTerminate.filterNot(_.id== templateLink.id) ++ Seq(normalizedSplits._3), normalizedSplits._3)
-    //connectTerminatedProjectLinks(normalizedSplits._1, normalizedSplits._2, normalizedSplits._3, templateLink, projectLinksToTerminate.filterNot(_.id == templateLink.id))
+    connectTerminatedProjectLinks(normalizedSplits._1, normalizedSplits._2, normalizedSplits._3, templateLink, projectLinksToTerminate.filterNot(_.id == templateLink.id))
   }
 
   def findMatchingGeometrySegment(suravage: PolyLine, template: PolyLine): Option[Seq[Point]] = {
@@ -306,7 +305,15 @@ case class SplitOptions(splitPoint: Point, statusA: LinkStatus, statusB: LinkSta
 case class SplitResult(splitA: ProjectLink, splitB: ProjectLink, allTerminatedProjectLinks: Seq[ProjectLink], terminatedProjectLink: ProjectLink)
 {
   private def isShorterProjectLinks(pl: ProjectLink) = Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength
-  def toSeqWithAllTerminated: Seq[ProjectLink] = (Seq(splitA, splitB) ++ (allTerminatedProjectLinks.filterNot(_.id == terminatedProjectLink.id) ++ Seq(terminatedProjectLink)).map(pl => pl.copy(status = LinkStatus.Terminated, connectedLinkId = terminatedProjectLink.connectedLinkId))).filter(isShorterProjectLinks)
+  def toSeqWithAllTerminated: Seq[ProjectLink] = {
+    val originalProjectLink = allTerminatedProjectLinks.find(_.id == terminatedProjectLink.id).get
+    (Seq(splitA, splitB) ++ (allTerminatedProjectLinks.filterNot(_.id == terminatedProjectLink.id)
+      ++ Seq(terminatedProjectLink.copy(startAddrMValue = originalProjectLink.startAddrMValue,
+                                        geometry = GeometryUtils.truncateGeometry2D(originalProjectLink.geometry, 0.0, terminatedProjectLink.endMValue - terminatedProjectLink.startMValue),
+                                        geometryLength = originalProjectLink.geometryLength))
+      ).map(pl => pl.copy(status = LinkStatus.Terminated,
+      connectedLinkId = terminatedProjectLink.connectedLinkId))).filter(isShorterProjectLinks)
+  }
   def toSeqWithMergeTerminated: Seq[ProjectLink] = Seq(splitA, splitB, terminatedProjectLink).filter(isShorterProjectLinks)
 }
 
