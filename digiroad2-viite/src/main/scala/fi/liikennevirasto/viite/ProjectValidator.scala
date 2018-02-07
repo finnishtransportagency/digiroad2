@@ -391,7 +391,46 @@ object ProjectValidator {
     def error(validationError: ValidationError)(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
       Option.empty[ValidationErrorDetails]
     }
-    def checkValidation(project: RoadAddressProject,roadNumber: Long, roadPartNumber: Long, projectLinks: Seq[ProjectLink] ) = {
+    def recursiveAdjacencyCheck(currentLink: ProjectLink, remaining: Seq[ProjectLink], carryErrors: Seq[ValidationErrorDetails] = Seq.empty[ValidationErrorDetails]) = {
+      val nextLink = remaining.head
+      //currentLink.startAddrMValue < nextLink.startAddrMValue
+      //currentLink.endAddrMValue < nextLink.endAddrMValue
+      //currentLink must be adjacent to nextLink
+
+
+      //Stop at remaining without nextLink is empty
+      if(remaining.tail.isEmpty){
+        carryErrors
+      }
+    }
+    //leftSideTracks ,rightSideTracks
+    /**
+      * L
+      * What to validate here:
+      * A - Minimal startAddressMValue is the same for both lst and rst
+      * B - Maximum value of endAddressMValue is the same for both lst and rst
+      * C - All of the lst is connected (between 2 consecutive links [increasing MAddress values] they are adjacent)
+      * D - All of the rst is connected (between 2 consecutive links [increasing MAddress values] they are adjacent)
+      * @param lst - all the projectLinks that share a Track code of 2, already sorted by startAddrMValue
+      * @param rst - all the projectLinks that share a Track code of 1, already sorted by startAddrMValue
+      */
+    def checkTracks(lst: Seq[ProjectLink], rst: Seq[ProjectLink]) = {
+      //Easy validations 1st A & B
+      val aValidations = if(lst.minBy(_.startAddrMValue).startAddrMValue != rst.minBy(_.startAddrMValue).startAddrMValue) {
+        //Return validation error A
+      } else {
+        //No return
+      }
+      val bValidation = if(lst.maxBy(_.endAddrMValue).endAddrMValue != rst.maxBy(_.endAddrMValue).endAddrMValue) {
+        //Return validation error B
+      } else {
+        //No Return
+      }
+
+      //Hard validations C and D
+      val cValidation = recursiveAdjacencyCheck(lst.head, lst.tail)
+
+      val dValidation = recursiveAdjacencyCheck(rst.head, rst.tail)
 
     }
 
@@ -409,14 +448,14 @@ object ProjectValidator {
       *__/     \____
       *
       */
-    def findTrackGroups(links: Seq[ProjectLink]) = {
+    def findTrackGroups(links: Seq[ProjectLink]): Seq[(Seq[ProjectLink], Seq[ProjectLink])] = {
       val leftSides = links.filter(_.track == Track.LeftSide)
       val rightSides = links.filter(_.track == Track.RightSide)
       val combined = links.filter (_.track == Track.Combined)
 
       if(combined.isEmpty){
         //Case 1
-        Seq(leftSides, rightSides)
+        Seq((leftSides, rightSides))
       } else {
         //Case 2
         //Start by finding the "edges" of the track changes
@@ -433,7 +472,7 @@ object ProjectValidator {
         })
         //With all the roads after the edges removed if we still have any combined roads then it means the remaining ones are from Case 2 if not then we are in a presence of case 1
         if(intermidiate.isEmpty){
-          Seq(leftSides, rightSides)
+          Seq((leftSides, rightSides))
         } else {
           val (smallerLeft, biggerLeft) = leftSides.partition(l => l.endAddrMValue <= intermidiate.minBy(_.startAddrMValue).startAddrMValue)
           val (smallerRight, biggerRight) = rightSides.partition(l => l.endAddrMValue <= intermidiate.minBy(_.startAddrMValue).startAddrMValue)
@@ -442,7 +481,18 @@ object ProjectValidator {
       }
     }
     val groupedProjectLinks = seq.groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
-    groupedProjectLinks.map(gpl => checkValidation(project, gpl._1._1, gpl._1._2, gpl._2))
+    groupedProjectLinks.map(gpl => {
+      val roadNumber = gpl._1._1
+      val roadPartNumber = gpl._1._2
+      val projectLinks = gpl._2
+      val trackGroups = findTrackGroups(projectLinks)
+      trackGroups.map(tg => {
+        val leftSide = tg._1
+        val rightSide = tg._2
+        checkTracks(leftSide, rightSide)
+      })
+
+    })
     Seq.empty[ValidationErrorDetails]
   }
 
