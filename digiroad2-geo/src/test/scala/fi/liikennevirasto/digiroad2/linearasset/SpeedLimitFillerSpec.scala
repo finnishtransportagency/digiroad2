@@ -222,11 +222,12 @@ test("should not drop adjusted short speed limit") {
     )
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
-      Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+      Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+      ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
     output.length should be(3)
-    output.head.trafficDirection should be (TrafficDirection.BothDirections)
-    output.head.startMeasure should be(0.0)
-    output.head.endMeasure should be(3.0)
+    output.head._1.trafficDirection should be (TrafficDirection.BothDirections)
+    output.head._1.startMeasure should be(0.0)
+    output.head._1.endMeasure should be(3.0)
   }
 
   test("project speed limits to new geometry, case 2 - different speeds to different directions") {
@@ -250,26 +251,28 @@ test("should not drop adjusted short speed limit") {
 
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
-    output.head.sideCode should be (SideCode.TowardsDigitizing)
-    output.last.sideCode should be (SideCode.AgainstDigitizing)
-    output.head.startMeasure should be(0.0)
-    output.head.endMeasure should be(3.0)
-    output.last.startMeasure should be(0.0)
-    output.last.endMeasure should be(3.0)
-    output.foreach(_.value should be (Some(NumericValue(40))))
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
+    output.head._1.sideCode should be (SideCode.TowardsDigitizing)
+    output.last._1.sideCode should be (SideCode.AgainstDigitizing)
+    output.head._1.startMeasure should be(0.0)
+    output.head._1.endMeasure should be(3.0)
+    output.last._1.startMeasure should be(0.0)
+    output.last._1.endMeasure should be(3.0)
+    output.foreach( out => out._1.value should be (Some(NumericValue(40))))
 
     val output2 = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.last, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
     output2.length should be(3)
-    output2.head.sideCode should be (SideCode.AgainstDigitizing)
-    output2.last.sideCode should be (SideCode.TowardsDigitizing)
-    output2.head.startMeasure should be(0.0)
-    output2.head.endMeasure should be(3.0)
-    output2.last.startMeasure should be(0.0)
-    output2.last.endMeasure should be(3.0)
-    output2.foreach(_.value should be (Some(NumericValue(50))))
+    output2.head._1.sideCode should be (SideCode.AgainstDigitizing)
+    output2.last._1.sideCode should be (SideCode.TowardsDigitizing)
+    output2.head._1.startMeasure should be(0.0)
+    output2.head._1.endMeasure should be(3.0)
+    output2.last._1.startMeasure should be(0.0)
+    output2.last._1.endMeasure should be(3.0)
+    output2.foreach(out => out._1.value should be (Some(NumericValue(50))))
   }
 
   test("project speed limits to new geometry, case 3 - speed changes in the middle of the roadlink") {
@@ -294,7 +297,8 @@ test("should not drop adjusted short speed limit") {
     val output = changes flatMap { change =>
       speedLimit.map(
       SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.foreach(_.sideCode should be (SideCode.BothDirections))
     output.head.startMeasure should be(0.0)
@@ -328,7 +332,8 @@ test("should not drop adjusted short speed limit") {
     val output = changes flatMap { change =>
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.foreach(_.sideCode should be (SideCode.BothDirections))
     output.length should be (4)
@@ -367,7 +372,8 @@ test("should not drop adjusted short speed limit") {
     val output = changes flatMap { change =>
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.filter(_.linkId == 1).count(_.value.contains(NumericValue(30))) should be (1)
     output.filter(_.linkId == 1).count(_.value.contains(NumericValue(40))) should be (1)
@@ -402,7 +408,8 @@ test("should not drop adjusted short speed limit") {
     val output = changes flatMap { change =>
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty  ))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
   }
 
   test("Should repair speed limit data on overlaps and invalid data") {
