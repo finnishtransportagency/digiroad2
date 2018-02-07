@@ -912,7 +912,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         .values.forall(_.size == 2) should be (true)
 
       // Test that the common_history_id is inherited correctly in split
-       flatList.forall(_.commonHistoryId == commonHistoryId) should be (true)
+      flatList.forall(_.commonHistoryId == commonHistoryId) should be (true)
 
     }
   }
