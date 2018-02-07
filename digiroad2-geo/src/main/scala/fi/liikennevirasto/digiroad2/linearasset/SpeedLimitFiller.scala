@@ -431,7 +431,7 @@ object SpeedLimitFiller {
     (speedLimits, changeSet.copy(droppedAssetIds = droppedIds -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
   }
 
-  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], ChangeSet) = {
+  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]], changedSet: Option[ChangeSet] = None): (Seq[SpeedLimit], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       combine,
@@ -444,10 +444,16 @@ object SpeedLimitFiller {
       fillHoles,
       clean
     )
-      // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
-    val initialChangeSet = ChangeSet(Set.empty, Nil, Nil, Set.empty)
+    // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
+    val changeSet = changedSet match {
+      case Some(change) => change
+      case None => ChangeSet( droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+    }
 
-    roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
+    roadLinks.foldLeft(Seq.empty[SpeedLimit], changeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
       val segments = speedLimits.getOrElse(roadLink.linkId, Nil)
       val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
@@ -480,7 +486,7 @@ object SpeedLimitFiller {
     }
   }
 
-  def projectSpeedLimit(asset: SpeedLimit, to: RoadLink, projection: Projection) = {
+  def projectSpeedLimit(asset: SpeedLimit, to: RoadLink, projection: Projection , changedSet: ChangeSet): (SpeedLimit, ChangeSet)= {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {
       case to.linkId => asset.id
@@ -517,12 +523,15 @@ object SpeedLimitFiller {
         GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
       0, to.length)
 
-    SpeedLimit(id = assetId, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
-      asset.value, geometry, newStart, newEnd,
-      modifiedBy = asset.modifiedBy,
-      modifiedDateTime = asset.modifiedDateTime, createdBy = asset.createdBy, createdDateTime = asset.createdDateTime,
-      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource
-    )
+    val changeSet = assetId match {
+      case 0 => changedSet
+      case _ => changedSet.copy(adjustedMValues =  changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newSideCode)))
+    }
+
+    (SpeedLimit(id = assetId, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
+      asset.value, geometry, newStart, newEnd, modifiedBy = asset.modifiedBy, modifiedDateTime = asset.modifiedDateTime,
+      createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, vvhTimeStamp = projection.vvhTimeStamp,
+      geomModifiedDate = None, linkSource = asset.linkSource), changeSet)
   }
 
   case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[NumericValue])
