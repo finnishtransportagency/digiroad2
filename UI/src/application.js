@@ -23,7 +23,7 @@
     });
 
     var pointAssets = _.map(pointAssetSpecs, function(spec) {
-      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec.layerName, spec.allowComplementaryLinks) : new spec.collection(backend, spec.layerName, spec.allowComplementaryLinks) ;
+      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec.layerName, spec.allowComplementaryLinks, verificationCollection, spec.typeId) : new spec.collection(backend, spec.layerName, spec.allowComplementaryLinks, verificationCollection) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
       return _.merge({}, spec, {
         collection: collection,

@@ -1,6 +1,6 @@
 (function(root) {
 
-  root.TrafficSignsCollection = function (backend, layerName, allowComplementary) {
+  root.TrafficSignsCollection = function (backend, layerName, allowComplementary, verificationCollection) {
     PointAssetsCollection.call(this);
     var me = this;
 
@@ -65,7 +65,8 @@
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
           me.allowComplementaryIsActive(allowComplementary);
-            return filterTrafficSigns(me.filterComplementaries(assets));
+          verificationCollection.fetch(boundingBox, 300);
+          return filterTrafficSigns(me.filterComplementaries(assets));
         });
     };
   };

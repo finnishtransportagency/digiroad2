@@ -1,5 +1,5 @@
 (function(root) {
-  root.PointAssetsCollection = function(backend, endPointName, allowComplementary) {
+  root.PointAssetsCollection = function(backend, endPointName, allowComplementary, verificationCollection, typeId) {
     var isComplementaryActive = false;
     var isAllowComplementary = false;
     var me = this;
@@ -15,6 +15,7 @@
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
           me.allowComplementaryIsActive(allowComplementary);
+          verificationCollection.fetch(boundingBox, typeId);
           return me.filterComplementaries(assets);
         });
     };

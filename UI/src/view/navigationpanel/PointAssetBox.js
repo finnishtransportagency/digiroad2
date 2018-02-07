@@ -2,6 +2,7 @@
   root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues, allowComplementaryLinks) {
     var className = _.kebabCase(layerName);
     var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
+    var checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän Todentama"/>';
 
     var toolSelection = new ActionPanelBoxes.ToolSelection([
       new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedPointAsset),
@@ -42,8 +43,11 @@
         '</div>';
     }).join('');
 
+    var header = ['<div id="left-panel">    ' + title + '</div>' +
+    ' <div id="right-panel">' + checkIcon + '</div>'].join('');
+
     var legend = legendTemplate !== "" ? '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>' : "";
-    var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + trafficSignPanel + complementaryCheckBox + '</div>');
+    var panel = $('<div class="panel"><header class="panel-header expanded">' + header + '</header>' + legend + trafficSignPanel + complementaryCheckBox + '</div>');
     panel.append(toolSelection.element);
 
     element.append(panel);
@@ -68,6 +72,14 @@
           eventbus.trigger('withComplementary:hide');
         }
       }
+    });
+
+    eventbus.on('verificationInfo:fetched', function(visible) {
+      var img = element.find('#right-panel');
+      if (visible)
+        img.css('display','inline');
+      else
+        img.css('display','none');
     });
 
     var trafficSignHandler = function(event) {
