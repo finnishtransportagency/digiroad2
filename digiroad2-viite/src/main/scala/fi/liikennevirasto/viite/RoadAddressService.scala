@@ -654,9 +654,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }.toMap
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks, viiteRoadLinks)
-
     publishChangeSet(changeSet)
-
     filledTopology
   }
 
