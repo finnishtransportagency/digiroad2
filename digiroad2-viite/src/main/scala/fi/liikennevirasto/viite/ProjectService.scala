@@ -539,8 +539,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       if(roadLink.isEmpty){
         (None, Some(ErrorSuravageLinkNotFound), None)
       }
+
+      val (projectLinksConnected, projectLinksDisconnected) = projectLinks.partition(l =>
+        GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
+
       //we rank template links near suravage link by how much they overlap with suravage geometry
-      val commonSections = projectLinks.map(x =>
+      val commonSections = projectLinksConnected.map(x =>
         x -> ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink, x).map(GeometryUtils.geometryLength)
           .getOrElse(0.0)).filter(_._2 > MinAllowedRoadAddressLength)
       if (commonSections.isEmpty)

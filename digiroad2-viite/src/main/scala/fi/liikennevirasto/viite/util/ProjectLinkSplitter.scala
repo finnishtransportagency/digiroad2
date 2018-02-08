@@ -139,7 +139,7 @@ object ProjectLinkSplitter {
 
   def split(roadLink: RoadLink, suravage: ProjectLink, templateLink: ProjectLink, projectLinksToTerminate: Seq[ProjectLink], split: SplitOptions): SplitResult = {
     val adjustedTemplate = templateLink.copy(
-      geometry = projectLinksToTerminate.flatMap(_.geometry).sortBy(_.x),
+      geometry = projectLinksToTerminate.sortBy(_.startAddrMValue).flatMap(_.geometry),
       startAddrMValue = projectLinksToTerminate.map(_.startAddrMValue).min,
       endAddrMValue = projectLinksToTerminate.map(_.endAddrMValue).max,
       geometryLength = projectLinksToTerminate.map(_.geometryLength).sum,
@@ -148,8 +148,8 @@ object ProjectLinkSplitter {
     )
 
     def movedFromStart(suravageM: Double, templateM: Double, splitAddressM: Long, isReversed: Boolean) = {
-      val termGeom = GeometryUtils.truncateGeometry2D(adjustedTemplate.geometry, 0.0, templateM)
-      val keptGeom = GeometryUtils.truncateGeometry2D(roadLink.geometry, templateM, roadLink.length)
+      val keptGeom = GeometryUtils.truncateGeometry2D(adjustedTemplate.geometry, 0.0, templateM)
+      val termGeom = GeometryUtils.truncateGeometry2D(roadLink.geometry, templateM, roadLink.length)
       val (splitA, splitB) = suravageWithOptions(suravage, adjustedTemplate, split, suravageM, splitAddressM, templateM, isReversed, keptGeom)
       val splitT = templateLink.copy(
         startMValue = templateM,
