@@ -147,12 +147,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/project/prefillfromvvh/:linkId") {
     val linkId = params("linkId").toLong
     projectService.fetchPreFillFromVVH(linkId) match {
-      case Right(preFillInfo) => {
-        Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart)
-      }
-      case Left(failuremessage) => {
-        Map("success" -> false, "reason" -> failuremessage)
-      }
+      case Right(preFillInfo) => Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart)
+      case Left(failuremessage) => Map("success" -> false, "reason" -> failuremessage)
     }
   }
 
@@ -477,7 +473,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/project/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
-    val user = userProvider.getCurrentUser()
+    userProvider.getCurrentUser()
 
     val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
     val projectId: Long = params.get("id") match {
@@ -493,7 +489,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   delete("/project/trid/:projectId") {
-    val user = userProvider.getCurrentUser()
+    userProvider.getCurrentUser()
     val projectId = params("projectId").toLong
     val oError = projectService.removeRotatingTRId(projectId)
     oError match {
@@ -523,7 +519,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   post("/project/publish") {
-    val user = userProvider.getCurrentUser()
+    userProvider.getCurrentUser()
     try {
       val projectId = params("projectId").toLong
 
@@ -554,7 +550,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             case Some(x) => val (p, v) = x
               val cutGeom = Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
               Map("success" -> true, "response" -> Map("geometry" -> cutGeom))
-            case _ => Map("success" -> false, "errorMessage" -> "Error during spliting calculation")
+            case _ => Map("success" -> false, "errorMessage" -> "Error during splitting calculation")
           }
         case _ => Map("success" -> false, "errorMessage" -> ErrorSuravageLinkNotFound)
       }
@@ -609,14 +605,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case Some(link) =>
         try {
           val options = parsedBody.extract[SplitOptions]
-          projectService.validateLinkTrack(options.trackCode.value) match {
-            case true => {
-              val writableProject = projectWritable(options.projectId)
-              val splitError = writableProject.splitSuravageLink(link, user.username, options)
-              writableProject.saveProjectCoordinates(options.projectId, options.coordinates)
-              Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
-            }
-            case _ => Map("success" -> false, "errorMessage" -> "Invalid track code")
+          if (projectService.validateLinkTrack(options.trackCode.value)) {
+            val writableProject = projectWritable(options.projectId)
+            val splitError = writableProject.splitSuravageLink(link, user.username, options)
+            writableProject.saveProjectCoordinates(options.projectId, options.coordinates)
+            Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
+          } else {
+            Map("success" -> false, "errorMessage" -> "Invalid track code")
           }
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
