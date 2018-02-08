@@ -64,6 +64,8 @@ object Queries {
 
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
+  def nextCommonHistoryValue = sql"select common_history_seq.nextval from dual"
+
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
   }

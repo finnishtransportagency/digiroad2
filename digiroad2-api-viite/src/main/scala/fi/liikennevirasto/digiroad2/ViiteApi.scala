@@ -417,18 +417,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-      projectService.validateLinkTrack(links.trackCode) match {
-        case true => {
-          logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-          val writableProject = projectWritable(links.projectId)
-          val retVal = writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-            Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username)
+      logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
+      val writableProject = projectWritable(links.projectId)
+      val response = writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
+        Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username)
+      response.get("success") match {
+        case Some(true) => {
           writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
           Map("success" -> true,
             "publishable" -> projectService.isProjectPublishable(links.projectId),
             "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
         }
-        case _ => Map("success" -> false, "errorMessage" -> "Invalid track code")
+        case _ => response
       }
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")

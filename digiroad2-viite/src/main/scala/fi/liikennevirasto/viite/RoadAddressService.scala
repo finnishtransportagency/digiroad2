@@ -315,7 +315,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         // re-fetch after recalculation
         val adjustedAddresses = adjustedRoadParts.flatMap { case (road, part) => RoadAddressDAO.fetchByRoadPart(road, part) }
 
-        val changedRoadAddresses = adjustedAddresses ++ RoadAddressDAO.fetchByIdMassQuery(ids -- adjustedAddresses.map(_.id).toSet, true, true)
+        val changedRoadAddresses = adjustedAddresses ++ RoadAddressDAO.fetchByIdMassQuery(ids -- adjustedAddresses.map(_.id), true, true)
         changedRoadAddresses.groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
       }
   }
@@ -613,26 +613,34 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     Kalpa-API methods
   */
   def getRoadAddressesLinkByMunicipality(municipality: Int, roadLinkDataTempAPI:Boolean=false): Seq[RoadAddressLink] = {
-    //TODO: Remove null checks and make sure no nulls are generated
-    //TODO: All this request to VVH can be done using asynchronous
-    val roadLinks = {
-      val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality,frozenTimeVVHAPIServiceEnabled)
-      if (tempRoadLinks == null)
-        Seq.empty[RoadLink]
-      else tempRoadLinks
-    }
-    val complimentaryLinks = {
-      val tempComplimentary = roadLinkService.getComplementaryRoadLinksFromVVH(municipality)
-      if (tempComplimentary == null)
-        Seq.empty[RoadLink]
-      else tempComplimentary
-    }
+
+    val (roadLinksWithComplementary, _) =
+      // TODO This if statement will be removed after the frozen links are no longer needed and jut use the cache
+      if (frozenTimeVVHAPIServiceEnabled) {
+        val roadLinks = {
+          val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality, frozenTimeVVHAPIServiceEnabled)
+          if (tempRoadLinks == null)
+            Seq.empty[RoadLink]
+          else tempRoadLinks
+        }
+        val complimentaryLinks = {
+          val tempComplimentary = roadLinkService.getComplementaryRoadLinksFromVVH(municipality)
+          if (tempComplimentary == null)
+            Seq.empty[RoadLink]
+          else tempComplimentary
+        }
+        (roadLinks ++ complimentaryLinks, Seq())
+      } else {
+        //TODO Add on the cache the all the complementary links, and then filter on the methods used by OTH
+        val (roadlinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+        (roadlinks.filterNot(r => r.linkSource == LinkGeomSource.ComplimentaryLinkInterface) ++ roadLinkService.getComplementaryRoadLinksFromVVH(municipality), changes)
+      }
     val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality)
-    val allRoadLinks = roadLinks ++ complimentaryLinks ++ suravageLinks
+    val allRoadLinks = roadLinksWithComplementary ++ suravageLinks
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet, RoadNetworkDAO.getLatestRoadNetworkVersion > 0).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
