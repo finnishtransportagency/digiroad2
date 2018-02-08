@@ -123,7 +123,7 @@ trait AddressLinkBuilder {
   )
   }
 
-
+/*
   def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     if (roadAddresses.size < 2) {
       roadAddresses
@@ -143,8 +143,20 @@ trait AddressLinkBuilder {
         }.toSeq
       }
     }
-  }
+  }*/
 
+  def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+    if (roadAddresses.size == 1) {
+      roadAddresses
+    } else {
+      val groupedRoadAddresses = roadAddresses.groupBy(record =>
+        (record.commonHistoryId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+
+      groupedRoadAddresses.flatMap { case (_, record) =>
+        fuseRoadAddressInGroup(record.sortBy(_.startMValue))
+      }.toSeq
+    }
+  }
 
   def getCommonHistoryRoadLinks(commonHistoryids: Seq[Long]): Seq[RoadAddress] = {
     if (commonHistoryids.isEmpty)
