@@ -37,7 +37,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     results.values.flatten.exists(_.endAddrMValue == 1400) should be (true)
     results.values.flatten.forall(_.adjustedTimestamp == 96400L) should be (true)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
-    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress.commonHistoryId)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 
   test("transfer 1 to 2, modify 2, then transfer 2 to 3") {
