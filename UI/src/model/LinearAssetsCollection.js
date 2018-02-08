@@ -50,7 +50,7 @@
     };
 
     this.fetchAssetsWithComplementary = function(boundingBox) {
-      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId));
+      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId, applicationModel.getWithRoadAddress()));
     };
 
     this.fetchReadOnlyAssets = function(boundingBox) {

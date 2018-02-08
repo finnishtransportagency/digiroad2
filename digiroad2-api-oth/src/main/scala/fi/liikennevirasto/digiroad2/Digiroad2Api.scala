@@ -430,27 +430,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
     val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
-    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
-    partitionedRoadLinks.map {
-      _.map(roadLinkToApi)
-    }
+    partitionRoadLinks(roadLinks)
   }
 
-  private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
-    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
-    partitionedRoadLinks.map {
-      _.map(roadLinkToApi)
-    }
+    val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
+    val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
+    partitionRoadLinks(roadLinks)
   }
 
   private def getRoadLinksHistoryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinks = roadLinkService.getRoadLinksHistoryFromVVH(boundingRectangle, municipalities)
+    partitionRoadLinks(roadLinks)
+  }
 
+  private def partitionRoadLinks(roadLinks: Seq[RoadLink]): Seq[Seq[Map[String, Any]]] = {
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map {
       _.map(roadLinkToApi)
@@ -675,18 +673,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val usedService =  getLinearAssetService(typeId)
-      if(params("withRoadAddress").toBoolean){
-        if(user.isServiceRoadMaintainer())
-          mapLinearAssets(usedService.withRoadAddress(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
-        else
-          mapLinearAssets(usedService.withRoadAddress(usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
-      }else{
-        if(user.isServiceRoadMaintainer())
-          mapLinearAssets(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
-        else
-          mapLinearAssets(usedService.getByBoundingBox(typeId, boundingRectangle, municipalities))
-      }
+      val usedService = getLinearAssetService(typeId)
+      val assets = if(user.isServiceRoadMaintainer())
+        usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
+      else
+        usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)
+      if(params("withRoadAddress").toBoolean)
+        mapLinearAssets(usedService.withRoadAddress(assets))
+      else
+        mapLinearAssets(assets)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -707,14 +702,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val usedService =  getLinearAssetService(typeId)
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      if(user.isServiceRoadMaintainer())
-        mapLinearAssets(usedService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
+      val usedService = getLinearAssetService(typeId)
+      val assets = if(user.isServiceRoadMaintainer())
+        usedService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
       else
-        mapLinearAssets(usedService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities))
+        usedService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities)
+      if(params("withRoadAddress").toBoolean)
+        mapLinearAssets(usedService.withRoadAddress(assets))
+      else
+        mapLinearAssets(assets)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
