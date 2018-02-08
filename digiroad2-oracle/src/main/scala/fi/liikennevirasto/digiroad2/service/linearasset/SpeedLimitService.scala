@@ -305,7 +305,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
     }
 
-    validateMunicipalities(dao.getLinksWithLengthFromVVH(20, id))
+    validateMunicipalities(dao.getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id))
 
     //Get all data from the speedLimit to update
     val speedLimit = dao.getPersistedSpeedLimit(id).get
@@ -329,14 +329,15 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       updatedIds
     }
   }
-//this method maybe replace updateSpeedLimitValue
+
+  //this method maybe replace updateSpeedLimitValue
   def updateSpeedLimit(id: Long, value: Int, username: String, measures: Option[Measures] = None, sideCode: Option[Int] = None,
     municipalityValidation: Int => Unit): Option[Long] = {
     def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)]): Unit = {
       vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
     }
 
-    validateMunicipalities(dao.getLinksWithLengthFromVVH(20, id))
+    validateMunicipalities(dao.getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id))
 
     //Get all data from the speedLimit to update
     val speedLimit = dao.getPersistedSpeedLimit(id).filterNot(_.expired).getOrElse(throw new IllegalStateException("Asset no longer available"))

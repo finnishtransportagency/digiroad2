@@ -1280,7 +1280,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(vvhRoadLinks)
 
       val topology = service.get(municipalityCode).sortBy(_.startMeasure).sortBy(_.linkId)
-      topology.filter(_.id != 0).foreach(sl => service.dao.updateMValues(sl.id, (sl.startMeasure, sl.endMeasure), sl.vvhTimeStamp))
+      topology.filter(_.id != 0).foreach(sl => service.dao.updateMValues(sl.id, (sl.startMeasure, sl.endMeasure), Some(sl.vvhTimeStamp)))
       val newLimits = topology.filter(_.id == 0).map(sl => {
         val aId = Sequences.nextPrimaryKeySeqValue
         val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue

@@ -665,7 +665,7 @@ class AssetDataImporter {
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
       val speedLimitsToFloat = speedLimitLinks.map(_._1).toSet
-      dao.floatSpeedLimits(speedLimitsToFloat)
+      dao.setFloating(speedLimitsToFloat)
       println(s"removed ${speedLimitsToFloat.size} multilink speed limits")
     }
   }
