@@ -31,6 +31,8 @@ package object viite {
   val MaxMoveDistanceBeforeFloating = 1.0
   /* Maximum amount a road start / end may move until it is turned into a floating road address */
 
+  val MinDistanceForGeometryUpdate = 0.5
+
   val NewRoadAddress: Long = -1000L
 
   val NewCommonHistoryId: Long = -1000L
