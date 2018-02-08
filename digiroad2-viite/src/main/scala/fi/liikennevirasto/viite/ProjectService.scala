@@ -467,11 +467,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def getGeometryWithTimestamp(linkId: Long, timeStamp: Long, roadLinks: Seq[RoadLink],
                                  vvhHistoryLinks: Seq[VVHHistoryRoadLink]): Seq[Point] = {
-      val matchingLinksGeometry = (roadLinks++vvhHistoryLinks).find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
+      val matchingLinksGeometry = (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
       if (matchingLinksGeometry.nonEmpty) {
         matchingLinksGeometry.get
       } else {
-        (roadLinks++vvhHistoryLinks).find(rl => rl.linkId == linkId).map(_.geometry)
+        (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId).map(_.geometry)
           .getOrElse(throw new InvalidAddressDataException(s"Geometry with linkId $linkId and timestamp $timeStamp not found!"))
       }
     }
@@ -536,12 +536,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
       val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(projectLinks.head.linkId, false).headOption
-      if(roadLink.isEmpty){
+      if (roadLink.isEmpty) {
         (None, Some(ErrorSuravageLinkNotFound), None)
       }
 
-      val (projectLinksConnected, projectLinksDisconnected) = projectLinks.partition(l =>
-        GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
+      val projectLinksConnected = projectLinks.filter(l => GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
 
       //we rank template links near suravage link by how much they overlap with suravage geometry
       val commonSections = projectLinksConnected.map(x =>
