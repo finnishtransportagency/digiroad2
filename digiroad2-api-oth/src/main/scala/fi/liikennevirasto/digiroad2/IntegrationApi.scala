@@ -226,6 +226,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case PavedRoad.typeId => pavingService
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
+        case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
         case _ => linearAssetService
       }
     }
