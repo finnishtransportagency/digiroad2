@@ -32,7 +32,7 @@
       var filter =  _.filter(linkList, function (link) {
         return _.contains(statusList,link.status);
       });
-      if(filter.length > 1){
+      if (filter.length > 1) {
         var min = _.min(_.map(filter, function (template) {
           return template.startAddressM;
         }));
