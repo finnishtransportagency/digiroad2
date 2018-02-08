@@ -1237,7 +1237,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  ignore("spliting road address and saving with different ROADTYPE on transfer + new creates one new commonBistoryId for the segment") {
+  ignore("splitting road address and saving with different ROADTYPE on transfer + new creates one new commonHistoryId for the segment") {
     val road = 5L
     val roadPart = 205L
     val origStartM = 1024L
@@ -1249,16 +1249,16 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val user = Some("user")
     val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
-    val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
+    val roadAddress = RoadAddress(1L, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
       None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
       LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123456)
-    val transferAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, 1028, 1128, Some(DateTime.now()), None, user,
+    val transferAndNew = Seq(ProjectLink(2L, road, roadPart, Track.Combined, Continuous, 1028, 1128, Some(DateTime.now()), None, user,
       2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
       -1L, LinkStatus.Transfer, MunicipalityStreetRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId), 748800L),
-      ProjectLink(3L, 5, 205, Track.Combined, Continuous, 1128, 1205, Some(DateTime.now()), None, user,
+      ProjectLink(3L, road, roadPart, Track.Combined, Continuous, 1128, 1205, Some(DateTime.now()), None, user,
         3L, suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
         -1L, LinkStatus.New, MunicipalityStreetRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, false, Some(linkId), 748800L),
-      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM+100L, origEndM, Some(DateTime.now()), None, user,
+      ProjectLink(4L, road, roadPart, Track.Combined, Continuous, origStartM + 100L, origEndM, Some(DateTime.now()), None, user,
         4L, linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
         -1L, LinkStatus.Terminated, MunicipalityStreetRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId), 748800L))
     val result = projectService.createSplitRoadAddress(roadAddress, transferAndNew, project)
@@ -1270,7 +1270,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result.filter(_.terminated == TerminationCode.NoTermination).foreach(r => r.commonHistoryId should be (-1000))
   }
 
-  ignore("spliting road address and saving with different TRACK on transfer + new creates one new commonBistoryId for the segment") {
+  ignore("splitting road address and saving with different TRACK on transfer + new creates one new commonHistoryId for the segment") {
     val road = 5L
     val roadPart = 205L
     val origStartM = 1024L
@@ -1282,16 +1282,16 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val user = Some("user")
     val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
-    val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
+    val roadAddress = RoadAddress(1L, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
       None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
       LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123456)
-    val transferAndNew = Seq(ProjectLink(2L, 5, 205, Track.RightSide, Continuous, 1028, 1128, Some(DateTime.now()), None, user,
+    val transferAndNew = Seq(ProjectLink(2L, road, roadPart, Track.RightSide, Continuous, 1028, 1128, Some(DateTime.now()), None, user,
       2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
       -1L, LinkStatus.Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId), 748800L),
-      ProjectLink(3L, 5, 205, Track.RightSide, Continuous, 1128, 1205, Some(DateTime.now()), None, user,
+      ProjectLink(3L, road, roadPart, Track.RightSide, Continuous, 1128, 1205, Some(DateTime.now()), None, user,
         3L, suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
         -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, false, Some(linkId), 748800L),
-      ProjectLink(4L, 5, 205, Track.RightSide, Continuous, origStartM+100L, origEndM, Some(DateTime.now()), None, user,
+      ProjectLink(4L, road, roadPart, Track.RightSide, Continuous, origStartM+100L, origEndM, Some(DateTime.now()), None, user,
         4L, linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
         -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId), 748800L))
     val result = projectService.createSplitRoadAddress(roadAddress, transferAndNew, project)
