@@ -633,15 +633,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       } else {
         roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
       }
-    val suravageLinks = roadLinkService.getSuravageLinksFromVVHByMunicipality(municipality).map(s => RoadAddressLinkBuilder.buildSuravageRoadAddressLink(s))
+    val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality)
+    val allRoadLinks = roadLinksWithComplementary ++ suravageLinks
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkIdToApi(roadLinksWithComplementary.map(_.linkId).toSet, RoadNetworkDAO.getLatestRoadNetworkVersion > 0).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet, RoadNetworkDAO.getLatestRoadNetworkVersion > 0).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
-    val knownRoadLinks = roadLinksWithComplementary.filter(rl => {
+    val knownRoadLinks = allRoadLinks.filter(rl => {
       addresses.contains(rl.linkId)
     })
 
@@ -650,11 +651,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
     }.toMap
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinksWithComplementary, viiteRoadLinks)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks, viiteRoadLinks)
 
     publishChangeSet(changeSet)
 
-    filledTopology ++ suravageLinks
+    filledTopology
   }
 
   def saveAdjustments(addresses: Seq[LRMValueAdjustment]): Unit = {
