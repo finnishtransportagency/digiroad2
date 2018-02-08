@@ -34,6 +34,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     results.values.flatten.exists(_.endAddrMValue == 1400) should be (true)
     results.values.flatten.forall(_.adjustedTimestamp == 96400L) should be (true)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress.commonHistoryId)
   }
 
   test("transfer 1 to 2, modify 2, then transfer 2 to 3") {
@@ -66,6 +67,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     results.values.flatten.exists(_.endAddrMValue == 1000) should be (true)
     results.values.flatten.exists(_.endAddrMValue == 1400) should be (true)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 
   test("no changes should apply") {
@@ -105,6 +107,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     results(roadLinkId3).count(_.id == -1000) should be (0)
     results(roadLinkId3).head.eq(roadAddress3) should be (true)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 
   test("modify 1, transfer 2 To 1, transfer 3 to 1") {
@@ -154,6 +157,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.endAddrMValue should be (1465)
     addr3.adjustedTimestamp should be (changesVVHTimestamp)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 
   test("split a road address link into three") {
@@ -201,6 +205,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.sideCode should be (TowardsDigitizing)
     addr3.discontinuity should be (EndOfRoad)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 
   test("Lengthened road links") {
@@ -257,6 +262,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr3.sideCode should be (TowardsDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 
   test("Shortened road links") {
@@ -314,6 +320,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr3.sideCode should be (TowardsDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 
   test("Removed link") {
@@ -337,6 +344,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr1.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr1.sideCode should be (AgainstDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 
   test("Multiple operations applied in order") {
@@ -379,5 +387,6 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr2.adjustedTimestamp should be (changesVVHTimestamp2)
     addr2.sideCode should be (AgainstDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+    results.values.flatten.map(_.commonHistoryId).toSet.head should be (roadAddress1.commonHistoryId)
   }
 }
