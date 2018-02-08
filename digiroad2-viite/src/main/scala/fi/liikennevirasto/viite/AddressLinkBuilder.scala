@@ -123,28 +123,6 @@ trait AddressLinkBuilder {
   )
   }
 
-/*
-  def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-    if (roadAddresses.size < 2) {
-      roadAddresses
-    } else {
-      val roadAddessesWithHistory = getCommonHistoryRoadLinks(roadAddresses.filterNot(y => y.commonHistoryId == fi.liikennevirasto.viite.NewCommonHistoryId).map(x => x.commonHistoryId).seq)
-      if (roadAddessesWithHistory.isEmpty) { // in off change that there is no history
-        val groupedRoadAddresses = roadAddresses.groupBy(record =>
-          (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
-        groupedRoadAddresses.flatMap { case (_, record) =>
-          fuseRoadAddressInGroup(record.sortBy(_.startMValue))
-        }.toSeq
-      } else { // in most cases we have history, so we will have to combine by history
-        val groupedRoadAddresses = roadAddessesWithHistory.groupBy(record =>
-          (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated, record.commonHistoryId))
-        groupedRoadAddresses.flatMap { case (_, record) =>
-          fuseRoadAddressInGroup(record.sortBy(_.startMValue))
-        }.toSeq
-      }
-    }
-  }*/
-
   def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     if (roadAddresses.size == 1) {
       roadAddresses
