@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{MinDistanceForGeometryUpdate, RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
@@ -309,8 +309,10 @@ class AssetDataImporter {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
             if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
 
-              if (((segment.geometry.head.distance2DTo(newGeom.head) > 1) && (segment.geometry.head.distance2DTo(newGeom.last) > 1)) ||
-                ((segment.geometry.last.distance2DTo(newGeom.head) > 1) && (segment.geometry.last.distance2DTo(newGeom.last) > 1))) {
+              if (((segment.geometry.head.distance2DTo(newGeom.head) > MinDistanceForGeometryUpdate) &&
+                (segment.geometry.head.distance2DTo(newGeom.last) > MinDistanceForGeometryUpdate)) ||
+                ((segment.geometry.last.distance2DTo(newGeom.head) > MinDistanceForGeometryUpdate) &&
+                  (segment.geometry.last.distance2DTo(newGeom.last) > MinDistanceForGeometryUpdate))) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1
