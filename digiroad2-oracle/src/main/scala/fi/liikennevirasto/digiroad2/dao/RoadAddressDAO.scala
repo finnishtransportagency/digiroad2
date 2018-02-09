@@ -28,6 +28,17 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
   private val addressLength: Long = endAddrMValue - startAddrMValue
   private val lrmLength: Double = Math.abs(endMValue - startMValue)
+
+  def addrAt(a: Double) = {
+    val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
+    sideCode match {
+      case SideCode.AgainstDigitizing =>
+        endAddrMValue - Math.round((a - startMValue) * coefficient)
+      case SideCode.TowardsDigitizing =>
+        startAddrMValue + Math.round((a - startMValue) * coefficient)
+      case _ => throw new IllegalArgumentException(s"Bad sidecode $sideCode on road address $id (link $linkId)")
+    }
+  }
 }
 
 case class RoadAddressRow(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
@@ -235,5 +246,29 @@ class RoadAddressDAO {
           floating, Seq(), expired, createdBy, createdDate, modifiedDate)
     }
   }
+
+  def getByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
+    val linkIdString = linkIds.mkString(",")
+    val where = linkIds.isEmpty match {
+      case true => return List()
+      case false => s""" where pos.link_id in ($linkIdString)"""
+    }
+    val query =
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code, ra.floating, t.X, t.Y, t2.X, t2.Y,
+        case when ra.valid_to <= sysdate then 1 else 0 end as expired, ra.created_by, ra.start_date, pos.modified_date
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        $where and t.id < t2.id and
+          valid_from <= sysdate and
+          (valid_to is null or valid_to > sysdate)
+      """
+    queryList(query)
+  }
+
 
 }
