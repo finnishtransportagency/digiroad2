@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{MinDistanceForGeometryUpdate, RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
@@ -143,6 +143,7 @@ class AssetDataImporter {
         RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
         RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
         RA2.START_ADDR_M = ROAD_ADDRESS.END_ADDR_M AND
+        RA2.COMMON_HISTORY_ID = ROAD_ADDRESS.COMMON_HISTORY_ID AND
         RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
         (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
         NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)))""".execute
@@ -155,6 +156,7 @@ class AssetDataImporter {
               RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
               RA2.END_ADDR_M = ROAD_ADDRESS.START_ADDR_M AND
               RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
+              RA2.COMMON_HISTORY_ID = ROAD_ADDRESS.COMMON_HISTORY_ID AND
               (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
                 NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
               )
@@ -248,7 +250,7 @@ class AssetDataImporter {
             0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue
           else
-            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode, commonHistoryId = fi.liikennevirasto.viite.NewCommonHistoryId)
+            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check common_history_id
 
     val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             0.0
@@ -256,7 +258,7 @@ class AssetDataImporter {
             splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue - splitMValue
           else
-            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode, commonHistoryId = fi.liikennevirasto.viite.NewCommonHistoryId)
+            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check common_history_id
     Seq(roadAddressA, roadAddressB)
   }
 
@@ -307,8 +309,10 @@ class AssetDataImporter {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
             if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
 
-              if (((segment.geometry.head.distance2DTo(newGeom.head) > 1) && (segment.geometry.head.distance2DTo(newGeom.last) > 1)) ||
-                ((segment.geometry.last.distance2DTo(newGeom.head) > 1) && (segment.geometry.last.distance2DTo(newGeom.last) > 1))) {
+              if (((segment.geometry.head.distance2DTo(newGeom.head) > MinDistanceForGeometryUpdate) &&
+                (segment.geometry.head.distance2DTo(newGeom.last) > MinDistanceForGeometryUpdate)) ||
+                ((segment.geometry.last.distance2DTo(newGeom.head) > MinDistanceForGeometryUpdate) &&
+                  (segment.geometry.last.distance2DTo(newGeom.last) > MinDistanceForGeometryUpdate))) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1

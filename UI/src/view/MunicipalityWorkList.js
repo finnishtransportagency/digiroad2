@@ -128,10 +128,10 @@
     return $('<table id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems)).append(deleteBtn).append(saveBtn);
   };
 
-  var searchbox = $('<div class="filter-box">' +
-    '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
-
   var generateWorkList = function (listP) {
+    var searchbox = $('<div class="filter-box">' +
+        '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
+
     var title = 'Tietolajien kuntasivu';
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +
@@ -156,7 +156,7 @@
         element.html($('<div class="municipality-list">').append(unknownLimits));
 
         if (_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium'))
-          searchbox.insertBefore('table');
+          searchbox.insertBefore('#tableData');
 
         $('#searchBox').on('keyup', function(event){
           var currentInput = event.currentTarget.value;

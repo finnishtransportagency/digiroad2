@@ -170,6 +170,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadLink = RoadLink(linkId, Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0)), 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityId)).thenReturn((Seq(roadLink),Seq()))
+      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(municipalityId)).thenReturn(Seq())
       when(mockRoadLinkService.getSuravageRoadLinks(municipalityId)).thenReturn(Seq())
       val roadAddressLink = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityId)
 
@@ -399,10 +400,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       ,FeatureClass.AllOthers,123,123,Map("MUNICIPALITYCODE" -> BigInt.apply(749)))
   }
 
-  private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
+  private def roadAddressLinkToRoadAddress(floating: Boolean, commonHistoryId: Long = 0)(l: RoadAddressLink) = {
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode, 0,
-      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, LinkGeomSource.NormalLinkInterface, l.elyCode, NoTermination, 0)
+      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, LinkGeomSource.NormalLinkInterface, l.elyCode, NoTermination,
+      commonHistoryId)
   }
 
   test("recalculate one track road with single part") {
@@ -792,7 +794,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622953, o5622953Geom, 2825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true) // end calibration point for testing
       )
 
-      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false, 123456))
 
       val newLinks = Seq(
         createRoadAddressLink(0, 499914628, n499914628Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
@@ -814,6 +816,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // Test that this is not accepted as 101-103 is moved to locate after 103-113
       newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet should be (addresses.map(_.id).toSet)
+      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.head should be (123456)
     }
   }
 
@@ -858,6 +862,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       // should contain just the 5622953
       newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size (1)
       newAddresses.get(5622953).isEmpty should be (false)
+      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.size should be (1)
     }
   }
 
@@ -870,13 +875,15 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val o5622931Geom = n499914628Geom  ++ n5622931Geom ++ n499914643Geom ++ n5622953Geom
     val o1Geom = Seq(Point(6734173, 332309-1984), Point(6734173,332309))
 
+    val commonHistoryId = 123;
+
     runWithRollback {
       val oldAddressLinks = Seq(
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622931, o5622931Geom, 92826, 3, 0, 1984, 2304, SideCode.AgainstDigitizing, Anomaly.None, false, true),
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1, o1Geom, 92826, 3, 0, 0, 1984, SideCode.TowardsDigitizing, Anomaly.None, true, false)
       )
 
-      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false, commonHistoryId))
 
       val newLinks = Seq(
         createRoadAddressLink(0, 1, o1Geom, 100,1, 1, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false),
@@ -903,9 +910,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       flatList.count(_.calibrationPoints._1.nonEmpty) should be (1)
       flatList.count(_.startAddrMValue == 0) should be (1)
       flatList.count(_.endAddrMValue == 2304) should be (1)
+
       // Test that the range is continuous
       flatList.flatMap(r => Seq(r.startAddrMValue, r.endAddrMValue)).filterNot(l => l == 0 || l == 2304).groupBy(l => l)
         .values.forall(_.size == 2) should be (true)
+
+      // Test that the common_history_id is inherited correctly in split
+      flatList.forall(_.commonHistoryId == commonHistoryId) should be (true)
+
     }
   }
 

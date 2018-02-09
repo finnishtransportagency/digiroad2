@@ -19,7 +19,7 @@ import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
 import fi.liikennevirasto.viite.ProjectValidator.{ValidationError, ValidationErrorDetails}
 import fi.liikennevirasto.viite.ProjectValidator.ValidationError.MissingEndOfRoad
-import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.viite.RoadType.{MunicipalityStreetRoad, PublicRoad}
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
@@ -1236,4 +1236,5 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       response.get should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
     }
   }
+
 }
