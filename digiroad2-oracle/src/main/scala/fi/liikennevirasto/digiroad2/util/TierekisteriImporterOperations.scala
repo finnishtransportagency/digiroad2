@@ -404,7 +404,7 @@ class SpeedLimitsTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   private def getSpeedLimitValue(assetInfo: TrAssetInfo, linkType:  Option[LinkType]): Option[Int] = {
     def getSpeedLimitValueByLinkType(linkType:  Option[LinkType]): Option[Int] = {
-    linkType.getOrElse("") match {
+    linkType.getOrElse(UnknownLinkType) match {
       case Motorway =>
         Some(defaultMotorwaySpeedLimit)
       case MultipleCarriageway | SingleCarriageway | Freeway =>
@@ -417,22 +417,16 @@ class SpeedLimitsTierekisteriImporter extends TierekisteriAssetImporterOperation
     print("assetType" -> trAsset.asInstanceOf[TierekisteriAssetData].assetType.trafficSignType)
     trAsset.assetType.trafficSignType match {
       case TrafficSignType.SpeedLimit  =>
-        println("")
         toInt(trAsset.assetValue)
       case TrafficSignType.EndSpeedLimit =>
-        println("")
         Some(defaultSpeedLimit)
       case TrafficSignType.SpeedLimitZone  =>
-        println("")
         toInt(trAsset.assetValue)
       case TrafficSignType.EndSpeedLimitZone =>
-        println("")
         Some(defaultSpeedLimit)
       case TrafficSignType.UrbanArea =>
-        println("")
         Some(urbanAreaSpeedLimit)
       case TrafficSignType.EndUrbanArea =>
-        println("")
         Some(defaultSpeedLimit)
       case TrafficSignType.TelematicSpeedLimit =>
         getSpeedLimitValueByLinkType(linkType) match {
