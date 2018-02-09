@@ -774,12 +774,6 @@ trait LinearAssetOperations {
     }
   }
 
-  def getMunicipalityById (id: Int): Seq[Int]={
-    withDynTransaction {
-      municipalityDao.getMunicipalityById(id)
-    }
-  }
-
   def updateVerifiedInfo(ids: Set[Long], userName: String, type_id: Int): Unit = {
     withDynTransaction {
       getVerifiedBy(userName, type_id) match {
