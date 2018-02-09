@@ -700,8 +700,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/verificationInfo") {
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val municipality = params.getOrElse("municipality", halt(BadRequest("Missing mandatory 'municipality' parameter"))).toInt
-    verificationService.getMunicipalityInfo(typeId, municipality)
+    val municipalityCode = params.getOrElse("municipality", halt(BadRequest("Missing mandatory 'municipality' parameter"))).toInt
+    val user = userProvider.getCurrentUser()
+    if (user.isAuthorizedToRead(municipalityCode))
+        verificationService.getMunicipalityInfo(typeId, municipalityCode)
+    else
+      None
   }
 
   get("/linearassets/complementary"){
