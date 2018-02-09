@@ -262,7 +262,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   private def loadSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
-    dao.getSpeedLimitLinksById(speedLimitId).headOption
+    dao.getSpeedLimitLinksByIds(Set(speedLimitId)).headOption
   }
 
   /**
