@@ -86,7 +86,6 @@ object DataFixture {
       importTableName match {
         case None => // shouldn't get here because args size test
           println(s"****** Import failed! conversiontable name required as second input ******")
-          System.exit(-1)
         case Some(tableName) =>
           val importOptions = ImportOptions(
             onlyComplementaryLinks = false,
@@ -322,10 +321,9 @@ object DataFixture {
       case Some("import_road_addresses") =>
         if (args.length > 1)
           importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"), Some(args(1)))
-        else {
+        else
           println(s"****** Import failed! conversiontable name required as second input ******")
-          System.exit(-1)
-        }
+
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
       case Some("update_road_addresses_ely_and_road_type") =>
