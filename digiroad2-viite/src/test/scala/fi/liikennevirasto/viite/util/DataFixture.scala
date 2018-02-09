@@ -85,7 +85,7 @@ object DataFixture {
       println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
       importTableName match {
         case None => // shouldn't get here because args size test
-          println(s"****** Import failed! conversiontable name required as second input ******")
+         throw new Exception("****** Import failed! conversiontable name required as second input ******")
         case Some(tableName) =>
           val importOptions = ImportOptions(
             onlyComplementaryLinks = false,
@@ -322,8 +322,7 @@ object DataFixture {
         if (args.length > 1)
           importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"), Some(args(1)))
         else
-          println(s"****** Import failed! conversiontable name required as second input ******")
-
+          throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
       case Some("update_road_addresses_ely_and_road_type") =>
