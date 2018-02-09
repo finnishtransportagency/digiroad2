@@ -1403,6 +1403,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case Transfer => // TODO if the whole common history -segment is transferred, keep the original common_history_id, otherwise generate new ids for the different segments
           val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
           Seq(
+            //TODO we should check situations where we need to create one new commonHistory for new and transfer/unchanged
             // Transferred part, original values
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = startAddr, endAddrMValue = endAddr,
               endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), startMValue = startM, endMValue = endM),
@@ -1453,7 +1454,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size){
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
-
     ProjectDAO.moveProjectLinksToHistory(projectID)
 
     try {
@@ -1500,12 +1500,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
       pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewCommonHistoryId)
+      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.get.commonHistoryId)
     pl.status match {
       case UnChanged =>
         roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)
+      //TODO in this situations we should check whether we should use one new CommonHistoryId or not
       case Transfer | Numbering =>
         roadAddress.copy(startDate = Some(project.startDate))
+      //TODO in new situations we should probably always user NewCommonId
       case New =>
         roadAddress.copy(startDate = Some(project.startDate))
       case Terminated =>
