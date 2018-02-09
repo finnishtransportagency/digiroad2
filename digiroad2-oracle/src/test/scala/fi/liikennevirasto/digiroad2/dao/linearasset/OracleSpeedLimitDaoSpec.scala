@@ -81,14 +81,14 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
       val createdId = dao.splitSpeedLimit(200097, 100, 120, "test", passingMunicipalityValidation)
-      val (existingModifiedBy, _, _, _, _) = dao.getSpeedLimitDetails(200097)
-      val (_, _, newCreatedBy, _, _) = dao.getSpeedLimitDetails(createdId)
+      val existing = dao.getPersistedSpeedLimit(200097).get
+      val created = dao.getPersistedSpeedLimit(createdId).get
 
       assertSpeedLimitEndPointsOnLink(200097, 388562360, 0, 100, dao)
       assertSpeedLimitEndPointsOnLink(createdId, 388562360, 100, 136.788, dao)
 
-      existingModifiedBy shouldBe Some("test")
-      newCreatedBy shouldBe Some("test")
+      existing.modifiedBy shouldBe Some("test")
+      created.createdBy shouldBe Some("test")
     }
   }
 
@@ -99,14 +99,14 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
       val createdId = dao.splitSpeedLimit(200097, 50, 120, "test", passingMunicipalityValidation)
-      val (modifiedBy, _, _, _, _) = dao.getSpeedLimitDetails(200097)
-      val (_, _, newCreatedBy, _, _) = dao.getSpeedLimitDetails(createdId)
+      val modified = dao.getPersistedSpeedLimit(200097).get
+      val created = dao.getPersistedSpeedLimit(createdId).get
 
       assertSpeedLimitEndPointsOnLink(200097, 388562360, 50, 136.788, dao)
       assertSpeedLimitEndPointsOnLink(createdId, 388562360, 0, 50, dao)
 
-      modifiedBy shouldBe Some("test")
-      newCreatedBy shouldBe Some("test")
+      modified.modifiedBy shouldBe Some("test")
+      created.createdBy shouldBe Some("test")
     }
   }
 
@@ -114,9 +114,9 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
       dao.updateSpeedLimitValue(200097, 60, "test", _ => ())
-      dao.getSpeedLimitDetails(200097)._5 should equal(Some(60))
+      dao.getPersistedSpeedLimit(200097).get.value should equal(Some(60))
       dao.updateSpeedLimitValue(200097, 100, "test", _ => ())
-      dao.getSpeedLimitDetails(200097)._5 should equal(Some(100))
+      dao.getPersistedSpeedLimit(200097).get.value should equal(Some(100))
     }
   }
 
