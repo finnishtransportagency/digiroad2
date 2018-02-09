@@ -31,7 +31,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     }
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, roadType, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
+      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
@@ -53,7 +53,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, roadType, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
+      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
@@ -116,11 +116,15 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val municipalityCode = roadLink.municipalityCode
     val anomalyType= {if (roadLinkRoadNumber!=0 && roadLinkRoadPartNumber!=0) Anomaly.None else Anomaly.NoAddressGiven}
     val trackValue=roadLink.attributes.getOrElse("TRACK_CODE",Track.Unknown.value).toString.toInt
+    val elyCode:Long = roadAddress match {
+      case Some (add) => add.ely
+      case _ => municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1)
+    }
     RoadAddressLink(0, roadLink.linkId, geom,
       length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLink, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes,roadLinkRoadNumber,
-      roadLinkRoadPartNumber, trackValue, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
+      roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }
 
@@ -136,7 +140,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     }
     RoadAddressLink(roadAddress.id, historyRoadLink.linkId, geom,
       length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, roadType, roadName, municipalityCode, extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
-      historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(historyRoadLink.municipalityCode, -1), roadAddress.discontinuity.value,
+      historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
