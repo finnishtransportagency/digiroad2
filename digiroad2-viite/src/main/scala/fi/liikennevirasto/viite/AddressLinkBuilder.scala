@@ -136,12 +136,6 @@ trait AddressLinkBuilder {
     }
   }
 
-  def getCommonHistoryRoadLinks(commonHistoryids: Seq[Long]): Seq[RoadAddress] = {
-    if (commonHistoryids.isEmpty)
-      return Seq.empty[RoadAddress]
-    RoadAddressDAO.fetchByCommonHistoryId(commonHistoryids)
-  }
-
   /**
     * Fuse recursively
     *
