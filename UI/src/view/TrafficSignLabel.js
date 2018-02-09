@@ -202,10 +202,6 @@
       populatedPoints = [];
     };
 
-    var isInProximity = function (pointA, pointB) {
-      return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < MIN_DISTANCE;
-    };
-
     this.getCoordinateForGrouping = function(point){
       var assetCoordinate = {lon : point.lon, lat : point.lat};
       var assetCounter = {counter: 1};
@@ -213,7 +209,7 @@
         populatedPoints.push({coordinate: assetCoordinate, counter: 1});
       }else{
         var populatedPoint = _.find(populatedPoints, function (p) {
-          return isInProximity(point, p);
+          return me.isInProximity(point, p, MIN_DISTANCE);
         });
         if (!_.isUndefined(populatedPoint)) {
           assetCoordinate = populatedPoint.coordinate;

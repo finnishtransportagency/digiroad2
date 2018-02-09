@@ -1,6 +1,8 @@
 (function(root) {
     root.AssetLabel = function() {
         var me = this;
+        this.populatedPoints = [];
+        this.MIN_DISTANCE = 0;
 
         this.getCoordinates = function(points){
             return _.map(points, function(point) {
@@ -51,6 +53,50 @@
             .value();
         };
 
+      this.getCoordinateForGrouping = function (point){
+        var assetCoordinate = {lon : point.lon, lat : point.lat};
+        var assetCounter = {counter: 1};
+        if(_.isEmpty(me.populatedPoints)){
+          me.populatedPoints.push({coordinate: assetCoordinate, counter: 1});
+        }else{
+          var populatedPoint = _.find(me.populatedPoints, function (p) {
+            return me.isInProximity(point, p, me.MIN_DISTANCE);
+          });
+          if (!_.isUndefined(populatedPoint)) {
+            assetCoordinate = populatedPoint.coordinate;
+            assetCounter.counter = populatedPoint.counter + 1;
+            populatedPoint.counter++;
+          } else {
+            me.populatedPoints.push({coordinate: assetCoordinate, counter: 1});
+          }
+        }
+        return [[assetCoordinate.lon, assetCoordinate.lat], assetCounter.counter];
+      };
+
+      this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
+        if(!this.isVisibleZoom(zoomLevel))
+          return [];
+
+        return _.chain(assets).
+        map(function(asset){
+          var value = me.getValue(asset);
+          var assetLocation = getPoint(asset);
+          if(value !== undefined){
+            var styles = [];
+            styles = styles.concat(me.getStyle(value, assetLocation[1]));
+            var feature = me.createFeature(assetLocation[0]);
+            feature.setStyle(styles);
+            feature.setProperties(asset);
+            return feature;
+          }
+        }).
+        filter(function(feature){ return !_.isUndefined(feature); }).
+        value();
+      };
+
+      this.clearPoints = function () {
+        me.populatedPoints = [];
+      };
 
         this.getMarkerOffset = function(zoomLevel){
             if(me.isVisibleZoom(zoomLevel))
@@ -64,6 +110,10 @@
 
         this.isVisibleZoom = function(zoomLevel){
             return zoomLevel >= 12;
+        };
+
+        this.isInProximity = function (pointA, pointB, MIN_DISTANCE) {
+          return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < MIN_DISTANCE;
         };
 
         this.getPoints = function(asset){ return asset.points; };

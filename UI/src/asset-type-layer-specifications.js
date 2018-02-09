@@ -637,6 +637,8 @@
       layerName: 'trHeightLimits',
       title: 'TR suurin sallittu korkeus',
       allowComplementaryLinks: true,
+      allowGrouping: true,
+      groupingDistance: 25 ,
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
@@ -656,6 +658,8 @@
       layerName: 'trWidthLimits',
       title: 'TR suurin sallittu leveys',
       allowComplementaryLinks: true,
+      allowGrouping: true,
+      groupingDistance: 25,
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
