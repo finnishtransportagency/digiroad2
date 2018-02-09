@@ -53,6 +53,10 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     getAssetVerification(nearestRoadLink.municipalityCode, typeId).headOption
   }
 
+  def getMunicipalityInfo(typeId: Int, municipality: Int): Option[VerificationInfo] = {
+    getAssetVerification(municipality, typeId).headOption
+  }
+
   def setAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], username: String): Seq[Long] = {
     if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
       throw new IllegalStateException("Asset type not allowed")

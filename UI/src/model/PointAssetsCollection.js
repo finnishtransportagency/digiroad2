@@ -10,12 +10,12 @@
       return _.filter(assets, function(asset) { return asset.linkSource != 2; });
     };
 
-    this.fetch = function(boundingBox) {
+    this.fetch = function(boundingBox, center) {
       return backend.getPointAssetsWithComplementary(boundingBox, specs.layerName)
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
           me.allowComplementaryIsActive(specs.allowComplementaryLinks);
-          verificationCollection.fetch(boundingBox, specs.typeId);
+          verificationCollection.fetch(center, specs.typeId);
           return me.filterComplementaries(assets);
         });
     };

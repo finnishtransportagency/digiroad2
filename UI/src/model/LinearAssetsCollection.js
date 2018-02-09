@@ -45,12 +45,12 @@
           linearAsset.endMeasure.toFixed(2);
     };
 
-    this.fetch = function(boundingBox) {
-      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress()));
+    this.fetch = function(boundingBox, center) {
+      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress()), center);
     };
 
-    this.fetchAssetsWithComplementary = function(boundingBox) {
-      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId, applicationModel.getWithRoadAddress()));
+    this.fetchAssetsWithComplementary = function(boundingBox, center) {
+      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId, applicationModel.getWithRoadAddress(), center));
     };
 
     this.fetchReadOnlyAssets = function(boundingBox) {
@@ -71,7 +71,7 @@
       });
     };
 
-    var fetch = function(boundingBox, assets) {
+    var fetch = function(boundingBox, assets, center) {
       return assets.then(function(linearAssetGroups) {
         var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
           return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'value'); });
@@ -84,7 +84,7 @@
           }) || [];
         linearAssets = knownLinearAssets.concat(unknownLinearAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
-        verificationCollection.fetch(boundingBox, typeId);
+        verificationCollection.fetch(center, typeId);
       });
     };
 
