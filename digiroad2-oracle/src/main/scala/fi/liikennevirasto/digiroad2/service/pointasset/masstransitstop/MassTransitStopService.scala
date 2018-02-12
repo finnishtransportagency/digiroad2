@@ -54,7 +54,7 @@ trait AbstractBusStopStrategy {
   def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop]): Boolean = {false}
   def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
   def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {}
-  def enrichBusStop(persistedStop: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean)
+  def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean)
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (false, None) }
   def create(newAsset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
 
@@ -317,11 +317,14 @@ trait MassTransitStopService extends PointAssetOperations {
       val persistedStopOption = fetchPointAssets(massTransitStopDao.withNationalId(nationalId)).headOption
       persistedStopOption match {
         case Some(persistedStop) =>
+          val roadLink = fetchRoadLink(persistedStop.linkId)
+
           municipalityValidation(persistedStop.municipalityCode)
 
           val strategy = getStrategy(persistedStop)
-          val (enrichedStop, error) = strategy.enrichBusStop(persistedStop)
-          (Some(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink))(enrichedStop)), error)
+          val (enrichedStop, error) = strategy.enrichBusStop(persistedStop, roadLink)
+
+          (Some(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => roadLink))(enrichedStop)), error)
         case _ =>
           (None, false)
       }

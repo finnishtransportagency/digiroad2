@@ -30,7 +30,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
       p.values.exists(v => v.propertyValue == BusStopType.Terminal.value.toString))
   }
 
-  override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
+  override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
     val childFilters =  massTransitStopDao.fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, Some(asset.id))
       .filter(a =>  a.terminalId.isEmpty || a.terminalId.contains(asset.id))
       .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
