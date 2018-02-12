@@ -29,7 +29,7 @@
     };
 
     var getLinkMarker = function(linkList, statusList){
-      var filter =  _.filter(linkList, function (link) {
+      var filter = _.filter(linkList, function (link) {
         return _.contains(statusList,link.status);
       });
       if (filter.length > 1) {
