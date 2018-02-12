@@ -455,12 +455,6 @@
       });
     };
 
-    // this.getVerificationInfo = latestResponseRequestor(function(boundingBox, typeId) {
-    //   return {
-    //     url: 'api/verificationInfo?bbox=' + boundingBox + '&typeId=' + typeId
-    //   };
-    // });
-
     this.getVerificationInfo = latestResponseRequestor(function(municipality, typeId) {
       return {
         url: 'api/verificationInfo?municipality=' + municipality + '&typeId=' + typeId
@@ -533,16 +527,13 @@
         .then(function(x) { return JSON.parse(x); });
     };
 
-      // this.returnedFunction = _.debounce(getMunicipalityFromCoordinates, 250);
-      //
-      // function getMunicipalityFromCoordinates(lon, lat) {
-      //     return $.get("vkm/reversegeocode", {x: lon, y: lat})
-      //         .then(function (x) {return JSON.parse(x);});
-      // }
-
-    this.getMunicipalityFromCoordinates = function(lon, lat) {
+    var returnedMunicipality = _.debounce(function(lon, lat, callback) {
       return $.get("vkm/reversegeocode", {x: lon, y: lat})
-          .then(function(x) {return JSON.parse(x);});
+          .then(function (x) {return callback(JSON.parse(x));});
+    }, 250);
+
+    this.getMunicipalityFromCoordinates = function(lon, lat, callback) {
+      return returnedMunicipality(lon, lat, callback);
     };
 
     this.getMassTransitStopByNationalIdForSearch = function(nationalId) {
