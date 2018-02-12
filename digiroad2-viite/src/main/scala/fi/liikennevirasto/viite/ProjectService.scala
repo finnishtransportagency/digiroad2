@@ -535,6 +535,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val rightTop = Point(x._2, endPoints._2.y)
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
+      if (projectLinks.isEmpty)
+        return (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
       val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(projectLinks.head.linkId, false).headOption
       if (roadLink.isEmpty) {
         (None, Some(ErrorSuravageLinkNotFound), None)
