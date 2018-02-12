@@ -4,9 +4,10 @@ import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType.{SpeedLimit, SpeedLimitZone, UrbanArea}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignType, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpRequestBase, _}
@@ -127,7 +128,6 @@ object TRRoadSide {
   case object Unknown extends TRRoadSide { def value = "ei tietoa"; def propertyValues = Set(0) }
 }
 
-
 /**
   * Values for traffic sign types enumeration
   */
@@ -140,56 +140,56 @@ object TRTrafficSignType {
     ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations, NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoVehiclesWithDangerGoods,
     NoBuses, NoMopeds, NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback, NoEntry, OvertakingProhibited, EndProhibitionOfOvertaking,
     MaxWidthExceeding, MaxHeightExceeding, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding, WRightBend, WLeftBend,
-    WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren)
+    WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit)
 
   def apply(value: Int): TRTrafficSignType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
-
-  case object SpeedLimit extends TRTrafficSignType { def value = 361;  def trafficSignType = TrafficSignType.SpeedLimit; }
-  case object EndSpeedLimit extends TRTrafficSignType { def value = 362;  def trafficSignType = TrafficSignType.EndSpeedLimit; }
-  case object SpeedLimitZone extends TRTrafficSignType { def value = 363;  def trafficSignType = TrafficSignType.SpeedLimitZone; }
-  case object EndSpeedLimitZone extends TRTrafficSignType { def value = 364;  def trafficSignType = TrafficSignType.EndSpeedLimitZone; }
-  case object UrbanArea extends TRTrafficSignType { def value = 571;  def trafficSignType = TrafficSignType.UrbanArea; }
-  case object EndUrbanArea extends TRTrafficSignType { def value = 572;  def trafficSignType = TrafficSignType.EndUrbanArea; }
-  case object PedestrianCrossing extends TRTrafficSignType { def value = 511;  def trafficSignType = TrafficSignType.PedestrianCrossing; }
-  case object MaximumLength extends TRTrafficSignType { def value = 343;  def trafficSignType = TrafficSignType.MaximumLength; }
-  case object Warning extends TRTrafficSignType { def value = 189;  def trafficSignType = TrafficSignType.Warning; }
-  case object NoLeftTurn extends TRTrafficSignType { def value = 332;  def trafficSignType = TrafficSignType.NoLeftTurn; }
-  case object NoRightTurn extends TRTrafficSignType { def value = 333;  def trafficSignType = TrafficSignType.NoRightTurn; }
-  case object NoUTurn extends TRTrafficSignType { def value = 334;  def trafficSignType = TrafficSignType.NoUTurn; }
-  case object ClosedToAllVehicles extends TRTrafficSignType { def value = 311;  def trafficSignType = TrafficSignType.ClosedToAllVehicles; }
-  case object NoPowerDrivenVehicles extends TRTrafficSignType { def value = 312;  def trafficSignType = TrafficSignType.NoPowerDrivenVehicles; }
-  case object NoLorriesAndVans extends TRTrafficSignType { def value = 313;  def trafficSignType = TrafficSignType.NoLorriesAndVans; }
-  case object NoVehicleCombinations extends TRTrafficSignType { def value = 314;  def trafficSignType = TrafficSignType.NoVehicleCombinations; }
-  case object NoAgriculturalVehicles extends TRTrafficSignType { def value = 315;  def trafficSignType = TrafficSignType.NoAgriculturalVehicles; }
-  case object NoMotorCycles extends TRTrafficSignType { def value = 316;  def trafficSignType = TrafficSignType.NoMotorCycles; }
-  case object NoMotorSledges extends TRTrafficSignType { def value = 317;  def trafficSignType = TrafficSignType.NoMotorSledges; }
-  case object NoVehiclesWithDangerGoods extends TRTrafficSignType { def value = 318;  def trafficSignType = TrafficSignType.NoVehiclesWithDangerGoods; }
-  case object NoBuses extends TRTrafficSignType { def value = 319;  def trafficSignType = TrafficSignType.NoBuses; }
-  case object NoMopeds extends TRTrafficSignType { def value = 321;  def trafficSignType = TrafficSignType.NoMopeds; }
-  case object NoCyclesOrMopeds extends TRTrafficSignType { def value = 322;  def trafficSignType = TrafficSignType.NoCyclesOrMopeds; }
-  case object NoPedestrians extends TRTrafficSignType { def value = 323;  def trafficSignType = TrafficSignType.NoPedestrians; }
-  case object NoPedestriansCyclesMopeds extends TRTrafficSignType { def value = 324;  def trafficSignType = TrafficSignType.NoPedestriansCyclesMopeds; }
-  case object NoRidersOnHorseback extends TRTrafficSignType { def value = 325;  def trafficSignType = TrafficSignType.NoRidersOnHorseback; }
-  case object NoEntry extends TRTrafficSignType { def value = 331;  def trafficSignType = TrafficSignType.NoEntry; }
-  case object OvertakingProhibited extends TRTrafficSignType { def value = 351;  def trafficSignType = TrafficSignType.OvertakingProhibited; }
-  case object EndProhibitionOfOvertaking extends TRTrafficSignType { def value = 352;  def trafficSignType = TrafficSignType.EndProhibitionOfOvertaking; }
-  case object MaxWidthExceeding extends TRTrafficSignType { def value = 341;  def trafficSignType = TrafficSignType.NoWidthExceeding; }
-  case object MaxHeightExceeding extends TRTrafficSignType { def value = 342;  def trafficSignType = TrafficSignType.MaxHeightExceeding; }
-  case object MaxLadenExceeding extends TRTrafficSignType { def value = 344;  def trafficSignType = TrafficSignType.MaxLadenExceeding; }
-  case object MaxMassCombineVehiclesExceeding extends TRTrafficSignType { def value = 345;  def trafficSignType = TrafficSignType.MaxMassCombineVehiclesExceeding; }
-  case object MaxTonsOneAxleExceeding extends TRTrafficSignType { def value = 346;  def trafficSignType = TrafficSignType.MaxTonsOneAxleExceeding; }
-  case object MaxTonsOnBogieExceeding extends TRTrafficSignType { def value = 347;  def trafficSignType = TrafficSignType.MaxTonsOnBogieExceeding; }
-  case object WRightBend extends TRTrafficSignType { def value = 111;  def trafficSignType = TrafficSignType.WRightBend; }
-  case object WLeftBend extends TRTrafficSignType { def value = 112;  def trafficSignType = TrafficSignType.WLeftBend; }
-  case object WSeveralBendsRight extends TRTrafficSignType { def value = 113;  def trafficSignType = TrafficSignType.WSeveralBendsRight ; }
-  case object WSeveralBendsLeft extends TRTrafficSignType { def value = 114;  def trafficSignType = TrafficSignType.WSeveralBendsLeft; }
-  case object WDangerousDescent extends TRTrafficSignType { def value = 115;  def trafficSignType = TrafficSignType.WDangerousDescent; }
-  case object WSteepAscent extends TRTrafficSignType { def value = 116;  def trafficSignType = TrafficSignType.WSteepAscent; }
-  case object WUnevenRoad extends TRTrafficSignType { def value = 141;  def trafficSignType = TrafficSignType.WUnevenRoad; }
-  case object WChildren extends TRTrafficSignType { def value = 152;  def trafficSignType = TrafficSignType.WChildren; }
-  case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; }
+  case object TelematicSpeedLimit extends TRTrafficSignType { def value = 0;  def trafficSignType = TrafficSignType.TelematicSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object SpeedLimit extends TRTrafficSignType { def value = 361;  def trafficSignType = TrafficSignType.SpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object EndSpeedLimit extends TRTrafficSignType { def value = 362;  def trafficSignType = TrafficSignType.EndSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object SpeedLimitZone extends TRTrafficSignType { def value = 363;  def trafficSignType = TrafficSignType.SpeedLimitZone; def group = TrafficSignTypeGroup.SpeedLimits;}
+  case object EndSpeedLimitZone extends TRTrafficSignType { def value = 364;  def trafficSignType = TrafficSignType.EndSpeedLimitZone; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object UrbanArea extends TRTrafficSignType { def value = 571;  def trafficSignType = TrafficSignType.UrbanArea; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object EndUrbanArea extends TRTrafficSignType { def value = 572;  def trafficSignType = TrafficSignType.EndUrbanArea; def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object PedestrianCrossing extends TRTrafficSignType { def value = 511;  def trafficSignType = TrafficSignType.PedestrianCrossing; def group = TrafficSignTypeGroup.PedestrianCrossing; }
+  case object MaximumLength extends TRTrafficSignType { def value = 343;  def trafficSignType = TrafficSignType.MaximumLength; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object Warning extends TRTrafficSignType { def value = 189;  def trafficSignType = TrafficSignType.Warning; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object NoLeftTurn extends TRTrafficSignType { def value = 332;  def trafficSignType = TrafficSignType.NoLeftTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoRightTurn extends TRTrafficSignType { def value = 333;  def trafficSignType = TrafficSignType.NoRightTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoUTurn extends TRTrafficSignType { def value = 334;  def trafficSignType = TrafficSignType.NoUTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object ClosedToAllVehicles extends TRTrafficSignType { def value = 311;  def trafficSignType = TrafficSignType.ClosedToAllVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoPowerDrivenVehicles extends TRTrafficSignType { def value = 312;  def trafficSignType = TrafficSignType.NoPowerDrivenVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoLorriesAndVans extends TRTrafficSignType { def value = 313;  def trafficSignType = TrafficSignType.NoLorriesAndVans; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoVehicleCombinations extends TRTrafficSignType { def value = 314;  def trafficSignType = TrafficSignType.NoVehicleCombinations; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoAgriculturalVehicles extends TRTrafficSignType { def value = 315;  def trafficSignType = TrafficSignType.NoAgriculturalVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoMotorCycles extends TRTrafficSignType { def value = 316;  def trafficSignType = TrafficSignType.NoMotorCycles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoMotorSledges extends TRTrafficSignType { def value = 317;  def trafficSignType = TrafficSignType.NoMotorSledges; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoVehiclesWithDangerGoods extends TRTrafficSignType { def value = 318;  def trafficSignType = TrafficSignType.NoVehiclesWithDangerGoods; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoBuses extends TRTrafficSignType { def value = 319;  def trafficSignType = TrafficSignType.NoBuses; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoMopeds extends TRTrafficSignType { def value = 321;  def trafficSignType = TrafficSignType.NoMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoCyclesOrMopeds extends TRTrafficSignType { def value = 322;  def trafficSignType = TrafficSignType.NoCyclesOrMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoPedestrians extends TRTrafficSignType { def value = 323;  def trafficSignType = TrafficSignType.NoPedestrians; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoPedestriansCyclesMopeds extends TRTrafficSignType { def value = 324;  def trafficSignType = TrafficSignType.NoPedestriansCyclesMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoRidersOnHorseback extends TRTrafficSignType { def value = 325;  def trafficSignType = TrafficSignType.NoRidersOnHorseback; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoEntry extends TRTrafficSignType { def value = 331;  def trafficSignType = TrafficSignType.NoEntry; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object OvertakingProhibited extends TRTrafficSignType { def value = 351;  def trafficSignType = TrafficSignType.OvertakingProhibited; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object EndProhibitionOfOvertaking extends TRTrafficSignType { def value = 352;  def trafficSignType = TrafficSignType.EndProhibitionOfOvertaking; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object MaxWidthExceeding extends TRTrafficSignType { def value = 341;  def trafficSignType = TrafficSignType.NoWidthExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxHeightExceeding extends TRTrafficSignType { def value = 342;  def trafficSignType = TrafficSignType.MaxHeightExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxLadenExceeding extends TRTrafficSignType { def value = 344;  def trafficSignType = TrafficSignType.MaxLadenExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxMassCombineVehiclesExceeding extends TRTrafficSignType { def value = 345;  def trafficSignType = TrafficSignType.MaxMassCombineVehiclesExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxTonsOneAxleExceeding extends TRTrafficSignType { def value = 346;  def trafficSignType = TrafficSignType.MaxTonsOneAxleExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxTonsOnBogieExceeding extends TRTrafficSignType { def value = 347;  def trafficSignType = TrafficSignType.MaxTonsOnBogieExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object WRightBend extends TRTrafficSignType { def value = 111;  def trafficSignType = TrafficSignType.WRightBend; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WLeftBend extends TRTrafficSignType { def value = 112;  def trafficSignType = TrafficSignType.WLeftBend; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WSeveralBendsRight extends TRTrafficSignType { def value = 113;  def trafficSignType = TrafficSignType.WSeveralBendsRight; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WSeveralBendsLeft extends TRTrafficSignType { def value = 114;  def trafficSignType = TrafficSignType.WSeveralBendsLeft; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WDangerousDescent extends TRTrafficSignType { def value = 115;  def trafficSignType = TrafficSignType.WDangerousDescent; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WSteepAscent extends TRTrafficSignType { def value = 116;  def trafficSignType = TrafficSignType.WSteepAscent; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WUnevenRoad extends TRTrafficSignType { def value = 141;  def trafficSignType = TrafficSignType.WUnevenRoad; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object WChildren extends TRTrafficSignType { def value = 152;  def trafficSignType = TrafficSignType.WChildren; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; def group = TrafficSignTypeGroup.Unknown; }
 }
 
 /**
@@ -280,7 +280,6 @@ case class TierekisteriEuropeanRoadData(roadNumber: Long, startRoadPartNumber: L
 case class TierekisteriSpeedLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                       track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int, roadSide: RoadSide) extends TierekisteriAssetData
 
-
 case class TierekisteriUrbanAreaData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: String) extends TierekisteriAssetData
 
@@ -303,7 +302,7 @@ trait TierekisteriClient{
   protected val auth = new TierekisteriAuthPropertyReader
   protected lazy val logger = LoggerFactory.getLogger(getClass)
 
-  def mapFields(data: Map[String, Any]): TierekisteriType
+  def mapFields(data: Map[String, Any]): Option[TierekisteriType]
 
   def addAuthorizationHeader(request: HttpRequestBase) = {
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
@@ -509,7 +508,7 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
   def fetchActiveMassTransitStops(): Seq[TierekisteriMassTransitStop] = {
     request[List[Map[String, Any]]](serviceUrl) match {
       case Left(content) =>
-        content.map{
+        content.flatMap{
           stopAsset =>
             mapFields(stopAsset)
         }
@@ -537,7 +536,7 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
     logger.info("Requesting stop %s from Tierekisteri".format(id))
     request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) =>
-        Some(mapFields(content))
+        mapFields(content)
       case Right(null) =>
         None
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
@@ -626,7 +625,7 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
-  override def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriMassTransitStop] = {
 
     //Mandatory fields
     val nationalId = convertToLong(getMandatoryFieldValue(data, trNationalId)).get
@@ -648,8 +647,8 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
     val removalDate = convertToDate(getFieldValue(data, trRemovalDate))
     val inventoryDate = convertToDate(Some(getFieldValue(data, trInventoryDate).getOrElse(toIso8601.print(DateTime.now())))).get
 
-    TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
-      stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate, inventoryDate)
+    Some(TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
+      stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate, inventoryDate))
   }
 
   private def extractEquipment(data: Map[String, Any]) : Map[Equipment, Existence] = {
@@ -714,9 +713,9 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchActiveAssetData(roadNumber: Long): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(trAssetType, roadNumber)) match {
       case Left(content) => {
-        content("Data").map{
+        content("Data").flatMap{
           asset => mapFields(asset)
-        }
+      }
       }
       case Right(null) => Seq()
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
@@ -726,7 +725,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchActiveAssetData(roadNumber: Long, roadPartNumber: Long): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(trAssetType, roadNumber, roadPartNumber)) match {
       case Left(content) =>
-        content("Data").map{
+        content("Data").flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -737,7 +736,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchActiveAssetData(roadNumber: Long, roadPartNumber: Long, startDistance: Int): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(trAssetType, roadNumber, roadPartNumber, startDistance)) match {
       case Left(content) =>
-        content("Data").map{
+        content("Data").flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -748,7 +747,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchActiveAssetData(roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(trAssetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance)) match {
       case Left(content) =>
-        content("Data").map{
+        content("Data").flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -759,7 +758,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchHistoryAssetData(roadNumber: Long, changeDate:  Option[DateTime]): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceHistoryUrl(trAssetType, roadNumber, changeDate)) match {
       case Left(content) => {
-        content("Data").map{
+        content("Data").flatMap{
           asset => mapFields(asset)
         }
       }
@@ -771,7 +770,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchHistoryAssetData(roadNumber: Long, roadPartNumber: Long, changeDate: Option[DateTime]): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceHistoryUrl(trAssetType, roadNumber, roadPartNumber, changeDate)) match {
       case Left(content) =>
-        content("Data").map{
+        content("Data").flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -782,7 +781,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchHistoryAssetData(roadNumber: Long, roadPartNumber: Long, startDistance: Int, changeDate: Option[DateTime]): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceHistoryUrl(trAssetType, roadNumber, roadPartNumber, startDistance, changeDate)) match {
       case Left(content) =>
-        content("Data").map{
+        content("Data").flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -793,7 +792,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchHistoryAssetData(roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int, changeDate: Option[DateTime]): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceHistoryUrl(trAssetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance, changeDate)) match {
       case Left(content) =>
-        content("Data").map{
+        content("Data").flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -811,7 +810,7 @@ class TierekisteriTrafficVolumeAssetClient(trEndPoint: String, trEnable: Boolean
   override val trAssetType = "tl201"
   private val trKVL = "KVL"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriTrafficData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficData] = {
     //Mandatory field
     val assetValue = convertToInt(getMandatoryFieldValue(data, trKVL)).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
@@ -821,7 +820,7 @@ class TierekisteriTrafficVolumeAssetClient(trEndPoint: String, trEnable: Boolean
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriTrafficData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue)
+    Some(TierekisteriTrafficData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue))
   }
 }
 
@@ -833,7 +832,7 @@ class TierekisteriLightingAssetClient(trEndPoint: String, trEnable: Boolean, htt
 
   override val trAssetType = "tl167"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriLightingData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriLightingData] = {
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
@@ -842,7 +841,7 @@ class TierekisteriLightingAssetClient(trEndPoint: String, trEnable: Boolean, htt
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriLightingData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue)
+    Some(TierekisteriLightingData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue))
   }
 }
 
@@ -855,7 +854,7 @@ class TierekisteriRoadWidthAssetClient(trEndPoint: String, trEnable: Boolean, ht
   override val trAssetType = "tl136"
   private val trALEV = "ALEV"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriRoadWidthData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriRoadWidthData] = {
     //Mandatory field
     val assetValue = convertToInt(getMandatoryFieldValue(data, trALEV)).get * 10 //To convert to cm
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
@@ -865,22 +864,25 @@ class TierekisteriRoadWidthAssetClient(trEndPoint: String, trEnable: Boolean, ht
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriRoadWidthData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue)
+    Some(TierekisteriRoadWidthData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue))
   }
 }
 
-class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
+class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
   override def tierekisteriRestApiEndPoint: String = trEndPoint
+
   override def tierekisteriEnabled: Boolean = trEnable
+
   override def client: CloseableHttpClient = httpClient
+
   type TierekisteriType = TierekisteriTrafficSignData
 
   override val trAssetType = "tl506"
-  private val trLMNUMERO = "LMNUMERO"
-  private val trLMTEKSTI = "LMTEKSTI"
-  private val trPUOLI = "PUOLI"
+  protected val trLMNUMERO = "LMNUMERO"
+  protected val trLMTEKSTI = "LMTEKSTI"
+  protected val trPUOLI = "PUOLI"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriTrafficSignData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
     //TODO remove the orElse and ignrore the all row when we give support for that on TierekisteriClient base implementation
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
@@ -890,7 +892,36 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
-    TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue)
+      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
+  }
+}
+
+class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriTrafficSignAssetClient(trEndPoint, trEnable, httpClient) {
+
+  private val trLIIKVAST = "LIIKVAST"
+  private val trNOPRA506 = "NOPRA506"
+  private val wrongSideOfTheRoad = "1"
+
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
+    val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
+
+    //Check if the traffic sign is in SpeedLimits group
+    if (TRTrafficSignType.apply(assetNumber).trafficSignType.group == TrafficSignTypeGroup.SpeedLimits) {
+      val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+      val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+      val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+      val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+      val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+      val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse(getFieldValue(data, trNOPRA506).getOrElse("")).trim
+
+      getFieldValue(data, trLIIKVAST) match {
+        case Some(sideInfo) if sideInfo == wrongSideOfTheRoad && Seq(SpeedLimit, SpeedLimitZone, UrbanArea).contains(TRTrafficSignType.apply(assetNumber)) =>
+          None
+        case _ =>
+          Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
+      }
+    }else
+      None
   }
 }
 
@@ -904,7 +935,7 @@ class TierekisteriUrbanAreaClient(trEndPoint: String, trEnable: Boolean, httpCli
   private val trUrbanAreaValue = "TIENAS"
   private val defaultUrbanAreaValue = "9"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriUrbanAreaData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriUrbanAreaData] = {
     val assetValue = getFieldValue(data, trUrbanAreaValue).orElse(Some(defaultUrbanAreaValue)).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
@@ -912,7 +943,34 @@ class TierekisteriUrbanAreaClient(trEndPoint: String, trEnable: Boolean, httpCli
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriUrbanAreaData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, endMValue, assetValue)
+    Some(TierekisteriUrbanAreaData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, endMValue, assetValue))
+  }
+}
+
+class TierekisteriTelematicSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriTrafficSignData
+
+  override val trAssetType = "tl523"
+  private val trTecPointType = "TEKTYYPPI"
+  private val trPUOLI = "PUOLI"
+  private val trTelematicSpeedLimitAsset = "34"
+
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+    val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+
+    getMandatoryFieldValue(data, trTecPointType) match {
+      case Some(tecType) if tecType == trTelematicSpeedLimitAsset =>
+        Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.TelematicSpeedLimit,""))
+      case _ =>
+        None
+    }
   }
 }
 
@@ -925,7 +983,7 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
   override val trAssetType = "tl137"
   private val trPavementType = "PAALLUOK"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriPavedRoadData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriPavedRoadData] = {
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
@@ -935,7 +993,7 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val pavementType = convertToInt(getMandatoryFieldValue(data, trPavementType)).get
 
-    TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRPavedRoadType.apply(pavementType))
+    Some(TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRPavedRoadType.apply(pavementType)))
   }
 }
 
@@ -948,7 +1006,7 @@ class TierekisteriMassTransitLaneAssetClient(trEndPoint: String, trEnable: Boole
   override val trAssetType = "tl161"
   private val trLaneType = "KAISTATY"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriMassTransitLaneData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriMassTransitLaneData] = {
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
@@ -958,7 +1016,7 @@ class TierekisteriMassTransitLaneAssetClient(trEndPoint: String, trEnable: Boole
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val laneType = convertToInt(getMandatoryFieldValue(data, trLaneType)).get
 
-    TierekisteriMassTransitLaneData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRLaneArrangementType.apply(laneType))
+    Some(TierekisteriMassTransitLaneData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRLaneArrangementType.apply(laneType)))
   }
 }
 
@@ -970,7 +1028,7 @@ class TierekisteriDamagedByThawAssetClient(trEndPoint: String, trEnable: Boolean
 
   override val trAssetType = "tl162"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriDamagedByThawData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriDamagedByThawData] = {
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
@@ -979,7 +1037,7 @@ class TierekisteriDamagedByThawAssetClient(trEndPoint: String, trEnable: Boolean
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriDamagedByThawData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue)
+    Some(TierekisteriDamagedByThawData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue))
   }
 }
 
@@ -992,7 +1050,7 @@ class TierekisteriEuropeanRoadAssetClient(trEndPoint: String, trEnable: Boolean,
   override val trAssetType = "tl130"
   private val trEuropeanRoadNumber = "EURONRO"
 
-  override def mapFields(data: Map[String, Any]): TierekisteriEuropeanRoadData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriEuropeanRoadData] = {
     val assetValue =
       getFieldValue(data, trEuropeanRoadNumber) match {
         case Some(value) => value
@@ -1007,7 +1065,7 @@ class TierekisteriEuropeanRoadAssetClient(trEndPoint: String, trEnable: Boolean,
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriEuropeanRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue)
+    Some(TierekisteriEuropeanRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue))
   }
 }
 
@@ -1021,8 +1079,7 @@ class TierekisteriSpeedLimitAssetClient(trEndPoint: String, trEnable: Boolean, h
   private val trSpeedLimitValue = "NOPRAJ"
   private val trSide = "PUOLI"
 
-
-  override def mapFields(data: Map[String, Any]): TierekisteriSpeedLimitData = {
+  override def mapFields(data: Map[String, Any]): Option[TierekisteriSpeedLimitData] = {
 
     //Mandatory field
     val assetValue = convertToInt(getMandatoryFieldValue(data, trSpeedLimitValue)).get
@@ -1034,8 +1091,7 @@ class TierekisteriSpeedLimitAssetClient(trEndPoint: String, trEnable: Boolean, h
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val roadSide = convertToInt(getMandatoryFieldValue(data, trSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
-
-    TierekisteriSpeedLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue, roadSide)
+    Some(TierekisteriSpeedLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue, roadSide))
   }
 }
 

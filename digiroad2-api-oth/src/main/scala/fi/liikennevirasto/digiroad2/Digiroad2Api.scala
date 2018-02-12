@@ -58,7 +58,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
-                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService)
+                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
+                   val assetService: AssetService = Digiroad2Context.assetService,
+                   val verificationService: VerificationService = Digiroad2Context.verificationService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -428,27 +430,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
     val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
-    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
-    partitionedRoadLinks.map {
-      _.map(roadLinkToApi)
-    }
+    partitionRoadLinks(roadLinks)
   }
 
-  private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
-    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
-    partitionedRoadLinks.map {
-      _.map(roadLinkToApi)
-    }
+    val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
+    val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
+    partitionRoadLinks(roadLinks)
   }
 
   private def getRoadLinksHistoryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinks = roadLinkService.getRoadLinksHistoryFromVVH(boundingRectangle, municipalities)
+    partitionRoadLinks(roadLinks)
+  }
 
+  private def partitionRoadLinks(roadLinks: Seq[RoadLink]): Seq[Seq[Map[String, Any]]] = {
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map {
       _.map(roadLinkToApi)
@@ -673,18 +673,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val usedService =  getLinearAssetService(typeId)
-      if(params("withRoadAddress").toBoolean){
-        if(user.isServiceRoadMaintainer())
-          mapLinearAssets(usedService.withRoadAddress(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
-        else
-          mapLinearAssets(usedService.withRoadAddress(usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
-      }else{
-        if(user.isServiceRoadMaintainer())
-          mapLinearAssets(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
-        else
-          mapLinearAssets(usedService.getByBoundingBox(typeId, boundingRectangle, municipalities))
-      }
+      val usedService = getLinearAssetService(typeId)
+      val assets = if(user.isServiceRoadMaintainer())
+        usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
+      else
+        usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)
+      if(params("withRoadAddress").toBoolean)
+        mapLinearAssets(usedService.withRoadAddress(assets))
+      else
+        mapLinearAssets(assets)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  get("/verificationInfo") {
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      verificationService.getMunicipalityInfo(typeId, boundingRectangle)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -694,14 +702,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val usedService =  getLinearAssetService(typeId)
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      if(user.isServiceRoadMaintainer())
-        mapLinearAssets(usedService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
+      val usedService = getLinearAssetService(typeId)
+      val assets = if(user.isServiceRoadMaintainer())
+        usedService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
       else
-        mapLinearAssets(usedService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities))
+        usedService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities)
+      if(params("withRoadAddress").toBoolean)
+        mapLinearAssets(usedService.withRoadAddress(assets))
+      else
+        mapLinearAssets(assets)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -1227,6 +1239,42 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         foundAsset
     }
   }
+  get("/municipalities/unverified") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    linearAssetService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_._2).map { municipality =>
+      Map("id" -> municipality._1,
+        "name" -> municipality._2)
+    }
+  }
+
+  get("/municipalities/:municipalityCode/assetTypes") {
+    val id = params("municipalityCode").toInt
+    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
+    verifiedAssetTypes.groupBy(_.municipalityName)
+      .mapValues(
+      _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
+                             "assetName" -> assetType.assetTypeName,
+                             "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+                             "verified_by"   -> assetType.verifiedBy.getOrElse(""),
+                             "verified"   -> assetType.verified)))
+  }
+
+  post("/municipalities/:municipalityCode/assetVerification") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = params("municipalityCode").toInt
+    validateUserMunicipalityAccess(user)(municipalityCode)
+    val assetTypeId = (parsedBody \ "typeId").extract[Set[Int]]
+    verificationService.verifyAssetType(municipalityCode, assetTypeId, user.username)
+  }
+
+  delete("/municipalities/:municipalityCode/removeVerification") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = params("municipalityCode").toInt
+    validateUserMunicipalityAccess(user)(municipalityCode)
+    val assetTypeIds = (parsedBody \ "typeId").extract[Set[Int]]
+    verificationService.removeAssetTypeVerification(municipalityCode, assetTypeIds, user.username)
+  }
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
@@ -1283,6 +1331,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService
+      case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
       case _ => linearAssetService
     }
   }
@@ -1335,4 +1384,5 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     transformation(values)
   }
+
 }

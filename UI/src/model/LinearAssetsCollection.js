@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetsCollection = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
+  root.LinearAssetsCollection = function(backend, verificationCollection, typeId, singleElementEventCategory, multiElementEventCategory) {
       var linearAssets = [];
       var dirty = false;
       var selection = null;
@@ -50,7 +50,7 @@
     };
 
     this.fetchAssetsWithComplementary = function(boundingBox) {
-      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId));
+      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId, applicationModel.getWithRoadAddress()));
     };
 
     this.fetchReadOnlyAssets = function(boundingBox) {
@@ -84,6 +84,7 @@
           }) || [];
         linearAssets = knownLinearAssets.concat(unknownLinearAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
+        verificationCollection.fetch(boundingBox, typeId);
       });
     };
 
