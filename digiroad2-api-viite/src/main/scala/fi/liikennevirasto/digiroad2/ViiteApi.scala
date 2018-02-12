@@ -148,7 +148,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val linkId = params("linkId").toLong
     projectService.fetchPreFillFromVVH(linkId) match {
       case Right(preFillInfo) => Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart)
-      case Left(failuremessage) => Map("success" -> false, "reason" -> failuremessage)
+      case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
     }
   }
 
@@ -577,11 +577,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           } else if (splitLinks.isEmpty) {
             Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
           } else {
-            val roadwithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
+            val roadWithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
             val split: Map[String, Any] = Map(
-              "roadNumber" -> roadwithInfo.roadNumber,
-              "roadPartNumber" -> roadwithInfo.roadPartNumber,
-              "trackCode" -> roadwithInfo.track,
+              "roadNumber" -> roadWithInfo.roadNumber,
+              "roadPartNumber" -> roadWithInfo.roadPartNumber,
+              "trackCode" -> roadWithInfo.track,
               "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
               "split" -> Map(
                 "geometry" -> cutGeom
