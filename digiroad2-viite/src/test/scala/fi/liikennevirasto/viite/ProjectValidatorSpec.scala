@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.Combined
+import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.ProjectValidator.ValidationError
 import fi.liikennevirasto.viite.ProjectValidator.ValidationError._
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
@@ -39,14 +39,22 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, 0L, 8L, false, None, 0L)
   }
 
-  private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
+  private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false) = {
     val id = Sequences.nextViitePrimaryKeySeqValue
+
+    def withTrack(t: Track): Seq[ProjectLink] = {
+      addrM.init.zip(addrM.tail).map{ case (st, en) =>
+        projectLink(st, en, t, id, linkStatus)
+      }
+    }
     val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(8), None)
     ProjectDAO.createRoadAddressProject(project)
-    val links = addrM.init.zip(addrM.tail).map{ case (st, en) =>
-      projectLink(st, en, Combined, id, linkStatus)
-    }
+    val links =
+      changeTrack match {
+        case false => withTrack(Combined)
+        case _ => withTrack(RightSide) ++ withTrack(LeftSide)
+      }
     ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
     ProjectDAO.create(links)
     project
@@ -320,4 +328,42 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       validationErrors.count(_.validationError.value == ValidationError.ErrorInValidationOfUnchangedLinks.value) should be (1)
     }
   }
+
+  test("project track codes should be consistent") {
+    runWithRollback{
+      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), true)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val validationErrors = ProjectValidator.checkTrackCode(project, projectLinks)
+      validationErrors.size should be (0)
+    }
+  }
+
+  test("project track codes inconsistent in midle of track") {
+    runWithRollback{
+      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), true)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id).filter(_.track.value != 0)
+      val inconsistentLinks = projectLinks.map { l =>
+        if (l.startAddrMValue == 20 && l.track == Track.RightSide)
+          l.copy(track = Track.LeftSide)
+        else l
+      }
+      val validationErrors = ProjectValidator.checkTrackCode(project, inconsistentLinks)
+      validationErrors.size should be (1)
+    }
+  }
+
+  test("project track codes inconsistent in extermities") {
+    runWithRollback{
+      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), true)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id).filter(_.track.value != 0)
+      val inconsistentLinks = projectLinks.map { l =>
+        if (l.startAddrMValue == 0 && l.track == Track.RightSide)
+          l.copy(startAddrMValue = 5)
+        else l
+      }
+      val validationErrors = ProjectValidator.checkTrackCode(project, inconsistentLinks)
+      validationErrors.size should be (1)
+    }
+  }
+
 }
