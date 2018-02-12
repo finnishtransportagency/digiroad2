@@ -103,11 +103,11 @@ object SpeedLimitFiller {
     }
   }
 
-  private def dropShortLimits(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-    val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MinAllowedSpeedLimitLength &&
+  private def expireShortLimits(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    val limitsToExpire = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MinAllowedSpeedLimitLength &&
       roadLink.length > MinAllowedSpeedLimitLength }.map(_.id).toSet
-    val limits = speedLimits.filterNot { x => limitsToDrop.contains(x.id) }
-    (limits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ limitsToDrop))
+    val limits = speedLimits.filterNot { x => limitsToExpire.contains(x.id) }
+    (limits, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ limitsToExpire))
   }
 
   private def generateUnknownSpeedLimitsForLink(roadLink: RoadLink, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
@@ -121,8 +121,8 @@ object SpeedLimitFiller {
 
   private def dropSegmentsOutsideGeometry(roadLink: RoadLink, assets: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val (segmentsWithinGeometry, segmentsOutsideGeometry) = assets.partition(_.startMeasure < roadLink.length)
-    val droppedAssetIds = segmentsOutsideGeometry.map(_.id).toSet
-    (segmentsWithinGeometry, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
+    val expiredAssetIds = segmentsOutsideGeometry.map(_.id).toSet
+    (segmentsWithinGeometry, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredAssetIds))
   }
 
   /**
@@ -287,10 +287,10 @@ object SpeedLimitFiller {
       speedLimits.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
       map(sl => SideCodeAdjustment(sl.id, sl.sideCode))
     val resultingSpeedLimits = updatedSpeedLimitsAndMValueAdjustments.map(n => n._1) ++ updateGeometry(newSpeedLimits, roadLink).map(_._1)
-    val droppedIds = speedLimits.map(_.id).toSet.--(resultingSpeedLimits.map(_.id).toSet)
+    val expiredIds = speedLimits.map(_.id).toSet.--(resultingSpeedLimits.map(_.id).toSet)
 
     val returnSpeedLimits = cleanSpeedLimitIds(resultingSpeedLimits, Seq())
-    (returnSpeedLimits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedIds,
+    (returnSpeedLimits, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredIds,
       adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments.filter(_.assetId > 0), adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
   }
 
@@ -314,11 +314,11 @@ object SpeedLimitFiller {
         val modified = toBeFused.head.copy(id=newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure,
           geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, origin.startMeasure, target.get.endMeasure),
           vvhTimeStamp = latestTimestamp(toBeFused.head, target))
-        val droppedId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to drop id zero
+        val expiredId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to drop id zero
         val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
         // Replace origin and target with this new item in the list and recursively call itself again
         fuse(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
-          changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedId, adjustedMValues = changeSet.adjustedMValues.filter(_.assetId > 0) ++ mValueAdjustment))
+          changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(_.assetId > 0) ++ mValueAdjustment))
       } else {
         val fused = fuse(roadLink, sortedList.tail, changeSet)
         (Seq(origin) ++ fused._1, fused._2)
@@ -425,10 +425,10 @@ object SpeedLimitFiller {
         case false => Seq(adj.head) ++ pruneSideCodes(adj.tail)
       }
     }
-    val droppedIds = changeSet.droppedAssetIds
-    val adjustments = prune(changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId)))
-    val sideAdjustments = pruneSideCodes(changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId)))
-    (speedLimits, changeSet.copy(droppedAssetIds = droppedIds -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
+    val droppedAndExpiredIds = changeSet.droppedAssetIds ++ changeSet.expiredAssetIds
+    val adjustments = prune(changeSet.adjustedMValues.filterNot(a => droppedAndExpiredIds.contains(a.assetId)))
+    val sideAdjustments = pruneSideCodes(changeSet.adjustedSideCodes.filterNot(a => droppedAndExpiredIds.contains(a.assetId)))
+    (speedLimits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds -- Set(0), expiredAssetIds = changeSet.expiredAssetIds -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
   }
 
   def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]], changedSet: Option[ChangeSet] = None): (Seq[SpeedLimit], ChangeSet) = {
@@ -440,7 +440,7 @@ object SpeedLimitFiller {
       capToGeometry,
       adjustLopsidedLimit,
       adjustSideCodeOnOneWayLink,
-      dropShortLimits,
+      expireShortLimits,
       fillHoles,
       clean
     )
