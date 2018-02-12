@@ -41,9 +41,9 @@ object ProjectDeltaCalculator {
         pl.status match {
           case Transfer =>
             val termAddress = connectedLink.map(l => (l.startAddrMValue, l.endAddrMValue))
-            termAddress.map{ case (st, en) =>
-              address.copy(startAddrMValue =  en,
-                endAddrMValue = if (en == address.endAddrMValue) st else address.endAddrMValue, startMValue = pl.startMValue,
+            termAddress.map { case (start, end) =>
+              address.copy(startAddrMValue = end,
+                endAddrMValue = if (end == address.endAddrMValue) start else address.endAddrMValue, startMValue = pl.startMValue,
                 endMValue = pl.endMValue, geometry = geom)
             }.getOrElse(address)
           case Terminated =>
