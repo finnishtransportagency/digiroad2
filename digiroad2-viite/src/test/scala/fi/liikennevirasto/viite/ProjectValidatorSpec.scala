@@ -341,7 +341,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
   test("project track codes inconsistent in midle of track") {
     runWithRollback{
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), true)
-      val projectLinks = ProjectDAO.getProjectLinks(project.id).filter(_.track.value != 0)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val inconsistentLinks = projectLinks.map { l =>
         if (l.startAddrMValue == 20 && l.track == Track.RightSide)
           l.copy(track = Track.LeftSide)
@@ -355,7 +355,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
   test("project track codes inconsistent in extermities") {
     runWithRollback{
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), true)
-      val projectLinks = ProjectDAO.getProjectLinks(project.id).filter(_.track.value != 0)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val inconsistentLinks = projectLinks.map { l =>
         if (l.startAddrMValue == 0 && l.track == Track.RightSide)
           l.copy(startAddrMValue = 5)
