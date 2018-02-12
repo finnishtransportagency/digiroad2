@@ -390,13 +390,13 @@ object ProjectValidator {
 
   def checkTrackCode(project:RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
-    def isTrackChange(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-      previous.track != currentLink.track && GeometryUtils.areAdjacent(previous.geometry, currentLink.geometry)
+    def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
+      previous.track == currentLink.track && GeometryUtils.areAdjacent(previous.geometry, currentLink.geometry, MaxDistanceForConnectedLinks)
     }
 
     def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
       links.foldLeft(Seq.empty[ProjectLink]){(linkSameTrack, current) => {
-        if (linkSameTrack.isEmpty || !isTrackChange(linkSameTrack.last, current)) {
+        if (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current)) {
           linkSameTrack :+ current
         } else {
           linkSameTrack
@@ -408,10 +408,10 @@ object ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        if (projectLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
+        if (!projectLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
           Some(minTrackLink)
         }
-        else if (projectLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
+        else if (!projectLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
           Some(maxTrackLink)
         } else None
       } else None
@@ -435,16 +435,19 @@ object ProjectValidator {
         error(project.id, ValidationError.InsufficientTrackCoverage)(errorLinks)
       } else {
         val trackToCheck = links.head.track
-        val trackInterval = getTrackInterval(links, trackToCheck)
+        val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
         recursiveCheckTrackChange(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)),
           validateTrackTopology(trackInterval))
       }
     }
 
-    recursiveCheckTrackChange(projectLinks) match {
-      case Some(errors) => Seq(errors)
-      case _ => Seq()
-    }
+    val groupedLinks = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
+    groupedLinks.map(roadPart => {
+      recursiveCheckTrackChange(roadPart._2) match {
+        case Some(errors) => Seq(errors)
+        case _ => Seq()
+      }
+    }).head
   }
 
   private def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
