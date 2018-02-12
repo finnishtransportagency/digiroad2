@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, Unknown}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{InUse, Planned}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
@@ -32,11 +32,6 @@ import slick.jdbc.StaticQuery.interpolation
 
 class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   val mockProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
@@ -185,6 +180,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   test("Split aligning project links") {
     val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 0.8))
     val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 1.5), Point(20.0, 4.8))
+    val rGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 0.8))
+
     val sLen = GeometryUtils.geometryLength(sGeom)
     val tLen = GeometryUtils.geometryLength(tGeom)
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
@@ -193,27 +190,18 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
-    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
-      LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.EndOfRoad, 8L, LinkGeomSource.NormalLinkInterface,
-      RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-    val (splitA, splitB) = sl.partition(_.status != LinkStatus.New)
-    sl should have size (2)
-    tl should have size (1)
-    val terminatedLink = tl.head
-    terminatedLink.status should be (LinkStatus.Terminated)
-    terminatedLink.endAddrMValue should be (template.endAddrMValue)
-    terminatedLink.startAddrMValue should be (splitB.head.startAddrMValue)
-    splitA.head.endAddrMValue should be (splitB.head.startAddrMValue)
-    splitB.head.discontinuity should be (Discontinuity.EndOfRoad)
-    splitA.head.discontinuity should be (Continuous)
-    sl.foreach { l =>
-      l.endAddrMValue == terminatedLink.startAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue should be (true)
-      l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
-      l.status == LinkStatus.New || l.status == LinkStatus.UnChanged || l.status == LinkStatus.Transfer should be (true)
-      l.roadNumber should be (template.roadNumber)
-      l.roadPartNumber should be (template.roadPartNumber)
-      l.sideCode should be (SideCode.TowardsDigitizing)
-    }
+    val roadLink = RoadLink(12345l, rGeom, GeometryUtils.geometryLength(rGeom), State, 99, TrafficDirection.TowardsDigitizing,
+      UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), Planned, NormalLinkInterface)
+    val result = ProjectLinkSplitter.split(roadLink, suravage, template, Seq(template), SplitOptions(Point(14.5, 0.0), LinkStatus.UnChanged,
+  LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.EndOfRoad, 8L, LinkGeomSource.NormalLinkInterface,
+  RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1)))
+    val (splitA, splitB, terminatedLink) = (result.splitA, result.splitB, result.allTerminatedProjectLinks)
+    terminatedLink.foreach(t => t.status should be (LinkStatus.Terminated))
+    terminatedLink.maxBy(_.endAddrMValue).endAddrMValue should be (template.endAddrMValue)
+    terminatedLink.minBy(_.startAddrMValue).startAddrMValue should be (splitB.startAddrMValue)
+    splitA.endAddrMValue should be (splitB.startAddrMValue)
+    splitB.discontinuity should be (Discontinuity.EndOfRoad)
+    splitA.discontinuity should be (Continuous)
   }
 
   test("Incorrect digitization of link should not affect calculation") {
