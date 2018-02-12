@@ -329,7 +329,7 @@ object ProjectValidator {
       val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
       if (linkIds.nonEmpty)
         Some(ValidationErrorDetails(project.id, validationError, linkIds,
-          points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
+          points.map(p => ProjectCoordinates(p.x, p.y, 12)), Some(info)))
       else
         None
     }
