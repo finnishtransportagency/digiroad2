@@ -60,7 +60,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
 
-      val createdLimit = provider.find(id.head).get
+      val createdLimit = provider.getSpeedLimitById(id.head).get
       createdLimit.value should equal(Some(NumericValue(30)))
       createdLimit.createdBy should equal(Some("test"))
     }

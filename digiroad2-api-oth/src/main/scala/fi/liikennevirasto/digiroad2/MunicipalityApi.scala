@@ -149,7 +149,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   def getSpeedLimitsAndRoadLinks(assetId: Set[Long]): Option[Seq[(SpeedLimit, RoadLink)]] = {
-    val speedLimits = speedLimitService.getSpeedLimitAssetsByIds(assetId)
+    val speedLimits = speedLimitService.getSpeedLimitAssetsByIds(assetId.toSeq)
 
     if (speedLimits.nonEmpty) {
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(speedLimits.map(_.linkId).toSet)
@@ -220,7 +220,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   def updateSpeedLimitAsset(assetId: Long, parsedBody: JValue, linkId: Long): (SpeedLimit, RoadLink) = {
-    val oldAsset = speedLimitService.getSpeedLimitAssetsByIds(Set(assetId)).filterNot(_.expired).headOption
+    val oldAsset = speedLimitService.getSpeedLimitAssetsByIds(Seq(assetId)).filterNot(_.expired).headOption
       .getOrElse(halt(NotFound("Asset not found.")))
 
     val newAsset = extractLinearAsset(SpeedLimitAsset.typeId, parsedBody)

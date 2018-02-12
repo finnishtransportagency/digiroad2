@@ -138,7 +138,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Returns speed limit by asset id. Used by SpeedLimitService.separate.
     */
   def getPersistedSpeedLimit(id: Long): Option[PersistedSpeedLimit] = {
-    val speedLimit = sql"""
+    sql"""
       select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure,a.modified_by,
              a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source
       from ASSET a
@@ -148,11 +148,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
-        """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Int)].firstOption
-
-    speedLimit.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource) =>
-      PersistedSpeedLimit(id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = LinkGeomSource.apply(linkSource))
-    }
+        """.as[PersistedSpeedLimit].firstOption
   }
 
   /**

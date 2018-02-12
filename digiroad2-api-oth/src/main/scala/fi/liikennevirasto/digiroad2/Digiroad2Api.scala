@@ -935,7 +935,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/speedlimit/sid/") {
     val segmentID = params.get("segmentid").getOrElse(halt(BadRequest("Bad coordinates")))
-    val speedLimit = speedLimitService.find(segmentID.toLong)
+    val speedLimit = speedLimitService.getSpeedLimitById(segmentID.toLong)
     speedLimit match {
       case Some(speedLimit) => {
         roadLinkService.getRoadLinkMiddlePointByLinkId(speedLimit.linkId) match {
@@ -1045,7 +1045,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(value) =>
         val updatedIds = speedLimitService.updateValues(ids, value, user.username, validateUserMunicipalityAccess(user))
         val createdIds = speedLimitService.create(newLimits, value, user.username, validateUserMunicipalityAccess(user))
-        speedLimitService.get(updatedIds ++ createdIds)
+        speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
@@ -1085,7 +1085,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "value").extract[Int],
       user.username,
       validateUserMunicipalityAccess(user)).headOption match {
-      case Some(id) => speedLimitService.find(id)
+      case Some(id) => speedLimitService.getSpeedLimitById(id)
       case _ => BadRequest("Speed limit creation failed")
     }
   }
