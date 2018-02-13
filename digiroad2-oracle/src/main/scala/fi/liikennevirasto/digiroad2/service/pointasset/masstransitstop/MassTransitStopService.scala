@@ -218,7 +218,7 @@ trait MassTransitStopService extends PointAssetOperations {
       persistedAsset.map{
         asset =>
           val strategy = getStrategy(asset)
-          val (enrichedStop, _) = strategy.enrichBusStop(asset)
+          val (enrichedStop, _) = strategy.enrichBusStop(asset, roadLinks)
           withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink))(enrichedStop)
       }
     }

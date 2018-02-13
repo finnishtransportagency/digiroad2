@@ -247,12 +247,28 @@ class RoadAddressDAO {
     }
   }
 
-  def getByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
-    val linkIdString = linkIds.mkString(",")
-    val where = linkIds.isEmpty match {
-      case true => return List()
-      case false => s""" where pos.link_id in ($linkIdString)"""
-    }
+  def getByLinkId(linkId: Long, startM: Double, endM: Double, includeFloating: Boolean = false, includeHistory: Boolean = true,
+                  includeTerminated: Boolean = true): List[RoadAddress] = {
+    val where =
+      s""" where pos.link_id = $linkId and
+         (( pos.start_measure >= $startM and pos.end_measure <= $endM ) or
+         ( $endM >= pos.start_measure and $endM <= pos.end_measure)) """
+
+    val floating = if (!includeFloating)
+      "AND floating='0'"
+    else
+      ""
+
+    val history = if (!includeHistory)
+      "AND ra.end_date is null"
+    else
+      ""
+
+    val valid = if (!includeTerminated)
+      "AND ra.terminated = 0"
+    else
+      ""
+
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
@@ -263,7 +279,7 @@ class RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where and t.id < t2.id and
+        $where $floating $history $valid and t.id < t2.id and
           valid_from <= sysdate and
           (valid_to is null or valid_to > sysdate)
       """

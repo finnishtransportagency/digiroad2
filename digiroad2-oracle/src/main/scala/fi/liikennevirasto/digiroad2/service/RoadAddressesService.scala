@@ -13,11 +13,11 @@ case class ChangedRoadAddress(roadAddress : RoadAddress, link: RoadLink)
 
 class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService) {
 
-  private val roadNumberPublicId = "tienumero"          // TIE
-  private val roadPartNumberPublicId = "tieosanumero"   // OSA
-  private val startMeasurePublicId = "etaisyys"         // AET
-  private val trackCodePublicId = "ajorata"             // AJR
-  private val sideCodePublicId = "puoli"
+  private val roadNumberPublicId = "TIE"          // Tienumero
+  private val roadPartNumberPublicId = "OSA"      // Tieosanumero
+  private val startMeasurePublicId = "AET"        // Etaisyys
+  private val trackCodePublicId = "AJR"           // Ajorata
+  private val sideCodePublicId = "PUOLI"
 
   val roadAddressDAO = new RoadAddressDAO()
   val logger = LoggerFactory.getLogger(getClass)
@@ -67,18 +67,26 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
   }
 
   def getRoadAddressPropertiesByLinkId(assetCoordinates: Point, linkId: Long, roadLink: RoadLinkLike): Seq[Property] = {
-    roadAddressDAO.getByLinkId(Set(linkId)).flatMap { ra =>
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
+    roadAddressDAO.getByLinkId(linkId, mValue, mValue).flatMap { ra =>
       val addrMValue = ra.addrAt(mValue).toString()
 
-      Seq(
+      return Seq(
         new Property(0, roadNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.roadNumber.toString(), Some(ra.roadNumber.toString())))),
         new Property(0, roadPartNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.roadPartNumber.toString(), Some(ra.roadPartNumber.toString())))),
         new Property(0, startMeasurePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(addrMValue, Some(addrMValue)))),
-        new Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.track.toString(), Some(ra.track.toString())))),
-        new Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.sideCode.toString(), Some(ra.sideCode.toString()))))
+        new Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.track.value.toString(), Some(ra.track.value.toString())))),
+        new Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.sideCode.value.toString(), Some(ra.sideCode.value.toString()))))
       )
     }
+
+    Seq(
+      new Property(0, roadNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue("", Some("")))),
+      new Property(0, roadPartNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue("", Some("")))),
+      new Property(0, startMeasurePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue("", Some("")))),
+      new Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue("", Some("")))),
+      new Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue("", Some(""))))
+    )
   }
 
 }

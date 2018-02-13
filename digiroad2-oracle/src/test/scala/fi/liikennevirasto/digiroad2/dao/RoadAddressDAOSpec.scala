@@ -32,12 +32,4 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     against.addressMValueToLRM(99L)  should be (None)
     against.addressMValueToLRM(111L) should be (None)
   }
-
-  test("testGetByLinkId") {
-    runWithRollback {
-      val sets = roadAddressDAO.getByLinkId(Set(5170942, 5170947))
-      sets.size should be (2)
-      sets.forall(_.floating == false) should be (true)
-    }
-  }
 }
