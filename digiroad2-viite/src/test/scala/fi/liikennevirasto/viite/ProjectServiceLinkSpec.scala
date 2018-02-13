@@ -1341,7 +1341,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Calculate delta after Unchanged + double split (Unchanged + New) and (Transfer + New) + Transfer") {
+  //We need to validate the point of this test, since it is not possible to re-split in real application
+  ignore("Calculate delta after Unchanged + double split (Unchanged + New) and (Transfer + New) + Transfer") {
     def toGeom(json: Option[Any]): List[Point] = {
       json.get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
     }
