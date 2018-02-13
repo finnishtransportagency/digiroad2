@@ -123,6 +123,7 @@
       var streetViewHandler;
       var isTRMassTransitStop = false;
       var isTerminalBusStop = false;
+      var roadAddressWrapper;
 
       var MStopDeletebutton = function(readOnly) {
 
@@ -265,6 +266,19 @@
           outer.append($('<p />').addClass('form-control-static').text(propertyVal));
         }
         return outer;
+      };
+
+      var createRoadAddressWrapper = function(){
+        roadAddressWrapper = $('<div />').addClass('form-list').append($('<label />').addClass('control-label').text('TIEOSA'));
+      };
+
+      var readOnlyNumberHandler = function(property){
+        if(roadAddressWrapper){
+          roadAddressWrapper.append($('<ul />').addClass('control-label-small').append('<li>' + property.publicId + '</li>').append('<li>' + property.values[0].propertyDisplayValue + '</li>'));
+        }else{
+          createRoadAddressWrapper();
+        }
+        return roadAddressWrapper;
       };
 
       var textHandler = function(property){
@@ -569,6 +583,11 @@
           'vyöhyketieto', //Information Zone
           'alternative_link_id',
           'liitetty_terminaaliin',
+          'TIE',
+          'OSA',
+          'AET',
+          'AJR',
+          'puoli',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',
@@ -681,7 +700,9 @@
             return dateHandler(feature);
           } else if (propertyType === 'notification') {
             return notificationHandler(feature);
-          }  else {
+          } else if (propertyType === 'read_only_number') {
+            return readOnlyNumberHandler(feature);
+          } else {
             feature.propertyValue = 'Ei toteutettu';
             return $(featureDataTemplateNA(feature));
           }
