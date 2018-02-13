@@ -437,7 +437,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-      val roadLink = RoadLink(1, Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)), 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing,
+      val geom = Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
+      val roadLink = RoadLink(1, geom , GeometryUtils.geometryLength(geom), State, 99, TrafficDirection.AgainstDigitizing,
         UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
       val suravageAddressLink = RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
         AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.UnknownRoadLinkType, ConstructionType.Planned, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, "testRoad",
@@ -445,6 +446,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
 
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLink))
       val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap)
       val templateGeom = toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 123.5), Point(0.5, 140)))
