@@ -117,7 +117,7 @@
       var textStyle = function(value) {
         if (!me.isValidValue(value))
           return '';
-        return "" + value;
+        return '' + value;
       };
 
     };
