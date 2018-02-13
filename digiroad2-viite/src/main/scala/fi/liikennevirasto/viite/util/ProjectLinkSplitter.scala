@@ -134,9 +134,6 @@ object ProjectLinkSplitter {
     merge(terminatedLink, sortedDisconnectedLinks, SplitResult(splitA, splitB, Seq(), terminatedLink))
   }
 
-  def split(suravage: ProjectLink, templateLink: ProjectLink, splitOptions: SplitOptions): Seq[ProjectLink] =
-    split(suravage, templateLink, splitOptions)
-
   def split(roadLink: RoadLink, suravage: ProjectLink, templateLink: ProjectLink, projectLinksToTerminate: Seq[ProjectLink], split: SplitOptions): SplitResult = {
     val adjustedTemplate = templateLink.copy(
       geometry = projectLinksToTerminate.sortBy(_.startAddrMValue).flatMap(_.geometry),
