@@ -426,7 +426,28 @@ object ProjectValidator {
     track1 == track2 || track1 == Track.Combined || track2 == Track.Combined
   }
 
+  //Utility method, will return correct GeometryEndpoint
+  def endPoint(b: BaseRoadAddress) = {
+    b.sideCode match {
+      case TowardsDigitizing => b.geometry.last
+      case AgainstDigitizing => b.geometry.head
+      case _ => Point(0.0, 0.0)
+    }
+  }
+
+  /**
+    * Check the project links edges for adjacent road addresses that must have a different ely then a adjacent one
+    * @param project - the current project
+    * @param groupedProjectLinks - project links, grouped by road number and road part number
+    * @return Validation Errors
+    */
   private def firstElyBorderCheck(project: RoadAddressProject, groupedProjectLinks: Map[(Long, Long), Seq[ProjectLink]]) = {
+    /**
+      * Method that will prepare the output of the validation error.
+      * @param validationError the validation error
+      * @param pl Sequence of the erroneous ProjectLinks
+      * @return An optional value with eventual Validation error details
+      */
     def error(validationError: ValidationError)(pl: Seq[BaseRoadAddress]): Option[ValidationErrorDetails] = {
       val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
       if (linkIds.nonEmpty)
@@ -436,22 +457,57 @@ object ProjectValidator {
         None
     }
 
-    def checkValidation(roads: Seq[BaseRoadAddress]) = {
-      val existingElyCodes = roads.map(_.ely).distinct
-      val addresses = RoadAddressDAO.fetchByRoad(roads.head.roadNumber).groupBy(_.roadPartNumber).filterNot(_._1 <= roads.head.roadPartNumber).toSeq.sortBy(_._1)
-      if (addresses.nonEmpty && addresses.head._2.map(_.ely).distinct.head == existingElyCodes.distinct.head)
-        error(ValidationErrorList.RoadNotEndingInElyBorder)(roads)
-      else
-        Option.empty[ValidationErrorDetails]
+    /**
+      * Main validation we create a bounding box and search for adjacent road addresses.
+      * Then check if the ely code changed between said road addresses and the edgeRoad,
+      * if it did NOT we output the edge road, if not, we output a empty optional
+      * @param edgeRoad - either the start or the end of a road number/road part number project link
+      * @return an optional symbolizing a found invalid edgeRoad, or nothing.
+      */
+    def checkValidation(edgeRoad: ProjectLink) = {
+      val p = endPoint(edgeRoad)
+      val lowerCorner = Point(p.x - 1.0, p.y - 1.0, p.z)
+      val higherCorner = Point(p.x + 1.0, p.y + 1.0, p.z)
+      val box = BoundingRectangle(lowerCorner, higherCorner)
+      val roadAddresses = RoadAddressDAO.fetchRoadAddressesByBoundingBox(box, false)
+        if(!roadAddresses.isEmpty){
+          val filtered = roadAddresses.filterNot(ra => ra.roadNumber == edgeRoad.roadNumber && ra.roadPartNumber == edgeRoad.roadPartNumber &&
+            !GeometryUtils.areAdjacent(ra.geometry, edgeRoad.geometry))
+          if(filtered.find(_.ely != edgeRoad.ely).isEmpty){
+            Option(edgeRoad)
+          } else Option.empty[ProjectLink]
+        } else Option.empty[ProjectLink]
     }
 
-    val validationProblems = groupedProjectLinks.flatMap(group => {
-      checkValidation(group._2)
-    })
-    validationProblems.toSeq
+    groupedProjectLinks.flatMap(group => {
+      val projectLinks = group._2
+      val startRoad = projectLinks.head
+      val endRoad = projectLinks.last
+     val startRoadValidation = if(startRoad.discontinuity == Discontinuity.ChangingELYCode) {
+        checkValidation(startRoad)
+      } else Option.empty[ProjectLink]
+     val endRoadValidation = if(endRoad.discontinuity == Discontinuity.ChangingELYCode) {
+        checkValidation(endRoad)
+      } else Option.empty[ProjectLink]
+      val problemRoads = Seq(startRoadValidation, endRoadValidation).filterNot(_.isEmpty).map(_.get)
+      error(ValidationErrorList.RoadNotEndingInElyBorder)(problemRoads)
+    }).toSeq
   }
 
+  /**
+    * Check the adjacent road addresses of the edges of the project links for ely codes that are different to the ones in the project links,
+    * if they are not, issue a error
+    * @param project - the current project
+    * @param groupedProjectLinks - project links, grouped by road number and road part number
+    * @return Validation Errors
+    */
   private def secondElyBorderCheck(project: RoadAddressProject, groupedProjectLinks: Map[(Long, Long), Seq[ProjectLink]]) = {
+    /**
+      * Method that will prepare the output of the validation error.
+      * @param validationError the validation error
+      * @param pl Sequence of the erroneous ProjectLinks
+      * @return An optional value with eventual Validation error details
+      */
     def error(validationError: ValidationError)(pl: Seq[BaseRoadAddress]): Option[ValidationErrorDetails] = {
       val grouppedByEly = pl.groupBy(_.ely)
       val (gLinkIds, gPoints, gEly) = grouppedByEly.flatMap(g => {
@@ -467,20 +523,40 @@ object ProjectValidator {
         Option.empty[ValidationErrorDetails]
     }
 
-    def checkValidation(roads: Seq[BaseRoadAddress]) = {
-      val existingElyCodes = roads.map(_.ely).distinct
-      val addresses = RoadAddressDAO.fetchByRoad(roads.head.roadNumber).groupBy(_.roadPartNumber).filterNot(_._1 <= roads.head.roadPartNumber).toSeq.sortBy(_._1)
-      if (addresses.nonEmpty && addresses.head._2.map(_.ely).distinct.head != existingElyCodes.head) {
-        error(ValidationErrorList.RoadContinuesInAnotherEly)(roads)
-      } else {
-        Option.empty[ValidationErrorDetails]
-      }
+    /**
+      * Main validation we create a bounding box and search for adjacent road addresses to the edgeRoad.
+      * Then check if the ely code changed between them, if it did we output the edge road, if not, we output a empty optional
+      * @param edgeRoad - either the start or the end of a road number/road part number project link
+      * @return an optional symbolizing a found invalid edgeRoad, or nothing.
+      */
+    def checkEdgeValidation(edgeRoad: ProjectLink) = {
+      val p = endPoint(edgeRoad)
+      val lowerCorner = Point(p.x - 1.0, p.y - 1.0, p.z)
+      val higherCorner = Point(p.x + 1.0, p.y + 1.0, p.z)
+      val box = BoundingRectangle(lowerCorner, higherCorner)
+      val roadAddresses = RoadAddressDAO.fetchRoadAddressesByBoundingBox(box, false)
+        if(!roadAddresses.isEmpty) {
+          val filtered = roadAddresses.filterNot(ra => ra.roadNumber == edgeRoad.roadNumber && ra.roadPartNumber == edgeRoad.roadPartNumber &&
+            !GeometryUtils.areAdjacent(ra.geometry, edgeRoad.geometry))
+          if(filtered.find(_.ely != edgeRoad.ely).isDefined) {
+            Option(edgeRoad)
+          } else {
+            Option.empty[ProjectLink]
+          }
+        } else {
+          Option.empty[ProjectLink]
+        }
     }
 
     val validationProblems = groupedProjectLinks.flatMap(group => {
-      val projectLink = group._2
-      val invalidProjectLinks = checkValidation(projectLink)
-      invalidProjectLinks
+      val projectLinks = group._2
+      val startRoad = projectLinks.head
+      val endRoad = projectLinks.last
+      val stv = if (startRoad.discontinuity != 3)checkEdgeValidation(startRoad) else Option.empty[ProjectLink]
+      val etv = if (endRoad.discontinuity != 3) checkEdgeValidation(endRoad) else Option.empty[ProjectLink]
+
+      val problemRoads = Seq(stv, etv).filterNot(_.isEmpty).map(_.get)
+      error(ValidationErrorList.RoadContinuesInAnotherEly)(problemRoads)
 
     })
     validationProblems.toSeq

@@ -73,7 +73,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
     val roadAddressId = RoadAddressDAO.getNextRoadAddressId
     val ra = Seq(RoadAddress(roadAddressId, 16320L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 1270L, 1309L,
       Some(DateTime.parse("1982-09-01")), None, Option("TR"), 0, 2583382, 0.0, 38.517, SideCode.AgainstDigitizing, 1476392565000L, (None, None), false,
-      Seq(Point(525621.588, 7028822.403), Point(525658.969, 7028813.116)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
+      Seq(Point(0.0, 40.0, 0.0), Point(0.0, 50.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
     RoadAddressDAO.create(ra)
 
   }
@@ -82,7 +82,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
     val roadAddressId = RoadAddressDAO.getNextRoadAddressId
     val ra = Seq(RoadAddress(roadAddressId, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 4278L, 4387L,
       Some(DateTime.parse("1996-01-01")), None, Option("TR"), 0, 1817196, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), false,
-      Seq(Point(468091.153, 7061440.566), Point(468190.85, 7061398.364)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
+      Seq(Point(0.0, 40.0, 0.0), Point(0.0, 50.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
     RoadAddressDAO.create(ra)
   }
 
