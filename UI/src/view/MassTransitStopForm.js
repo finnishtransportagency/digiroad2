@@ -123,7 +123,7 @@
       var streetViewHandler;
       var isTRMassTransitStop = false;
       var isTerminalBusStop = false;
-      var roadAddressWrapper;
+      var roadAddressInfoLabel;
 
       var MStopDeletebutton = function(readOnly) {
 
@@ -268,17 +268,30 @@
         return outer;
       };
 
-      var createRoadAddressWrapper = function(){
-        roadAddressWrapper = $('<div />').addClass('form-list').append($('<label />').addClass('control-label').text('TIEOSA'));
+      var createRoadAddressInfoLabel = function(property){
+        roadAddressInfoLabel = $('<div />').addClass('form-list').append($('<label />').addClass('control-label control-label-list').text('TIEOSA'));
+        roadAddressInfoLabel.append(addRoadAddressAttribute(property));
+      };
+
+      var addRoadAddressAttribute = function(property) {
+        return ($('<ul />').addClass('label-list')
+          .append($('<li />').append($('<label />').text(property.publicId)))
+          .append($('<li />').append($('<label />').text(property.values[0].propertyDisplayValue))));
+      };
+
+      var isRoadAddressProperty = function(property){
+        var publicId = property.publicId;
+        return publicId == 'TIE' || publicId == 'OSA' || publicId == 'AET' || publicId == 'AJR' || publicId == 'PUOLI';
       };
 
       var readOnlyNumberHandler = function(property){
-        if(roadAddressWrapper){
-          roadAddressWrapper.append($('<ul />').addClass('control-label-small').append('<li>' + property.publicId + '</li>').append('<li>' + property.values[0].propertyDisplayValue + '</li>'));
-        }else{
-          createRoadAddressWrapper();
+        if(isRoadAddressProperty(property)){
+          if(roadAddressInfoLabel)
+            roadAddressInfoLabel.append(addRoadAddressAttribute(property));
+          else
+            createRoadAddressInfoLabel(property);
+          return roadAddressInfoLabel;
         }
-        return roadAddressWrapper;
       };
 
       var textHandler = function(property){
@@ -587,7 +600,7 @@
           'OSA',
           'AET',
           'AJR',
-          'puoli',
+          'PUOLI',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',
@@ -667,6 +680,7 @@
       };
 
       var getAssetForm = function() {
+        roadAddressInfoLabel = '';
         var allProperties = selectedMassTransitStopModel.getProperties();
         var properties;
 
