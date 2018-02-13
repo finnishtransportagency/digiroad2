@@ -328,13 +328,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * @return
     */
   def getMissingRoadAddresses(roadNumberLimits: Seq[(Int, Int)], municipality: Int) = {
-    val roadLinks = roadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumberLimits,frozenTimeVVHAPIServiceEnabled)
-    val linkIds = roadLinks.map(_.linkId).toSet
-    val addresses = RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
-
-    val missingLinkIds = linkIds -- addresses.keySet
-    val missedRL = RoadAddressDAO.getMissingRoadAddresses(missingLinkIds).groupBy(_.linkId)
-
+    val (addresses, missedRL, roadLinks) =
+      withDynTransaction {
+        val roadLinks = roadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumberLimits, frozenTimeVVHAPIServiceEnabled)
+        val linkIds = roadLinks.map(_.linkId).toSet
+        val addr = RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
+        val missingLinkIds = linkIds -- addr.keySet
+        (addr, RoadAddressDAO.getMissingRoadAddresses(missingLinkIds).groupBy(_.linkId), roadLinks)
+      }
     val viiteRoadLinks = roadLinks.map { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
       val missed = missedRL.getOrElse(rl.linkId, Seq())
