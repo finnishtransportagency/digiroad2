@@ -44,16 +44,17 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
-  def getMunicipalityInfo(typeId: Int, bounds: BoundingRectangle): Option[VerificationInfo] = {
+  def getMunicipalityInfo(bounds: BoundingRectangle): Option[Int] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     val midPoint = Point((bounds.rightTop.x + bounds.leftBottom.x) / 2, (bounds.rightTop.y + bounds.leftBottom.y) / 2)
 
-    val nearestRoadLink = roadLinks.minBy(road => GeometryUtils.minimumDistance(midPoint, road.geometry))
-
-    getAssetVerification(nearestRoadLink.municipalityCode, typeId).headOption
+    if(roadLinks.nonEmpty)
+      Some(roadLinks.minBy(road => GeometryUtils.minimumDistance(midPoint, road.geometry)).municipalityCode)
+    else
+      None
   }
 
-  def getMunicipalityInfo(typeId: Int, municipality: Int): Option[VerificationInfo] = {
+  def getAssetVerificationInfo(typeId: Int, municipality: Int): Option[VerificationInfo] = {
     getAssetVerification(municipality, typeId).headOption
   }
 

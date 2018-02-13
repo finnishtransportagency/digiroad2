@@ -455,6 +455,12 @@
       });
     };
 
+    this.getMunicipalityByBoundingBox = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/getMunicipalityInfo?bbox=' + boundingBox
+      };
+    });
+
     this.getVerificationInfo = latestResponseRequestor(function(municipality, typeId) {
       return {
         url: 'api/verificationInfo?municipality=' + municipality + '&typeId=' + typeId

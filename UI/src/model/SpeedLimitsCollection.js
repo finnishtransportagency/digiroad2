@@ -58,7 +58,7 @@
             }) || [];
         speedLimits = knownSpeedLimits.concat(unknownSpeedLimits);
         eventbus.trigger('speedLimits:fetched', self.getAll());
-        verificationCollection.fetch(center, 20);
+        verificationCollection.fetch(boundingBox, center, 20, true);
       });
     };
 

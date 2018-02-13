@@ -15,7 +15,7 @@
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
           me.allowComplementaryIsActive(specs.allowComplementaryLinks);
-          verificationCollection.fetch(center, specs.typeId);
+          verificationCollection.fetch(boundingBox, center, specs.typeId, specs.hasMunicipalityValidation);
           return me.filterComplementaries(assets);
         });
     };

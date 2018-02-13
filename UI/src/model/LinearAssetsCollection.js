@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetsCollection = function(backend, verificationCollection, typeId, singleElementEventCategory, multiElementEventCategory) {
+  root.LinearAssetsCollection = function(backend, verificationCollection, typeId, singleElementEventCategory, multiElementEventCategory, hasMunicipalityValidation) {
       var linearAssets = [];
       var dirty = false;
       var selection = null;
@@ -84,7 +84,7 @@
           }) || [];
         linearAssets = knownLinearAssets.concat(unknownLinearAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
-        verificationCollection.fetch(center, typeId);
+        verificationCollection.fetch(boundingBox, center, typeId, hasMunicipalityValidation);
       });
     };
 
