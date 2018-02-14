@@ -390,6 +390,8 @@ object ProjectValidator {
 
   def checkTrackCode(project:RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
+    val notCombinedLinks = projectLinks.filterNot(_.track == Track.Combined)
+
     def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
       previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue//&& GeometryUtils.areAdjacent(previous.geometry, currentLink.geometry, MaxDistanceForConnectedLinks)
     }
@@ -408,10 +410,10 @@ object ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        if (!projectLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
+        if (!notCombinedLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
           Some(minTrackLink)
         }
-        else if (!projectLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
+        else if (!notCombinedLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
           Some(maxTrackLink)
         } else None
       } else None
@@ -437,7 +439,7 @@ object ProjectValidator {
         val trackToCheck = links.head.track
         val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
         recursiveCheckTrackChange(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)),
-          validateTrackTopology(trackInterval))
+          errorLinks ++ validateTrackTopology(trackInterval))
       }
     }
 
