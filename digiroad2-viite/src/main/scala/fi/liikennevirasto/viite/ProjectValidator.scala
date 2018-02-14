@@ -391,12 +391,12 @@ object ProjectValidator {
   def checkTrackCode(project:RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-      previous.track == currentLink.track && GeometryUtils.areAdjacent(previous.geometry, currentLink.geometry, MaxDistanceForConnectedLinks)
+      previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue//&& GeometryUtils.areAdjacent(previous.geometry, currentLink.geometry, MaxDistanceForConnectedLinks)
     }
 
     def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
       links.foldLeft(Seq.empty[ProjectLink]){(linkSameTrack, current) => {
-        if (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current)) {
+        if (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current))) {
           linkSameTrack :+ current
         } else {
           linkSameTrack
@@ -422,7 +422,7 @@ object ProjectValidator {
         case Some(link) => Seq(link)
         case None => {
           trackInterval.sliding(2).map(l => {
-            if (!GeometryUtils.areAdjacent(l.head.geometry, l.last.geometry) || l.head.endAddrMValue != l.last.startAddrMValue) {
+            if (l.head.endAddrMValue != l.last.startAddrMValue) {
               Some(l.head)
             } else None
           }).toSeq.flatten
