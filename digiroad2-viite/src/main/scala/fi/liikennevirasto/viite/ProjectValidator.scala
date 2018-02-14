@@ -114,13 +114,13 @@ object ProjectValidator {
       def notification = false}
 
     case object RoadNotEndingInElyBorder extends ValidationError {
-      def value = 15
+      def value = 16
       def message = RoadNotEndingInElyBorderMessage
       def notification = true
     }
 
     case object RoadContinuesInAnotherEly extends ValidationError {
-      def value = 16
+      def value = 17
       def message = RoadContinuesInAnotherElyMessage
       def notification = true
     }
@@ -400,7 +400,7 @@ object ProjectValidator {
         if(isConnectingRoundabout(lastProjectLinks)){
           discontinuity match {
             case EndOfRoad | Discontinuous | ChangingELYCode | Continuous =>
-              return error(ValidationError.RampConnectingRoundabout, s"Rampin ${lastProjectLinks.head.roadNumber} tieosa ${lastProjectLinks.head.roadPartNumber} päättyy kiertoliittymään. Korjaa lievä epäjatkuvuus")(lastProjectLinks)
+              return error(ValidationErrorList.RampConnectingRoundabout, s"Rampin ${lastProjectLinks.head.roadNumber} tieosa ${lastProjectLinks.head.roadPartNumber} päättyy kiertoliittymään. Korjaa lievä epäjatkuvuus")(lastProjectLinks)
             case _ =>
           }
         }
