@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType._
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, MunicipalityDAO, RoadAddress}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, MunicipalityDAO, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -116,21 +116,23 @@ trait AddressLinkBuilder {
     * @param roadAddresses roadaddress seq
     * @return fused roadaddress seq
     */
+
+  def fuseRoadAddressWithTransaction(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+  OracleDatabase.withDynSession(
+    fuseRoadAddress(roadAddresses)
+  )
+  }
+
   def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     if (roadAddresses.size == 1) {
       roadAddresses
     } else {
-      val (newAddresses, oldAddresses) = roadAddresses.partition(_.id == NewRoadAddress)
-      val historyGrouping = oldAddresses.groupBy(record =>
-        record.lrmPositionId)
-      val linksWithHistoryRemoved = historyGrouping.filterNot(x => x._2.size > 1).flatMap(_._2).toSeq
-      //check which addresses contain history and removes them from fusing we might want to create fusing batchjob later with defined rules to fuse links containing history
-      val linksContainingHistory = historyGrouping.filter(x => x._2.size > 1).flatMap(_._2).toSeq
-      val groupedRoadAddresses = (linksWithHistoryRemoved ++ newAddresses).groupBy(record =>
-        (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+      val groupedRoadAddresses = roadAddresses.groupBy(record =>
+        (record.commonHistoryId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+
       groupedRoadAddresses.flatMap { case (_, record) =>
         fuseRoadAddressInGroup(record.sortBy(_.startMValue))
-      }.toSeq ++ linksContainingHistory
+      }.toSeq
     }
   }
 
@@ -224,7 +226,7 @@ trait AddressLinkBuilder {
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, nextSegment.roadType, nextSegment.track,
         discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy,
         nextSegment.lrmPositionId, nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
-        calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated, NewCommonHistoryId))
+        calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated, nextSegment.commonHistoryId))
 
     } else Seq(nextSegment, previousSegment)
 

@@ -234,9 +234,9 @@
       };
     });
 
-    this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId) {
+    this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
       return {
-        url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -248,7 +248,7 @@
 
     this.getReadOnlyLinearAssetsComplementaries = latestResponseRequestor(function(boundingBox, typeId) {
       return {
-        url: 'api/linearassets/massLimitation/complementary/?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/linearassets/massLimitation/complementary?bbox=' + boundingBox + '&typeId=' + typeId
       };
     });
 

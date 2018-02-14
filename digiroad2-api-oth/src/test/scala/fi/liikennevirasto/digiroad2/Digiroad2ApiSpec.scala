@@ -328,13 +328,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get complementary numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/linearassets/complementary?bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets/complementary?bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(400)
     }
   }
 
   test("get complementary numerical limits with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
       parsedBody.size should be(3)

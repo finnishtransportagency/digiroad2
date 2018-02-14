@@ -45,8 +45,8 @@ class VerificationServiceSpec extends FunSuite with Matchers {
            values ($id+3, 235, 60, sysdate, 'testuser')""".execute
 
       val verificationInfo = ServiceWithDao.getAssetTypesByMunicipality(235)
-      verificationInfo should have size 12
-      verificationInfo.filter(_.municipalityCode == 235) should have size 12
+      verificationInfo should have size 13
+      verificationInfo.filter(_.municipalityCode == 235) should have size 13
       verificationInfo.filter(_.verifiedBy.isDefined) should have size 4
       verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (true)
       verificationInfo.find(_.assetTypeCode == 40).map(_.verified).head should be (true)

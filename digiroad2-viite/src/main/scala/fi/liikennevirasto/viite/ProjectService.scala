@@ -467,12 +467,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def getGeometryWithTimestamp(linkId: Long, timeStamp: Long, roadLinks: Seq[RoadLink],
                                  vvhHistoryLinks: Seq[VVHHistoryRoadLink]): Seq[Point] = {
-      val roadLinkMatch = roadLinks.find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
-      val historyMatch = vvhHistoryLinks.find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
-      if (roadLinkMatch.nonEmpty || historyMatch.nonEmpty) {
-        roadLinkMatch.orElse(historyMatch).get
+      val matchingLinksGeometry = (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
+      if (matchingLinksGeometry.nonEmpty) {
+        matchingLinksGeometry.get
       } else {
-        roadLinks.find(rl => rl.linkId == linkId).map(_.geometry).orElse(vvhHistoryLinks.find(_.linkId == linkId).map(_.geometry))
+        (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId).map(_.geometry)
           .getOrElse(throw new InvalidAddressDataException(s"Geometry with linkId $linkId and timestamp $timeStamp not found!"))
       }
     }
@@ -486,7 +485,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       userName, false)
   }
 
-  def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Option[String], Option[(Point, Vector3d)]) = {
+  def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Seq[ProjectLink], Option[String], Option[(Point, Vector3d)]) = {
     def previousSplitToSplitOptions(plSeq: Seq[ProjectLink], splitOptions: SplitOptions): SplitOptions = {
       val splitsAB = plSeq.filter(_.linkId == linkId)
       val (template, splitA, splitB) = (plSeq.find(_.status == LinkStatus.Terminated),
@@ -508,7 +507,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           splitOptions
       val r = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
       dynamicSession.rollback()
-      (r._1.map(rs => rs.toSeqWithMergeTerminated), r._2, r._3)
+      (r._1.map(rs => rs.toSeqWithMergeTerminated), r._1.get.allTerminatedProjectLinks, r._2, r._3)
     }
   }
 
@@ -536,8 +535,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val rightTop = Point(x._2, endPoints._2.y)
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
-      val (projectLinksConnected, projectLinksDisconnected) = projectLinks.partition(l =>
-        GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
+      if (projectLinks.isEmpty)
+        return (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
+      val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(projectLinks.head.linkId, false).headOption
+      if (roadLink.isEmpty) {
+        (None, Some(ErrorSuravageLinkNotFound), None)
+      }
+
+      val projectLinksConnected = projectLinks.filter(l => GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
+
       //we rank template links near suravage link by how much they overlap with suravage geometry
       val commonSections = projectLinksConnected.map(x =>
         x -> ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink, x).map(GeometryUtils.geometryLength)
@@ -546,7 +552,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
       else {
         val bestFit = commonSections.maxBy(_._2)._1
-        val splitResult = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinksDisconnected, splitOptions)
+        val splitResult = ProjectLinkSplitter.split(roadLink.get, newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinks, splitOptions)
         (Some(splitResult), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
@@ -898,8 +904,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
-    RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
+    RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet).foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) if mod.geometry.nonEmpty =>
           val geom = GeometryUtils.truncateGeometry3D(mod.geometry, ra.startMValue, ra.endMValue)
@@ -1403,6 +1408,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case Transfer => // TODO if the whole common history -segment is transferred, keep the original common_history_id, otherwise generate new ids for the different segments
           val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
           Seq(
+            //TODO we should check situations where we need to create one new commonHistory for new and transfer/unchanged
             // Transferred part, original values
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = startAddr, endAddrMValue = endAddr,
               endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), startMValue = startM, endMValue = endM),
@@ -1453,7 +1459,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size){
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
-
     ProjectDAO.moveProjectLinksToHistory(projectID)
 
     try {
@@ -1500,12 +1505,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
       pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewCommonHistoryId)
+      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.get.commonHistoryId)
     pl.status match {
       case UnChanged =>
         roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)
+      //TODO in this situations we should check whether we should use one new CommonHistoryId or not
       case Transfer | Numbering =>
         roadAddress.copy(startDate = Some(project.startDate))
+      //TODO in new situations we should probably always user NewCommonId
       case New =>
         roadAddress.copy(startDate = Some(project.startDate))
       case Terminated =>

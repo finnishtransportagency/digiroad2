@@ -257,6 +257,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
+  def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
+    RoadLinkServiceDAO.getAllLinkType(linkIds).groupBy(_._1)
+  }
+
   def fetchVVHComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) vvhClient.complementaryData.fetchByLinkIds(linkIds)
     else Seq.empty[VVHRoadlink]

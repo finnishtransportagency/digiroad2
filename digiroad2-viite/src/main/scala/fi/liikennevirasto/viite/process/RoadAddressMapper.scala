@@ -57,7 +57,7 @@ trait RoadAddressMapper {
       ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
         startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
-        calibrationPoints = (startCP, endCP), floating = false, geometry = mappedGeom) // TODO Check common_history_id
+        calibrationPoints = (startCP, endCP), floating = false, geometry = mappedGeom)
     })
   }
 
@@ -137,8 +137,6 @@ trait RoadAddressMapper {
   protected def startCalibrationPointCheck(addr: RoadAddress, cp: CalibrationPoint, seq: Seq[RoadAddress]): Unit = {
     if (addr.startAddrMValue != cp.addressMValue)
       throw new IllegalArgumentException(s"Start calibration point value mismatch in $cp")
-    if (seq.exists(_.startAddrMValue < cp.addressMValue))
-      throw new IllegalArgumentException("Start calibration point not in the first link of source")
     if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
       addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
       throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
@@ -147,8 +145,6 @@ trait RoadAddressMapper {
   protected def endCalibrationPointCheck(addr: RoadAddress, cp: CalibrationPoint, seq: Seq[RoadAddress]): Unit = {
     if (addr.endAddrMValue != cp.addressMValue)
       throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
-    if (seq.exists(_.endAddrMValue > cp.addressMValue))
-      throw new IllegalArgumentException(s"End calibration point not in the last link of source in linkId ${addr.linkId}")
     if (Math.abs(cp.segmentMValue -
       (addr.sideCode match {
         case SideCode.AgainstDigitizing => 0.0
