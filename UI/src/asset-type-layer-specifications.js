@@ -224,8 +224,7 @@
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
       },
-      isVerifiable: false,
-      hasMunicipalityValidation: false
+      isVerifiable: false
     },
     {
       typeId: assetType.width,
@@ -268,8 +267,7 @@
         enabled: 'Ruuhkaantumisherkkä',
         disabled: 'Ei ruuhkaantumisherkkä'
       },
-      isVerifiable: false,
-      hasMunicipalityValidation: false
+      isVerifiable: false
     },
     {
       typeId: assetType.pavedRoad,
@@ -291,8 +289,7 @@
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
       },
-      isVerifiable: false,
-      hasMunicipalityValidation: false
+      isVerifiable: false
     },
     {
       typeId: assetType.trafficVolume,
@@ -312,8 +309,7 @@
         showUnit: true
       },
       label: new LinearAssetLabel(),
-      isVerifiable: false,
-      hasMunicipalityValidation: false
+      isVerifiable: false
     },
     {
       typeId: assetType.massTransitLane,
@@ -335,8 +331,7 @@
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
       },
-      isVerifiable: true,
-      hasMunicipalityValidation: false
+      isVerifiable: true
     },
     {
       typeId: assetType.winterSpeedLimit,
@@ -357,8 +352,7 @@
       },
       possibleValues: [100, 80, 70, 60],
       style : new WinterSpeedLimitStyle(),
-      isVerifiable: false,
-      hasMunicipalityValidation: false
+      isVerifiable: false
     },
     {
       typeId: assetType.prohibition,
@@ -375,8 +369,7 @@
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta'
       },
-      isVerifiable: true,
-      hasMunicipalityValidation: false
+      isVerifiable: true
     },
     {
       typeId: assetType.hazardousMaterialTransportProhibition,
@@ -393,8 +386,7 @@
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta'
       },
-      isVerifiable: true,
-      hasMunicipalityValidation: false
+      isVerifiable: true
     },
     {
       typeId: assetType.europeanRoads,
@@ -417,8 +409,7 @@
         return selectedAsset.administrativeClass === 1;
       },
       label: new LinearAssetLabelMultiValues(),
-      isVerifiable: false,
-      hasMunicipalityValidation: false
+      isVerifiable: false
     },
     {
       typeId: assetType.exitNumbers,
@@ -437,8 +428,7 @@
         disabled: 'Ei liittymänumeroa'
       },
       label: new LinearAssetLabelMultiValues(),
-      isVerifiable: false,
-      hasMunicipalityValidation: false
+      isVerifiable: false
     },
     {
       typeId: assetType.maintenanceRoad,
@@ -471,8 +461,7 @@
         {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
       style: new MaintenanceRoadStyle(),
       label : new ServiceRoadLabel(),
-      isVerifiable: true,
-      hasMunicipalityValidation: false
+      isVerifiable: true
     },
     {
       typeId: assetType.numberOfLanes,
@@ -491,8 +480,7 @@
         disabled: 'Ei tietoa'
       },
       label: new LinearAssetLabel(),
-      isVerifiable: true,
-      hasMunicipalityValidation: false
+      isVerifiable: true
     }
   ];
 
@@ -514,8 +502,7 @@
         disabled: 'Tuntematon'
       },
       label: new SpeedLimitAssetLabel(),
-      hasTrafficSignReadOnlyLayer: true,
-      hasMunicipalityValidation: false
+      hasTrafficSignReadOnlyLayer: true
     }
   ];
 
@@ -552,8 +539,7 @@
         singleFloatingAssetLabel: 'esterakennelman',
         manyFloatingAssetsLabel: 'esterakennelmat',
         newAssetLabel: 'esterakennelma'
-      },
-      hasMunicipalityValidation: false
+      }
     },
     {
       typeId: assetType.railwayCrossings,
@@ -569,8 +555,7 @@
         singleFloatingAssetLabel: 'tasoristeyksen',
         manyFloatingAssetsLabel: 'tasoristeykset',
         newAssetLabel: 'tasoristeys'
-      },
-      hasMunicipalityValidation: false
+      }
     },
     {
       typeId: assetType.directionalTrafficSigns,
@@ -586,8 +571,7 @@
         singleFloatingAssetLabel: 'opastustaulun',
         manyFloatingAssetsLabel: 'opastustaulut',
         newAssetLabel: 'opastustaulu'
-      },
-      hasMunicipalityValidation: false
+      }
     },
     {
       typeId: assetType.servicePoints,
@@ -602,8 +586,7 @@
         singleFloatingAssetLabel: 'palvelupisteen',
         manyFloatingAssetsLabel: 'palvelupisteet',
         newAssetLabel: 'palvelupiste'
-      },
-      hasMunicipalityValidation: false
+      }
     },
     {
       typeId: assetType.trafficLights,

@@ -533,13 +533,19 @@
         .then(function(x) { return JSON.parse(x); });
     };
 
-    var returnedMunicipality = _.debounce(function(lon, lat, callback) {
+    var returnedMunicipality = _.debounce(function(lon, lat, onSuccess, onFailure) {
       return $.get("vkm/reversegeocode", {x: lon, y: lat})
-          .then(function (x) {return callback(JSON.parse(x));});
+          .then(
+              function (result) {
+                return onSuccess(JSON.parse(result));
+              },
+              function (fail) {
+                return onFailure(fail.code);
+              });
     }, 250);
 
-    this.getMunicipalityFromCoordinates = function(lon, lat, callback) {
-      return returnedMunicipality(lon, lat, callback);
+    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
+      return returnedMunicipality(lon, lat, onSuccess, onFailure);
     };
 
     this.getMassTransitStopByNationalIdForSearch = function(nationalId) {
