@@ -122,16 +122,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Returns speed limits that match a set of link ids.
     */
   def getCurrentSpeedLimitsByLinkIds(ids: Option[Set[Long]]): Seq[SpeedLimit] = {
-    if (ids.isEmpty) {
-      List()
-    } else {
-      val idSet = ids.get
-      if (idSet.size > MassQueryThreshold) {
-        fetchSpeedLimitsByLinkIds(idSet.toSeq)
-      } else {
-        fetchSpeedLimitsByLinkIds(idSet.toSeq)
+
+    ids.map { id =>
+      id.isEmpty match {
+        case true => Seq.empty[SpeedLimit]
+        case false => fetchSpeedLimitsByLinkIds(id.toSeq)
       }
-    }
+    }.getOrElse(Seq.empty[SpeedLimit])
   }
 
   /**
