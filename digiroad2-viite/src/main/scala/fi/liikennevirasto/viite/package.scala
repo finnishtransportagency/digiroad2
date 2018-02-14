@@ -85,6 +85,7 @@ package object viite {
   val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
   val RoadNotEndingInElyBorderMessage = "JATKUU-koodi virheellinen. Tieosa ei pääty ELY-rajalle."
   val RoadContinuesInAnotherElyMessage = "JATKUU-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
+  val MinorDiscontinuousWhenRampConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
