@@ -13,11 +13,11 @@ case class ChangedRoadAddress(roadAddress : RoadAddress, link: RoadLink)
 
 class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService) {
 
-  private val roadNumberPublicId = "TIE"          // Tienumero
-  private val roadPartNumberPublicId = "OSA"      // Tieosanumero
-  private val startMeasurePublicId = "AET"        // Etaisyys
-  private val trackCodePublicId = "AJR"           // Ajorata
-  private val sideCodePublicId = "PUOLI"
+  private val roadNumberPublicId = "tie"          // Tienumero
+  private val roadPartNumberPublicId = "osa"      // Tieosanumero
+  private val startMeasurePublicId = "aet"        // Etaisyys
+  private val trackCodePublicId = "ajr"           // Ajorata
+  private val sideCodePublicId = "puoli"
 
   val roadAddressDAO = new RoadAddressDAO()
   val logger = LoggerFactory.getLogger(getClass)
