@@ -276,12 +276,12 @@
       var addRoadAddressAttribute = function(property) {
         return ($('<ul />').addClass('label-list')
           .append($('<li />').append($('<label />').text(property.publicId)))
-          .append($('<li />').append($('<label />').text(property.values[0].propertyDisplayValue))));
+          .append($('<li />').append($('<label />').text(_.isEmpty(property.values) ? '' :  property.values[0].propertyDisplayValue))));
       };
 
       var isRoadAddressProperty = function(property){
         var publicId = property.publicId;
-        return publicId == 'TIE' || publicId == 'OSA' || publicId == 'AET' || publicId == 'AJR' || publicId == 'PUOLI';
+        return publicId == 'tie' || publicId == 'osa' || publicId == 'aet' || publicId == 'ajr' || publicId == 'puoli';
       };
 
       var readOnlyNumberHandler = function(property){
@@ -596,11 +596,11 @@
           'vyöhyketieto', //Information Zone
           'alternative_link_id',
           'liitetty_terminaaliin',
-          'TIE',
-          'OSA',
-          'AET',
-          'AJR',
-          'PUOLI',
+          'tie',
+          'osa',
+          'aet',
+          'ajr',
+          'puoli',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',

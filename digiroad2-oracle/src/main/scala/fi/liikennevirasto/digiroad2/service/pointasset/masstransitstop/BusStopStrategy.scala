@@ -20,10 +20,12 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   }
 
   override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
-    val roadAddressProperties = roadLinkOption match {
-      case Some(roadLink) =>
-        roadAddressesService.getRoadAddressPropertiesByLinkId(Point(asset.lon, asset.lat), asset.linkId, roadLink)
-      case _ => Seq()
+    def addRoadAddressProperties(oldProperties: Seq[Property]): Seq[Property] = {
+      roadLinkOption match {
+        case Some(roadLink) =>
+          roadAddressesService.getRoadAddressPropertiesByLinkId(Point(asset.lon, asset.lat), asset.linkId, roadLink, oldProperties)
+        case _ => oldProperties
+      }
     }
 
     asset.terminalId match {
@@ -42,9 +44,9 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
         val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalExternalId)
 
-        (asset.copy(propertyData = asset.propertyData ++ Seq(newProperty, newPropertyExtId) ++ roadAddressProperties), false)
+        (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData ++ Seq(newProperty, newPropertyExtId))), false)
       case _ =>
-        (asset.copy(propertyData = asset.propertyData ++ roadAddressProperties), false)
+        (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData)), false)
     }
   }
 
