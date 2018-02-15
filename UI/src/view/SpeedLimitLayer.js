@@ -370,15 +370,6 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
-  var selectSpeedLimit = function(feature) {
-    var features = _.filter(vectorLayer.getSource().getFeatures(), function(item) {
-        return item.getProperties().id === feature.id && item.getProperties().linkId === feature.linkId ;
-    });
-    if (features) {
-        selectToolControl.addSelectionFeatures(features);
-    }
-  };
-
   var handleSpeedLimitSaved = function() {
     collection.fetch(map.getView().calculateExtent(map.getSize()));
     applicationModel.setSelectedTool('Select');
@@ -401,11 +392,11 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var handleSpeedLimitUnselected = function () {
-    selectToolControl.activate();
+    selectToolControl.clear();
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
 
-    var drawIndicators = function(links) {
+  var drawIndicators = function(links) {
         var features = [];
 
         var markerContainer = function(link, position) {
@@ -549,6 +540,7 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     roadAddressInfoPopup.start();
+    me.refreshView();
     me.show(map);
   };
 

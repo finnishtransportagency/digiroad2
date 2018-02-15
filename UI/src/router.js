@@ -69,7 +69,7 @@
         'railwayCrossings/:id': 'railwayCrossings',
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
         'trafficSigns/:id': 'trafficSigns',
-        'maintenanceRoad/:linkId': 'maintenanceRoad',
+        'maintenanceRoad/:id': 'maintenanceRoad',
         'litRoad/:id': 'litRoad',
         'roadWidth/:id': 'roadWidth',
         'numberOfLanes/:id': 'numberOfLanes',
@@ -143,12 +143,15 @@
       },
 
       speedLimit: function (linkId) {
-        var roadLinkReceived = backend.getRoadLinkByLinkId(linkId);
         var layerSelected = eventbus.oncePromise('layer:speedLimit:shown');
         applicationModel.selectLayer('speedLimit');
         $.when(layerSelected).then(function () {
-          var mapMoved = $.when(roadLinkReceived).then(function (response) {
+          var mapMoved = backend.getRoadLinkByLinkId(linkId).then(function (response) {
             var promise = eventbus.oncePromise('layer:speedLimit:moved');
+            eventbus.once('speedLimits:fetched', function () {
+              var asset = models.selectedSpeedLimit.getSpeedLimit(response.id);
+              models.selectedSpeedLimit.open(asset, true);
+            });
             mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
             return promise;
           });

@@ -96,6 +96,10 @@
       });
     };
 
+    this.getById = function(id){
+      return _.flatten(speedLimits).find(function(speedLimit) { return speedLimit.linkId === id ; });
+    };
+
     this.setSelection = function(sel) {
       selection = sel;
     };
