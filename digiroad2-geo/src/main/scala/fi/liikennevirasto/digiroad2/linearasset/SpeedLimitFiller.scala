@@ -93,6 +93,18 @@ object SpeedLimitFiller {
     }
   }
 
+  private def droppedSegmentWrongDirection(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+      (segments, changeSet)
+    } else {
+      val droppedAssetIds = (roadLink.trafficDirection match {
+        case TrafficDirection.TowardsDigitizing => segments.filter(s => s.sideCode == SideCode.AgainstDigitizing)
+        case _ => segments.filter(s => s.sideCode == SideCode.TowardsDigitizing)
+      }).map(_.id)
+
+      (segments.filterNot(s => droppedAssetIds.contains(s.id)), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds++ droppedAssetIds))
+    }
+  }
   private def adjustSideCodeOnOneWayLink(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       (segments, changeSet)
@@ -439,6 +451,7 @@ object SpeedLimitFiller {
       adjustSegmentMValues,
       capToGeometry,
       adjustLopsidedLimit,
+      droppedSegmentWrongDirection,
       adjustSideCodeOnOneWayLink,
       expireShortLimits,
       fillHoles,

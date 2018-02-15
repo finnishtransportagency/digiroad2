@@ -328,12 +328,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Saves speed limit values when speed limit is split to two parts in UI (scissors icon). Used by Digiroad2Api /speedlimits/:speedLimitId/split POST endpoint.
     */
   def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
-    withDynTransaction {
-      val newId = dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation)
-      val idUpdated = updateSpeedLimit(id, existingValue, username, None, None, municipalityValidation).get
+    val (newId ,idUpdated) = withDynTransaction {
+      (dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation) ,
+      updateSpeedLimit(id, existingValue, username, None, None, municipalityValidation).get)
+    }
       Seq(getSpeedLimitById(idUpdated).get, getSpeedLimitById(newId).get)
     }
-  }
 
   private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit): SpeedLimit = {
     val roadLink = roadLinkServiceImplementation.getRoadLinkAndComplementaryFromVVH(persistedSpeedLimit.linkId).get
@@ -363,14 +363,15 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       .map(isSeparableValidation)
       .get
 
-    withDynTransaction {
+    val (idUpdated, newId) = withDynTransaction {
       val idUpdated = updateSpeedLimit(id, valueTowardsDigitization, username, None, None, municipalityValidation).get
       dao.updateSideCode(idUpdated, SideCode.TowardsDigitizing)
       val newId = dao.createSpeedLimit(username, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization, None, linkSource = speedLimit.linkSource).get
 
+      (idUpdated, newId)
+    }
       Seq(getSpeedLimitById(idUpdated).get, getSpeedLimitById(newId).get)
     }
-  }
 
   def getByMunicpalityAndRoadLinks(municipality: Int): Seq[(SpeedLimit, RoadLink)] = {
     val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
