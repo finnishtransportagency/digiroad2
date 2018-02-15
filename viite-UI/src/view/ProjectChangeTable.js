@@ -9,11 +9,7 @@
       'Numerointi',
       'Lakkautettu'
     ];
-    var unchangedStatus = 1;
-    var newLinkStatus = 2;
-    var transferredLinkStatus = 3;
-    var numberingLinkStatus = 4;
-    var terminatedLinkStatus = 5;
+    var LinkStatus = LinkValues.LinkStatus;
     var windowMaximized = false;
 
     var changeTable =
@@ -65,12 +61,21 @@
       $('.container').append(changeTable.toggle());
       bindEvents();
       getChanges();
+      enableTableInteractions();
+
     }
 
     function hide() {
+      resetInteractions();
       $('#information-content').empty();
       $('#send-button').attr('disabled', true);
       changeTable.hide();
+    }
+
+    function resetInteractions() {
+      $('.change-table-frame')[0].setAttribute('data-x', 0);
+      $('.change-table-frame')[0].setAttribute('data-y', 0);
+      $('.change-table-frame').css('transform', 'none');
     }
 
     function getChangeType(type){
@@ -88,31 +93,31 @@
         var htmlTable = "";
         if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
           _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq) {
-            if (changeInfoSeq.changetype === newLinkStatus) {
+            if (changeInfoSeq.changetype === LinkStatus.New.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getEmptySource(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
+            } else if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getEmptyTarget();
               htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === unchangedStatus) {
+            } else if (changeInfoSeq.changetype === LinkStatus.Unchanged.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === transferredLinkStatus) {
+            } else if (changeInfoSeq.changetype === LinkStatus.Transfer.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === numberingLinkStatus) {
+            } else if (changeInfoSeq.changetype === LinkStatus.Numbering.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
@@ -192,9 +197,59 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
 
+    function dragListener (event) {
+      var target = event.target,
+        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+        y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+      target.style.webkitTransform =
+        target.style.transform =
+          'translate(' + x + 'px, ' + y + 'px)';
+      target.setAttribute('data-x', x);
+      target.setAttribute('data-y', y);
+    }
+
+
+    function enableTableInteractions() {
+      interact('.change-table-frame')
+        .draggable({
+          onmove: dragListener,
+          restrict: {
+            restriction: '.container',
+            elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+          }
+        })
+        .resizable({
+          edges: { left: true, right: true, bottom: true, top: true },
+          restrictEdges: {
+            outer: '.container',
+            endOnly: true
+          },
+          restrictSize: {
+            min: { width: 100, height: 50 }
+          },
+          inertia: true
+        })
+        .on('resizemove', function (event) {
+          var target = event.target,
+            x = (parseFloat(target.getAttribute('data-x')) || 0),
+            y = (parseFloat(target.getAttribute('data-y')) || 0);
+          target.style.width  = event.rect.width + 'px';
+          target.style.height = event.rect.height + 'px';
+          x += event.deltaRect.left;
+          y += event.deltaRect.top;
+          target.style.webkitTransform = target.style.transform =
+            'translate(' + x + 'px,' + y + 'px)';
+          target.setAttribute('data-x', x);
+          target.setAttribute('data-y', y);
+        });
+    }
+
     changeTable.on('click', 'button.max', function (){
+      resetInteractions();
       if(windowMaximized) {
         $('.change-table-frame').height('260px');
+        $('.change-table-frame').width('1135px');
+        $('.change-table-frame').css('top', '620px');
         $('[id=change-table-borders-target]').height('180px');
         $('[id=change-table-borders-source]').height('180px');
         $('[id=change-table-borders-reversed]').height('180px');
@@ -203,7 +258,9 @@
         $('[id=sizeSymbol]').text("□");
         windowMaximized=false;
       } else {
-        $('.change-table-frame').height('80%');
+        $('.change-table-frame').height('800px');
+        $('.change-table-frame').width('1135px');
+        $('.change-table-frame').css('top', '50px');
         $('[id=change-table-borders-target]').height('670px');
         $('[id=change-table-borders-source]').height('670px');
         $('[id=change-table-borders-reversed]').height('670px');
@@ -217,6 +274,7 @@
     eventbus.on('projectChangeTable:refresh', function() {
       bindEvents();
       getChanges();
+      enableTableInteractions();
     });
 
     eventbus.on('projectChangeTable:hide', function() {
