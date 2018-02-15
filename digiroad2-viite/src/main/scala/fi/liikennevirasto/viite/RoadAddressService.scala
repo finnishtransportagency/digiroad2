@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
@@ -185,9 +185,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     publishChangeSet(changeSet)
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
-      complementaryLinkFilter(link))
+      complementaryLinkFilter(link)).filterNot(_.roadLinkType == RoadLinkType.FloatingRoadLinkType)
+    val floatingValues = filledTopology.filter(_.roadLinkType == RoadLinkType.FloatingRoadLinkType).map(floating => floating.copy(roadLinkSource = LinkGeomSource.Unknown))
 
-    returningTopology ++ missingFloating.flatMap(_._2)
+    returningTopology  ++ floatingValues ++ missingFloating.flatMap(_._2).map(floating => floating.copy(roadLinkSource = LinkGeomSource.Unknown, roadLinkType = RoadLinkType.FloatingRoadLinkType))
 
   }
 
@@ -441,7 +442,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressLink(id: Long) = {
 
     val (addresses, missedRL) = withDynTransaction {
-      (RoadAddressDAO.fetchByLinkId(Set(id), includeFloating = true,includeHistory = true,  includeTerminated = false), // cannot builld terminated link because missing geometry
+      (RoadAddressDAO.fetchByLinkId(Set(id), includeFloating = true, includeHistory = true,  includeTerminated = false), // cannot builld terminated link because missing geometry
         RoadAddressDAO.getMissingRoadAddresses(Set(id)))
     }
     val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
@@ -667,7 +668,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   private def getAdjacentAddresses(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
     withDynSession {
-      val ra = RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true).sortBy(_.startAddrMValue)
+      val ra = RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true, includeHistory = false).sortBy(_.startAddrMValue)
       assert(ra.forall(r => r.roadNumber == roadNumber && r.roadPartNumber == roadPartNumber && r.track == track),
         s"Mixed floating addresses selected ($roadNumber/$roadPartNumber/$track): " + ra.map(r =>
           s"${r.linkId} = ${r.roadNumber}/${r.roadPartNumber}/${r.track.value}").mkString(", "))
