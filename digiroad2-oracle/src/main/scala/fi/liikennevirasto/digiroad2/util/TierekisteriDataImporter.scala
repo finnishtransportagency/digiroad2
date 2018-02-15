@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, TrafficVolume}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficVolumeAssetClient
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -128,7 +128,7 @@ object TierekisteriDataImporter {
 
   //TODO migrate this import asset to TierekisteriImporterOperations
   def importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient) = {
-    val trafficVolumeId = 170
+    val trafficVolumeId = TrafficVolume.typeId
     println("\nExpiring Traffic Volume From OTH Database")
     OracleDatabase.withDynSession {
       oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId)

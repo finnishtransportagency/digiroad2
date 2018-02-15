@@ -174,18 +174,6 @@
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
     }
-    eventbus.on( layerName + ':changeSigns', function(trafficSignData){
-      setTrafficSigns(trafficSignData[0], trafficSignData[1]);
-    });
-
-    eventbus.on( layerName + ':signsChanged', function(trafficSignsShowing) {
-      selectedAsset.checkSelectedSign(trafficSignsShowing);
-    });
-
-    var setTrafficSigns = function(trafficSign, isShowing) {
-      collection.setTrafficSigns(trafficSign, isShowing);
-      me.refreshView();
-    };
 
     var startListeningExtraEvents = function(){
       extraEventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);

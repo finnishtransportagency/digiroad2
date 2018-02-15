@@ -1,5 +1,5 @@
 (function(root) {
-  root.GroupedPointAssetsCollection = function(backend, endPointName, allowComplementary, typeIds) {
+  root.GroupedPointAssetsCollection = function(backend, spec) {
     var isComplementaryActive = false;
     var isAllowComplementary = false;
     var me = this;
@@ -11,10 +11,10 @@
     };
 
     this.fetch = function(boundingBox) {
-      return backend.getGroupedPointAssetsWithComplementary(boundingBox, typeIds)
+      return backend.getGroupedPointAssetsWithComplementary(boundingBox, spec.typeIds)
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
-          me.allowComplementaryIsActive(allowComplementary);
+          me.allowComplementaryIsActive(spec.allowComplementaryLinks);
           return me.filterComplementaries(assets);
         });
     };
@@ -30,8 +30,6 @@
     this.complementaryIsActive= function() {
       return isComplementaryActive;
     };
-
-    this.setTrafficSigns = function(){};
 
   };
 })(this);

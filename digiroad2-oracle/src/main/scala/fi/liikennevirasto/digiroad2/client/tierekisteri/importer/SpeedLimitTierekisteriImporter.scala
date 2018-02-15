@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
+import fi.liikennevirasto.digiroad2.asset.SpeedLimitAsset
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriSpeedLimitAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
@@ -11,7 +12,7 @@ class SpeedLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOper
 
   lazy val speedLimitService: SpeedLimitService = new SpeedLimitService(eventbus, vvhClient, roadLinkService)
 
-  override def typeId: Int = 20
+  override def typeId: Int = SpeedLimitAsset.typeId
   override def assetName = "speedlimit"
   override type TierekisteriClientType = TierekisteriSpeedLimitAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)

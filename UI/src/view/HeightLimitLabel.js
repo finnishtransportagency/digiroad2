@@ -1,16 +1,14 @@
 (function(root) {
 
-  root.HeightLimitLabel = function(){
-    AssetLabel.call(this, this.MIN_DISTANCE, this.populatedPoints);
+  root.HeightLimitLabel = function(groupingDistance){
+    AssetLabel.call(this, this.MIN_DISTANCE);
     var me = this;
     var IMAGE_HEIGHT = 23;
-    this.MIN_DISTANCE = 5;
-    this.populatedPoints = [];
+    this.MIN_DISTANCE = groupingDistance;
 
     me.renderFeaturesByPointAssets = function(pointAssets, zoomLevel){
-      me.clearPoints();
       return me.renderGroupedFeatures(pointAssets, zoomLevel, function(asset){
-        return me.getCoordinateForGrouping(asset);
+        return me.getCoordinate(asset);
       });
     };
 
@@ -18,7 +16,7 @@
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: getImage(),
-          anchor : [0.5, 0.5 + (counter)]
+          anchor : [0.5, 1.5 + (counter)]
         }))
       });
     };
@@ -32,8 +30,7 @@
               color: '#ffffff'
             }),
             font: '12px sans-serif',
-            offsetX: 0,
-            offsetY: -IMAGE_HEIGHT*counter
+            offsetY: -IMAGE_HEIGHT*(counter+1)
           })
         })];
     };

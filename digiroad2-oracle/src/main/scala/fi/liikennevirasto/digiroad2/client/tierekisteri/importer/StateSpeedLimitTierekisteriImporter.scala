@@ -12,7 +12,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
 class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOperations {
-  override def typeId: Int = 310
+  override def typeId: Int = StateSpeedLimit.typeId
   override def assetName: String = "speedLimitState"
   override type TierekisteriClientType = TierekisteriTrafficSignAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -221,7 +221,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    val municipalities = getAllMunicipalities()
+    val municipalities = getAllMunicipalities
 
     municipalities.foreach { municipality =>
       withDynTransaction{
@@ -229,7 +229,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
       }
     }
 
-    val roadNumbers = getAllViiteRoadNumbers()
+    val roadNumbers = getAllViiteRoadNumbers
 
     roadNumbers.foreach {
       roadNumber =>
@@ -259,7 +259,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
   }
 
   override def updateAssets(lastExecution: DateTime): Unit = {
-    val roadNumbers = getAllViiteRoadNumbers()
+    val roadNumbers = getAllViiteRoadNumbers
 
     roadNumbers.foreach {
       roadNumber =>

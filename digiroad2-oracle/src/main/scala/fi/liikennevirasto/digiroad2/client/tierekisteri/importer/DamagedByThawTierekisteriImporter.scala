@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{DamagedByThaw, SideCode}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriDamagedByThawAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
@@ -10,7 +10,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 
 class DamagedByThawTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 130
+  override def typeId: Int = DamagedByThaw.typeId
   override def assetName = "damagedByThaw"
   override type TierekisteriClientType = TierekisteriDamagedByThawAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)

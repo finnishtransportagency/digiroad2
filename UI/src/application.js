@@ -31,7 +31,7 @@
     });
 
     var groupedPointAssets = _.map(groupedPointAssetSpecs, function(spec) {
-      var collection = _.isUndefined(spec.collection ) ?  new GroupedPointAssetsCollection(backend, spec.layerName, spec.allowComplementaryLinks, spec.typeIds) : new spec.collection(backend, spec.layerName, spec.allowComplementaryLinks) ;
+      var collection = _.isUndefined(spec.collection) ?  new GroupedPointAssetsCollection(backend, spec) : new spec.collection(backend, spec) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
       return _.merge({}, spec, {
         collection: collection,
@@ -319,7 +319,7 @@
         collection: asset.collection,
         map: map,
         selectedAsset: asset.selectedPointAsset,
-        style: PointAssetStyle(asset.layerName), //TODO: new style
+        style: PointAssetStyle(asset.layerName),
         mapOverlay: mapOverlay,
         layerName: asset.layerName,
         assetLabel: asset.label,
@@ -328,7 +328,6 @@
         allowGrouping: asset.allowGrouping,
         assetGrouping: new AssetGrouping(asset.groupingDistance),
         hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
         editConstrains : asset.editConstrains || function() {return false;},
         assetTypeIds: asset.typeIds
       });
@@ -405,8 +404,8 @@
           .concat(getLinearAsset(assetType.numberOfLanes))
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
-          .concat(getLinearAsset(assetType.exitNumbers))
-      .concat([speedLimitBox])
+          .concat(getLinearAsset(assetType.exitNumbers)),
+      [speedLimitBox]
       .concat([winterSpeedLimits]),
       [massTransitBox]
           .concat(getPointAsset(assetType.obstacles))

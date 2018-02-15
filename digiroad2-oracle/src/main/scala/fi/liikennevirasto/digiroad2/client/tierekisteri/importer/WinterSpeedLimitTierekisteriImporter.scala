@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{SideCode, WinterSpeedLimit}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWinterSpeedLimitAssetClient
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
@@ -11,7 +11,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 //TODO this importer was never tested it was just bring from DROTH-810
 class WinterSpeedLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 180
+  override def typeId: Int = WinterSpeedLimit.typeId
   override def assetName = "winterSpeedLimits"
   override type TierekisteriClientType = TierekisteriWinterSpeedLimitAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)

@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
+import fi.liikennevirasto.digiroad2.asset.MassTransitLane
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRLaneArrangementType, TierekisteriMassTransitLaneAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
@@ -9,7 +10,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 
 class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 160
+  override def typeId: Int = MassTransitLane.typeId
   override def assetName = "massTransitLane"
   override type TierekisteriClientType = TierekisteriMassTransitLaneAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)

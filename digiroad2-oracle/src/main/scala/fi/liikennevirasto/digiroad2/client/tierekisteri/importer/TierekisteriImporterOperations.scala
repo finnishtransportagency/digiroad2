@@ -102,13 +102,13 @@ trait TierekisteriAssetImporterOperations {
     }
   }
 
-  protected def getAllMunicipalities(): Seq[Int] = {
+  protected def getAllMunicipalities: Seq[Int] = {
     withDynSession {
       municipalityDao.getMunicipalities
     }
   }
 
-  protected def getAllViiteRoadNumbers(): Seq[Long] = {
+  protected def getAllViiteRoadNumbers: Seq[Long] = {
     println("\nFetch Road Numbers From Viite")
     val roadNumbers = withDynSession {
       roadAddressDao.getRoadNumbers()
@@ -245,14 +245,14 @@ trait TierekisteriAssetImporterOperations {
 
   def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    val municipalities = getAllMunicipalities()
-    municipalities.foreach { municipality =>
-      withDynTransaction{
-        expireAssets(municipality, Some(State))
-      }
-    }
+//    val municipalities = getAllMunicipalities
+//    municipalities.foreach { municipality =>
+//      withDynTransaction{
+//        expireAssets(municipality, Some(State))
+//      }
+//    }
 
-    val roadNumbers = getAllViiteRoadNumbers()
+    val roadNumbers = Seq(110)
 
     roadNumbers.foreach {
       roadNumber =>
@@ -273,7 +273,7 @@ trait TierekisteriAssetImporterOperations {
   }
 
   def updateAssets(lastExecution: DateTime): Unit = {
-    val roadNumbers = getAllViiteRoadNumbers()
+    val roadNumbers = getAllViiteRoadNumbers
 
     roadNumbers.foreach {
       roadNumber =>
