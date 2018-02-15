@@ -536,10 +536,10 @@ object ProjectValidator {
       val projectLinks = group._2
       val startRoad = projectLinks.head
       val endRoad = projectLinks.last
-      val stv = if (startRoad.discontinuity.value != 3)evaluateBorderCheck(startRoad, true) else Option.empty[ProjectLink]
-      val etv = if (endRoad.discontinuity.value != 3) evaluateBorderCheck(endRoad, true) else Option.empty[ProjectLink]
+      val startValidationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value)evaluateBorderCheck(startRoad, true) else Option.empty[ProjectLink]
+      val endValidationResult = if (endRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(endRoad, true) else Option.empty[ProjectLink]
 
-      val problemRoads = Seq(stv, etv).filterNot(_.isEmpty).map(_.get)
+      val problemRoads = Seq(startValidationResult, endValidationResult).filterNot(_.isEmpty).map(_.get)
       error(ValidationErrorList.RoadContinuesInAnotherEly)(problemRoads)
 
     })
