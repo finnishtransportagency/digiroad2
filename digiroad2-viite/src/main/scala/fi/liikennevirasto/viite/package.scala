@@ -84,6 +84,7 @@ package object viite {
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
   val MinorDiscontinuousWhenRampConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
+  val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi Tien loppu. Muuta jatkuvuuskoodiksi Tien loppu (1) tieosoitteelle: %s."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
