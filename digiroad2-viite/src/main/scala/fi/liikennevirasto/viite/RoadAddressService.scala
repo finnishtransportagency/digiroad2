@@ -309,6 +309,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
           logger.debug("Expired: "+s.mkString(","))
         })
+        unchanged.filter(ra => ra.floating).foreach{
+          ra => RoadAddressDAO.changeRoadAddressFloating(1, ra.id, None)
+        }
         val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
         val changedRoadParts = addressesToCreate.map(a => (a.roadNumber, a.roadPartNumber)).toSet
 
