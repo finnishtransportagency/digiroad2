@@ -14,7 +14,7 @@
     var enabledExperimentalAssets = isExperimental ? experimentalLinearAssetSpecs : [];
     var enabledLinearAssetSpecs = linearAssetSpecs.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
-      var collection = new LinearAssetsCollection(backend, verificationCollection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
+      var collection = new LinearAssetsCollection(backend, verificationCollection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.hasMunicipalityValidation);
       var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
       return _.merge({}, spec, {
         collection: collection,

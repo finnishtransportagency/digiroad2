@@ -60,12 +60,12 @@
       return signsToShow;
     };
 
-    this.fetch = function(boundingBox) {
+    this.fetch = function(boundingBox, center) {
       return backend.getPointAssetsWithComplementary(boundingBox, specs.layerName)
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
           me.allowComplementaryIsActive(specs.allowComplementaryLinks);
-          verificationCollection.fetch(boundingBox, specs.typeId);
+          verificationCollection.fetch(boundingBox, center, specs.typeId, specs.hasMunicipalityValidation);
           return filterTrafficSigns(me.filterComplementaries(assets));
         });
     };

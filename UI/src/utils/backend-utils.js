@@ -455,9 +455,15 @@
       });
     };
 
-    this.getVerificationInfo = latestResponseRequestor(function(boundingBox, typeId) {
+    this.getMunicipalityByBoundingBox = latestResponseRequestor(function(boundingBox) {
       return {
-        url: 'api/verificationInfo?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/getMunicipalityInfo?bbox=' + boundingBox
+      };
+    });
+
+    this.getVerificationInfo = latestResponseRequestor(function(municipality, typeId) {
+      return {
+        url: 'api/verificationInfo?municipality=' + municipality + '&typeId=' + typeId
       };
     });
 
@@ -527,9 +533,25 @@
         .then(function(x) { return JSON.parse(x); });
     };
 
+    var returnedMunicipality = _.debounce(function(lon, lat, onSuccess, onFailure) {
+      return $.get("vkm/reversegeocode", {x: lon, y: lat})
+          .then(
+              function (result) {
+                return onSuccess(JSON.parse(result));
+              },
+              function (fail) {
+                return onFailure(fail.code);
+              });
+    }, 250);
+
+    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
+      return returnedMunicipality(lon, lat, onSuccess, onFailure);
+    };
+
     this.getMassTransitStopByNationalIdForSearch = function(nationalId) {
       return $.get('api/massTransitStopsSafe/' + nationalId);
     };
+
     this.getSpeedLimitsLinkIDFromSegmentID = function(sid) {
       return $.get('api/speedlimit/sid/?segmentid=' + sid);
     };
