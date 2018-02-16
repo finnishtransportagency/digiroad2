@@ -19,7 +19,7 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
         var roadCollection = new RoadCollection(backend);
         var speedLimitsCollection = new SpeedLimitsCollection(backend, verificationCollection);
         roadCollection.fetch();
-        speedLimitsCollection.fetch();
+        speedLimitsCollection.fetch(null, [0,0]);
 
         selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
       });
