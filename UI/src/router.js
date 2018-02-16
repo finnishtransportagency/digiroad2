@@ -149,6 +149,7 @@
           var mapMoved = backend.getRoadLinkByLinkId(linkId).then(function (response) {
             var promise = eventbus.oncePromise('layer:speedLimit:moved');
             eventbus.once('speedLimits:fetched', function () {
+              eventbus.trigger('speedLimit:unselect', self);
               var asset = models.selectedSpeedLimit.getSpeedLimit(response.id);
               models.selectedSpeedLimit.open(asset, true);
             });
