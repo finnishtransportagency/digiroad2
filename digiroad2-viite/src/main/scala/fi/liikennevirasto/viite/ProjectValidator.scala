@@ -156,7 +156,9 @@ object ProjectValidator {
       val notHandled = projectLinks.filter(_.status == LinkStatus.NotHandled)
       notHandled.groupBy(link => (link.roadNumber, link.roadPartNumber)).foldLeft(Seq.empty[ValidationErrorDetails])((errorDetails, road) =>
         errorDetails :+ ValidationErrorDetails(project.id, ValidationError.HasNotHandledLinks,
-          Seq(road._2.size), road._2.map(l => ProjectCoordinates(l.geometry.head.x, l.geometry.head.y, 12)),
+          Seq(road._2.size), road._2.map{l =>
+            val point = GeometryUtils.midPointGeometry(l.geometry)
+            ProjectCoordinates(point.x, point.y, 12)},
           Some(HasNotHandledLinksMessage.format(road._2.size, road._1._1, road._1._2)))
       )
     }
@@ -164,10 +166,11 @@ object ProjectValidator {
     def checkForInvalidUnchangedLinks = {
       val roadNumberAndParts = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).keySet
       val invalidUnchangedLinks = roadNumberAndParts.flatMap(rn => ProjectDAO.getInvalidUnchangedOperationProjectLinks(rn._1, rn._2)).toSeq
-      invalidUnchangedLinks.map(projectLink =>
+      invalidUnchangedLinks.map{projectLink =>
+        val point = GeometryUtils.midPointGeometry(projectLink.geometry)
         ValidationErrorDetails(project.id, ValidationError.ErrorInValidationOfUnchangedLinks,
-          Seq(projectLink.linkId), Seq(ProjectCoordinates(projectLink.geometry.head.x, projectLink.geometry.head.y, 12)),
-          Some("TIE : %d, OSA: %d, AET: %d".format(projectLink.roadNumber, projectLink.roadPartNumber, projectLink.startAddrMValue))))
+          Seq(projectLink.linkId), Seq(ProjectCoordinates(point.x, point.y, 12)),
+          Some("TIE : %d, OSA: %d, AET: %d".format(projectLink.roadNumber, projectLink.roadPartNumber, projectLink.startAddrMValue)))}
     }
 
     checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++

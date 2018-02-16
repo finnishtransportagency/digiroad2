@@ -388,9 +388,9 @@
     };
 
     var templateFloatingEditMode = function(options, linkProperty) {
-      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', 'startAddressM') : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', 'endAddressM') : dynamicField('LOPPUETÄISUUS');
-      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
+      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
         '<header>' +
