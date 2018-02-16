@@ -185,10 +185,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     publishChangeSet(changeSet)
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
-      complementaryLinkFilter(link)).filterNot(_.roadLinkType == RoadLinkType.FloatingRoadLinkType)
-    val floatingValues = filledTopology.filter(_.roadLinkType == RoadLinkType.FloatingRoadLinkType).map(floating => floating.copy(roadLinkSource = LinkGeomSource.Unknown))
+      complementaryLinkFilter(link))
 
-    returningTopology  ++ floatingValues ++ missingFloating.flatMap(_._2).map(floating => floating.copy(roadLinkSource = LinkGeomSource.Unknown, roadLinkType = RoadLinkType.FloatingRoadLinkType))
+    returningTopology   ++ missingFloating.flatMap(_._2).map(floating => floating.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))
 
   }
 
