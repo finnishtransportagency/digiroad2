@@ -120,7 +120,7 @@ object ProjectValidator {
       def message = MinorDiscontinuousWhenRampConnectingRoundabout
       def notification = false}
 
-    case object Test2 extends ValidationError {
+    case object TerminationContinuity extends ValidationError {
       def value = 18
       def message = WrongDiscontinuityWhenAdjacentToTerminatedRoad
       def notification = true
@@ -478,7 +478,7 @@ object ProjectValidator {
       val anomalousAtEnd = if (endRoad.status == LinkStatus.Terminated) {
         checkValidation(endRoad)
       } else Seq.empty[BaseRoadAddress]
-      error(ValidationError.Test2)(anomalousAtStart ++ anomalousAtEnd)
+      error(ValidationError.TerminationContinuity)(anomalousAtStart ++ anomalousAtEnd)
     }
 
     /**
