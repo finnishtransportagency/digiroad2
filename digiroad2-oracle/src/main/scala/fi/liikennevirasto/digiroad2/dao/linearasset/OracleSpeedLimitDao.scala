@@ -80,20 +80,15 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
   }
 
-  private def fetchSpeedLimitsByLinkId(linkId: Long): Seq[SpeedLimit] = {
-
-    fetchSpeedLimitsByLinkIds(Seq(linkId))
-  }
+  private def fetchSpeedLimitsByLinkId(linkId: Long): Seq[SpeedLimit] = fetchSpeedLimitsByLinkIds(Seq(linkId))
 
   private def fetchHistorySpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
-
     val queryFilter = "AND (valid_to IS NOT NULL AND valid_to < SYSDATE)"
 
     fetchByLinkIds(linkIds, queryFilter).map {
       case (persisted) =>
         SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value.map(NumericValue), Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.vvhTimeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
     }
-
   }
 
   def getSpeedLimitLinksByIds(ids: Set[Long]): Seq[SpeedLimit] = {

@@ -9,6 +9,7 @@ window.SpeedLimitLayer = function(params) {
       roadAddressInfoPopup= params.roadAddressInfoPopup,
       trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
   var isActive = false;
+  var isActiveTrafficSigns = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
   Layer.call(this, layerName, roadLayer);
@@ -62,9 +63,10 @@ window.SpeedLimitLayer = function(params) {
       eventbus.trigger('layer:speedLimit:' + event);
     });
     if (isActive) {
-      showSpeedLimitsHistory();
+        showSpeedLimitsHistory();
     }
-    trafficSignReadOnlyLayer.refreshView();
+    if (isActiveTrafficSigns)
+        trafficSignReadOnlyLayer.refreshView();
   };
 
   this.removeLayerFeatures = function() {
@@ -314,6 +316,8 @@ window.SpeedLimitLayer = function(params) {
   var startListeningExtraEvents = function(){
     extraEventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsComplementary', hideSpeedLimitsComplementary);
     extraEventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsComplementary', showSpeedLimitsComplementary);
+    extraEventListener.listenTo(eventbus, 'speedLimit:hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
+    extraEventListener.listenTo(eventbus, 'speedLimit:showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
   };
 
   var stopListeningExtraEvents = function(){
@@ -339,6 +343,16 @@ window.SpeedLimitLayer = function(params) {
   var hideSpeedLimitsComplementary = function() {
     collection.activeComplementary(false);
     trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
+    me.refreshView();
+  };
+
+  var showReadOnlyTrafficSigns = function() {
+    isActiveTrafficSigns = true;
+    trafficSignReadOnlyLayer.refreshView();
+  };
+
+  var hideReadOnlyTrafficSigns = function() {
+    isActiveTrafficSigns = false;
     me.refreshView();
   };
 
