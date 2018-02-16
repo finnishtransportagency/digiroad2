@@ -147,7 +147,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
     }
   }
 
-  private def generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData]): Unit = {
+  protected def generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData]): Unit = {
     def getViiteRoadAddress(roadSide: RoadSide) = {
       roadSide match {
         case RoadSide.Left =>

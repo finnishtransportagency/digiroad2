@@ -257,7 +257,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
-  def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
+  def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, Int)]] = {
     RoadLinkServiceDAO.getAllLinkType(linkIds).groupBy(_._1)
   }
 
