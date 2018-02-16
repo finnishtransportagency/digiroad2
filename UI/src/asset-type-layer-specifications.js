@@ -60,7 +60,7 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
+      label: new MassLimitationsLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true
     },
@@ -81,7 +81,7 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
+      label: new MassLimitationsLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true
     },
@@ -102,7 +102,7 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
+      label: new MassLimitationsLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true
     },
@@ -123,7 +123,7 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
+      label: new MassLimitationsLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true
     },
@@ -618,7 +618,7 @@
         {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
         {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
       ]},
-      label: new TrafficSignLabel(this.groupingDistance),
+      label: new TrafficSignLabel(Math.pow(3, 2)),
       collection: TrafficSignsCollection,
       allowGrouping: true,
       groupingDistance: Math.pow(3, 2), //geometry-calculations calculates the squared distance between two points, so give the grouping distance in meters x^2
@@ -651,7 +651,7 @@
         return true;
       },
       nonModifiableBox: true,
-      label: new HeightLimitLabel(this.groupingDistance)
+      label: new HeightLimitLabel(Math.pow(5, 2))
     },
     {
       typeId: assetType.trWidthLimits,
@@ -672,7 +672,7 @@
         return true;
       },
       nonModifiableBox: true,
-      label: new WidthLimitLabel(this.groupingDistance)
+      label: new WidthLimitLabel(Math.pow(5, 2))
     }
 
   ];

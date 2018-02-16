@@ -68,9 +68,9 @@
           var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
           return _.flatten(_.chain(groupedAssets).map(function(assets){
             return _.map(assets, function(asset, index){
-              var value = 1;
-              if(value !== undefined){
-                var styles = me.getStyle(value, index);
+              var assetValue = me.getValue(asset);
+              if(assetValue !== undefined){
+                var styles = me.getStyle(assetValue, index);
                 var feature = me.createFeature(getPoint(asset));
                 feature.setStyle(styles);
                 feature.setProperties(asset);
