@@ -124,6 +124,7 @@ trait BaseRoadAddress {
   def ely: Long
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
+  def commonHistoryId: Long
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
