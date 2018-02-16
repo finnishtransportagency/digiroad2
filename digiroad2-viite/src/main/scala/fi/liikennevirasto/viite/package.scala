@@ -89,7 +89,7 @@ package object viite {
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
-  val MaxLengthChange = 1.0
+  val MaxLengthChange = 20.0
 
   val DefaultScreenWidth = 1920
   val DefaultScreenHeight = 1080
