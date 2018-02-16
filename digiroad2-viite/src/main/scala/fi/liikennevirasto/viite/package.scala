@@ -31,7 +31,11 @@ package object viite {
   val MaxMoveDistanceBeforeFloating = 1.0
   /* Maximum amount a road start / end may move until it is turned into a floating road address */
 
+  val MinDistanceForGeometryUpdate = 0.5
+
   val NewRoadAddress: Long = -1000L
+
+  val NewCommonHistoryId: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
 
@@ -79,6 +83,7 @@ package object viite {
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
+  val MinorDiscontinuousWhenRampConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 

@@ -5,6 +5,7 @@
   var rectangleToolIcon = '<img src="images/rectangle-tool.svg"/>';
   var polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
   var terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
+  var checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän todentama"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();
@@ -81,18 +82,18 @@
     var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
       return '<div class="legend-entry">' +
-        '<div class="label">' + speedLimit + '</div>' +
-        '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
-        '</div>';
+               '<div class="label">' + speedLimit + '</div>' +
+               '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
+             '</div>';
     }).join('');
     var speedLimitHistoryCheckBox = [
       '<div class="check-box-container">',
-      '<input id="historyCheckbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
-      '</div>'].join('');
+          '<input id="historyCheckbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+    '</div>'].join('');
 
     var speedLimitComplementaryCheckBox = [
       '<div class="check-box-container">' +
-      '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+        '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
       '</div>'
     ].join('');
 
@@ -103,16 +104,19 @@
       '</div>'
     ].join('');
 
+    var header = ['<div id="left-panel">    Nopeusrajoitukset</div>' +
+        ' <div id="right-panel">' + checkIcon + '</div>'].join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      '    Nopeusrajoitukset',
+      header,
       '  </header>',
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
-      speedLimitLegendTemplate,
-      speedLimitHistoryCheckBox,
-      speedLimitComplementaryCheckBox,
-      speedLimitSignsCheckBox,
+            speedLimitLegendTemplate,
+            speedLimitHistoryCheckBox,
+            speedLimitComplementaryCheckBox,
+            speedLimitSignsCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -188,6 +192,14 @@
       } else {
         eventbus.trigger('speedLimit:hideReadOnlyTrafficSigns');
       }
+    });
+
+    eventbus.on('verificationInfo:fetched', function(visible) {
+      var img = elements.expanded.find('#right-panel');
+      if (visible)
+        img.css('display','inline');
+      else
+        img.css('display','none');
     });
 
     return {
@@ -420,24 +432,24 @@
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var roadTypeLegend = [
-      '  <div class="panel-section panel-legend road-link-legend">',
-      '    <div class="legend-entry">',
-      '      <div class="label">Valtion omistama</div>',
-      '      <div class="symbol linear road"/>',
-      '   </div>',
-      '   <div class="legend-entry">',
-      '     <div class="label">Kunnan omistama</div>',
-      '     <div class="symbol linear street"/>',
-      '   </div>',
-      '   <div class="legend-entry">',
-      '     <div class="label">Yksityisen omistama</div>',
-      '     <div class="symbol linear private-road"/>',
-      '   </div>',
-      '   <div class="legend-entry">',
-      '     <div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>',
-      '     <div class="symbol linear unknown"/>',
-      '   </div>',
-      '  </div>'
+        '  <div class="panel-section panel-legend road-link-legend">',
+        '    <div class="legend-entry">',
+        '      <div class="label">Valtion omistama</div>',
+        '      <div class="symbol linear road"/>',
+        '   </div>',
+        '   <div class="legend-entry">',
+        '     <div class="label">Kunnan omistama</div>',
+        '     <div class="symbol linear street"/>',
+        '   </div>',
+        '   <div class="legend-entry">',
+        '     <div class="label">Yksityisen omistama</div>',
+        '     <div class="symbol linear private-road"/>',
+        '   </div>',
+        '   <div class="legend-entry">',
+        '     <div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>',
+        '     <div class="symbol linear unknown"/>',
+        '   </div>',
+        '  </div>'
     ].join('');
 
     var constructionTypeLegend = [
@@ -455,9 +467,9 @@
 
     var roadLinkComplementaryCheckBox = [
       '  <div class="panel-section roadLink-complementary-checkbox">',
-      '<div class="check-box-container">' +
-      '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
-      '</div>' +
+          '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" checked/> <lable>Näytä täydentävä geometria</lable>' +
+          '</div>' +
       '</div>'
     ].join('');
 

@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao
 
+import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -116,12 +117,16 @@ object RoadLinkServiceDAO {
   }
 
   def getAllLinkType(linkIds: Seq[Long]) = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+    val linkTypeInfo = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
         select lt.link_id, lt.link_type
            from link_type lt
            join  #$idTableName i on i.id = lt.link_id
          """.as[(Long, Int)].list
-     }
+    }
+    linkTypeInfo.map {
+      case (linkId, linkType) =>
+        (linkId, asset.LinkType.apply(linkType))
+    }
   }
 }

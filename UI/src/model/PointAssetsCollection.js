@@ -1,5 +1,5 @@
 (function(root) {
-  root.PointAssetsCollection = function(backend, endPointName, allowComplementary) {
+  root.PointAssetsCollection = function(backend, specs, verificationCollection) {
     var isComplementaryActive = false;
     var isAllowComplementary = false;
     var me = this;
@@ -10,11 +10,12 @@
       return _.filter(assets, function(asset) { return asset.linkSource != 2; });
     };
 
-    this.fetch = function(boundingBox) {
-      return backend.getPointAssetsWithComplementary(boundingBox, endPointName)
+    this.fetch = function(boundingBox, center) {
+      return backend.getPointAssetsWithComplementary(boundingBox, specs.layerName)
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
-          me.allowComplementaryIsActive(allowComplementary);
+          me.allowComplementaryIsActive(specs.allowComplementaryLinks);
+          verificationCollection.fetch(boundingBox, center, specs.typeId, specs.hasMunicipalityValidation);
           return me.filterComplementaries(assets);
         });
     };

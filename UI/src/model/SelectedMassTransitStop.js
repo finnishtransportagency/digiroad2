@@ -49,7 +49,7 @@
       var transformProperty = function(property) {
         return _.merge(
           {},
-          _.pick(property, 'publicId', 'propertyType', 'required'),
+          _.pick(property, 'publicId', 'propertyType', 'required', 'numCharacterMax'),
           {
             values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
           });
@@ -305,10 +305,10 @@
       currentAsset.payload.validityDirection = validityDirection;
     };
 
-    var setProperty = function(publicId, values, propertyType, required) {
+    var setProperty = function(publicId, values, propertyType, required, numCharacterMax) {
       var propertyData = {};
       if(propertyType){
-        propertyData = {publicId: publicId, values: values, propertyType: propertyType, required: required};
+        propertyData = {publicId: publicId, values: values, propertyType: propertyType, required: required, numCharacterMax: numCharacterMax};
       }
       else{
         propertyData = {publicId: publicId, values: values};

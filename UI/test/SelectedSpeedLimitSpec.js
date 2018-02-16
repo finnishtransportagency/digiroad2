@@ -1,6 +1,7 @@
 /*jshint expr: true*/
-define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedLimitsCollection', 'RoadCollection', 'Backend', 'EventBus'],
-  function(chai, _, $, testHelpers, SelectedSpeedLimit, SpeedLimitsCollection, RoadCollection, EventBus) {
+define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedLimitsCollection', 'RoadCollection', 'Backend', 'EventBus', 'AssetsVerificationCollection'],
+  function(chai, _, $, testHelpers, SelectedSpeedLimit, SpeedLimitsCollection, RoadCollection, Backend, EventBus, AssetsVerificationCollection) {
+
     describe('Selected speed limit', function() {
       var expect = chai.expect;
 
@@ -13,10 +14,12 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
         speedLimitTestData = SpeedLimitsTestData.generate();
         var backend = testHelpers.defaultBackend()
           .withSpeedLimitsData(speedLimitTestData);
+
+        var verificationCollection = new AssetsVerificationCollection(backend);
         var roadCollection = new RoadCollection(backend);
-        var speedLimitsCollection = new SpeedLimitsCollection(backend);
+        var speedLimitsCollection = new SpeedLimitsCollection(backend, verificationCollection);
         roadCollection.fetch();
-        speedLimitsCollection.fetch();
+        speedLimitsCollection.fetch(null, [0,0]);
 
         selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
       });

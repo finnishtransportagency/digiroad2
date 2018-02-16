@@ -32,6 +32,7 @@
   <span class="notification" id="notification">
   </span>
   <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
+    <a href="#work-list/municipality" class="header-link" title="Kuntasivun ohjeistus on vielä työn alla. Tarkempi ohjeistus lisätään käyttöohjeeseen viikolla 7.">Tietolajien kuntasivu</a>
 </header>
 <div class="container">
     <div id="contentMap">
@@ -159,6 +160,7 @@
 <script type="text/javascript" src="src/modalconfirm/Confirm.js"></script>
 <script type="text/javascript" src="src/modalconfirm/GenericConfirmPopup.js"></script>
 <script type="text/javascript" src="src/view/CrosshairToggle.js"></script>
+<script type="text/javascript" src="src/view/MunicipalityDisplay.js"></script>
 <script type="text/javascript" src="src/view/AssetFormElementsFactory.js"></script>
 <script type="text/javascript" src="src/view/MassTransitStopForm.js"></script>
 <script type="text/javascript" src="src/view/SpeedLimitForm.js"></script>
@@ -170,13 +172,15 @@
 <script type="text/javascript" src="src/view/PointAssetForm.js"></script>
 <script type="text/javascript" src="src/view/GroupedPointAssetForm.js"></script>
 <script type="text/javascript" src="src/view/WorkListView.js"></script>
-<script type="text/javascript" src="src/view/VerificationListView.js"></script>
+<script type="text/javascript" src="src/view/VerificationWorkList.js"></script>
 <script type="text/javascript" src="src/asset-type-layer-specifications.js"></script>
 <script type="text/javascript" src="src/application.js"></script>
 <script type="text/javascript" src="src/utils/script-loader.js"></script>
 <script type="text/javascript" src="src/assetgrouping/asset-grouping.js"></script>
 <script type="text/javascript" src="src/analytics.js"></script>
 <script type="text/javascript" src="src/main.js"></script>
+<script type="text/javascript" src="src/view/MunicipalityWorkList.js"></script>
+<script type="text/javascript" src="src/model/AssetsVerificationCollection.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'STAGING' -->
 <script type="text/javascript" src="components/ol3.js"></script>

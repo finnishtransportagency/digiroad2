@@ -1,7 +1,11 @@
 package fi.liikennevirasto.viite.dao
 
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import org.joda.time.DateTime
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 object RoadNetworkDAO {
 
@@ -31,6 +35,10 @@ object RoadNetworkDAO {
 
   def getLatestRoadNetworkVersion: Long = {
     sql"""SELECT MAX(id) FROM published_road_network""".as[Long].first
+  }
+
+  def getLatestPublishedNetworkDate: Option[DateTime] = {
+    sql"""SELECT MAX(created) as created FROM published_road_network""".as[Option[DateTime]].first
   }
 
 }

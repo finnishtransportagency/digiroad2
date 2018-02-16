@@ -115,7 +115,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
             extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
-            extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString)
+            extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("vyöhyketieto", massTransitStop.propertyData, propertyValuesToString)
           ))
       })
   }
@@ -225,6 +226,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case MaintenanceRoadAsset.typeId => maintenanceRoadService
         case PavedRoad.typeId => pavingService
         case RoadWidth.typeId => roadWidthService
+        case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
+        case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
         case _ => linearAssetService
       }
     }
