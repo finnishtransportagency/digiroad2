@@ -331,6 +331,8 @@
           },
           closeCallback: function () {
             applicationModel.removeSpinner();
+            eventbus.trigger('clearProjectLinkLayer');
+
           }
         });
       } else{
