@@ -56,7 +56,19 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
     }
   }
 
-  private def getSpeedLimitValue(trAsset: TierekisteriAssetData, linkType: LinkType) = {
+  private def getSpeedLimitValue(assetInfo: TrAssetInfo, linkType:  Option[LinkType]): Option[Int] = {
+    def getSpeedLimitValueByLinkType(linkType:  Option[LinkType]): Option[Int] = {
+      linkType.getOrElse(UnknownLinkType) match {
+        case Motorway =>
+          Some(defaultMotorwaySpeedLimit)
+        case MultipleCarriageway | SingleCarriageway | Freeway =>
+          Some(defaultCarriageOrFreewaySpeedLimit)
+        case _ =>
+          None
+      }
+    }
+    val trAsset = assetInfo.trAsset.asInstanceOf[TierekisteriAssetData]
+    print("assetType" -> trAsset.asInstanceOf[TierekisteriAssetData].assetType.trafficSignType)
     trAsset.assetType.trafficSignType match {
       case TrafficSignType.SpeedLimit  =>
         toInt(trAsset.assetValue)
@@ -71,13 +83,9 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
       case TrafficSignType.EndUrbanArea =>
         Some(defaultSpeedLimit)
       case TrafficSignType.TelematicSpeedLimit =>
-        linkType match {
-          case Motorway =>
-            Some(defaultMotorwaySpeedLimit)
-          case MultipleCarriageway | SingleCarriageway | Freeway =>
-            Some(defaultCarriageOrFreewaySpeedLimit)
-          case _ =>
-            None
+        getSpeedLimitValueByLinkType(linkType) match {
+          case None => getSpeedLimitValueByLinkType(assetInfo.linkType)
+          case value => value
         }
       case _ =>
         None
@@ -113,75 +121,83 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
 
   protected def createUrbanTrafficSign(roadLink: Option[VVHRoadlink], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData],
                                        addressSection: AddressSection, roadAddress: ViiteRoadAddress,
-                                       roadSide: RoadSide): Option[TierekisteriAssetData] = {
+                                       roadSide: RoadSide): Option[TrAssetInfo] = {
 
-    def getDefaultTrTrafficSign(addressSection: AddressSection): Option[TierekisteriAssetData] ={
-      Some(TierekisteriTrafficSignData(addressSection.roadNumber, addressSection.roadPartNumber, addressSection.roadPartNumber, addressSection.track, addressSection.startAddressMValue, addressSection.startAddressMValue, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString))
+    def getDefaultTrTrafficSign(addressSection: AddressSection, roadLink: Option[VVHRoadlink]): Option[TrAssetInfo] ={
+      Some(TrAssetInfo(TierekisteriTrafficSignData(addressSection.roadNumber, addressSection.roadPartNumber, addressSection.roadPartNumber, addressSection.track, addressSection.startAddressMValue, addressSection.startAddressMValue, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString), roadLink))
     }
 
     val trUrbanAssets = trUrbanAreaAssets.filter( ua => ua.startRoadPartNumber == addressSection.roadPartNumber && ( ua.track == addressSection.track || ua.track == Track.Combined))
     val assets = trUrbanAssets.flatMap{ trAsset => generateUrbanTrafficSign(trAsset, roadSide) }
 
-    splitRoadAddressSectionBySigns(assets, roadAddress, roadSide).foldLeft(None: Option[TierekisteriAssetData]){
+    splitRoadAddressSectionBySigns(assets, roadAddress, roadSide).foldLeft(None: Option[TrAssetInfo]){
       case (previousTrAsset, (addressSection: AddressSection, beginTrAsset)) =>
-        val currentTrAssetSign = beginTrAsset.orElse(previousTrAsset) match {
+        val currentTrAssetSign = (beginTrAsset match {
+          case Some(info) => Some(TrAssetInfo(info, roadLink))
+          case _ => None
+        }).orElse(previousTrAsset) match {
           case Some(asset) => Some(asset)
-          case None => getDefaultTrTrafficSign(addressSection)
+          case None => getDefaultTrTrafficSign(addressSection, roadLink)
         }
-        createSpeedLimit(roadAddress, addressSection, currentTrAssetSign, roadLink, UnknownLinkType)
+        createSpeedLimit(roadAddress, addressSection, currentTrAssetSign, roadLink, None)
         currentTrAssetSign
     }
   }
 
-  protected def createSpeedLimit(roadAddress: ViiteRoadAddress, addressSection: AddressSection, trAssetOption: Option[TierekisteriAssetData],
-                                 roadLinkOption: Option[VVHRoadlink], linkType: LinkType): Unit = {
+  protected def createSpeedLimit(roadAddress: ViiteRoadAddress, addressSection: AddressSection, trAssetOption: Option[TrAssetInfo]
+                                 ,roadLinkOption: Option[VVHRoadlink], linkType: Option[LinkType]): Unit = {
     roadLinkOption.foreach {
       roadLink =>
         calculateMeasures(roadAddress, addressSection).foreach {
           measures =>
             trAssetOption.foreach {
-              trAsset =>
-                createSpeedLimitAsset(roadLink, roadAddress, addressSection, measures, trAsset, linkType)
+              assetInfo =>
+                createSpeedLimitAsset(roadLink, roadAddress, addressSection, measures, assetInfo, linkType)
             }
         }
+    }
+  }
+  protected def createSpeedLimitAsset(roadLink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TrAssetInfo, linkType: Option[LinkType]) = {
+    val speedLimit = getSpeedLimitValue(trAssetData, linkType)
+    val trAsset = trAssetData.trAsset.asInstanceOf[TierekisteriAssetData]
+    if (measures.startMeasure != measures.endMeasure) {
+      val assetId = linearAssetService.dao.createLinearAsset(typeId, roadLink.linkId, false, getSideCode(roadAddress, trAsset.track, trAsset.roadSide).value,
+        measures, s"batch_process_$assetName", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink.linkSource.value))
+
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, speedLimit.getOrElse(-1))
+      println(s"Created OTH Speed Limit assets for road ${roadLink.linkId} from TR data with assetId $assetId")
     }
   }
 
   protected def generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData]): Unit = {
     def getViiteRoadAddress(roadSide: RoadSide) = {
-      roadSide match {
+      val allViiteRoadAddress = roadSide match {
         case RoadSide.Left =>
-          val allViiteRoadAddress = getAllViiteRoadAddress(roadNumber, Seq(Track.LeftSide, Track.Combined)).sortBy(r => (-r._1.roadPartNumber, -r._1.startAddrMValue))
-          val linkTypes = roadLinkService.getAllLinkType(allViiteRoadAddress.flatMap(_._2).map(_.linkId))
-
-          allViiteRoadAddress.map {
-            case (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink]) =>
-              (roadAddress, roadLink, roadLink match {
-                case Some(road) => LinkType.apply(linkTypes.get(road.linkId).map(_.head._2).getOrElse(99))
-                case _ => UnknownLinkType
-              }
-              )
-          }
+          getAllViiteRoadAddress(roadNumber, Seq(Track.LeftSide, Track.Combined)).sortBy(r => (-r._1.roadPartNumber, -r._1.startAddrMValue))
         case _ =>
-          val allViiteRoadAddress = getAllViiteRoadAddress(roadNumber, Seq(Track.RightSide, Track.Combined)).sortBy(r => (r._1.roadPartNumber, r._1.startAddrMValue))
-          val linkTypes = roadLinkService.getAllLinkType(allViiteRoadAddress.flatMap(_._2).map(_.linkId))
+          getAllViiteRoadAddress(roadNumber, Seq(Track.RightSide, Track.Combined)).sortBy(r => (r._1.roadPartNumber, r._1.startAddrMValue))
+      }
+      val linkTypes = roadLinkService.getAllLinkType(allViiteRoadAddress.flatMap(_._2).map(_.linkId))
 
-          allViiteRoadAddress.map {
-            case (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink]) =>
-              (roadAddress, roadLink, roadLink match {
-                case Some(road) => LinkType.apply(linkTypes.get(road.linkId).map(_.head._2).getOrElse(99))
-                case _ => UnknownLinkType
-              }
-              )
+      allViiteRoadAddress.map {
+        case (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink]) =>
+          val linkType = roadLink match {
+            case Some(road) => linkTypes.get(road.linkId).map(_.head._2)
+            case _ => None
           }
+          (roadAddress, roadLink, linkType)
       }
     }
 
-    getViiteRoadAddress(roadSide).foldLeft[Option[tierekisteriClient.TierekisteriType]](None){
+    getViiteRoadAddress(roadSide).foldLeft[Option[TrAssetInfo]](None){
       case (trAsset, (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink], linkType)) =>
         splitRoadAddressSectionBySigns(trAssets, roadAddress, roadSide).foldLeft(trAsset){
           case (previousTrAsset, (addressSection: AddressSection, beginTrAsset)) =>
-            beginTrAsset.orElse(previousTrAsset) match {
+
+            (beginTrAsset match {
+              case Some(info) => Some(TrAssetInfo(info, roadLink, linkType))
+              case _ => None
+            }).orElse(previousTrAsset) match {
               case Some(asset) => createSpeedLimit(roadAddress, addressSection, Some(asset), roadLink, linkType)
                 Some(asset)
               case None => createUrbanTrafficSign(roadLink, trUrbanAreaAssets, addressSection, roadAddress, roadSide)
@@ -244,17 +260,6 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
           //Generate all speed limits of the left side of the road
           generateOneSideSpeedLimits(roadNumber, RoadSide.Left, trAssets, trUrbanAreaAssets)
         }
-    }
-  }
-
-  protected def createSpeedLimitAsset(roadLink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData, linkType: LinkType) = {
-    val speedLimit = getSpeedLimitValue(trAssetData, linkType)
-    if (measures.startMeasure != measures.endMeasure) {
-      val assetId = linearAssetService.dao.createLinearAsset(typeId, roadLink.linkId, false, getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value,
-        measures, s"batch_process_$assetName", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink.linkSource.value))
-
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, speedLimit.getOrElse(-1))
-      println(s"Created OTH Speed Limit assets for road ${roadLink.linkId} from TR data with assetId $assetId")
     }
   }
 

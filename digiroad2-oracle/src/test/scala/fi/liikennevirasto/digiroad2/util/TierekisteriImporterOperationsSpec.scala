@@ -102,13 +102,14 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def calculateMeasuresTest(roadAddress: ViiteRoadAddress, section: AddressSection) = super.calculateMeasures(roadAddress, section)
 
     def createSpeedLimitTest(roadAddress: ViiteRoadAddress, addressSection: AddressSection,
-                             trAssetOption: Option[TierekisteriAssetData], roadLinkOption: Option[VVHRoadlink]) = super.createSpeedLimit(roadAddress, addressSection, trAssetOption, roadLinkOption, UnknownLinkType)
-    def generateOneSideSpeedLimitsTest(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
-    = super.generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
+                             trAssetOption: Option[TrAssetInfo], roadLinkOption: Option[VVHRoadlink]) = super.createSpeedLimit(roadAddress, addressSection, trAssetOption, roadLinkOption, None)
 
     override def createUrbanTrafficSign(roadLink: Option[VVHRoadlink], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData],
                                         addressSection: AddressSection, roadAddress: ViiteRoadAddress,
-                                        roadSide: RoadSide): Option[TierekisteriAssetData] = super.createUrbanTrafficSign(roadLink, trUrbanAreaAssets, addressSection, roadAddress, roadSide)
+                                        roadSide: RoadSide): Option[TrAssetInfo] = super.createUrbanTrafficSign(roadLink, trUrbanAreaAssets, addressSection, roadAddress, roadSide)
+
+    def generateOneSideSpeedLimitsTest(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
+    = super.generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
   }
 
   class TestLitRoadOperations extends LitRoadTierekisteriImporter {
@@ -1260,7 +1261,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       val startMValue = 118
       val trAsset =  Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, startMValue, startMValue, RoadSide.Right, TRTrafficSignType.TelematicSpeedLimit,""))
-      val mappedLinkType: Map[Long, Seq[(Long, Int)]] = Map((5001L, Seq((5001L, 1))))
+      val mappedLinkType: Map[Long, Seq[(Long, LinkType)]] = Map((5001L, Seq((5001L, Motorway))))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(ra)
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLink)

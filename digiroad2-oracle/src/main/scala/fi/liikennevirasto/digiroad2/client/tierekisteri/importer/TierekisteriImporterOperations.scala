@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
 
 case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Option[Long])
+case class TrAssetInfo(trAsset: TierekisteriAssetData, roadLink: Option[VVHRoadlink], linkType: Option[LinkType] = None)
 
 trait TierekisteriAssetImporterOperations {
 
