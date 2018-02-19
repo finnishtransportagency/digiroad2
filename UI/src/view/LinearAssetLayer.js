@@ -448,11 +448,11 @@ root.LinearAssetLayer  = function(params) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
     if (isComplementaryChecked) {
-      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize())).then(function() {
+      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
         eventbus.trigger('layer:linearAsset');
       });
     } else {
-      collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
+      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
         eventbus.trigger('layer:linearAsset');
       });
     }
