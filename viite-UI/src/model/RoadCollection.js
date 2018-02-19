@@ -65,9 +65,11 @@
     var preMovedRoadAddresses = [];
     var date = [];
     var historicRoadLinks = [];
+    var floatingRoadLinks = [];
     var changedIds = [];
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
+    var LinkType = LinkValues.RoadLinkType;
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -119,8 +121,13 @@
         }
         
         historicRoadLinks = _.filter(roadLinkGroups, function(group) {
-          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
+          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
         });
+
+        floatingRoadLinks = _.filter(roadLinkGroups, function(group) {
+          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
+        });
+
         roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
           return groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
         });
@@ -130,7 +137,7 @@
         var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
           return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
         });
-        roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]);
+        roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
         eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups);
         if(historicRoadLinks.length !== 0) {
           eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
@@ -165,6 +172,18 @@
         });
       } else {
         return group.getData().roadLinkSource === dataSource.value;
+      }
+    };
+
+    var groupLinkTypeFilter = function(group, dataSource) {
+      if (_.isArray(group)) {
+        return _.some(group, function(roadLink) {
+          if (roadLink !== null)
+            return roadLink.getData().roadLinkType === dataSource.value;
+          else return false;
+        });
+      } else {
+        return group.getData().roadLinkType === dataSource.value;
       }
     };
 
