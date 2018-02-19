@@ -175,10 +175,10 @@
       }
     };
 
-    var groupLinkTypeFilter = function(group, dataSource){
-      if(_.isArray(group)) {
+    var groupLinkTypeFilter = function(group, dataSource) {
+      if (_.isArray(group)) {
         return _.some(group, function(roadLink) {
-          if(roadLink !== null)
+          if (roadLink !== null)
             return roadLink.getData().roadLinkType === dataSource.value;
           else return false;
         });

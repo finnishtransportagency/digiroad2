@@ -181,13 +181,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val inUseSuravageLinks = suravageLinks.filter(sl => roadAddressLinkMap.keySet.contains(sl.linkId))
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks++inUseSuravageLinks, roadAddressLinkMap)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks ++ inUseSuravageLinks, roadAddressLinkMap)
 
     publishChangeSet(changeSet)
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(link))
 
-    returningTopology   ++ missingFloating.flatMap(_._2).map(floating => floating.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))
+    returningTopology ++ missingFloating.flatMap(_._2).map(floating => floating.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))
 
   }
 
@@ -308,7 +308,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
           logger.debug("Expired: "+s.mkString(","))
         })
-        unchanged.filter(ra => ra.floating).foreach{
+        unchanged.filter(ra => ra.floating).foreach {
           ra => RoadAddressDAO.changeRoadAddressFloating(1, ra.id, None)
         }
         val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
