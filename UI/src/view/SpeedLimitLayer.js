@@ -58,7 +58,7 @@ window.SpeedLimitLayer = function(params) {
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
-    collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
+    collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
       eventbus.trigger('layer:speedLimit:' + event);
     });
     if (isActive) {
@@ -264,14 +264,14 @@ window.SpeedLimitLayer = function(params) {
   function cancelSelection() {
     selectToolControl.clear();
     selectedSpeedLimit.closeMultiple();
-    collection.fetch(map.getView().calculateExtent(map.getSize()));
+    collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
   }
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      return collection.fetch(boundingBox);
+      return collection.fetch(boundingBox, map.getView().getCenter());
     } else {
       return $.Deferred().resolve();
     }
@@ -380,7 +380,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var handleSpeedLimitSaved = function() {
-    collection.fetch(map.getView().calculateExtent(map.getSize()));
+    collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
     applicationModel.setSelectedTool('Select');
   };
 
