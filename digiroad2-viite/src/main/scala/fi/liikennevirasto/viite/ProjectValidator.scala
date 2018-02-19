@@ -351,9 +351,6 @@ object ProjectValidator {
             else
               RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
                 .filter(_.startAddrMValue == 0L)
-          //TODO to be done/changed in a more detailed story
-          //          if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
-          //            return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
           val isConnected = lastProjectLinks.forall(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
             connected(lpl, nl)))
           val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
@@ -462,9 +459,6 @@ object ProjectValidator {
           else
             RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
               .filter(_.startAddrMValue == 0L)
-        //TODO to be done/changed in a more detailed story
-        //        if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
-        //          return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
 
         if (isConnectingRoundabout(lastProjectLinks)) {
           discontinuity match {
@@ -522,7 +516,7 @@ object ProjectValidator {
     val notCombinedLinks = projectLinks.filterNot(_.track == Track.Combined)
 
     def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-      previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue //&& GeometryUtils.areAdjacent(previous.geometry, currentLink.geometry, MaxDistanceForConnectedLinks)
+      previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue
     }
 
     def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
