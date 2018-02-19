@@ -1046,6 +1046,20 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     speedLimitService.getUnknown(includedMunicipalities)
   }
 
+  get("/speedLimits/qualityErrors") {
+    val user = userProvider.getCurrentUser()
+    val (includedMunicipalities, includedAreas, adminClassAllow) =
+      user.isOperator() match {
+        case true =>
+          (None, None, None)
+        case false if (user.configuration.authorizedAreas.nonEmpty) =>
+          (None, Some(user.configuration.authorizedAreas), Some(asset.State.value, asset.Municipality.value))
+        case false if (user.configuration.authorizedMunicipalities.nonEmpty) =>
+          (Some(user.configuration.authorizedMunicipalities), Some(asset.Municipality.value))
+      }
+    speedLimitService.getSpeedLimitsWithQualityErrors(includedMunicipalities, includedAreas, adminClassAllow)
+  }
+
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
     if (user.isServiceRoadMaintainer())

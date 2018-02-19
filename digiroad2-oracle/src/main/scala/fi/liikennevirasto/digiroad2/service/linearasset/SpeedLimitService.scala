@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
+import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, InaccurateAssetDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -16,6 +17,8 @@ case class ChangedSpeedLimit(speedLimit: SpeedLimit, link: RoadLink)
 
 class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLinkServiceImplementation: RoadLinkService) {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkServiceImplementation)
+  val inaccurateAssetDao: InaccurateAssetDAO = new InaccurateAssetDAO()
+  val assetDao: OracleAssetDao = new OracleAssetDao()
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -460,4 +463,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       dao.getSpeedLimitLinksByIds(ids)
     }
   }
+
+  def getSpeedLimitsWithQualityErrors(municipalities: Option[Set[Int]], areas: Option[Set[Int]],
+                                      adminClassList: Option[Set[Int]]): List[Long] = {
+    inaccurateAssetDao.getInaccurateAssetByTypeId(SpeedLimitAsset.typeId, municipalities, areas, adminClassList)
+  }
+
 }
