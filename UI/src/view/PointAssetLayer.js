@@ -156,7 +156,7 @@
         roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
       else
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
-      collection.fetch(map.getView().calculateExtent(map.getSize())).then(function(assets) {
+      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function(assets) {
         if (selectedAsset.exists()) {
           var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
           assets = assetsWithoutSelectedAsset.concat([selectedAsset.get()]);

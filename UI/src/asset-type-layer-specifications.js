@@ -51,7 +51,8 @@
         showUnit: true
       },
       hasTrafficSignReadOnlyLayer: true,
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.trailerTruckWeightLimit,
@@ -71,7 +72,8 @@
         showUnit: true
       },
       hasTrafficSignReadOnlyLayer: true,
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.axleWeightLimit,
@@ -91,7 +93,8 @@
         showUnit: true
       },
       hasTrafficSignReadOnlyLayer: true,
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.bogieWeightLimit,
@@ -111,7 +114,8 @@
         showUnit: true
       },
       hasTrafficSignReadOnlyLayer: true,
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.heightLimit,
@@ -131,7 +135,8 @@
       },
       label: new LinearAssetLabel(),
       hasTrafficSignReadOnlyLayer: true,
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.lengthLimit,
@@ -151,7 +156,8 @@
       },
       label: new LinearAssetLabel(),
       hasTrafficSignReadOnlyLayer: true,
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.widthLimit,
@@ -172,7 +178,8 @@
       },
       label: new LinearAssetLabel(),
       hasTrafficSignReadOnlyLayer: true,
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.litRoad,
@@ -194,7 +201,8 @@
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
       },
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.damagedByThaw,
@@ -240,7 +248,8 @@
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
       },
-      isVerifiable: true
+      isVerifiable: true,
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.congestionTendency,
@@ -512,7 +521,8 @@
         singleFloatingAssetLabel: 'suojatien',
         manyFloatingAssetsLabel: 'suojatiet',
         newAssetLabel: 'suojatie'
-      }
+      },
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.obstacles,
@@ -592,7 +602,8 @@
         singleFloatingAssetLabel: 'liikennevalojen',
         manyFloatingAssetsLabel: 'liikennevalot',
         newAssetLabel: 'liikennevalo'
-      }
+      },
+      hasMunicipalityValidation: true
     },
     {
       typeId: assetType.trafficSigns,
@@ -616,7 +627,8 @@
       editConstrains : function(selectedAsset, linkId) {
        // check if administrative class is State
           return selectedAsset.getAdministrativeClass(linkId) === "State";
-     }
+     },
+      hasMunicipalityValidation: true
     }
   ];
 })(this);

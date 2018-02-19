@@ -7,11 +7,12 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.viite.ProjectValidator.ValidationError
-import fi.liikennevirasto.viite.ProjectValidator.ValidationError._
+import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorList._
+import fi.liikennevirasto.viite.ProjectValidator._
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{TerminationCode, _}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -20,6 +21,7 @@ import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.viite.util._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
+import org.scalatest.mock.MockitoSugar
 
 class ProjectValidatorSpec extends FunSuite with Matchers{
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -32,19 +34,21 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
     }
   }
 
-  private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled) = {
-    ProjectLink(NewRoadAddress, 19999L, 1L, track, Discontinuity.Continuous, startAddrM, endAddrM, None, None,
+  private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
+                          roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L ) = {
+    ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
       Some("User"), 0L, startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
       false, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
-      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, 0L, 8L, false, None, 0L)
+      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, 0L, ely, false, None, 0L)
   }
 
-  private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false) = {
+  private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
+                                    roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L) = {
     val id = Sequences.nextViitePrimaryKeySeqValue
 
     def withTrack(t: Track): Seq[ProjectLink] = {
       addrM.init.zip(addrM.tail).map{ case (st, en) =>
-        projectLink(st, en, t, id, linkStatus)
+        projectLink(st, en, t, id, linkStatus, roadNumber, roadPartNumber, discontinuity, ely)
       }
     }
     val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
@@ -55,7 +59,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
         case false => withTrack(Combined)
         case _ => withTrack(RightSide) ++ withTrack(LeftSide)
       }
-    ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
+    ProjectDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
     ProjectDAO.create(links)
     project
   }
@@ -73,6 +77,23 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
     project
   }
 
+  private def testDataForElyTest01() = {
+    val roadAddressId = RoadAddressDAO.getNextRoadAddressId
+    val ra = Seq(RoadAddress(roadAddressId, 16320L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 1270L, 1309L,
+      Some(DateTime.parse("1982-09-01")), None, Option("TR"), 0, 2583382, 0.0, 38.517, SideCode.AgainstDigitizing, 1476392565000L, (None, None), false,
+      Seq(Point(0.0, 40.0, 0.0), Point(0.0, 50.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
+    RoadAddressDAO.create(ra)
+
+  }
+
+  private def testDataForElyTest02() = {
+    val roadAddressId = RoadAddressDAO.getNextRoadAddressId
+    val ra = Seq(RoadAddress(roadAddressId, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 4278L, 4387L,
+      Some(DateTime.parse("1996-01-01")), None, Option("TR"), 0, 1817196, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), false,
+      Seq(Point(0.0, 40.0, 0.0), Point(0.0, 50.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
+    RoadAddressDAO.create(ra)
+  }
+
   test("Project Links should be continuous if geometry is continuous") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
@@ -82,8 +103,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       val brokenContinuity = endOfRoadSet.tail :+ endOfRoadSet.head.copy(geometry = projectLinks.head.geometry.map(_ + Vector3d(1.0, 1.0, 0.0)))
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, brokenContinuity)
       errors should have size(1)
-      errors.head.validationError should be (ValidationError.MinorDiscontinuityFound
-      )
+      errors.head.validationError should be (MinorDiscontinuityFound)
     }
   }
 
@@ -93,8 +113,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
       errors should have size(1)
-      errors.head.validationError should be (ValidationError.MissingEndOfRoad
-      )
+      errors.head.validationError should be (MissingEndOfRoad)
     }
   }
 
@@ -325,7 +344,31 @@ class ProjectValidatorSpec extends FunSuite with Matchers{
       val validationErrors = ProjectValidator.validateProject(project, ProjectDAO.getProjectLinks(project.id))
 
       validationErrors.size shouldNot be (0)
-      validationErrors.count(_.validationError.value == ValidationError.ErrorInValidationOfUnchangedLinks.value) should be (1)
+      validationErrors.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be (1)
+    }
+  }
+
+  test("validator should return errors if discontinuity is 3 and next road part ely is equal") {
+    runWithRollback {
+      testDataForElyTest01()
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), false, 16320L, 1L, Discontinuity.ChangingELYCode)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+
+      val validationErrors = ProjectValidator.checkProjectElyCodes(project,projectLinks)
+      validationErrors.size should be (1)
+      validationErrors.head.validationError.value should be (RoadNotEndingInElyBorder.value)
+    }
+  }
+
+  test("validator should return errors if discontinuity is anything BUT 3 and next road part ely is different") {
+    runWithRollback {
+      testDataForElyTest02()
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), false, 27L, 19L, Discontinuity.Continuous,12L)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+
+      val validationErrors = ProjectValidator.checkProjectElyCodes(project,projectLinks)
+      validationErrors.size should be (1)
+      validationErrors.head.validationError.value should be (RoadContinuesInAnotherEly.value)
     }
   }
 

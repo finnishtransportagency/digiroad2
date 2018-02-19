@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{MinDistanceForGeometryUpdate, RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
@@ -143,6 +143,7 @@ class AssetDataImporter {
         RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
         RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
         RA2.START_ADDR_M = ROAD_ADDRESS.END_ADDR_M AND
+        RA2.COMMON_HISTORY_ID = ROAD_ADDRESS.COMMON_HISTORY_ID AND
         RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
         (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
         NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)))""".execute
@@ -155,6 +156,7 @@ class AssetDataImporter {
               RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
               RA2.END_ADDR_M = ROAD_ADDRESS.START_ADDR_M AND
               RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
+              RA2.COMMON_HISTORY_ID = ROAD_ADDRESS.COMMON_HISTORY_ID AND
               (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
                 NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
               )
@@ -272,18 +274,18 @@ class AssetDataImporter {
     val service = new RoadAddressService(linkService, eventBus)
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
-    OracleDatabase.withDynTransaction {
-      val municipalities = Queries.getMunicipalitiesWithoutAhvenanmaa
+    val municipalities = OracleDatabase.withDynTransaction {
       sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
       println("Old address data cleared")
+      Queries.getMunicipalitiesWithoutAhvenanmaa
+    }
       municipalities.foreach(municipality => {
         println("Processing municipality %d at time: %s".format(municipality, DateTime.now().toString))
         val missing = service.getMissingRoadAddresses(roadNumbersToFetch, municipality)
         println("Got %d links".format(missing.size))
-        missing.foreach(service.createSingleMissingRoadAddress)
+        service.createMissingRoadAddress(missing)
         println("Municipality %d: %d links added at time: %s".format(municipality, missing.size, DateTime.now().toString))
       })
-    }
   }
 
   def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean) = {
@@ -307,8 +309,10 @@ class AssetDataImporter {
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
             if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
 
-              if (((segment.geometry.head.distance2DTo(newGeom.head) > 1) && (segment.geometry.head.distance2DTo(newGeom.last) > 1)) ||
-                ((segment.geometry.last.distance2DTo(newGeom.head) > 1) && (segment.geometry.last.distance2DTo(newGeom.last) > 1))) {
+              if (((segment.geometry.head.distance2DTo(newGeom.head) > MinDistanceForGeometryUpdate) &&
+                (segment.geometry.head.distance2DTo(newGeom.last) > MinDistanceForGeometryUpdate)) ||
+                ((segment.geometry.last.distance2DTo(newGeom.head) > MinDistanceForGeometryUpdate) &&
+                  (segment.geometry.last.distance2DTo(newGeom.last) > MinDistanceForGeometryUpdate))) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1
