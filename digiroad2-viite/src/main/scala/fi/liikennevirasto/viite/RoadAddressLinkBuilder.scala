@@ -1,20 +1,21 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.service.RoadLinkType.{apply => _, _}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.service.RoadLinkType.{apply => _, _}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 
 object RoadAddressLinkBuilder extends AddressLinkBuilder {
-  /*Temporary restriction from PO: Filler limit on modifications
-                                            (LRM adjustments) is limited to 1 meter. If there is a need to fill /
-                                            cut more than that then nothing is done to the road address LRM data.
-                                            */
+
+  /* Temporary restriction from PO: Filler limit on modifications
+   * (LRM adjustments) is limited to 1 meter. If there is a need to fill /
+   * cut more than that then nothing is done to the road address LRM data.
+   */
   def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false, newGeometry: Option[Seq[Point]] = None): RoadAddressLink = {
     val roadLinkType = (floating, roadLink.linkSource) match {
       case (true, _) => FloatingRoadLinkType
@@ -148,11 +149,9 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   }
 
   def capToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => (x.endMValue - MaxAllowedMValueError > geomLength))
-    val cappedSegments = overflowingSegments.map { s =>
-      (s.copy(endMValue = geomLength))
-    }
-    (passThroughSegments ++ cappedSegments)
+    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => x.endMValue - MaxAllowedMValueError > geomLength)
+    val cappedSegments = overflowingSegments.map { s => s.copy(endMValue = geomLength) }
+    passThroughSegments ++ cappedSegments
   }
 
   def extendToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
@@ -161,9 +160,10 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val sorted = sourceSegments.sortBy(_.endMValue)(Ordering[Double].reverse)
     val lastSegment = sorted.head
     val restSegments = sorted.tail
-    val adjustments = (lastSegment.endMValue < geomLength - MaxAllowedMValueError) match {
-      case true => (restSegments ++ Seq(lastSegment.copy(endMValue = geomLength)))
-      case _ => sourceSegments
+    val adjustments = if (lastSegment.endMValue < geomLength - MaxAllowedMValueError) {
+      restSegments ++ Seq(lastSegment.copy(endMValue = geomLength))
+    } else {
+      sourceSegments
     }
     adjustments
   }
@@ -181,7 +181,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   }
 }
 
-//TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
+// TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
 sealed trait RoadType {
   def value: Int
   def displayValue: String
