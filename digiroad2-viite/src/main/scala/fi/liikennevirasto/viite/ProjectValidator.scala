@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
+import fi.liikennevirasto.viite.ProjectValidator.checkTerminationContinuity
 import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
@@ -13,6 +14,15 @@ import fi.liikennevirasto.viite.process.TrackSectionOrder
 object ProjectValidator {
 
   private def distanceToPoint = 10.0
+
+  // Utility method, will return correct GeometryEndpoint
+  private def endPoint(b: BaseRoadAddress) = {
+    b.sideCode match {
+      case TowardsDigitizing => b.geometry.last
+      case AgainstDigitizing => b.geometry.head
+      case _ => Point(0.0, 0.0)
+    }
+  }
 
   sealed trait ValidationError {
     def value: Int
@@ -151,6 +161,12 @@ object ProjectValidator {
       def notification = true
     }
 
+    case object TerminationContinuity extends ValidationError {
+      def value = 18
+      def message: String = WrongDiscontinuityWhenAdjacentToTerminatedRoad
+      def notification = true
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -232,7 +248,7 @@ object ProjectValidator {
     }
 
     checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ elyCodesResults
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ elyCodesResults ++ checkTerminationContinuity(project, projectLinks)
   }
 
   def checkRemovedEndOfRoadParts(project: RoadAddressProject): Seq[ValidationErrorDetails] = {
@@ -271,7 +287,7 @@ object ProjectValidator {
     * 2) If inside a part there is no gap, discontinuity 5 (cont) is required
     * 3) End of road part, discontinuity 2 or 3 (major, ely change) is required if there is a gap
     * 4) If a part that contained end of road discontinuity is terminated / renumbered / transferred,
-    *    there must be a new end of road link for that road at the last part
+    * there must be a new end of road link for that road at the last part
     * 5) If the next road part has differing ely code then there must be a discontinuity code 3 at the end
     *
     * @param project
@@ -279,6 +295,14 @@ object ProjectValidator {
     * @return
     */
   def checkOrdinaryRoadContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+/*    def error(validationError: ValidationError)(pl: Seq[ProjectLink]) = {
+      val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+      if (linkIds.nonEmpty)
+        Some(ValidationErrorDetails(project.id, validationError, linkIds,
+          points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
+      else
+        None
+    }*/
 
     def checkConnectedAreContinuous = {
       error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(seq.filterNot(pl =>
@@ -327,9 +351,6 @@ object ProjectValidator {
             else
               RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
                 .filter(_.startAddrMValue == 0L)
-          //TODO to be done/changed in a more detailed story
-          //          if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
-          //            return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
           val isConnected = lastProjectLinks.forall(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
             connected(lpl, nl)))
           val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
@@ -367,7 +388,7 @@ object ProjectValidator {
     * 2) If inside a part there is no gap, discontinuity 5 (cont) is required
     * 3) End of road part, discontinuity 2 or 3 (major, ely change) is required if there is a gap
     * 4) If a part that contained end of road discontinuity is terminated / renumbered / transferred,
-    *    there must be a new end of road link for that road at the last part
+    * there must be a new end of road link for that road at the last part
     * 5) If the next road part has differing ely code then there must be a discontinuity code 3 at the end
     *
     * @param project
@@ -438,9 +459,6 @@ object ProjectValidator {
           else
             RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
               .filter(_.startAddrMValue == 0L)
-        //TODO to be done/changed in a more detailed story
-        //        if (nextLinks.exists(_.ely != ely) && discontinuity != ChangingELYCode)
-        //          return error(ValidationError.ElyCodeChangeDetected)(lastProjectLinks)
 
         if (isConnectingRoundabout(lastProjectLinks)) {
           discontinuity match {
@@ -498,7 +516,7 @@ object ProjectValidator {
     val notCombinedLinks = projectLinks.filterNot(_.track == Track.Combined)
 
     def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-      previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue //&& GeometryUtils.areAdjacent(previous.geometry, currentLink.geometry, MaxDistanceForConnectedLinks)
+      previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue
     }
 
     def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
@@ -558,21 +576,110 @@ object ProjectValidator {
     }).head
   }
 
+  /**
+    * When terminating any road part, this will validate if the discontinuity of adjacent road addresses or project links.
+    * Discontinuty of roads adjacent to terminated must be End Of Road, if not, this method will inform the user places where this does not happen.
+    *
+    * @param project         The current project to validate
+    * @param allProjectLinks All the project links associated with the project in question
+    * @return A sequence with ValidationErrorDetails, can be empty.
+    */
+  def checkTerminationContinuity(project: RoadAddressProject, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    /**
+      * Method that will prepare the output of the validation error.
+      *
+      * @param validationError the validation error
+      * @param roadAddressLike Sequence of the BaseRoadAddresses that did not passed validation
+      * @return An optional value with eventual Validation error details
+      */
+    def error(validationError: ValidationError)(roadAddressLike: Seq[BaseRoadAddress]): Option[ValidationErrorDetails] = {
+      val grouppedByRoadAndPartNumber = roadAddressLike.groupBy(p => (p.roadNumber, p.roadPartNumber))
+      val (gLinkIds, gPoints, roadAndPart) = grouppedByRoadAndPartNumber.flatMap(g => {
+        val (road, part) = g._1
+        val links = g._2
+        val zoomPoint = GeometryUtils.midPointGeometry(links.minBy(_.endAddrMValue).geometry)
+        links.map(l => (l.linkId, zoomPoint, (road, part)))
+      }).unzip3
+
+      if (gLinkIds.nonEmpty)
+        Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq.distinct,
+          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Some(WrongDiscontinuityWhenAdjacentToTerminatedRoad.format(roadAndPart.toSet.mkString(", ")))))
+      else
+        Option.empty[ValidationErrorDetails]
+    }
+
+    /**
+      * Will find the endPoints (lowest and highest endAddressM respectivly) and run the standard validation to them
+      *
+      * @param groupedProjectLinks Project Links groupped by Road Number and Road Part Number
+      * @return Well formed validation error objects, if applicable
+      */
+    def checkEndpoints(groupedProjectLinks: Seq[ProjectLink]) = {
+      //Find endpoints, start and end
+      val startRoad = groupedProjectLinks.head
+      val endRoad = groupedProjectLinks.last
+      val anomalousAtStart = if (startRoad.status == LinkStatus.Terminated) {
+        checkValidation(startRoad)
+      } else Seq.empty[BaseRoadAddress]
+      val anomalousAtEnd = if (endRoad.status == LinkStatus.Terminated) {
+        checkValidation(endRoad)
+      } else Seq.empty[BaseRoadAddress]
+      error(ValidationErrorList.TerminationContinuity)(anomalousAtStart ++ anomalousAtEnd)
+    }
+
+    /**
+      * Main validation method, logic will find all the road addresses by bounding box surrounding the edge of the projctLink.
+      * Will remove from validation the road addresses that possess the same road number and road part number, are non-adjacent and whose discontinuity is not EndOfRoad
+      * If any road address survives the removal process then it is a anomalous and must be reported as such.
+      * We also search the whole project link list for the same "anomalous" linkIds and run them through the same process, if any returns then it is also deemed "anomalous" and will be reported
+      *
+      * @param edgeRoad A project link, either the start of it (lowest endAddressMValue) or the end of it(highest endAddressMValue)
+      * @return the anomalous base road addresses
+      */
+    def checkValidation(edgeRoad: ProjectLink): Seq[BaseRoadAddress] = {
+      val roadAddresses = findRoads(edgeRoad)
+      val problemAddress = if (roadAddresses.nonEmpty) {
+        //I am aware that in THEORY this filters could be fused into one, unifying the filter clauses with a && operator
+        // but it just does not work, you can try it, but using the Viite1120Test project (devtest) it will output 4 entries while the correct result should be only one entry
+        val numberAndPartFilter = roadAddresses.filterNot(ra => {
+          ra.roadNumber == edgeRoad.roadNumber && ra.roadPartNumber == edgeRoad.roadPartNumber
+        })
+        val onlyAdjacents = numberAndPartFilter.filterNot(tf => {
+          !GeometryUtils.areAdjacent(tf.geometry, edgeRoad.geometry)
+        })
+        onlyAdjacents.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
+      } else Seq.empty[RoadAddress]
+      val adjacentProjectLinks = allProjectLinks.filter(p => problemAddress.exists(_.linkId == p.linkId))
+      val problemLinks = if (adjacentProjectLinks.nonEmpty) {
+        //I am aware that in THEORY this filters could be fused into one, unifying the filter clauses with a && operator
+        // but it just does not work, you can try it, but using the Viite1120Test project (devtest) it will output 4 entries while the correct result should be only one entry
+        val numberAndPartFilter = adjacentProjectLinks.filterNot(ra => {
+          ra.roadNumber == edgeRoad.roadNumber && ra.roadPartNumber == edgeRoad.roadPartNumber
+        })
+        val onlyAdjacents = numberAndPartFilter.filterNot(tf => {
+          !GeometryUtils.areAdjacent(tf.geometry, edgeRoad.geometry)
+        })
+        onlyAdjacents.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
+      } else Seq.empty[ProjectLink]
+      problemLinks ++ problemAddress
+    }
+
+    val terminatedProjectLinks = allProjectLinks.filterNot(_.status.value != LinkStatus.Terminated.value)
+    if (terminatedProjectLinks.nonEmpty) {
+      val grouped = terminatedProjectLinks.groupBy(p => (p.roadNumber, p.roadPartNumber))
+      val t = grouped.map(g => {
+        checkEndpoints(g._2.sortBy(_.endAddrMValue))
+      })
+      t.filter(_.nonEmpty).map(_.get).toSeq
+    } else Seq.empty[ValidationErrorDetails]
+  }
+
   private def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
     GeometryUtils.areAdjacent(pl1.geometry, pl2.geometry, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 
   private def trackMatch(track1: Track, track2: Track) = {
     track1 == track2 || track1 == Track.Combined || track2 == Track.Combined
-  }
-
-  // Utility method, will return correct GeometryEndpoint
-  def endPoint(b: BaseRoadAddress): Point = {
-    b.sideCode match {
-      case TowardsDigitizing => b.geometry.last
-      case AgainstDigitizing => b.geometry.head
-      case _ => Point(0.0, 0.0)
-    }
   }
 
   /**

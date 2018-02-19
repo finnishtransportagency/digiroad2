@@ -27,6 +27,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  private def testDataForCheckTerminationContinuity() = {
+    val roadAddressId = RoadAddressDAO.getNextRoadAddressId
+    val ra = Seq(RoadAddress(roadAddressId, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 4278L, 4387L,
+      Some(DateTime.parse("1996-01-01")), None, Option("TR"), 0, 1817196, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), floating = false,
+      Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
+    RoadAddressDAO.create(ra)
+  }
+
   private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
                           roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L) = {
     ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
@@ -404,4 +412,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("validator should return an issue whenever a road gets terminated and adjacent to that same roa lies other roads with discontinuity value = 1") {
+    runWithRollback {
+      testDataForCheckTerminationContinuity()
+      val project = setUpProjectWithLinks(LinkStatus.Terminated, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = false, 16320L, 1L, Discontinuity.ChangingELYCode)
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+
+      val validationErrors = ProjectValidator.checkTerminationContinuity(project, projectLinks)
+      validationErrors.size should be(1)
+      validationErrors.head.validationError.value should be(TerminationContinuity.value)
+    }
+  }
 }
