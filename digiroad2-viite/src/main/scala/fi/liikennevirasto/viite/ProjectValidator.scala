@@ -29,7 +29,7 @@ object ProjectValidator {
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
       def value = 0
-      def message = MissingEndOfRoadMessage
+      def message: String = MissingEndOfRoadMessage
       def notification = false
     }
 
@@ -37,7 +37,7 @@ object ProjectValidator {
     // There must be a minor discontinuity if the jump is longer than 0.1 m (10 cm) between road links
     case object MinorDiscontinuityFound extends ValidationError {
       def value = 1
-      def message = MinorDiscontinuityFoundMessage
+      def message: String = MinorDiscontinuityFoundMessage
       def notification = true
     }
 
@@ -45,7 +45,7 @@ object ProjectValidator {
     // There must be a major discontinuity if the jump is longer than 50 meters
     case object MajorDiscontinuityFound extends ValidationError {
       def value = 2
-      def message = MajorDiscontinuityFoundMessage
+      def message: String = MajorDiscontinuityFoundMessage
       def notification = false
     }
 
@@ -53,7 +53,7 @@ object ProjectValidator {
     // For every track 1 there must exist track 2 that covers the same address span and vice versa
     case object InsufficientTrackCoverage extends ValidationError {
       def value = 3
-      def message = InsufficientTrackCoverageMessage
+      def message: String = InsufficientTrackCoverageMessage
       def notification = false
     }
 
@@ -61,7 +61,7 @@ object ProjectValidator {
     // There must be a continuous road addressing scheme so that all values from 0 to the highest number are covered
     case object DiscontinuousAddressScheme extends ValidationError {
       def value = 4
-      def message = DiscontinuousAddressSchemeMessage
+      def message: String = DiscontinuousAddressSchemeMessage
       def notification = false
     }
 
@@ -69,7 +69,7 @@ object ProjectValidator {
     // There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
     case object SharedLinkIdsExist extends ValidationError {
       def value = 5
-      def message = SharedLinkIdsExistMessage
+      def message: String = SharedLinkIdsExistMessage
       def notification = false
     }
 
@@ -77,7 +77,7 @@ object ProjectValidator {
     // Continuity codes are given for end of road
     case object NoContinuityCodesAtEnd extends ValidationError {
       def value = 6
-      def message = NoContinuityCodesAtEndMessage
+      def message: String = NoContinuityCodesAtEndMessage
       def notification = false
     }
 
@@ -85,43 +85,43 @@ object ProjectValidator {
     // Recalculation of M values and delta calculation are both unsuccessful for every road part in project
     case object UnsuccessfulRecalculation extends ValidationError {
       def value = 7
-      def message = UnsuccessfulRecalculationMessage
+      def message: String = UnsuccessfulRecalculationMessage
       def notification = false
     }
 
     case object HasNotHandledLinks extends ValidationError {
       def value = 8
-      def message = ""
+      def message: String = ""
       def notification = false
     }
 
     case object ConnectedDiscontinuousLink extends ValidationError {
       def value = 9
-      def message = ConnectedDiscontinuousMessage
+      def message: String = ConnectedDiscontinuousMessage
       def notification = false
     }
 
     case object IncompatibleDiscontinuityCodes extends ValidationError {
       def value = 10
-      def message = DifferingDiscontinuityCodesForTracks
+      def message: String = DifferingDiscontinuityCodesForTracks
       def notification = false
     }
 
     case object EndOfRoadNotOnLastPart extends ValidationError {
       def value = 11
-      def message = EndOfRoadNotOnLastPartMessage
+      def message: String = EndOfRoadNotOnLastPartMessage
       def notification = false
     }
 
     case object ElyCodeChangeDetected extends ValidationError {
       def value = 12
-      def message = ElyCodeChangeNotPresent
+      def message: String = ElyCodeChangeNotPresent
       def notification = false
     }
 
     case object DiscontinuityOnRamp extends ValidationError {
       def value = 13
-      def message = RampDiscontinuityFoundMessage
+      def message: String = RampDiscontinuityFoundMessage
       def notification = true
     }
 
@@ -129,25 +129,25 @@ object ProjectValidator {
     // Unchanged project links cannot have any other operation (transfer, termination) previously on the same number and part
     case object ErrorInValidationOfUnchangedLinks extends ValidationError {
       def value = 14
-      def message = ErrorInValidationOfUnchangedLinksMessage
+      def message: String = ErrorInValidationOfUnchangedLinksMessage
       def notification = false
     }
 
     case object RampConnectingRoundabout extends ValidationError {
       def value = 15
-      def message = MinorDiscontinuousWhenRampConnectingRoundabout
+      def message: String = MinorDiscontinuousWhenRampConnectingRoundabout
       def notification = false
     }
 
     case object RoadNotEndingInElyBorder extends ValidationError {
       def value = 16
-      def message = RoadNotEndingInElyBorderMessage
+      def message: String = RoadNotEndingInElyBorderMessage
       def notification = true
     }
 
     case object RoadContinuesInAnotherEly extends ValidationError {
       def value = 17
-      def message = RoadContinuesInAnotherElyMessage
+      def message: String = RoadContinuesInAnotherElyMessage
       def notification = true
     }
 
@@ -160,7 +160,7 @@ object ProjectValidator {
                                     affectedLinkIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
-  def error(id: Long, validationError: ValidationError)(pl: Seq[ProjectLink]) = {
+  def error(id: Long, validationError: ValidationError)(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
     val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (linkIds.nonEmpty)
       Some(ValidationErrorDetails(id, validationError, linkIds,
@@ -381,7 +381,7 @@ object ProjectValidator {
       val boundingBox = BoundingRectangle(Point(endPoints._1.min,
         endPoints._2.min), Point(endPoints._1.max, endPoints._2.max))
       // Fetch all ramps and roundabouts roads and parts this is connected to (or these, if ramp has multiple links)
-      val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, false, false,
+      val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, fetchOnlyFloating = false, onlyNormalRoads = false,
         Seq((RampsMinBound, RampsMaxBound))).filter(ra =>
         pls.exists(pl => connected(pl, ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
 
@@ -460,7 +460,7 @@ object ProjectValidator {
               val boundingBox = BoundingRectangle(Point(endPoints._1.min,
                 endPoints._2.min), Point(endPoints._1.max, endPoints._2.max))
               // Fetch all ramps and roundabouts roads and parts this is connected to (or these, if ramp has multiple links)
-              val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, false, false,
+              val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, fetchOnlyFloating = false, onlyNormalRoads = false,
                 Seq((RampsMinBound, RampsMaxBound))).filter(ra =>
                 lastProjectLinks.exists(pl => connected(pl, ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
 
@@ -566,8 +566,8 @@ object ProjectValidator {
     track1 == track2 || track1 == Track.Combined || track2 == Track.Combined
   }
 
-  //Utility method, will return correct GeometryEndpoint
-  def endPoint(b: BaseRoadAddress) = {
+  // Utility method, will return correct GeometryEndpoint
+  def endPoint(b: BaseRoadAddress): Point = {
     b.sideCode match {
       case TowardsDigitizing => b.geometry.last
       case AgainstDigitizing => b.geometry.head
@@ -604,10 +604,10 @@ object ProjectValidator {
       val startRoad = projectLinks.head
       val endRoad = projectLinks.last
       val startRoadValidation = if (startRoad.discontinuity == Discontinuity.ChangingELYCode) {
-        evaluateBorderCheck(startRoad, false)
+        evaluateBorderCheck(startRoad, secondCheck = false)
       } else Option.empty[ProjectLink]
       val endRoadValidation = if (endRoad.discontinuity == Discontinuity.ChangingELYCode) {
-        evaluateBorderCheck(endRoad, false)
+        evaluateBorderCheck(endRoad, secondCheck = false)
       } else Option.empty[ProjectLink]
       val problemRoads = Seq(startRoadValidation, endRoadValidation).filterNot(_.isEmpty).map(_.get)
       error(ValidationErrorList.RoadNotEndingInElyBorder)(problemRoads)
@@ -649,8 +649,8 @@ object ProjectValidator {
       val projectLinks = group._2
       val startRoad = projectLinks.head
       val endRoad = projectLinks.last
-      val startValidationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(startRoad, true) else Option.empty[ProjectLink]
-      val endValidationResult = if (endRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(endRoad, true) else Option.empty[ProjectLink]
+      val startValidationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(startRoad, secondCheck = true) else Option.empty[ProjectLink]
+      val endValidationResult = if (endRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(endRoad, secondCheck = true) else Option.empty[ProjectLink]
 
       val problemRoads = Seq(startValidationResult, endValidationResult).filterNot(_.isEmpty).map(_.get)
       error(ValidationErrorList.RoadContinuesInAnotherEly)(problemRoads)
@@ -670,7 +670,7 @@ object ProjectValidator {
     val lowerCorner = Point(p.x - distanceToPoint, p.y - distanceToPoint, p.z - distanceToPoint)
     val higherCorner = Point(p.x + distanceToPoint, p.y + distanceToPoint, p.z + distanceToPoint)
     val box = BoundingRectangle(lowerCorner, higherCorner)
-    RoadAddressDAO.fetchRoadAddressesByBoundingBox(box, false)
+    RoadAddressDAO.fetchRoadAddressesByBoundingBox(box, fetchOnlyFloating = false)
   }
 
   /**
