@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup.SpeedLimits
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -274,6 +275,63 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("7")
       asset.validityDirection should be(BothDirections.value)
 
+    }
+  }
+
+  test("Get trafficSigns by radius") {
+    runWithRollback {
+      val propertiesSpeedLimit = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 50.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, propertiesSpeedLimit, 1, None), testUser.username, roadLink)
+
+      val assets = service.getTrafficSignByRadius(roadLink.geometry.last, 50, None)
+
+      assets.size should be(1)
+
+      val asset = assets.head
+
+      asset.id should be(id)
+      asset.linkId should be(388553075)
+      asset.lon should be(0)
+      asset.lat should be(20)
+      asset.mValue should be(20)
+      asset.floating should be(false)
+      asset.municipalityCode should be(235)
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
+      asset.createdBy should be(Some(testUser.username))
+      asset.createdAt shouldBe defined
+    }
+  }
+
+  test("Get trafficSigns by radius and sign type") {
+    runWithRollback {
+      val propertiesSpeedLimit = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val propertiesMaximumRestrictions= Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("3"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("10"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 50.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, propertiesSpeedLimit, 1, None), testUser.username, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, propertiesMaximumRestrictions, 1, None), testUser.username, roadLink)
+
+      val assets = service.getTrafficSignByRadius(roadLink.geometry.last, 50, Some(SpeedLimits))
+
+      assets.size should be(1)
+
+      val asset = assets.head
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
     }
   }
 }
