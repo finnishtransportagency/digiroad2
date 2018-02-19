@@ -1053,9 +1053,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case true =>
           (None, None, None)
         case false if (user.configuration.authorizedAreas.nonEmpty) =>
-          (None, Some(user.configuration.authorizedAreas), Some(asset.State.value, asset.Municipality.value))
+          (None, Some(user.configuration.authorizedAreas), Some(Set(asset.State.value, asset.Municipality.value)))
         case false if (user.configuration.authorizedMunicipalities.nonEmpty) =>
-          (Some(user.configuration.authorizedMunicipalities), Some(asset.Municipality.value))
+          (Some(user.configuration.authorizedMunicipalities), None, Some(Set(asset.Municipality.value)))
       }
     speedLimitService.getSpeedLimitsWithQualityErrors(includedMunicipalities, includedAreas, adminClassAllow)
   }
