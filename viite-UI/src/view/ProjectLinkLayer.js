@@ -1020,12 +1020,6 @@
     });
 
 
-    eventbus.on('clearProjectLinkLayer', function () {
-      eventbus.trigger('roadAddress:projectLinksUpdated');
-      suravageRoadProjectLayer.getSource().clear();
-    });
-
-
     eventbus.on('map:clearLayers', clearLayers);
 
     eventbus.on('suravageProjectRoads:toggleVisibility', function (visibility) {

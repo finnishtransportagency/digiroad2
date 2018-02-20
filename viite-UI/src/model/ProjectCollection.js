@@ -331,7 +331,7 @@
           },
           closeCallback: function () {
             applicationModel.removeSpinner();
-            eventbus.trigger('clearProjectLinkLayer');
+            eventbus.trigger('roadAddress:projectLinksUpdated');
 
           }
         });
