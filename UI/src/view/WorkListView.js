@@ -23,6 +23,9 @@
     this.bindExternalEventHandlers = function() {};
 
     this.workListItemTable = function(layerName, workListItems, municipalityName) {
+      if (layerName === 'speedLimitErrors')
+        layerName = 'speedLimit';
+
       var municipalityHeader = function(municipalityName, totalCount) {
         var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
         return $('<h2/>').html(municipalityName + countString);
@@ -76,6 +79,7 @@
     this.generateWorkList = function(layerName, listP) {
       var title = {
         speedLimit: 'Tuntemattomien nopeusrajoitusten lista',
+        speedLimitErrors: 'Laatuvirheet Lista',
         linkProperty: 'Korjattavien linkkien lista',
         massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
         pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',

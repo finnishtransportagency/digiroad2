@@ -187,6 +187,10 @@
       });
     };
 
+    this.getSpeedLimitErrors = function () {
+      return $.getJSON('api/speedLimits/qualityErrors');
+    };
+
     this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox

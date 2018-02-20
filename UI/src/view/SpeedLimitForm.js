@@ -77,9 +77,11 @@
     var notRendered = !$('#work-list-link').length;
     if(notRendered) {
       $('#information-content').append('' +
-        '<div class="form form-horizontal">' +
+          '<div class="form form-horizontal">' +
           '<a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
-        '</div>');
+          '<a id="work-list-link-errors" class="wrong-speed-limits" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a>' +
+          '</div>'
+      );
     }
   };
 
@@ -128,6 +130,7 @@
       }
       else {
         $('#work-list-link').parent().remove();
+        $('#work-list-link-errors').parent().remove();
       }
     });
   };
