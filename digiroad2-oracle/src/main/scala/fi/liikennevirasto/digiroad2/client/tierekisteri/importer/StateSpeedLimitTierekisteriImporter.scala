@@ -13,7 +13,7 @@ import org.joda.time.DateTime
 
 class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOperations {
   override def typeId: Int = StateSpeedLimit.typeId
-  override def assetName: String = "speedLimitState"
+  override def assetName: String = "stateSpeedLimit"
   override type TierekisteriClientType = TierekisteriTrafficSignAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)

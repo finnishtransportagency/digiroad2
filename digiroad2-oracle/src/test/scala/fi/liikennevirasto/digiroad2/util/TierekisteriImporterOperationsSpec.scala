@@ -1107,7 +1107,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.value should be(Some(NumericValue(80)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
     }
   }
 
@@ -1143,7 +1143,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.value should be(Some(NumericValue(50)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
     }
   }
 
@@ -1173,7 +1173,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.foreach{ asset =>
         asset.linkId should be(5001)
         asset.sideCode should be(SideCode.TowardsDigitizing.value)
-        asset.createdBy should be(Some("batch_process_speedLimitState"))
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
       assets.sortBy(_.startMeasure)
       assets.head.value should be (Some(NumericValue(80)))
@@ -1207,7 +1207,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.size should be (1)
       asset.head.linkId should be(5001)
       asset.head.sideCode should be(SideCode.AgainstDigitizing.value)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
       asset.head.value should be (Some(NumericValue(80)))
     }
   }
@@ -1240,7 +1240,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.foreach{ asset =>
         asset.linkId should be(5001)
         asset.sideCode should be(2)
-        asset.createdBy should be(Some("batch_process_speedLimitState"))
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
       assets.sortBy(_.startMeasure).map(_.value) should be (Seq(Some(NumericValue(80)), Some(NumericValue(50)), Some(NumericValue(80))))
     }
@@ -1273,7 +1273,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.size should be (3)
       assets.foreach{ asset =>
         asset.sideCode should be(2)
-        asset.createdBy should be(Some("batch_process_speedLimitState"))
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
       assets.sortBy(_.linkId).map(_.linkId) should be (Seq(5001, 5001, 5002))
       assets.sortBy(_.linkId).sortBy(_.startMeasure).map(_.value) should be (Seq(Some(NumericValue(80)), Some(NumericValue(120)), Some(NumericValue(120))))

@@ -13,7 +13,6 @@ class TierekisteriTelematicSpeedLimitClient(trEndPoint: String, trEnable: Boolea
   private val trTecPointType = "TEKTYYPPI"
   private val trPUOLI = "PUOLI"
   private val trTelematicSpeedLimitAsset = "34"
-  //TODO check if this code is update with branch DROTH-1021
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
