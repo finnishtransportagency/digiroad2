@@ -397,4 +397,4 @@ kehitys@digiroad.fi
 
 __Palaute operaattorin manuaalista:__
 
-antti.salo@dimenteq.fi
+operaattori@digiroad.fi
