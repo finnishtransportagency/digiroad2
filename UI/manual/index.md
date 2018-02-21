@@ -5,7 +5,7 @@ __Huom! Suosittelemme Firefoxia tai Chromea, kun sovelluksella yll&auml;pidet&au
 
 __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat paremmin.__
 
-1. Miten p&auml;&auml;st&auml; alkuun?
+1. Miten p&auml;&auml;sen alkuun?
 -----------------------
 
 1. Digiroadiin k&auml;yv&auml;t olemassa olevat Liikenneviraston tunnukset. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-palvelusta: info@digiroad.fi tai 040-507 2301.
@@ -23,7 +23,7 @@ Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
 Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Liikenneviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
 
-1.1 Mist&auml; saada opastusta?
+1.1 Mist&auml; saan opastusta?
 --------------------------
 
 Digiroad-palvelusta saa tarvittavia tunnuksia ja k&auml;ytt&ouml;oikeuksia selainsovellukseen. Palvelu auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Palvelussa vastataan puhelimeen ja s&auml;hk&ouml;posteihin arkip&auml;ivin&auml; klo 9-16.
