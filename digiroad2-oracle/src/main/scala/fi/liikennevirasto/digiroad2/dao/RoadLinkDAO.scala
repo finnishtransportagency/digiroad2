@@ -174,6 +174,22 @@ object RoadLinkDAO{
       Some(vvhRoadLink.trafficDirection.value)
     }
 
+    override def insertValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
+      sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type)
+                   select primary_key_seq.nextval, ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value}
+                   from dual
+                   where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
+    }
+
+    override def updateValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long]): Unit = {
+      sqlu"""update #$table
+               set #$column = $value,
+                   modified_date = SYSDATE,
+                   modified_by = $username,
+                   link_type = ${linkProperty.linkType.value}
+               where link_id = ${linkProperty.linkId}""".execute
+
+    }
   }
 
   case object LinkTypeDao extends RoadLinkDAO {
