@@ -24,9 +24,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockSpeedLimitService = MockitoSugar.mock[SpeedLimitService]
 
-  val validator = new SpeedLimitValidator(mockSpeedLimitService, mockTrafficSignService) {
-    override def withDynTransaction[T](f: => T): T = f
-  }
+  val validator = new SpeedLimitValidator(mockSpeedLimitService, mockTrafficSignService)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -45,7 +43,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     inaccurateId should be (speedLimit.id)
   }
 
-  test("inaccurate SpeedLimit when exist more than one and the value doesn't match") {
+  test("when exist more than one trafficSign on same linkId and the value of one doesn't match") {
     val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0),
       Point(20, 0.0)), 0.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
@@ -58,7 +56,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     inaccurateId should be (speedLimit.id)
   }
 
-  test("inaccurate SpeedLimit when traffic Signs has the same linkId out of asset length geometry") {
+  test("when traffic Signs has the same linkId out of asset length geometry and value doesn't match") {
     val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(10.0, 0.0),
       Point(20, 0.0)), 10.0, 20.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
@@ -66,6 +64,21 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
     when(mockTrafficSignService.getPersistedAssetsByLinkId(speedLimit.linkId)).thenReturn(trafficSign)
 
+    val (first, last) = GeometryUtils.geometryEndpoints(speedLimit.geometry)
+    when(mockTrafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))).thenReturn(trafficSign)
+    when(mockTrafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))).thenReturn(Seq())
+
+    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit).getOrElse(0)
+    inaccurateId should be (speedLimit.id)
+  }
+
+  test("when traffic Signs has the same linkId but out of asset geometry")  {
+    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(10.0, 0.0),
+      Point(20, 0.0)), 10.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+
+    val trafficSign = Seq(PersistedTrafficSign(2, speedLimit.linkId, 9, 1, 9, false, 0, 235, simpleProp80, None, None, None, None, TrafficDirection.TowardsDigitizing.value, None, NormalLinkInterface))
+
+    when(mockTrafficSignService.getPersistedAssetsByLinkId(speedLimit.linkId)).thenReturn(Seq())
     val (first, last) = GeometryUtils.geometryEndpoints(speedLimit.geometry)
     when(mockTrafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))).thenReturn(trafficSign)
     when(mockTrafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))).thenReturn(Seq())

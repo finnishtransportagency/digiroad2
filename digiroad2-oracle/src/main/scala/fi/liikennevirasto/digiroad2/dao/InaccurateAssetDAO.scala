@@ -6,7 +6,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 class InaccurateAssetDAO {
 
-  def createInaccurateAsset(assetId: Long, typeId: Int, municipalityCode: Long, areaCode: Long, administrativeClass: Long) = {
+  def createInaccurateAsset(assetId: Long, typeId: Int, municipalityCode: Long, areaCode: Int, administrativeClass: Long) = {
     sqlu"""
         insert into inaccurate_asset (asset_id, asset_type_id, municipality_code, area_code, administrative_class)
         values ($assetId, $typeId, $municipalityCode, $areaCode, $administrativeClass)
