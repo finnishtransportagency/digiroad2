@@ -497,12 +497,6 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val geom = List(Point(0, 0), Point(300, 0))
     val len = GeometryUtils.geometryLength(geom)
 
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-
     val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
       RoadLink(newLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
     )
