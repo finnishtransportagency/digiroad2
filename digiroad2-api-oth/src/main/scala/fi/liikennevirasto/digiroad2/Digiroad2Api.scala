@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, LinkProperties, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop}
@@ -25,8 +25,6 @@ import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
-
-case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection, administrativeClass: AdministrativeClass)
 
 case class ExistingLinearAsset(id: Long, linkId: Long)
 
@@ -596,7 +594,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
     properties.map { prop =>
-      roadLinkService.updateLinkProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, prop.administrativeClass, Option(user.username), municipalityValidation).map { roadLink =>
+      roadLinkService.updateLinkProperties(prop, Option(user.username), municipalityValidation).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
