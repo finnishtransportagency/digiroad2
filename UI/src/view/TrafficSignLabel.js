@@ -1,17 +1,16 @@
 (function(root) {
 
-  root.TrafficSignLabel = function() {
-    AssetLabel.call(this);
+  root.TrafficSignLabel = function(groupingDistance) {
+    AssetLabel.call(this, this.MIN_DISTANCE);
     var me = this;
 
-    var MIN_DISTANCE = 3;
-    var populatedPoints = [];
+    this.MIN_DISTANCE = groupingDistance;
 
     var backgroundStyle = function (trafficSign, counter) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: getLabelProperty(trafficSign, counter).findImage(),
-          anchor : [0.48, 0.75 + (counter)]
+          anchor : [0.48, 1.75 + (counter)]
         }))
       });
     };
@@ -74,7 +73,7 @@
       ];
 
       var labelProperty = _.find(labelingProperties, function(properties) {
-          return _.contains(properties.signValue, trafficSign.type);
+        return _.contains(properties.signValue, trafficSign.type);
       });
 
 
@@ -83,7 +82,7 @@
       }
 
       function getTextOffset(){
-        return labelProperty && labelProperty.offset ? labelProperty.offset :  -10 - (counter * 35);
+        return labelProperty && labelProperty.offset ? labelProperty.offset :  -45 - (counter * 35);
       }
 
       function getValidation(){
@@ -153,32 +152,29 @@
     };
 
     this.renderFeaturesByPointAssets = function(pointAssets, zoomLevel){
-      clearPoints();
-      return me.renderFeatures(pointAssets, zoomLevel, function(asset){
-        return me.getCoordinateForGrouping(asset);
+      return me.renderGroupedFeatures(pointAssets, zoomLevel, function(asset){
+        return me.getCoordinate(asset);
       });
     };
 
-    this.renderFeatures = function(assets, zoomLevel, getPoint){
+    this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
       if(!this.isVisibleZoom(zoomLevel))
         return [];
-
-      return _.chain(assets).
-      map(function(asset){
-        var trafficSign = me.getValue(asset);
-        var assetLocation = getPoint(asset);
-        if(trafficSign !== undefined){
-          var styles = [];
-          styles = styles.concat(me.getStickStyle());
-          styles = styles.concat(me.getStyle(trafficSign, assetLocation[1]));
-          var feature = me.createFeature(assetLocation[0]);
-          feature.setStyle(styles);
-          feature.setProperties(asset);
-          return feature;
-        }
-      }).
-      filter(function(feature){ return !_.isUndefined(feature); }).
-      value();
+      var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
+      return _.flatten(_.chain(groupedAssets).map(function(assets){
+        return _.map(assets, function(asset, index){
+          var value = me.getValue(asset);
+          if(value !== undefined){
+            var styles = [];
+            styles = styles.concat(me.getStickStyle());
+            styles = styles.concat(me.getStyle(value, index));
+            var feature = me.createFeature(getPoint(asset));
+            feature.setStyle(styles);
+            feature.setProperties(asset);
+            return feature;
+          }
+        });
+      }).filter(function(feature){ return !_.isUndefined(feature); }).value());
     };
 
     this.createFeature = function(point){
@@ -193,37 +189,9 @@
 
     this.getValue = function (asset) {
       if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
-          return;
+        return;
       var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : '';
       return {value : value, type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue)};
-    };
-
-    var clearPoints = function () {
-      populatedPoints = [];
-    };
-
-    var isInProximity = function (pointA, pointB) {
-      return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < MIN_DISTANCE;
-    };
-
-    this.getCoordinateForGrouping = function(point){
-      var assetCoordinate = {lon : point.lon, lat : point.lat};
-      var assetCounter = {counter: 1};
-      if(_.isEmpty(populatedPoints)){
-        populatedPoints.push({coordinate: assetCoordinate, counter: 1});
-      }else{
-        var populatedPoint = _.find(populatedPoints, function (p) {
-          return isInProximity(point, p);
-        });
-        if (!_.isUndefined(populatedPoint)) {
-          assetCoordinate = populatedPoint.coordinate;
-          assetCounter.counter = populatedPoint.counter + 1;
-          populatedPoint.counter++;
-        } else {
-          populatedPoints.push({coordinate: assetCoordinate, counter: 1});
-        }
-      }
-      return [[assetCoordinate.lon, assetCoordinate.lat], assetCounter.counter];
     };
   };
 })(this);

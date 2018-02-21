@@ -28,7 +28,17 @@
     trafficLights: 280,
     maintenanceRoad: 290,
     trafficSigns: 300,
-    trSpeedLimits: 310
+    trSpeedLimits: 310,
+    trWeightLimits: 320,
+    trTrailerTruckWeightLimits: 330,
+    trAxleWeightLimits: 340,
+    trBogieWeightLimits: 350,
+    trHeightLimits: 360,
+    trWidthLimits: 370
+  };
+
+  root.assetGroups = {
+    trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
   };
 
   root.linearAssetSpecs = [
@@ -50,6 +60,7 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
+      label: new MassLimitationsLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true,
       hasMunicipalityValidation: true
@@ -71,6 +82,7 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
+      label: new MassLimitationsLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true,
       hasMunicipalityValidation: true
@@ -92,6 +104,7 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
+      label: new MassLimitationsLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true,
       hasMunicipalityValidation: true
@@ -113,6 +126,7 @@
         massLimitations : 'Muut massarajoitukset',
         showUnit: true
       },
+      label: new MassLimitationsLabel(),
       hasTrafficSignReadOnlyLayer: true,
       isVerifiable: true,
       hasMunicipalityValidation: true
@@ -490,7 +504,7 @@
       singleElementEventCategory: 'trSpeedLimit',
       multiElementEventCategory: 'trSpeedLimits',
       layerName: 'trSpeedLimits',
-      title: 'Tierekisteri nopeusrajoitus',
+      title: 'TR nopeusrajoitus',
       newTitle: 'Uusi nopeusrajoitus',
       className: 'tr-speed-limits',
       unit: 'km/h',
@@ -615,10 +629,10 @@
         {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
         {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
       ]},
-      label: new TrafficSignLabel(),
+      label: new TrafficSignLabel(Math.pow(3, 2)),
       collection: TrafficSignsCollection,
       allowGrouping: true,
-      groupingDistance: 9,
+      groupingDistance: Math.pow(3, 2), //geometry-calculations calculates the squared distance between two points, so give the grouping distance in meters x^2
       formLabels: {
         singleFloatingAssetLabel: 'liikennemerkin',
         manyFloatingAssetsLabel: 'liikennemerkit',
@@ -629,6 +643,78 @@
           return selectedAsset.getAdministrativeClass(linkId) === "State";
      },
       hasMunicipalityValidation: true
+    },
+    {
+      typeId: assetType.trHeightLimits,
+      layerName: 'trHeightLimits',
+      title: 'TR suurin sallittu korkeus',
+      allowComplementaryLinks: true,
+      allowGrouping: true,
+      groupingDistance: Math.pow(5, 2), //geometry-calculations calculates the squared distance between two points, so give the grouping distance in meters x^2
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
+      formLabels: {
+        title: 'Rajoitus',
+        showUnit: true
+      },
+      editConstrains : function() {
+        return true;
+      },
+      nonModifiableBox: true,
+      label: new HeightLimitLabel(Math.pow(5, 2))
+    },
+    {
+      typeId: assetType.trWidthLimits,
+      layerName: 'trWidthLimits',
+      title: 'TR suurin sallittu leveys',
+      allowComplementaryLinks: true,
+      allowGrouping: true,
+      groupingDistance: Math.pow(5, 2), //geometry-calculations calculates the squared distance between two points, so give the grouping distance in meters x^2
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
+      formLabels: {
+        title: 'Rajoitus',
+        showUnit: true
+      },
+      editConstrains : function() {
+        return true;
+      },
+      nonModifiableBox: true,
+      label: new WidthLimitLabel(Math.pow(5, 2))
+    }
+
+  ];
+
+  root.groupedPointAssetSpecs = [
+    {
+      typeIds: assetGroups.trWeightGroup,
+      layerName: 'trWeightLimits',
+      title: 'TR painorajoitukset',
+      allowComplementaryLinks: true,
+      allowGrouping: false,
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
+      formLabels: {
+        title: 'Painorajoitus',
+        showUnit: true
+      },
+      editConstrains : function() {
+        return true;
+      },
+      nonModifiableBox: true,
+      label: new WeightLimitLabel(),
+      propertyData: [
+        {'propertyTypeId': assetType.trWeightLimits, 'propertyType': 'number', 'publicId': "suurin_sallittu_massa_mittarajoitus", values: []},
+        {'propertyTypeId': assetType.trTrailerTruckWeightLimits, 'propertyType': 'number', 'publicId': "yhdistelman_suurin_sallittu_massa", values: []},
+        {'propertyTypeId': assetType.trAxleWeightLimits, 'propertyType': 'number', 'publicId': "suurin_sallittu_akselimassa", values: []},
+        {'propertyTypeId': assetType.trBogieWeightLimits, 'propertyType': 'number', 'publicId': "suurin_sallittu_telimassa", values: []}
+      ]
     }
   ];
 })(this);

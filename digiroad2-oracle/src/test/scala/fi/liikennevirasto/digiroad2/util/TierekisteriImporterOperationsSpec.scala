@@ -2,19 +2,19 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import org.joda.time.DateTime
-import org.mockito.Matchers.{any, _}
+import org.mockito.Matchers.any
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import org.mockito.Mockito._
 
 class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
@@ -29,7 +29,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val oracleAssetDao = new OracleAssetDao
-  val mockTrImporter: TierekisteriDataImporter = MockitoSugar.mock[TierekisteriDataImporter]
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
   val mockMassTransitLaneClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
@@ -87,7 +86,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     }
   }
 
-  class TestSpeedLimitsTierekisteriImporter extends SpeedLimitsTierekisteriImporter {
+  class TestSpeedLimitsTierekisteriImporter extends StateSpeedLimitTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
@@ -110,7 +109,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
                                         roadSide: RoadSide): Option[TrAssetInfo] = super.createUrbanTrafficSign(roadLink, trUrbanAreaAssets, addressSection, roadAddress, roadSide)
 
     def generateOneSideSpeedLimitsTest(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
-        = super.generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
+    = super.generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
   }
 
   class TestLitRoadOperations extends LitRoadTierekisteriImporter {
@@ -174,7 +173,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  class TestSpeedLimitAssetOperations extends SpeedLimitAssetTierekisteriImporter {
+  class TestSpeedLimitAssetOperations extends SpeedLimitTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
@@ -1108,7 +1107,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.value should be(Some(NumericValue(80)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
     }
   }
 
@@ -1144,7 +1143,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.value should be(Some(NumericValue(50)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
     }
   }
 
@@ -1174,7 +1173,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.foreach{ asset =>
         asset.linkId should be(5001)
         asset.sideCode should be(SideCode.TowardsDigitizing.value)
-        asset.createdBy should be(Some("batch_process_speedLimitState"))
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
       assets.sortBy(_.startMeasure)
       assets.head.value should be (Some(NumericValue(80)))
@@ -1208,7 +1207,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.size should be (1)
       asset.head.linkId should be(5001)
       asset.head.sideCode should be(SideCode.AgainstDigitizing.value)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
       asset.head.value should be (Some(NumericValue(80)))
     }
   }
@@ -1241,7 +1240,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.foreach{ asset =>
         asset.linkId should be(5001)
         asset.sideCode should be(2)
-        asset.createdBy should be(Some("batch_process_speedLimitState"))
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
       assets.sortBy(_.startMeasure).map(_.value) should be (Seq(Some(NumericValue(80)), Some(NumericValue(50)), Some(NumericValue(80))))
     }
@@ -1274,7 +1273,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.size should be (3)
       assets.foreach{ asset =>
         asset.sideCode should be(2)
-        asset.createdBy should be(Some("batch_process_speedLimitState"))
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
       assets.sortBy(_.linkId).map(_.linkId) should be (Seq(5001, 5001, 5002))
       assets.sortBy(_.linkId).sortBy(_.startMeasure).map(_.value) should be (Seq(Some(NumericValue(80)), Some(NumericValue(120)), Some(NumericValue(120))))

@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitS
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MassLimitationDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -391,6 +392,34 @@ object Digiroad2Context {
 
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkOTHService)
+  }
+
+  lazy val weightLimitService: WeightLimitService = {
+    new TotalWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val axleWeightLimitService: AxleWeightLimitService = {
+    new AxleWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val bogieWeightLimitService: BogieWeightLimitService = {
+    new BogieWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = {
+    new TrailerTruckWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val heightLimitService: HeightLimitService = {
+    new HeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val widthLimitService: WidthLimitService = {
+    new WidthLimitService(roadLinkOTHService)
+  }
+
+  lazy val pointMassLimitationService: PointMassLimitationService = {
+    new PointMassLimitationService(roadLinkOTHService, new OraclePointMassLimitationDao)
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()

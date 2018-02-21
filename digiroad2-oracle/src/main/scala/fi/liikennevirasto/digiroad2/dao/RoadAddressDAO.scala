@@ -86,7 +86,7 @@ class RoadAddressDAO {
     }
 
     val endAddr = endM match {
-      case Some(endValue) => s"AND ra.start_addr_m <= $endValue"
+      case Some(endValue) => s"AND ra.start_addr_m < $endValue"
       case _ => ""
     }
 
@@ -127,7 +127,7 @@ class RoadAddressDAO {
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
-  def withValidatyCheck(): String = {
+    def withValidatyCheck(): String = {
     s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " +
     s" AND (ra.end_date IS NULL OR ra.end_date > sysdate) AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
   }

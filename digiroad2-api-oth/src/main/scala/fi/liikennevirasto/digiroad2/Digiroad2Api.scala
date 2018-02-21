@@ -59,6 +59,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
                    val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
+                   val heightLimitService: HeightLimitService = Digiroad2Context.heightLimitService,
+                   val widthLimitService: WidthLimitService = Digiroad2Context.widthLimitService,
+                   val pointMassLimitationService: PointMassLimitationService = Digiroad2Context.pointMassLimitationService,
                    val assetService: AssetService = Digiroad2Context.assetService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService)
   extends ScalatraServlet
@@ -87,6 +90,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     null
   }, {
     case s: SideCode => JInt(s.value)
+  }))
+
+  case object WidthLimitReasonSerializer extends CustomSerializer[WidthLimitReason](format => ({
+    case JInt(lg) => WidthLimitReason.apply(lg.toInt)
+  }, {
+    case lg: WidthLimitReason => JInt(lg.value)
   }))
 
   case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
@@ -119,7 +128,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ac: AdministrativeClass => JString(ac.toString)
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -1227,6 +1236,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   put("/trafficSigns/:id")(updatePointAsset(trafficSignService))
   delete("/trafficSigns/:id")(deletePointAsset(trafficSignService))
 
+  get("/trHeightLimits")(getPointAssets(heightLimitService))
+  get("/trHeightLimits/:id")(getPointAssetById(heightLimitService))
+
+  get("/trWidthLimits")(getPointAssets(widthLimitService))
+  get("/trWidthLimits/:id")(getPointAssetById(widthLimitService))
+
+  get("/groupedPointAssets")(getGroupedPointAssets)
+
+  private def getGroupedPointAssets: Seq[MassLimitationPointAsset] = {
+    val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    val typeIds = params.get("typeIds").getOrElse(halt(BadRequest("type Id parameters missing")))
+    validateBoundingBox(bbox)
+    pointMassLimitationService.getByBoundingBox(user,bbox)
+  }
+
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
     if (user.isServiceRoadMaintainer())
@@ -1393,5 +1420,4 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     transformation(values)
   }
-
 }

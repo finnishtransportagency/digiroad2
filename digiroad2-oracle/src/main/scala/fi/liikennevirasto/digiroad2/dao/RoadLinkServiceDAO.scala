@@ -36,7 +36,6 @@ object RoadLinkServiceDAO {
                    where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
-
   def updateExistingAdministrativeClass(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
     expireExistingLinkPropertyRow(table, linkId, username)
     insertValues(table, column, vvhColumn, linkId, username, existingValue, value, mmlId, optionalVVHValue)
