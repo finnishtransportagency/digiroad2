@@ -280,8 +280,15 @@
       };
 
       var isRoadAddressProperty = function(property){
+        var roadAddressProperties = [
+          'tie',
+          'osa',
+          'aet',
+          'ajr',
+          'puoli'];
+
         var publicId = property.publicId;
-        return publicId == 'tie' || publicId == 'osa' || publicId == 'aet' || publicId == 'ajr' || publicId == 'puoli';
+        return _.contains(roadAddressProperties, publicId);
       };
 
       var readOnlyNumberHandler = function(property){
