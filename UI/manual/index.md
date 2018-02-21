@@ -359,7 +359,10 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 |Yll&auml;pit&auml;j&auml;n tunnus|Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.||||
 |LIVI-tunnus|Pys&auml;kin Livi-tunniste, tallentuu automaattisesti my&ouml;s Tierekisteriin. K&auml;yt&ouml;ss&auml; vain maanteiden pys&auml;keill&auml;.|x||x|
 |Matkustajatunnus|Pys&auml;kin tunnus, joka n&auml;kyy matkustajalle.||||
+|Laiturinumero| Pysäkin mahdollinen laiturinumero, joka ilmoitettu maastossa.||||
+|Vyöhyketieto|Mahdollinen seudullisen matkustajaliikenteen ilmoittama tieto siitä, mihin liikennöintivyöhykkeeseen pysäkki kuuluu.||||
 |Maastokoordinaatti X|Pys&auml;kin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
+|Vaihtoehtoinen link_ID|Mikäli tieverkon geometrian kuvaus estää pysäkille ohjauksen esim. rampista, vaikka maastossa pysäkkiä on mahdollista käyttää sekä päätien että rampin kautta, tässä kentässä on mahdollista ilmoittaa rampin link_ID, jolta pysäkille on mahdollista kulkea.|||| 
 |Maastokoordinaatti Y|Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
 |Maastokoordinaatti Z|Pys&auml;kin sijainnin mitattu Z-koordinaatti: N2000 korkeusj&auml;rjestelm&auml;ss&auml;.||||
 |Liikenn&ouml;intisuunta|Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi:"Keskustaan".||||
