@@ -18,7 +18,7 @@ class InaccurateAssetDAO {
   }
 
   def getInaccurateAssetByTypeId(typeId: Int, municipalities: Option[Set[Int]] = None, areas: Option[Set[Int]] = None,
-                                 adminClassAllow: Option[Set[Int]] = None): List[(Long, String, Int)] = {
+                                 adminClassAllow: Option[Set[Int]] = None): List[(Long, String, Int, String)] = {
 
     val optionalMunicipalities = municipalities.map(_.mkString(","))
     val optionalAreas = areas.map(_.mkString(","))
@@ -40,12 +40,12 @@ class InaccurateAssetDAO {
     }
 
     sql"""
-       select ia.asset_id, m.name_fi, ia.administrative_class
+       select ia.asset_id, m.name_fi, ia.administrative_class, TO_CHAR(ia.area_code)
        from inaccurate_asset ia,
             municipality m
        where ia.asset_type_id= $typeId #$withAuthorizedMunicipalities #$withAuthorizedAreas #$withAdminClassRestrictions
        and ia.municipality_code = m.id
-     """.as[(Long, String, Int)].list
+     """.as[(Long, String, Int, String)].list
   }
 
   def deleteInaccurateAssetById(assetId: Long) = {

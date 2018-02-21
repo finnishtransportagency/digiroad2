@@ -467,13 +467,22 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def getSpeedLimitsWithQualityErrors(municipalities: Option[Set[Int]], areas: Option[Set[Int]],
                                       adminClassList: Option[Set[Int]]): Map[String, Map[String, Any]] = {
 
-    case class WrongSpeedLimit(linkId: Long, municipality: String, administrativeClass: String)
-    def toWrongSpeedLimit(x: (Long, String, Int)) = WrongSpeedLimit(x._1, x._2, AdministrativeClass(x._3).toString)
+    case class WrongSpeedLimit(linkId: Long, municipality: String, administrativeClass: String, area: String)
+    def toWrongSpeedLimit(x: (Long, String, Int, String)) = WrongSpeedLimit(x._1, x._2, AdministrativeClass(x._3).toString, x._4)
 
     withDynTransaction {
-      inaccurateAssetDao.getInaccurateAssetByTypeId(SpeedLimitAsset.typeId, municipalities, areas, adminClassList)
+      val wrongSpeedLimits = inaccurateAssetDao.getInaccurateAssetByTypeId(SpeedLimitAsset.typeId, municipalities, areas, adminClassList)
         .map(toWrongSpeedLimit)
-        .groupBy(_.municipality)
+
+      val wrongSpeedLimitsGrouped =
+        areas match {
+          case Some(areas) =>
+            wrongSpeedLimits.groupBy(_.area)
+          case _ =>
+            wrongSpeedLimits.groupBy(_.municipality)
+        }
+
+      wrongSpeedLimitsGrouped
         .mapValues {
           _.groupBy(_.administrativeClass)
             .mapValues(_.map(_.linkId))
