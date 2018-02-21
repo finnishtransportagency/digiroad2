@@ -269,7 +269,7 @@
       };
 
       var createRoadAddressInfoLabel = function(property){
-        roadAddressInfoLabel = $('<div />').addClass('form-list').append($('<label />').addClass('control-label control-label-list').text('TIEOSA'));
+        roadAddressInfoLabel = $('<div />').addClass('form-list').append($('<label />').addClass('control-label control-label-list').text('TIEOSOITE'));
         roadAddressInfoLabel.append(addRoadAddressAttribute(property));
       };
 
@@ -593,7 +593,7 @@
           'yllapitajan_koodi',
           'matkustajatunnus',
           'laiturinumero', //Platform Number
-          'vyöhyketieto', //Information Zone
+          'vyohyketieto', //Information Zone
           'alternative_link_id',
           'liitetty_terminaaliin',
           'tie',

@@ -68,7 +68,7 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
 
   def getRoadAddressPropertiesByLinkId(assetCoordinates: Point, linkId: Long, roadLink: RoadLinkLike, oldProperties: Seq[Property]): Seq[Property] = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
-    roadAddressDAO.getByLinkId(linkId, mValue, mValue).flatMap { ra =>
+    roadAddressDAO.getByLinkIdAndMeasures(linkId, mValue, mValue).flatMap { ra =>
       val addrMValue = ra.addrAt(mValue).toString()
 
       val newRoadAddressProperties =

@@ -170,12 +170,28 @@ class RoadAddressDAO {
     queryRoadAddresses(query)
   }
 
-  def getByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double): List[RoadAddress] = {
+  def getByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double, includeFloating: Boolean = false, includeHistory: Boolean = true,
+                             includeTerminated: Boolean = true): List[RoadAddress] = {
 
     val where =
       s""" where pos.link_id = $linkId and
          (( pos.start_measure >= $startM and pos.end_measure <= $endM ) or
          ( $endM >= pos.start_measure and $endM <= pos.end_measure)) """
+
+    val floating = if (!includeFloating)
+      "AND floating='0'"
+    else
+      ""
+
+    val history = if (!includeHistory)
+      "AND ra.end_date is null"
+    else
+      ""
+
+    val valid = if (!includeTerminated)
+      "AND ra.terminated = 0"
+    else
+      ""
 
     val query =
       s"""
@@ -187,7 +203,7 @@ class RoadAddressDAO {
        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
        join lrm_position pos on ra.lrm_position_id = pos.id
-			 $where
+			 $where $floating $history $valid $withValidatyCheck
 		  """
 
     queryList(query)
@@ -246,45 +262,5 @@ class RoadAddressDAO {
           floating, Seq(), expired, createdBy, createdDate, modifiedDate)
     }
   }
-
-  def getByLinkId(linkId: Long, startM: Double, endM: Double, includeFloating: Boolean = false, includeHistory: Boolean = true,
-                  includeTerminated: Boolean = true): List[RoadAddress] = {
-    val where =
-      s""" where pos.link_id = $linkId and
-         (( pos.start_measure >= $startM and pos.end_measure <= $endM ) or
-         ( $endM >= pos.start_measure and $endM <= pos.end_measure)) """
-
-    val floating = if (!includeFloating)
-      "AND floating='0'"
-    else
-      ""
-
-    val history = if (!includeHistory)
-      "AND ra.end_date is null"
-    else
-      ""
-
-    val valid = if (!includeTerminated)
-      "AND ra.terminated = 0"
-    else
-      ""
-
-    val query =
-      s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
-        pos.side_code, ra.floating, t.X, t.Y, t2.X, t2.Y,
-        case when ra.valid_to <= sysdate then 1 else 0 end as expired, ra.created_by, ra.start_date, pos.modified_date
-        from road_address ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $floating $history $valid and t.id < t2.id and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
-      """
-    queryList(query)
-  }
-
 
 }

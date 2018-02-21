@@ -1,22 +1,10 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadAddressDAOSpec extends FunSuite with Matchers {
-
-  val roadAddressDAO = new RoadAddressDAO()
-
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   test("LRM calculation on Road Address") {
     val towards = RoadAddress(1L, 1L, 1L, Track.RightSide, 5, 100, 110, None, None, 1L, 123L, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
