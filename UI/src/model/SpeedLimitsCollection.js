@@ -39,6 +39,10 @@
       return maintainSelectedSpeedLimitChain(speedLimitsHistory);
     };
 
+    this.getById = function (Id) {
+      return _.find(_.flatten(speedLimits), {id: Id});
+    };
+
     var generateUnknownLimitId = function(speedLimit) {
       return speedLimit.linkId.toString() +
           speedLimit.startMeasure.toFixed(2) +

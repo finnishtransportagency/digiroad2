@@ -23,8 +23,6 @@
     this.bindExternalEventHandlers = function() {};
 
     this.workListItemTable = function(layerName, workListItems, municipalityName) {
-      if (layerName === 'speedLimitErrors')
-        layerName = 'speedLimit';
 
       var municipalityHeader = function(municipalityName, totalCount) {
         var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
