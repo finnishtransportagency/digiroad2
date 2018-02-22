@@ -35,11 +35,11 @@ object DataFixture {
     props
   }
 
-  lazy val propertiesDigiroad: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
+//  lazy val propertiesDigiroad: Properties = {
+//    val props = new Properties()
+//    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+//    props
+//  }
 
   lazy val dr2properties: Properties = {
     val props = new Properties()
@@ -64,7 +64,7 @@ object DataFixture {
   }
 
   lazy val userProvider: UserProvider = {
-    Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
 
   lazy val eventbus: DigiroadEventBus = {
@@ -147,7 +147,7 @@ object DataFixture {
   }
 
   def getProperty(name: String) = {
-    val property = propertiesDigiroad.getProperty(name)
+    val property = dr2properties.getProperty(name)
     if(property != null)
       property
     else
@@ -1027,9 +1027,16 @@ object DataFixture {
   }
 
   def verifyInaccurateSpeedLimits(): Unit = {
-    println("Verify inaccurate SpeedLimit\n")
+    println("Start Verify inaccurate SpeedLimit\n")
     println(DateTime.now())
     val polygonTools: PolygonTools = new PolygonTools()
+    val dao = new OracleLinearAssetDao(null, null)
+
+    //Expire all inacciratedAssets
+    OracleDatabase.withDynTransaction {
+      inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
+    }
+
     //Get All Municipalities
     val municipalities: Seq[Int] =
     OracleDatabase.withDynSession {
@@ -1037,29 +1044,28 @@ object DataFixture {
     }
 
     municipalities.foreach { municipality =>
-      println("Processing municipality...  " + municipality)
+      println("Working on... municipality -> " + municipality)
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
       val filteredRoadLinks = roadLinks.filter(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
 
       OracleDatabase.withDynTransaction {
-        val speedLimits = speedLimitService.dao.getCurrentSpeedLimitsByLinkIds(Some(filteredRoadLinks.map(_.linkId).toSet))
-
+        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(filteredRoadLinks.map(_.linkId).toSet))
         val inaccuratesInfo = speedLimits.flatMap{speedLimit =>
           speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit) match {
-            case Some(inaccurateId) =>
+            case Some(inaccurateAsset) =>
               val roadLink = filteredRoadLinks.find(_.linkId == speedLimit.linkId).get
-              Some(inaccurateId, polygonTools.getAreaByGeometry(roadLink.geometry, Measures(speedLimit.startMeasure, speedLimit.endMeasure), None ), roadLink.administrativeClass)
+              Some(inaccurateAsset, polygonTools.getAreaByGeometry(roadLink.geometry, Measures(speedLimit.startMeasure, speedLimit.endMeasure), None ), roadLink.administrativeClass)
             case _ => None
           }
         }
 
-        inaccuratesInfo.foreach { case (id, area, administrativeClass) =>
-          inaccurateAssetDAO.createInaccurateAsset(id, SpeedLimitAsset.typeId, municipality, area, administrativeClass.value)
+        inaccuratesInfo.foreach { case (speedLimit, area, administrativeClass) =>
+          inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, area, administrativeClass.value)
         }
       }
     }
 
-    println("Find inaccurate SpeedLimit\n")
+    println("Ended bacth for inaccurate SpeedLimit\n")
     println(DateTime.now())
   }
 

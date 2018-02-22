@@ -4,9 +4,11 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
+case class InaccurateAsset (assetId: Long, typeId: Int, municipalityCode: Int, areaCode: Int, administrativeClass: AdministrativeClass)
+
 class InaccurateAssetDAO {
 
-  def createInaccurateAsset(assetId: Long, typeId: Int, municipalityCode: Long, areaCode: Int, administrativeClass: Long) = {
+  def createInaccurateAsset(assetId: Long, typeId: Int, municipalityCode: Int, areaCode: Int, administrativeClass: Long) = {
     sqlu"""
         insert into inaccurate_asset (asset_id, asset_type_id, municipality_code, area_code, administrative_class)
         values ($assetId, $typeId, $municipalityCode, $areaCode, $administrativeClass)
@@ -52,12 +54,10 @@ class InaccurateAssetDAO {
     sqlu"""delete from inaccurate_asset where asset_id= $assetId""".execute
   }
 
-  def deleteAllInaccurateAssets(typeId: Option[Int] = None) = {
-    val where: String = typeId match {
-      case Some(id) => " where asset_type_id= " + id + ""
-      case _ => ""
-    }
-    sqlu"""delete from inaccurate_asset #$where""".execute
+  def deleteAllInaccurateAssets(typeId: Int) = {
+    sqlu"""delete from inaccurate_asset
+          where asset_type_id = $typeId""".execute
   }
+
 }
 

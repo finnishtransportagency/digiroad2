@@ -110,30 +110,31 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
       inaccurateAssetCreated.exists(_ == listSpeedLimit.last)
 
 
-      inaccurateAssetDao.deleteAllInaccurateAssets(Some(speedLimitAssetTypeID))
+      inaccurateAssetDao.deleteAllInaccurateAssets(speedLimitAssetTypeID)
       val inaccurateAssetDeleted = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
       inaccurateAssetDeleted.size == 0 should be(true)
       dynamicSession.rollback()
     }
   }
 
-  test("delete all asset on InaccurateAsset table") {
-    OracleDatabase.withDynTransaction {
-      val listSpeedLimit = sql"""select id from asset where rownum <= 10 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
-      listSpeedLimit.map { speedLimitId =>
-        inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, areaCode, municipalityAdminClass)
-      }
-
-      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
-      inaccurateAssetCreated.size == 10 should be(true)
-      inaccurateAssetCreated.exists(_ == listSpeedLimit.head)
-      inaccurateAssetCreated.exists(_ == listSpeedLimit.last)
-
-
-      inaccurateAssetDao.deleteAllInaccurateAssets()
-      val inaccurateAssetDeleted = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
-      inaccurateAssetDeleted.size == 0 should be(true)
-      dynamicSession.rollback()
-    }
-  }
+//  test("delete all asset on InaccurateAsset table") {
+//    OracleDatabase.withDynTransaction {
+//      val listSpeedLimit = sql"""select id from asset where rownum <= 10 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
+//      listSpeedLimit.map { speedLimitId =>
+//        inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, areaCode, municipalityAdminClass)
+//      }
+//
+//      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
+//      inaccurateAssetCreated.size == 10 should be(true)
+//      inaccurateAssetCreated.exists(_ == listSpeedLimit.head)
+//      inaccurateAssetCreated.exists(_ == listSpeedLimit.last)
+//
+//
+//      inaccurateAssetDao.deleteAllInaccurateAssets()
+//      val inaccurateAssetDeleted = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
+//      inaccurateAssetDeleted.size == 0 should be(true)
+//      dynamicSession.rollback()
+//    }
+//
+//  }
 }
