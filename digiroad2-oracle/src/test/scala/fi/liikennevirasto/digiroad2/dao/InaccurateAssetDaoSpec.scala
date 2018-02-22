@@ -24,8 +24,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
       val inaccurateAssetInfo = inaccurateAssetDao.getInaccurateAssetById(speedLimitTestAsset)
 
       inaccurateAssetInfo.size == 1 should be(true)
-      inaccurateAssetInfo.head._1 should be(speedLimitTestAsset)
-      inaccurateAssetInfo.head._2 should be(speedLimitAssetTypeID)
+      inaccurateAssetInfo.head should be(speedLimitTestAsset)
       dynamicSession.rollback()
     }
   }
@@ -37,8 +36,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
       val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAssetById(speedLimitTestAsset)
       inaccurateAssetCreated.size == 1 should be(true)
-      inaccurateAssetCreated.head._1 should be(speedLimitTestAsset)
-      inaccurateAssetCreated.head._2 should be(speedLimitAssetTypeID)
+      inaccurateAssetCreated.head should be(speedLimitTestAsset)
 
       inaccurateAssetDao.deleteInaccurateAssetById(speedLimitTestAsset)
       val inaccurateAssetInfoDeleted = inaccurateAssetDao.getInaccurateAssetById(speedLimitTestAsset)
