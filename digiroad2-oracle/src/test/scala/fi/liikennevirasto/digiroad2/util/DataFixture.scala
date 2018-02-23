@@ -18,7 +18,6 @@ import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, Obstac
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType.SpeedLimit
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -85,7 +84,7 @@ object DataFixture {
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
-    new SpeedLimitValidator(speedLimitService, trafficSignService)
+    new SpeedLimitValidator(trafficSignService)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
@@ -1029,10 +1028,11 @@ object DataFixture {
   def verifyInaccurateSpeedLimits(): Unit = {
     println("Start Verify inaccurate SpeedLimit\n")
     println(DateTime.now())
+
     val polygonTools: PolygonTools = new PolygonTools()
     val dao = new OracleLinearAssetDao(null, null)
 
-    //Expire all inacciratedAssets
+    //Expire all inaccuratedAssets
     OracleDatabase.withDynTransaction {
       inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
     }
@@ -1051,7 +1051,7 @@ object DataFixture {
       OracleDatabase.withDynTransaction {
         val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(filteredRoadLinks.map(_.linkId).toSet))
         val inaccuratesInfo = speedLimits.flatMap{speedLimit =>
-          speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit) match {
+          speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, filteredRoadLinks.find(_.linkId == speedLimit.linkId).get) match {
             case Some(inaccurateAsset) =>
               val roadLink = filteredRoadLinks.find(_.linkId == speedLimit.linkId).get
               Some(inaccurateAsset, polygonTools.getAreaByGeometry(roadLink.geometry, Measures(speedLimit.startMeasure, speedLimit.endMeasure), None ), roadLink.administrativeClass)
