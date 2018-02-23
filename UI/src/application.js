@@ -246,6 +246,35 @@
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
+      // var form  = new AssetFormFactory({
+      //   fields : [
+      //     { publicId: 'HEIGHT2', label:'', type: 'boolean', weigth: 1 },
+      //     { publicId: 'HEIGHT',  label:'', type: 'text', weigth: 2 },
+      //     { publicId: 'HEIGHT1', label:'', type: 'singleChoice', weigth: 3 },
+      //     { publicId: 'HEIGHT4', label:'', type:  'multiChoice', weigth: 4 },
+      //     { publicId: 'HEIGHT3', label: '', type: 'datePicker', weight: 5}
+      //   ]
+      // });
+      //
+      // form.initialize(linearAsset);
+
+      // form.renderForm({
+      //   getId: function(){ return 1; },
+      //   count: function(){ return 1; },
+      //   properties: [
+      //     { publicId: 'HEIGHT', values:[{value: 1}] }
+      //   ],
+      //   getModifiedBy : function () { },
+      //   getModifiedDateTime : function () { },
+      //   getCreatedBy : function () { },
+      //   getCreatedDateTime : function () { },
+      //   getVerifiedBy : function () { },
+      //   getVerifiedDateTime : function () { },
+      //   isDirty: function () { },
+      //   isUnknown: function () { },
+      //   isSplit: function () { }
+      // });
+
      LinearAssetForm.initialize(
        linearAsset.selectedLinearAsset,
        linearAsset.singleElementEventCategory,
