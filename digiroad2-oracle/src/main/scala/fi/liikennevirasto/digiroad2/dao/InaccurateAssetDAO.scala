@@ -16,7 +16,7 @@ class InaccurateAssetDAO {
   }
 
   def getInaccurateAssetById(assetId: Long): Option[Long] = {
-    sql"""select asset_id from inaccurate_asset where asset_id= $assetId""".as[Option[Long]].first
+    sql"""select asset_id from inaccurate_asset where asset_id= $assetId""".as[Option[Long]].firstOption.getOrElse(None)
   }
 
   def getInaccurateAssetByTypeId(typeId: Int, municipalities: Option[Set[Int]] = None, areas: Option[Set[Int]] = None,

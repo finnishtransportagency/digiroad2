@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
+import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -8,8 +10,11 @@ import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, InaccurateAssetDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
+import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.{PolygonTools, LinearAssetUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -20,6 +25,25 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   val inaccurateAssetDao: InaccurateAssetDAO = new InaccurateAssetDAO()
   val assetDao: OracleAssetDao = new OracleAssetDao()
   val logger = LoggerFactory.getLogger(getClass)
+  val polygonTools: PolygonTools = new PolygonTools
+
+  lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+
+  lazy val userProvider: UserProvider = {
+    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+  }
+
+  lazy val trafficSignService: TrafficSignService = {
+    new TrafficSignService(roadLinkServiceImplementation, userProvider)
+  }
+
+  lazy val speedLimitValidator: SpeedLimitValidator = {
+    new SpeedLimitValidator(trafficSignService)
+  }
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -308,9 +332,13 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     dao.updateExpiration(id, true, username)
 
     //Create New Asset copy by the old one with new value
-    dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure),
-      speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate,
-      Some(username), Some(DateTime.now()), speedLimit.linkSource)
+    val newAssetId =
+      dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure),
+        speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate,
+        Some(username), Some(DateTime.now()), speedLimit.linkSource)
+
+    existOnQualityErrorsList(id, newAssetId)
+    newAssetId
   }
 
   def update(id: Long, newLimits: Seq[NewLinearAsset], username: String): Seq[Long] = {
@@ -339,8 +367,37 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     dao.updateExpiration(id, true, username)
 
     //Create New Asset copy by the old one with new value
-    dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, measures.getOrElse(Measures(speedLimit.startMeasure, speedLimit.endMeasure)),
-      SideCode.apply(sideCode.getOrElse(speedLimit.sideCode.value)), value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate, Some(username), Some(DateTime.now()), speedLimit.linkSource)
+    val newAssetId =
+      dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, measures.getOrElse(Measures(speedLimit.startMeasure, speedLimit.endMeasure)),
+        SideCode.apply(sideCode.getOrElse(speedLimit.sideCode.value)), value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate, Some(username), Some(DateTime.now()), speedLimit.linkSource)
+
+    existOnQualityErrorsList(id, newAssetId)
+    newAssetId
+  }
+
+  private def existOnQualityErrorsList(oldId: Long, newId: Option[Long] = None) = {
+    (inaccurateAssetDao.getInaccurateAssetById(oldId), newId) match {
+      case (Some(idOld), Some(idNew)) =>
+        inaccurateAssetDao.deleteInaccurateAssetById(idOld)
+        checkInaccurateSpeedLimit(newId)
+      case _ => None
+    }
+  }
+
+  private def checkInaccurateSpeedLimit(id: Option[Long] = None) = {
+    dao.getSpeedLimitLinksById(id.head).foreach { speedLimit =>
+
+      val roadLink = roadLinkServiceImplementation.getRoadLinksAndComplementariesFromVVH(Set(speedLimit.linkId), false)
+        .filter(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
+        .headOption.getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
+
+      speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, roadLink) match {
+        case Some(speedLimitAsset) =>
+          val area = polygonTools.getAreaByGeometry(roadLink.geometry, Measures(speedLimitAsset.startMeasure, speedLimitAsset.endMeasure), None)
+          speedLimitValidator.inaccurateAssetDAO.createInaccurateAsset(speedLimitAsset.id, SpeedLimitAsset.typeId, roadLink.municipalityCode, area, roadLink.administrativeClass.value)
+        case _ => None
+      }
+    }
   }
 
   /**
