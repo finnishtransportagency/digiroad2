@@ -27,8 +27,8 @@ object Queries {
       case _ => this
     }
   }
-
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String, propertyMaxCharacters: Option[Int] = None)
+  case class MultiValuePropertyRow(publicId: String, propertyType: String, propertyValue: Any)
 
   def bytesToPoint(bytes: Array[Byte]): Point = {
     val geometry = JGeometry.load(bytes)

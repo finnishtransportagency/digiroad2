@@ -63,7 +63,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val widthLimitService: WidthLimitService = Digiroad2Context.widthLimitService,
                    val pointMassLimitationService: PointMassLimitationService = Digiroad2Context.pointMassLimitationService,
                    val assetService: AssetService = Digiroad2Context.assetService,
-                   val verificationService: VerificationService = Digiroad2Context.verificationService)
+                   val verificationService: VerificationService = Digiroad2Context.verificationService,
+                   val multiValueLinearAsset: MultiValueLinearAssetService = Digiroad2Context.multiValueLinearAssetService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport

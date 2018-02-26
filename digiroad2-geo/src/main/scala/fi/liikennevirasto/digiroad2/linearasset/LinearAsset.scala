@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, LocalDate}
 
 trait LinearAsset extends PolyLine {
   val id: Long
@@ -62,8 +62,8 @@ case class MultiValue(properties: Seq[MultiTypeProperty]) extends Value{
               x => prop2.values.exists(_.propertyValue == x.propertyValue)
             )
           }
-          case _ => super.equals(obj)
         }
+      case _ => super.equals(obj)
     }
   }
 }
