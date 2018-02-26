@@ -17,6 +17,16 @@
     });
   }
 
+    function fetchSpeedLimitEvent (asset, result) {
+      eventbus.once('speedLimits:fetched', function() {
+        var speedLimit = asset.getSpeedLimit(result.id);
+        if (speedLimit) {
+          asset.open(speedLimit, true);
+          applicationModel.setSelectedTool('Select');
+        }
+      });
+    }
+
     var linearCentering = function(layerName, id){
       applicationModel.selectLayer(layerName);
       var asset = _(models.linearAssets).find({ layerName: layerName });
@@ -52,12 +62,12 @@
       backend.getLinearAssetMidPoint(20, id).then(function (result) {
         if (result.success) {
           if (result.source === 1) {
-            fetchLinearAssetEvent(asset, result);
+            fetchSpeedLimitEvent(asset, result);
           } else if (result.source === 2) {
             eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
               eventbus.trigger(layerName + ':activeComplementaryLayer');
               eventbus.trigger('complementaryLinks:show');
-              fetchLinearAssetEvent(asset, result);
+              fetchSpeedLimitEvent(asset, result);
             });
           }
           mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
