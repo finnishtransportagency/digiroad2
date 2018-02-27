@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -76,6 +77,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
+  val municipalityDao: MunicipalityDao = new MunicipalityDao
 
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
     case _ => throw new NotImplementedError("DateTime deserialization")
@@ -1048,16 +1050,21 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/speedLimits/qualityErrors") {
     val user = userProvider.getCurrentUser()
-    val (includedMunicipalities, includedAreas, adminClassAllow) =
-      user.isOperator() match {
-        case true =>
-          (None, None, None)
-        case false if (user.configuration.authorizedAreas.nonEmpty) =>
-          (None, Some(user.configuration.authorizedAreas), Some(Set(asset.State.value, asset.Municipality.value)))
-        case false if (user.configuration.authorizedMunicipalities.nonEmpty) =>
-          (Some(user.configuration.authorizedMunicipalities), None, Some(Set(asset.Municipality.value)))
-      }
-    speedLimitService.getSpeedLimitsWithQualityErrors(includedMunicipalities, includedAreas, adminClassAllow)
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccess(user))
+
+    user.isOperator() match {
+      case true =>
+        speedLimitService.getSpeedLimitsWithQualityErrors()
+      case false =>
+        if (municipalityDao.getMassMunicipalities(user.configuration.authorizedMunicipalities).groupBy(_.ely).exists {
+          case (ely, municipalities) =>
+            municipalities.forall(municipality => user.configuration.authorizedMunicipalities.contains(municipality.id))
+        })
+          speedLimitService.getSpeedLimitsWithQualityErrors(municipalityCode, Set(State, Municipality))
+        else
+          speedLimitService.getSpeedLimitsWithQualityErrors(municipalityCode, Set(Municipality))
+    }
   }
 
   put("/speedlimits") {

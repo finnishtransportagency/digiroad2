@@ -23,11 +23,11 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
     val trafficSingsByRadius = (speedLimit.sideCode match {
       case SideCode.TowardsDigitizing =>
         trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))
-          .filter (_.validityDirection == speedLimit.trafficDirection.value)
+          .filter (_.validityDirection == speedLimit.sideCode.value)
 
       case SideCode.AgainstDigitizing =>
         trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))
-          .filter (_.validityDirection == speedLimit.trafficDirection.value)
+          .filter (_.validityDirection == speedLimit.sideCode.value)
 
       case _ =>
         trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits)).filter(_.validityDirection == SideCode.TowardsDigitizing.value) ++

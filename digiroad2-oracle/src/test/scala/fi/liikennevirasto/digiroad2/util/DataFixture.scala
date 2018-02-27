@@ -1050,17 +1050,16 @@ object DataFixture {
 
       OracleDatabase.withDynTransaction {
         val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(filteredRoadLinks.map(_.linkId).toSet))
-        val inaccuratesInfo = speedLimits.flatMap{speedLimit =>
+
+        speedLimits.flatMap{speedLimit =>
           speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, filteredRoadLinks.find(_.linkId == speedLimit.linkId).get) match {
             case Some(inaccurateAsset) =>
               val roadLink = filteredRoadLinks.find(_.linkId == speedLimit.linkId).get
-              Some(inaccurateAsset, polygonTools.getAreaByGeometry(roadLink.geometry, Measures(speedLimit.startMeasure, speedLimit.endMeasure), None ), roadLink.administrativeClass)
+              Some(inaccurateAsset, roadLink.administrativeClass)
             case _ => None
           }
-        }
-
-        inaccuratesInfo.foreach { case (speedLimit, area, administrativeClass) =>
-          inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, area, administrativeClass.value)
+        }.foreach { case (speedLimit, administrativeClass) =>
+          inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
         }
       }
     }

@@ -388,13 +388,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     dao.getSpeedLimitLinksById(id.head).foreach { speedLimit =>
 
       val roadLink = roadLinkServiceImplementation.getRoadLinksAndComplementariesFromVVH(Set(speedLimit.linkId), false)
-        .filter(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
-        .headOption.getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
+        .find(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
+        .getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
 
       speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, roadLink) match {
         case Some(speedLimitAsset) =>
-          val area = polygonTools.getAreaByGeometry(roadLink.geometry, Measures(speedLimitAsset.startMeasure, speedLimitAsset.endMeasure), None)
-          speedLimitValidator.inaccurateAssetDAO.createInaccurateAsset(speedLimitAsset.id, SpeedLimitAsset.typeId, roadLink.municipalityCode, area, roadLink.administrativeClass.value)
+          speedLimitValidator.inaccurateAssetDAO.createInaccurateAsset(speedLimitAsset.id, SpeedLimitAsset.typeId, roadLink.municipalityCode, roadLink.administrativeClass)
         case _ => None
       }
     }
@@ -521,30 +520,20 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  def getSpeedLimitsWithQualityErrors(municipalities: Option[Set[Int]], areas: Option[Set[Int]],
-                                      adminClassList: Option[Set[Int]]): Map[String, Map[String, Any]] = {
+  def getSpeedLimitsWithQualityErrors(municipalities: Set[Int]= Set(), adminClassList: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
 
-    case class WrongSpeedLimit(linkId: Long, municipality: String, administrativeClass: String, area: String)
-    def toWrongSpeedLimit(x: (Long, String, Int, String)) = WrongSpeedLimit(x._1, x._2, AdministrativeClass(x._3).toString, x._4)
+    case class WrongSpeedLimit(linkId: Long, municipality: String, administrativeClass: String)
+    def toWrongSpeedLimit(x: (Long, String, Int)) = WrongSpeedLimit(x._1, x._2, AdministrativeClass(x._3).toString)
 
     withDynTransaction {
-      val wrongSpeedLimits = inaccurateAssetDao.getInaccurateAssetByTypeId(SpeedLimitAsset.typeId, municipalities, areas, adminClassList)
+      val wrongSpeedLimits = inaccurateAssetDao.getInaccurateAssetByTypeId(SpeedLimitAsset.typeId, municipalities, adminClassList)
         .map(toWrongSpeedLimit)
 
-      val wrongSpeedLimitsGrouped =
-        areas match {
-          case Some(areas) =>
-            wrongSpeedLimits.groupBy(_.area)
-          case _ =>
             wrongSpeedLimits.groupBy(_.municipality)
-        }
-
-      wrongSpeedLimitsGrouped
         .mapValues {
           _.groupBy(_.administrativeClass)
             .mapValues(_.map(_.linkId))
         }
     }
   }
-
 }
