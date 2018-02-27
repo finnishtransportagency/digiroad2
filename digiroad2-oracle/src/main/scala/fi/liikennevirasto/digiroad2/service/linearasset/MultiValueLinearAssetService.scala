@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -11,7 +11,7 @@ import org.joda.time.DateTime
 
 class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def dao: MultiValueLinearAssetDao = new MultiValueLinearAssetDao
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
@@ -38,4 +38,22 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
       }.filterNot(_.expired)
     existingAssets
   }
+
+//  override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+//                                         createdByFromUpdate: Option[String] = Some(""),
+//                                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None): Long = {
+//
+//
+//
+//
+//
+//    val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
+//      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
+//    value match {
+//      case NumericValue(intValue) =>
+//        dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
+//      case _ => None
+//    }
+//    id
+//  }
 }
