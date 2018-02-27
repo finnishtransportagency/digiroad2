@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit}
@@ -20,20 +20,29 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
     val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
     val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
 
-    val trafficSingsByRadius = (speedLimit.sideCode match {
-      case SideCode.TowardsDigitizing =>
-        trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))
-          .filter (_.validityDirection == speedLimit.sideCode.value)
+    val trafficSingsByRadius =
+          (speedLimit.sideCode match {
+            case SideCode.TowardsDigitizing =>
+              trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits)).filter (_.validityDirection == speedLimit.sideCode.value)
 
-      case SideCode.AgainstDigitizing =>
-        trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))
-          .filter (_.validityDirection == speedLimit.sideCode.value)
+            case SideCode.AgainstDigitizing =>
+              trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits)).filter (_.validityDirection == speedLimit.sideCode.value)
 
-      case _ =>
-        trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits)).filter(_.validityDirection == SideCode.TowardsDigitizing.value) ++
-        trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits)).filter(_.validityDirection == SideCode.AgainstDigitizing.value)
+            case _ =>
+              roadLink.trafficDirection match {
+                case TrafficDirection.TowardsDigitizing =>
+                  trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))
+                    .filter (trafficSign => SideCode.apply(trafficSign.validityDirection) == TrafficDirection.toSideCode(TrafficDirection.TowardsDigitizing))
 
-    }).filter(trafficSign => trafficSign.linkId == speedLimit.linkId)
+                case TrafficDirection.AgainstDigitizing =>
+                  trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))
+                    .filter (trafficSign => SideCode.apply(trafficSign.validityDirection) == TrafficDirection.toSideCode(TrafficDirection.AgainstDigitizing))
+
+                case _ =>
+              trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits)).filter(_.validityDirection == SideCode.TowardsDigitizing.value) ++
+                trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits)).filter(_.validityDirection == SideCode.AgainstDigitizing.value)
+
+          }}).filter(_.linkId == speedLimit.linkId)
 
     if (trafficSingsByRadius.nonEmpty) {
       (trafficSingsByRadius.groupBy(minDistance(_, first)) ++ trafficSingsByRadius.groupBy(minDistance(_, last))).reduceLeft(min)._2
@@ -74,10 +83,24 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
     }
   }
 
+  private def filterBySide(trafficSign: PersistedTrafficSign, speedLimit: SpeedLimit, roadLink: RoadLink) : Boolean = {
+    speedLimit.sideCode match {
+      case SideCode.TowardsDigitizing | SideCode.AgainstDigitizing =>
+        trafficSign.validityDirection == speedLimit.sideCode.value
+      case _ =>
+        if (roadLink.trafficDirection == TrafficDirection.BothDirections)
+          true
+        else
+          TrafficDirection.toSideCode(roadLink.trafficDirection) == SideCode.apply(trafficSign.validityDirection)
+    }
+  }
+
   def checkInaccurateSpeedLimitValues(speedLimit: SpeedLimit, roadLink: RoadLink): Option[SpeedLimit]= {
+    val minimumAllowedLength = 2
+
     val trafficSignsOnLinkId = trafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)
-      .filter(trafficSign => trafficSign.mValue >= speedLimit.startMeasure && trafficSign.mValue < speedLimit.endMeasure)
-      .filter(_.validityDirection == speedLimit.sideCode.value || speedLimit.sideCode == SideCode.BothDirections)
+      .filter(trafficSign => trafficSign.mValue >= (speedLimit.startMeasure + minimumAllowedLength) && trafficSign.mValue <= (speedLimit.endMeasure - minimumAllowedLength))
+      .filter(filterBySide(_, speedLimit, roadLink))
 
     val trafficSigns = if (trafficSignsOnLinkId.nonEmpty) {
       trafficSignsOnLinkId

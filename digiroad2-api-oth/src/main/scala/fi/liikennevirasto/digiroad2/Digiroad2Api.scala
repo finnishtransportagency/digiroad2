@@ -1057,12 +1057,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case true =>
         speedLimitService.getSpeedLimitsWithQualityErrors()
       case false =>
-        if (municipalityDao.getMassMunicipalities(user.configuration.authorizedMunicipalities).groupBy(_.ely).exists {
-          case (ely, municipalities) =>
-            municipalities.forall(municipality => user.configuration.authorizedMunicipalities.contains(municipality.id))
-        })
-          speedLimitService.getSpeedLimitsWithQualityErrors(municipalityCode, Set(State, Municipality))
-        else
           speedLimitService.getSpeedLimitsWithQualityErrors(municipalityCode, Set(Municipality))
     }
   }

@@ -1026,7 +1026,7 @@ object DataFixture {
   }
 
   def verifyInaccurateSpeedLimits(): Unit = {
-    println("Start Verify inaccurate SpeedLimit\n")
+    println("Start inaccurate SpeedLimit verification\n")
     println(DateTime.now())
 
     val polygonTools: PolygonTools = new PolygonTools()
@@ -1045,26 +1045,27 @@ object DataFixture {
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
-      val filteredRoadLinks = roadLinks.filter(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality)
 
       OracleDatabase.withDynTransaction {
-        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(filteredRoadLinks.map(_.linkId).toSet))
+        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.map(_.linkId).toSet))
 
-        speedLimits.flatMap{speedLimit =>
-          speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, filteredRoadLinks.find(_.linkId == speedLimit.linkId).get) match {
+      val inaccurateAssets =  speedLimits.flatMap{speedLimit =>
+          val roadLink = roadLinks.find(_.linkId == speedLimit.linkId).get
+          speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, roadLink) match {
             case Some(inaccurateAsset) =>
-              val roadLink = filteredRoadLinks.find(_.linkId == speedLimit.linkId).get
               Some(inaccurateAsset, roadLink.administrativeClass)
             case _ => None
           }
-        }.foreach { case (speedLimit, administrativeClass) =>
+        }
+
+        inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
           inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
         }
       }
     }
 
-    println("Ended bacth for inaccurate SpeedLimit\n")
+    println("Ended inaccurate SpeedLimit verification\n")
     println(DateTime.now())
   }
 

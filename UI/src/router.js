@@ -54,11 +54,6 @@
     var speedLimitCentering = function (layerName, id) {
       applicationModel.selectLayer(layerName);
       var asset = models.selectedSpeedLimit;
-      var speedLimit = asset.getSpeedLimit(parseInt(id));
-      if (speedLimit) {
-        asset.open(speedLimit, true);
-        applicationModel.setSelectedTool('Select');
-      }
       backend.getLinearAssetMidPoint(20, id).then(function (result) {
         if (result.success) {
           if (result.source === 1) {

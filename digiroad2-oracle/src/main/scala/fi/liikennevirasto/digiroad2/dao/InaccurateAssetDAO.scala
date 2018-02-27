@@ -20,17 +20,16 @@ class InaccurateAssetDAO {
   def getInaccurateAssetByTypeId(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): List[(Long, String, Int)] = {
 
     val withAuthorizedMunicipalities =
-      if (municipalities.nonEmpty) s" and ia.municipality_code in (${municipalities.mkString(",")}"  else ""
+      if (municipalities.nonEmpty) s" and ia.municipality_code in (${municipalities.mkString(",")})"  else s""
 
     val withAdminClassRestrictions =
-      if(adminClass.nonEmpty) s" and ia.administrative_class in (${adminClass.map(_.value).mkString(",")}" else ""
+      if(adminClass.nonEmpty) s" and ia.administrative_class in (${adminClass.map(_.value).mkString(",")})" else s""
 
     sql"""
        select ia.asset_id, m.name_fi, ia.administrative_class
-       from inaccurate_asset ia,
-            municipality m
-       where ia.asset_type_id= $typeId $withAuthorizedMunicipalities #$withAdminClassRestrictions
-       and ia.municipality_code = m.id
+       from inaccurate_asset ia
+       left join municipality m on ia.municipality_code = m.id
+       where ia.asset_type_id = $typeId #$withAuthorizedMunicipalities #$withAdminClassRestrictions
      """.as[(Long, String, Int)].list
   }
 

@@ -23,9 +23,6 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
   val validator = new SpeedLimitValidator(mockTrafficSignService)
-
-//  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
-
   val simpleProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("1"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
   val simpleProp80 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("1"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("80"))))
 
@@ -36,7 +33,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
       0.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
-    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 10, 0, 5, false, 0, 235, simpleProp80, None, None, None, None, TrafficDirection.AgainstDigitizing.value, None, NormalLinkInterface))
+    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 10, 0, 5, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
 
     when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
 
@@ -51,8 +48,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0),
       Point(20, 0.0)), 0.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
-     val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 10, 0, 10, false, 0, 235, simpleProp70, None, None, None, None, TrafficDirection.AgainstDigitizing.value, None, NormalLinkInterface),
-                          PersistedTrafficSign(2, speedLimit.linkId, 15, 0, 15, false, 0, 235, simpleProp80, None, None, None, None, TrafficDirection.TowardsDigitizing.value, None, NormalLinkInterface))
+     val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 10, 0, 10, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
+                          PersistedTrafficSign(2, speedLimit.linkId, 15, 0, 15, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
 
     when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
 
@@ -154,8 +151,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
       0.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
-    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 1, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
-      PersistedTrafficSign(2, speedLimit.linkId, 5, 1, 1, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
+    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 2, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
+      PersistedTrafficSign(2, speedLimit.linkId, 5, 1, 2, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
 
     when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
 
@@ -170,8 +167,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
       1.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
-    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 1, false, 0, 235, simpleProp70, None, None, None, None, TrafficDirection.AgainstDigitizing.value, None, NormalLinkInterface),
-      PersistedTrafficSign(2, speedLimit.linkId, 5, 1, 1, false, 0, 235, simpleProp80, None, None, None, None, TrafficDirection.TowardsDigitizing.value, None, NormalLinkInterface))
+    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 1, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
+      PersistedTrafficSign(2, speedLimit.linkId, 5, 1, 1, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
 
     when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
 
