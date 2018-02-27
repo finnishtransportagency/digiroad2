@@ -238,6 +238,11 @@
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
       },
+      form: new AssetFormFactory( {
+          fields : [
+            { publicId: 'weightLimitation',  label:'rajoitus', type: 'number', weigth: 1 }
+          ]
+        }),
       isVerifiable: false
     },
     {
