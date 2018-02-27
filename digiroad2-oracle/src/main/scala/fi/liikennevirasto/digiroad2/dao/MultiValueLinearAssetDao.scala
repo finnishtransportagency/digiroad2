@@ -1,14 +1,56 @@
 package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.asset.{MultiTypePropertyValue, LinkGeomSource, MultiTypeProperty}
-import fi.liikennevirasto.digiroad2.dao.Queries.MultiValuePropertyRow
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.linearasset.{MultiValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+
+
+
+
+
+
+
+
+import java.sql.SQLException
+
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import org.joda.time.{DateTime, Interval, LocalDate}
+
+import scala.language.reflectiveCalls
+
+
+
+
+
+
+
+import org.joda.time.{DateTime}
+import slick.driver.JdbcDriver.backend.Database
+import _root_.oracle.sql.STRUCT
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.service.linearasset.Measures
+
+
+
+
+
+
+
+
+
 
 case class MultiValueAssetRow(id: Long, linkId: Long, sideCode: Int, value: MultiValuePropertyRow,
                               startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
@@ -16,7 +58,7 @@ case class MultiValueAssetRow(id: Long, linkId: Long, sideCode: Int, value: Mult
                               vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime])
 
 class MultiValueLinearAssetDao {
-
+  val logger = LoggerFactory.getLogger(getClass)
 
   def fetchMultiValueLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
@@ -56,7 +98,6 @@ class MultiValueLinearAssetDao {
     }.values.toSeq
   }
 
-
   def fetchMultiValueLinearAssetsByIds(assetTypeId: Int, ids: Set[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
     val assets = MassQuery.withIds(ids) { idTableName =>
@@ -95,7 +136,6 @@ class MultiValueLinearAssetDao {
     }.values.toSeq
   }
 
-
   private def queryToPersistedLinearAssets(query: String): Seq[PersistedLinearAsset] = {
     val rows = Q.queryNA[MultiValueAssetRow](query).iterator.toSeq
 
@@ -108,7 +148,6 @@ class MultiValueLinearAssetDao {
         geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate)
     }.values.toSeq
   }
-
 
   def assetRowToProperty(assetRows: Iterable[MultiValueAssetRow]): Seq[MultiTypeProperty] = {
     assetRows.groupBy(_.value.publicId).map { case (key, rows) =>
@@ -156,6 +195,189 @@ class MultiValueLinearAssetDao {
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
       MultiValueAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate)
+    }
+  }
+
+  /**
+    * Creates new linear asset with Multi Values. Return id of new asset. Used by MultiValueLinearAssetService.createWithoutTransaction
+    */
+  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
+                        fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
+                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val validTo = if (expired) "sysdate" else "null"
+    val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
+
+    if (fromUpdate) {
+      verifiedDateFromUpdate match {
+        case Some(value) => sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, $verifiedDateFromUpdate)
+
+        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+        case None => sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, #$verifiedDate)
+
+        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+      }
+    } else {
+      sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date)
+      values ($id, $typeId, $username, sysdate, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate)
+
+      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
+
+      into asset_link(asset_id, position_id)
+      values ($id, $lrmPositionId)
+      select * from dual
+        """.execute
+    }
+    id
+  }
+
+  def propertyDefaultValues(assetTypeId: Long): List[MultiTypeProperty] = {
+    implicit val getDefaultValue = new GetResult[MultiTypeProperty] {
+      def apply(r: PositionedResult) = {
+        MultiTypeProperty(publicId = r.nextString, propertyType = r.nextString(), values = List(MultiTypePropertyValue(r.nextString)))
+      }
+    }
+    sql"""
+      select p.public_id, p.default_value, p.property_type from asset_type a
+      join property p on p.asset_type_id = a.id
+      where a.id = $assetTypeId and p.default_value is not null""".as[MultiTypeProperty].list
+  }
+
+  private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], MultiTypeProperty]): Boolean = {
+    propertyWithType match {
+      case (SingleChoice, _, property) => property.values.nonEmpty
+      case _ => true
+    }
+  }
+
+  private def propertyWithTypeAndId(property: MultiTypeProperty): Tuple3[String, Option[Long], MultiTypeProperty] = {
+    if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
+      (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
+    }
+    else {
+      val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+      (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
+    }
+  }
+
+  def updateAssetProperties(assetId: Long, properties: Seq[MultiTypeProperty]) {
+    properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
+      if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
+        updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+      } else {
+        updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+      }
+    }
+  }
+
+  private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[MultiTypePropertyValue]) {
+    propertyType match {
+      case Text | LongText => {
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty) {
+          deleteTextProperty(assetId, propertyId).execute
+        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue.toString).execute
+        } else {
+          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue.toString).execute
+        }
+      }
+      case SingleChoice => {
+        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
+        if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[Long]).execute
+        } else {
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[Long]).execute
+        }
+      }
+      case MultipleChoice => {
+        createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
+      }
+      case ReadOnly | ReadOnlyNumber | ReadOnlyText => {
+        logger.debug("Ignoring read only property in update: " + propertyPublicId)
+      }
+      case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
+  }
+
+  private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyType: String, propertyValues: Seq[MultiTypePropertyValue]) {
+    val property = AssetPropertyConfiguration.commonAssetProperties(propertyPublicId)
+    propertyType match {
+      case SingleChoice => {
+        val newVal = propertyValues.head.propertyValue.toString
+        AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
+          (p.publicId == propertyPublicId) && (p.values.map(_.propertyValue).contains(newVal))
+        } match {
+          case Some(propValues) => {
+            updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute
+          }
+          case None => throw new IllegalArgumentException("Invalid property/value: " + propertyPublicId + "/" + newVal)
+        }
+      }
+      case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyValue.toString).execute
+      case Date => {
+        val formatter = ISODateTimeFormat.dateOptionalTimeParser()
+        val optionalDateTime = propertyValues.headOption match {
+          case None => None
+          case Some(x) if x.propertyValue.toString.trim.isEmpty => None
+          case Some(x) => Some(formatter.parseDateTime(x.propertyValue.toString))
+        }
+        updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute
+      }
+      case ReadOnlyText | ReadOnlyNumber => {
+        logger.debug("Ignoring read only property in update: " + propertyPublicId)
+      }
+      case t: String => throw new UnsupportedOperationException("Asset: " + propertyPublicId + " property type: " + t + " not supported")
+    }
+  }
+
+  private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[MultiTypePropertyValue], assetId: Long, propertyId: Long) {
+    val newValues = propertyValues.map(_.propertyValue.asInstanceOf[Long])
+    val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
+    val currentValues = currentIdsAndValues.map(_._2)
+    // remove values as necessary
+    currentIdsAndValues.foreach {
+      case (multipleChoiceId, enumValue) =>
+        if (!newValues.contains(enumValue)) {
+          deleteMultipleChoiceValue(multipleChoiceId).execute
+        }
+    }
+    // add values as necessary
+    newValues.filter {
+      !currentValues.contains(_)
+    }.foreach {
+      v =>
+        insertMultipleChoiceValue(assetId, propertyId, v).execute
     }
   }
 
