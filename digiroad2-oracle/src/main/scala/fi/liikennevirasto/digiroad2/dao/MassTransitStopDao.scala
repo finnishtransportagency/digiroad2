@@ -570,6 +570,15 @@ class MassTransitStopDao {
       and tp.value_fi = $liviId""".as[Long].list
   }
 
+  def getNationalIdByStopCode(stopCode: String): Seq[Long] = {
+    sql"""
+      select a.external_id
+      from text_property_value tp
+      join asset a on a.id = tp.asset_id
+      where tp.property_id = (select p.id from property p where p.public_id = 'matkustajatunnus')
+      and tp.value_fi = $stopCode""".as[Long].list
+  }
+
   def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
   }
