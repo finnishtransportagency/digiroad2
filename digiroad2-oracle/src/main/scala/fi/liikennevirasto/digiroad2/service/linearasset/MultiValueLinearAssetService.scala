@@ -86,7 +86,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
                                                   createdByFromUpdate: Option[String] = Some(""),
                                                   createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None): Long = {
 
-    val id = multiValueLinearAssetDao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
+    val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
 
     value match {

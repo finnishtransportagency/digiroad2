@@ -163,60 +163,6 @@ class MultiValueLinearAssetDao {
     }
   }
 
-  /**
-    * Creates new linear asset with Multi Values. Return id of new asset. Used by MultiValueLinearAssetService.createWithoutTransaction
-    */
-  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
-                        fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
-                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None): Long = {
-    val id = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val validTo = if (expired) "sysdate" else "null"
-    val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
-
-    if (fromUpdate) {
-      verifiedDateFromUpdate match {
-        case Some(value) => sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, $verifiedDateFromUpdate)
-
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
-
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
-    """.execute
-        case None => sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, #$verifiedDate)
-
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
-
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
-    """.execute
-      }
-    } else {
-      sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date)
-      values ($id, $typeId, $username, sysdate, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate)
-
-      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
-
-      into asset_link(asset_id, position_id)
-      values ($id, $lrmPositionId)
-      select * from dual
-        """.execute
-    }
-    id
-  }
 
   def propertyDefaultValues(assetTypeId: Long): List[MultiTypeProperty] = {
     implicit val getDefaultValue = new GetResult[MultiTypeProperty] {
@@ -274,17 +220,31 @@ class MultiValueLinearAssetDao {
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
           insertSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString).toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId,Integer.valueOf(propertyValues.head.propertyValue.toString).toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString).toLong).execute
         }
       }
       case MultipleChoice => {
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
+      }
+      case Number => {
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty) {
+          deleteNumberProperty(assetId, propertyId).execute
+        } else if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
+          insertNumberProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString)).execute
+        } else {
+          updateNumberProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString)).execute
+        }
       }
       case ReadOnly | ReadOnlyNumber | ReadOnlyText => {
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
+  }
+
+  private def numberPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsNumberProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
