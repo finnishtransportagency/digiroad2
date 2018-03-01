@@ -13,43 +13,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
-
-
-
-
-
-
-
-
-import java.sql.SQLException
-
-import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import org.joda.time.{DateTime, Interval, LocalDate}
-
-import scala.language.reflectiveCalls
-
-
-
-
-
-
-
-import org.joda.time.{DateTime}
-import slick.driver.JdbcDriver.backend.Database
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.service.linearasset.Measures
-
-
-
-
-
-
-
-
 
 
 case class MultiValueAssetRow(id: Long, linkId: Long, sideCode: Int, value: MultiValuePropertyRow,
@@ -260,7 +225,7 @@ class MultiValueLinearAssetDao {
       }
     }
     sql"""
-      select p.public_id, p.default_value, p.property_type from asset_type a
+      select p.public_id, p.property_type, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
       where a.id = $assetTypeId and p.default_value is not null""".as[MultiTypeProperty].list
   }
@@ -307,9 +272,9 @@ class MultiValueLinearAssetDao {
       case SingleChoice => {
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[Long]).execute
+          insertSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString).toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[Long]).execute
+          updateSingleChoiceProperty(assetId, propertyId,Integer.valueOf(propertyValues.head.propertyValue.toString).toLong).execute
         }
       }
       case MultipleChoice => {
@@ -362,7 +327,7 @@ class MultiValueLinearAssetDao {
   }
 
   private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[MultiTypePropertyValue], assetId: Long, propertyId: Long) {
-    val newValues = propertyValues.map(_.propertyValue.asInstanceOf[Long])
+    val newValues = propertyValues.map(p => Integer.valueOf(p.propertyValue.toString).toLong)
     val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
     val currentValues = currentIdsAndValues.map(_._2)
     // remove values as necessary
