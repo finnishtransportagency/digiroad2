@@ -591,6 +591,10 @@ class MassTransitStopDao {
     query + s" where a.external_id = $nationalId"
   }
 
+  def withNationalIds(nationalIds: Seq[Long])(query: String): String = {
+    query + s" where a.external_id in (${nationalIds.mkString(",")})"
+  }
+
   def countTerminalChildBusStops(assetId: Long): Int = {
     sql"""
         select count(*)
