@@ -344,14 +344,19 @@ trait MassTransitStopService extends PointAssetOperations {
   def getMassTransitStopByPassengerId(passengerId: String, municipalityValidation: Int => Unit): Seq[(Option[MassTransitStopWithProperties], Boolean)] = {
     withDynTransaction {
       val nationalIds = massTransitStopDao.getNationalIdByStopCode(passengerId)
-      val persistedStops = fetchPointAssets(massTransitStopDao.withNationalIds(nationalIds))
 
-      persistedStops.map(_.municipalityCode).foreach(municipalityValidation)
-      val municipalities = municipalityDao.getMunicipalitiesNameAndIdByCode(persistedStops.map(_.municipalityCode).toSet)
-      persistedStops.map { persistedStop =>
-        val strategy = getStrategy(persistedStop)
-        val (enrichedStop, error) = strategy.enrichBusStop(persistedStop)
-        (Some(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink, (id) => municipalities.find(_.id == id).map(_.name)))(enrichedStop)), error)
+      if (nationalIds.isEmpty)
+        Seq()
+      else {
+        val persistedStops = fetchPointAssets(massTransitStopDao.withNationalIds(nationalIds))
+
+        persistedStops.map(_.municipalityCode).foreach(municipalityValidation)
+        val municipalities = municipalityDao.getMunicipalitiesNameAndIdByCode(persistedStops.map(_.municipalityCode).toSet)
+        persistedStops.map { persistedStop =>
+          val strategy = getStrategy(persistedStop)
+          val (enrichedStop, error) = strategy.enrichBusStop(persistedStop)
+          (Some(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink, (id) => municipalities.find(_.id == id).map(_.name)))(enrichedStop)), error)
+        }
       }
     }
   }
