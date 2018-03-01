@@ -227,13 +227,14 @@
       title: 'Kelirikko',
       newTitle: 'Uusi kelirikko',
       className: 'road-damaged-by-thaw',
-      isSeparable: false,
+      isSeparable: true,
       allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Kelirikko',
         enabled: 'Kelirikko',
         disabled: 'Ei kelirikkoa'
       },
+      possibleValues: [100, 80, 70, 60],
       editConstrains : function(selectedAsset) {
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
@@ -254,7 +255,7 @@
       newTitle: 'Uusi leveys',
       className: 'road-width',
       unit: 'cm',
-      isSeparable: false,
+      isSeparable: true,
       allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Leveys',
