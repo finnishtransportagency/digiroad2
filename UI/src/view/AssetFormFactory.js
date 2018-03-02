@@ -16,6 +16,10 @@
     me.editModeRender = function (field, currentValue, setValue, asset){};
 
     me.inputElementHandler = function(assetTypeConfiguration, inputValue, publicId, setValue, asset){
+
+      if(!asset)
+        asset = assetTypeConfiguration.selectedLinearAsset.get()[0];
+
       var value = asset.value;
 
       if(!value)
@@ -94,7 +98,7 @@
     var template =  _.template(
       '<div class="form-group">' +
       '<label class="control-label">'+ className+'</label>' +
-      '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>" <%= optionTags %></select>' +
+      '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>"><%= optionTags %> </select>' +
       '</div>');
 
 
@@ -222,10 +226,10 @@
         addDatePickers();
 
         if (assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-          bindEvents(assetTypeConfiguration, 'a');
-          bindEvents(assetTypeConfiguration, 'b');
+          me.bindEvents(rootElement, assetTypeConfiguration, 'a');
+          me.bindEvents(rootElement, assetTypeConfiguration, 'b');
         } else {
-          bindEvents(assetTypeConfiguration);
+          me.bindEvents(rootElement, assetTypeConfiguration);
         }
       });
 
@@ -247,7 +251,7 @@
           rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset));
           rootElement.find('.read-only-title').toggle(readOnly);
           rootElement.find('.edit-mode-title').toggle(!readOnly);
-          bindEvents(assetTypeConfiguration);
+          me.bindEvents(rootElement, assetTypeConfiguration);
         }
       });
 
@@ -397,27 +401,6 @@
           '</div>' : '';
       };
 
-      function singleValueElement(currentValue, sideCode) {
-        // if(Array.isArray(currentValue)){
-        //   return '' +
-        //     '<div class="form-group editable form-editable-'+ className +'">' +
-        //     ' <label class="control-label">' + editControlLabels.title + '</label>' +
-        //     ' <div class="form-control-static ' + className + '" style="display:none;">' +
-        //     obtainFormControl(className, valueString, currentValue, possibleValues)  +
-        //     ' </div>' +
-        //     singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
-        //     '</div>';
-        //
-        // }else {
-        return '' +
-          '<div class="form-group editable form-editable-'+ assetTypeConfiguration.className +'">' +
-          '  <label class="control-label">' + assetTypeConfiguration.editControlLabels.title + '</label>' +
-          '  <p class="form-control-static ' + assetTypeConfiguration.className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
-          singleValueEditElement(currentValue, sideCode, assetTypeConfiguration) +
-          '</div>';
-        // }
-      }
-
       var title = function () {
         if(asset.isUnknown() || asset.isSplit()) {
           return '<span class="read-only-title" style="display: block">' +assetTypeConfiguration.title + '</span>' +
@@ -451,15 +434,9 @@
         '</footer>') ;
     }
 
-    function bindEvents(assetTypeConfiguration, sideCode) {
-      var inputElement = $('#feature-attributes').find('.form-editable-' + generateClassName(sideCode));
-      var toggleElement = $('#feature-attributes').find('.radio input.' + generateClassName(sideCode));
-
-      // var valueSetters = {
-      //   a: assetTypeConfiguration.selectedLinearAsset.setAValue,
-      //   b: assetTypeConfiguration.selectedLinearAsset.setBValue
-      // };
-  //    var setValue = valueSetters[sideCode] || assetTypeConfiguration.selectedLinearAsset.setValue;
+    me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode) {
+      var inputElement = rootELement.find('.form-editable-' + generateClassName(sideCode));
+      var toggleElement = rootELement.find('.radio input.' + generateClassName(sideCode));
       var valueRemovers = {
         a: assetTypeConfiguration.selectedLinearAsset.removeAValue,
         b: assetTypeConfiguration.selectedLinearAsset.removeBValue
@@ -470,11 +447,9 @@
         inputElement.find('.form-control, .choice-group .multiChoice').not('.edit-control-group.choice-group').attr('disabled', disabled);
         if (disabled) {
           removeValue();
-        } /*else {
-          setValue(inputElementValue(inputElement.find(':input')));
-        }*/
+        }
       });
-    }
+    };
 
     function addBodyEvents(rootElement, assetTypeConfiguration, isReadOnly) {
       rootElement.find('.form-controls').toggle(!isReadOnly);

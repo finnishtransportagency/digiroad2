@@ -9,6 +9,8 @@
       onSave = options.onSave,
       validator = options.validator,
       formElements = options.formElements,
+      selectedLinearAsset = options.selectedLinearAsset,
+      assetTypeConfiguration = options.assetTypeConfiguration,
       currentValue;
 
     var confirmDiv =
@@ -36,6 +38,23 @@
       }
     }
 
+    function _setValue(value){
+      if (validator(value)) {
+
+        if(!currentValue)
+          currentValue  = { properties: [] };
+
+        currentValue.properties.push({
+            publicId: value.properties[0].publicId,
+            value: value.properties[0].value
+        });
+        $('button.save').prop('disabled', '');
+      } else {
+        $('button.save').prop('disabled', 'disabled');
+      }
+    }
+
+
     function removeValue() {
       currentValue = undefined;
       $('button.save').prop('disabled', '');
@@ -52,6 +71,15 @@
       });
     };
 
+    var _renderDialog = function() {
+      var container = $('.container').append(_.template(confirmDiv)({ count: count,  editElement: '' }));
+      selectedLinearAsset.setValue =  _setValue;
+      selectedLinearAsset.removeValue = removeValue;
+      container.find('.form-elements-container').html(formElements.renderForm(selectedLinearAsset).find('.editable'));
+      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), assetTypeConfiguration);
+    };
+
+
     var bindEvents = function() {
       $('.mass-update-modal .close').on('click', function() {
         purge();
@@ -66,7 +94,10 @@
 
     var show = function() {
       purge();
-      renderDialog();
+      if(assetTypeConfiguration.formElements.singleValueElement)
+        renderDialog();
+      else
+        _renderDialog();
       bindEvents();
     };
 
