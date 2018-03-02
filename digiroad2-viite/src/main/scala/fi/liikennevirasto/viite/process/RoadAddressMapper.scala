@@ -1,7 +1,8 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, VVHClient}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 import fi.liikennevirasto.viite._
 
@@ -136,8 +137,6 @@ trait RoadAddressMapper {
   protected def startCalibrationPointCheck(addr: RoadAddress, cp: CalibrationPoint, seq: Seq[RoadAddress]): Unit = {
     if (addr.startAddrMValue != cp.addressMValue)
       throw new IllegalArgumentException(s"Start calibration point value mismatch in $cp")
-    if (seq.exists(_.startAddrMValue < cp.addressMValue))
-      throw new IllegalArgumentException("Start calibration point not in the first link of source")
     if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
       addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
       throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
@@ -146,8 +145,6 @@ trait RoadAddressMapper {
   protected def endCalibrationPointCheck(addr: RoadAddress, cp: CalibrationPoint, seq: Seq[RoadAddress]): Unit = {
     if (addr.endAddrMValue != cp.addressMValue)
       throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
-    if (seq.exists(_.endAddrMValue > cp.addressMValue))
-      throw new IllegalArgumentException(s"End calibration point not in the last link of source in linkId ${addr.linkId}")
     if (Math.abs(cp.segmentMValue -
       (addr.sideCode match {
         case SideCode.AgainstDigitizing => 0.0

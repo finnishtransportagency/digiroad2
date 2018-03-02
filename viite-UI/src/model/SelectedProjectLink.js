@@ -22,16 +22,31 @@
     };
 
     var orderSplitParts = function(links) {
-      var splitLinks =  _.partition(links, function(link){
+      var splitLinks = _.partition(links, function(link) {
         return !_.isUndefined(link.connectedLinkId);
       });
-      return _.sortBy(splitLinks[0], function (s) {return s.status == LinkStatus.Transfer.value ? 1 : s.status;});
+      return _.sortBy(splitLinks[0], function (s) { return s.status == LinkStatus.Transfer.value ? 1 : s.status; });
     };
 
-    var getLinkMarker = function(linkList, statusList){
-      return _.find(linkList, function (link) {
+    var getLinkMarker = function(linkList, statusList) {
+      var filter = _.filter(linkList, function (link) {
         return _.contains(statusList,link.status);
       });
+      if (filter.length > 1) {
+        var min = _.min(_.map(filter, function (template) {
+          return template.startAddressM;
+        }));
+
+        var max = _.max(_.map(filter, function (template) {
+          return template.endAddressM;
+        }));
+
+        var toReturn = filter[0];
+        toReturn.startAddressM = min;
+        toReturn.endAddressM = max;
+        return toReturn;
+      }
+      return filter[0];
     };
 
     var openSplit = function (linkid, multiSelect) {
@@ -47,7 +62,7 @@
       var suravageB = getLinkMarker(orderedSplitParts, [LinkStatus.New.value]);
       var terminatedC = getLinkMarker(orderedSplitParts, [LinkStatus.Terminated.value]);
       suravageA.marker = "A";
-      if (!suravageB){
+      if (!suravageB) {
         suravageB = zeroLengthSplit(suravageA);
         suravageA.points = suravageA.originalGeometry;
       }
@@ -151,17 +166,17 @@
     };
 
     var get = function(linkId) {
-      var clicked = _.filter(current, function (c) {return c.getData().linkId == linkId;});
-      var others = _.filter(_.map(current, function(projectLink) { return projectLink.getData();}), function (link) {
+      var clicked = _.filter(current, function (c) { return c.getData().linkId == linkId; });
+      var others = _.filter(_.map(current, function(projectLink) { return projectLink.getData(); }), function (link) {
         return link.linkId != linkId;
       });
-      if (!_.isUndefined(clicked[0])){
+      if (!_.isUndefined(clicked[0])) {
         return [clicked[0].getData()].concat(others);
       }
       return others;
     };
 
-    var getPreSplitData = function(){
+    var getPreSplitData = function() {
       return preSplitData;
     };
 
@@ -179,20 +194,20 @@
       return _.contains(ids, linkId);
     };
 
-    var clean = function(){
+    var clean = function() {
       current = [];
     };
 
-    var cleanIds = function(){
+    var cleanIds = function() {
       ids = [];
     };
 
-    var close = function(){
+    var close = function() {
       current = [];
       eventbus.trigger('layer:enableButtons', true);
     };
 
-    var revertSuravage = function(){
+    var revertSuravage = function() {
       splitSuravage = {};
     };
 
@@ -204,7 +219,7 @@
       nearest = point;
     };
 
-    eventbus.on('projectLink:preSplitSuccess', function(data){
+    eventbus.on('projectLink:preSplitSuccess', function(data) {
       preSplitData = data;
       var suravageA = data.a;
       if (!suravageA) {

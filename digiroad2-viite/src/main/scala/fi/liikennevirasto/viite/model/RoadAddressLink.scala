@@ -2,7 +2,8 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.{Point, RoadLinkType}
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.service.RoadLinkType
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.RoadType
 
@@ -43,7 +44,7 @@ case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                           anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, newGeometry: Option[Seq[Point]] = None) extends RoadAddressLinkLike {
+                           anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, commonHistoryID: Long = 0, newGeometry: Option[Seq[Point]] = None) extends RoadAddressLinkLike {
 }
 
 sealed trait Anomaly {

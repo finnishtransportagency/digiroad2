@@ -7,7 +7,8 @@ window.GenericConfirmPopup = function(message, options) {
         noButtonLbl: 'Ei',
         okCallback: function() {},
         successCallback: function(){},
-        closeCallback: function(){}
+        closeCallback: function(){},
+        container: '.container'
     };
 
     options = _.merge(defaultOptions, options);
@@ -42,7 +43,7 @@ window.GenericConfirmPopup = function(message, options) {
         if(options.type === 'alert')
             template = alertDiv;
 
-        jQuery('.container').append(template);
+        jQuery(options.container).append(template);
         var modal = $('.modal-dialog');
     };
 

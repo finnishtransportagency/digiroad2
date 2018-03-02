@@ -1,10 +1,11 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.{Point, RoadLinkType}
-import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.service.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.service.RoadLinkType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 // Used in debugging when needed.
 import org.scalatest.{FunSuite, Matchers}

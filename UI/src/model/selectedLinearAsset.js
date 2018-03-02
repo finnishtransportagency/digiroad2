@@ -183,6 +183,15 @@
       }
     };
 
+    this.verify = function() {
+      eventbus.trigger(singleElementEvent('saving'));
+      var knownLinearAssets = _.reject(selection, isUnknown);
+      var payload = {ids: _.pluck(knownLinearAssets, 'id'), typeId: typeId};
+      collection.verifyLinearAssets(payload);
+      dirty = false;
+      self.close();
+    };
+
     this.exists = function() {
       return !_.isEmpty(selection);
     };
@@ -219,6 +228,14 @@
     this.getAdministrativeClass = function() {
       var value = getProperty('administrativeClass');
       return _.isNull(value) ? undefined : value;
+    };
+
+    this.getVerifiedBy = function() {
+      return selection.length === 1 ? getProperty('verifiedBy') : null;
+    };
+
+    this.getVerifiedDateTime = function() {
+      return selection.length === 1 ? getProperty('verifiedAt') : null;
     };
 
     this.get = function() {

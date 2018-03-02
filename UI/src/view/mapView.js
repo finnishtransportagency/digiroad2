@@ -17,6 +17,7 @@
     var mapMovedHandler = function(mapState) {
       if (mapState.zoom < minZoomForContent()) {
         if (isInitialized && mapState.hasZoomLevelChanged) {
+          eventbus.trigger('verificationInfo:fetched', false);
           showAssetZoomDialog();
         }
       }

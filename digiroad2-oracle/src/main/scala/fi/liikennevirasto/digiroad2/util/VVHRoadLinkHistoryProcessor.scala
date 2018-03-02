@@ -1,7 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{Point, GeometryUtils, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.geotools.filter.function.GeometryTransformation
+
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.ArrayBuffer
 

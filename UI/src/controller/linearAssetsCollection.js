@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetsCollection = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
+  root.LinearAssetsCollection = function(backend, verificationCollection, typeId, singleElementEventCategory, multiElementEventCategory, hasMunicipalityValidation) {
       var linearAssets = [];
       var dirty = false;
       var selection = null;
@@ -45,12 +45,12 @@
           linearAsset.endMeasure.toFixed(2);
     };
 
-    this.fetch = function(boundingBox) {
-      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress()));
+    this.fetch = function(boundingBox, center) {
+      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress()), center);
     };
 
-    this.fetchAssetsWithComplementary = function(boundingBox) {
-      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId));
+    this.fetchAssetsWithComplementary = function(boundingBox, center) {
+      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId, applicationModel.getWithRoadAddress(), center));
     };
 
     this.fetchReadOnlyAssets = function(boundingBox) {
@@ -71,7 +71,7 @@
       });
     };
 
-    var fetch = function(boundingBox, assets) {
+    var fetch = function(boundingBox, assets, center) {
       return assets.then(function(linearAssetGroups) {
         var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
           return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'value'); });
@@ -84,6 +84,7 @@
           }) || [];
         linearAssets = knownLinearAssets.concat(unknownLinearAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
+        verificationCollection.fetch(boundingBox, center, typeId, hasMunicipalityValidation);
       });
     };
 
@@ -141,6 +142,14 @@
         linearAssets = replaceGroup(linearAssets, selection[0], newSegments);
       }
       return newSegments;
+    };
+
+    this.verifyLinearAssets = function(payload) {
+      backend.verifyLinearAssets(payload, function () {
+        eventbus.trigger(singleElementEvent('saved'));
+      }, function () {
+        eventbus.trigger('asset:verificationFailed');
+      });
     };
 
     var calculateMeasure = function(link) {

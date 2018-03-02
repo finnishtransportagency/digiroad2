@@ -2,8 +2,11 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.MassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -14,24 +17,24 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockMassLimitationDao = MockitoSugar.mock[OracleMassLimitationDao]
+  val mockMassLimitationDao = MockitoSugar.mock[MassLimitationDao]
   val TotalWeightLimits = 30
   val TrailerTruckWeightLimits = 40
   val AxleWeightLimits = 50
   val BogieWeightLimits = 60
   val MassLimitationAssetTypes = List(TotalWeightLimits, TrailerTruckWeightLimits, AxleWeightLimits, BogieWeightLimits)
 
-  val assetsTotalWeightLimits = Seq(PersistedLinearAsset(1l, 1000l, SideCode.BothDirections.value, Some(NumericValue(1)), 1.0, 5.0, None, None, None, None, false, TotalWeightLimits, 0, None, linkSource = NormalLinkInterface))
-  val assetsTotalWeightLimits2 = Seq(PersistedLinearAsset(2l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(1)), 3.0, 5.0, None, None, None, None, false, TotalWeightLimits, 0, None, linkSource = NormalLinkInterface))
+  val assetsTotalWeightLimits = Seq(PersistedLinearAsset(1l, 1000l, SideCode.BothDirections.value, Some(NumericValue(1)), 1.0, 5.0, None, None, None, None, false, TotalWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None))
+  val assetsTotalWeightLimits2 = Seq(PersistedLinearAsset(2l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(1)), 3.0, 5.0, None, None, None, None, false, TotalWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None))
 
-  val assetsTrailerTruckWeightLimits = Seq(PersistedLinearAsset(3l, 1000l, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 2.0, 6.0, None, None, None, None, false, TrailerTruckWeightLimits, 0, None, linkSource = NormalLinkInterface))
-  val assetsTrailerTruckWeightLimits1 = Seq(PersistedLinearAsset(4l, 1001l, SideCode.AgainstDigitizing.value, Some(NumericValue(2)), 5.0, 8.0, None, None, None, None, false, TrailerTruckWeightLimits, 0, None, linkSource = NormalLinkInterface))
+  val assetsTrailerTruckWeightLimits = Seq(PersistedLinearAsset(3l, 1000l, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 2.0, 6.0, None, None, None, None, false, TrailerTruckWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None))
+  val assetsTrailerTruckWeightLimits1 = Seq(PersistedLinearAsset(4l, 1001l, SideCode.AgainstDigitizing.value, Some(NumericValue(2)), 5.0, 8.0, None, None, None, None, false, TrailerTruckWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None))
 
-  val assetsAxleWeightLimits2 = Seq(PersistedLinearAsset(3l, 1002l, SideCode.BothDirections.value, Some(NumericValue(2)), 2.0, 4.0, None, None, None, None, false, AxleWeightLimits, 0, None, linkSource = NormalLinkInterface))
-  val assetsAxleWeightLimits1 = Seq(PersistedLinearAsset(5l, 1001l, SideCode.AgainstDigitizing.value, Some(NumericValue(2)), 5.0, 8.0, None, None, None, None, false, AxleWeightLimits, 0, None, linkSource = NormalLinkInterface))
+  val assetsAxleWeightLimits2 = Seq(PersistedLinearAsset(3l, 1002l, SideCode.BothDirections.value, Some(NumericValue(2)), 2.0, 4.0, None, None, None, None, false, AxleWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None))
+  val assetsAxleWeightLimits1 = Seq(PersistedLinearAsset(5l, 1001l, SideCode.AgainstDigitizing.value, Some(NumericValue(2)), 5.0, 8.0, None, None, None, None, false, AxleWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None))
 
-  val assetsBogieWeightLimits2 = Seq(PersistedLinearAsset(3l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 5.0, 9.0, None, None, None, None, false, BogieWeightLimits, 0, None, linkSource = NormalLinkInterface),
-  PersistedLinearAsset(6l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(3)), 9.0, 20.0, None, None, None, None, false, BogieWeightLimits, 0, None, linkSource = NormalLinkInterface))
+  val assetsBogieWeightLimits2 = Seq(PersistedLinearAsset(3l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 5.0, 9.0, None, None, None, None, false, BogieWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None),
+  PersistedLinearAsset(6l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(3)), 9.0, 20.0, None, None, None, None, false, BogieWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None))
 
   val assets = assetsTotalWeightLimits ++ assetsTrailerTruckWeightLimits
   val assets1 = assetsTrailerTruckWeightLimits1 ++ assetsAxleWeightLimits1

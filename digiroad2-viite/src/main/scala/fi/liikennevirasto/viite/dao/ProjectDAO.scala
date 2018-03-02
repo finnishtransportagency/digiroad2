@@ -7,8 +7,8 @@ import java.util.regex.{Matcher, Pattern}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
@@ -95,13 +95,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
-  }
-
-  def toNewRoadAddress(): RoadAddress = {
-    RoadAddress(NewRoadAddress, roadNumber, this.roadPartNumber, roadType, track, discontinuity, startAddrMValue,
-      endAddrMValue, startDate, endDate, modifiedBy, 0L, linkId, startMValue, endMValue, sideCode, linkGeometryTimeStamp,
-      calibrationPoints, floating, Seq(GeometryUtils.geometryEndpoints(geometry)._1, GeometryUtils.geometryEndpoints(geometry)._2),
-      linkGeomSource, ely, if (LinkStatus.Terminated == status) TerminationCode.Termination else TerminationCode.NoTermination)
   }
 
   def addrAt(a: Double) = {
@@ -318,11 +311,12 @@ object ProjectDAO {
     Q.queryNA[Long](query).firstOption
   }
 
-  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None, currentAddressFilter: Boolean = false): Seq[ProjectLink] = {
     val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
+    val currentFilter = if (currentAddressFilter) s"PROJECT_LINK.END_DATE IS NULL AND PROJECT_LINK.VALID_TO IS NULL " else s""
     val query =
       s"""$projectLinkQueryBase
-                where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where $filter $currentFilter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     listQuery(query)
   }
 

@@ -1,6 +1,7 @@
 (function(root) {
     root.AssetLabel = function() {
         var me = this;
+        this.MIN_DISTANCE = 0;
 
         this.getCoordinates = function(points){
             return _.map(points, function(point) {
@@ -33,21 +34,50 @@
         };
 
         this.renderFeatures = function(assets, zoomLevel, getPoint){
-            if(!me.isVisibleZoom(zoomLevel))
-                return [];
+          if(!me.isVisibleZoom(zoomLevel))
+            return [];
 
-            return _.chain(assets).
-                map(function(asset){
-                    var assetValue = me.getValue(asset);
-                    if(assetValue !== undefined){
-                        var style = me.getStyle(assetValue);
-                        var feature = me.createFeature(getPoint(asset));
-                        feature.setStyle(style);
-                        return feature;
-                    }
-                }).
-                filter(function(feature){ return feature !== undefined; }).
-                value();
+          return _.chain(assets).
+          map(function(asset){
+            var assetValue = me.getValue(asset);
+            if(assetValue !== undefined){
+              var style = me.getStyle(assetValue);
+              var feature = me.createFeature(getPoint(asset));
+              feature.setProperties(asset);
+              feature.setStyle(style);
+              return feature;
+            }
+          }).
+          filter(function(feature){ return feature !== undefined; })
+            .value();
+        };
+
+        this.getGroupedFeatures = function (assets, zoomLevel) {
+          var assetGroups = AssetGrouping(me.MIN_DISTANCE).groupByDistance(assets, zoomLevel);
+          return _.forEach(assetGroups, function (assetGroup) {
+            _.map(assetGroup, function (asset) {
+              asset.lon = _.head(assetGroup).lon;
+              asset.lat = _.head(assetGroup).lat;
+            });
+          });
+        };
+
+        this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
+          if(!this.isVisibleZoom(zoomLevel))
+            return [];
+          var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
+          return _.flatten(_.chain(groupedAssets).map(function(assets){
+            return _.map(assets, function(asset, index){
+              var assetValue = me.getValue(asset);
+              if(assetValue !== undefined){
+                var styles = me.getStyle(assetValue, index);
+                var feature = me.createFeature(getPoint(asset));
+                feature.setStyle(styles);
+                feature.setProperties(asset);
+                return feature;
+              }
+            });
+          }).filter(function(feature){ return !_.isUndefined(feature); }).value());
         };
 
         this.getMarkerOffset = function(zoomLevel){

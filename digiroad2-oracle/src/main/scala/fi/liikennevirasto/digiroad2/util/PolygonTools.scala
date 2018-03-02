@@ -6,8 +6,10 @@ import com.vividsolutions.jts.geom._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.geotools.geometry.jts.GeometryBuilder
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Measures, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import com.vividsolutions.jts.io.WKTReader
+import fi.liikennevirasto.digiroad2.service.linearasset.Measures
+
 import scala.collection.mutable.ListBuffer
 
 /**

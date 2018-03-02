@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.io.File
 
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHRoadNodes}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 

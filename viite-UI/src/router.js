@@ -1,5 +1,5 @@
 (function (root) {
-  root.URLRouter = function(map, backend, models) {
+  root.URLRouter = function (map, backend, models) {
     var Router = Backbone.Router.extend({
       initialize: function () {
         // Support legacy format for opening mass transit stop via ...#300289
@@ -22,7 +22,8 @@
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'roadAddressProject/:projectId': 'roadAddressProject',
         'historyLayer/:date': 'historyLayer',
-        'work-list/floatingRoadAddress' : 'floatingAddressesList'
+        'work-list/floatingRoadAddress' : 'floatingAddressesList',
+        'work-list/roadAddressErrors' : 'roadAddressErrorsList'
       },
 
       linkProperty: function (linkId) {
@@ -66,7 +67,11 @@
       },
 
       floatingAddressesList: function () {
-        eventbus.trigger('workList:select', 'linkProperty', backend.getFloatingRoadAddresses());
+        eventbus.trigger('workList-floatings:select', 'linkProperty', backend.getFloatingRoadAddresses());
+      },
+
+      roadAddressErrorsList: function () {
+        eventbus.trigger('workList-errors:select', 'linkProperty', backend.getRoadAddressErrors());
       }
     });
 
@@ -88,8 +93,8 @@
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
-      if(!_.isEmpty(models.selectedLinkProperty.get())){
-        if(_.isArray(linkProperty)){
+      if (!_.isEmpty(models.selectedLinkProperty.get())) {
+        if (_.isArray(linkProperty)) {
           router.navigate('linkProperty/' + _.first(linkProperty).linkId);
         } else {
           router.navigate('linkProperty/' + linkProperty.linkId);
@@ -98,11 +103,11 @@
     });
 
     eventbus.on('linkProperties:selectedProject', function (linkId, project) {
-      if(typeof project.id !== 'undefined') {
+      if (typeof project.id !== 'undefined') {
         var baseUrl = 'roadAddressProject/' + project.id;
         var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
         router.navigate(baseUrl + linkIdUrl);
-        if(!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0){
+        if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
           applicationModel.selectLayer('linkProperty', false);
           map.getView().setCenter([project.coordX, project.coordY]);
           map.getView().setZoom(project.zoomLevel);
@@ -117,7 +122,7 @@
     });
 
     eventbus.on('layer:selected', function (layer) {
-      if(layer.indexOf('/') === -1){
+      if (layer.indexOf('/') === -1) {
         layer = layer.concat('/');
       }
       router.navigate(layer);

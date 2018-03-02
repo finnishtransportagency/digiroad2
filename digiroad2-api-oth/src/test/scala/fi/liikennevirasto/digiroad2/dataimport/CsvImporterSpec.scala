@@ -5,9 +5,12 @@ import java.io.{ByteArrayInputStream, InputStream}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, _}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.mockito.Matchers
 import org.mockito.Matchers._
@@ -214,7 +217,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     "lisatiedot" -> ("qwer", "asdf"),
     "tietojen_yllapitaja" -> ("1", "3"),
     "korotettu" -> ("1", "2"),
-    "roska_astia" -> ("1", "2")
+    "roska_astia" -> ("1", "2"),
+    "vyöhyketieto" -> ("InfoZone", "InfoZone ready")
   )
 
   test("update asset's properties in a generic manner", Tag("db")) {
@@ -282,6 +286,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
+    val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
     when(mockMassTransitStopDao.getAssetAdministrationClass(any[Long])).thenReturn(None)
 
     class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
@@ -289,6 +294,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       override def withDynTransaction[T](f: => T): T = f
       override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
+      override val municipalityDao: MunicipalityDao = mockMunicipalityDao
     }
 
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]

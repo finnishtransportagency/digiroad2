@@ -333,7 +333,7 @@
           disabled = true;
           $('#tie').val(currentSplitData.roadNumber);
           $('#osa').val(currentSplitData.roadPartNumber);
-          $('#ajr').val(currentSplitData.trackCode);
+          $('#trackCodeDropdown').val(currentSplitData.trackCode);
         }
         else if (this.value == LinkStatus.Transfer.description) {
           $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
@@ -341,7 +341,7 @@
         }
         $('#tie').prop('disabled', disabled);
         $('#osa').prop('disabled', disabled);
-        $('#ajr').prop('disabled', disabled);
+        $('#trackCodeDropdown').prop('disabled', disabled);
         $('#discontinuityDropdown').prop('disabled', false);
         $('#roadTypeDropDown').prop('disabled', false);
       });

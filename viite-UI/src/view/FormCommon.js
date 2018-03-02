@@ -2,6 +2,7 @@
   root.FormCommon = function(prefix) {
     var ProjectStatus = LinkValues.ProjectStatus;
     var LinkStatus = LinkValues.LinkStatus;
+    var Track = LinkValues.Track;
 
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
@@ -33,7 +34,7 @@
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
         addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
-        addSmallInputNumber('ajr',(track !== 99 ? track :
+        addTrackCodeDropdown((track !== Track.Unknown.value ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
@@ -51,7 +52,7 @@
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
-              $('#ajr').val("0");
+              $('#trackCodeDropdown').val("0");
           }
         });
       }
@@ -71,6 +72,14 @@
 
     var addSmallLabel = function(label){
       return '<label class="control-label-small">'+label+'</label>';
+    };
+
+    var addSmallLabelTopped = function(label){
+      return '<label class="control-label-small" style="vertical-align: top;">'+label+'</label>';
+    };
+
+    var addSmallLabelWrapped = function(label){
+      return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">'+label+'</label>';
     };
 
     var addSmallInputNumber = function(id, value){
@@ -99,6 +108,20 @@
           '<option value="5" >5 Jatkuva</option>' +
           '</select>';
       }
+    };
+
+    var addTrackCodeDropdown = function (trackDefaultValue, properties){
+      if(trackDefaultValue === ''){
+        trackDefaultValue = Track.Unknown.value;
+      }
+
+      return '<select class="form-select-small-control" id="trackCodeDropdown" size="1" '+properties+'>' +
+        '<option value = "'+trackDefaultValue+'" selected hidden>'+trackDefaultValue+'</option>' +
+        '<option value="0" >0</option>' +
+        '<option value="1" >1</option>' +
+        '<option value="2" >2</option>' +
+        '</select>';
+
     };
 
     var directionChangedInfo = function (selected, isPartialReversed) {
@@ -258,7 +281,7 @@
           buttonIndex++;
         }
         errorLines += '<div class="form-project-errors-list">' +
-          addSmallLabel('LINKIDS: ') + ' ' + addSmallLabel(error.linkIds) + '</br>' +
+          addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
           addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabel((error.info ? error.info: 'N/A')) + '</br>' +
           (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +

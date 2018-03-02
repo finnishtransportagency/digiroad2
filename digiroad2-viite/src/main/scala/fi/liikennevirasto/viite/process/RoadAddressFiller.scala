@@ -7,8 +7,12 @@ import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
+import org.slf4j.LoggerFactory
 
 object RoadAddressFiller {
+
+  val logger = LoggerFactory.getLogger(getClass)
+
   case class LRMValueAdjustment(addressId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class AddressChangeSet(
                                toFloatingAddressIds: Set[Long],
@@ -105,7 +109,7 @@ object RoadAddressFiller {
       dropShort
     )
     val initialChangeSet = AddressChangeSet(Set.empty, Nil, Nil)
-
+    logger.info(s"Starting filling topology.")
     roadLinks.foldLeft(Seq.empty[RoadAddressLink], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
       val segments = roadAddressMap.getOrElse(roadLink.linkId, Nil)

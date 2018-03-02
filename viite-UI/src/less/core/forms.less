@@ -77,6 +77,7 @@ input[type="checkbox"]:focus {
 .form-control,
 .split-form-control,
 .form-select-control,
+.form-select-small-control,
 .action-select {
   display: block;
   width: 100%;
@@ -307,8 +308,16 @@ form.roadAddressProject .split-form-control{
 
 form.roadAddressProject .form-select-control{
   width: 100px !important;
-  height: 28px;
+  height: 27px;
   margin-top: 6px !important;
+}
+
+form.roadAddressProject .form-select-small-control{
+  float: left;
+  width: 55px !important;
+  height: 27px;
+  margin-top: 6px !important;
+  margin-right: 11px !important;
 }
 
 form.roadAddressProject p {
@@ -466,7 +475,7 @@ form.roadAddressProject p {
     color: @gray-lighter;
   }
 
-  .form-control, .split-form-control, .form-select-control, .action-select {
+  .form-control, .split-form-control, .form-select-control, .form-select-small-control, .action-select {
     border-color: @input-border-dark;
     color: @input-color-dark;
     background-color: @input-bg-dark;

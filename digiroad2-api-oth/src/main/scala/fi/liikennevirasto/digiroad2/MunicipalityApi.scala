@@ -2,9 +2,15 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.pointasset.oracle._
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacleAsset, IncomingPedestrianCrossingAsset, IncomingRailwayCrossingtAsset, PavingService}
 import org.joda.time.DateTime
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
@@ -881,7 +887,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Missing municipality code."))
 
     val municipalityCode = params("municipalityCode").toInt
-    if(linearAssetService.getMunicipalityById(municipalityCode).isEmpty)
+    if(assetService.getMunicipalityById(municipalityCode).isEmpty)
       halt(NotFound("Municipality code not found."))
 
     val assetType = getAssetTypeId(params("assetType"))

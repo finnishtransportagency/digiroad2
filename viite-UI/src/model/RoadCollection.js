@@ -65,9 +65,11 @@
     var preMovedRoadAddresses = [];
     var date = [];
     var historicRoadLinks = [];
+    var floatingRoadLinks = [];
     var changedIds = [];
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
+    var LinkType = LinkValues.RoadLinkType;
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -106,33 +108,59 @@
             return new RoadLinkModel(roadLink);
           });
         });
-        roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
-          return _.some(roadLinkGroup, function(roadLink) {
-            _.contains(selectedIds, roadLink.getId());
-          });
-        }).concat(getSelectedRoadLinks());
+        roadLinkGroups = fetchedRoadLinkModels;
 
+        if(!_.isEmpty(getSelectedRoadLinks())){
+          var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinks(), function(selected) {
+            var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function(group){
+              return group.getData();
+            });
+            return _.contains(_.pluck(allGroups, 'linkId'), selected.getData().linkId);
+          });
+          roadLinkGroups.concat(nonFetchedLinksInSelection);
+        }
+        
         historicRoadLinks = _.filter(roadLinkGroups, function(group) {
-          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
+          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
         });
+
+        floatingRoadLinks = _.filter(roadLinkGroups, function(group) {
+          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
+        });
+
         roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
           return groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
+        });
+        var suravageRoadAddresses = _.partition(roadLinkGroupsSuravage, function(sur) {
+          return findSuravageRoadAddressInGroup(sur);
         });
         var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
           return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
         });
-        roadLinkGroups = nonSuravageRoadLinkGroups;
+        roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
         eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups);
         if(historicRoadLinks.length !== 0) {
           eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
         }
-        if(roadLinkGroupsSuravage.length !== 0)
-          eventbus.trigger('suravageRoadLinks:fetched', roadLinkGroupsSuravage);
+        if(suravageRoadAddresses[1].length !== 0)
+          eventbus.trigger('suravageRoadLinks:fetched', suravageRoadAddresses[1]);
         if(applicationModel.isProjectButton()){
           eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
           applicationModel.setProjectButton(false);
         }
       });
+    };
+
+    var findSuravageRoadAddressInGroup = function(group) {
+      var groupData = _.map(group, function (data) {
+        return data.getData();
+      });
+      var found = _.filter(groupData, function(grp) {
+        var id = grp.id;
+        var roadLinkSource = grp.roadLinkSource;
+        return id !== 0 && roadLinkSource === LinkSource.SuravageLinkInterface.value;
+      });
+      return found.length !== 0;
     };
 
     var groupDataSourceFilter = function(group, dataSource){
@@ -144,6 +172,18 @@
         });
       } else {
         return group.getData().roadLinkSource === dataSource.value;
+      }
+    };
+
+    var groupLinkTypeFilter = function(group, dataSource) {
+      if (_.isArray(group)) {
+        return _.some(group, function(roadLink) {
+          if (roadLink !== null)
+            return roadLink.getData().roadLinkType === dataSource.value;
+          else return false;
+        });
+      } else {
+        return group.getData().roadLinkType === dataSource.value;
       }
     };
 

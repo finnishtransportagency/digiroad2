@@ -1,5 +1,5 @@
 (function(root) {
-  root.SpeedLimitsCollection = function(backend) {
+  root.SpeedLimitsCollection = function(backend, verificationCollection) {
     var speedLimits = [];
     var speedLimitsHistory = [];
     var dirty = false;
@@ -45,7 +45,7 @@
           speedLimit.endMeasure.toFixed(2);
     };
 
-    this.fetch = function(boundingBox) {
+    this.fetch = function(boundingBox, center) {
       return backend.getSpeedLimits(boundingBox, applicationModel.getWithRoadAddress()).then(function(speedLimitGroups) {
         var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
           return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
@@ -58,6 +58,7 @@
             }) || [];
         speedLimits = knownSpeedLimits.concat(unknownSpeedLimits);
         eventbus.trigger('speedLimits:fetched', self.getAll());
+        verificationCollection.fetch(boundingBox, center, 20, true);
       });
     };
 

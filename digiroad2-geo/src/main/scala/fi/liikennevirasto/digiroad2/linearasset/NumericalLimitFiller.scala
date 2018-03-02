@@ -134,6 +134,19 @@ object NumericalLimitFiller {
     (validSegments ++ cappedSegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
   }
 
+  private def droppedSegmentWrongDirection(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+      (segments, changeSet)
+    } else {
+      val droppedAssetIds = (roadLink.trafficDirection match {
+        case TrafficDirection.TowardsDigitizing => segments.filter(s => s.sideCode == SideCode.AgainstDigitizing.value)
+        case _ => segments.filter(s => s.sideCode == SideCode.TowardsDigitizing.value)
+      }).map(_.id)
+
+      (segments.filterNot(s => droppedAssetIds.contains(s.id)), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds++ droppedAssetIds))
+    }
+  }
+
   private def adjustSegmentSideCodes(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val oneWayTrafficDirection =
       (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) ||
@@ -152,7 +165,7 @@ object NumericalLimitFiller {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
     val generated = remainders.map { segment =>
-      PersistedLinearAsset(0L, roadLink.linkId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource)
+      PersistedLinearAsset(0L, roadLink.linkId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource, None, None)
     }
     (segments ++ generated, changeSet)
   }
@@ -164,7 +177,7 @@ object NumericalLimitFiller {
         .map { x => (x.startMeasure, x.endMeasure) }
       val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5 }
       remainders.map { segment =>
-        PersistedLinearAsset(0L, roadLink.linkId, sideCode.value, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource)
+        PersistedLinearAsset(0L, roadLink.linkId, sideCode.value, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource, None, None)
       }
     } else {
       Nil
@@ -326,10 +339,10 @@ object NumericalLimitFiller {
       val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
       PieceWiseLinearAsset(
-        dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired,
-        dbAsset.startMeasure, dbAsset.endMeasure,
-        Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime,
-        dbAsset.createdBy, dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection, dbAsset.vvhTimeStamp, dbAsset.geomModifiedDate, dbAsset.linkSource, roadLink.administrativeClass)
+        dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired, dbAsset.startMeasure,
+        dbAsset.endMeasure, Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime, dbAsset.createdBy,
+        dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection, dbAsset.vvhTimeStamp, dbAsset.geomModifiedDate,
+        dbAsset.linkSource, roadLink.administrativeClass,  verifiedBy = dbAsset.verifiedBy, verifiedDate = dbAsset.verifiedDate)
     }
   }
 
@@ -436,7 +449,7 @@ object NumericalLimitFiller {
     if (linearAssets.nonEmpty) {
       val origin = sortedList.head
       val target = sortedList.tail.find(sl => Math.abs(sl.startMeasure - origin.endMeasure) < 0.1 &&
-          sl.value == origin.value && sl.sideCode.equals(origin.sideCode))
+          sl.value == origin.value && sl.sideCode == origin.sideCode)
       if (target.nonEmpty) {
         // pick id if it already has one regardless of which one is newer
         val toBeFused = Seq(origin, target.get).sortWith(modifiedSort)
@@ -471,12 +484,13 @@ object NumericalLimitFiller {
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
-      dropShortSegments,
       capSegmentsThatOverflowGeometry,
       expireOverlappingSegments,
       combine,
       fuse,
+      dropShortSegments,
       adjustAssets,
+      droppedSegmentWrongDirection,
       adjustSegmentSideCodes,
       generateTwoSidedNonExistingLinearAssets(typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
@@ -549,6 +563,6 @@ object NumericalLimitFiller {
       value = asset.value, startMeasure = newStart, endMeasure = newEnd,
       createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
-      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource), changeSet)
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource, verifiedBy = asset.verifiedBy, verifiedDate = asset.verifiedDate), changeSet)
   }
 }

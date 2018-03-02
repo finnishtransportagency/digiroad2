@@ -46,6 +46,10 @@
       (singleLinkSelect !== isSingleLinkSelection()));
     };
 
+    var setCurrent = function(data){
+      current = data;
+    };
+
     var extractDataForDisplay = function(selectedData) {
       var extractUniqueValues = function(selectedData, property) {
         return _.chain(selectedData)
@@ -828,7 +832,9 @@
       isLinkIdInCurrent: isLinkIdInCurrent,
       isLinkIdInFeaturesToKeep: isLinkIdInFeaturesToKeep,
       filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
-      linkIdsToExclude: linkIdsToExclude
+      linkIdsToExclude: linkIdsToExclude,
+      extractDataForDisplay: extractDataForDisplay,
+      setCurrent: setCurrent
     };
   };
 })(this);

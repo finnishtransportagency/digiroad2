@@ -270,6 +270,19 @@
     ]
   };
 
+  var widthLimitReason = [
+    { value:1, label: 'Silta'},
+    { value:2, label: 'Kokoportaali'},
+    { value:3, label: 'Puoliportaali'},
+    { value:4, label: 'Kaide'},
+    { value:5, label: 'Valaisin'},
+    { value:6, label: 'Aita'},
+    { value:7, label: 'Maatuki'},
+    { value:8, label: 'Liikennevalopylväs'},
+    { value:9, label: 'Muu alikulkueste'},
+    { value:99, label: 'El tietoa'}
+  ];
+
   var sortAndFilterTrafficSignProperties = function(properties) {
     var propertyOrdering = [
       'trafficSigns_type',
@@ -349,19 +362,30 @@
         '    <div class="form-group editable form-railway-crossing">' +
         '        <label class="control-label">' + 'Nimi' + '</label>' +
         '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
-        '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
+      '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
         '    </div>';
     } else if (asset.validityDirection && !asset.propertyData) {
       return '' +
         '  <div class="form-group editable form-directional-traffic-sign">' +
         '      <label class="control-label">Teksti</label>' +
         '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
-        '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
+        '      <textarea class="form-control large-input">' + (asset.text || '') + '</textarea>' +
         '  </div>' +
         '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
         '      <label class="control-label">Vaikutussuunta</label>' +
         '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
         '    </div>';
+    }else if(asset.limit || asset.limit === 0){
+      var selectedReason = _.find(widthLimitReason, { value: asset.reason });
+      return '' +
+        '  <div class="form-group editable form-heigh">' +
+        '      <label class="control-label">Rajoitus</label>' +
+        '      <p class="form-control-static">' + (asset.limit ? (asset.limit + ' cm') : '–') + '</p>' +
+        '  </div>' + '' +
+        (asset.reason ? '<div class="form-group editable form-width">' +
+        '      <label class="control-label">Syy</label>' +
+        '      <p class="form-control-static">' + selectedReason.label + '</p>' +
+        '  </div>': '');
     } else if (asset.services) {
       var services = _(asset.services)
         .sortByAll('serviceType', 'id')

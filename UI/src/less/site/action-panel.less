@@ -27,6 +27,16 @@
       background-color: @blue;
       cursor: inherit;
     }
+
+    #right-panel {
+      float: right;
+      display: none;
+    }
+
+    #left-panel {
+      display: inline-block;
+      width: 90%;
+    }
   }
 
   .panel-section {
@@ -43,6 +53,14 @@
     padding: 10px;
     color: @gray-darker;
     border-bottom: none;
+  }
+}
+.municipality-list {
+  padding: 10px;
+
+  .filter-box {
+    border-bottom: 1px solid @gray-light-2;
+    padding-bottom: 6px;
   }
 }
 
@@ -267,6 +285,26 @@
       position: relative;
       top: 2px;
     }
+  }
+}
+
+.limitation-label-legend{
+  .labeling-entry {
+    padding: 0 6px 5px 0;
+    display: block;
+    font-size: @font-size-small;
+    line-height: @line-height-base;
+
+    .limitation-0, .limitation-1, .limitation-2, .limitation-3 {
+      padding: 2px 0 4px 4px;
+      border: 2px solid @gray-light;
+      border-radius: 5px;
+      color:@white
+    }
+    .limitation-0 { background-color: @limitation-1; }
+    .limitation-1 { background-color: @limitation-2; }
+    .limitation-2 { background-color: @limitation-3; }
+    .limitation-3 { background-color: @limitation-4; }
   }
 }
 

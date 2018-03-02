@@ -31,7 +31,11 @@ package object viite {
   val MaxMoveDistanceBeforeFloating = 1.0
   /* Maximum amount a road start / end may move until it is turned into a floating road address */
 
+  val MinDistanceForGeometryUpdate = 0.5
+
   val NewRoadAddress: Long = -1000L
+
+  val NewCommonHistoryId: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
 
@@ -62,6 +66,8 @@ package object viite {
   val ErrorReversingUnchangedLinks = "Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan."
   val ErrorSavingFailed = "Päivitys ei onnistunut"
   val ErrorMultipleRoadNumbersOrParts = "Valitut linkit eivät ole samalta tieosalta. Tallennus tulee tehdä erikseen."
+  val ErrorOverlappingRoadAddress = "Road address overlaps another one."
+  val ErrorInconsistentTopology = "Topology have inconsistent data."
   val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia, ${EndOfRoad.description}, tieosan viimeiselle linkille."
   val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi ${EndOfRoad.description}, vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
@@ -77,10 +83,14 @@ package object viite {
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
+  val RoadNotEndingInElyBorderMessage = "JATKUU-koodi virheellinen. Tieosa ei pääty ELY-rajalle."
+  val RoadContinuesInAnotherElyMessage = "JATKUU-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
+  val MinorDiscontinuousWhenRampConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
+  val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi Tien loppu. Muuta jatkuvuuskoodiksi Tien loppu (1) tieosoitteelle: %s."
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
-  val MaxLengthChange = 1.0
+  val MaxLengthChange = 20.0
 
   val DefaultScreenWidth = 1920
   val DefaultScreenHeight = 1080

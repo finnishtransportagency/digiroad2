@@ -5,8 +5,9 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import java.util.UUID
+
 import fi.liikennevirasto.digiroad2.AuthenticatedApiSpec
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 
 class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats

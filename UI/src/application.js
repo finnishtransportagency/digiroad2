@@ -3,7 +3,8 @@
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
-    var speedLimitsCollection = new SpeedLimitsCollection(backend);
+    var verificationCollection = new AssetsVerificationCollection(backend);
+    var speedLimitsCollection = new SpeedLimitsCollection(backend, verificationCollection);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
@@ -14,7 +15,7 @@
     var enabledExperimentalAssets = isExperimental ? assetConfiguration.experimentalAssetsConfig : [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
-      var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
+      var collection = new LinearAssetsCollection(backend, verificationCollection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.hasMunicipalityValidation);
       var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
       return _.merge({}, spec, {
         collection: collection,
@@ -23,7 +24,16 @@
     });
 
     var pointAssets = _.map(assetConfiguration.pointAssetsConfig, function(spec) {
-      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec.layerName, spec.allowComplementaryLinks) : new spec.collection(backend, spec.layerName, spec.allowComplementaryLinks) ;
+      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
+      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
+      return _.merge({}, spec, {
+        collection: collection,
+        selectedPointAsset: selectedPointAsset
+      });
+    });
+
+    var groupedPointAssets = _.map(groupedPointAssetSpecs, function(spec) {
+      var collection = _.isUndefined(spec.collection) ?  new GroupedPointAssetsCollection(backend, spec) : new spec.collection(backend, spec) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
       return _.merge({}, spec, {
         collection: collection,
@@ -48,13 +58,15 @@
     window.selectedMassTransitStopModel = selectedMassTransitStopModel;
     var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
     var selectedPointAssetModels = _.pluck(pointAssets, "selectedPointAsset");
+    var selectedGroupedPointAssetModels = _.pluck(groupedPointAssets, "selectedPointAsset");
     window.applicationModel = new ApplicationModel([
       selectedMassTransitStopModel,
       selectedSpeedLimit,
       selectedLinkProperty,
       selectedManoeuvreSource]
         .concat(selectedLinearAssetModels)
-        .concat(selectedPointAssetModels));
+        .concat(selectedPointAssetModels)
+        .concat(selectedGroupedPointAssetModels));
 
     EditModeDisclaimer.initialize(instructionsPopup);
 
@@ -64,6 +76,7 @@
         linkPropertiesModel,
         selectedSpeedLimit,
         selectedMassTransitStopModel,
+        groupedPointAssets,
         isExperimental);
 
     var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
@@ -89,21 +102,25 @@
     RoadAddressInfoDataInitializer.initialize(isExperimental);
     MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
-    WorkListView.initialize(backend);
+
+    new WorkListView().initialize();
+    new VerificationWorkList().initialize();
+    new MunicipalityWorkList().initialize(backend);
+
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection);
+        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets);
       });
     });
   };
 
-  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection) {
+  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
@@ -118,7 +135,8 @@
           { selectedRailwayCrossing: selectedRailwayCrossing },
           { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign },
           { selectedTrafficSign: selectedTrafficSign},
-          {selectedMaintenanceRoad: selectedMaintenanceRoad}
+          { selectedMaintenanceRoad: selectedMaintenanceRoad},
+          { linearAssets: linearAssets}
     ));
       eventbus.trigger('application:initialized');
     }
@@ -131,9 +149,14 @@
   var tierekisteriFailedMessageDelete = 'Tietojen poisto Tierekisterissä epäonnistui. Pysäkkiä ei poistettu OTH:ssa';
   var vkmNotFoundMessage = 'Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui';
   var notFoundInTierekisteriMessage = 'Huom! Tämän pysäkin tallennus ei onnistu, koska vastaavaa pysäkkiä ei löydy Tierekisteristä tai Tierekisteriin ei ole yhteyttä tällä hetkellä.';
+  var verificationFailedMessage = 'Tarkistus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+  };
+
+  var indicatorOverlayForWorklist= function() {
+    jQuery('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
   var bindEvents = function(linearAssetSpecs, pointAssetSpecs, roadCollection) {
@@ -145,13 +168,17 @@
       indicatorOverlay();
     });
 
+    eventbus.on('municipality:verifying', function() {
+      indicatorOverlayForWorklist();
+    });
+
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched ' + fetchedEventNames, function() {
+    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched municipality:verified ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 
     var massUpdateFailedEventNames = _.map(multiElementEventNames, function(name) { return name + ':massUpdateFailed'; }).join(' ');
-    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed ' + massUpdateFailedEventNames, function() {
+    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed municipality:verificationFailed ' + massUpdateFailedEventNames, function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
     });
@@ -176,6 +203,11 @@
       alert(vkmNotFoundMessage);
     });
 
+    eventbus.on('asset:verificationFailed', function() {
+      jQuery('.spinner-overlay').remove();
+      alert(verificationFailedMessage);
+    });
+
     eventbus.on('confirm:show', function() { new Confirm(); });
   };
 
@@ -194,7 +226,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection) {
+  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets) {
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -207,6 +239,7 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
     new TrafficSignToggle(map, mapPluginsContainer);
+    new MunicipalityDisplay(map, mapPluginsContainer, backend);
 
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
@@ -223,11 +256,16 @@
        linearAsset.newTitle,
        linearAsset.title,
        linearAsset.editConstrains || function() {return false;},
-       linearAsset.layerName );
+       linearAsset.layerName,
+       linearAsset.isVerifiable);
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
      PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
+    });
+
+    _.forEach(groupedPointAssets, function(pointAsset) {
+      GroupedPointAssetForm.initialize(pointAsset.typeIds, pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, roadCollection, pointAsset.propertyData);
     });
 
     var trafficSignReadOnlyLayer = function(layerName){
@@ -281,9 +319,34 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
+       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
+       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
        editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
+    }, {});
+
+    var groupedPointAssetLayers = _.reduce(groupedPointAssets, function(acc, asset) {
+      acc[asset.layerName] = new GroupedPointAssetLayer({
+        roadLayer: roadLayer,
+        application: applicationModel,
+        roadCollection: models.roadCollection,
+        collection: asset.collection,
+        map: map,
+        selectedAsset: asset.selectedPointAsset,
+        style: PointAssetStyle(asset.layerName),
+        mapOverlay: mapOverlay,
+        layerName: asset.layerName,
+        assetLabel: asset.label,
+        newAsset: asset.newAsset,
+        roadAddressInfoPopup: roadAddressInfoPopup,
+        allowGrouping: asset.allowGrouping,
+        assetGrouping: new AssetGrouping(asset.groupingDistance),
+        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
+        editConstrains : asset.editConstrains || function() {return false;},
+        assetTypeIds: asset.typeIds
+      });
+      return acc;
     }, {});
 
     var layers = _.merge({
@@ -302,7 +365,7 @@
        }),
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
-    }, linearAssetLayers, pointAssetLayers);
+    }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers);
 
     VioniceLayer({ map: map });
 
@@ -339,8 +402,8 @@
                        linkPropertiesModel,
                        selectedSpeedLimit,
                        selectedMassTransitStopModel,
+                       groupedPointAssets,
                        isExperimental) {
-
     var assetType =  assetConfiguration.assetTypes;
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
     var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
@@ -350,7 +413,8 @@
     var serviceRoadBox = new ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
     var trSpeedLimitBox = isExperimental ? [new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}))] : [];
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
-
+    var heightBox = new ActionPanelBoxes.HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
+    var widthBox = new ActionPanelBoxes.WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -360,9 +424,8 @@
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers))
-          .concat(trSpeedLimitBox),
-      [speedLimitBox].concat(
-      [winterSpeedLimits]),
+      [speedLimitBox]
+        .concat([winterSpeedLimits]),
       [massTransitBox]
           .concat(getPointAsset(assetType.obstacles))
           .concat(getPointAsset(assetType.railwayCrossings))
@@ -384,7 +447,12 @@
         .concat(getLinearAsset(assetType.heightLimit))
         .concat(getLinearAsset(assetType.lengthLimit))
         .concat(getLinearAsset(assetType.widthLimit)),
-      [].concat([serviceRoadBox])
+      [].concat([serviceRoadBox]),
+      [].concat([heightBox])
+        .concat([widthBox])
+        .concat(getGroupedPointAsset(assetGroups.trWeightGroup)),
+      [].concat(trSpeedLimitBox)
+
     ];
 
     function getLinearAsset(typeId) {
@@ -403,7 +471,15 @@
       }
       return [];
     }
+
+  function getGroupedPointAsset(typeIds) {
+    var asset = _.find(groupedPointAssets, {typeIds: typeIds.sort()});
+    if (asset) {
+      return [ActionPanelBoxes.LimitationBox(asset)];
+    }
+    return [];
   }
+}
 
   // Shows modal with message and close button
   function showInformationModal(message) {

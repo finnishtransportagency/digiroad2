@@ -1,15 +1,17 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.io.{FileWriter, BufferedWriter, File}
+import java.io.{BufferedWriter, File, FileWriter}
 
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
-import org.joda.time.{Seconds, DateTime}
+import org.joda.time.{DateTime, Seconds}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new RoadLinkOTHService(new VVHClient(vvhServiceHost), new DummyEventBus, new DummySerializer)

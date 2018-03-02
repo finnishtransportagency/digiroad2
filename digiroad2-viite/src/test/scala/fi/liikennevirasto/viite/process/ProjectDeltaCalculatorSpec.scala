@@ -3,13 +3,14 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -33,7 +34,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     RoadAddress(id = start, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
       discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start+distance, lrmPositionId = start, linkId = start,
       startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L,
-      geometry = Seq(Point(0.0, start), Point(0.0, start+distance)), linkGeomSource = NormalLinkInterface, ely = 8)
+      geometry = Seq(Point(0.0, start), Point(0.0, start+distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, commonHistoryId = 0L)
   }
   private val project: RoadAddressProject = RoadAddressProject(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
     DateTime.now(), "", Seq(), None, None)
@@ -295,7 +296,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY)
             values (${ids(3)},${project.id},'0','5','6591','1','62','85',${lrms(3)},'silari',null,
             to_date('20.10.2017','DD.MM.RRRR'),null,'5','2','9',${ids(0)},'499972936','')""".execute
-      val delta = ProjectDeltaCalculator.delta(project.id)
+      val delta = ProjectDeltaCalculator.delta(project)
       delta.terminations should have size (1)
       delta.unChanged.mapping should have size (1)
       delta.newRoads should have size (1)
