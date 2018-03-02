@@ -3,7 +3,7 @@ require.config({
     'underscore': '../node_modules/underscore/underscore',
     'jquery': '../node_modules/jquery/dist/jquery.min',
     'lodash': '../node_modules/lodash/index',
-    'backbone': '../../node_modules/backbone/bsackbone',
+    'backbone': '../../node_modules/backbone/backbone',
     'chai': '../../node_modules/chai/chai',
     'EventBus': '../src/utils/eventbus',
     "SelectedMassTransitStop": '../src/model/selectedMassTransitStop',
@@ -63,7 +63,7 @@ require.config({
     },
     'LocationInputParser': { exports: 'LocationInputParser' },
     'GeometryUtils': {
-      exports: 'GeometryUstils'
+      exports: 'GeometryUtils'
     },
     'assetGrouping': {
       exports: 'AssetGrouping'
@@ -80,16 +80,23 @@ require.config({
   },
   waitSeconds: 10
 });
-require([], function (lodash) {
-  console.log("teste1");
+require(['lodash',
+  'unit-tests/selectedMassTransitStopSpec',
+  'unit-tests/geometry-calculations-spec',
+  'unit-tests/massTransitStopGroupingSpec',
+  'unit-tests/selectedSpeedLimitSpec',
+  'unit-tests/locationInputParserSpec'], function (lodash) {
+  window._ = lodash;
+  window.applicationModel = {
+    getWithRoadAddress : function(){
+      return 'false';
+    }
+  };
   mocha.checkLeaks();
-    console.log("teste2");
   if (window.mochaPhantomJS) {
-      console.log("teste2.1");
     mochaPhantomJS.run();
   }
   else {
-      console.log("teste2.2");
     mocha.run();
   }
 });
