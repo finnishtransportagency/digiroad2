@@ -744,7 +744,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      mapMassLinearAssets(linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities))
+      val massLinearAssets = linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities)
+      if(params("withRoadAddress").toBoolean)
+        mapMassLinearAssets(linearMassLimitationService.withRoadAddress(massLinearAssets))
+      else
+        mapMassLinearAssets(massLinearAssets)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -757,7 +761,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      mapMassLinearAssets(linearMassLimitationService.getWithComplementaryByBoundingBox(boundingRectangle, municipalities))
+      val massLinearAssets = linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities)
+      if(params("withRoadAddress").toBoolean)
+        mapMassLinearAssets(linearMassLimitationService.withRoadAddress(massLinearAssets))
+      else
+        mapMassLinearAssets(massLinearAssets)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -799,7 +807,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         Map(
           "points" -> link.geometry,
           "sideCode" -> link.sideCode,
-          "values" -> link.value.map(_.toJson)
+          "values" -> link.value.map(_.toJson),
+          "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
+          "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
+          "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
+          "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
+          "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
+          "administrativeClass" -> link.administrativeClass.value
         )
       }
     }

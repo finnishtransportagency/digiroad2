@@ -54,11 +54,11 @@
     };
 
     this.fetchReadOnlyAssets = function(boundingBox) {
-      return fetchReadOnly(boundingBox, backend.getReadOnlyLinearAssets(boundingBox, typeId));
+      return fetchReadOnly(boundingBox, backend.getReadOnlyLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress()));
     };
 
     this.fetchReadOnlyAssetsWithComplementary = function(boundingBox) {
-      return fetchReadOnly(boundingBox, backend.getReadOnlyLinearAssetsComplementaries(boundingBox, typeId));
+      return fetchReadOnly(boundingBox, backend.getReadOnlyLinearAssetsComplementaries(boundingBox, typeId, applicationModel.getWithRoadAddress()));
     };
 
     var fetchReadOnly = function(boundingBox, assets) {

@@ -1,13 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.dao.MassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 
-case class MassLimitationAsset(geometry: Seq[Point], sideCode: Int, value: Option[Value])
+case class MassLimitationAsset(linkId: Long, administrativeClass: AdministrativeClass, sideCode: SideCode, value: Option[Value], geometry: Seq[Point],
+                              attributes: Map[String, Any] = Map())
 
 class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLimitationDao) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -33,10 +34,11 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLim
 
     allAssets.groupBy(_.linkId).flatMap {
       case (linkId, assets) =>
-        val geometrySegment = GeometryUtils.truncateGeometry2D(roadLinks.find(_.linkId == assets.head.linkId).get.geometry, assets.minBy(_.startMeasure).startMeasure, assets.maxBy(_.endMeasure).endMeasure)
+        val roadLink = roadLinks.find(_.linkId == assets.head.linkId).get
+        val geometrySegment = GeometryUtils.truncateGeometry2D(roadLink.geometry, assets.minBy(_.startMeasure).startMeasure, assets.maxBy(_.endMeasure).endMeasure)
 
         assetSplitSideCodes(assets).groupBy(_.sideCode).map {
-          case (side, assetsBySide) => getAssetBySideCode(assetsBySide, geometrySegment)
+          case (side, assetsBySide) => getAssetBySideCode(assetsBySide, geometrySegment, roadLink)
         }
     }.toSeq
   }
@@ -56,8 +58,19 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLim
     }
   }
 
-  private def getAssetBySideCode(assets: Seq[PersistedLinearAsset], geometry: Seq[Point]): MassLimitationAsset = {
-      val values = assets.map(a => AssetTypes(a.typeId, a.value.getOrElse(NumericValue(0)).asInstanceOf[NumericValue].value.toString ))
-      MassLimitationAsset(geometry, assets.head.sideCode, Some(MassLimitationValue(values)))
+  private def getAssetBySideCode(assets: Seq[PersistedLinearAsset], geometry: Seq[Point], roadLink: RoadLink): MassLimitationAsset = {
+    val values = assets.map(a => AssetTypes(a.typeId, a.value.getOrElse(NumericValue(0)).asInstanceOf[NumericValue].value.toString))
+    MassLimitationAsset(assets.head.linkId, roadLink.administrativeClass, SideCode.apply(assets.head.sideCode), Some(MassLimitationValue(values)), geometry)
+  }
+
+  def withRoadAddress(pieceWiseLinearAssets: Seq[Seq[MassLimitationAsset]]): Seq[Seq[MassLimitationAsset]] ={
+    val addressData = roadLinkService.getRoadAddressesByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)).toSet).map(a => (a.linkId, a)).toMap
+    pieceWiseLinearAssets.map(
+      _.map(pwa =>
+        if (addressData.contains(pwa.linkId))
+          pwa.copy(attributes = pwa.attributes ++ addressData(pwa.linkId).asAttributes)
+        else
+          pwa
+      ))
   }
 }
