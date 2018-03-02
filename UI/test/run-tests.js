@@ -3,7 +3,7 @@ require.config({
     'underscore': '../node_modules/underscore/underscore',
     'jquery': '../node_modules/jquery/dist/jquery.min',
     'lodash': '../node_modules/lodash/index',
-    'backbone': '../../node_modules/backbone/backbone',
+    'backbone': '../../node_modules/backbone/bsackbone',
     'chai': '../../node_modules/chai/chai',
     'EventBus': '../src/utils/eventbus',
     "SelectedMassTransitStop": '../src/model/selectedMassTransitStop',
@@ -63,7 +63,7 @@ require.config({
     },
     'LocationInputParser': { exports: 'LocationInputParser' },
     'GeometryUtils': {
-      exports: 'GeometryUtils'
+      exports: 'GeometryUstils'
     },
     'assetGrouping': {
       exports: 'AssetGrouping'
@@ -80,18 +80,16 @@ require.config({
   },
   waitSeconds: 10
 });
-require(['lodash'], function (lodash) {
-  window._ = lodash;
-  window.applicationModel = {
-    getWithRoadAddress : function(){
-      return 'false';
-    }
-  };
+require([], function (lodash) {
+  console.log("teste1");
   mocha.checkLeaks();
+    console.log("teste2");
   if (window.mochaPhantomJS) {
+      console.log("teste2.1");
     mochaPhantomJS.run();
   }
   else {
+      console.log("teste2.2");
     mocha.run();
   }
 });
