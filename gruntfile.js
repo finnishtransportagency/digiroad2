@@ -245,6 +245,7 @@ module.exports = function(grunt) {
 
           // Indicates whether 'mocha.run()' should be executed in
           // 'bridge.js'
+          timeout: 50000,
           run: false,
           log: true,
           reporter: 'Spec'
