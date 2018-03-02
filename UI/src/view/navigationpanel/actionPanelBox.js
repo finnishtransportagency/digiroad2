@@ -9,6 +9,7 @@
     this.rectangleToolIcon = '<img src="images/rectangle-tool.svg"/>';
     this.polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
     this.terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
+    this.checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän todentama"/>';
 
     this.Tool = function (toolName, icon) {
       var className = toolName.toLowerCase();
@@ -87,6 +88,7 @@
     this.checkboxPanel = function () {};
     this.predicate = function () {};
     this.legendName = function () {};
+    this.municipalityShit = function () {};
 
     this.elements = function (){
       return { expanded: $([
@@ -106,7 +108,6 @@
                '   <div class="panel-section panel-legend '+ me.legendName() + '-legend">'].join('');
     };
 
-
     this.bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
         me.roles = roles;
@@ -115,7 +116,22 @@
           $(me.expanded).append(me.toolSelection.element);
           $(me.expanded).append(me.editModeToggle.element);
         }
+        if(me.municipalityShit()){
+          $(me.expanded).find('.panel-header').css('display', 'flex');
+          $(me.expanded).find('.panel-header').append(verificationIcon);
+        }
       });
+
+      var verificationIcon = '<div id="right-panel">' + me.checkIcon + '</div>';
+
+      eventbus.on('verificationInfo:fetched', function(visible) {
+        var img = me.expanded.find('#right-panel');
+        if (visible)
+          img.css('display','inline');
+        else
+          img.css('display','none');
+      });
+
       eventbus.on('application:readOnly', function(readOnly) {
         $(me.expanded).find('.panel-header').toggleClass('edit', !readOnly);
       });

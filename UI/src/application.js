@@ -32,7 +32,7 @@
       });
     });
 
-    var groupedPointAssets = _.map(groupedPointAssetSpecs, function(spec) {
+    var groupedPointAssets = _.map(assetConfiguration.groupedPointAssetSpecs, function(spec) {
       var collection = _.isUndefined(spec.collection) ?  new GroupedPointAssetsCollection(backend, spec) : new spec.collection(backend, spec) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
       return _.merge({}, spec, {
@@ -405,6 +405,7 @@
                        groupedPointAssets,
                        isExperimental) {
     var assetType =  assetConfiguration.assetTypes;
+    var assetGroups = assetConfiguration.assetGroups;
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
     var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
     var speedLimitBox = new SpeedLimitBox(selectedSpeedLimit);
@@ -413,8 +414,8 @@
     var serviceRoadBox = new ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
     var trSpeedLimitBox = isExperimental ? [new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}))] : [];
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
-    var heightBox = new ActionPanelBoxes.HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
-    var widthBox = new ActionPanelBoxes.WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
+    var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
+    var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -423,7 +424,7 @@
           .concat(getLinearAsset(assetType.numberOfLanes))
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
-          .concat(getLinearAsset(assetType.exitNumbers))
+          .concat(getLinearAsset(assetType.exitNumbers)),
       [speedLimitBox]
         .concat([winterSpeedLimits]),
       [massTransitBox]
@@ -475,7 +476,7 @@
   function getGroupedPointAsset(typeIds) {
     var asset = _.find(groupedPointAssets, {typeIds: typeIds.sort()});
     if (asset) {
-      return [ActionPanelBoxes.LimitationBox(asset)];
+      return [new WeightLimitationBox(asset)];
     }
     return [];
   }

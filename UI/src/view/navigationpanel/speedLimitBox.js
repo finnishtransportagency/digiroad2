@@ -56,6 +56,10 @@
       return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium');
     };
 
+    this.municipalityShit = function () {
+      return true;
+    };
+
     this.toolSelection = new me.ToolSelection([
       new me.Tool('Select', me.selectToolIcon, selectedSpeedLimit),
       new me.Tool('Cut', me.cutToolIcon, selectedSpeedLimit)
