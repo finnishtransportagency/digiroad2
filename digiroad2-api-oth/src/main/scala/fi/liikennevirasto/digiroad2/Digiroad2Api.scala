@@ -260,7 +260,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
     }
 
-  get("/massTransitStopsMT/:passengerId") {
+  get("/massTransitStops/passenger/:passengerId") {
     def validateMunicipalityAuthorization(passengerId: String)(municipalityCode: Int): Unit = {
       if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
         halt(Unauthorized("User not authorized for mass transit stop " + passengerId))
