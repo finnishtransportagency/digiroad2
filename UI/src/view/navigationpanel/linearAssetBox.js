@@ -5,8 +5,8 @@
 
     this.header = function () {
       return assetConfig.title + (assetConfig.editControlLabels.showUnit ? ' ('+assetConfig.unit+')': '');
-
     };
+
     this.title = function () {
       return assetConfig.title;
     };
