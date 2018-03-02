@@ -343,12 +343,13 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def getMassTransitStopByPassengerId(passengerId: String, municipalityValidation: Int => Unit): Seq[(Option[MassTransitStopWithProperties], Boolean)] = {
     withDynTransaction {
-      val nationalIds = massTransitStopDao.getNationalIdByStopCode(passengerId)
+      val busStopIds = massTransitStopDao.getIdsByStopCode(passengerId)
 
-      if (nationalIds.isEmpty)
+      if (busStopIds.isEmpty)
         Seq()
       else {
-        val persistedStops = fetchPointAssets(massTransitStopDao.withNationalIds(nationalIds))
+        getPersistedAssetsByIds(busStopIds.toSet)
+        val persistedStops = getPersistedAssetsByIds(busStopIds.toSet)
 
         persistedStops.map(_.municipalityCode).foreach(municipalityValidation)
         val municipalities = municipalityDao.getMunicipalitiesNameAndIdByCode(persistedStops.map(_.municipalityCode).toSet)

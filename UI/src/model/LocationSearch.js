@@ -164,19 +164,16 @@
      * @returns {*}
      */
     var  massTransitStopPassengerIdSearch = function(input) {
-      return $.when(backend.getMassTransitStopByPassengerIdForSearch(input.text), backend.getCoordinatesFromRoadAddress(input.text)).then(function(result,roadData) {
-        var returnObject = roadLocationAPIResultParser(roadData);
-        if (_.get(result[0], 'success')) {
-          var lon = _.get(result[0], 'lon');
-          var lat = _.get(result[0], 'lat');
-          var nationalId =_.get(result[0], 'nationalId');
+      return $.when(backend.getMassTransitStopByPassengerIdForSearch(input.text)).then(function(result) {
+        var toCoordinates = function (r) {
           var title = input.text + ' (pysäkin Livi-tunniste)';
-          returnObject.push({title: title, lon: lon, lat: lat, nationalId: nationalId, resultType:"Mtstop"});
-        }
-        if (returnObject.length === 0){
+          return {title: title, lon: r.lon, lat: r.lat, nationalId: r.nationalId, resultType: "Mtstop"};
+        };
+
+        if (result.length > 0)
+          return _.map(result, toCoordinates);
+        else
           return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-        }
-        return returnObject;
       });
     };
 
