@@ -26,23 +26,26 @@
         value = { properties: [] };
 
       var properties = _.find(value.properties, function(property){ return property.publicId === field.publicId; });
-      var propertyValue = [];
 
+      var values = [];
       if(!_.isArray(inputValue))
-        propertyValue.push(inputValue);
+        values.push({ value : inputValue });
 
-      else{
-        propertyValue = inputValue;
+      else
+        _.forEach(inputValue, function(input){
+          values.push({
+            value : input
+          })
+        });
+
+      if(properties) {
+        properties.values = values;
       }
-
-      if(properties){
-        properties.value = propertyValue;
-      }else
-      {
+      else {
         value.properties.push({
           publicId: field.publicId,
           propertyType: field.type,
-          value: propertyValue
+          values: values
         });
       }
       setValue(value);

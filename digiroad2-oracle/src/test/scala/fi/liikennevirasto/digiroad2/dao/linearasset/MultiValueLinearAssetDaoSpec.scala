@@ -7,7 +7,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.MultiTypePropertyValue
-import fi.liikennevirasto.digiroad2.linearasset.MultiValue
+import fi.liikennevirasto.digiroad2.linearasset.{MultiAssetValue, MultiValue}
 
 class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
 
@@ -75,10 +75,10 @@ class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
       persistedAssets.size should be(1)
       persistedAssets.head.linkId should be(linkId)
 
-      val assetValues = persistedAssets.head.value.get.asInstanceOf[MultiValue].properties
-      assetValues.find(_.publicId == "test_data_text").get.values.head.propertyValue should be (textValue)
+      val assetValues = persistedAssets.head.value.get.asInstanceOf[MultiAssetValue].properties
+      assetValues.find(_.publicId == "test_data_text").get.values.head.value should be (textValue)
       assetValues.find(_.publicId == "test_multiple_choice").get.values should be (Seq(MultiTypePropertyValue(enumeratedValue2), MultiTypePropertyValue(enumeratedValue1)))
-      assetValues.find(_.publicId == "test_single_choice").get.values.head.propertyValue should be (enumeratedValue1)
+      assetValues.find(_.publicId == "test_single_choice").get.values.head.value should be (enumeratedValue1)
       assetValues.find(_.publicId == "test_data_number").get.values should be (Seq(MultiTypePropertyValue(numberValue1.toString()), MultiTypePropertyValue(numberValue2.toString())))
     }
   }

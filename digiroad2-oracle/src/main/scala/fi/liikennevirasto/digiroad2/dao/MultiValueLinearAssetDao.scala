@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.linearasset.{MultiValue, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.linearasset.{MultiAssetValue, MultiValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.joda.time.DateTime
@@ -55,7 +55,7 @@ class MultiValueLinearAssetDao {
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
-      val value: Seq[MultiTypeProperty] = assetRowToProperty(assetRows)
+      val value: MultiAssetValue = MultiAssetValue(assetRowToProperty(assetRows))
 
       id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(MultiValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
         createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  vvhTimeStamp = row.vvhTimeStamp,
@@ -91,7 +91,7 @@ class MultiValueLinearAssetDao {
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
-      val value: Seq[MultiTypeProperty] = assetRowToProperty(assetRows)
+      val value: MultiAssetValue = MultiAssetValue(assetRowToProperty(assetRows))
 
       id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(MultiValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
         createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId, vvhTimeStamp = row.vvhTimeStamp,
@@ -104,7 +104,7 @@ class MultiValueLinearAssetDao {
 
     rows.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
-      val value: Seq[MultiTypeProperty] = assetRowToProperty(assetRows)
+      val value: MultiAssetValue = MultiAssetValue(assetRowToProperty(assetRows))
 
       id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(MultiValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
         createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  vvhTimeStamp = row.vvhTimeStamp,
@@ -208,17 +208,17 @@ class MultiValueLinearAssetDao {
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue.toString).execute
+          insertTextProperty(assetId, propertyId, propertyValues.head.value.toString).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue.toString).execute
+          updateTextProperty(assetId, propertyId, propertyValues.head.value.toString).execute
         }
       }
       case SingleChoice => {
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString).toLong).execute
+          insertSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.value.toString).toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString).toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.value.toString).toLong).execute
         }
       }
       case MultipleChoice => {
@@ -229,9 +229,9 @@ class MultiValueLinearAssetDao {
         if (propertyValues.isEmpty) {
           deleteNumberProperty(assetId, propertyId).execute
         } else if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertNumberProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString)).execute
+          insertNumberProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.value.toString)).execute
         } else {
-          updateNumberProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.propertyValue.toString)).execute
+          updateNumberProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.value.toString)).execute
         }
       }
       case ReadOnly | ReadOnlyNumber | ReadOnlyText => {
@@ -257,7 +257,7 @@ class MultiValueLinearAssetDao {
     val property = AssetPropertyConfiguration.commonAssetProperties(propertyPublicId)
     propertyType match {
       case SingleChoice => {
-        val newVal = propertyValues.head.propertyValue.toString
+        val newVal = propertyValues.head.value.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
           (p.publicId == propertyPublicId) && (p.values.map(_.propertyValue).contains(newVal))
         } match {
@@ -267,13 +267,13 @@ class MultiValueLinearAssetDao {
           case None => throw new IllegalArgumentException("Invalid property/value: " + propertyPublicId + "/" + newVal)
         }
       }
-      case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyValue.toString).execute
+      case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.value.toString).execute
       case Date => {
         val formatter = ISODateTimeFormat.dateOptionalTimeParser()
         val optionalDateTime = propertyValues.headOption match {
           case None => None
-          case Some(x) if x.propertyValue.toString.trim.isEmpty => None
-          case Some(x) => Some(formatter.parseDateTime(x.propertyValue.toString))
+          case Some(x) if x.value.toString.trim.isEmpty => None
+          case Some(x) => Some(formatter.parseDateTime(x.value.toString))
         }
         updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute
       }
@@ -285,7 +285,7 @@ class MultiValueLinearAssetDao {
   }
 
   private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[MultiTypePropertyValue], assetId: Long, propertyId: Long) {
-    val newValues = propertyValues.map(p => Integer.valueOf(p.propertyValue.toString).toLong)
+    val newValues = propertyValues.map(p => Integer.valueOf(p.value.toString).toLong)
     val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
     val currentValues = currentIdsAndValues.map(_._2)
     // remove values as necessary

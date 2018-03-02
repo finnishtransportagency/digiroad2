@@ -115,7 +115,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
     value match {
       case MultiValue(multiTypeProps) =>
-        val properties = setPropertiesDefaultValues(multiTypeProps, roadLink)
+        val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
         val defaultValues = multiValueLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         multiValueLinearAssetDao.updateAssetProperties(id, properties ++ defaultValues.toSet)
       case _ => None
@@ -136,7 +136,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
 
     defaultProperties.map { parameter =>
-      if (parameter.values.isEmpty || parameter.values.exists(_.propertyValue == "")) {
+      if (parameter.values.isEmpty || parameter.values.exists(_.value == "")) {
         parameter.publicId match {
 //          UNTIL DON'T HAVE A ASSET USING THE NEW SYSTEM OF PROPERTIES LETS KEEP THE EXAMPLES
 //          case roadName_FI => parameter.copy(values = Seq(MultiTypePropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
