@@ -15,7 +15,7 @@
     };
     me.editModeRender = function (field, currentValue, setValue, asset){};
 
-    me.inputElementHandler = function(assetTypeConfiguration, inputValue, publicId, setValue, asset){
+    me.inputElementHandler = function(assetTypeConfiguration, inputValue, field, setValue, asset){
 
       if(!asset)
         asset = assetTypeConfiguration.selectedLinearAsset.get()[0];
@@ -25,15 +25,24 @@
       if(!value)
         value = { properties: [] };
 
-      var properties = _.find(value.properties, function(property){ return property.publicId === publicId; });
+      var properties = _.find(value.properties, function(property){ return property.publicId === field.publicId; });
+      var propertyValue = [];
+
+      if(!_.isArray(inputValue))
+        propertyValue.push(inputValue);
+
+      else{
+        propertyValue = inputValue;
+      }
 
       if(properties){
-        properties.value = inputValue;
+        properties.value = propertyValue;
       }else
       {
         value.properties.push({
-          publicId: publicId,
-          value: inputValue
+          publicId: field.publicId,
+          propertyType: field.type,
+          value: propertyValue
         });
       }
       setValue(value);
@@ -56,7 +65,7 @@
         '</div>');
 
       element.find('textarea').on('keyup', function(){
-         me.inputElementHandler(assetTypeConfiguration, $(this).val(), field.publicId, setValue, asset);
+         me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
       return element;
     };
@@ -82,7 +91,7 @@
         $(this).closest("#feature-attributes").find(".save.btn").attr('disabled', disabled);
 
         if(!disabled)
-          me.inputElementHandler(assetTypeConfiguration, $(this).val(), field.publicId, setValue, asset);
+          me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
       return element;
     };
@@ -115,7 +124,7 @@
 
       var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId}));
       element.find('select').on('change', function(){
-        me.inputElementHandler(assetTypeConfiguration, $(this).val(), field.publicId, setValue, asset);
+        me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
 
       return element;
@@ -155,7 +164,7 @@
         $('.multiChoice:checked').each(function(i){
             val[i] = $(this).val();
           });
-        me.inputElementHandler(assetTypeConfiguration, val, field.publicId, setValue, asset);
+        me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
       });
 
       return element;
@@ -315,7 +324,7 @@
         var sideCodeClass = generateClassName('');
         var radio = singleValueEditElement(asset[0].value, assetTypeConfiguration);
         body.find('.form').append(radio);
-        body.find('.form-editable-' + sideCodeClass).append(me.renderElements(selectedAsset, isReadOnly, selectedAsset.setValue, asset[0]));
+        body.find('.form-editable-' + sideCodeClass).append(me.renderElements(selectedAsset, isReadOnly, selectedAsset.setValue));
       }
       addBodyEvents(body, assetTypeConfiguration, isReadOnly);
       return body;
@@ -456,10 +465,12 @@
       rootElement.find('.editable .form-control-static').toggle(isReadOnly);
       rootElement.find('.editable .edit-control-group').toggle(!isReadOnly);
       rootElement.find('#separate-limit').toggle(!isReadOnly);
+
       rootElement.find('#separate-limit').on('click', function() { assetTypeConfiguration.selectedLinearAsset.separate(); });
       rootElement.find('.form-controls.linear-asset button.save').on('click', function() { assetTypeConfiguration.selectedLinearAsset.save(); });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { assetTypeConfiguration.selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { assetTypeConfiguration.selectedLinearAsset.verify(); });
+
       rootElement.find('.read-only-title').toggle(isReadOnly);
       rootElement.find('.edit-mode-title').toggle(!isReadOnly);
     }
