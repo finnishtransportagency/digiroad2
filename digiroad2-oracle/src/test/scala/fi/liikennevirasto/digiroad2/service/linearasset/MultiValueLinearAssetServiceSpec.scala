@@ -5,15 +5,11 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -191,7 +187,6 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO Review that test
   test("Separate with empty value towards digitization") {
     val typeId = 140
     runWithRollback {
@@ -314,6 +309,9 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+
+      when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, 140)))
+
       intercept[IllegalArgumentException] {
         ServiceWithDao.separate(assetId, Some(propertyData1), Some(propertyData2), "unittest", failingMunicipalityValidation)
       }

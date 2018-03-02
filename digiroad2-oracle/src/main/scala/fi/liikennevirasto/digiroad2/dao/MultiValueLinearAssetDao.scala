@@ -63,8 +63,7 @@ class MultiValueLinearAssetDao {
     }.values.toSeq
   }
 
-  def fetchMultiValueLinearAssetsByIds(assetTypeId: Int, ids: Set[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
-    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+  def fetchMultiValueLinearAssetsByIds(assetTypeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     val assets = MassQuery.withIds(ids) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type,
@@ -88,8 +87,7 @@ class MultiValueLinearAssetDao {
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number')
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
-          and a.floating = 0
-          #$filterExpired""".as[MultiValueAssetRow].list
+          and a.floating = 0 """.as[MultiValueAssetRow].list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.{MultiTypePropertyValue, MultiTypeProperty}
+import fi.liikennevirasto.digiroad2.asset.{SideCode, MultiTypePropertyValue, MultiTypeProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -64,6 +64,30 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     Some(newAssetIDcreate)
   }
 
+  /**
+    * Saves linear assets when linear asset is separated to two sides in UI.
+    */
+  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+    withDynTransaction {
+      val assetTypeId = assetDao.getAssetTypeId(Seq(id)).head
+      val existing = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(assetTypeId._2, Set(id)).head
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode)
+
+      val newExistingIdsToReturn = valueTowardsDigitization match {
+        case None => dao.updateExpiration(id, expired = true, username).toSeq
+        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
+      }
+
+      dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
+
+      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp,
+        Some(roadLink)))
+
+      newExistingIdsToReturn ++ created
+    }
+  }
+
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
@@ -100,7 +124,8 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
   }
 
   def setPropertiesDefaultValues(properties: Seq[MultiTypeProperty], roadLink: Option[RoadLinkLike]): Seq[MultiTypeProperty] = {
-    val defaultPropertiesPublicId = Seq(roadName_FI, roadName_SE)
+    //To add Properties with Default Values we need to add the public ID to the Seq below
+    val defaultPropertiesPublicId = Seq()
     val defaultProperties = defaultPropertiesPublicId.flatMap {
       key =>
         if (!properties.exists(_.publicId == key))
@@ -116,6 +141,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 //          UNTIL DON'T HAVE A ASSET USING THE NEW SYSTEM OF PROPERTIES LETS KEEP THE EXAMPLES
 //          case roadName_FI => parameter.copy(values = Seq(MultiTypePropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
 //          case roadName_SE => parameter.copy(values = Seq(MultiTypePropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))
+//          case inventoryDateId => parameter.copy(values = Seq(PropertyValue(toIso8601.print(DateTime.now()))))
           case _ => parameter
         }
       } else
