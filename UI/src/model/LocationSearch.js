@@ -156,6 +156,30 @@
           return returnObject;
       });
     };
+
+    /**
+     * Search by mass transit stop Livi-id
+     *
+     * @param input
+     * @returns {*}
+     */
+    var  massTransitStopPassengerIdSearch = function(input) {
+      return $.when(backend.getMassTransitStopByPassengerIdForSearch(input.text), backend.getCoordinatesFromRoadAddress(input.text)).then(function(result,roadData) {
+        var returnObject = roadLocationAPIResultParser(roadData);
+        if (_.get(result[0], 'success')) {
+          var lon = _.get(result[0], 'lon');
+          var lat = _.get(result[0], 'lat');
+          var nationalId =_.get(result[0], 'nationalId');
+          var title = input.text + ' (pysäkin Livi-tunniste)';
+          returnObject.push({title: title, lon: lon, lat: lat, nationalId: nationalId, resultType:"Mtstop"});
+        }
+        if (returnObject.length === 0){
+          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
+        }
+        return returnObject;
+      });
+    };
+
     /**
      * Get road address coordinates
      *
@@ -215,6 +239,7 @@
         road: getCoordinatesFromRoadAddress,
         idOrRoadNumber: idOrRoadNumber,
         liviId: massTransitStopLiviIdSearch,
+        passengerId:  massTransitStopPassengerIdSearch,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
 
