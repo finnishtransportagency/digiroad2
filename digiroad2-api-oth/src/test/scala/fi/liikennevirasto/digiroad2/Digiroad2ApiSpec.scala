@@ -30,7 +30,8 @@ case class LinearAssetFromApi(id: Option[Long], linkId: Long, sideCode: Int, val
 case class DirectionalTrafficSignFromApi(id: Long, linkId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean, vvhTimeStamp: Long, municipalityCode: Int,
                                          validityDirection: Int, text: Option[String], bearing: Option[Int], createdBy: Option[String] = None, createdAt: Option[DateTime] = None,
                                          modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, geometry: Seq[Point] = Nil)
-case class MassLinearAssetFromApi(geometry: Seq[Point], sideCode: Int, value: Option[Value])
+case class MassLinearAssetFromApi(linkId: Long, administrativeClass: AdministrativeClass, sideCode: SideCode, value: Option[Value], geometry: Seq[Point],
+                                  attributes: Map[String, Any] = Map())
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
