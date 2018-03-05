@@ -54,8 +54,8 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       val roadLink = Seq(RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode)))
 
       val test = service.getByRoadLinks(MassLimitationAssetTypes, roadLink)
-      val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing)
-      val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing)
+      val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing.value)
+      val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing.value)
       roadLinkSide2.size should be (1)
       roadLinkSide3.size should be (1)
       roadLinkSide2.map(_.geometry) should be (roadLinkSide3.map(_.geometry))
@@ -79,8 +79,8 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       val roadLink = Seq(RoadLink(1002l, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode)))
 
       val test = service.getByRoadLinks(MassLimitationAssetTypes, roadLink)
-      val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing)
-      val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing)
+      val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing.value)
+      val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing.value)
       roadLinkSide2.map(_.geometry) should be (roadLinkSide3.map(_.geometry))
       roadLinkSide2.flatMap(_.geometry) should be (Seq(Point(2, 0), Point(20, 0)))
       roadLinkSide3.flatMap(_.value).head should be (MassLimitationValue(Seq(AssetTypes(AxleWeightLimits,"2"))))
@@ -103,8 +103,8 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       val roadLink = Seq(RoadLink(1001l, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode)))
 
       val test = service.getByRoadLinks(MassLimitationAssetTypes, roadLink)
-      val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing)
-      val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing)
+      val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing.value)
+      val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing.value)
       roadLinkSide2.size should be (0)
       roadLinkSide3.size should be (1)
       roadLinkSide3.flatMap(_.geometry) should be (Seq(Point(5, 0), Point(8, 0)))

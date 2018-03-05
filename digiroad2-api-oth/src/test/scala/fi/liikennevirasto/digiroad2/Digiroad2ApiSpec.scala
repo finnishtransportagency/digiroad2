@@ -30,8 +30,7 @@ case class LinearAssetFromApi(id: Option[Long], linkId: Long, sideCode: Int, val
 case class DirectionalTrafficSignFromApi(id: Long, linkId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean, vvhTimeStamp: Long, municipalityCode: Int,
                                          validityDirection: Int, text: Option[String], bearing: Option[Int], createdBy: Option[String] = None, createdAt: Option[DateTime] = None,
                                          modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, geometry: Seq[Point] = Nil)
-case class MassLinearAssetFromApi(linkId: Long, administrativeClass: AdministrativeClass, sideCode: SideCode, value: Option[Value], geometry: Seq[Point],
-                                  attributes: Map[String, Any] = Map())
+case class MassLinearAssetFromApi(geometry: Seq[Point], sideCode: Int, value: Option[Value], administrativeClass: Int)
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -121,7 +120,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary((1611071l))).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   when(mockRoadLinkService.getRoadAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq())
 
@@ -351,7 +350,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get mass Limitations Assets with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets/massLimitation?typeId=60&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets/massLimitation?typeId=60&bbox=374037,6677013,374540,6677675&withRoadAddress=false") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[MassLinearAssetFromApi]]
       parsedBody.size should be(1)

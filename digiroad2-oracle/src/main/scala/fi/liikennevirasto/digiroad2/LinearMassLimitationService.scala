@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 
-case class MassLimitationAsset(linkId: Long, administrativeClass: AdministrativeClass, sideCode: SideCode, value: Option[Value], geometry: Seq[Point],
+case class MassLimitationAsset(linkId: Long, administrativeClass: AdministrativeClass, sideCode: Int, value: Option[Value], geometry: Seq[Point],
                               attributes: Map[String, Any] = Map())
 
 class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLimitationDao) {
@@ -60,7 +60,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLim
 
   private def getAssetBySideCode(assets: Seq[PersistedLinearAsset], geometry: Seq[Point], roadLink: RoadLink): MassLimitationAsset = {
     val values = assets.map(a => AssetTypes(a.typeId, a.value.getOrElse(NumericValue(0)).asInstanceOf[NumericValue].value.toString))
-    MassLimitationAsset(assets.head.linkId, roadLink.administrativeClass, SideCode.apply(assets.head.sideCode), Some(MassLimitationValue(values)), geometry)
+    MassLimitationAsset(assets.head.linkId, roadLink.administrativeClass, assets.head.sideCode, Some(MassLimitationValue(values)), geometry)
   }
 
   def withRoadAddress(massLimitationAsset: Seq[Seq[MassLimitationAsset]]): Seq[Seq[MassLimitationAsset]] ={
