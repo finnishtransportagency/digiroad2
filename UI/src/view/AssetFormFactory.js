@@ -35,7 +35,7 @@
         _.forEach(inputValue, function(input){
           values.push({
             value : input
-          })
+          });
         });
 
       if(properties) {
@@ -107,14 +107,15 @@
     var possibleValues = assetTypeConfiguration.possibleValues;
     var unit = assetTypeConfiguration.unit ? assetTypeConfiguration.unit : '';
 
-    var template =  _.template(
-      '<div class="form-group">' +
-      '<label class="control-label">'+ className+'</label>' +
-      '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>"><%= optionTags %> </select>' +
-      '</div>');
-
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
+      var template =  _.template(
+        '<div class="form-group">' +
+        '<label class="control-label">'+ field.label +'</label>' +
+        '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>"><%= optionTags %> </select>' +
+        '</div>');
+
+
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : undefined;
       var disabled = _.isUndefined(_value) ? 'disabled' : '';
@@ -141,16 +142,16 @@
     var className = assetTypeConfiguration.className;
     var possibleValues = assetTypeConfiguration.possibleValues;
 
-    var template =  _.template(
-      '<div class="form-group">' +
-      '<label class="control-label">'+ className+'</label>' +
-      '<div class="choice-group"> ' +
-      ' <%= divCheckBox %>' +
-      '</div>'+
-      '</div>');
-
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
+
+      var template =  _.template(
+        '<div class="form-group">' +
+        '<label class="control-label">'+ field.label+'</label>' +
+        '<div class="choice-group"> ' +
+        ' <%= divCheckBox %>' +
+        '</div>'+
+        '</div>');
 
       var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
 
@@ -218,7 +219,7 @@
       var value =  first ? first.value : '';
       return $('' +
         '<div class="form-group">' +
-        '   <label class="control-label">' + me.className + '</label>' +
+        '   <label class="control-label">' + field.label + '</label>' +
         '   <p class="form-control-static">' + value + '</p>' +
         '</div>'
       );
@@ -288,7 +289,7 @@
         {name: 'number', field: new NumericalField(assetTypeConfiguration)}
       ];
 
-      formStructure.fields.sort(function (a, b) { return a.weigth - b.weight; });
+      formStructure.fields.sort(function (a, b) { return a.weight - b.weight; });
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
       _.each(formStructure.fields, function (field) {
         var values = [];
@@ -296,7 +297,7 @@
           values = _.find(selectedAsset.properties, function (property) { return property.publicId === field.publicId; }).values;
         }
         var fieldType = _.find(availableFieldTypes, function (availableFieldType) { return availableFieldType.name === field.type; }).field;
-        var fieldElement = isReadOnly ? fieldType.viewModeRender(field, values, setAsset) : fieldType.editModeRender(field, values, setAsset, asset);
+        var fieldElement = isReadOnly ? fieldType.viewModeRender(field, values, setAsset, asset) : fieldType.editModeRender(field, values, setAsset, asset);
         fieldGroupElement.append(fieldElement);
 
       });
@@ -447,7 +448,7 @@
           '   </div> ' +
           '</footer>'),
         separateButton: toSeparateButton
-      }
+      };
     }
 
     me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode) {
