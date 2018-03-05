@@ -29,8 +29,8 @@ require.config({
 });
 require(['chai',
          'chai-jquery',
-         'testHelpers'
-         // 'integration-tests/groupingByValidityPeriodSpec',
+         'testHelpers',
+         'integration-tests/groupingByValidityPeriodSpec'
          // 'integration-tests/massTransitStopCreationSpec',
          // 'integration-tests/massTransitStopMoveSpec',
          // 'integration-tests/speedLimitVisualizationSpec',
