@@ -60,7 +60,7 @@
     me.editModeRender = function (field, currentValue, setValue, asset) {
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
-      var disabled = _.isUndefined(_value) ? 'disabled' : '';
+      var disabled = _.isUndefined(value) ? 'disabled' : '';
       var element = $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
@@ -81,8 +81,8 @@
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : undefined;
-      var disabled = _.isUndefined(_value) ? 'disabled' : '';
+      var _value = value ? value.value : '';
+      var disabled = _.isUndefined(value) ? 'disabled' : '';
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
@@ -117,8 +117,8 @@
 
 
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : undefined;
-      var disabled = _.isUndefined(_value) ? 'disabled' : '';
+      var _value = value ? value.value : '';
+      var disabled = _.isUndefined(value) ? 'disabled' : '';
 
       var optionTags = _.map(possibleValues, function(value) {
         var selected = value === _value ? " selected" : "";
@@ -195,8 +195,8 @@
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : undefined;
-      var disabled = _.isUndefined(_value) ? 'disabled' : '';
+      var _value = value ? value.value : '';
+      var disabled = _.isUndefined(value) ? 'disabled' : '';
 
       var addDatePickers = function (field, html) {
         var $dateElement = html.find('#' + field.publicId);
