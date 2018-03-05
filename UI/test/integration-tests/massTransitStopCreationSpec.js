@@ -1,5 +1,5 @@
 /*jshint expr: true*/
-define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers) {
+define(['chai', 'eventbus', 'testHelpers'], function(chai, eventbus, testHelpers) {
   var expect = chai.expect;
 
   describe('when loading application', function() {

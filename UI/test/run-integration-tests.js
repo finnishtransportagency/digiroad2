@@ -31,9 +31,9 @@ require(['chai',
          'chai-jquery',
          'testHelpers',
          // 'integration-tests/groupingByValidityPeriodSpec',
-         'integration-tests/massTransitStopCreationSpec'
+         'integration-tests/massTransitStopCreationSpec',
          // 'integration-tests/massTransitStopMoveSpec',
-         // 'integration-tests/speedLimitVisualizationSpec',
+         'integration-tests/speedLimitVisualizationSpec'
          // 'integration-tests/regroupingMassTransitStopsSpec',
          // 'integration-tests/groupingInCreationSpec',
          // 'integration-tests/singleSegmentSpeedLimitSpec',

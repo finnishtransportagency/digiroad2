@@ -1,5 +1,5 @@
 /*jshint expr: true*/
-define(['chai', 'TestHelpers'], function(chai, testHelpers) {
+define(['chai', 'testHelpers'], function(chai, testHelpers) {
   var expect = chai.expect;
   var lineStrings = function(features) {
     return _.filter(features, function(feature) {
