@@ -193,26 +193,36 @@
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
 
-    //TODO: Has to be possible to only add one field, or more than 3!
     me.editModeRender = function (field, currentValue, setValue, asset) {
+      var value = _.first(currentValue, function(values) { return values.value ; });
+      var _value = value ? value.value : undefined;
+      var disabled = _.isUndefined(_value) ? 'disabled' : '';
+
+      var addDatePickers = function (field, html) {
+        var $dateElement = html.find('#' + field.publicId);
+        dateutil.addDependentDatePicker($dateElement);
+      };
+
       var html = $('' +
         '<div class="form-group">' +
-        '<label class="control-label">' + me.className + '</label>' +
+        '<label class="control-label">' + field.label + '</label>' +
         '</div>');
 
-      var dates = ['viimeinen_voimassaolopaiva', 'ensimmainen_voimassaolopaiva', 'inventointipaiva'];
-      var elements = _.map(dates, function(date) {
-        return $('<input type="text"/>').addClass('form-control').attr('id', date).attr('placeholder',"pp.kk.vvvv").on('keyup datechange', _.debounce(function (target) {
+      var elements = $('<input type="text"/>').addClass('form-control').attr('id', field.publicId).attr('placeholder',"pp.kk.vvvv").attr('disabled', disabled).on('keyup datechange', _.debounce(function (target) {
           // tab press
           if (target.keyCode === 9) {
             return;
           }
           var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
-
+          me.inputElementHandler(assetTypeConfiguration, propertyValue, field, setValue, asset);
         }, 500));
-      });
-      return html.append(elements);
+
+      html.append(elements);
+      addDatePickers(field, html);
+      return html;
     };
+
+
     me.viewModeRender = function (field, currentValue) {
       var first = _.first(currentValue, function(values) { return values.value ; });
 
@@ -236,7 +246,6 @@
 
       eventbus.on(events('selected', 'cancelled'), function () {
         rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset));
-        addDatePickers();
 
         if (assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
           me.bindEvents(rootElement, assetTypeConfiguration, 'a');
@@ -482,17 +491,6 @@
       rootElement.find('.read-only-title').toggle(isReadOnly);
       rootElement.find('.edit-mode-title').toggle(!isReadOnly);
     }
-
-    var addDatePickers = function () {
-      //TODO: Should be able to have anothers datePickers! Needs to be added to dateutil a generic function!
-      var $validFrom = $('#ensimmainen_voimassaolopaiva');
-      var $validTo = $('#viimeinen_voimassaolopaiva');
-      var $inventoryDate = $('#inventointipaiva');
-
-      if ($validFrom.length > 0 && $validTo.length > 0) {
-        dateutil.addDependentDatePickers($validFrom, $validTo, $inventoryDate);
-      }
-    };
 
     function generateClassName(sideCode) {
       return sideCode ? _assetTypeConfiguration.className + '-' + sideCode : _assetTypeConfiguration.className;

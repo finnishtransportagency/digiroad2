@@ -73,6 +73,21 @@
     }
   };
 
+  dateutil.addDependentDatePicker = function (dateElement) {
+    var fromDateString = function (s) {
+      return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
+    };
+
+    var datePickers;
+    var dateCallback = function () {
+      dateElement.trigger('datechange');
+    };
+
+    datePickers = {
+      date: dateutil.addNullableFinnishDatePicker(dateElement, dateCallback)
+    };
+  };
+
   dateutil.removeDatePickersFromDom = function () {
     jQuery('.pika-single.is-bound.is-hidden').remove();
   };
