@@ -37,7 +37,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/StyleRule.js', 'UI/src/view/TrafficSignLabel.js', 'UI/src/view/AssetStyle.js', 'UI/src/view/ServiceRoadLabel.js', 'UI/src/view/HeightLimitLabel.js', 'UI/src/view/WeightLimitLabel.js', 'UI/src/view/WidthLimitLabel.js', 'UI/src/view/MaintenanceRoadStyle.js', 'UI/src/view/WinterSpeedLimitStyle.js', 'UI/src/view/AssetLabel.js', 'UI/src/view/LinearAssetLabel.js', 'UI/src/model/TrafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
+          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/StyleRule.js', 'UI/src/view/point_asset/trafficSignLabel.js', 'UI/src/view/providers/assetStyle.js', 'UI/src/view/linear_asset/serviceRoadLabel.js', 'UI/src/view/point_asset/heightLimitLabel.js', 'UI/src/view/point_asset/weightLimitLabel.js', 'UI/src/view/point_asset/widthLimitLabel.js', 'UI/src/view/linear_asset/serviceRoadStyle.js', 'UI/src/view/linear_asset/winterSpeedLimitStyle.js', 'UI/src/view/providers/assetLabel.js', 'UI/src/view/linear_asset/linearAssetLabel.js', 'UI/src/controller/trafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
           'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
