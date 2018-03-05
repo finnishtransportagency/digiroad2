@@ -86,7 +86,7 @@ class RoadAddressDAO {
     }
 
     val endAddr = endM match {
-      case Some(endValue) => s"AND ra.start_addr_m < $endValue"
+      case Some(endValue) => s"AND ra.start_addr_m <= $endValue"
       case _ => ""
     }
 

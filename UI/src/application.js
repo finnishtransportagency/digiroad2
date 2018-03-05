@@ -273,7 +273,7 @@
         layerName: layerName,
         style: new PointAssetStyle('trafficSigns'),
         collection: new TrafficSignsReadOnlyCollection(backend, 'trafficSigns', true),
-        assetLabel: new TrafficSignLabel(),
+        assetLabel: new TrafficSignLabel(9),
         assetGrouping: new AssetGrouping(9),
         map: map
       });
