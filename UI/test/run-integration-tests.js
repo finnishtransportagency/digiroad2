@@ -55,8 +55,10 @@ require(['chai',
   };
 
   eventbus.once('map:initialized', function() {
+    console.log("after map:initialized, before mocha if");
     if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
     else { mocha.run(); }
+    console.log("after mocha.run();");
   });
 
   Application.start(testHelpers.defaultBackend(), false, true);
