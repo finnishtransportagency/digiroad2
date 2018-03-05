@@ -282,9 +282,9 @@
       var assetTypeConfiguration = _assetTypeConfiguration;
       var availableFieldTypes = [
         {name: 'text', field: new TextualField(assetTypeConfiguration)},
-        {name: 'singleChoice', field: new SingleChoiceField(assetTypeConfiguration)},
-        {name: 'datePicker', field: new DateField(assetTypeConfiguration)},
-        {name: 'multipleChoice', field: new MultiSelectField(assetTypeConfiguration)},
+        {name: 'single_choice', field: new SingleChoiceField(assetTypeConfiguration)},
+        {name: 'date', field: new DateField(assetTypeConfiguration)},
+        {name: 'multiple_choice', field: new MultiSelectField(assetTypeConfiguration)},
         {name: 'number', field: new NumericalField(assetTypeConfiguration)}
       ];
 
@@ -308,7 +308,8 @@
       var isReadOnly = applicationModel.isReadOnly() || validateAdministrativeClass(selectedAsset, assetTypeConfiguration.editConstrains);
       var asset = selectedAsset.get();
 
-      var body = createBody(selectedAsset);
+      var created = createBody(selectedAsset);
+      var body  = created.body;
 
       if(selectedAsset.isSplitOrSeparated()) {
 
@@ -329,6 +330,7 @@
         body.find('.form').append(radio);
         body.find('.form-editable-' + sideCodeClass).append(me.renderElements(selectedAsset, isReadOnly, selectedAsset.setValue));
       }
+      body.find('.form').append(created.separateButton);
       addBodyEvents(body, assetTypeConfiguration, isReadOnly);
       return body;
     };
@@ -423,27 +425,29 @@
 
       };
 
-      return  $('<header>' + title() + '<div class="linear-asset form-controls">' + headerButtons + '</div></header>' +
-        '<div class="wrapper read-only">' +
-        '   <div class="form form-horizontal form-dark">' +
-        '     <div class="form-group">' +
-        '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + info.createdBy  + info.createdDate + '</p>' +
-        '     </div>' +
-        '     <div class="form-group">' +
-        '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + info.modifiedBy + info.modifiedDate + '</p>' +
-        '     </div>' +
-        verifiedFields() +
-        '     <div class="form-group">' +
-        '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + asset.count() + '</p>' +
-        '     </div>' +
-        toSeparateButton() +
-        '   </div>' +
-        '</div>' +
-        '<footer >' +
-        '   <div class="linear-asset form-controls" style="display: none">' +
-        footerButtons +
-        '   </div> '+
-        '</footer>') ;
+      return {
+        body: $('<header>' + title() + '<div class="linear-asset form-controls">' + headerButtons + '</div></header>' +
+          '<div class="wrapper read-only">' +
+          '   <div class="form form-horizontal form-dark">' +
+          '     <div class="form-group">' +
+          '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + info.createdBy + info.createdDate + '</p>' +
+          '     </div>' +
+          '     <div class="form-group">' +
+          '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + info.modifiedBy + info.modifiedDate + '</p>' +
+          '     </div>' +
+          verifiedFields() +
+          '     <div class="form-group">' +
+          '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + asset.count() + '</p>' +
+          '     </div>' +
+          '   </div>' +
+          '</div>' +
+          '<footer >' +
+          '   <div class="linear-asset form-controls" style="display: none">' +
+          footerButtons +
+          '   </div> ' +
+          '</footer>'),
+        separateButton: toSeparateButton
+      }
     }
 
     me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode) {
