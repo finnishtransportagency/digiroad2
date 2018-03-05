@@ -280,7 +280,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "validityPeriod" -> stop.validityPeriod,
             "floating" -> stop.floating,
             "propertyData" -> stop.propertyData,
-            "municipalityName" -> stop.municipalityName,
+            "municipalityName" -> stop.municipalityName.getOrElse(""),
             "success" -> true)
         case None =>
           Map("success" -> false)

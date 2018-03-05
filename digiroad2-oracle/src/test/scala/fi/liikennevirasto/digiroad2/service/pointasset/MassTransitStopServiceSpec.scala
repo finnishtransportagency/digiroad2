@@ -1387,7 +1387,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.propertyValue should be ("user_road_name_se")
   }
 
-  test("Should find more than one busStop with and without terminalInfo"){
+  test("Find more than one busStop with same passengerId"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
@@ -1412,7 +1412,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         )), "masstransitstopservice_spec", roadLink.last))
 
       val result = service.getMassTransitStopByPassengerId("1000", _ => Unit)
-      result.size should be (2)
+      result should have size 2
       result.flatMap(_._1).find(_.id == ids.head).head.municipalityName should be (Some("Kauniainen"))
       result.flatMap(_._1).find(_.id == ids.last).head.municipalityName should be (Some("Helsinki"))
       }

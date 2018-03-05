@@ -166,7 +166,7 @@
     var  massTransitStopPassengerIdSearch = function(input) {
       return $.when(backend.getMassTransitStopByPassengerIdForSearch(input.text)).then(function(result) {
         var toCoordinates = function (r) {
-          var title = input.text + ' (pysäkin Livi-tunniste)';
+          var title = r.municipalityName + ', ' + input.text;
           return {title: title, lon: r.lon, lat: r.lat, nationalId: r.nationalId, resultType: "Mtstop"};
         };
 
