@@ -1,6 +1,6 @@
 /*jshint expr: true*/
 define(['chai', 'lodash', 'jquery', 'testHelpers', 'SelectedSpeedLimit', 'SpeedLimitsCollection', 'RoadCollection', 'Backend', 'EventBus', 'AssetsVerificationCollection'],
-  function(chai, _, $, testHelpers, SelectedSpeedLimit, SpeedLimitsCollection, RoadCollection, Backend, eventbus, AssetsVerificationCollection) {
+  function(chai, _, $, testHelpers, SelectedSpeedLimit, SpeedLimitsCollection, RoadCollection, Backend, EventBus, AssetsVerificationCollection) {
 
     describe('Selected speed limit', function() {
       var expect = chai.expect;
