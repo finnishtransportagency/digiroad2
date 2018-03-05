@@ -45,8 +45,8 @@ class MultiValueAssetServiceSpec extends FunSuite with Matchers {
     val ratings = MultiTypeProperty("ratings", PropertyTypes.ReadOnlyNumber, Seq(MultiTypePropertyValue(1), MultiTypePropertyValue(10)))
     val choice1 = MultiTypeProperty("choices", PropertyTypes.Text, Seq(MultiTypePropertyValue("Strawberry"), MultiTypePropertyValue("Chocolate"), MultiTypePropertyValue("Vanilla")))
     val choice2 = MultiTypeProperty("choices", PropertyTypes.Text, Seq(MultiTypePropertyValue("Vanilla"), MultiTypePropertyValue("Strawberry"), MultiTypePropertyValue("Chocolate")))
-    val asset1 = MultiAssetValue(Seq(choice1, ratings))
-    val asset2 = MultiAssetValue(Seq(ratings, choice2))
+    val asset1 = MultiValue(MultiAssetValue(Seq(choice1, ratings)))
+    val asset2 = MultiValue(MultiAssetValue(Seq(ratings, choice2)))
     asset1.equals(asset2) should be (true)
   }
 }
