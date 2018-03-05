@@ -84,7 +84,7 @@ require(['lodash',
   'unit-tests/selectedMassTransitStopSpec',
   'unit-tests/geometry-calculations-spec',
   'unit-tests/massTransitStopGroupingSpec',
-  'unit-tests/selectedSpeedLimitSpec',
+  // 'unit-tests/selectedSpeedLimitSpec',
   'unit-tests/locationInputParserSpec'], function (lodash) {
   window._ = lodash;
   window.applicationModel = {
