@@ -41,6 +41,7 @@ require(['chai',
          // 'integration-tests/multiSegmentSpeedLimitSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
+          console.log("test 1");
   chai.use(chaiJquery);
 
   //Workaround to give PhantomJS openlayers support
