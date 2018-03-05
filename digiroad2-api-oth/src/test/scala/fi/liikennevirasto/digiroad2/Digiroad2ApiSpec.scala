@@ -345,13 +345,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get mass Limitations Assets with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/linearassets/massLimitation?bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets/massLimitation?bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(400)
     }
   }
 
   test("get mass Limitations Assets with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets/massLimitation?typeId=60&bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets/massLimitation?typeId=60&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[MassLinearAssetFromApi]]
       parsedBody.size should be(1)
