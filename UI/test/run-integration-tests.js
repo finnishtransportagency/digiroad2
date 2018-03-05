@@ -30,15 +30,15 @@ require.config({
 require(['chai',
          'chai-jquery',
          'testHelpers',
-         // 'integration-tests/groupingByValidityPeriodSpec'
-         'integration-tests/massTransitStopCreationSpec',
-         'integration-tests/massTransitStopMoveSpec',
-         'integration-tests/speedLimitVisualizationSpec',
-         'integration-tests/regroupingMassTransitStopsSpec',
-         'integration-tests/groupingInCreationSpec',
-         'integration-tests/singleSegmentSpeedLimitSpec',
-         'integration-tests/speedLimitSplitSpec',
-         'integration-tests/multiSegmentSpeedLimitSpec'
+         // 'integration-tests/groupingByValidityPeriodSpec',
+         'integration-tests/massTransitStopCreationSpec'
+         // 'integration-tests/massTransitStopMoveSpec',
+         // 'integration-tests/speedLimitVisualizationSpec',
+         // 'integration-tests/regroupingMassTransitStopsSpec',
+         // 'integration-tests/groupingInCreationSpec',
+         // 'integration-tests/singleSegmentSpeedLimitSpec',
+         // 'integration-tests/speedLimitSplitSpec',
+         // 'integration-tests/multiSegmentSpeedLimitSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
           console.log("test 1");
