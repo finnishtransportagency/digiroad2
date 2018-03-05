@@ -1,5 +1,5 @@
 /*jshint expr: true*/
-define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eventbus, testHelpers, AssetsTestData) {
+define(['chai', 'eventbus', 'testHelpers', 'AssetsTestData'], function(chai, eventbus, testHelpers, AssetsTestData) {
   var expect = chai.expect;
 
   describe('when loading application with two individual bus stops with same validity periods', function() {

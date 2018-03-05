@@ -30,18 +30,17 @@ require.config({
 require(['chai',
          'chai-jquery',
          'testHelpers',
-         // 'integration-tests/groupingByValidityPeriodSpec',
+         'integration-tests/groupingByValidityPeriodSpec',
          'integration-tests/massTransitStopCreationSpec',
-         // 'integration-tests/massTransitStopMoveSpec',
-         'integration-tests/speedLimitVisualizationSpec'
-         // 'integration-tests/regroupingMassTransitStopsSpec',
-         // 'integration-tests/groupingInCreationSpec',
-         // 'integration-tests/singleSegmentSpeedLimitSpec',
-         // 'integration-tests/speedLimitSplitSpec',
-         // 'integration-tests/multiSegmentSpeedLimitSpec'
+         'integration-tests/massTransitStopMoveSpec',
+         'integration-tests/speedLimitVisualizationSpec',
+         'integration-tests/regroupingMassTransitStopsSpec',
+         'integration-tests/groupingInCreationSpec',
+         'integration-tests/singleSegmentSpeedLimitSpec',
+         'integration-tests/speedLimitSplitSpec',
+         'integration-tests/multiSegmentSpeedLimitSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
-          console.log("test 1");
   chai.use(chaiJquery);
 
   //Workaround to give PhantomJS openlayers support
@@ -56,10 +55,8 @@ require(['chai',
   };
 
   eventbus.once('map:initialized', function() {
-    console.log("after map:initialized, before mocha if");
     if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
     else { mocha.run(); }
-    console.log("after mocha.run();");
   });
 
   Application.start(testHelpers.defaultBackend(), false, true);
