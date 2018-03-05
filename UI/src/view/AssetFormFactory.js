@@ -59,12 +59,12 @@
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : undefined;
+      var _value = value ? value.value : '';
       var disabled = _.isUndefined(_value) ? 'disabled' : '';
       var element = $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <textarea name="' + field.publicId + '" class="form-control' + className + '" ' + disabled + '>' + value  + '</textarea>' +
+        '   <textarea name="' + field.publicId + '" class="form-control ' + className + '" ' + disabled + '>' + _value  + '</textarea>' +
         '</div>');
 
       element.find('textarea').on('keyup', function(){
@@ -86,7 +86,7 @@
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" class="form-control" id="' + className + '" '+ disabled+'>' +
+        '   <input type="text" name="' + field.publicId + '" class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
         '</div>');
 
       element.find('input').on('keyup', function(){
@@ -214,6 +214,7 @@
             return;
           }
           var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
+          field.type = 'text';
           me.inputElementHandler(assetTypeConfiguration, propertyValue, field, setValue, asset);
         }, 500));
 
@@ -302,8 +303,8 @@
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
       _.each(formStructure.fields, function (field) {
         var values = [];
-        if (selectedAsset.get().value) {
-          values = _.find(selectedAsset.properties, function (property) { return property.publicId === field.publicId; }).values;
+        if (selectedAsset.get()[0].value) {
+          values = _.find(selectedAsset.get()[0].value.properties, function (property) { return property.publicId === field.publicId; }).values;
         }
         var fieldType = _.find(availableFieldTypes, function (availableFieldType) { return availableFieldType.name === field.type; }).field;
         var fieldElement = isReadOnly ? fieldType.viewModeRender(field, values, setAsset, asset) : fieldType.editModeRender(field, values, setAsset, asset);
@@ -315,7 +316,7 @@
 
     me.renderForm = function (selectedAsset) {
       var assetTypeConfiguration = _assetTypeConfiguration;
-      var isReadOnly = applicationModel.isReadOnly() || validateAdministrativeClass(selectedAsset, assetTypeConfiguration.editConstrains);
+      var isReadOnly =  validateAdministrativeClass(selectedAsset, assetTypeConfiguration.editConstrains) || applicationModel.isReadOnly();
       var asset = selectedAsset.get();
 
       var created = createBody(selectedAsset);

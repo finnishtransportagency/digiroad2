@@ -241,7 +241,8 @@
       },
       form: new AssetFormFactory( {
           fields : [
-            { publicId: 'weightLimitation',  label:'rajoitus', type: 'number', weigth: 1 }
+            //TODO: On US:1142 fill the publicId with the one defined for the input
+            { publicId: '',  label:'rajoitus', type: 'number', weigth: 1 }
           ]
         }),
       isVerifiable: false
