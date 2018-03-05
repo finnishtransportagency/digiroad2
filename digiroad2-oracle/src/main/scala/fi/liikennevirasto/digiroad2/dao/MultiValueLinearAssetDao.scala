@@ -33,7 +33,7 @@ class MultiValueLinearAssetDao {
          case
                when tp.value_fi is not null then tp.value_fi
                when np.value is not null then to_char(np.value)
-               when e.name_fi is not null then e.name_fi
+               when e.value is not null then to_char(e.value)
                else null
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -70,7 +70,7 @@ class MultiValueLinearAssetDao {
          case
                when tp.value_fi is not null then tp.value_fi
                when np.value is not null then to_char(np.value)
-               when e.name_fi is not null then e.name_fi
+               when e.value is not null then to_char(e.value)
                else null
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,

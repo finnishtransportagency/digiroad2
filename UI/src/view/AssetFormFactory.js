@@ -127,6 +127,11 @@
 
 
       var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId}));
+
+      _.forEach(currentValue, function(current){
+        element.find('option[value="'+current.value+'"]').attr('selected', true);
+      });
+
       element.find('select').on('change', function(){
         me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
@@ -162,6 +167,10 @@
           '</div>';
       }).join('');
       var element =  $(template({divCheckBox: divCheckBox}));
+
+      _.forEach(currentValue, function(current){
+        element.find(':input[value="'+current.value+'"]').attr('checked', true);
+      });
 
       element.find('input').on('click', function(){
         var val = [];
