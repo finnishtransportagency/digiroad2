@@ -589,7 +589,7 @@
     }
 
     function validateAdministrativeClass(selectedLinearAsset, editConstrains){
-      editConstrains = editConstrains || function () { return false; };
+      editConstrains = editConstrains || function() { return false; };
 
       var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
         return editConstrains(selected);
