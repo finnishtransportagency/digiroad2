@@ -90,7 +90,9 @@
       [11, '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>'],
       [12, 'Ajopolku'],
       [21, 'Huoltoaukko moottoritiellä'],
-      [13, 'Lautta tai lossi']
+      [13, 'Lautta tai lossi'],
+      [14, 'Erikoiskuljetusyhteys ilman puomia'],
+      [15, 'Erikoiskuljetusyhteys puomilla']
     ];
     var linkTypeLegendEntries = _.map(linkTypes, function(linkType) {
       return '<div class="legend-entry">' +
@@ -107,7 +109,9 @@
       [2, 'Silta, Taso 2'],
       [1, 'Silta, Taso 1'],
       [0, 'Maan pinnalla'],
-      [-1, 'Alikulku'],
+      [-1, 'Alikulku, taso 1'],
+      [-2 , 'Alikulku, taso 2'],
+      [-3 , 'Alikulku, taso 3'],
       [-11, 'Tunneli']
     ];
     var verticalLevelLegendEntries = _.map(verticalLevels, function(verticalLevel) {
