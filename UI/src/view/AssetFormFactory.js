@@ -104,7 +104,7 @@
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
     var className = assetTypeConfiguration.className;
-    var possibleValues = assetTypeConfiguration.possibleValues;
+    var possibleValues = assetTypeConfiguration.singlePossibleValues;
     var unit = assetTypeConfiguration.unit ? assetTypeConfiguration.unit : '';
 
 
@@ -145,7 +145,7 @@
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
     var className = assetTypeConfiguration.className;
-    var possibleValues = assetTypeConfiguration.possibleValues;
+    var possibleValues = assetTypeConfiguration.multiplePossibleValues;
 
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
