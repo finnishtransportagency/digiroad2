@@ -31,8 +31,10 @@ class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
 
       val numberValue1 = 666
       val numberValue2 = 777
-      val enumeratedValue1 = "Avattava puomi"
-      val enumeratedValue2 = "Ohituskielto"
+      val enumeratedValue1_nameFi = "Avattava puomi"
+      val enumeratedValue2_nameFi = "Ohituskielto"
+      val enumeratedValue1_value = 2
+      val enumeratedValue2_value = 28
       val textValue = "hope this works!"
       val testUser = "dr2_test_data"
 
@@ -46,15 +48,15 @@ class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId1, $assetTypeId, 'single_choice', 0, $testUser, 'test_single_choice', null)""".execute
       sqlu"""INSERT INTO single_choice_value(asset_id, enumerated_value_id, property_id)
-           VALUES ($assetId, (select id from enumerated_value where name_fi=$enumeratedValue1), $propId1)""".execute
+           VALUES ($assetId, (select id from enumerated_value where name_fi=$enumeratedValue1_nameFi), $propId1)""".execute
 
       //Multiple choice value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, $assetTypeId, 'multiple_choice', 0, $testUser, 'test_multiple_choice', null)""".execute
       sqlu"""INSERT INTO multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_by)
-           VALUES (1, $propId2, $assetId, (select id from enumerated_value where name_fi=$enumeratedValue2), $testUser)""".execute
+           VALUES (1, $propId2, $assetId, (select id from enumerated_value where name_fi=$enumeratedValue2_nameFi), $testUser)""".execute
       sqlu"""INSERT INTO multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_by)
-           VALUES(2, $propId2, $assetId, (select id from enumerated_value where name_fi=$enumeratedValue1), $testUser)""".execute
+           VALUES(2, $propId2, $assetId, (select id from enumerated_value where name_fi=$enumeratedValue1_nameFi), $testUser)""".execute
 
       //Number property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
@@ -77,8 +79,8 @@ class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
 
       val assetValues = persistedAssets.head.value.get.asInstanceOf[MultiValue].value.properties
       assetValues.find(_.publicId == "test_data_text").get.values.head.value should be (textValue)
-      assetValues.find(_.publicId == "test_multiple_choice").get.values should be (Seq(MultiTypePropertyValue(enumeratedValue2), MultiTypePropertyValue(enumeratedValue1)))
-      assetValues.find(_.publicId == "test_single_choice").get.values.head.value should be (enumeratedValue1)
+      assetValues.find(_.publicId == "test_multiple_choice").get.values should be (Seq(MultiTypePropertyValue(enumeratedValue2_value.toString()), MultiTypePropertyValue(enumeratedValue1_value.toString())))
+      assetValues.find(_.publicId == "test_single_choice").get.values.head.value should be (enumeratedValue1_value.toString())
       assetValues.find(_.publicId == "test_data_number").get.values should be (Seq(MultiTypePropertyValue(numberValue1.toString()), MultiTypePropertyValue(numberValue2.toString())))
     }
   }
