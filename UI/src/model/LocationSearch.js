@@ -166,7 +166,7 @@
     var  massTransitStopPassengerIdSearch = function(input) {
       return $.when(backend.getMassTransitStopByPassengerIdForSearch(input.text)).then(function(result) {
         var toCoordinates = function (r) {
-          var title = r.municipalityName + ', ' + input.text;
+          var title = input.text + ', ' + r.municipalityName;
           return {title: title, lon: r.lon, lat: r.lat, nationalId: r.nationalId, resultType: "Mtstop"};
         };
 

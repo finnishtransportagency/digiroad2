@@ -1413,8 +1413,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       val result = service.getMassTransitStopByPassengerId("1000", _ => Unit)
       result should have size 2
-      result.flatMap(_._1).find(_.id == ids.head).head.municipalityName should be (Some("Kauniainen"))
-      result.flatMap(_._1).find(_.id == ids.last).head.municipalityName should be (Some("Helsinki"))
+      result.find(_.get.id == ids.head).head.get.municipalityName should be (Some("Kauniainen"))
+      result.find(_.get.id == ids.last).last.get.municipalityName should be (Some("Helsinki"))
       }
     }
 }

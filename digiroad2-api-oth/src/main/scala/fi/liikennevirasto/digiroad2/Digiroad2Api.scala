@@ -268,7 +268,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val passengerId = params("passengerId")
     val massTransitStopsReturned = massTransitStopService.getMassTransitStopByPassengerId(passengerId, validateMunicipalityAuthorization(passengerId))
     massTransitStopsReturned.map { massTransitStopReturned =>
-      massTransitStopReturned._1 match {
+      massTransitStopReturned match {
         case Some(stop) =>
           Map("id" -> stop.id,
             "nationalId" -> stop.nationalId,
