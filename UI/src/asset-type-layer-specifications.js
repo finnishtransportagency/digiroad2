@@ -234,7 +234,6 @@
         enabled: 'Kelirikko',
         disabled: 'Ei kelirikkoa'
       },
-      possibleValues: [100, 80, 70, 60],
       editConstrains : function(selectedAsset) {
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
