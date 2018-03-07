@@ -84,6 +84,8 @@
         'lengthLimit/:id': 'lengthLimit',
         'widthLimit/:id': 'widthLimit',
         'work-list/speedLimit': 'speedLimitWorkList',
+        'work-list/speedLimit/state' : '',
+        'work-list/speedLimit/municipality' : '',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',

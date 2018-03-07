@@ -1,5 +1,7 @@
 (function (root) {
   var unit = 'km/h';
+  var userRole;
+
   var template = function(selectedSpeedLimit) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
@@ -76,10 +78,20 @@
   var renderLinktoWorkList = function renderLinktoWorkList() {
     var notRendered = !$('#work-list-link').length;
     if(notRendered) {
-      $('#information-content').append('' +
-        '<div class="form form-horizontal">' +
-          '<a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
-        '</div>');
+      if (!_.contains(userRole, 'operator')) {
+        $('#information-content').append('' +
+          '<div class="form form-horizontal">' +
+          '   <a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
+          '</div>');
+      }
+      else {
+        $('#information-content').append('' +
+          '<div class="form form-horizontal">' +
+          '   <p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p>' +
+          '   <a id="work-list-link" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Kunnan Omistama</a>' +
+          '   <a id="work-list-link" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Valtion Omistama</a>' +
+          '</div>');
+      }
     }
   };
 
@@ -129,6 +141,10 @@
       else {
         $('#work-list-link').parent().remove();
       }
+    });
+
+    eventbus.on('roles:fetched', function(roles) {
+      userRole = roles;
     });
   };
 
