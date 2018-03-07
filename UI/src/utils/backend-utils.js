@@ -381,6 +381,10 @@
       return $.getJSON('api/speedlimits/unknown');
     };
 
+    this.getUnknownLimitsState = function() {
+      return $.getJSON('api/speedlimits/unknown/state');
+    };
+
     this.getFloatinPedestrianCrossings = function() {
       return $.getJSON('api/pedestrianCrossings/floating');
     };

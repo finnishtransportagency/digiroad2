@@ -1069,14 +1069,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/speedlimits/unknown") {
+  get("/speedlimits/unknown") (getUnknowns(None))
+
+  get("/speedlimits/unknown/state") (getUnknowns(Some(State)))
+
+  def getUnknowns(administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] ={
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    speedLimitService.getUnknown(includedMunicipalities)
+    speedLimitService.getUnknown(includedMunicipalities, administrativeClass)
   }
+
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()

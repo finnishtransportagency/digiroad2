@@ -35,7 +35,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Returns unknown speed limits by municipality. Used by SpeedLimitService.getUnknown.
     */
-  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
+  def getUnknownSpeedLimits(municipalities: Option[Set[Int]], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
     case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val optionalMunicipalities = municipalities.map(_.mkString(","))
@@ -45,9 +45,15 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       join municipality m on s.municipality_code = m.id
       """
 
+    var filterAdministrativeClass =
+      administrativeClass match {
+        case Some(ac) => s" where s.administrative_class = ${ac.value}"
+        case _ => ""
+      }
+
     val sql = optionalMunicipalities match {
-      case Some(m) => unknownSpeedLimitQuery + s" and municipality_code in ($m)"
-      case _ => unknownSpeedLimitQuery
+      case Some(m) => unknownSpeedLimitQuery + s" and municipality_code in ($m) " + filterAdministrativeClass
+      case _ => unknownSpeedLimitQuery  + filterAdministrativeClass
     }
 
     val limitsByMunicipality = Q.queryNA[(Long, String, Int)](sql).list
@@ -63,18 +69,20 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
   private def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
     val unknownSpeedLimitCounts =  sql"""
-      select name_fi, s.administrative_class, count(*)
+      select name_fi, s.administrative_class, count(*), m.id
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
-      group by name_fi, administrative_class
-    """.as[(String, Int, Int)].list
+      group by name_fi, administrative_class, m.id
+    """.as[(String, Int, Int, Int)].list
 
     unknownLimitsByMunicipality.map { case (municipality, values) =>
       val municipalityCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Municipality.value).map(_._3).getOrElse(0)
       val stateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == State.value).map(_._3).getOrElse(0)
       val privateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Private.value).map(_._3).getOrElse(0)
+      val municipalityId = unknownSpeedLimitCounts.find(x => x._1 == municipality).map(_._4).getOrElse(0)
 
       val valuesWithCounts = values +
+        ("id" ->  municipalityId) +
         ("municipalityCount" -> municipalityCount) +
         ("stateCount" -> stateCount) +
         ("privateCount" -> privateCount) +

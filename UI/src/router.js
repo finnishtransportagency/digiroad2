@@ -84,8 +84,7 @@
         'lengthLimit/:id': 'lengthLimit',
         'widthLimit/:id': 'widthLimit',
         'work-list/speedLimit': 'speedLimitWorkList',
-        'work-list/speedLimit/state' : '',
-        'work-list/speedLimit/municipality' : '',
+        'work-list/speedLimit/state' : 'speedLimitStateWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
@@ -211,6 +210,10 @@
 
       speedLimitWorkList: function () {
         eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
+      },
+
+      speedLimitStateWorkList: function () {
+        eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimitsState());
       },
 
       linkPropertyWorkList: function () {

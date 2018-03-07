@@ -88,8 +88,8 @@
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
           '   <p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p>' +
-          '   <a id="work-list-link" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Kunnan Omistama</a>' +
-          '   <a id="work-list-link" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Valtion Omistama</a>' +
+          '   <a id="work-list-link" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Kunnan Omistama</a>' +
+          '   <a id="work-list-link" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Valtion Omistama</a>' +
           '</div>');
       }
     }
