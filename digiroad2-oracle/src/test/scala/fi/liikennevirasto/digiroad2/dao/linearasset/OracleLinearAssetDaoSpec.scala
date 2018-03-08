@@ -240,11 +240,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink2 = VVHRoadlink(linkId2, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink, roadLink2))
 
-      val allSpeedLimits = dao.getUnknownSpeedLimits(None)
+      val allSpeedLimits = dao.getUnknownSpeedLimits(None, None)
       allSpeedLimits("Kauniainen")("State").asInstanceOf[Seq[Long]].length should be(1)
       allSpeedLimits("Espoo")("State").asInstanceOf[Seq[Long]].length should be(1)
 
-      val kauniainenSpeedLimits = dao.getUnknownSpeedLimits(Some(Set(235)))
+      val kauniainenSpeedLimits = dao.getUnknownSpeedLimits(Some(Set(235)), None)
       kauniainenSpeedLimits("Kauniainen")("State").asInstanceOf[Seq[Long]].length should be(1)
       kauniainenSpeedLimits.keySet.contains("Espoo") should be(false)
     }
