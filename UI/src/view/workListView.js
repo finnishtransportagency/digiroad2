@@ -24,7 +24,7 @@
 
     this.workListItemTable = function(layerName, workListItems, municipalityName) {
       var municipalityHeader = function(municipalityName, totalCount) {
-        var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
+        var countString = totalCount && layerName !== 'speedLimit' ? ' (yhteensä ' + totalCount + ' kpl)' : '';
         return $('<h2/>').html(municipalityName + countString);
       };
       var tableHeaderRow = function(headerName) {
