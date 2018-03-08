@@ -385,6 +385,10 @@
       return $.getJSON('api/speedlimits/unknown/state');
     };
 
+    this.getUnknownLimitsMunicipality = function() {
+      return $.getJSON('api/speedlimits/unknown/municipality');
+    };
+
     this.getFloatinPedestrianCrossings = function() {
       return $.getJSON('api/pedestrianCrossings/floating');
     };

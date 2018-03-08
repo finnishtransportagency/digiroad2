@@ -1073,6 +1073,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/speedlimits/unknown/state") (getUnknowns(Some(State)))
 
+  get("/speedlimits/unknown/municipality") {
+    getUnknowns(Some(Municipality)).map {
+      unknowns =>
+        Map( "id" -> unknowns._2.get("id"),
+             "name" -> unknowns._1,
+              unknowns._1 -> unknowns._2
+        )
+    }
+  }
+
   def getUnknowns(administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] ={
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
