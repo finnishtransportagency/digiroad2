@@ -240,8 +240,7 @@
       },
       form: new AssetFormFactory( {
           fields : [
-            //TODO: On US:1142 fill the publicId with the one defined for the input
-            { publicId: '',  label:'rajoitus', type: 'number', weigth: 1 }
+            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1 }
           ]
         }),
       isVerifiable: false
