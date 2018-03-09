@@ -120,6 +120,16 @@
       });
     };
 
+    this.stop = function() {
+      if (me.isStarted()) {
+        me.removeLayerFeatures();
+        me.deactivateSelection();
+        me.eventListener.stopListening(eventbus);
+        me.eventListener.running = false;
+        handleUnSelected();
+      }
+    };
+
     var getGroupedFeatures = function (assets) {
       var assetGroups = assetGrouping.groupByDistance(assets, map.getView().getZoom());
       var modifiedAssets = _.forEach(assetGroups, function (assetGroup) {
