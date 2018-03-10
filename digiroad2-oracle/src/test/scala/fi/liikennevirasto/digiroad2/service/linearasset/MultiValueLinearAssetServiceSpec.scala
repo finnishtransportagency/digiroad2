@@ -124,7 +124,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
-      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(30, Set(newAssets.head)).head
+      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
       asset.expired should be (false)
       mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360l), newTransaction = false).head.linkSource.value should be (1)
@@ -145,7 +145,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
-      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(30, Set(newAssets.head)).head
+      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
       asset.expired should be (false)
       asset.verifiedBy.get should be ("testuser")

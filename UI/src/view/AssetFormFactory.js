@@ -5,7 +5,7 @@
 
     me.viewModeRender = function (field, currentValue) {
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '';
+      var _value = value ? value.value : '-';
       return $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
@@ -22,7 +22,7 @@
 
       var value = asset.value;
 
-      if(!value)
+      if(!value || !value.properties)
         value = { properties: [] };
 
       var properties = _.find(value.properties, function(property){ return property.publicId === field.publicId; });
@@ -52,7 +52,7 @@
     };
   };
 
-  var TextualField = function(assetTypeConfiguration){
+  var TextualLongField = function(assetTypeConfiguration){
     DynamicField.call(this);
     var me = this;
     var className = assetTypeConfiguration.className;
@@ -69,6 +69,28 @@
 
       element.find('textarea').on('keyup', function(){
          me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
+      });
+      return element;
+    };
+  };
+
+  var TextualField = function(assetTypeConfiguration){
+    DynamicField.call(this);
+    var me = this;
+    var className = assetTypeConfiguration.className;
+
+    me.editModeRender = function (field, currentValue, setValue, asset) {
+      var value = _.first(currentValue, function(values) { return values.value ; });
+      var _value = value ? value.value : '';
+      var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var element = $('' +
+          '<div class="form-group">' +
+          '   <label class="control-label">' + field.label + '</label>' +
+          '   <input type="text" name="' + field.publicId + '" class="form-control ' + className + '" ' + disabled  + ' value="' + _value + '" >' +
+          '</div>');
+
+      element.find('input[type=text]').on('keyup', function(){
+        me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
       return element;
     };
@@ -91,8 +113,31 @@
 
       element.find('input').on('keyup', function(){
         var disabled = isNaN($(this).val());
-        $(this).closest("#feature-attributes").find(".save.btn").attr('disabled', disabled);
+        if(!disabled)
+          me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
+      });
+      return element;
+    };
+  };
 
+  var IntegerField = function(assetTypeConfiguration){
+    DynamicField.call(this, assetTypeConfiguration);
+    var me = this;
+    var className = assetTypeConfiguration.className;
+
+    me.editModeRender = function (field, currentValue, setValue, asset) {
+      var value = _.first(currentValue, function(values) { return values.value ; });
+      var _value = value ? value.value : '';
+      var disabled = _.isUndefined(value) ? 'disabled' : '';
+
+      var element =   $('' +
+          '<div class="form-group">' +
+          '   <label class="control-label">' + field.label + '</label>' +
+          '   <input type="text" name="' + field.publicId + '" class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
+          '</div>');
+
+      element.find('input[type=text]').on('keyup', function(){
+        var disabled = isNaN($(this).val());
         if(!disabled)
           me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
@@ -104,9 +149,6 @@
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
     var className = assetTypeConfiguration.className;
-    var possibleValues = assetTypeConfiguration.singlePossibleValues;
-    var unit = assetTypeConfiguration.unit ? assetTypeConfiguration.unit : '';
-
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
       var template =  _.template(
@@ -119,10 +161,10 @@
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
-
-      var optionTags = _.map(possibleValues, function(value) {
-        var selected = value === _value ? " selected" : "";
-        return '<option value="' + value + '"' + selected + '>' + value + ' ' + unit + '</option>';
+      var unit =  field.unit ? field.unit : '';
+      var optionTags = _.map(field.values, function(value) {
+        var selected = value.id === _value ? " selected" : "";
+        return '<option value="' + value.id + '"' + selected + '>' + value.label + ' ' + unit + '</option>';
       }).join('');
 
 
@@ -145,8 +187,6 @@
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
     var className = assetTypeConfiguration.className;
-    var possibleValues = assetTypeConfiguration.multiplePossibleValues;
-
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
 
@@ -158,12 +198,12 @@
         '</div>'+
         '</div>');
 
-      var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
+      //var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
 
-      var divCheckBox = _.map(possibleValues, function(value) {
+      var divCheckBox = _.map(field.values, function(value) {
         return '' +
           '<div class = "checkbox">' +
-          ' <label>'+ value + '<input type = "checkbox" class="multiChoice" name = "'+field.publicId+'" value="'+value+'"'+ disabled+'></label>' +
+          ' <label>'+ value.label + '<input type = "checkbox" class="multiChoice" name = "'+field.publicId+'" value="'+value.id+'"></label>' +
           '</div>';
       }).join('');
       var element =  $(template({divCheckBox: divCheckBox}));
@@ -246,6 +286,36 @@
     };
   };
 
+  var CheckboxField = function(assetTypeConfiguration) {
+    DynamicField.call(this, assetTypeConfiguration);
+    var me = this;
+    var className = assetTypeConfiguration.className;
+
+    me.editModeRender = function (field, currentValue, setValue, asset) {
+
+      var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
+
+      var element = $('' +
+          '<div class="form-group">' +
+          '<label class="control-label">'+ field.label+'</label>' +
+          '<div class="choice-group"> ' +
+          '<input type = "checkbox" class="multiChoice" name = "' + field.publicId + '"'+ disabled+'>' +
+          '</div>'+
+          '</div>');
+
+
+      element.find("input[type=checkbox]").attr('checked', !_.isEmpty(currentValue));
+
+      element.find('input[type=checkbox]').on('click', function(){
+        var val = $('input[name=' + field.publicId + ']:checked').length;
+
+        me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
+      });
+
+      return element;
+    };
+  };
+
   root.AssetFormFactory = function (formStructure) {
     var me = this;
     var _assetTypeConfiguration;
@@ -301,16 +371,18 @@
     me.renderElements = function(selectedAsset, isReadOnly, setAsset, asset) {
       var assetTypeConfiguration = _assetTypeConfiguration;
       var availableFieldTypes = [
-        {name: 'text', field: new TextualField(assetTypeConfiguration)},
+        {name: 'long_text', field: new TextualLongField(assetTypeConfiguration)},
         {name: 'single_choice', field: new SingleChoiceField(assetTypeConfiguration)},
         {name: 'date', field: new DateField(assetTypeConfiguration)},
         {name: 'multiple_choice', field: new MultiSelectField(assetTypeConfiguration)},
-        {name: 'number', field: new NumericalField(assetTypeConfiguration)}
+        {name: 'integer', field: new IntegerField(assetTypeConfiguration)},
+        {name: 'number', field: new NumericalField(assetTypeConfiguration)},
+        {name: 'text', field: new TextualField(assetTypeConfiguration)},
+        {name: 'checkbox', field: new CheckboxField(assetTypeConfiguration)}
       ];
 
-      formStructure.fields.sort(function (a, b) { return a.weight - b.weight; });
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
-      _.each(formStructure.fields, function (field) {
+      _.each(_.sortBy(formStructure.fields, function(field){ return field.weight; }), function (field) {
         var values = [];
         if (selectedAsset.get()[0].value) {
           values = _.find(selectedAsset.get()[0].value.properties, function (property) { return property.publicId === field.publicId; }).values;
@@ -477,12 +549,22 @@
         a: assetTypeConfiguration.selectedLinearAsset.removeAValue,
         b: assetTypeConfiguration.selectedLinearAsset.removeBValue
       };
+      var valueSetters = {
+        a: assetTypeConfiguration.selectedLinearAsset.setAValue,
+        b: assetTypeConfiguration.selectedLinearAsset.setBValue
+      };
       var removeValue = valueRemovers[sideCode] || assetTypeConfiguration.selectedLinearAsset.removeValue;
+      var setValue = valueSetters[sideCode] ||  assetTypeConfiguration.selectedLinearAsset.setValue;
       toggleElement.on('change', function(event) {
         var disabled = $(event.currentTarget).val() === 'disabled';
         inputElement.find('.form-control, .choice-group .multiChoice').not('.edit-control-group.choice-group').attr('disabled', disabled);
         if (disabled) {
           removeValue();
+        }
+        else{
+          // var value = _.isUndefined(assetTypeConfiguration.unit) ? defaultValue : inputElementValue(inputElement);
+          var value = disabled ? 0 : 1;
+          setValue(value);
         }
       });
     };
@@ -507,6 +589,8 @@
     }
 
     function validateAdministrativeClass(selectedLinearAsset, editConstrains){
+      editConstrains = editConstrains || function () { return false; };
+
       var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
         return editConstrains(selected);
       });

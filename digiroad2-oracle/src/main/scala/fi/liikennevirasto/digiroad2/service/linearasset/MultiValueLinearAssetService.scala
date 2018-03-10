@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.{SideCode, MultiTypePropertyValue, MultiTypeProperty}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
+import fi.liikennevirasto.digiroad2.asset.{MultiTypeProperty, MultiTypePropertyValue, SideCode}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, MunicipalityDao, OracleAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, MunicipalityDao, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -24,10 +24,10 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
   val roadName_FI = "osoite_suomeksi"
   val roadName_SE = "osoite_ruotsiksi"
 
-
+  //TODO check if make sense remove asset type
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(typeId, ids)
+      multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(ids)
     }
   }
 
@@ -50,7 +50,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     val oldAsset =
       valueToUpdate match {
         case MultiValue(multiTypeProps) =>
-          multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(typeId, Set(assetId)).head
+          multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(assetId)).head
         case _ => return None
       }
 
@@ -70,7 +70,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
   override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id)).head
-      val existing = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(assetTypeId._2, Set(id)).head
+      val existing = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
@@ -149,4 +149,22 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     }
   }
 
+  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+    withDynTransaction {
+      val linearAsset = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linearAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
+      val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
+
+      val newIdsToReturn = existingValue match {
+        case None => dao.updateExpiration(id, expired = true, username).toSeq
+        case Some(value) => updateWithoutTransaction(Seq(id), value, username, Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)))
+      }
+
+      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
+        Some(roadLink)))
+
+      newIdsToReturn ++ Seq(createdIdOption).flatten
+    }
+  }
 }
