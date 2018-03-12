@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Weekday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
-import fi.liikennevirasto.digiroad2.service.pointasset.{ObstacleService, PavingService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -244,6 +244,18 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
+  def assetNotDeletedWithStateAdministrativeClass(assetURLName: String) = {
+    val newRoadLinks = Seq(RoadLink(1000L, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1000), false)).thenReturn(newRoadLinks)
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(1000), false)).thenReturn(newRoadLinks)
+
+    deleteWithUserAuth("/235/" + assetURLName + "/1", getAuthorizationHeader("kalpa", "kalpa")) {
+      withClue("assetName " + assetURLName) {
+        status should equal(422)
+      }
+    }
+  }
+
   def updatedWithNewerTimestampAndDifferingMeasures(assetInfo: (String, String)) = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 1502, "endMeasure": 16, "sideCode": 1, """ + prop + """}"""
@@ -377,8 +389,12 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     assetInfo.foreach(notUpdatedWithoutValidSidecode)
   }
 
-  test("asset is not upade if linkId has AdministrativeClass State"){
+  test("asset is not updated if linkId has AdministrativeClass State"){
     assetInfo.foreach(assetNotUpdatedWithStateAdministrativeClass)
+  }
+
+  test("asset is not deleted if linkId has AdministrativeClass State"){
+    assetInfo.keySet.foreach(assetNotDeletedWithStateAdministrativeClass)
   }
 
   test("encode lighting limit") {
