@@ -167,7 +167,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       Some(manoeuvres.map { manoeuvre => (manoeuvre,
         roadLinks.filter(road => road.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).get ||
           road.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).get)
-      )})
+        )})
     } else None
   }
 
@@ -282,10 +282,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt)).getOrElse(Seq()),
             manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString),
             Seq(manoeuvre.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).get) ++
-              (manoeuvre.properties.find(_.name == "elements").map(_.value) match {
-                case Some(value) => value.asInstanceOf[Seq[BigInt]].map(_.toLong)
-                case _ => Seq() }) ++
-              Seq(manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).get)
+            (manoeuvre.properties.find(_.name == "elements").map(_.value) match {
+              case Some(value) => value.asInstanceOf[Seq[BigInt]].map(_.toLong)
+              case _ => Seq() }) ++
+            Seq(manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).get)
           )
         )
       }
@@ -319,8 +319,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           IncomingRailwayCrossingtAsset(
             x.linkId,
             x.startMeasure.toLong,
-            x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
-            x.properties.find(_.name == "name").map { name => name.value }
+              x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
+              x.properties.find(_.name == "name").map { name => name.value }
           ))
       case TrafficLights.typeId =>
         parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
@@ -356,30 +356,30 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   def extractManoeuvreProperties(manoeuvre: Manoeuvre): Any = {
-    val exceptions = if (manoeuvre.exceptions.nonEmpty) {
-      Seq(Map("name" -> "exceptions", "value" -> manoeuvre.exceptions))
-    } else Seq()
+      val exceptions = if (manoeuvre.exceptions.nonEmpty) {
+        Seq(Map("name" -> "exceptions", "value" -> manoeuvre.exceptions))
+      } else Seq()
 
-    val additionalInfo = if (manoeuvre.additionalInfo != null) {
-      Seq(Map("name" -> "additionalInfo", "value" -> manoeuvre.additionalInfo))
-    } else Seq()
+      val additionalInfo = if (manoeuvre.additionalInfo != null) {
+        Seq(Map("name" -> "additionalInfo", "value" -> manoeuvre.additionalInfo))
+      } else Seq()
 
-    val validityPeriods = if (manoeuvre.validityPeriods.nonEmpty) {
-      Seq(Map("name" -> "validityPeriods", "value" -> manoeuvre.validityPeriods.map { validity =>
-        Map("startHour" -> validity.startHour,
-          "endHour" -> validity.endHour,
-          "days" -> validity.days.toString,
-          "startMinute" -> validity.startMinute,
-          "endMinute" -> validity.endMinute)
-      }))
-    } else Seq()
+      val validityPeriods = if (manoeuvre.validityPeriods.nonEmpty) {
+        Seq(Map("name" -> "validityPeriods", "value" -> manoeuvre.validityPeriods.map { validity =>
+          Map("startHour" -> validity.startHour,
+            "endHour" -> validity.endHour,
+            "days" -> validity.days.toString,
+            "startMinute" -> validity.startMinute,
+            "endMinute" -> validity.endMinute)
+        }))
+      } else Seq()
 
-    val elements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement).map(_.sourceLinkId)
+      val elements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement).map(_.sourceLinkId)
 
-    Seq(Map("name" -> "sourceLinkId", "value" -> manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).get
-    ),Map("name" -> "elements", "value" -> elements),
-      Map("name" -> "destLinkId", "value" -> manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).get
-      )) ++ exceptions ++ additionalInfo ++ validityPeriods
+      Seq(Map("name" -> "sourceLinkId", "value" -> manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).get
+      ),Map("name" -> "elements", "value" -> elements),
+        Map("name" -> "destLinkId", "value" -> manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).get
+        )) ++ exceptions ++ additionalInfo ++ validityPeriods
   }
 
   def extractModifiedAt(pointAsset: PersistedPointAsset, typeId: Int): Any = {
@@ -665,7 +665,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     manoeuvres.foreach { manoeuvre =>
       val destLinkId = manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("destLinkId not found")))
       val linkIdAll = Seq(manoeuvre.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("sourceLinkId not found")))) ++
-        manoeuvre.properties.find(_.name == "elements").map(_.value.asInstanceOf[Seq[BigInt]].map(_.toLong)).getOrElse(Seq()) ++ Seq(destLinkId)
+      manoeuvre.properties.find(_.name == "elements").map(_.value.asInstanceOf[Seq[BigInt]].map(_.toLong)).getOrElse(Seq()) ++ Seq(destLinkId)
 
       manoeuvre.startMeasure match {
         case Some(measure) =>
@@ -723,8 +723,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             halt(BadRequest(s"The property names for the property validityPeriods are not valid."))
 
           validyPeriodValue.foreach { prop =>
-            Set("startHour", "endHour", "days", "startMinute", "endMinute").foreach(checkValidityPeriodFields(_, prop))
-          }
+          Set("startHour", "endHour", "days", "startMinute", "endMinute").foreach(checkValidityPeriodFields(_, prop))
+        }
         case _ => None
       }
 
