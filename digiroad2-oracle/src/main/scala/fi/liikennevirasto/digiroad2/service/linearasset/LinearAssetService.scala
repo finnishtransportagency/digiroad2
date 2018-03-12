@@ -35,6 +35,7 @@ object LinearAssetTypes {
   val numericValuePropertyId: String = "mittarajoitus"
   val europeanRoadPropertyId: String = "eurooppatienumero"
   val exitNumberPropertyId: String = "liittymänumero"
+  val damagedByThawPropertyId: String = "kelirikko"
   def getValuePropertyId(typeId: Int) = typeId match {
     case EuropeanRoadAssetTypeId => europeanRoadPropertyId
     case ExitNumberAssetTypeId => exitNumberPropertyId

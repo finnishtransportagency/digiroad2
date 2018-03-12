@@ -25,6 +25,11 @@ class DamagedByThawTierekisteriImporter extends LinearAssetTierekisteriImporterO
       measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
     linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
+    trAssetData.weight match {
+      case Some(value) =>
+        linearAssetService.dao.insertValue(assetId, LinearAssetTypes.damagedByThawPropertyId, value)
+      case _ => None
+    }
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
   }
 }
