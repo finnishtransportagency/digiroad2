@@ -157,7 +157,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     } else None
   }
 
-  def getManoeuvreAndRoadLinks(assetId: Seq[Long]) : Option[Seq[(Manoeuvre, Seq[RoadLink])]] = {
+  def getManoeuvreAndRoadLinks(assetId: Seq[Int]) : Option[Seq[(Manoeuvre, Seq[RoadLink])]] = {
     val manoeuvres = assetId.flatMap(manoeuvreService.find(_))
     val linkIds = manoeuvres.flatMap(_.elements.find (_.elementType == ElementTypes.LastElement).map (_.sourceLinkId) ) ++
       manoeuvres.flatMap(_.elements.find (_.elementType == ElementTypes.FirstElement).map (_.sourceLinkId))
@@ -291,7 +291,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       }
     }.get
 
-    getManoeuvreAndRoadLinks(manoeuvreIds).getOrElse(halt(InternalServerError("Asset not created")))
+    getManoeuvreAndRoadLinks(manoeuvreIds.map(_.toInt)).getOrElse(halt(InternalServerError("Asset not created")))
   }
 
   def convertValidityPeriod(validityOpt: Option[ManoeuvreProperties]): Option[Set[ValidityPeriod]] = {
@@ -890,27 +890,15 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     if(assetService.getMunicipalityById(municipalityCode).isEmpty)
       halt(NotFound("Municipality code not found."))
 
-    val assetTypeId = getAssetTypeId(params("assetType"))
+    val assetType = getAssetTypeId(params("assetType"))
     val assetId = params("assetId").toLong
 
-    AssetTypeInfo.apply(assetTypeId).geometryType match {
-      case "linear" if assetTypeId == SpeedLimitAsset.typeId =>
-        val (asset, roadLink) = getSpeedLimitsAndRoadLinks(Set(assetId)).getOrElse(halt(NotFound("Asset not found"))).head
-        linkIdValidation(Set(roadLink.linkId))
-        linearAssetService.expireAsset(assetTypeId, assetId, user.username, expired = true).getOrElse("").toString
-      case "linear" if assetTypeId == Manoeuvres.typeId =>
-        val (asset, roadLinks) = getManoeuvreAndRoadLinks(Seq(assetId)).getOrElse(halt(NotFound("Asset not found"))).head
-        linkIdValidation(roadLinks.map(_.linkId).toSet)
-        linearAssetService.expireAsset(assetTypeId, assetId, user.username, expired = true).getOrElse("").toString
-      case "linear" =>
-        val (asset, roadLink) = getLinearAssetsAndRoadLinks(assetTypeId, Set(assetId)).getOrElse(halt(NotFound("Asset not found"))).head
-        linkIdValidation(Set(roadLink.linkId))
-        linearAssetService.expireAsset(assetTypeId, assetId, user.username, expired = true).getOrElse("").toString
-      case "point" =>
-        val asset = getPointAssetById(assetTypeId, assetId)
-        linkIdValidation(Set(asset.linkId))
-        expirePointAsset(assetTypeId, assetId, user.username)
+    AssetTypeInfo.apply(assetType).geometryType match {
+      case "linear" if assetType == Manoeuvres.typeId => manoeuvreService.deleteManoeuvre(user.username, assetId)
+      case "linear" => expireLinearAsset(assetType, assetId, user.username, expired = true)
+      case "point" => expirePointAsset(assetType, assetId, user.username)
       case _ =>
+
     }
   }
 }
