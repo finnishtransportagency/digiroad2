@@ -105,6 +105,7 @@
 
     new WorkListView().initialize();
     new VerificationWorkList().initialize();
+    new SpeedLimitWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
 
     backend.getUserRoles();

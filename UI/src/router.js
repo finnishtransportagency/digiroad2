@@ -55,6 +55,9 @@
         this.route(/^$/, function () {
           applicationModel.selectLayer('massTransitStop');
         });
+
+        this.stateHistory = null;
+
       },
 
       routes: {
@@ -62,7 +65,7 @@
         'asset/:id': 'massTransitStop',
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
-        'speedLimit/:linkId': 'speedLimit',
+        'speedLimit/:linkId(/:municipalityName/:position)': 'speedLimit',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
         'obstacles/:id': 'obstacles',
@@ -85,6 +88,7 @@
         'widthLimit/:id': 'widthLimit',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/speedLimit/state' : 'speedLimitStateWorkList',
+        'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
@@ -144,7 +148,9 @@
         });
       },
 
-      speedLimit: function (linkId) {
+      speedLimit: function (linkId, municipalityName,  position) {
+        this.stateHistory = {municipality: municipalityName, position: position};
+
         var roadLinkReceived = backend.getRoadLinkByLinkId(linkId);
         var layerSelected = eventbus.oncePromise('layer:speedLimit:shown');
         applicationModel.selectLayer('speedLimit');
@@ -214,6 +220,15 @@
 
       speedLimitStateWorkList: function () {
         eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimitsState());
+      },
+
+      speedLimitMunicipalitiesWorkList: function (id) {
+        if(!this.stateHistory)
+          eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality(), id);
+        else
+          eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality(), this.stateHistory);
+
+        this.stateHistory = null;
       },
 
       linkPropertyWorkList: function () {
