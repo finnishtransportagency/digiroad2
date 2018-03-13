@@ -123,6 +123,7 @@
       var streetViewHandler;
       var isTRMassTransitStop = false;
       var isTerminalBusStop = false;
+      var roadAddressInfoLabel;
 
       var MStopDeletebutton = function(readOnly) {
 
@@ -265,6 +266,39 @@
           outer.append($('<p />').addClass('form-control-static').text(propertyVal));
         }
         return outer;
+      };
+
+      var createRoadAddressInfoLabel = function(property){
+        roadAddressInfoLabel = $('<div />').addClass('form-list').append($('<label />').addClass('control-label control-label-list').text('TIEOSOITE'));
+        roadAddressInfoLabel.append(addRoadAddressAttribute(property));
+      };
+
+      var addRoadAddressAttribute = function(property) {
+        return ($('<ul />').addClass('label-list')
+          .append($('<li />').append($('<label />').text(property.publicId)))
+          .append($('<li />').append($('<label />').text(_.isEmpty(property.values) ? '' :  property.values[0].propertyDisplayValue))));
+      };
+
+      var isRoadAddressProperty = function(property){
+        var roadAddressProperties = [
+          'tie',
+          'osa',
+          'aet',
+          'ajr',
+          'puoli'];
+
+        var publicId = property.publicId;
+        return _.contains(roadAddressProperties, publicId);
+      };
+
+      var readOnlyNumberHandler = function(property){
+        if(isRoadAddressProperty(property)){
+          if(roadAddressInfoLabel)
+            roadAddressInfoLabel.append(addRoadAddressAttribute(property));
+          else
+            createRoadAddressInfoLabel(property);
+          return roadAddressInfoLabel;
+        }
       };
 
       var textHandler = function(property){
@@ -566,9 +600,14 @@
           'yllapitajan_koodi',
           'matkustajatunnus',
           'laiturinumero', //Platform Number
-          'vyöhyketieto', //Information Zone
+          'vyohyketieto', //Information Zone
           'alternative_link_id',
           'liitetty_terminaaliin',
+          'tie',
+          'osa',
+          'aet',
+          'ajr',
+          'puoli',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',
@@ -648,6 +687,7 @@
       };
 
       var getAssetForm = function() {
+        roadAddressInfoLabel = '';
         var allProperties = selectedMassTransitStopModel.getProperties();
         var properties;
 
@@ -681,7 +721,9 @@
             return dateHandler(feature);
           } else if (propertyType === 'notification') {
             return notificationHandler(feature);
-          }  else {
+          } else if (propertyType === 'read_only_number') {
+            return readOnlyNumberHandler(feature);
+          } else {
             feature.propertyValue = 'Ei toteutettu';
             return $(featureDataTemplateNA(feature));
           }

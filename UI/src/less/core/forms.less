@@ -122,6 +122,11 @@ input[type="checkbox"]:focus {
   margin-bottom: @input-margin;
 }
 
+.form-list {
+  display: inline-flex;
+  margin-bottom: @input-margin;
+}
+
 // Checkboxes and radios
 //
 // Indent the labels to position radios/checkboxes as hanging controls.
@@ -331,6 +336,9 @@ input[type="checkbox"] {
     padding-bottom: (@line-height-modifier + 1);
     line-height: @line-height-modifier * 3;
   }
+  .control-label-list{
+    padding-top: 19px;
+  }
 }
 
 // Inverted colors
@@ -340,6 +348,9 @@ input[type="checkbox"] {
 .form-dark {
   label {
     color: @gray-lighter;
+  }
+  .label-list{
+    margin-right: 10px;
   }
 
   .form-control {
