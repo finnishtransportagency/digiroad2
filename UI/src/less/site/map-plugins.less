@@ -271,7 +271,25 @@
 		}
 	}
 
+	.municipality-container {
+		position: absolute;
+		top: 0;
+		right: 660px;
+		color: @gray-darkest;
+		text-align: right;
+
+		.municipality-wrapper {
+			width: auto;
+			height: @line-height-base * 2;
+			padding: (@line-height-modifier * 2) 10px 0 (@line-height-modifier * 2);
+			border-left: 1px solid @gray-light-2;
+			border-right: 1px solid @gray-light-2;
+			.box-sizing(border-box);
+		}
+	}
+
 }
+
 
 //** Crosshair
 

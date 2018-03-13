@@ -467,12 +467,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def getGeometryWithTimestamp(linkId: Long, timeStamp: Long, roadLinks: Seq[RoadLink],
                                  vvhHistoryLinks: Seq[VVHHistoryRoadLink]): Seq[Point] = {
-      val roadLinkMatch = roadLinks.find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
-      val historyMatch = vvhHistoryLinks.find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
-      if (roadLinkMatch.nonEmpty || historyMatch.nonEmpty) {
-        roadLinkMatch.orElse(historyMatch).get
+      val matchingLinksGeometry = (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
+      if (matchingLinksGeometry.nonEmpty) {
+        matchingLinksGeometry.get
       } else {
-        roadLinks.find(rl => rl.linkId == linkId).map(_.geometry).orElse(vvhHistoryLinks.find(_.linkId == linkId).map(_.geometry))
+        (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId).map(_.geometry)
           .getOrElse(throw new InvalidAddressDataException(s"Geometry with linkId $linkId and timestamp $timeStamp not found!"))
       }
     }
@@ -486,7 +485,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       userName, false)
   }
 
-  def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Option[String], Option[(Point, Vector3d)]) = {
+  def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Seq[ProjectLink], Option[String], Option[(Point, Vector3d)]) = {
     def previousSplitToSplitOptions(plSeq: Seq[ProjectLink], splitOptions: SplitOptions): SplitOptions = {
       val splitsAB = plSeq.filter(_.linkId == linkId)
       val (template, splitA, splitB) = (plSeq.find(_.status == LinkStatus.Terminated),
@@ -508,7 +507,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           splitOptions
       val r = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
       dynamicSession.rollback()
-      (r._1.map(rs => rs.toSeqWithMergeTerminated), r._2, r._3)
+      (r._1.map(rs => rs.toSeqWithMergeTerminated), r._1.get.allTerminatedProjectLinks, r._2, r._3)
     }
   }
 
@@ -536,8 +535,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val rightTop = Point(x._2, endPoints._2.y)
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
-      val (projectLinksConnected, projectLinksDisconnected) = projectLinks.partition(l =>
-        GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
+      if (projectLinks.isEmpty)
+        return (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
+      val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(projectLinks.head.linkId, false).headOption
+      if (roadLink.isEmpty) {
+        (None, Some(ErrorSuravageLinkNotFound), None)
+      }
+
+      val projectLinksConnected = projectLinks.filter(l => GeometryUtils.areAdjacent(l.geometry, suravageLink.geometry))
+
       //we rank template links near suravage link by how much they overlap with suravage geometry
       val commonSections = projectLinksConnected.map(x =>
         x -> ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink, x).map(GeometryUtils.geometryLength)
@@ -546,7 +552,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
       else {
         val bestFit = commonSections.maxBy(_._2)._1
-        val splitResult = ProjectLinkSplitter.split(newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinksDisconnected, splitOptions)
+        val splitResult = ProjectLinkSplitter.split(roadLink.get, newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinks, splitOptions)
         (Some(splitResult), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
@@ -898,8 +904,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
-    RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
+    RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet).foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) if mod.geometry.nonEmpty =>
           val geom = GeometryUtils.truncateGeometry3D(mod.geometry, ra.startMValue, ra.endMValue)

@@ -10,9 +10,9 @@
         });
     };
 
-      this.getAssetEnumeratedPropertyValues = function(assetType) {
-          $.getJSON('api/enumeratedPropertyValues/'+assetType, function (enumeratedPropertyValues) {
-              eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValues});
+      this.getAssetEnumeratedPropertyValues = function(typeId) {
+          $.getJSON('api/enumeratedPropertyValues/'+typeId, function (enumeratedPropertyValues) {
+              eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: typeId, enumeratedPropertyValues: enumeratedPropertyValues});
           })
               .fail(function () {
                   console.log("error");
@@ -199,6 +199,12 @@
       };
     });
 
+    this.getGroupedPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeIds) {
+      return {
+        url: 'api/groupedPointAssets?bbox=' + boundingBox + '&typeIds=' + typeIds
+      };
+    });
+
     this.createPointAsset = function(asset, endPointName) {
       return $.ajax({
         contentType: "application/json",
@@ -240,15 +246,15 @@
       };
     });
 
-    this.getReadOnlyLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
+    this.getReadOnlyLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
       return {
-        url: 'api/linearassets/massLimitation?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/linearassets/massLimitation?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
       };
     });
 
-    this.getReadOnlyLinearAssetsComplementaries = latestResponseRequestor(function(boundingBox, typeId) {
+    this.getReadOnlyLinearAssetsComplementaries = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
       return {
-        url: 'api/linearassets/massLimitation/complementary?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/linearassets/massLimitation/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -455,9 +461,15 @@
       });
     };
 
-    this.getVerificationInfo = latestResponseRequestor(function(boundingBox, typeId) {
+    this.getMunicipalityByBoundingBox = latestResponseRequestor(function(boundingBox) {
       return {
-        url: 'api/verificationInfo?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/getMunicipalityInfo?bbox=' + boundingBox
+      };
+    });
+
+    this.getVerificationInfo = latestResponseRequestor(function(municipality, typeId) {
+      return {
+        url: 'api/verificationInfo?municipality=' + municipality + '&typeId=' + typeId
       };
     });
 
@@ -527,9 +539,25 @@
         .then(function(x) { return JSON.parse(x); });
     };
 
+    var returnedMunicipality = _.debounce(function(lon, lat, onSuccess, onFailure) {
+      return $.get("vkm/reversegeocode", {x: lon, y: lat})
+          .then(
+              function (result) {
+                return onSuccess(JSON.parse(result));
+              },
+              function (fail) {
+                return onFailure(fail.code);
+              });
+    }, 250);
+
+    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
+      return returnedMunicipality(lon, lat, onSuccess, onFailure);
+    };
+
     this.getMassTransitStopByNationalIdForSearch = function(nationalId) {
       return $.get('api/massTransitStopsSafe/' + nationalId);
     };
+
     this.getSpeedLimitsLinkIDFromSegmentID = function(sid) {
       return $.get('api/speedlimit/sid/?segmentid=' + sid);
     };
@@ -602,7 +630,7 @@
 
     this.withAssetEnumeratedPropertyValues = function(enumeratedPropertyValuesData, typeId) {
       self.getAssetEnumeratedPropertyValues = function (typeId) {
-          eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValuesData});
+          eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: typeId, enumeratedPropertyValues: enumeratedPropertyValuesData});
       };
       return self;
     };

@@ -79,7 +79,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     //Remove the asset ids adjusted in the "prohibition:saveProjectedProhibition" otherwise if the "prohibition:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
     eventBus.publish("linearAssets:update", changeSet)
-    eventBus.publish("prohibition:saveProjectedProhibition", newAssets.filterNot( _ == 0L))
+    eventBus.publish("prohibition:saveProjectedProhibition", newAssets.filter(_.id == 0L))
 
     filledTopology
   }

@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitS
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MassLimitationDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -169,6 +170,13 @@ class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
   }
 }
 
+class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) extends Actor {
+  def receive = {
+    case x: Seq[T] => prohibitionProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _ => println("prohibitionSaveProjected: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -240,6 +248,9 @@ object Digiroad2Context {
 
   val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
+
+  val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
+  eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
   lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
@@ -391,6 +402,34 @@ object Digiroad2Context {
 
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkOTHService)
+  }
+
+  lazy val weightLimitService: WeightLimitService = {
+    new TotalWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val axleWeightLimitService: AxleWeightLimitService = {
+    new AxleWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val bogieWeightLimitService: BogieWeightLimitService = {
+    new BogieWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = {
+    new TrailerTruckWeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val heightLimitService: HeightLimitService = {
+    new HeightLimitService(roadLinkOTHService)
+  }
+
+  lazy val widthLimitService: WidthLimitService = {
+    new WidthLimitService(roadLinkOTHService)
+  }
+
+  lazy val pointMassLimitationService: PointMassLimitationService = {
+    new PointMassLimitationService(roadLinkOTHService, new OraclePointMassLimitationDao)
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
