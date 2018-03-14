@@ -234,6 +234,7 @@
         enabled: 'Kelirikko',
         disabled: 'Ei kelirikkoa'
       },
+      label: new RoadDamagedByThawLabel(),
       editConstrains : function(selectedAsset) {
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
