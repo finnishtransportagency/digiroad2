@@ -18,11 +18,6 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
-case class PersistedSpeedLimit(id: Long, linkId: Long, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
-                               modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
-                               vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource)
-
-
 class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
   def MassQueryThreshold = 500
@@ -116,12 +111,12 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Returns speed limits that match a set of link ids.
     */
-  def getCurrentSpeedLimitsByLinkIds(ids: Option[Set[Long]]): Seq[SpeedLimit] = {
+  def getCurrentSpeedLimitsByLinkIds(linkIds: Option[Set[Long]]): Seq[SpeedLimit] = {
 
-    ids.map { id =>
-      id.isEmpty match {
+    linkIds.map { linkId =>
+      linkId.isEmpty match {
         case true => Seq.empty[SpeedLimit]
-        case false => fetchSpeedLimitsByLinkIds(id.toSeq)
+        case false => fetchSpeedLimitsByLinkIds(linkId.toSeq)
       }
     }.getOrElse(Seq.empty[SpeedLimit])
   }

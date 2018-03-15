@@ -686,7 +686,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
 class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 100
+  override def typeId: Int = LitRoad.typeId
   override def assetName = "lighting"
   override type TierekisteriClientType = TierekisteriLightingAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -708,7 +708,7 @@ class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperati
 
 class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 120
+  override def typeId: Int = RoadWidth.typeId
   override def assetName = "roadWidth"
   override type TierekisteriClientType = TierekisteriRoadWidthAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -731,7 +731,7 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
 
 class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 110
+  override def typeId: Int = PavedRoad.typeId
   override def assetName = "pavedRoad"
   override type TierekisteriClientType = TierekisteriPavedRoadAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -757,7 +757,7 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
 
 class DamagedByThawTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 130
+  override def typeId: Int = DamagedByThaw.typeId
   override def assetName = "damagedByThaw"
   override type TierekisteriClientType = TierekisteriDamagedByThawAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -778,7 +778,7 @@ class DamagedByThawTierekisteriImporter extends LinearAssetTierekisteriImporterO
 
 class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 160
+  override def typeId: Int = MassTransitLane.typeId
   override def assetName = "massTransitLane"
   override type TierekisteriClientType = TierekisteriMassTransitLaneAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -805,7 +805,7 @@ class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporte
 
 class EuropeanRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 260
+  override def typeId: Int = EuropeanRoads.typeId
   override def assetName = "europeanRoads"
   override type TierekisteriClientType = TierekisteriEuropeanRoadAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -832,7 +832,7 @@ class EuropeanRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOp
 class SpeedLimitAssetTierekisteriImporter extends LinearAssetTierekisteriImporterOperations{
   lazy val speedLimitService: SpeedLimitService = new SpeedLimitService(eventbus, vvhClient, roadLinkService)
 
-  override def typeId: Int = 20
+  override def typeId: Int = SpeedLimitAsset.typeId
   override def assetName = "speedlimit"
   override type TierekisteriClientType = TierekisteriSpeedLimitAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)

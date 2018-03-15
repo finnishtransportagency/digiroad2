@@ -4,7 +4,7 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode, SpeedLimitAsset}
 import fi.liikennevirasto.digiroad2.linearasset._
 import org.joda.time.format.{DateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleSpeedLimitDao, OracleLinearAssetDao}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -660,7 +660,7 @@ class AssetDataImporter {
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, linkId, sideCode, value, startMeasure, endMeasure, linkSource) = speedLimitLink
-        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", 20, linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None, LinkGeomSource.apply(linkSource))
+        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", SpeedLimitAsset.typeId , linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None, LinkGeomSource.apply(linkSource))
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
