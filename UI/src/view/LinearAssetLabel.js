@@ -221,7 +221,7 @@
     root.RoadDamagedByThawLabel = function () {
         AssetLabel.call(this);
         var me = this;
-        var IMAGE_SIGN_HEIGHT = 32;
+        var IMAGE_SIGN_HEIGHT = 33;
         var IMAGE_SIGN_ADJUSTMENT = 15;
         var IMAGE_LABEL_HEIGHT = 58;
         var IMAGE_LABEL_ADJUSTMENT = 43;
