@@ -26,7 +26,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   def getSpeedLimitAssetsByIds(ids: Set[Long]): Seq[SpeedLimit] = {
     withDynTransaction {
-      dao.getSpeedLimitLinksByIds(ids.toSet)
+      dao.getSpeedLimitLinksByIds(ids)
     }
   }
 
@@ -332,8 +332,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       (dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation) ,
       updateSpeedLimit(id, existingValue, username, None, None, municipalityValidation).get)
     }
-    getSpeedLimitAssetsByIds(Set(idUpdated, newId))
-  }
+    val assets = getSpeedLimitAssetsByIds(Set(idUpdated, newId))
+    Seq(assets.find(_.id == idUpdated).get, assets.find(_.id == newId).get)
+}
 
   private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit): SpeedLimit = {
     val roadLink = roadLinkServiceImplementation.getRoadLinkAndComplementaryFromVVH(persistedSpeedLimit.linkId).get
@@ -370,7 +371,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
       (idUpdated, newId)
     }
-    getSpeedLimitAssetsByIds(Set(idUpdated, newId))
+    val assets = getSpeedLimitAssetsByIds(Set(idUpdated, newId))
+    Seq(assets.find(_.id == idUpdated).get, assets.find(_.id == newId).get)
   }
 
   def getByMunicpalityAndRoadLinks(municipality: Int): Seq[(SpeedLimit, RoadLink)] = {
