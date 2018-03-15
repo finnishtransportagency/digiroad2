@@ -150,23 +150,31 @@
 
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
-        var mn = stateHistory;
         if (limits.length == 1){
           showFormBtnVisible = false;
           me.createVerificationForm(_.first(limits));
-        }else{
-          var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
-          element.html($('<div class="municipality-list">').append(unknownLimits));
+        } else {
+          if (stateHistory) {
+            showFormBtnVisible = false;
+            me.createVerificationForm(_.find(limits, function (limit) {
+              return limit.name === stateHistory.municipality;
+            }));
+            $('#' + stateHistory.position).scrollView().focus();
+          }
+          else {
+            var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
+            element.html($('<div class="municipality-list">').append(unknownLimits));
 
-          if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
-            searchbox.insertBefore('#tableData');
+            if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
+              searchbox.insertBefore('#tableData');
 
-          $('#searchBox').on('keyup', function(event){
-            var currentInput = event.currentTarget.value;
+            $('#searchBox').on('keyup', function (event) {
+              var currentInput = event.currentTarget.value;
 
-            var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
-            $('#tableData tbody').html(unknownLimits);
-          });
+              var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
+              $('#tableData tbody').html(unknownLimits);
+            });
+          }
         }
       });
     };

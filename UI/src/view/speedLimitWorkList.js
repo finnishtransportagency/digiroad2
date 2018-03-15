@@ -12,10 +12,7 @@
         $('#work-list').show();
         $('body').addClass('scrollable');
         municipalityList = listP;
-        if(!stateHistory)
-           me.generateWorkList(listP, stateHistory);
-        else
-          $('#'+stateHistory.position).scrollView().focus();
+        me.generateWorkList(listP, stateHistory);
       });
     };
 
