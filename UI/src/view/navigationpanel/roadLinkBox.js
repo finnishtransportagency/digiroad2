@@ -90,9 +90,10 @@
       [11, '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>'],
       [12, 'Ajopolku'],
       [21, 'Huoltoaukko moottoritiellä'],
-      [13, 'Lautta tai lossi'],
       [14, 'Erikoiskuljetusyhteys ilman puomia'],
-      [15, 'Erikoiskuljetusyhteys puomilla']
+      [15, 'Erikoiskuljetusyhteys puomilla'],
+      [13, 'Lautta tai lossi']
+
     ];
     var linkTypeLegendEntries = _.map(linkTypes, function(linkType) {
       return '<div class="legend-entry">' +
