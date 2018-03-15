@@ -134,7 +134,7 @@
       var searchbox = $('<div class="filter-box">' +
         '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
 
-      var title = 'Tietolajien kuntasivu';
+      var title = !_.isUndefined(stateHistory) ? 'Tuntemattomien nopeusrajoitusten lista' : 'Tietolajien kuntasivu';
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
         '<div class="page">' +

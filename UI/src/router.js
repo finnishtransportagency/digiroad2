@@ -149,7 +149,8 @@
       },
 
       speedLimit: function (linkId, municipalityName,  position) {
-        this.stateHistory = {municipality: municipalityName, position: position};
+        if(position)
+          this.stateHistory = {municipality: municipalityName, position: position};
 
         var roadLinkReceived = backend.getRoadLinkByLinkId(linkId);
         var layerSelected = eventbus.oncePromise('layer:speedLimit:shown');
