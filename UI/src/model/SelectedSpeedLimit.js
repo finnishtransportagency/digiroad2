@@ -175,7 +175,7 @@
     };
 
     this.getSpeedLimit = function(id){
-      return collection.getById(id);
+      return collection.getByLinkId(id);
     };
 
     this.getId = function() {

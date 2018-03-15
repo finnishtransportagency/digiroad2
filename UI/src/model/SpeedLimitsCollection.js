@@ -96,7 +96,7 @@
       });
     };
 
-    this.getById = function(id){
+    this.getByLinkId = function(id){
       return _.flatten(speedLimits).find(function(speedLimit) { return speedLimit.linkId === id ; });
     };
 
