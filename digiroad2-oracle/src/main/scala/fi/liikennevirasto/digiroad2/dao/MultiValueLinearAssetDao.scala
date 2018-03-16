@@ -47,7 +47,7 @@ class MultiValueLinearAssetDao {
                       left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
                       left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
                       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number')
+                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'checkbox')
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
@@ -84,7 +84,7 @@ class MultiValueLinearAssetDao {
                       left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
                       left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
                       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number')
+                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'checkbox')
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where (a.valid_to > sysdate or a.valid_to is null)
           and a.floating = 0 """.as[MultiValueAssetRow].list
@@ -215,7 +215,7 @@ class MultiValueLinearAssetDao {
           updateTextProperty(assetId, propertyId, propertyValues.head.value.toString).execute
         }
 
-      case SingleChoice | CheckBox =>
+      case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
           insertSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.value.toString).toLong).execute
@@ -226,7 +226,7 @@ class MultiValueLinearAssetDao {
       case MultipleChoice  =>
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
 
-      case Number =>
+      case Number | CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteNumberProperty(assetId, propertyId).execute

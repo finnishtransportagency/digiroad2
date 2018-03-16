@@ -13,9 +13,20 @@
       });
     };
 
+    var checkValues = function (value) {
+      if(_.isUndefined(value))
+        return true;
+      else {
+        if (value.properties)
+          return _.isUndefined(value) || _.isEmpty(_.filter(value.properties, function (prop) {
+            return !_.isEmpty(prop.values);
+          }));
+      }
+    };
+
     var getNewFeatureProperties = function(linearAssets){
       var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
-        var expired = _.isUndefined(linearAsset.value);
+        var expired = checkValues(linearAsset.value);
         var type =  isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
         return _.merge({}, linearAsset, { expired: expired }, type);
       });

@@ -14,13 +14,12 @@
       );
     };
     me.editModeRender = function (field, currentValue, setValue, asset){};
-
     me.inputElementHandler = function(assetTypeConfiguration, inputValue, field, setValue, asset){
 
       if(!asset)
         asset = assetTypeConfiguration.selectedLinearAsset.get()[0];
 
-      var value = asset.value;
+      var value = _.cloneDeep(asset.value);
 
       if(!value || !value.properties)
         value = { properties: [] };
@@ -28,16 +27,22 @@
       var properties = _.find(value.properties, function(property){ return property.publicId === field.publicId; });
 
       var values = [];
-      if(!_.isArray(inputValue))
+      if(!_.isObject(inputValue))
         values.push({ value : inputValue });
 
-      else
-        _.forEach(inputValue, function(input){
-          values.push({
-            value : input
-          });
-        });
+      else {
+        var exists = _.some(properties.values, function (val) { return val.value === inputValue.value; });
+        values = _.filter(properties.values, function (val) { return val.value !== inputValue.value; });
 
+        if (inputValue.checked) {
+          if (!exists)
+            values.push({value: inputValue.value});
+        }
+        else{
+          if (exists)
+            values = _.filter(values, function(val) { return  val.value !== inputValue.value; });
+        }
+      }
       if(properties) {
         properties.values = values;
       }
@@ -45,6 +50,7 @@
         value.properties.push({
           publicId: field.publicId,
           propertyType: field.type,
+          required : field.required,
           values: values
         });
       }
@@ -61,14 +67,16 @@
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
+
       var element = $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <textarea name="' + field.publicId + '" class="form-control ' + className + '" ' + disabled + '>' + _value  + '</textarea>' +
+        '   <textarea fieldType = "' + field.type + '" '+required+' name="' + field.publicId + '" class="form-control ' + className + '" ' + disabled + '>' + _value  + '</textarea>' +
         '</div>');
 
       element.find('textarea').on('keyup', function(){
-         me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
+        me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
       return element;
     };
@@ -83,11 +91,13 @@
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
+
       var element = $('' +
-          '<div class="form-group">' +
-          '   <label class="control-label">' + field.label + '</label>' +
-          '   <input type="text" name="' + field.publicId + '" class="form-control ' + className + '" ' + disabled  + ' value="' + _value + '" >' +
-          '</div>');
+        '<div class="form-group">' +
+        '   <label class="control-label">' + field.label + '</label>' +
+        '   <input type="text" fieldType = "' + field.type + '" '+required+' name="' + field.publicId + '" class="form-control ' + className + '" ' + disabled  + ' value="' + _value + '" >' +
+        '</div>');
 
       element.find('input[type=text]').on('keyup', function(){
         me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
@@ -105,10 +115,13 @@
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
+
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
+        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' +required+ ' class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
+        '   <span class="input-group-addon ' + className + '">' + field.unit + '</span>' +
         '</div>');
 
       element.find('input').on('keyup', function(){
@@ -117,6 +130,23 @@
           me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
       return element;
+    };
+  };
+
+  var ReadOnlyFields = function(assetTypeConfiguration){
+    DynamicField.call(this, assetTypeConfiguration);
+    var me = this;
+    var className = assetTypeConfiguration.className;
+
+    me.editModeRender = function (field, currentValue) {
+      var value = _.first(currentValue, function(values) { return values.value ; });
+      var _value = value ? value.value : '-';
+      return $('' +
+        '<div class="form-group">' +
+        '   <label class="control-label">' + field.label + '</label>' +
+        '   <p class="form-control-readOnly">' + _value + '</p>' +
+        '</div>'
+      );
     };
   };
 
@@ -129,12 +159,15 @@
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
+
 
       var element =   $('' +
-          '<div class="form-group">' +
-          '   <label class="control-label">' + field.label + '</label>' +
-          '   <input type="text" name="' + field.publicId + '" class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
-          '</div>');
+        '<div class="form-group">' +
+        '   <label class="control-label">' + field.label + '</label>' +
+        '   <input type="text" name="' + field.publicId + '" '+required+' class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
+        //  '   <span class="input-group-addon ' + className + '">' + field.unit + '</span>' +
+        '</div>');
 
       element.find('input[type=text]').on('keyup', function(){
         var disabled = isNaN($(this).val());
@@ -150,25 +183,28 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
+
     me.editModeRender = function (field, currentValue, setValue, asset) {
       var template =  _.template(
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label +'</label>' +
-        '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>"><%= optionTags %> </select>' +
+        '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>" <%- requied %>><%= optionTags %> </select>' +
         '</div>');
 
 
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
       var unit =  field.unit ? field.unit : '';
+
       var optionTags = _.map(field.values, function(value) {
         var selected = value.id === _value ? " selected" : "";
         return '<option value="' + value.id + '"' + selected + '>' + value.label + ' ' + unit + '</option>';
       }).join('');
 
 
-      var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId}));
+      var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId, required: required}));
 
       _.forEach(currentValue, function(current){
         element.find('option[value="'+current.value+'"]').attr('selected', true);
@@ -198,12 +234,12 @@
         '</div>'+
         '</div>');
 
-      //var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
 
       var divCheckBox = _.map(field.values, function(value) {
         return '' +
           '<div class = "checkbox">' +
-          ' <label>'+ value.label + '<input type = "checkbox" class="multiChoice" name = "'+field.publicId+'" value="'+value.id+'"></label>' +
+          ' <label>'+ value.label + '<input type = "checkbox" fieldType = "' + field.type + '" '+required+' class="multiChoice" name = "'+field.publicId+'" value="'+value.id+'"></label>' +
           '</div>';
       }).join('');
       var element =  $(template({divCheckBox: divCheckBox}));
@@ -213,10 +249,11 @@
       });
 
       element.find('input').on('click', function(){
-        var val = [];
-        $('.multiChoice:checked').each(function(i){
-            val[i] = $(this).val();
-          });
+
+        var val = {
+          checked : $(this).prop('checked'),
+          value : $(this).val()
+        };
         me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
       });
 
@@ -246,6 +283,8 @@
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
+
 
       var addDatePickers = function (field, html) {
         var $dateElement = html.find('#' + field.publicId);
@@ -257,15 +296,15 @@
         '<label class="control-label">' + field.label + '</label>' +
         '</div>');
 
-      var elements = $('<input type="text"/>').addClass('form-control').attr('id', field.publicId).attr('placeholder',"pp.kk.vvvv").attr('disabled', disabled).on('keyup datechange', _.debounce(function (target) {
-          // tab press
-          if (target.keyCode === 9) {
-            return;
-          }
-          var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
-          field.type = 'text';
-          me.inputElementHandler(assetTypeConfiguration, propertyValue, field, setValue, asset);
-        }, 500));
+      var elements = $('<input type="text"/>').addClass('form-control').attr('id', field.publicId).attr('required', required).attr('placeholder',"pp.kk.vvvv").attr('disabled', disabled).on('keyup datechange', _.debounce(function (target) {
+        // tab press
+        if (target.keyCode === 9) {
+          return;
+        }
+        var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
+        field.type = 'text';
+        me.inputElementHandler(assetTypeConfiguration, propertyValue, field, setValue, asset);
+      }, 500));
 
       html.append(elements);
       addDatePickers(field, html);
@@ -294,25 +333,117 @@
     me.editModeRender = function (field, currentValue, setValue, asset) {
 
       var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
 
       var element = $('' +
-          '<div class="form-group">' +
-          '<label class="control-label">'+ field.label+'</label>' +
-          '<div class="choice-group"> ' +
-          '<input type = "checkbox" class="multiChoice" name = "' + field.publicId + '"'+ disabled+'>' +
-          '</div>'+
-          '</div>');
-
+        '<div class="form-group">' +
+        '<label class="control-label">'+ field.label+'</label>' +
+        '<div class="choice-group"> ' +
+        '<input type = "checkbox" fieldType = "' + field.type + '" '+required+' class="multiChoice" name = "' + field.publicId + '"'+ disabled+'>' +
+        '</div>'+
+        '</div>');
 
       element.find("input[type=checkbox]").attr('checked', !_.isEmpty(currentValue));
-
-      element.find('input[type=checkbox]').on('click', function(){
-        var val = $('input[name=' + field.publicId + ']:checked').length;
-
+      element.find('input').on('click', function(){
+        var val  = $(this).prop('checked') ? 1 : 0;
         me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
       });
 
       return element;
+    };
+
+    me.viewModeRender = function (field, currentValue) {
+      var curr = _.isEmpty(currentValue) ? 0 : currentValue[0].value;
+
+      var template = _.template('<div class="form-group">' +
+        '   <label class="control-label">' + className + '</label>' +
+        '   <p class="form-control-static">' +
+        ' <%= divCheckBox %>  ' +
+        '</p>' +
+        '</div>' );
+
+      var values = _.find(field.values, function(value) {return value.id === Number(curr); }).label;
+      return $(template({divCheckBox : values}));
+    };
+  };
+
+  var SaveButton = function(assetTypeConfiguration) {
+
+    var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
+      assetTypeConfiguration.selectedLinearAsset.save();
+    });
+
+    var updateStatus = function() {
+     var saveButton = $('.save');
+
+     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing() )
+       saveButton.prop('disabled',!assetTypeConfiguration.selectedLinearAsset.isSaveable());
+     else{
+         saveButton.prop('disabled', true);
+       }
+    };
+
+    updateStatus();
+
+    eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
+      updateStatus();
+    });
+
+    return {
+      element: element
+    };
+
+    function events() {
+      return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+    }
+
+  };
+
+  var CancelButton = function(assetTypeConfiguration) {
+
+    var element = $('<button />').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+      assetTypeConfiguration.selectedLinearAsset.cancel();
+    });
+
+    eventbus.on(events('valueChanged'), function() {
+      var cancel = $('.cancel').prop('disabled', false);
+    });
+
+
+    function events() {
+      return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+    }
+
+    return {
+      element: element
+    };
+  };
+
+  var VerificationButton = function(assetTypeConfiguration) {
+
+    var visible = (assetTypeConfiguration.isVerifiable && !_.isNull(assetTypeConfiguration.selectedLinearAsset.getId()) && assetTypeConfiguration.selectedLinearAsset.count() === 1);
+
+    var element = visible ? $('<button />').prop('disabled', assetTypeConfiguration.selectedLinearAsset.isSaveable()).addClass('verify btn btn-primary').text('Merkitse tarkistetuksi').click(function() {
+      assetTypeConfiguration.selectedLinearAsset.verify();
+    }) : '';
+
+    var updateStatus = function() {
+      if(!_.isEmpty(element))
+        element.prop('disabled', assetTypeConfiguration.selectedLinearAsset.isSaveable());
+    };
+
+    updateStatus();
+
+    eventbus.on(events('valueChanged'), function() {
+      updateStatus();
+    });
+
+    function events() {
+      return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+    }
+
+    return {
+      element: element
     };
   };
 
@@ -357,12 +488,6 @@
         }
       });
 
-      eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
-        rootElement.find('.form-controls.linear-asset button.save').attr('disabled', !selectedLinearAsset.isSaveable());
-        rootElement.find('.form-controls.linear-asset button.cancel').attr('disabled', false);
-        rootElement.find('.form-controls.linear-asset button.verify').attr('disabled', selectedLinearAsset.isSaveable());
-      });
-
       function events() {
         return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
       }
@@ -378,7 +503,9 @@
         {name: 'integer', field: new IntegerField(assetTypeConfiguration)},
         {name: 'number', field: new NumericalField(assetTypeConfiguration)},
         {name: 'text', field: new TextualField(assetTypeConfiguration)},
-        {name: 'checkbox', field: new CheckboxField(assetTypeConfiguration)}
+        {name: 'checkbox', field: new CheckboxField(assetTypeConfiguration)},
+        {name: 'read_only_number', field: new ReadOnlyFields(assetTypeConfiguration)},
+        {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)}
       ];
 
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
@@ -434,10 +561,10 @@
       var unit = assetTypeConfiguration.unit ? currentValue ? currentValue + ' ' + assetTypeConfiguration.unit : '-' : currentValue ? 'on' : 'ei ole';
 
       var formGroup = $('' +
-                      '<div class="form-group editable form-editable-'+ generateClassName(sideCode) +'">' +
-                      '  <label class="control-label">' + assetTypeConfiguration.editControlLabels.title + '</label>' +
-                      '  <p class="form-control-static ' + assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
-                      '</div>');
+        '<div class="form-group editable form-editable-'+ generateClassName(sideCode) +'">' +
+        '  <label class="control-label">' + assetTypeConfiguration.editControlLabels.title + '</label>' +
+        '  <p class="form-control-static ' + assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
+        '</div>');
 
       formGroup.append($('' +
         sideCodeMarker(sideCode) +
@@ -489,16 +616,6 @@
           '</div>' : '';
       };
 
-      var disabled = asset.isDirty() ? '' : 'disabled';
-      var visible = (assetTypeConfiguration.isVerifiable && !_.isNull(asset.getId()) && asset.count() === 1);
-
-      var saveButton = '<button class="save btn btn-primary" disabled> Tallenna</button>';
-      var cancelButton = '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>';
-      var verifiableButton = visible ? '<button class="verify btn btn-primary">Merkitse tarkistetuksi</button>' : '';
-
-      var headerButtons = [saveButton, cancelButton, verifiableButton].join('');
-      var footerButtons = [saveButton, cancelButton].join('');
-
       var toSeparateButton =  function() {
         return asset.isSeparable() ?
           '<div class="form-group editable">' +
@@ -517,8 +634,7 @@
 
       };
 
-      return {
-        body: $('<header>' + title() + '<div class="linear-asset form-controls">' + headerButtons + '</div></header>' +
+      var body = $('<header>' + title() + '<div class="linear-asset-header form-controls"></div></header>' +
           '<div class="wrapper read-only">' +
           '   <div class="form form-horizontal form-dark">' +
           '     <div class="form-group">' +
@@ -534,12 +650,14 @@
           '   </div>' +
           '</div>' +
           '<footer >' +
-          '   <div class="linear-asset form-controls" style="display: none">' +
-          footerButtons +
-          '   </div> ' +
-          '</footer>'),
-        separateButton: toSeparateButton
-      };
+          '   <div class="linear-asset-footer form-controls" style="display: none">' +
+          '  </div>' +
+          '</footer>'
+      );
+
+      body.find('.linear-asset-header').append( new SaveButton(assetTypeConfiguration).element).append(new CancelButton(assetTypeConfiguration).element);
+      body.find('.linear-asset-footer').append( new VerificationButton(assetTypeConfiguration).element).append( new SaveButton(assetTypeConfiguration).element).append(new CancelButton(assetTypeConfiguration).element);
+      return { body : body, separateButton: toSeparateButton};
     }
 
     me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode) {
@@ -557,29 +675,65 @@
       var setValue = valueSetters[sideCode] ||  assetTypeConfiguration.selectedLinearAsset.setValue;
       toggleElement.on('change', function(event) {
         var disabled = $(event.currentTarget).val() === 'disabled';
-        inputElement.find('.form-control, .choice-group .multiChoice').not('.edit-control-group.choice-group').attr('disabled', disabled);
+        var input = inputElement.find('.form-control, .choice-group .multiChoice').not('.edit-control-group.choice-group');
+        input.attr('disabled', disabled);
         if (disabled) {
           removeValue();
         }
         else{
-          // var value = _.isUndefined(assetTypeConfiguration.unit) ? defaultValue : inputElementValue(inputElement);
-          var value = disabled ? 0 : 1;
-          setValue(value);
+          setValue(extractInputValues(input));
         }
       });
     };
+
+    //THIS WAS DONE BECAUSE WHEN WE CHANGE BETWEEN ON AND OFF WITH VALUES WE LOSE THE STRUCTURE
+    function extractInputValues(input) {
+      var value = {};
+
+      _.forEach(input, function(element){
+        var $element = $(element);
+        var publicId = $element.attr('name');
+        var type = $element.attr('type');
+
+
+        if(!value || !value.properties)
+          value = { properties: [] };
+
+        var properties = _.find(value.properties, function(property){ return property.publicId === publicId; });
+        var values;
+
+        if(properties){
+          values = properties.values;
+          if(type === 'checkbox' && !$element.prop('checked')) {}
+          else {
+            values.push({value: $element.val()});
+            properties.values = values;
+          }
+        }
+        else {
+          values = [];
+          if(type === 'checkbox' && !$element.prop('checked')) {}
+          else values.push({ value : $element.val() });
+
+          value.properties.push({
+            publicId: $element.attr('name'),
+            propertyType:  $element.attr('fieldType'),
+            required : $element.attr('required'),
+            values: values
+          });
+        }
+      });
+      // return _.isEmpty(_.filter(value.properties, function (prop) { return !_.isEmpty(prop.values); })) ? value : undefined;
+      // check if values are empty, if so set undefined as value?
+      return value;
+    }
 
     function addBodyEvents(rootElement, assetTypeConfiguration, isReadOnly) {
       rootElement.find('.form-controls').toggle(!isReadOnly);
       rootElement.find('.editable .form-control-static').toggle(isReadOnly);
       rootElement.find('.editable .edit-control-group').toggle(!isReadOnly);
       rootElement.find('#separate-limit').toggle(!isReadOnly);
-
       rootElement.find('#separate-limit').on('click', function() { assetTypeConfiguration.selectedLinearAsset.separate(); });
-      rootElement.find('.form-controls.linear-asset button.save').on('click', function() { assetTypeConfiguration.selectedLinearAsset.save(); });
-      rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { assetTypeConfiguration.selectedLinearAsset.cancel(); });
-      rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { assetTypeConfiguration.selectedLinearAsset.verify(); });
-
       rootElement.find('.read-only-title').toggle(isReadOnly);
       rootElement.find('.edit-mode-title').toggle(!isReadOnly);
     }

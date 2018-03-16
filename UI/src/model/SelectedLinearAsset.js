@@ -357,5 +357,23 @@
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
+
+    this.requiredPropertiesMissing = function () {
+
+      return !_.every(selection, function(asset){
+        if(!asset.value || _.isEmpty(asset.value) || _.isEmpty(asset.value.properties))
+          return true;
+
+        return _.every(asset.value.properties, function(property){
+          if(!property.required)
+            return true;
+
+          if(_.isEmpty(property.values))
+            return false;
+
+          return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
+        });
+      });
+    };
   };
 })(this);
