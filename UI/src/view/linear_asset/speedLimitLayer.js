@@ -9,6 +9,7 @@ window.SpeedLimitLayer = function(params) {
       roadAddressInfoPopup= params.roadAddressInfoPopup,
       trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
   var isActive = false;
+  var isActiveTrafficSigns = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
   Layer.call(this, layerName, roadLayer);
@@ -62,9 +63,10 @@ window.SpeedLimitLayer = function(params) {
       eventbus.trigger('layer:speedLimit:' + event);
     });
     if (isActive) {
-      showSpeedLimitsHistory();
+        showSpeedLimitsHistory();
     }
-    trafficSignReadOnlyLayer.refreshView();
+    if (isActiveTrafficSigns)
+        trafficSignReadOnlyLayer.refreshView();
   };
 
   this.removeLayerFeatures = function() {
@@ -314,6 +316,8 @@ window.SpeedLimitLayer = function(params) {
   var startListeningExtraEvents = function(){
     extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:hide', hideSpeedLimitsComplementary);
     extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:show', showSpeedLimitsComplementary);
+    extraEventListener.listenTo(eventbus, 'speedLimit:hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
+    extraEventListener.listenTo(eventbus, 'speedLimit:showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
   };
 
   var stopListeningExtraEvents = function(){
@@ -339,6 +343,16 @@ window.SpeedLimitLayer = function(params) {
   var hideSpeedLimitsComplementary = function() {
     collection.activeComplementary(false);
     trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
+    me.refreshView();
+  };
+
+  var showReadOnlyTrafficSigns = function() {
+    isActiveTrafficSigns = true;
+    trafficSignReadOnlyLayer.refreshView();
+  };
+
+  var hideReadOnlyTrafficSigns = function() {
+    isActiveTrafficSigns = false;
     me.refreshView();
   };
 
@@ -370,15 +384,6 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
-  var selectSpeedLimit = function(feature) {
-    var features = _.filter(vectorLayer.getSource().getFeatures(), function(item) {
-        return item.getProperties().id === feature.id && item.getProperties().linkId === feature.linkId ;
-    });
-    if (features) {
-        selectToolControl.addSelectionFeatures(features);
-    }
-  };
-
   var handleSpeedLimitSaved = function() {
     collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
     applicationModel.setSelectedTool('Select');
@@ -401,11 +406,11 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var handleSpeedLimitUnselected = function () {
-    selectToolControl.activate();
+    selectToolControl.clear();
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
 
-    var drawIndicators = function(links) {
+  var drawIndicators = function(links) {
         var features = [];
 
         var markerContainer = function(link, position) {
@@ -549,6 +554,7 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     roadAddressInfoPopup.start();
+    me.refreshView();
     me.show(map);
   };
 
