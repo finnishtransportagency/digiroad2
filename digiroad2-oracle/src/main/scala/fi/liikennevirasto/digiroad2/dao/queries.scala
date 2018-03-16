@@ -64,6 +64,8 @@ object Queries {
 
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
+  def nextCommonHistoryValue = sql"select common_history_seq.nextval from dual"
+
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
   }
@@ -138,6 +140,13 @@ object Queries {
     "select id from text_property_value where asset_id = ? and property_id = ?"
 
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
+    sqlu"""
+      insert into number_property_value(id, property_id, asset_id, value)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+    """
+  }
+
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Double) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
       values (primary_key_seq.nextval, $propertyId, $assetId, $value)

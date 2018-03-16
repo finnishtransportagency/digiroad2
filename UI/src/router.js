@@ -93,6 +93,7 @@
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
+        'work-list/municipality': 'municipalityWorkList',
         'work-list/:layerName': 'unverifiedLinearAssetWorkList'
       },
 
@@ -239,6 +240,10 @@
 
       maintenanceRoadWorkList: function () {
         eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedLinearAsset(290));
+      },
+
+      municipalityWorkList: function () {
+        eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities());
       },
 
       maintenanceRoad: function (id) {

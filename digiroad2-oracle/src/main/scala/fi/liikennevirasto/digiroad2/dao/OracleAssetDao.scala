@@ -19,11 +19,6 @@ class OracleAssetDao {
 
   }
 
-  def getMunicipalityById(id: Long): Seq[Long] = {
-    val municipalityCode = sql"""select id from municipality where id = $id """.as[Long].list
-    municipalityCode
-  }
-
   def getGeometryType(typeId: Int): String = {
     val geometryType = sql""" select GEOMETRY_TYPE from asset_type where id = $typeId""".as[String].firstOption.get
     geometryType
@@ -76,4 +71,8 @@ class OracleAssetDao {
     sql"""select ID, ASSET_TYPE_ID from ASSET where ID in (#${ids.mkString(",")})""".as[(Long, Int)].list
   }
 
+  def getVerifiableAssetTypes: Seq[String] = {
+    val assetTypes = sql"""select name from asset_type where verifiable = 1""".as[(String)].list
+    assetTypes
+  }
 }

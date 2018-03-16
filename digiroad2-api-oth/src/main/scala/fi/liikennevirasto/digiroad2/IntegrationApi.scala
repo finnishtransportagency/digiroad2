@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, LinearAssetTypes, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
@@ -225,6 +226,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case MaintenanceRoadAsset.typeId => maintenanceRoadService
         case PavedRoad.typeId => pavingService
         case RoadWidth.typeId => roadWidthService
+        case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
+        case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
         case _ => linearAssetService
       }
     }
@@ -411,6 +414,49 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def trWeightLimitationsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
+    weightLimits.filterNot(_.floating).map { weightLimit =>
+      Map("id" -> weightLimit.id,
+        "linkId" -> weightLimit.linkId,
+        "point" -> Point(weightLimit.lon, weightLimit.lat),
+        geometryWKTForPoints(weightLimit.lon, weightLimit.lat),
+        "m_value" -> weightLimit.mValue,
+        "value" -> weightLimit.limit,
+        latestModificationTime(weightLimit.createdAt, weightLimit.modifiedAt),
+        lastModifiedBy(weightLimit.createdBy, weightLimit.modifiedBy),
+        "linkSource" -> weightLimit.linkSource.value)
+    }
+  }
+
+  def trHeightLimitsToApi(heightLimits: Seq[HeightLimit]): Seq[Map[String, Any]] = {
+    heightLimits.filterNot(_.floating).map { heightLimit =>
+      Map("id" -> heightLimit.id,
+        "linkId" -> heightLimit.linkId,
+        "point" -> Point(heightLimit.lon, heightLimit.lat),
+        geometryWKTForPoints(heightLimit.lon, heightLimit.lat),
+        "m_value" -> heightLimit.mValue,
+        "value" -> heightLimit.limit,
+        latestModificationTime(heightLimit.createdAt, heightLimit.modifiedAt),
+        lastModifiedBy(heightLimit.createdBy, heightLimit.modifiedBy),
+        "linkSource" -> heightLimit.linkSource.value)
+    }
+  }
+
+  def trWidthLimitsToApi(widthLimits: Seq[WidthLimit]): Seq[Map[String, Any]] = {
+    widthLimits.filterNot(_.floating).map { widthLimit =>
+      Map("id" -> widthLimit.id,
+        "linkId" -> widthLimit.linkId,
+        "point" -> Point(widthLimit.lon, widthLimit.lat),
+        geometryWKTForPoints(widthLimit.lon, widthLimit.lat),
+        "m_value" -> widthLimit.mValue,
+        "value" -> widthLimit.limit,
+        "reason" -> widthLimit.reason.value,
+        latestModificationTime(widthLimit.createdAt, widthLimit.modifiedAt),
+        lastModifiedBy(widthLimit.createdBy, widthLimit.modifiedBy),
+        "linkSource" -> widthLimit.linkSource.value)
+    }
+  }
+
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {
       "Remove"
@@ -473,6 +519,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
         case "road_nodes" => roadNodesToApi(roadLinkOTHService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
+        case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
+        case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

@@ -1,20 +1,21 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.service.RoadLinkType.{apply => _, _}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.service.RoadLinkType.{apply => _, _}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 
 object RoadAddressLinkBuilder extends AddressLinkBuilder {
-  /*Temporary restriction from PO: Filler limit on modifications
-                                            (LRM adjustments) is limited to 1 meter. If there is a need to fill /
-                                            cut more than that then nothing is done to the road address LRM data.
-                                            */
+
+  /* Temporary restriction from PO: Filler limit on modifications
+   * (LRM adjustments) is limited to 1 meter. If there is a need to fill /
+   * cut more than that then nothing is done to the road address LRM data.
+   */
   def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false, newGeometry: Option[Seq[Point]] = None): RoadAddressLink = {
     val roadLinkType = (floating, roadLink.linkSource) match {
       case (true, _) => FloatingRoadLinkType
@@ -31,11 +32,11 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     }
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, roadType, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
+      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2,Anomaly.None, roadAddress.lrmPositionId)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.lrmPositionId, roadAddress.commonHistoryId)
 
   }
 
@@ -53,11 +54,11 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, roadType, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
+      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2,Anomaly.None, roadAddress.lrmPositionId)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.lrmPositionId, roadAddress.commonHistoryId)
   }
 
   def buildSimpleLink(roadAddress: RoadAddress): RoadAddressLink = {
@@ -74,7 +75,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2,Anomaly.None, roadAddress.lrmPositionId)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.lrmPositionId, roadAddress.commonHistoryId)
 
   }
 
@@ -116,11 +117,15 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val municipalityCode = roadLink.municipalityCode
     val anomalyType= {if (roadLinkRoadNumber!=0 && roadLinkRoadPartNumber!=0) Anomaly.None else Anomaly.NoAddressGiven}
     val trackValue=roadLink.attributes.getOrElse("TRACK_CODE",Track.Unknown.value).toString.toInt
+    val elyCode:Long = roadAddress match {
+      case Some (add) => add.ely
+      case _ => municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1)
+    }
     RoadAddressLink(0, roadLink.linkId, geom,
       length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLink, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes,roadLinkRoadNumber,
-      roadLinkRoadPartNumber, trackValue, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
+      roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }
 
@@ -136,19 +141,17 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     }
     RoadAddressLink(roadAddress.id, historyRoadLink.linkId, geom,
       length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, roadType, roadName, municipalityCode, extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
-      historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(historyRoadLink.municipalityCode, -1), roadAddress.discontinuity.value,
+      historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.lrmPositionId)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.lrmPositionId, roadAddress.commonHistoryId)
   }
 
   def capToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => (x.endMValue - MaxAllowedMValueError > geomLength))
-    val cappedSegments = overflowingSegments.map { s =>
-      (s.copy(endMValue = geomLength))
-    }
-    (passThroughSegments ++ cappedSegments)
+    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => x.endMValue - MaxAllowedMValueError > geomLength)
+    val cappedSegments = overflowingSegments.map { s => s.copy(endMValue = geomLength) }
+    passThroughSegments ++ cappedSegments
   }
 
   def extendToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
@@ -157,9 +160,10 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val sorted = sourceSegments.sortBy(_.endMValue)(Ordering[Double].reverse)
     val lastSegment = sorted.head
     val restSegments = sorted.tail
-    val adjustments = (lastSegment.endMValue < geomLength - MaxAllowedMValueError) match {
-      case true => (restSegments ++ Seq(lastSegment.copy(endMValue = geomLength)))
-      case _ => sourceSegments
+    val adjustments = if (lastSegment.endMValue < geomLength - MaxAllowedMValueError) {
+      restSegments ++ Seq(lastSegment.copy(endMValue = geomLength))
+    } else {
+      sourceSegments
     }
     adjustments
   }
@@ -177,7 +181,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   }
 }
 
-//TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
+// TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
 sealed trait RoadType {
   def value: Int
   def displayValue: String

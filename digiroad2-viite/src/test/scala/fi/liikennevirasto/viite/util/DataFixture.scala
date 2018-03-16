@@ -2,12 +2,12 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
@@ -30,6 +30,7 @@ object DataFixture {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
+
 
   val dataImporter = new AssetDataImporter
   lazy val vvhClient: VVHClient = {
@@ -73,7 +74,8 @@ object DataFixture {
     }
   }
 
-  def importRoadAddresses(isDevDatabase: Boolean): Unit = {
+
+  def importRoadAddresses(isDevDatabase: Boolean, importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
@@ -81,27 +83,22 @@ object DataFixture {
       println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
     } else {
       println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      val vvhClientProd = if (isDevDatabase) {
-        Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
-      } else {
-        None
-      }
-      val importOptions = ImportOptions(
-        onlyComplementaryLinks = false,
-        useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
-        geometryAdjustedTimeStamp.toLong)
-      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
-    }
-    println(s"Road address import complete at time: ${DateTime.now()}")
-    println()
-  }
+      importTableName match {
+        case None => // shouldn't get here because args size test
+         throw new Exception("****** Import failed! conversiontable name required as second input ******")
+        case Some(tableName) =>
+          val importOptions = ImportOptions(
+            onlyComplementaryLinks = false,
+            useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
+            geometryAdjustedTimeStamp.toLong, tableName,
+            onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
+          dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
 
-  def importRoadAddressesHistory(): Unit = {
-    println(s"\nCommencing road address history import from conversion at time: ${DateTime.now()}")
-    val importDate = dr2properties.getProperty("digiroad2.viite.historyImportDate", "")
-    dataImporter.importRoadAddressHistory(Conversion.database(), importDate)
-    println(s"Road address history import complete at time: ${DateTime.now()}")
-    println()
+      }
+      println(s"Road address import complete at time: ${DateTime.now()}")
+      println()
+    }
+
   }
 
   def updateRoadAddressesValues(vVHClient: VVHClient): Unit = {
@@ -317,21 +314,24 @@ object DataFixture {
     }
 
     args.headOption match {
-      case Some ("find_floating_road_addresses")  if geometryFrozen =>
+      case Some("find_floating_road_addresses") if geometryFrozen =>
         showFreezeInfo()
-      case Some ("find_floating_road_addresses") =>
+      case Some("find_floating_road_addresses") =>
         findFloatingRoadAddresses()
-      case Some ("import_road_addresses") =>
-        importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"))
+      case Some("import_road_addresses") =>
+        if (args.length > 1)
+          importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"), Some(args(1)))
+        else
+          throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
       case Some("update_road_addresses_ely_and_road_type") =>
         updateRoadAddressesValues(vvhClient)
-      case Some ("recalculate_addresses") =>
+      case Some("recalculate_addresses") =>
         recalculate()
-      case Some ("update_missing") if geometryFrozen =>
+      case Some("update_missing") if geometryFrozen =>
         showFreezeInfo()
-      case Some ("update_missing") =>
+      case Some("update_missing") =>
         updateMissingRoadAddresses()
       case Some("fuse_multi_segment_road_addresses") =>
         combineMultipleSegmentsOnLinks()
@@ -343,27 +343,25 @@ object DataFixture {
         showFreezeInfo()
       case Some("update_road_addresses_geometry") =>
         updateRoadAddressesGeometry(false)
-      case Some ("import_road_address_change_test_data") =>
+      case Some("import_road_address_change_test_data") =>
         importRoadAddressChangeTestData()
-      case Some ("apply_change_information_to_road_address_links") if geometryFrozen =>
+      case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
         showFreezeInfo()
-      case Some ("apply_change_information_to_road_address_links") =>
+      case Some("apply_change_information_to_road_address_links") =>
         applyChangeInformationToRoadAddressLinks()
-      case Some ("update_road_address_link_source") if geometryFrozen =>
+      case Some("update_road_address_link_source") if geometryFrozen =>
         showFreezeInfo()
-      case Some ("update_road_address_link_source") =>
+      case Some("update_road_address_link_source") =>
         updateRoadAddressGeometrySource()
-      case Some ("update_project_link_geom") =>
+      case Some("update_project_link_geom") =>
         updateProjectLinkGeom()
-      case Some ("import_road_names") =>
+      case Some("import_road_names") =>
         importRoadNames()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
-      case Some("import_road_address_history") =>
-        importRoadAddressesHistory()
-      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
+      case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
-        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+
+        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names ")
     }
   }

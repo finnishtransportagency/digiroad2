@@ -2,19 +2,19 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleSpeedLimitDao, OracleLinearAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import org.joda.time.DateTime
-import org.mockito.Matchers.{any, _}
+import org.mockito.Matchers.any
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import org.mockito.Mockito._
 
 class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
@@ -23,13 +23,13 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockTRClient: TierekisteriLightingAssetClient = MockitoSugar.mock[TierekisteriLightingAssetClient]
   val mockTRTrafficSignsLimitClient: TierekisteriTrafficSignAssetClient = MockitoSugar.mock[TierekisteriTrafficSignAssetClient]
+  val mockTRTrafficSignsLimitSpeedLimitClient: TierekisteriTrafficSignSpeedLimitClient = MockitoSugar.mock[TierekisteriTrafficSignSpeedLimitClient]
   val mockRoadLinkService: RoadLinkOTHService = MockitoSugar.mock[RoadLinkOTHService]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val speedLimitDao = new OracleSpeedLimitDao(mockVVHClient, mockRoadLinkService)
   val oracleAssetDao = new OracleAssetDao
-  val mockTrImporter: TierekisteriDataImporter = MockitoSugar.mock[TierekisteriDataImporter]
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
   val mockMassTransitLaneClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
@@ -73,6 +73,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def getRoadAddressSectionsTest(trAsset: TierekisteriAssetData): Seq[(AddressSection, TierekisteriAssetData)] = super.getRoadAddressSections(trAsset)
     def getAllViiteRoadAddressTest(section: AddressSection) = super.getAllViiteRoadAddress(section)
     def getAllViiteRoadAddressTest(roadNumber: Long, roadPart: Long) = super.getAllViiteRoadAddress(roadNumber, roadPart)
+    def getAllViiteRoadAddressTest(roadNumber: Long, tracks: Seq[Track]) = super.getAllViiteRoadAddress(roadNumber: Long, tracks: Seq[Track])
     def expireAssetsTest(linkIds: Seq[Long]): Unit = super.expireAssets(linkIds)
     def calculateStartLrmByAddressTest(startAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateStartLrmByAddress(startAddress, section)
     def calculateEndLrmByAddressTest(endAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateEndLrmByAddress(endAddress, section)
@@ -86,11 +87,11 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     }
   }
 
-  class TestSpeedLimitsTierekisteriImporter extends SpeedLimitsTierekisteriImporter {
+  class TestSpeedLimitsTierekisteriImporter extends StateSpeedLimitTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
-    override val tierekisteriClient = mockTRTrafficSignsLimitClient
+    override val tierekisteriClient = mockTRTrafficSignsLimitSpeedLimitClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
@@ -102,11 +103,14 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def calculateMeasuresTest(roadAddress: ViiteRoadAddress, section: AddressSection) = super.calculateMeasures(roadAddress, section)
 
     def createSpeedLimitTest(roadAddress: ViiteRoadAddress, addressSection: AddressSection,
-                             trAssetOption: Option[TierekisteriAssetData], roadLinkOption: Option[VVHRoadlink]) = super.createSpeedLimit(roadAddress, addressSection, trAssetOption, roadLinkOption)
+                             trAssetOption: Option[TrAssetInfo], roadLinkOption: Option[VVHRoadlink]) = super.createSpeedLimit(roadAddress, addressSection, trAssetOption, roadLinkOption, None)
 
     override def createUrbanTrafficSign(roadLink: Option[VVHRoadlink], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData],
                                         addressSection: AddressSection, roadAddress: ViiteRoadAddress,
-                                        roadSide: RoadSide): Option[TierekisteriAssetData] = super.createUrbanTrafficSign(roadLink, trUrbanAreaAssets, addressSection, roadAddress, roadSide)
+                                        roadSide: RoadSide): Option[TrAssetInfo] = super.createUrbanTrafficSign(roadLink, trUrbanAreaAssets, addressSection, roadAddress, roadSide)
+
+    def generateOneSideSpeedLimitsTest(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
+    = super.generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
   }
 
   class TestLitRoadOperations extends LitRoadTierekisteriImporter {
@@ -170,7 +174,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  class TestSpeedLimitAssetOperations extends SpeedLimitAssetTierekisteriImporter {
+  class TestSpeedLimitAssetOperations extends SpeedLimitTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
@@ -1085,7 +1089,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startAddress = 0L
       val endAddress = 250L
       val assetValue = "9"
-      val roadSide = RoadSide.Left
 
       val trUrbanArea = TierekisteriUrbanAreaData(roadNumber, roadPart, roadPart, Track.RightSide, startAddress, endAddress, assetValue)
       val addressSection = AddressSection(roadNumber, roadPart, Track.RightSide, startAddress, Some(endAddress))
@@ -1101,11 +1104,11 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001), LinearAssetTypes.numericValuePropertyId)
       asset.size should be (1)
       asset.head.linkId should be(5001)
-      asset.head.sideCode should be(roadSide.value)
+      asset.head.sideCode should be(SideCode.AgainstDigitizing.value)
       asset.head.value should be(Some(NumericValue(80)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
     }
   }
 
@@ -1141,7 +1144,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.value should be(Some(NumericValue(50)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
     }
   }
 
@@ -1160,7 +1163,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val trUrbanArea = TierekisteriUrbanAreaData(roadNumber, roadPart, roadPart, Track.RightSide, 230, 250, assetValue)
       val addressSection = AddressSection(roadNumber, roadPart, Track.RightSide, startAddressMValue, Some(endAddressMValue))
 
-      val ra = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val ra = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -1171,7 +1174,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.foreach{ asset =>
         asset.linkId should be(5001)
         asset.sideCode should be(SideCode.TowardsDigitizing.value)
-        asset.createdBy should be(Some("batch_process_speedLimitState"))
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
       assets.sortBy(_.startMeasure)
       assets.head.value should be (Some(NumericValue(80)))
@@ -1205,7 +1208,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.size should be (1)
       asset.head.linkId should be(5001)
       asset.head.sideCode should be(SideCode.AgainstDigitizing.value)
-      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
+      asset.head.createdBy should be(Some("batch_process_stateSpeedLimit"))
       asset.head.value should be (Some(NumericValue(80)))
     }
   }
@@ -1238,9 +1241,43 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.foreach{ asset =>
         asset.linkId should be(5001)
         asset.sideCode should be(2)
-        asset.createdBy should be(Some("batch_process_speedLimitState"))
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
       assets.sortBy(_.startMeasure).map(_.value) should be (Seq(Some(NumericValue(80)), Some(NumericValue(50)), Some(NumericValue(80))))
+    }
+  }
+
+  test("Create SpeedLimit based on Telematic type without roadLink type info"){
+    TestTransactions.runWithRollback() {
+      val testTRSpeedLimit = new TestSpeedLimitsTierekisteriImporter
+
+      val roadNumber = 1
+      val roadPart = 1
+
+      val ra = Seq(ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, 0, 170, None, None, 1L, 5001,0, 170.3, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None),
+      ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, 170, 175, None, None, 2L, 5002, 0, 5.8, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None))
+
+      val vvhRoadLink = Seq(VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
+      VVHRoadlink(5002, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
+
+      val startMValue = 118
+      val trAsset =  Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, startMValue, startMValue, RoadSide.Right, TRTrafficSignType.TelematicSpeedLimit,""))
+      val mappedLinkType: Map[Long, Seq[(Long, LinkType)]] = Map((5001L, Seq((5001L, Motorway))))
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(ra)
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLink)
+      when(mockRoadLinkService.getAllLinkType(any[Seq[Long]])).thenReturn(mappedLinkType)
+      testTRSpeedLimit.generateOneSideSpeedLimitsTest(roadNumber, RoadSide.Right, trAsset, Seq())
+
+      val assets = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001, 5002), LinearAssetTypes.numericValuePropertyId)
+
+      assets.size should be (3)
+      assets.foreach{ asset =>
+        asset.sideCode should be(2)
+        asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
+      }
+      assets.sortBy(_.linkId).map(_.linkId) should be (Seq(5001, 5001, 5002))
+      assets.sortBy(_.linkId).sortBy(_.startMeasure).map(_.value) should be (Seq(Some(NumericValue(80)), Some(NumericValue(120)), Some(NumericValue(120))))
     }
   }
 }

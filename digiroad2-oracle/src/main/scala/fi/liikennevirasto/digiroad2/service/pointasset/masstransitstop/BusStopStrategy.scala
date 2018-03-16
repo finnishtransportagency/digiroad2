@@ -4,9 +4,13 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 
 class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService, val eventbus: DigiroadEventBus) extends AbstractBusStopStrategy {
+
+  lazy val roadAddressesService: RoadAddressesService = {
+    new RoadAddressesService(eventbus, roadLinkService)
+  }
 
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     publishInfo.asset match {
@@ -15,7 +19,15 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     }
   }
 
-  override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
+  override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
+    def addRoadAddressProperties(oldProperties: Seq[Property]): Seq[Property] = {
+      roadLinkOption match {
+        case Some(roadLink) =>
+          roadAddressesService.getRoadAddressPropertiesByLinkId(Point(asset.lon, asset.lat), asset.linkId, roadLink, oldProperties)
+        case _ => oldProperties
+      }
+    }
+
     asset.terminalId match {
       case Some(terminalId) =>
         val terminalAssetOption = massTransitStopDao.fetchPointAssets(massTransitStopDao.withId(terminalId)).headOption
@@ -32,9 +44,9 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
         val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalExternalId)
 
-        (asset.copy(propertyData = asset.propertyData ++ Seq(newProperty, newPropertyExtId)), false)
+        (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData ++ Seq(newProperty, newPropertyExtId))), false)
       case _ =>
-        (asset, false)
+        (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData)), false)
     }
   }
 
