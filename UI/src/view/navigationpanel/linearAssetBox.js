@@ -50,7 +50,7 @@
       return (!assetConfig.readOnly && (_.contains(me.roles, 'operator') || (_.contains(me.roles, 'premium') && assetConfig.layerName != 'maintenanceRoad') || (_.contains(me.roles, 'serviceRoadMaintainer') && assetConfig.layerName == 'maintenanceRoad')));
     };
 
-    this.municipalityShit = function () {
+    this.municipalityVerified = function () {
       return assetConfig.hasMunicipalityValidation;
     };
 
