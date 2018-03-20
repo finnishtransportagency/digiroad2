@@ -116,12 +116,13 @@
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
+      var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
 
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
         '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' +required+ ' class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
-        '   <span class="input-group-addon ' + className + '">' + field.unit + '</span>' +
+        unit +
         '</div>');
 
       element.find('input').on('keyup', function(){
@@ -160,13 +161,14 @@
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
+      var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
 
 
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
         '   <input type="text" name="' + field.publicId + '" '+required+' class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
-        //  '   <span class="input-group-addon ' + className + '">' + field.unit + '</span>' +
+        unit +
         '</div>');
 
       element.find('input[type=text]').on('keyup', function(){
@@ -636,7 +638,7 @@
 
       var body = $('<header>' + title() + '<div class="linear-asset-header form-controls"></div></header>' +
           '<div class="wrapper read-only">' +
-          '   <div class="form form-horizontal form-dark">' +
+          '   <div class="form form-horizontal form-dark asset-factory">' +
           '     <div class="form-group">' +
           '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + info.createdBy + info.createdDate + '</p>' +
           '     </div>' +
