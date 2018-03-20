@@ -1,4 +1,4 @@
-'(function(root) {
+(function(root) {
   root.MassTransitStopBox = function (selectedMassTransitStop) {
     ActionPanelBox.call(this);
     var me = this;
