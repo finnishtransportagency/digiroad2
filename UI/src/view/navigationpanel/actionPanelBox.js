@@ -86,6 +86,7 @@
     this.layerName = function () {};
     this.labeling = function () {};
     this.checkboxPanel = function () {};
+    this.radioButton = function () {};
     this.predicate = function () {};
     this.legendName = function () {};
     this.municipalityShit = function () {};
@@ -93,6 +94,7 @@
     this.elements = function (){
       return { expanded: $([
         me.panel(),
+        me.radioButton(),
         me.labeling(),
         me.checkboxPanel(),
         me.bindExternalEventHandlers(),
