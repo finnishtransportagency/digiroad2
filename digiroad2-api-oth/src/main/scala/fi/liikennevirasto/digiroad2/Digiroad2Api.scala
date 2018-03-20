@@ -828,6 +828,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
 
     val multiValueProps = multiValueParameter match {
+      case Some(MultiAssetValue(Nil)) => None
       case None => None
       case Some(x) => Some(MultiValue(x))
     }

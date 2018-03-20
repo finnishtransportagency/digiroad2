@@ -64,30 +64,6 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     Some(newAssetIDcreate)
   }
 
-  /**
-    * Saves linear assets when linear asset is separated to two sides in UI.
-    */
-  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
-    withDynTransaction {
-      val assetTypeId = assetDao.getAssetTypeId(Seq(id)).head
-      val existing = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
-      val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-      municipalityValidation(roadLink.municipalityCode)
-
-      val newExistingIdsToReturn = valueTowardsDigitization match {
-        case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
-      }
-
-      dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
-
-      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp,
-        Some(roadLink)))
-
-      newExistingIdsToReturn ++ created
-    }
-  }
-
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
@@ -161,10 +137,32 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
         case Some(value) => updateWithoutTransaction(Seq(id), value, username, Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)))
       }
 
-      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
+      val createdIdOption = createdValue.map(
+          createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
         Some(roadLink)))
 
       newIdsToReturn ++ Seq(createdIdOption).flatten
+    }
+  }
+
+
+  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+    withDynTransaction {
+      val existing = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode)
+
+      val newExistingIdsToReturn = valueTowardsDigitization match {
+        case None => dao.updateExpiration(id, expired = true, username).toSeq
+        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
+      }
+
+      dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
+
+      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp,
+        Some(roadLink)))
+
+      newExistingIdsToReturn ++ created
     }
   }
 }
