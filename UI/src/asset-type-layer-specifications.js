@@ -227,7 +227,7 @@
       title: 'Kelirikko',
       newTitle: 'Uusi kelirikko',
       className: 'road-damaged-by-thaw',
-      isSeparable: true,
+      isSeparable: false,
       allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Kelirikko',
@@ -255,7 +255,7 @@
       newTitle: 'Uusi leveys',
       className: 'road-width',
       unit: 'cm',
-      isSeparable: true,
+      isSeparable: false,
       allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Leveys',
