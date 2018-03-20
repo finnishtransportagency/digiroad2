@@ -188,6 +188,15 @@ object GeometryUtils {
     partitions.minBy { p => minimumDistance(point, p) }
   }
 
+  def middlePoint(geometries: Seq[Seq[Point]]): Point = {
+    val minX = geometries.map(_.map(_.x).min).min
+    val maxX = geometries.map(_.map(_.x).max).max
+    val minY = geometries.map(_.map(_.y).min).min
+    val maxY = geometries.map(_.map(_.y).max).max
+
+    Point((maxX - minX) / 2, (maxY - minY) / 2)
+  }
+
   def minimumDistance(point: Point, segment: Seq[Point]): Double = {
     if (segment.size < 1) { return Double.NaN }
     if (segment.size < 2) { return point.distance2DTo(segment.head) }

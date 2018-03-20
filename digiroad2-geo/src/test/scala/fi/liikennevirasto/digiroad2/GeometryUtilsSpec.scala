@@ -248,4 +248,17 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val geometry2 = List(Point(1.0, 1.0), Point(1.0, 0.0), Point(0.0, 0.0))
     geometryMoved(1.0)(geometry1, geometry2) should be (true)
   }
+
+  test("calculate middle point of multiple geometries") {
+    val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0))
+    val geometry2 = List(Point(2.0, 0.0), Point(2.0, 1.0), Point(2.0, 2.0))
+    val geometry3 = List(Point(2.0, 2.0), Point(1.0, 2.0), Point(0.0, 2.0))
+    val geometry4 = List(Point(0.0, 2.0), Point(0.0, 1.0), Point(0.0, 0.0))
+
+
+    val point = GeometryUtils.middlePoint(Seq(geometry1, geometry2, geometry3, geometry4))
+
+    point.x should be(1)
+    point.x should be(1)
+  }
 }
