@@ -29,6 +29,7 @@
     }
 
     #right-panel {
+      margin-left: 5px;
       float: right;
       display: none;
     }
@@ -285,6 +286,26 @@
       position: relative;
       top: 2px;
     }
+  }
+}
+
+.limitation-label-legend{
+  .labeling-entry {
+    padding: 0 6px 5px 0;
+    display: block;
+    font-size: @font-size-small;
+    line-height: @line-height-base;
+
+    .limitation-0, .limitation-1, .limitation-2, .limitation-3 {
+      padding: 2px 0 4px 4px;
+      border: 2px solid @gray-light;
+      border-radius: 5px;
+      color:@white
+    }
+    .limitation-0 { background-color: @limitation-1; }
+    .limitation-1 { background-color: @limitation-2; }
+    .limitation-2 { background-color: @limitation-3; }
+    .limitation-3 { background-color: @limitation-4; }
   }
 }
 
