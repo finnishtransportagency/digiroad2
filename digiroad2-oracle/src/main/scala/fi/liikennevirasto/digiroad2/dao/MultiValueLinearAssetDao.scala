@@ -86,8 +86,7 @@ class MultiValueLinearAssetDao {
                       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'checkbox')
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          where (a.valid_to > sysdate or a.valid_to is null)
-          and a.floating = 0 """.as[MultiValueAssetRow].list
+          where a.floating = 0 """.as[MultiValueAssetRow].list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
