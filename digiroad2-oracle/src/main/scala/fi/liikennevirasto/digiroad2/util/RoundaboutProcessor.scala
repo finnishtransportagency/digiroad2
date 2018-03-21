@@ -1,15 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.asset.{Roundabout, State, TrafficDirection}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
-case class RoundaboutChangeSet(trafficDirectionChanges: Seq[VVHRoadlink] = Seq.empty)
+case class RoundaboutChangeSet(trafficDirectionChanges: Seq[RoadLink] = Seq.empty)
 
 object RoundaboutProcessor {
 
-  private def getRoundaboutLinkEndpoints(roadLink: VVHRoadlink, center: Point): (Point, Point) = {
+  private def getRoundaboutLinkEndpoints(roadLink: RoadLink, center: Point): (Point, Point) = {
     val firstPoint: Point = roadLink.geometry.head
     val otherPoint: Point = roadLink.geometry.tail.head
     val lastPoint: Point = roadLink.geometry.last
@@ -26,17 +25,17 @@ object RoundaboutProcessor {
     }
   }
 
-  private def setRoundaboutChangeSet(roadlinks : Seq[VVHRoadlink], roadLink: VVHRoadlink, trafficDirection: TrafficDirection, changeSet: RoundaboutChangeSet) : (Seq[VVHRoadlink], RoundaboutChangeSet) = {
+  private def setRoundaboutChangeSet(roadLinks : Seq[RoadLink], roadLink: RoadLink, trafficDirection: TrafficDirection, changeSet: RoundaboutChangeSet) : (Seq[RoadLink], RoundaboutChangeSet) = {
     if(roadLink.trafficDirection == trafficDirection)
-      (roadlinks :+ roadLink, changeSet)
+      (roadLinks :+ roadLink, changeSet)
     else
-      (roadlinks :+ roadLink.copy(trafficDirection = trafficDirection), changeSet.copy(trafficDirectionChanges = changeSet.trafficDirectionChanges :+ roadLink))
+      (roadLinks :+ roadLink.copy(trafficDirection = trafficDirection), changeSet.copy(trafficDirectionChanges = changeSet.trafficDirectionChanges :+ roadLink))
   }
 
-  def setTrafficDirection(roadLinks : Seq[VVHRoadlink]): (Seq[VVHRoadlink], RoundaboutChangeSet) = {
+  def setTrafficDirection(roadLinks : Seq[RoadLink]): (Seq[RoadLink], RoundaboutChangeSet) = {
     val center = GeometryUtils.middlePoint(roadLinks.map(_.geometry))
 
-    roadLinks.foldLeft((Seq[VVHRoadlink](), RoundaboutChangeSet())) {
+    roadLinks.foldLeft((Seq[RoadLink](), RoundaboutChangeSet())) {
       case ((pRoadLinks, changeSet), roadLink) =>
         val (startPoint, endPoint) = getRoundaboutLinkEndpoints(roadLink, center)
 
@@ -49,5 +48,13 @@ object RoundaboutProcessor {
         else
           setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.TowardsDigitizing, changeSet)
     }
+  }
+
+  def isRoundaboutLink(roadLink: RoadLink) = {
+    roadLink.administrativeClass == State && roadLink.linkType == Roundabout
+  }
+
+  def groupByRoundabout(roadlinks: Seq[RoadLink]): Unit = {
+
   }
 }
