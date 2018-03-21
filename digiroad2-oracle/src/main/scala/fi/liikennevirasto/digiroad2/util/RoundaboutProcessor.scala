@@ -26,30 +26,28 @@ object RoundaboutProcessor {
     }
   }
 
-  private def setRoundaboutChangeSet(roadLink: VVHRoadlink, trafficDirection: TrafficDirection, changeSet: RoundaboutChangeSet) : (VVHRoadlink, RoundaboutChangeSet) = {
+  private def setRoundaboutChangeSet(roadlinks : Seq[VVHRoadlink], roadLink: VVHRoadlink, trafficDirection: TrafficDirection, changeSet: RoundaboutChangeSet) : (Seq[VVHRoadlink], RoundaboutChangeSet) = {
     if(roadLink.trafficDirection == trafficDirection)
-      (roadLink, changeSet)
+      (roadlinks :+ roadLink, changeSet)
     else
-      (roadLink.copy(trafficDirection = trafficDirection), changeSet.copy(trafficDirectionChanges = changeSet.trafficDirectionChanges :+ roadLink))
+      (roadlinks :+ roadLink.copy(trafficDirection = trafficDirection), changeSet.copy(trafficDirectionChanges = changeSet.trafficDirectionChanges :+ roadLink))
   }
 
   def setTrafficDirection(roadLinks : Seq[VVHRoadlink]): (Seq[VVHRoadlink], RoundaboutChangeSet) = {
     val center = GeometryUtils.middlePoint(roadLinks.map(_.geometry))
-    val changeSet = RoundaboutChangeSet()
 
-    val result =  roadLinks.map { roadLink =>
+    roadLinks.foldLeft((Seq[VVHRoadlink](), RoundaboutChangeSet())) {
+      case ((pRoadLinks, changeSet), roadLink) =>
         val (startPoint, endPoint) = getRoundaboutLinkEndpoints(roadLink, center)
 
         if(startPoint.y > endPoint.y)
-          setRoundaboutChangeSet(roadLink, TrafficDirection.AgainstDigitizing, changeSet)._1
+          setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.AgainstDigitizing, changeSet)
         else if(startPoint.y < endPoint.y)
-          setRoundaboutChangeSet(roadLink, TrafficDirection.TowardsDigitizing, changeSet)._1
+          setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.TowardsDigitizing, changeSet)
         else if(startPoint.x < endPoint.x)
-          setRoundaboutChangeSet(roadLink, TrafficDirection.AgainstDigitizing, changeSet)._1
+          setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.AgainstDigitizing, changeSet)
         else
-          setRoundaboutChangeSet(roadLink, TrafficDirection.TowardsDigitizing, changeSet)._1
+          setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.TowardsDigitizing, changeSet)
     }
-
-    (result, changeSet)
   }
 }
