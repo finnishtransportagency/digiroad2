@@ -762,28 +762,22 @@
         var publicId = $element.attr('name');
         var type = $element.attr('type');
 
-
         if(!value || !value.properties)
           value = { properties: [] };
 
         var properties = _.find(value.properties, function(property){ return property.publicId === publicId; });
         var values;
 
-        if(properties){
-          values = properties.values;
-          if(type === 'checkbox' && !$element.prop('checked')) {}
-          else {
+        if(type === 'checkbox' && !$element.prop('checked')) {}
+        else{
+          if(properties){
+            values = properties.values;
             values.push({value: $element.val()});
             properties.values = values;
-          }
-        }
-        else {
-          values = [];
-          if(type === 'checkbox' && !$element.prop('checked')) {}
-          else {
-            if(!_.isEmpty($element.val())) {
+          }else {
+            values = [];
+            if (!_.isEmpty($element.val())) {
               values.push({value: $element.val()});
-
               value.properties.push({
                 publicId: $element.attr('name'),
                 propertyType: $element.attr('fieldType'),
