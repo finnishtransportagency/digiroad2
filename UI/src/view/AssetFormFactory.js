@@ -97,13 +97,13 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
-    me.editModeRender = function (field, currentValue, setValue, asset) {
-      var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '';
-      var disabled = _.isUndefined(value) ? 'disabled' : '';
+    me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
+      var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
-
       var defaultValue = field.defaultValue;
+
+      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var _value = value ? value.value : '';
       if(defaultValue && _.isEmpty(_value))
         _value = defaultValue;
 
@@ -125,10 +125,11 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
-    me.editModeRender = function (field, currentValue, setValue, asset) {
-      var value = _.first(currentValue, function(values) { return values.value ; });
+    me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
+      var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
+
+      var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
-      var disabled = _.isUndefined(value) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
 
       var defaultValue = field.defaultValue;
@@ -175,10 +176,10 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
-    me.editModeRender = function (field, currentValue, setValue, asset) {
-      var value = _.first(currentValue, function(values) { return values.value ; });
+    me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
+      var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
-      var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
       var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
 
@@ -207,18 +208,16 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
-    me.editModeRender = function (field, currentValue, setValue, asset) {
-      currentValue = _.map(currentValue, function(curr) { return curr.value; });
+    me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
+      fieldValue = _.map(fieldValue, function(curr) { return curr.value; });
       var template =  _.template(
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label +'</label>' +
         '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>" fieldType ="<%- fieldType %>" <%- required %>><%= optionTags %> </select>' +
         '</div>');
 
-
-      var value = _.first(currentValue, function(values) { return values.value ; });
       var required = _.isUndefined(field.required) ? '' : 'required';
-      var disabled = _.isUndefined(value) ? 'disabled' : '';
+      var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var unit =  field.unit ? field.unit : '';
 
       var optionTags = _.map(field.values, function(value) {
@@ -230,10 +229,10 @@
       var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId, fieldType: field.type, required: required}));
 
       var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(currentValue))
-        currentValue = String(defaultValue);
+      if(defaultValue && _.isEmpty(fieldValue))
+        fieldValue = String(defaultValue);
 
-      _.forEach(currentValue, function(current){
+      _.forEach(fieldValue, function(current){
         element.find('option[value="'+current+'"]').attr('selected', true);
       });
 
@@ -268,9 +267,9 @@
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
 
-    me.editModeRender = function (field, currentValue, setValue, asset) {
-      var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
-      currentValue = _.map(currentValue, function(curr) { return curr.value; });
+    me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
+      var disabled = _.isEmpty(assetValue) ? 'disabled' : '';
+      fieldValue = _.map(fieldValue, function(curr) { return curr.value; });
       var template =  _.template(
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label+'</label>' +
@@ -290,10 +289,10 @@
       var element =  $(template({divCheckBox: divCheckBox}));
 
       var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(currentValue))
-        currentValue = defaultValue;
+      if(defaultValue && _.isEmpty(fieldValue))
+        fieldValue = defaultValue;
 
-      _.forEach(currentValue, function(current){
+      _.forEach(fieldValue, function(current){
         element.find(':input[value="'+current+'"]').attr('checked', true);
       });
 
@@ -332,10 +331,9 @@
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
 
-    me.editModeRender = function (field, currentValue, setValue, asset) {
-      var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '';
-      var disabled = _.isUndefined(value) ? 'disabled' : '';
+    me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
+      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = !_.isUndefined(field.required);
 
 
@@ -389,12 +387,12 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
-    me.editModeRender = function (field, currentValue, setValue, asset) {
+    me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
 
-      var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
+      var disabled = _.isEmpty(assetValue) ? 'disabled' : '';
       var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(currentValue))
-        currentValue = String(defaultValue);
+      if(defaultValue && _.isEmpty(fieldValue))
+        fieldValue = String(defaultValue);
 
       var required = _.isUndefined(field.required) ? '' : 'required';
 
@@ -407,8 +405,8 @@
         '</div>');
 
 
-      var initValue = !_.isEmpty(currentValue) ? 1 :0;
-      element.find("input[type=checkbox]").attr('checked', !_.isEmpty(currentValue));
+      var initValue = !_.isEmpty(fieldValue) ? 1 :0;
+      element.find("input[type=checkbox]").attr('checked', !_.isEmpty(fieldValue));
       element.find('input').attr('value', initValue);
 
 
@@ -579,12 +577,13 @@
 
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
       _.each(_.sortBy(formStructure.fields, function(field){ return field.weight; }), function (field) {
-        var values = [];
-        if (selectedAsset.get()[0].value) {
-          values = _.find(selectedAsset.get()[0].value.properties, function (property) { return property.publicId === field.publicId; }).values;
+        var fieldValues = [];
+        var assetValues = selectedAsset.get()[0].value;
+        if (assetValues) {
+          fieldValues = _.find(selectedAsset.get()[0].value.properties, function (property) { return property.publicId === field.publicId; }).values;
         }
         var fieldType = _.find(availableFieldTypes, function (availableFieldType) { return availableFieldType.name === field.type; }).field;
-        var fieldElement = isReadOnly ? fieldType.viewModeRender(field, values, setAsset, asset) : fieldType.editModeRender(field, values, setAsset, asset);
+        var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(field, fieldValues, assetValues, setAsset, asset);
         fieldGroupElement.append(fieldElement);
 
       });
@@ -781,14 +780,18 @@
         else {
           values = [];
           if(type === 'checkbox' && !$element.prop('checked')) {}
-          else values.push({ value : $element.val() });
+          else {
+            if(!_.isEmpty($element.val())) {
+              values.push({value: $element.val()});
 
-          value.properties.push({
-            publicId: $element.attr('name'),
-            propertyType:  $element.attr('fieldType'),
-            required : $element.attr('required'),
-            values: values
-          });
+              value.properties.push({
+                publicId: $element.attr('name'),
+                propertyType: $element.attr('fieldType'),
+                required: $element.attr('required'),
+                values: values
+              });
+            }
+          }
         }
       });
       return value;
