@@ -43,7 +43,7 @@
             if(assetValue !== undefined){
               var style = me.getStyle(assetValue);
               var feature = me.createFeature(getPoint(asset));
-              feature.setProperties(asset);
+              feature.setProperties(_.omit(asset, 'geometry'));
               feature.setStyle(style);
               return feature;
             }

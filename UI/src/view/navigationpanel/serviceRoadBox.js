@@ -54,13 +54,14 @@
 
     var labelingHandler = function() {
       if (this.value == 'responsibility') {
-        $('.right-use-legend').css('display','none');
-        $('.responsibility-legend').css('display','inline');
-          // eventbus.trigger(me.layerName() + '...');
+          $('.right-use-legend').hide();
+          $('.responsibility-legend').show();
+          eventbus.trigger('serviceRoad:responsibility', true);
+
         } else {
-        $('.right-use-legend').css('display','inline');
-        $('.responsibility-legend').css('display','none');
-          // eventbus.trigger(me.layerName() + '...');
+          $('.right-use-legend').show();
+          $('.responsibility-legend').hide();
+          eventbus.trigger('serviceRoad:responsibility', false);
         }
     };
 

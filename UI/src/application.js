@@ -280,6 +280,31 @@
     };
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
+      if(asset.layerName == 'maintenanceRoad') {
+        acc[asset.layerName] = new ServiceRoadLayer({
+          map: map,
+          application: applicationModel,
+          collection: asset.collection,
+          selectedLinearAsset: asset.selectedLinearAsset,
+          roadCollection: models.roadCollection,
+          roadLayer: roadLayer,
+          layerName: asset.layerName,
+          multiElementEventCategory: asset.multiElementEventCategory,
+          singleElementEventCategory: asset.singleElementEventCategory,
+          style: new ServiceRoadStyle(),
+          formElements: AssetFormElementsFactory.construct(asset),
+          assetLabel: asset.label,
+          roadAddressInfoPopup: roadAddressInfoPopup,
+          editConstrains: asset.editConstrains || function () {
+            return false;
+          },
+          hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
+          trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
+          massLimitation: asset.editControlLabels.massLimitations,
+          typeId: asset.typeId
+        });
+        return acc;
+      } else {
      acc[asset.layerName] = new LinearAssetLayer({
        map: map,
        application: applicationModel,
@@ -301,6 +326,7 @@
        typeId : asset.typeId
      });
      return acc;
+      }
     }, {});
 
     var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
