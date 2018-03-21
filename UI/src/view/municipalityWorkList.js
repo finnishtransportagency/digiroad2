@@ -154,7 +154,7 @@
       }else{
         var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
         element.html($('<div class="municipality-list">').append(unknownLimits));
-
+        //TODO: remove this
         if (_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium'))
           searchbox.insertBefore('#tableData');
 

@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title, editConstrains, layerName, isVerifiable) {
+  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title, editConstrains, authorizationPolicy, layerName, isVerifiable) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on(events('selected', 'cancelled'), function() {

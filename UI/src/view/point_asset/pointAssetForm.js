@@ -5,7 +5,7 @@
 
   var enumeratedPropertyValues = null;
 
-  function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
+  function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, authorizationPolicy, roadCollection, applicationModel, backend) {
     var rootElement = $('#feature-attributes');
 
     backend.getAssetEnumeratedPropertyValues(typeId);

@@ -17,27 +17,33 @@
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = new LinearAssetsCollection(backend, verificationCollection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.hasMunicipalityValidation);
       var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
+      var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
-        selectedLinearAsset: selectedLinearAsset
+        selectedLinearAsset: selectedLinearAsset,
+        authorizationPolicy: authorizationPolicy
       });
     });
 
     var pointAssets = _.map(assetConfiguration.pointAssetsConfig, function(spec) {
       var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
+      var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
-        selectedPointAsset: selectedPointAsset
+        selectedPointAsset: selectedPointAsset,
+        authorizationPolicy: authorizationPolicy
       });
     });
 
     var groupedPointAssets = _.map(assetConfiguration.groupedPointAssetSpecs, function(spec) {
       var collection = _.isUndefined(spec.collection) ?  new GroupedPointAssetsCollection(backend, spec) : new spec.collection(backend, spec) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
+      var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
-        selectedPointAsset: selectedPointAsset
+        selectedPointAsset: selectedPointAsset,
+        authorizationPolicy: authorizationPolicy
       });
     });
 
@@ -256,16 +262,34 @@
        linearAsset.newTitle,
        linearAsset.title,
        linearAsset.editConstrains || function() {return false;},
+       linearAsset.authorizationPolicy,
        linearAsset.layerName,
-       linearAsset.isVerifiable);
+       linearAsset.isVerifiable
+     );
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
+     PointAssetForm.initialize(pointAsset.typeId,
+       pointAsset.selectedPointAsset,
+       pointAsset.collection,
+       pointAsset.layerName,
+       pointAsset.formLabels,
+       pointAsset.editConstrains || function() {return false;},
+       pointAsset.authorizationPolicy,
+       roadCollection,
+       applicationModel,
+       backend);
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
-      GroupedPointAssetForm.initialize(pointAsset.typeIds, pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, roadCollection, pointAsset.propertyData);
+      GroupedPointAssetForm.initialize(
+        pointAsset.typeIds,
+        pointAsset.selectedPointAsset,
+        pointAsset.layerName,
+        pointAsset.formLabels,
+        roadCollection,
+        pointAsset.propertyData,
+        pointAsset.authorizationPolicy);
     });
 
     var trafficSignReadOnlyLayer = function(layerName){

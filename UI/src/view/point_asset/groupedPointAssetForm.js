@@ -3,12 +3,12 @@
         initialize: bindEvents
     };
 
-    function bindEvents(typeIds, selectedAsset, layerName, localizedTexts, roadCollection, propertiesData) {
+    function bindEvents(typeIds, selectedAsset, layerName, localizedTexts, roadCollection, propertiesData, authorizationPolicy) {
         var rootElement = $('#feature-attributes');
 
         eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function () {
             if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-                renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData);
+                renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData, authorizationPolicy);
             }
         });
 
@@ -17,7 +17,7 @@
         });
     }
 
-    function renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData) {
+    function renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData, authorizationPolicy) {
         var title = localizedTexts.title;
         var header = '<header><span>' + title + '</span></header>';
         var form = '';
