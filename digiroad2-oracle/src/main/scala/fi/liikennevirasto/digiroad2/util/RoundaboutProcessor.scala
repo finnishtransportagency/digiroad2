@@ -8,6 +8,23 @@ case class RoundaboutChangeSet(trafficDirectionChanges: Seq[RoadLink] = Seq.empt
 
 object RoundaboutProcessor {
 
+  private def findRoundaboutRecursive(firstLink: RoadLink, nextLink: RoadLink, roadLinks: Seq[RoadLink], acc: Seq[RoadLink] = Seq.empty): (Seq[RoadLink], Seq[RoadLink]) = {
+    val (adjacents, rest) = roadLinks.partition(r => GeometryUtils.areAdjacent(r.geometry, nextLink.geometry))
+    if(adjacents.nonEmpty && adjacents.head.linkId != firstLink.linkId )
+      findRoundaboutRecursive(firstLink, adjacents.head, rest ++ adjacents.tail, acc :+ nextLink)
+    else
+      (acc :+ nextLink, rest)
+  }
+
+  private def groupByRoundaboutRecursive(roadLinks: Seq[RoadLink], acc: Seq[Seq[RoadLink]] = Seq.empty): Seq[Seq[RoadLink]] = {
+    roadLinks match {
+      case Seq() => acc
+      case rls =>
+        val (adjacents, rest) = findRoundaboutRecursive(rls.head, rls.head, rls.tail)
+        groupByRoundaboutRecursive(rest, acc :+ adjacents)
+    }
+  }
+
   private def getRoundaboutLinkEndpoints(roadLink: RoadLink, center: Point): (Point, Point) = {
     val firstPoint: Point = roadLink.geometry.head
     val otherPoint: Point = roadLink.geometry.tail.head
@@ -54,7 +71,9 @@ object RoundaboutProcessor {
     roadLink.administrativeClass == State && roadLink.linkType == Roundabout
   }
 
-  def groupByRoundabout(roadlinks: Seq[RoadLink]): Unit = {
-
+  def groupByRoundabout(roadlinks: Seq[RoadLink]): Seq[Seq[RoadLink]] = {
+    val roundabouts = roadlinks.filter(isRoundaboutLink)
+    groupByRoundaboutRecursive(roundabouts)
   }
+
 }
