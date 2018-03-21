@@ -122,8 +122,8 @@ class RoundaboutProcessorSpec extends FunSuite with Matchers {
   }
 
   test("Group roundabouts links") {
-    val roadLinks = Seq(
-      //Roundabout 1
+
+    val roundabout1 = Seq(
       RoadLink(438869, Seq(Point(385795, 6675342), Point(385800, 6675344), Point(385806, 6675345), Point(385811, 6675344)), 2, State, 1, TrafficDirection.AgainstDigitizing, Roundabout, None, None),
       RoadLink(438871, Seq(Point(385789, 6675331), Point(385791, 6675336), Point(385795, 6675342)), 2, State, 1, TrafficDirection.AgainstDigitizing, Roundabout, None, None),
       RoadLink(438870, Seq(Point(385791, 6675320), Point(385789, 6675324), Point(385789, 6675331)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
@@ -131,16 +131,28 @@ class RoundaboutProcessorSpec extends FunSuite with Matchers {
       RoadLink(438872, Seq(Point(385802, 6675313), Point(385810, 6675313), Point(385817, 6675317)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
       RoadLink(438839, Seq(Point(385817, 6675317), Point(385819, 6675320), Point(385821, 6675326)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
       RoadLink(438840, Seq(Point(385821, 6675326), Point(385821, 6675331), Point(385819, 6675337)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
-      RoadLink(438841, Seq(Point(385819, 6675337), Point(385813, 6675343), Point(385811, 6675344)), 2, State, 1, TrafficDirection.TowardsDigitizing, Roundabout, None, None),
-      //Roundabout 2
+      RoadLink(438841, Seq(Point(385819, 6675337), Point(385813, 6675343), Point(385811, 6675344)), 2, State, 1, TrafficDirection.TowardsDigitizing, Roundabout, None, None)
+    )
+
+    val roundabout2 = Seq(
       RoadLink(442434, Seq(Point(385152, 6671749), Point(385160, 6671757), Point(385168, 6671756)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
       RoadLink(442436, Seq(Point(385160, 6671739), Point(385155, 6671742), Point(385152, 6671749)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
       RoadLink(442435, Seq(Point(385160, 6671739), Point(385168, 6671740), Point(385171, 6671749)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
       RoadLink(442437, Seq(Point(385171, 6671749), Point(385171, 6671752), Point(385168, 6671756)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None)
     )
 
-    println(RoundaboutProcessor.groupByRoundabout(roadLinks).map(_.map(_.linkId)))
+    //Roundabout 3 incomplete
+    val roundabout3 = Seq(
+      RoadLink(442443, Seq(Point(384985, 6671649), Point(384980, 6671646), Point(384972, 6671647), Point(384970, 6671649)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(442445, Seq(Point(384970, 6671649), Point(384968, 6671653), Point(384969, 6671660), Point(384975, 6671664)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
 
+    val groupedRoundabouts = RoundaboutProcessor.groupByRoundabout(roundabout1 ++ roundabout2 ++ roundabout3).map(_.map(_.linkId))
+
+    groupedRoundabouts.size should be (3)
+    groupedRoundabouts.find(_.size == roundabout1.size).get.forall(roundabout1.map(_.linkId).contains) should be (true)
+    groupedRoundabouts.find(_.size == roundabout2.size).get.forall(roundabout2.map(_.linkId).contains) should be (true)
+    groupedRoundabouts.find(_.size == roundabout3.size).get.forall(roundabout3.map(_.linkId).contains) should be (true)
   }
 
 }
