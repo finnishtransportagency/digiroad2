@@ -88,6 +88,21 @@ class RoundaboutProcessorSpec extends FunSuite with Matchers {
     getTrafficDirection(4, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
   }
 
+  test("Set traffic direction to Roundabouts road links when the roundabout is a triangle (extreme case)"){
+
+    val roadLinks = Seq(
+      RoadLink(1, Seq(Point(35, 30), Point(20, 35), Point(25, 40)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(2, Seq(Point(25, 40), Point(35, 40), Point(45, 40)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(3, Seq(Point(45, 40), Point(35, 35), Point(35, 30)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
+
+    val (roadLinksWithDirections, _) = RoundaboutProcessor.setTrafficDirection(roadLinks)
+
+    getTrafficDirection(1, roadLinksWithDirections) should be (TrafficDirection.AgainstDigitizing)
+    getTrafficDirection(2, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
+    getTrafficDirection(3, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
+  }
+
   test("Add changed road links to Roundabouts change set"){
 
     val roadLinks = Seq(
