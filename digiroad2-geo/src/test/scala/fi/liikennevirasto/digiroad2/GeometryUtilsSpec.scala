@@ -255,10 +255,22 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val geometry3 = List(Point(2.0, 2.0), Point(1.0, 2.0), Point(0.0, 2.0))
     val geometry4 = List(Point(0.0, 2.0), Point(0.0, 1.0), Point(0.0, 0.0))
 
-
     val point = GeometryUtils.middlePoint(Seq(geometry1, geometry2, geometry3, geometry4))
 
     point.x should be(1)
     point.x should be(1)
+  }
+
+  test("calculate angle of a vector") {
+    val center = Point(5,15)
+    val p1 = Point(10, 20)
+    val p2 = Point(0,20)
+    val p3 = Point(0,10)
+    val p4 = Point(10,10)
+
+    Math.toDegrees(GeometryUtils.calculateAngle(p1, center)) should be(45)
+    Math.toDegrees(GeometryUtils.calculateAngle(p2, center)) should be(135)
+    Math.toDegrees(GeometryUtils.calculateAngle(p3, center)) should be(225)
+    Math.toDegrees(GeometryUtils.calculateAngle(p4, center)) should be(315)
   }
 }
