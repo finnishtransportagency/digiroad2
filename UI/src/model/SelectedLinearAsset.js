@@ -5,6 +5,7 @@
     var dirty = false;
     var originalLinearAssetValue = null;
     var isSeparated = false;
+    var isValid = true;
 
     var singleElementEvent = function(eventName) {
       return singleElementEventCategory + ':' + eventName;
@@ -375,5 +376,14 @@
         });
       });
     };
+
+    this.hasValidValues = function () {
+       return isValid;
+    };
+
+    this.setValidValues = function (valid) {
+      isValid = valid;
+    };
+
   };
 })(this);

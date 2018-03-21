@@ -6,6 +6,11 @@
     me.viewModeRender = function (field, currentValue) {
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '-';
+
+      var defaultValue = field.defaultValue;
+      if(defaultValue && !value)
+        _value = defaultValue;
+
       return $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
@@ -66,6 +71,11 @@
     me.editModeRender = function (field, currentValue, setValue, asset) {
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
+
+      var defaultValue = field.defaultValue;
+      if(defaultValue && _.isEmpty(_value))
+          _value = defaultValue;
+
       var disabled = _.isUndefined(value) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
 
@@ -93,6 +103,10 @@
       var disabled = _.isUndefined(value) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
 
+      var defaultValue = field.defaultValue;
+      if(defaultValue && _.isEmpty(_value))
+        _value = defaultValue;
+
       var element = $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
@@ -116,6 +130,11 @@
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
+
+      var defaultValue = field.defaultValue;
+      if(defaultValue && _.isEmpty(_value))
+        _value = defaultValue;
+
       var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
 
       var element =   $('' +
@@ -126,9 +145,9 @@
         '</div>');
 
       element.find('input').on('keyup', function(){
-        var disabled = isNaN($(this).val());
-        if(!disabled)
-          me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
+        var isNumber = !isNaN($(this).val());
+        assetTypeConfiguration.selectedLinearAsset.setValidValues(isNumber);
+        me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
       return element;
     };
@@ -163,18 +182,21 @@
       var required = _.isUndefined(field.required) ? '' : 'required';
       var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
 
+      var defaultValue = field.defaultValue;
+      if(defaultValue && _.isEmpty(_value))
+        _value = defaultValue;
 
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" '+required+' class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
+        '   <input type="text" name="' + field.publicId + '" '+required+' class="form-control"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
         unit +
         '</div>');
 
       element.find('input[type=text]').on('keyup', function(){
-        var disabled = isNaN($(this).val());
-        if(!disabled)
-          me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
+        var isNumber = !isNaN($(this).val());
+        assetTypeConfiguration.selectedLinearAsset.setValidation(isNumber);
+        me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
       return element;
     };
@@ -185,31 +207,34 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
-
     me.editModeRender = function (field, currentValue, setValue, asset) {
+      currentValue = _.map(currentValue, function(curr) { return curr.value; });
       var template =  _.template(
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label +'</label>' +
-        '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>" <%- requied %>><%= optionTags %> </select>' +
+        '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>" fieldType ="<%- fieldType %>" <%- required %>><%= optionTags %> </select>' +
         '</div>');
 
 
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '';
-      var disabled = _.isUndefined(value) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
+      var disabled = _.isUndefined(value) ? 'disabled' : '';
       var unit =  field.unit ? field.unit : '';
 
       var optionTags = _.map(field.values, function(value) {
-        var selected = value.id === _value ? " selected" : "";
+        var selected = value.id === value ? " selected" : "";
         return '<option value="' + value.id + '"' + selected + '>' + value.label + ' ' + unit + '</option>';
       }).join('');
 
 
-      var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId, required: required}));
+      var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId, fieldType: field.type, required: required}));
+
+      var defaultValue = field.defaultValue;
+      if(defaultValue && _.isEmpty(currentValue))
+        currentValue = String(defaultValue);
 
       _.forEach(currentValue, function(current){
-        element.find('option[value="'+current.value+'"]').attr('selected', true);
+        element.find('option[value="'+current+'"]').attr('selected', true);
       });
 
       element.find('select').on('change', function(){
@@ -219,15 +244,33 @@
       return element;
 
     };
+
+    me.viewModeRender = function (field, currentValue) {
+      var value = _.first(currentValue, function(values) { return values.value ; });
+      var _value = value ? value.value : '-';
+
+      var defaultValue = field.defaultValue;
+      if(defaultValue && !value)
+        _value = defaultValue;
+
+      var printValue = _.find(field.values, function(value) { return value.id === Number(_value) ; }).label;
+
+      return $('' +
+        '<div class="form-group">' +
+        '   <label class="control-label">' + field.label + '</label>' +
+        '   <p class="form-control-static">' + printValue + '</p>' +
+        '</div>'
+      );
+    };
   };
 
   var MultiSelectField = function (assetTypeConfiguration) {
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
-    var className = assetTypeConfiguration.className;
 
     me.editModeRender = function (field, currentValue, setValue, asset) {
-
+      var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
+      currentValue = _.map(currentValue, function(curr) { return curr.value; });
       var template =  _.template(
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label+'</label>' +
@@ -241,13 +284,17 @@
       var divCheckBox = _.map(field.values, function(value) {
         return '' +
           '<div class = "checkbox">' +
-          ' <label>'+ value.label + '<input type = "checkbox" fieldType = "' + field.type + '" '+required+' class="multiChoice" name = "'+field.publicId+'" value="'+value.id+'"></label>' +
+          ' <label>'+ value.label + '<input type = "checkbox" fieldType = "' + field.type + '" '+required+' class="multiChoice" name = "'+field.publicId+'" value="'+value.id+'" '+ disabled+'></label>' +
           '</div>';
       }).join('');
       var element =  $(template({divCheckBox: divCheckBox}));
 
+      var defaultValue = field.defaultValue;
+      if(defaultValue && _.isEmpty(currentValue))
+        currentValue = defaultValue;
+
       _.forEach(currentValue, function(current){
-        element.find(':input[value="'+current.value+'"]').attr('checked', true);
+        element.find(':input[value="'+current+'"]').attr('checked', true);
       });
 
       element.find('input').on('click', function(){
@@ -263,15 +310,19 @@
     };
 
     me.viewModeRender = function (field, currentValue) {
+      var values =  _.map(currentValue, function (values) { return values.value ; });
+
+      var defaultValue = field.defaultValue;
+      if(defaultValue && _.isEmpty(values))
+        values = defaultValue;
+
       var template = _.template('<div class="form-group">' +
-        '   <label class="control-label">' + className + '</label>' +
+        '   <label class="control-label">' + field.label + '</label>' +
         '   <p class="form-control-static">' +
         ' <%= divCheckBox %>  ' +
         '</p>' +
         '</div>' );
 
-
-      var values =  _.map(currentValue, function (values) { return values.value ; });
       return $(template({divCheckBox : values}));
 
     };
@@ -285,7 +336,7 @@
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(value) ? 'disabled' : '';
-      var required = _.isUndefined(field.required) ? '' : 'required';
+      var required = !_.isUndefined(field.required);
 
 
       var addDatePickers = function (field, html) {
@@ -298,7 +349,13 @@
         '<label class="control-label">' + field.label + '</label>' +
         '</div>');
 
-      var elements = $('<input type="text"/>').addClass('form-control').attr('id', field.publicId).attr('required', required).attr('placeholder',"pp.kk.vvvv").attr('disabled', disabled).on('keyup datechange', _.debounce(function (target) {
+      var elements = $('<input type="text"/>').addClass('form-control')
+                                                .attr('id', field.publicId)
+                                                .attr('required', required)
+                                                .attr('placeholder',"pp.kk.vvvv")
+                                                .attr('disabled', disabled)
+                                                .attr('fieldType', field.type)
+                                                .attr('name', field.publicId).on('keyup datechange', _.debounce(function (target) {
         // tab press
         if (target.keyCode === 9) {
           return;
@@ -335,6 +392,10 @@
     me.editModeRender = function (field, currentValue, setValue, asset) {
 
       var disabled = _.isEmpty(currentValue) ? 'disabled' : '';
+      var defaultValue = field.defaultValue;
+      if(defaultValue && _.isEmpty(currentValue))
+        currentValue = String(defaultValue);
+
       var required = _.isUndefined(field.required) ? '' : 'required';
 
       var element = $('' +
@@ -345,9 +406,15 @@
         '</div>'+
         '</div>');
 
+
+      var initValue = !_.isEmpty(currentValue) ? 1 :0;
       element.find("input[type=checkbox]").attr('checked', !_.isEmpty(currentValue));
+      element.find('input').attr('value', initValue);
+
+
       element.find('input').on('click', function(){
-        var val  = $(this).prop('checked') ? 1 : 0;
+        var val  = $(this).prop('checked') ? 1: 0;
+        element.find('input').attr('value', val);
         me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
       });
 
@@ -358,7 +425,7 @@
       var curr = _.isEmpty(currentValue) ? 0 : currentValue[0].value;
 
       var template = _.template('<div class="form-group">' +
-        '   <label class="control-label">' + className + '</label>' +
+        '   <label class="control-label">' + field.label + '</label>' +
         '   <p class="form-control-static">' +
         ' <%= divCheckBox %>  ' +
         '</p>' +
@@ -378,7 +445,7 @@
     var updateStatus = function() {
      var saveButton = $('.save');
 
-     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing() )
+     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing() && assetTypeConfiguration.selectedLinearAsset.hasValidValues())
        saveButton.prop('disabled',!assetTypeConfiguration.selectedLinearAsset.isSaveable());
      else{
          saveButton.prop('disabled', true);
@@ -688,7 +755,6 @@
       });
     };
 
-    //THIS WAS DONE BECAUSE WHEN WE CHANGE BETWEEN ON AND OFF WITH VALUES WE LOSE THE STRUCTURE
     function extractInputValues(input) {
       var value = {};
 
@@ -725,8 +791,6 @@
           });
         }
       });
-      // return _.isEmpty(_.filter(value.properties, function (prop) { return !_.isEmpty(prop.values); })) ? value : undefined;
-      // check if values are empty, if so set undefined as value?
       return value;
     }
 
@@ -770,4 +834,3 @@
     };
   };
 })(this);
-
