@@ -38,7 +38,7 @@
         });
       };
       var idLink = function (municipality) {
-        return $('<a class="work-list-item"/>').attr('href', me.hrefDir/* + '/' + municipality.id*/).html(municipality.name).click(function(){
+        return $('<a class="work-list-item"/>').attr('href', me.hrefDir).html(municipality.name).click(function(){
           me.createVerificationForm(municipality);
         });
       };
@@ -53,8 +53,8 @@
       var tableHeaderRow = function(headerName) {
         return $('<caption/>').html(headerName);
       };
-      var tableContentRows = function(Ids) {
-        return _.map(Ids, function(item, index) {
+      var tableContentRows = function(ids) {
+        return _.map(ids, function(item, index) {
           return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item, index) : idLink(item, index)));
         });
       };
@@ -72,12 +72,12 @@
           workListItem.append(floatingValidator);
         return workListItem;
       };
-      var tableForGroupingValues = function(values, Ids, count) {
-        if (!Ids || Ids.length === 0) return '';
+      var tableForGroupingValues = function(values, ids, count) {
+        if (!ids || ids.length === 0) return '';
         var countString = count ? ' (' + count + ' kpl)' : '';
         return $('<table/>').addClass('table')
           .append(tableHeaderRow(values + countString))
-          .append(tableContentRows(Ids));
+          .append(tableContentRows(ids));
       };
 
       return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))

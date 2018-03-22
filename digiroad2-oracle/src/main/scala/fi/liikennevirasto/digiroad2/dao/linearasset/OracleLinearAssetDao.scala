@@ -45,11 +45,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       join municipality m on s.municipality_code = m.id
       """
 
-    var filterAdministrativeClass =
-      administrativeClass match {
-        case Some(ac) => s" where s.administrative_class = ${ac.value}"
-        case _ => ""
-      }
+    var filterAdministrativeClass = administrativeClass match {
+      case Some(ac) if ac == Municipality => s" where s.administrative_class != ${State.value}"
+      case Some(ac) if ac == State => s" where s.administrative_class = ${ac.value}"
+      case _ =>
+    }
 
     val sql = optionalMunicipalities match {
       case Some(m) => unknownSpeedLimitQuery + s" and municipality_code in ($m) " + filterAdministrativeClass
@@ -82,7 +82,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val municipalityId = unknownSpeedLimitCounts.find(x => x._1 == municipality).map(_._4).getOrElse(0)
 
       val valuesWithCounts = values +
-        ("id" ->  municipalityId) +
+        ("municipalityId" ->  municipalityId) +
         ("municipalityCount" -> municipalityCount) +
         ("stateCount" -> stateCount) +
         ("privateCount" -> privateCount) +

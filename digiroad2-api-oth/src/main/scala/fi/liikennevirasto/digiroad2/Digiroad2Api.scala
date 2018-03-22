@@ -1076,7 +1076,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/speedlimits/unknown/municipality") {
     getUnknowns(Some(Municipality)).map {
       unknowns =>
-        Map( "id" -> unknowns._2.get("id"),
+        Map( "id" -> unknowns._2.get("municipalityId"),
              "name" -> unknowns._1,
               unknowns._1 -> unknowns._2
         )

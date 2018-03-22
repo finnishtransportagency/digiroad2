@@ -88,7 +88,7 @@
         'widthLimit/:id': 'widthLimit',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/speedLimit/state' : 'speedLimitStateWorkList',
-        'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
+        'work-list/speedLimit/municipality' : 'speedLimitMunicipalitiesWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
@@ -223,9 +223,9 @@
         eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimitsState());
       },
 
-      speedLimitMunicipalitiesWorkList: function (id) {
+      speedLimitMunicipalitiesWorkList: function () {
         if(!this.stateHistory)
-          eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality(), id);
+          eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality());
         else
           eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality(), this.stateHistory);
 
