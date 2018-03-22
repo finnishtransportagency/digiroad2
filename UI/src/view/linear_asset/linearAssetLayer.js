@@ -495,7 +495,7 @@ root.LinearAssetLayer  = function(params) {
     linearAssetCutter.deactivate();
   };
 
-  var show = function(map) {
+  this.showLayer = function(map) {
     startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
@@ -555,7 +555,7 @@ root.LinearAssetLayer  = function(params) {
 
   return {
     vectorLayer: vectorLayer,
-    show: me.show,
+    show: me.showLayer,
     hide: me.hideLayer,
     minZoomForContent: me.minZoomForContent
   };

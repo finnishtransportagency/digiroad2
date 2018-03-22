@@ -21,7 +21,7 @@
 
         return {
             vectorLayer: me.vectorLayer,
-            show: me.show,
+            show: me.showLayer,
             hide: me.hideLayer,
             minZoomForContent: me.minZoomForContent
         };
