@@ -10,11 +10,10 @@
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
-      editConstrains = params.editConstrains,
       assetLabel = params.assetLabel,
       allowGrouping = params.allowGrouping,
       assetGrouping = params.assetGrouping,
-      assetTypeIds = params.assetTypeIds;
+      authorizationPolicy = params.authorizationPolicy;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -257,7 +256,7 @@
 
     function excludeRoadByAdminClass(roadCollection) {
       return _.filter(roadCollection, function (roads) {
-        return !editConstrains(selectedAsset, roads.linkId);
+        return !authorizationPolicy.formEditModeAccess(selectedAsset, roads.linkId);
       });
     }
 

@@ -246,7 +246,6 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
     new TrafficSignToggle(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
-
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
     if (withTileMaps) { new TileMapCollection(map); }
@@ -256,26 +255,14 @@
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
      LinearAssetForm.initialize(
-       linearAsset.selectedLinearAsset,
-       linearAsset.singleElementEventCategory,
-       AssetFormElementsFactory.construct(linearAsset),
-       linearAsset.newTitle,
-       linearAsset.title,
-       linearAsset.editConstrains || function() {return false;},
-       linearAsset.authorizationPolicy,
-       linearAsset.layerName,
-       linearAsset.isVerifiable
+       linearAsset,
+       AssetFormElementsFactory.construct(linearAsset)
      );
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(pointAsset.typeId,
-       pointAsset.selectedPointAsset,
-       pointAsset.collection,
-       pointAsset.layerName,
-       pointAsset.formLabels,
-       pointAsset.editConstrains || function() {return false;},
-       pointAsset.authorizationPolicy,
+     PointAssetForm.initialize(
+       pointAsset,
        roadCollection,
        applicationModel,
        backend);
@@ -283,13 +270,9 @@
 
     _.forEach(groupedPointAssets, function(pointAsset) {
       GroupedPointAssetForm.initialize(
-        pointAsset.typeIds,
-        pointAsset.selectedPointAsset,
-        pointAsset.layerName,
-        pointAsset.formLabels,
-        roadCollection,
-        pointAsset.propertyData,
-        pointAsset.authorizationPolicy);
+        pointAsset,
+        roadCollection
+       );
     });
 
     var trafficSignReadOnlyLayer = function(layerName){
@@ -318,7 +301,7 @@
        formElements: AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label,
        roadAddressInfoPopup: roadAddressInfoPopup,
-       editConstrains : asset.editConstrains || function() {return false;},
+       authorizationPolicy: asset.authorizationPolicy,
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
        massLimitation : asset.editControlLabels.massLimitations,
@@ -345,7 +328,7 @@
        assetGrouping: new AssetGrouping(asset.groupingDistance),
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
-       editConstrains : asset.editConstrains || function() {return false;}
+       authorizationPolicy: asset.authorizationPolicy
      });
      return acc;
     }, {});
@@ -367,7 +350,7 @@
         allowGrouping: asset.allowGrouping,
         assetGrouping: new AssetGrouping(asset.groupingDistance),
         hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-        editConstrains : asset.editConstrains || function() {return false;},
+        authorizationPolicy: asset.authorizationPolicy,
         assetTypeIds: asset.typeIds
       });
       return acc;

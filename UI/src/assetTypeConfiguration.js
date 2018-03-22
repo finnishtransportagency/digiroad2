@@ -213,10 +213,7 @@
           enabled: 'Valaistus',
           disabled: 'Ei valaistusta'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new StateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true
       },
@@ -236,10 +233,7 @@
           enabled: 'Kelirikko',
           disabled: 'Ei kelirikkoa'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new StateRoadAuthorizationPolicy(),
         isVerifiable: false
       },
       {
@@ -260,10 +254,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new StateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true
       },
@@ -301,10 +292,7 @@
           enabled: 'Päällyste',
           disabled: 'Ei päällystettä'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new StateRoadAuthorizationPolicy(),
         isVerifiable: false
       },
       {
@@ -344,10 +332,7 @@
           enabled: 'Joukkoliikennekaista',
           disabled: 'Ei joukkoliikennekaistaa'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new StateRoadAuthorizationPolicy(),
         isVerifiable: true
       },
       {
@@ -421,10 +406,7 @@
           enabled: 'Eurooppatienumero(t)',
           disabled: 'Ei eurooppatienumeroa'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new StateRoadAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false
       },
@@ -643,10 +625,7 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
-        editConstrains : function(selectedAsset, linkId) {
-          // check if administrative class is State
-          return selectedAsset.getAdministrativeClass(linkId) === "State";
-        },
+        authorizationPolicy: new TrafficSignAuthorizationPolicy(),
         hasMunicipalityValidation: true
       },
       {
@@ -664,9 +643,7 @@
           title: 'Rajoitus',
           showUnit: true
         },
-        editConstrains : function() {
-          return true;
-        },
+        authorizationPolicy: new TrPointLimitAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new HeightLimitLabel(Math.pow(5, 2))
       },
@@ -685,9 +662,7 @@
           title: 'Rajoitus',
           showUnit: true
         },
-        editConstrains : function() {
-          return true;
-        },
+        authorizationPolicy: new TrPointLimitAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new WidthLimitLabel(Math.pow(5, 2))
       }
@@ -708,9 +683,7 @@
           title: 'Painorajoitus',
           showUnit: true
         },
-        editConstrains : function() {
-          return true;
-        },
+        authorizationPolicy: new TrPointLimitAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new WeightLimitLabel(),
         propertyData: [

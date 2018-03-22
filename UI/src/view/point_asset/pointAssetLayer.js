@@ -11,10 +11,10 @@
       layerName = params.layerName,
       newAsset = params.newAsset,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
-      editConstrains = params.editConstrains,
       assetLabel = params.assetLabel,
       allowGrouping = params.allowGrouping,
-      assetGrouping = params.assetGrouping;
+      assetGrouping = params.assetGrouping,
+      authorizationPolicy = params.authorizationPolicy;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -63,7 +63,7 @@
     this.selectControl = selectControl;
 
     function isAllowedToDrag(features) {
-      if (selectedAsset.exists() && (layerName == 'trafficSigns' && editConstrains(selectedAsset)))
+      if (selectedAsset.exists() && (layerName == 'trafficSigns' && authorizationPolicy.editModeAccess(selectedAsset))) //TODO: edit constrains only receives one parameter here, points need two. what is the desired functionality?
         return [];
       return features;
     }
@@ -374,7 +374,7 @@
 
     function excludeRoadByAdminClass(roadCollection) {
       return _.filter(roadCollection, function (roads) {
-        return !editConstrains(selectedAsset, roads.linkId);
+        return !authorizationPolicy.formEditModeAccess(selectedAsset, roads.linkId);
       });
     }
 

@@ -3,7 +3,16 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title, editConstrains, authorizationPolicy, layerName, isVerifiable) {
+  function bindEvents(linearAsset, formElements) {
+
+    var selectedLinearAsset = linearAsset.selectedLinearAsset,
+      eventCategory = linearAsset.singleElementEventCategory,
+      newTitle = linearAsset.newTitle,
+      title = linearAsset.title,
+      authorizationPolicy = linearAsset.authorizationPolicy,
+      layerName = linearAsset.layerName,
+      isVerifiable = linearAsset.isVerifiable;
+
     var rootElement = $('#feature-attributes');
 
     eventbus.on(events('selected', 'cancelled'), function() {
@@ -20,14 +29,14 @@
       rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
-      toggleMode( validateAdministrativeClass(selectedLinearAsset, editConstrains) || applicationModel.isReadOnly());
+      toggleMode( validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || applicationModel.isReadOnly());
     });
     eventbus.on(events('unselect'), function() {
       rootElement.empty();
     });
     eventbus.on('application:readOnly', function(readOnly){
       if(layerName ===  applicationModel.getSelectedLayer()) {
-        toggleMode(validateAdministrativeClass(selectedLinearAsset, editConstrains) || readOnly);
+        toggleMode(validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || readOnly);
       }
     });
     eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
@@ -154,9 +163,9 @@
           '</div>');
 };
 
-  function validateAdministrativeClass(selectedLinearAsset, editConstrains){
+  function validateAdministrativeClass(selectedLinearAsset, authorizationPolicy){
     var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
-      return editConstrains(selected);
+      return authorizationPolicy.formEditModeAccess(selected);
     });
     return !_.isEmpty(selectedAssets);
   }

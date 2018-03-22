@@ -1,5 +1,6 @@
 (function (root) {
   var unit = 'km/h';
+  var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
   var template = function(selectedSpeedLimit) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
@@ -134,16 +135,10 @@
 
   function validateAdministrativeClass(selectedSpeedLimit){
     var selectedSpeedLimits = _.filter(selectedSpeedLimit.get(), function (selected) {
-      return editConstrains(selected);
+      return authorizationPolicy.editModeAccess(selected);
     });
     return !_.isEmpty(selectedSpeedLimits);
   }
-
-  var editConstrains = function(selectedAsset) {
-    return false;
-    //TODO revert this when DROTH-909
-    //return selectedAsset.administrativeClass === 'State';
-  };
 
   root.SpeedLimitForm = {
     initialize: function(selectedSpeedLimit) {

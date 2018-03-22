@@ -5,14 +5,22 @@
 
   var enumeratedPropertyValues = null;
 
-  function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, authorizationPolicy, roadCollection, applicationModel, backend) {
+  function bindEvents(pointAsset, roadCollection, applicationModel, backend) {
+
+    var typeId = pointAsset.typeId,
+        selectedAsset = pointAsset.selectedPointAsset,
+        collection = pointAsset.collection,
+        layerName = pointAsset.layerName,
+        localizedTexts = pointAsset.formLabels,
+        authorizationPolicy = pointAsset.authorizationPolicy;
+
     var rootElement = $('#feature-attributes');
 
     backend.getAssetEnumeratedPropertyValues(typeId);
 
     eventbus.on('application:readOnly', function(readOnly) {
       if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
-        toggleMode(rootElement, (editConstrains && editConstrains(selectedAsset)) || readOnly);
+        toggleMode(rootElement, authorizationPolicy.formEditModeAccess(selectedAsset) || readOnly);
         //TODO: add form configurations to assetTypeConfiguration.js to avoid if-clauses
         if (layerName == 'servicePoints' && isSingleService(selectedAsset)){
           rootElement.find('button.delete').hide();
@@ -22,8 +30,8 @@
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
       if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-        renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection, collection);
-        toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
+        renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+        toggleMode(rootElement, authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
         if (layerName == 'servicePoints') {
           rootElement.find('button#save-button').prop('disabled', true);
           rootElement.find('button#cancel-button').prop('disabled', false);
@@ -58,7 +66,7 @@
     });
   }
 
-  function renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection, collection) {
+  function renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
@@ -103,8 +111,8 @@
       var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
       var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType});
       selectedAsset.set({services: services});
-      renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
-      toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
+      renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection);
+      toggleMode(rootElement, authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
       if(services.length < 2){
         rootElement.find('button.delete').hide();
@@ -134,8 +142,8 @@
       var generatedId = services.length;
       var newServices = services.concat({id: generatedId, assetId: assetId, serviceType: newServiceType});
       selectedAsset.set({services: newServices});
-      renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
-      toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
+      renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection);
+      toggleMode(rootElement, authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
       if(newServices.length < 2){
         rootElement.find('button.delete').hide();

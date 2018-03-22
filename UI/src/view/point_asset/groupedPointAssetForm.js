@@ -3,7 +3,15 @@
         initialize: bindEvents
     };
 
-    function bindEvents(typeIds, selectedAsset, layerName, localizedTexts, roadCollection, propertiesData, authorizationPolicy) {
+    function bindEvents(pointAsset, roadCollection) {
+
+        var typeIds = pointAsset.typeIds,
+            selectedAsset = pointAsset.selectedPointAsset,
+            layerName = pointAsset.layerName,
+            localizedTexts = pointAsset.formLabels,
+            propertiesData = pointAsset.propertyData,
+            authorizationPolicy = pointAsset.authorizationPolicy;
+
         var rootElement = $('#feature-attributes');
 
         eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function () {
