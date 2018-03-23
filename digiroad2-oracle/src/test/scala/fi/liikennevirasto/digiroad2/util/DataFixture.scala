@@ -1158,7 +1158,7 @@ object DataFixture {
 //        Queries.getMunicipalities
 //      }
 
-    val municipalities = Seq(235)
+    val municipalities = Seq(235, 49, 5, 109)
 
     municipalities.foreach { municipality =>
 
