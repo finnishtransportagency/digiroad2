@@ -1161,7 +1161,7 @@ object DataFixture {
     val municipalities = Seq(235, 49, 182, 252, 768, 230, 927, 90, 977, 398, 10, 91, 92)
 
     municipalities.foreach { municipality =>
-
+      println("")
       println(s"Obtaining all Road Links for Municipality: $municipality")
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
 
@@ -1174,26 +1174,30 @@ object DataFixture {
 
       roundabouts.foreach {
         roundabout =>
-          val (roadLinksWithDirections, _) = RoundaboutProcessor.setTrafficDirection(roundabout)
-          roadLinksWithDirections.foreach {
-            roadLink =>
+          val (roadLinkWithTrafficDirection, trafficChanges) = RoundaboutProcessor.setTrafficDirection(roundabout)
+          trafficChanges.trafficDirectionChanges.foreach {
+            trafficChange =>
               OracleDatabase.withDynTransaction {
 
-                println("")
-                val actualTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
-                println(s"Before -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(actualTrafficDirection)}")
+                roadLinkWithTrafficDirection.find(_.linkId == trafficChange.linkId).foreach {
+                  roadLink =>
 
-                println(s"roadLinkprocessed ->linkId: ${roadLink.linkId} trafficDirection ${roadLink.trafficDirection}, linkType: ${roadLink.linkType.value}")
+                    println("")
+                    val actualTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
+                    println(s"Before -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(actualTrafficDirection)}")
 
-                val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass)
+                    println(s"roadLinkprocessed ->linkId: ${roadLink.linkId} trafficDirection ${roadLink.trafficDirection}, linkType: ${roadLink.linkType.value}")
 
-                actualTrafficDirection match {
-                  case Some(traffic) /* if traffic != linkProperty.trafficDirection.value */ =>  RoadLinkDAO.update("traffic_direction", linkProperty, Some("batch"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
-                  case _ => RoadLinkDAO.insert("traffic_direction", linkProperty, Some("batch"))
+                    val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass)
+
+                    actualTrafficDirection match {
+                      case Some(traffic) =>  RoadLinkDAO.update("traffic_direction", linkProperty, Some("batch"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
+                      case _ => RoadLinkDAO.insert("traffic_direction", linkProperty, Some("batch"))
+                    }
+
+                    val updateTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
+                    println(s"After -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(updateTrafficDirection)}")
                 }
-
-                val updateTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
-                println(s"After -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(updateTrafficDirection)}")
               }
           }
       }
