@@ -1158,7 +1158,7 @@ object DataFixture {
 //        Queries.getMunicipalities
 //      }
 
-    val municipalities = Seq(235, 49, 5, 109)
+    val municipalities = Seq(235, 49, 182, 252, 768, 230, 927, 90, 977, 398, 10, 91, 92)
 
     municipalities.foreach { municipality =>
 
@@ -1167,6 +1167,10 @@ object DataFixture {
 
       println(s"Grouping roundabouts")
       val roundabouts = RoundaboutProcessor.groupByRoundabout(roadLinks, false)
+
+      println("")
+//      if(roundabouts.isEmpty)
+//        println(s"No roundabouts threated for municipality $municipality")
 
       roundabouts.foreach {
         roundabout =>
