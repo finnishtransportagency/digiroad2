@@ -1179,9 +1179,8 @@ object DataFixture {
             trafficChange =>
               OracleDatabase.withDynTransaction {
 
-                roadLinkWithTrafficDirection.find(_.linkId == trafficChange.linkId).foreach {
-                  roadLink =>
-
+                roadLinkWithTrafficDirection.find(_.linkId == trafficChange.linkId) match {
+                  case Some(roadLink) =>
                     println("")
                     val actualTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
                     println(s"Before -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(actualTrafficDirection)}")
@@ -1191,12 +1190,14 @@ object DataFixture {
                     val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass)
 
                     actualTrafficDirection match {
-                      case Some(traffic) =>  RoadLinkDAO.update("traffic_direction", linkProperty, Some("batch"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
+                      case Some(traffic) => RoadLinkDAO.update("traffic_direction", linkProperty, Some("batch"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
                       case _ => RoadLinkDAO.insert("traffic_direction", linkProperty, Some("batch"))
                     }
 
                     val updateTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
                     println(s"After -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(updateTrafficDirection)}")
+
+                  case _ => println("No roadlinks to process")
                 }
               }
           }
