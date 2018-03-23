@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
@@ -16,7 +17,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -1147,6 +1148,54 @@ object DataFixture {
     println("\n")
   }
 
+  def updateTrafficDirectionRoundabouts(): Unit = {
+    println("\nStart Update roundadbouts traffic direction ")
+    println(DateTime.now())
+
+    //Get All Municipalities
+//    val municipalities: Seq[Int] =
+//      OracleDatabase.withDynSession {
+//        Queries.getMunicipalities
+//      }
+
+    val municipalities = Seq(235)
+
+    municipalities.foreach { municipality =>
+
+      println(s"Obtaining all Road Links for Municipality: $municipality")
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+
+      println(s"Grouping roundabouts")
+      val roundabouts = RoundaboutProcessor.groupByRoundabout(roadLinks, false)
+
+      roundabouts.foreach {
+        roundabout =>
+          val (roadLinksWithDirections, _) = RoundaboutProcessor.setTrafficDirection(roundabout)
+          roadLinksWithDirections.foreach {
+            roadLink =>
+              OracleDatabase.withDynTransaction {
+
+                println("")
+                val actualTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
+                println(s"Before -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(actualTrafficDirection)}")
+
+                println(s"roadLinkprocessed ->linkId: ${roadLink.linkId} trafficDirection ${roadLink.trafficDirection}, linkType: ${roadLink.linkType.value}")
+
+                val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass)
+
+                actualTrafficDirection match {
+                  case Some(traffic) /* if traffic != linkProperty.trafficDirection.value */ =>  RoadLinkDAO.update("traffic_direction", linkProperty, Some("batch"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
+                  case _ => RoadLinkDAO.insert("traffic_direction", linkProperty, Some("batch"))
+                }
+
+                val updateTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
+                println(s"After -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(updateTrafficDirection)}")
+              }
+          }
+      }
+    }
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1234,6 +1283,8 @@ object DataFixture {
         updateAreasOnAsset()
       case Some("update_OTH_BS_with_TR_info") =>
         updateOTHBusStopWithTRInfo()
+      case Some("update_traffic_direction_on_roundabouts") =>
+        updateTrafficDirectionRoundabouts()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1241,7 +1292,7 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | update_traffic_direction_on_roundabouts")
     }
   }
 }

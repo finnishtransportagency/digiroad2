@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao.{column, table}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -28,6 +29,14 @@ sealed trait RoadLinkDAO{
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
   }
 
+  def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
+    sqlu"""insert into #$table (id, link_id, #$column, modified_by )
+                   select primary_key_seq.nextval, ${linkProperty.linkId}, $value, $username
+                   from dual
+                   where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
+  }
+
+
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
     sqlu"""insert into #$table (id, link_id, #$column, modified_by )
                    select primary_key_seq.nextval, $linkId, $value, $username
@@ -46,6 +55,14 @@ sealed trait RoadLinkDAO{
 
   def updateValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long]): Unit = {
       sqlu"""update #$table
+               set #$column = $value,
+                   modified_date = SYSDATE,
+                   modified_by = $username
+               where link_id = ${linkProperty.linkId}""".execute
+  }
+
+  def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
+    sqlu"""update #$table
                set #$column = $value,
                    modified_date = SYSDATE,
                    modified_by = $username
@@ -125,6 +142,12 @@ object RoadLinkDAO{
     dao.insertValues(linkProperty.linkId, username, value, timeStamp)
   }
 
+  def insert(propertyName: String, linkProperty: LinkProperties, username: Option[String]) = {
+    val dao = getDao(propertyName)
+    val value = dao.getValue(linkProperty)
+    dao.insertValues(linkProperty.linkId, username, value)
+  }
+
 
   def update(propertyName: String, linkId: Long, username: Option[String], value: Int, existingValue: Int) = {
     val dao = getDao(propertyName)
@@ -139,6 +162,15 @@ object RoadLinkDAO{
 
     if(existingValue != value)
       dao.updateValues(linkProperty, vvhRoadLink, username, value, mmlId)
+  }
+
+  def update(propertyName: String, linkProperty: LinkProperties, username: Option[String], existingValue: Int) = {
+    val dao = getDao(propertyName)
+    val value = dao.getValue(linkProperty)
+
+    if(existingValue != value)
+      dao.updateValues(linkProperty, username, value)
+
   }
 
   def delete(propertyName: String, linkId: Long) = {
@@ -174,14 +206,14 @@ object RoadLinkDAO{
       Some(vvhRoadLink.trafficDirection.value)
     }
 
-    override def insertValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
+    override def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
       sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type)
                    select primary_key_seq.nextval, ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value}
                    from dual
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
-    override def updateValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long]): Unit = {
+    override def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
       sqlu"""update #$table
                set #$column = $value,
                    modified_date = SYSDATE,
