@@ -1153,12 +1153,10 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-//    val municipalities: Seq[Int] =
-//      OracleDatabase.withDynSession {
-//        Queries.getMunicipalities
-//      }
-
-    val municipalities = Seq(235, 49, 743, 91, 92, 182 /*, 252, 768, 230, 927, 977, 398, 10*/)
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
     municipalities.foreach { municipality =>
       println("")
@@ -1169,8 +1167,6 @@ object DataFixture {
       val roundabouts = RoundaboutProcessor.groupByRoundabout(roadLinks, false)
 
       println("")
-//      if(roundabouts.isEmpty)
-//        println(s"No roundabouts threated for municipality $municipality")
 
       roundabouts.foreach {
         roundabout =>

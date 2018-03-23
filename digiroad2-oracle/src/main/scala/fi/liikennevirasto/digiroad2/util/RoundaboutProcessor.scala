@@ -72,7 +72,7 @@ object RoundaboutProcessor {
   }
 
   def isRoundaboutLink(roadLink: RoadLink) = {
-    /*roadLink.administrativeClass == State && */roadLink.linkType == Roundabout
+    roadLink.administrativeClass == State && roadLink.linkType == Roundabout
   }
 
   def groupByRoundabout(roadlinks: Seq[RoadLink], withIncomplete: Boolean = true): Seq[Seq[RoadLink]] = {
