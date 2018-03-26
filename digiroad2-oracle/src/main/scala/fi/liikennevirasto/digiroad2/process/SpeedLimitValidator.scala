@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit}
@@ -12,65 +12,65 @@ import fi.liikennevirasto.digiroad2.util.PolygonTools
 class SpeedLimitValidator(trafficSignService: TrafficSignService) {
   val inaccurateAssetDAO: InaccurateAssetDAO = new InaccurateAssetDAO
   val polygonTools: PolygonTools = new PolygonTools
+  val radiusDistance: Int = 50
 
-  private def minDistance(trafficSign: PersistedTrafficSign, point: Point) = Math.sqrt(Math.pow(trafficSign.lon - point.x, 2) + Math.pow(trafficSign.lat - point.y, 2))
+  private def length(point: Point)(trafficSign: PersistedTrafficSign) = GeometryUtils.geometryLength(Seq(Point(trafficSign.lon, trafficSign.lat),point))
   private def min(s1: (Double, Seq[PersistedTrafficSign]), s2: (Double, Seq[PersistedTrafficSign])): (Double, Seq[PersistedTrafficSign]) = if (s1._1 < s2._1) s1 else s2
+
+  private def getGeometryPosition(first: Point, last: Point, sideCode: SideCode): Seq[(Point, SideCode)] = {
+    sideCode match {
+      case SideCode.TowardsDigitizing => Seq((first, SideCode.TowardsDigitizing))
+      case SideCode.AgainstDigitizing => Seq((last, SideCode.AgainstDigitizing))
+      case _ => Seq((first, SideCode.TowardsDigitizing), (last, SideCode.AgainstDigitizing))
+    }
+  }
 
   private def getTrafficSingsByRadius(speedLimit: SpeedLimit, roadLink: RoadLink): Seq[PersistedTrafficSign] = {
     val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
     val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
 
-    val trafficSingsByRadius =
-          (speedLimit.sideCode match {
-            case SideCode.TowardsDigitizing =>
-              trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits)).filter (_.validityDirection == speedLimit.sideCode.value)
+    val speedLimitSideCode =
+      speedLimit.sideCode match {
+        case SideCode.BothDirections =>
+          TrafficDirection.toSideCode(roadLink.trafficDirection)
+        case _ =>
+          speedLimit.sideCode
+      }
 
-            case SideCode.AgainstDigitizing =>
-              trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits)).filter (_.validityDirection == speedLimit.sideCode.value)
-
-            case _ =>
-              roadLink.trafficDirection match {
-                case TrafficDirection.TowardsDigitizing =>
-                  trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))
-                    .filter (trafficSign => SideCode.apply(trafficSign.validityDirection) == TrafficDirection.toSideCode(TrafficDirection.TowardsDigitizing))
-
-                case TrafficDirection.AgainstDigitizing =>
-                  trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))
-                    .filter (trafficSign => SideCode.apply(trafficSign.validityDirection) == TrafficDirection.toSideCode(TrafficDirection.AgainstDigitizing))
-
-                case _ =>
-              trafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits)).filter(_.validityDirection == SideCode.TowardsDigitizing.value) ++
-                trafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits)).filter(_.validityDirection == SideCode.AgainstDigitizing.value)
-
-          }}).filter(_.linkId == speedLimit.linkId)
+    val trafficSingsByRadius = getGeometryPosition(first, last, speedLimitSideCode).flatMap { case (position, sideCode) =>
+      trafficSignService.getTrafficSignByRadius(position, radiusDistance, Some(SpeedLimits))
+        .filter(_.validityDirection == sideCode)
+    }.filter(_.linkId == speedLimit.linkId)
 
     if (trafficSingsByRadius.nonEmpty) {
-      (trafficSingsByRadius.groupBy(minDistance(_, first)) ++ trafficSingsByRadius.groupBy(minDistance(_, last))).reduceLeft(min)._2
+      (trafficSingsByRadius.groupBy(length(first)) ++ trafficSingsByRadius.groupBy(length(last))).reduceLeft(min)._2
     }else
       Seq()
+
   }
 
   private def speedLimitValueValidator(speedLimit: SpeedLimit, trafficSign: PersistedTrafficSign): Option[SpeedLimit] = {
     val startUrbanAreaSpeedLimit: Int = 50
     val endUrbanAreaSpeedLimit: Int = 80
 
+    val trafficSignType = TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)
+    val trafficSignValueOption = getTrafficSignsProperties(trafficSign, "trafficSigns_value")
+
     speedLimit.value match {
       case Some(NumericValue(speedLimitValue)) =>
-        TrafficSignType.apply(trafficSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.toInt) match {
+        trafficSignType match {
           case TrafficSignType.SpeedLimit | TrafficSignType.SpeedLimitZone =>
-            trafficSign.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.headOption match {
+            trafficSignValueOption match {
               case Some(trafficSignValue) if trafficSignValue.propertyValue != speedLimitValue.toString =>
                 Some(speedLimit)
               case _ => None
             }
-
           case TrafficSignType.EndSpeedLimitZone | TrafficSignType.EndSpeedLimit =>
-            trafficSign.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.headOption match {
+            trafficSignValueOption match {
               case Some(trafficSignValue) if trafficSignValue.propertyValue == speedLimitValue.toString =>
                 Some(speedLimit)
               case _ => None
             }
-
           case TrafficSignType.UrbanArea if speedLimitValue != startUrbanAreaSpeedLimit =>
             Some(speedLimit)
 
@@ -110,5 +110,10 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
     trafficSigns.flatMap { trafficSign =>
       speedLimitValueValidator(speedLimit, trafficSign)
     }.headOption
+  }
+
+
+  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 }

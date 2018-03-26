@@ -188,7 +188,7 @@
     };
 
     this.getSpeedLimitErrors = function () {
-      return $.getJSON('api/speedLimits/qualityErrors');
+      return $.getJSON('api/speedLimits/inaccurates');
     };
 
     this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {

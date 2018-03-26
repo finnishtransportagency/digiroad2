@@ -337,7 +337,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate,
         Some(username), Some(DateTime.now()), speedLimit.linkSource)
 
-    existOnQualityErrorsList(id, newAssetId)
+    existOnInaccuratesList(id, newAssetId)
     newAssetId
   }
 
@@ -371,11 +371,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, measures.getOrElse(Measures(speedLimit.startMeasure, speedLimit.endMeasure)),
         SideCode.apply(sideCode.getOrElse(speedLimit.sideCode.value)), value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate, Some(username), Some(DateTime.now()), speedLimit.linkSource)
 
-    existOnQualityErrorsList(id, newAssetId)
+    existOnInaccuratesList(id, newAssetId)
     newAssetId
   }
 
-  private def existOnQualityErrorsList(oldId: Long, newId: Option[Long] = None) = {
+  private def existOnInaccuratesList(oldId: Long, newId: Option[Long] = None) = {
     (inaccurateAssetDao.getInaccurateAssetById(oldId), newId) match {
       case (Some(idOld), Some(idNew)) =>
         inaccurateAssetDao.deleteInaccurateAssetById(idOld)
@@ -387,13 +387,13 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   private def checkInaccurateSpeedLimit(id: Option[Long] = None) = {
     dao.getSpeedLimitLinksById(id.head).foreach { speedLimit =>
 
-      val roadLink = roadLinkServiceImplementation.getRoadLinksAndComplementariesFromVVH(Set(speedLimit.linkId), false)
+      val roadLink = roadLinkServiceImplementation.getRoadLinkAndComplementaryFromVVH(speedLimit.linkId, false)
         .find(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
         .getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
 
       speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, roadLink) match {
         case Some(speedLimitAsset) =>
-          speedLimitValidator.inaccurateAssetDAO.createInaccurateAsset(speedLimitAsset.id, SpeedLimitAsset.typeId, roadLink.municipalityCode, roadLink.administrativeClass)
+          inaccurateAssetDao.createInaccurateAsset(speedLimitAsset.id, SpeedLimitAsset.typeId, roadLink.municipalityCode, roadLink.administrativeClass)
         case _ => None
       }
     }
@@ -520,7 +520,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  def getSpeedLimitsWithQualityErrors(municipalities: Set[Int]= Set(), adminClassList: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
+  def getSpeedLimitsWithInaccurates(municipalities: Set[Int]= Set(), adminClassList: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
 
     case class WrongSpeedLimit(linkId: Long, municipality: String, administrativeClass: String)
     def toWrongSpeedLimit(x: (Long, String, Int)) = WrongSpeedLimit(x._1, x._2, AdministrativeClass(x._3).toString)

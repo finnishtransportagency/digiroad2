@@ -77,7 +77,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
-  val municipalityDao: MunicipalityDao = new MunicipalityDao
 
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
     case _ => throw new NotImplementedError("DateTime deserialization")
@@ -1048,16 +1047,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     speedLimitService.getUnknown(includedMunicipalities)
   }
 
-  get("/speedLimits/qualityErrors") {
+  get("/speedLimits/inaccurate") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
     municipalityCode.foreach(validateUserMunicipalityAccess(user))
 
     user.isOperator() match {
       case true =>
-        speedLimitService.getSpeedLimitsWithQualityErrors()
+        speedLimitService.getSpeedLimitsWithInaccurates()
       case false =>
-          speedLimitService.getSpeedLimitsWithQualityErrors(municipalityCode, Set(Municipality))
+          speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
     }
   }
 

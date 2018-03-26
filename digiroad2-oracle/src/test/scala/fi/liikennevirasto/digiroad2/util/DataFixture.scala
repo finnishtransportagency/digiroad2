@@ -34,12 +34,6 @@ object DataFixture {
     props
   }
 
-//  lazy val propertiesDigiroad: Properties = {
-//    val props = new Properties()
-//    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-//    props
-//  }
-
   lazy val dr2properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
