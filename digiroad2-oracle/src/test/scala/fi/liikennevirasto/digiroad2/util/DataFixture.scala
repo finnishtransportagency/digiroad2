@@ -1166,7 +1166,7 @@ object DataFixture {
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
 
       println(s"Grouping roundabouts")
-      val roundabouts = RoundaboutProcessor.groupByRoundabout(roadLinks/*, withIncomplete = false*/)
+      val roundabouts = RoundaboutProcessor.groupByRoundabout(roadLinks, withIncomplete = false)
 
       println("")
 
