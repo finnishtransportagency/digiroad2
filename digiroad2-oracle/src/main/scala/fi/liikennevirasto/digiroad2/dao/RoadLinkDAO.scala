@@ -145,7 +145,7 @@ object RoadLinkDAO{
   def insert(propertyName: String, linkProperty: LinkProperties, username: Option[String]) = {
     val dao = getDao(propertyName)
     val value = dao.getValue(linkProperty)
-    dao.insertValues(linkProperty.linkId, username, value)
+    dao.insertValues(linkProperty, username, value)
   }
 
 
