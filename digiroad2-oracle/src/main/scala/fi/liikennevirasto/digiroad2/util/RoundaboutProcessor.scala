@@ -12,7 +12,7 @@ object RoundaboutProcessor {
     val (adjacents, rest) = roadLinks.partition(r => GeometryUtils.areAdjacent(r.geometry, nextLink.geometry))
     adjacents match{
       case Seq() if acc.size < 3 && !withIncomplete => {
-        println("findRoundaboutRecursive: Seq() &&  acc.size < 3 && !withIncomplete")
+        println(s"findRoundaboutRecursive: Seq() &&  acc.size < 3 && !withIncomplete firstLink =  ${firstLink.linkId} nextLink = ${nextLink.linkId}")
         (Seq.empty, rest)
       }
       case Seq() if GeometryUtils.areAdjacent(firstLink.geometry, nextLink.geometry) =>
