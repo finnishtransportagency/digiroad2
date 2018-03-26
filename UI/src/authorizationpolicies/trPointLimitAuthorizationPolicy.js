@@ -4,7 +4,7 @@
 
     var me = this;
 
-    this.formEditModeAccess = function(selectedAsset) {
+    this.formEditModeAccess = function() {
       return true;
     };
   };

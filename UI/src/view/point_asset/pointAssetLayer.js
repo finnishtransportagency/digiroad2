@@ -314,15 +314,17 @@
       var selectedLon = coordinates.x;
       var selectedLat = coordinates.y;
       var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), selectedLon, selectedLat);
-      var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
-      var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-      var administrativeClass = obtainAdministrativeClass(nearestLine);
+      if(nearestLine.end && nearestLine.start){
+        var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
+        var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+        var administrativeClass = obtainAdministrativeClass(nearestLine);
 
-      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
+        var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
 
-      vectorLayer.getSource().addFeature(createFeature(asset));
-      selectedAsset.place(asset);
-      mapOverlay.show();
+        vectorLayer.getSource().addFeature(createFeature(asset));
+        selectedAsset.place(asset);
+        mapOverlay.show();
+      }
     }
 
     function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass) {

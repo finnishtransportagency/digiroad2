@@ -5,12 +5,8 @@
     this.initialize = function(mapBackend){
       backend = mapBackend;
       me.bindExternalEventHandlers();
+      authorizationPolicy = new AuthorizationPolicy();
       me.bindEvents();
-    };
-    this.bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        userRoles = roles;
-      });
     };
     this.bindEvents = function () {
       eventbus.on('municipality:select', function(listP) {
@@ -24,9 +20,9 @@
   };
 
   var backend;
+  var authorizationPolicy;
   var municipalityList;
   var showFormBtnVisible = true;
-  var userRoles;
   var hrefDir = "#work-list/municipality";
   var municipalityId;
   var municipalityName;
@@ -154,8 +150,7 @@
       }else{
         var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
         element.html($('<div class="municipality-list">').append(unknownLimits));
-        //TODO: remove this
-        if (_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium'))
+        if (authorizationPolicy.workListAccess())
           searchbox.insertBefore('#tableData');
 
         $('#searchBox').on('keyup', function(event){

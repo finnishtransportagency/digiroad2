@@ -124,7 +124,7 @@
       var isTRMassTransitStop = false;
       var isTerminalBusStop = false;
       var roadAddressInfoLabel;
-
+      var authorizationPolicy = new MassTransitStopAuthorizationPolicy();
       var MStopDeletebutton = function(readOnly) {
 
         var removalForm = $('<div class="checkbox"> <label>Poista<input type="checkbox" id = "removebox"></label></div>');
@@ -345,7 +345,7 @@
           return choice.publicId === property.publicId;
         }).values;
 
-        if(!isBusStopMaintainer && property.publicId == 'tietojen_yllapitaja'){
+        if(!authorizationPolicy.editModeAccess() && property.publicId == 'tietojen_yllapitaja'){
           enumValues = _.filter(enumValues, function(value){
             return value.propertyValue != '2';
           });
@@ -763,7 +763,7 @@
           readOnly = true;
         }
 
-        if(!isBusStopExpired && isTRMassTransitStop && !isBusStopMaintainer){
+        if(!isBusStopExpired && isTRMassTransitStop && !authorizationPolicy.editModeAccess()){
           readOnly = true;
         }
 
@@ -798,18 +798,6 @@
         }
       };
 
-      var isBusStopMaintainer = false;
-
-      var bindExternalEventHandlers = function () {
-        eventbus.on('roles:fetched', function (roles) {
-          if (_.contains(roles, 'busStopMaintainer')) {
-            isBusStopMaintainer = true;
-          }
-        });
-      };
-
-      bindExternalEventHandlers();
-
       var controlledByTR = function () {
         if(applicationModel.isReadOnly()){
           return true;
@@ -825,7 +813,7 @@
           return value.propertyValue;
         }), "2");
 
-         if(isBusStopMaintainer === true && condition) {
+         if(authorizationPolicy.editModeAccess() === true && condition) {
            eventbus.trigger('application:controledTR',condition);
            return false;
          } else {
