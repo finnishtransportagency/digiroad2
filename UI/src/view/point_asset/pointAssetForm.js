@@ -8,6 +8,11 @@
   function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
     var rootElement = $('#feature-attributes');
 
+    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
+      if(event.assetType == typeId)
+        enumeratedPropertyValues = event.enumeratedPropertyValues;
+    });
+
     backend.getAssetEnumeratedPropertyValues(typeId);
 
     eventbus.on('application:readOnly', function(readOnly) {
@@ -34,11 +39,6 @@
           rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
         }
       }
-    });
-
-    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
-        if(event.assetType == typeId)
-            enumeratedPropertyValues = event.enumeratedPropertyValues;
     });
 
     eventbus.on(layerName + ':changed', function() {
