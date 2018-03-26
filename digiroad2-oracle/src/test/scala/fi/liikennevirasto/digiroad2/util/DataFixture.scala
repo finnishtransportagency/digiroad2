@@ -1158,7 +1158,7 @@ object DataFixture {
     //        Queries.getMunicipalities
     //      }
 
-    val municipalities = Seq(/*235,*/ 49,/* 743, 91, 92, 182,*/ 257/*, 252, 768, 230, 927, 977, 398, 10*/)
+    val municipalities = Seq(49, 257)
 
     municipalities.foreach { municipality =>
       println("")
@@ -1166,7 +1166,7 @@ object DataFixture {
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
 
       println(s"Grouping roundabouts")
-      val roundabouts = RoundaboutProcessor.groupByRoundabout(roadLinks, false)
+      val roundabouts = RoundaboutProcessor.groupByRoundabout(roadLinks/*, withIncomplete = false*/)
 
       println("")
 
