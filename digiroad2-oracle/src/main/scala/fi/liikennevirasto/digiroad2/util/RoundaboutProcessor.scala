@@ -11,8 +11,10 @@ object RoundaboutProcessor {
   private def findRoundaboutRecursive(firstLink: RoadLink, nextLink: RoadLink, roadLinks: Seq[RoadLink], acc: Seq[RoadLink] = Seq.empty, withIncomplete: Boolean = true): (Seq[RoadLink], Seq[RoadLink]) = {
     val (adjacents, rest) = roadLinks.partition(r => GeometryUtils.areAdjacent(r.geometry, nextLink.geometry))
     adjacents match{
-      case Seq() if acc.size < 3 && !withIncomplete =>
+      case Seq() if acc.size < 3 && !withIncomplete => {
+        println("findRoundaboutRecursive: Seq() &&  acc.size < 3 && !withIncomplete")
         (Seq.empty, rest)
+      }
       case Seq() if GeometryUtils.areAdjacent(firstLink.geometry, nextLink.geometry) =>
         (acc :+ nextLink, rest)
       case adjs =>
@@ -72,12 +74,11 @@ object RoundaboutProcessor {
   }
 
   def isRoundaboutLink(roadLink: RoadLink) = {
-    roadLink.administrativeClass == State && roadLink.linkType == Roundabout
+    /*roadLink.administrativeClass == State &&*/ roadLink.linkType == Roundabout
   }
 
   def groupByRoundabout(roadlinks: Seq[RoadLink], withIncomplete: Boolean = true): Seq[Seq[RoadLink]] = {
     val roundabouts = roadlinks.filter(isRoundaboutLink)
     groupByRoundaboutRecursive(roundabouts, withIncomplete = withIncomplete)
   }
-
 }

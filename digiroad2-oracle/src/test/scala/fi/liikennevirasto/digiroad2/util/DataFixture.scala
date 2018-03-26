@@ -1153,10 +1153,12 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
+    //    val municipalities: Seq[Int] =
+    //      OracleDatabase.withDynSession {
+    //        Queries.getMunicipalities
+    //      }
+
+    val municipalities = Seq(/*235,*/ 49,/* 743, 91, 92, 182,*/ 257/*, 252, 768, 230, 927, 977, 398, 10*/)
 
     municipalities.foreach { municipality =>
       println("")
@@ -1186,8 +1188,8 @@ object DataFixture {
                     val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass)
 
                     actualTrafficDirection match {
-                      case Some(traffic) => RoadLinkDAO.update("traffic_direction", linkProperty, Some("batch"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
-                      case _ => RoadLinkDAO.insert("traffic_direction", linkProperty, Some("batch"))
+                      case Some(traffic) => RoadLinkDAO.update("traffic_direction", linkProperty, Some("batch_roundabout"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
+                      case _ => RoadLinkDAO.insert("traffic_direction", linkProperty, Some("batch_roundabout"))
                     }
 
                     val updateTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
