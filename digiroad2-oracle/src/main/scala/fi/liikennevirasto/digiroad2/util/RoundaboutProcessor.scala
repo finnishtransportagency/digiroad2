@@ -13,6 +13,7 @@ object RoundaboutProcessor {
     adjacents match{
       case Seq() if acc.size < 3 && !withIncomplete => {
         println(s"findRoundaboutRecursive: Seq() &&  acc.size < 3 && !withIncomplete firstLink =  ${firstLink.linkId} nextLink = ${nextLink.linkId}")
+        acc.foreach(ac => println(s" acc:  linkIc: ${ac.linkId}"))
         (Seq.empty, rest)
       }
       case Seq() if GeometryUtils.areAdjacent(firstLink.geometry, nextLink.geometry) =>
