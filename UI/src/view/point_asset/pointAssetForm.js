@@ -12,17 +12,9 @@ root.PointAssetForm = function(typeId, pointAsset, editConstrains, roadCollectio
     var layerName = pointAsset.layerName;
     var localizedTexts = pointAsset.formLabels;
 
-    console.log("BindEvent called");
-
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
-      console.log("on assetEnumeratedPropertyValues:fetched");
-      console.log(typeId);
-      console.log(event.assetType);
-      console.log(event.enumeratedPropertyValues);
-      console.log(event);
-      if(event.assetType == typeId) {
+      if(event.assetType == typeId)
         me.enumeratedPropertyValues = event.enumeratedPropertyValues;
-      }
     });
 
     backend.getAssetEnumeratedPropertyValues(typeId);
