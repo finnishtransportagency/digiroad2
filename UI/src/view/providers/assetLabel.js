@@ -73,7 +73,7 @@
                 var styles = me.getStyle(assetValue, index);
                 var feature = me.createFeature(getPoint(asset));
                 feature.setStyle(styles);
-                feature.setProperties(asset);
+                feature.setProperties(_.omit(asset, 'geometry'));
                 return feature;
               }
             });

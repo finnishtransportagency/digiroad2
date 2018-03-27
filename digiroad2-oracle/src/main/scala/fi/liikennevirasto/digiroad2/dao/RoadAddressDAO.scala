@@ -28,6 +28,17 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
   private val addressLength: Long = endAddrMValue - startAddrMValue
   private val lrmLength: Double = Math.abs(endMValue - startMValue)
+
+  def addrAt(a: Double) = {
+    val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
+    sideCode match {
+      case SideCode.AgainstDigitizing =>
+        endAddrMValue - Math.round((a - startMValue) * coefficient)
+      case SideCode.TowardsDigitizing =>
+        startAddrMValue + Math.round((a - startMValue) * coefficient)
+      case _ => throw new IllegalArgumentException(s"Bad sidecode $sideCode on road address $id (link $linkId)")
+    }
+  }
 }
 
 case class RoadAddressRow(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
@@ -159,12 +170,28 @@ class RoadAddressDAO {
     queryRoadAddresses(query)
   }
 
-  def getByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double): List[RoadAddress] = {
+  def getByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double, includeFloating: Boolean = false, includeHistory: Boolean = true,
+                             includeTerminated: Boolean = true): List[RoadAddress] = {
 
     val where =
       s""" where pos.link_id = $linkId and
          (( pos.start_measure >= $startM and pos.end_measure <= $endM ) or
          ( $endM >= pos.start_measure and $endM <= pos.end_measure)) """
+
+    val floating = if (!includeFloating)
+      "AND floating='0'"
+    else
+      ""
+
+    val history = if (!includeHistory)
+      "AND ra.end_date is null"
+    else
+      ""
+
+    val valid = if (!includeTerminated)
+      "AND ra.terminated = 0"
+    else
+      ""
 
     val query =
       s"""
@@ -176,7 +203,7 @@ class RoadAddressDAO {
        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
        join lrm_position pos on ra.lrm_position_id = pos.id
-			 $where
+			 $where $floating $history $valid $withValidatyCheck
 		  """
 
     queryList(query)

@@ -174,6 +174,10 @@
       return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
     };
 
+    this.getSpeedLimit = function(id){
+      return collection.getByLinkId(id);
+    };
+
     this.getId = function() {
       return getProperty('id');
     };

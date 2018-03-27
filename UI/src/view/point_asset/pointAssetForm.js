@@ -3,10 +3,36 @@
     initialize: bindEvents
   };
 
-  var enumeratedPropertyValues = null;
+  var enumeratedPropertyValues = [{
+    propertyId: 300144,
+    propertyName :"Tyyppi",
+    propertyType :"single_choice",
+    publicId :"trafficSigns_type",
+    required:false,
+    values : [
+      {
+        checked : false,
+        propertyDisplayValue :"Nopeusrajoitus",
+        propertyValue : "1"
+      }
+    ]
+  }];
 
   function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
     var rootElement = $('#feature-attributes');
+
+    console.log("BindEvent called");
+
+    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
+      console.log("on assetEnumeratedPropertyValues:fetched");
+      console.log(typeId);
+      console.log(event.assetType);
+      console.log(event.enumeratedPropertyValues);
+      console.log(event);
+      if(event.assetType == typeId) {
+        enumeratedPropertyValues = event.enumeratedPropertyValues;
+      }
+    });
 
     backend.getAssetEnumeratedPropertyValues(typeId);
 
@@ -34,11 +60,6 @@
           rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
         }
       }
-    });
-
-    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
-        if(event.assetType == typeId)
-            enumeratedPropertyValues = event.enumeratedPropertyValues;
     });
 
     eventbus.on(layerName + ':changed', function() {

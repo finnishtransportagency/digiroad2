@@ -34,12 +34,16 @@
       [11, 'Liitännäisliikennealue'],
       [12, 'Ajopolku'],
       [13, 'Huoltoaukko moottoritiellä'],
+      [14, 'Erikoiskuljetusyhteys ilman puomia'],
+      [15, 'Erikoiskuljetusyhteys puomilla'],
       [21, 'Lautta/lossi']
     ];
 
     var verticalLevelTypes= [
       [-11, 'Tunneli'],
-      [-1, 'Alikulku'],
+      [-3, 'Alikulku, taso 3'],
+      [-2, 'Alikulku, taso 2'],
+      [-1, 'Alikulku, taso 1'],
       [0, 'Maan pinnalla'],
       [1, 'Silta, Taso 1'],
       [2, 'Silta, Taso 2'],
