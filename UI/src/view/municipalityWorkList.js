@@ -2,6 +2,14 @@
   root.MunicipalityWorkList = function(){
     WorkListView.call(this);
     var me = this;
+    this.roles = {};
+    this.hrefDir = "#work-list/municipality";
+    var backend;
+    var municipalityList;
+    var showFormBtnVisible = true;
+    var municipalityId;
+    var municipalityName;
+
     this.initialize = function(mapBackend){
       backend = mapBackend;
       me.bindExternalEventHandlers();
@@ -9,7 +17,7 @@
     };
     this.bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
-        userRoles = roles;
+        me.roles = roles;
       });
     };
     this.bindEvents = function () {
@@ -18,154 +26,157 @@
         $('#work-list').show();
         $('body').addClass('scrollable');
         municipalityList = listP;
-        generateWorkList(listP);
+        me.generateWorkList(listP);
       });
     };
-  };
 
-  var backend;
-  var municipalityList;
-  var showFormBtnVisible = true;
-  var userRoles;
-  var hrefDir = "#work-list/municipality";
-  var municipalityId;
-  var municipalityName;
-
-  var municipalityTable = function (municipalities, filter) {
-    var municipalityValues =
-      _.isEmpty(filter) ? municipalities : _.filter(municipalities, function (municipality) {
+    this.municipalityTable = function (municipalities, filter) {
+      var municipalityValues =
+        _.isEmpty(filter) ? municipalities : _.filter(municipalities, function (municipality) {
           return municipality.name.toLowerCase().startsWith(filter.toLowerCase());});
 
-    var tableContentRows = function (municipalities) {
-      return _.map(municipalities, function (municipality) {
-        return $('<tr/>').append($('<td/>').append(idLink(municipality)));
+      var tableContentRows = function (municipalities) {
+        return _.map(municipalities, function (municipality) {
+          return $('<tr/>').append($('<td/>').append(idLink(municipality)));
+        });
+      };
+      var idLink = function (municipality) {
+        return $('<a class="work-list-item"/>').attr('href', me.hrefDir).html(municipality.name).click(function(){
+          me.createVerificationForm(municipality);
+        });
+      };
+      return $('<table id="tableData"/>').append(tableContentRows(municipalityValues));
+    };
+
+    this.createVerificationForm = function(municipality) {
+      $('#tableData').hide();
+      $('.filter-box').hide();
+      if (showFormBtnVisible) $('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
+          me.generateWorkList(municipalityList);
+        })
+      );
+      municipalityId = municipality.id;
+      municipalityName = municipality.name;
+      me.reloadForm();
+    };
+
+    this.reloadForm = function(){
+      $('#formTable').remove();
+      backend.getAssetTypesByMunicipality(municipalityId).then(function(assets){
+        $('#work-list .work-list').append(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
       });
     };
-    var idLink = function (municipality) {
-      return $('<a class="work-list-item"/>').attr('href', hrefDir).html(municipality.name).click(function(){
-        createVerificationForm(municipality);
+
+    eventbus.on('municipality:verified', me.reloadForm);
+
+    var unknownLimitsTable = function (workListItems, municipalityName, municipalityId) {
+      var selected = [];
+      var municipalityHeader = function (municipalityName) {
+        return $('<h2/>').html(municipalityName);
+      };
+
+      var tableHeaderRow = function () {
+        return '<tr> <th></th> <th id="name">TIETOLAJI</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr>';
+      };
+
+      var tableContentRows = function (values) {
+        var rows = "";
+        _.forEach(values, function (asset) {
+          rows += (asset.verified || _.isEmpty(asset.verified_by)) ? upToDateAsset(asset) : oldAsset(asset);
+        });
+        return rows;
+      };
+
+      var upToDateAsset = function (asset) {
+        return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
+          "<td headers='name'>" + asset.assetName + "</td>" +
+          "<td headers='date'>" + asset.verified_date + "</td>" +
+          "<td headers='verifier'>" + asset.verified_by + "</td></tr>";
+      };
+
+      var oldAsset = function (asset) {
+        return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
+          "<td headers='name'>" + asset.assetName + "    <img src='images/oldAsset.png' title='Tarkistus Vanhentumassa'" + "</td>" +
+          "<td style='color:red' headers='date'>" + asset.verified_date + "</td>" +
+          "<td style='color:red' headers='verifier'>" + asset.verified_by + "</td></tr>";
+      };
+
+      var saveBtn = $('<button />').addClass('save btn btn-municipality').text('Merkitse tarkistetuksi').click(function () {
+        $("input:checkbox[class=verificationCheckbox]:checked").each(function () {
+          selected.push(parseInt(($(this).attr('value'))));
+        });
+        backend.verifyMunicipalityAssets(selected, municipalityId);
       });
-    };
-    return $('<table id="tableData"/>').append(tableContentRows(municipalityValues));
-  };
 
-  var createVerificationForm = function(municipality) {
-    $('#tableData').hide();
-    $('.filter-box').hide();
-    if (showFormBtnVisible) $('#work-list-header').append($('<a class="header-link"></a>').attr('href', hrefDir).html('Kuntavalinta').click(function(){generateWorkList(municipalityList);}));
-    municipalityId = municipality.id;
-    municipalityName = municipality.name;
-    reloadForm();
-  };
-
-  var reloadForm = function(){
-    $('#formTable').remove();
-    backend.getAssetTypesByMunicipality(municipalityId).then(function(assets){
-      $('#work-list .work-list').append(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
-    });
-  };
-
-  eventbus.on('municipality:verified', reloadForm);
-
-  var unknownLimitsTable = function (workListItems, municipalityName, municipalityId) {
-    var selected = [];
-    var municipalityHeader = function (municipalityName) {
-      return $('<h2/>').html(municipalityName);
-    };
-
-    var tableHeaderRow = function () {
-      return '<tr> <th></th> <th id="name">TIETOLAJI</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr>';
-    };
-
-    var tableContentRows = function (values) {
-      var rows = "";
-      _.forEach(values, function (asset) {
-        rows += (asset.verified || _.isEmpty(asset.verified_by)) ? upToDateAsset(asset) : oldAsset(asset);
+      var deleteBtn = $('<button />').addClass('delete btn btn-municipality').text('Nollaa').click(function () {
+        new GenericConfirmPopup("Haluatko varmasti nollata tietolajin tarkistuksen?", {
+          container: '#work-list',
+          successCallback: function () {
+            $(".verificationCheckbox:checkbox:checked").each(function () {
+              selected.push(parseInt(($(this).attr('value'))));
+            });
+            backend.removeMunicipalityVerification(selected, municipalityId);
+          },
+          closeCallback: function () {}
+        });
       });
-      return rows;
+
+      var tableForGroupingValues = function (values) {
+        return $('<table/>').addClass('table')
+          .append(tableHeaderRow())
+          .append(tableContentRows(values));
+      };
+
+      return $('<table id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems)).append(deleteBtn).append(saveBtn);
     };
 
-    var upToDateAsset = function (asset) {
-      return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
-        "<td headers='name'>" + asset.assetName + "</td>" +
-        "<td headers='date'>" + asset.verified_date + "</td>" +
-        "<td headers='verifier'>" + asset.verified_by + "</td></tr>";
-    };
-
-    var oldAsset = function (asset) {
-      return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
-        "<td headers='name'>" + asset.assetName + "    <img src='images/oldAsset.png' title='Tarkistus Vanhentumassa'" + "</td>" +
-        "<td style='color:red' headers='date'>" + asset.verified_date + "</td>" +
-        "<td style='color:red' headers='verifier'>" + asset.verified_by + "</td></tr>";
-    };
-
-    var saveBtn = $('<button />').addClass('save btn btn-municipality').text('Merkitse tarkistetuksi').click(function () {
-      $("input:checkbox[class=verificationCheckbox]:checked").each(function () {
-        selected.push(parseInt(($(this).attr('value'))));
-      });
-      backend.verifyMunicipalityAssets(selected, municipalityId);
-    });
-
-    var deleteBtn = $('<button />').addClass('delete btn btn-municipality').text('Nollaa').click(function () {
-      new GenericConfirmPopup("Haluatko varmasti nollata tietolajin tarkistuksen?", {
-        container: '#work-list',
-        successCallback: function () {
-          $(".verificationCheckbox:checkbox:checked").each(function () {
-            selected.push(parseInt(($(this).attr('value'))));
-          });
-          backend.removeMunicipalityVerification(selected, municipalityId);
-        },
-        closeCallback: function () {}
-      });
-    });
-
-    var tableForGroupingValues = function (values) {
-      return $('<table/>').addClass('table')
-        .append(tableHeaderRow())
-        .append(tableContentRows(values));
-    };
-
-    return $('<table id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems)).append(deleteBtn).append(saveBtn);
-  };
-
-  var generateWorkList = function (listP) {
-    var searchbox = $('<div class="filter-box">' +
+    this.generateWorkList = function (listP, stateHistory) {
+      var searchbox = $('<div class="filter-box">' +
         '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
 
-    var title = 'Tietolajien kuntasivu';
-    $('#work-list').html('' +
-      '<div style="overflow: auto;">' +
-      '<div class="page">' +
-      '<div class="content-box">' +
-      '<header id="work-list-header">' + title +
-      '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
-      '</header>' +
-      '<div class="work-list">' +
-      '</div>' +
-      '</div>' +
-      '</div>'
-    );
+      var title = !_.isUndefined(stateHistory) ? 'Tuntemattomien nopeusrajoitusten lista' : 'Tietolajien kuntasivu';
+      $('#work-list').html('' +
+        '<div style="overflow: auto;">' +
+        '<div class="page">' +
+        '<div class="content-box">' +
+        '<header id="work-list-header">' + title +
+        '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
+        '</header>' +
+        '<div class="work-list">' +
+        '</div>' +
+        '</div>' +
+        '</div>'
+      );
 
-    listP.then(function (limits) {
-      var element = $('#work-list .work-list');
-      if (limits.length == 1){
-        showFormBtnVisible = false;
-        createVerificationForm(_.first(limits));
-      }else{
-        var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, ""]))();
-        element.html($('<div class="municipality-list">').append(unknownLimits));
+      listP.then(function (limits) {
+        var element = $('#work-list .work-list');
+        if (limits.length == 1){
+          showFormBtnVisible = false;
+          me.createVerificationForm(_.first(limits));
+        } else {
+          if (stateHistory) {
+            showFormBtnVisible = false;
+            me.createVerificationForm(_.find(limits, function (limit) {
+              return limit.name === stateHistory.municipality;
+            }));
+            $('#' + stateHistory.position).scrollView().focus();
+          }
+          else {
+            var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
+            element.html($('<div class="municipality-list">').append(unknownLimits));
 
-        if (_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium'))
-          searchbox.insertBefore('#tableData');
+            if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
+              searchbox.insertBefore('#tableData');
 
-        $('#searchBox').on('keyup', function(event){
-          var currentInput = event.currentTarget.value;
+            $('#searchBox').on('keyup', function (event) {
+              var currentInput = event.currentTarget.value;
 
-          var unknownLimits = _.partial.apply(null, [municipalityTable].concat([limits, currentInput]))();
-          $('#tableData tbody').html(unknownLimits);
-        });
-      }
-    });
+              var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
+              $('#tableData tbody').html(unknownLimits);
+            });
+          }
+        }
+      });
+    };
   };
-
 })(this);
