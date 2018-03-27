@@ -369,7 +369,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
 
   def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[Polygon]) = {
-    polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
+    Await.result(Future.sequence(polygons.map(getLinkIdsFromVVHWithComplementaryByPolygonF)), Duration.Inf).flatten
   }
 
   /**
@@ -387,6 +387,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     val (complementaryResult, result) = Await.result(fut, Duration.Inf)
     complementaryResult ++ result
+  }
+
+  def getLinkIdsFromVVHWithComplementaryByPolygonF(polygon :Polygon): Future[Seq[Long]] = {
+    Future(getLinkIdsFromVVHWithComplementaryByPolygon(polygon))
   }
 
   /**
