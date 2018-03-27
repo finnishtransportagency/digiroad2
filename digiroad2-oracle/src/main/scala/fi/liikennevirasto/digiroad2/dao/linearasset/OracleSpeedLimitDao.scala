@@ -155,7 +155,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     var filterAdministrativeClass = administrativeClass match {
       case Some(ac) if ac == Municipality => s" where s.administrative_class != ${State.value}"
       case Some(ac) if ac == State => s" where s.administrative_class = ${ac.value}"
-      case _ =>
+      case _ => ""
     }
 
     val sql = optionalMunicipalities match {
