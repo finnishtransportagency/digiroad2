@@ -1,12 +1,29 @@
 (function (root) {
-  root.PointAssetForm = {
-    initialize: bindEvents
-  };
+root.PointAssetForm = function(typeId, pointAsset, editConstrains, roadCollection, applicationModel, backend) {
+  var me = this;
+  me.enumeratedPropertyValues = null;
 
-  var enumeratedPropertyValues = null;
+  bindEvents(typeId, pointAsset, editConstrains, roadCollection, applicationModel, backend);
 
-  function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
+  function bindEvents(typeId, pointAsset, editConstrains, roadCollection, applicationModel, backend) {
     var rootElement = $('#feature-attributes');
+    var selectedAsset = pointAsset.selectedPointAsset;
+    var collection  = pointAsset.collection;
+    var layerName = pointAsset.layerName;
+    var localizedTexts = pointAsset.formLabels;
+
+    console.log("BindEvent called");
+
+    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
+      console.log("on assetEnumeratedPropertyValues:fetched");
+      console.log(typeId);
+      console.log(event.assetType);
+      console.log(event.enumeratedPropertyValues);
+      console.log(event);
+      if(event.assetType == typeId) {
+        me.enumeratedPropertyValues = event.enumeratedPropertyValues;
+      }
+    });
 
     backend.getAssetEnumeratedPropertyValues(typeId);
 
@@ -34,11 +51,6 @@
           rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
         }
       }
-    });
-
-    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
-        if(event.assetType == typeId)
-            enumeratedPropertyValues = event.enumeratedPropertyValues;
     });
 
     eventbus.on(layerName + ':changed', function() {
@@ -122,9 +134,9 @@
     }
 
     function checkTypeExtension(service, modifications)  {
-        var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
-          if(!serviceTypeExtensions[serviceType])
-            delete service.typeExtension;
+      var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
+      if(!serviceTypeExtensions[serviceType])
+        delete service.typeExtension;
     }
 
     rootElement.find('.form-service').on('change', '.new-service select', function (event) {
@@ -309,7 +321,7 @@
   var singleChoiceHandler = function (property, collection) {
     var propertyValue = (property.values.length === 0) ? '' : _.first(property.values).propertyValue;
     var propertyDisplayValue = (property.values.length === 0) ? '' : _.first(property.values).propertyDisplayValue;
-    var signTypes = _.map(_.filter(enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
+    var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
 
     var groups =  collection.getGroup(signTypes);
     var groupKeys = Object.keys(groups);
@@ -321,7 +333,7 @@
             { value: group.propertyValue,
               selected: propertyValue == group.propertyValue,
               text: group.propertyDisplayValue}
-              )[0].outerHTML; }))
+          )[0].outerHTML; }))
 
       )[0].outerHTML;}).join('');
 
@@ -362,7 +374,7 @@
         '    <div class="form-group editable form-railway-crossing">' +
         '        <label class="control-label">' + 'Nimi' + '</label>' +
         '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
-      '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
+        '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
         '    </div>';
     } else if (asset.validityDirection && !asset.propertyData) {
       return '' +
@@ -383,9 +395,9 @@
         '      <p class="form-control-static">' + (asset.limit ? (asset.limit + ' cm') : '–') + '</p>' +
         '  </div>' + '' +
         (asset.reason ? '<div class="form-group editable form-width">' +
-        '      <label class="control-label">Syy</label>' +
-        '      <p class="form-control-static">' + selectedReason.label + '</p>' +
-        '  </div>': '');
+          '      <label class="control-label">Syy</label>' +
+          '      <p class="form-control-static">' + selectedReason.label + '</p>' +
+          '  </div>': '');
     } else if (asset.services) {
       var services = _(asset.services)
         .sortByAll('serviceType', 'id')
@@ -536,4 +548,5 @@
     rootElement.find('.editable .form-control').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
   }
+  };
 })(this);
