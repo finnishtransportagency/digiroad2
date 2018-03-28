@@ -158,7 +158,7 @@
     };
 
     /**
-     * Search by mass transit stop Livi-id
+     * Search by mass transit stop passenger id
      *
      * @param input
      * @returns {*}
@@ -172,8 +172,7 @@
 
         if (result.length > 0)
           return _.map(result, toCoordinates);
-        else
-          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
+        return $.Deferred().reject('Haulla ei löytynyt tuloksia');
       });
     };
 

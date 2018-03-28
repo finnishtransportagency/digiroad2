@@ -270,16 +270,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     massTransitStopsReturned.map { massTransitStopReturned =>
       massTransitStopReturned match {
         case Some(stop) =>
-          Map("id" -> stop.id,
-            "nationalId" -> stop.nationalId,
-            "stopTypes" -> stop.stopTypes,
+          Map("nationalId" -> stop.nationalId,
             "lat" -> stop.lat,
             "lon" -> stop.lon,
-            "validityDirection" -> stop.validityDirection,
-            "bearing" -> stop.bearing,
-            "validityPeriod" -> stop.validityPeriod,
-            "floating" -> stop.floating,
-            "propertyData" -> stop.propertyData,
             "municipalityName" -> stop.municipalityName.getOrElse(""),
             "success" -> true)
         case None =>
