@@ -78,7 +78,7 @@
     this.radioButton = function () {
       return [
         '  <div class="panel-section">' +
-        '    <div class="radio-button">' +
+        '    <div class="radio">' +
         '     <label>' +
         '       <input name="labelingRadioButton" value="responsibility" type="radio" checked> Käyttöoikeus' +
         '     </label>' +
