@@ -1,12 +1,13 @@
 (function (root) {
-root.PointAssetForm = function(typeId, pointAsset, editConstrains, roadCollection, applicationModel, backend) {
+root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, applicationModel, backend) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(typeId, pointAsset, editConstrains, roadCollection, applicationModel, backend);
+  bindEvents(pointAsset, editConstrains, roadCollection, applicationModel, backend);
 
-  function bindEvents(typeId, pointAsset, editConstrains, roadCollection, applicationModel, backend) {
+  function bindEvents(pointAsset, editConstrains, roadCollection, applicationModel, backend) {
     var rootElement = $('#feature-attributes');
+    var typeId = pointAsset.typeId;
     var selectedAsset = pointAsset.selectedPointAsset;
     var collection  = pointAsset.collection;
     var layerName = pointAsset.layerName;

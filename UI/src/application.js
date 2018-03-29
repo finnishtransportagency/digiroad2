@@ -261,7 +261,7 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-      new PointAssetForm(pointAsset.typeId, pointAsset, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
+      new PointAssetForm(pointAsset, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
