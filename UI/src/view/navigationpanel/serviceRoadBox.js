@@ -38,13 +38,13 @@
     };
 
     this.predicate = function () {
-      return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium')  || _.contains(me.roles, 'serviceRoadMaintainer');
+      return assetConfig.authorizationPolicy.editModeAccess() /*_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium')  || _.contains(me.roles, 'serviceRoadMaintainer')*/;
     };
 
     var element = $('<div class="panel-group service-road"/>');
 
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
+      if (!assetConfig.authorizationPolicy.editModeAccess()) {
         me.editModeToggle.reset();
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());

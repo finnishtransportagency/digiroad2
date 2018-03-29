@@ -20,7 +20,7 @@
 
     eventbus.on('application:readOnly', function(readOnly) {
       if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
-        toggleMode(rootElement, authorizationPolicy.formEditModeAccess(selectedAsset) || readOnly);
+        toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset) || readOnly);
         //TODO: add form configurations to assetTypeConfiguration.js to avoid if-clauses
         if (layerName == 'servicePoints' && isSingleService(selectedAsset)){
           rootElement.find('button.delete').hide();
@@ -31,7 +31,7 @@
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
       if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
         renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
-        toggleMode(rootElement, authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
+        toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
         if (layerName == 'servicePoints') {
           rootElement.find('button#save-button').prop('disabled', true);
           rootElement.find('button#cancel-button').prop('disabled', false);
@@ -112,7 +112,7 @@
       var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType});
       selectedAsset.set({services: services});
       renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection);
-      toggleMode(rootElement, authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
+      toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
       if(services.length < 2){
         rootElement.find('button.delete').hide();
@@ -143,7 +143,7 @@
       var newServices = services.concat({id: generatedId, assetId: assetId, serviceType: newServiceType});
       selectedAsset.set({services: newServices});
       renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection);
-      toggleMode(rootElement, authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
+      toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset) || applicationModel.isReadOnly());
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
       if(newServices.length < 2){
         rootElement.find('button.delete').hide();

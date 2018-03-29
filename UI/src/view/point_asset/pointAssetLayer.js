@@ -63,7 +63,7 @@
     this.selectControl = selectControl;
 
     function isAllowedToDrag(features) {
-      if (selectedAsset.exists() && (layerName == 'trafficSigns' && authorizationPolicy.formEditModeAccess(selectedAsset))) //TODO: edit constrains only receives one parameter here, points need two. what is the desired functionality?
+      if (selectedAsset.exists() && (layerName == 'trafficSigns' && authorizationPolicy.formEditModeAccess(selectedAsset)))
         return [];
       return features;
     }
@@ -376,7 +376,7 @@
 
     function excludeRoadByAdminClass(roadCollection) {
       return _.filter(roadCollection, function (roads) {
-        return !authorizationPolicy.formEditModeAccess(selectedAsset, roads.linkId);
+        return authorizationPolicy.formEditModeAccess(selectedAsset, roads.linkId);
       });
     }
 

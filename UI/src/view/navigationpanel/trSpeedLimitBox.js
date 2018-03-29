@@ -18,7 +18,7 @@
     };
 
     this.predicate = function () {
-      return (!assetConfig.readOnly && _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'));
+      return (!assetConfig.readOnly && assetConfig.authorizationPolicy.editModeAccess());
     };
 
     this.toolSelection = new me.ToolSelection([
@@ -31,7 +31,7 @@
     var element = $('<div class="panel-group tr-speed-limits"/>');
 
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
+      if (assetConfig.authorizationPolicy.editModeAccess()) {
         me.editModeToggle.reset();
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());

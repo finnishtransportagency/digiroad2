@@ -5,7 +5,7 @@
     var me = this;
 
     this.editModeAccess = function() {
-      return (_.contains(me.userRoles, 'operator') || _.contains(me.userRoles, 'busStopMaintainer'));
+      return me.isUser('operator');
     };
   };
 })(this);

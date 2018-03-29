@@ -5,7 +5,7 @@
     var me = this;
 
     this.formEditModeAccess = function(selectedAsset) {
-      return selectedAsset.administrativeClass === 1;
+      return selectedAsset.administrativeClass !== 1;
     };
   };
 })(this);

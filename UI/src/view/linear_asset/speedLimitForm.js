@@ -135,7 +135,7 @@
 
   function validateAdministrativeClass(selectedSpeedLimit){
     var selectedSpeedLimits = _.filter(selectedSpeedLimit.get(), function (selected) {
-      return authorizationPolicy.formEditModeAccess(selected);
+      return !authorizationPolicy.formEditModeAccess(selected);
     });
     return !_.isEmpty(selectedSpeedLimits);
   }

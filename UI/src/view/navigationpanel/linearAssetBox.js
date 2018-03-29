@@ -47,7 +47,7 @@
     };
 
     this.predicate = function () {
-      return (!assetConfig.readOnly && (_.contains(me.roles, 'operator') || (_.contains(me.roles, 'premium') && assetConfig.layerName != 'maintenanceRoad') || (_.contains(me.roles, 'serviceRoadMaintainer') && assetConfig.layerName == 'maintenanceRoad')));
+      return assetConfig.authorizationPolicy.editModeAccess(); /*(!assetConfig.readOnly && (_.contains(me.roles, 'operator') || (_.contains(me.roles, 'premium') && assetConfig.layerName != 'maintenanceRoad') || (_.contains(me.roles, 'serviceRoadMaintainer') && assetConfig.layerName == 'maintenanceRoad')));*/
     };
 
     this.municipalityVerified = function () {
@@ -74,7 +74,7 @@
     };
 
     function show() {
-      if (assetConfig.readOnly || (me.editModeToggle.hasNoRolesPermission(me.roles) || (_.contains(me.roles, 'premium') && (assetConfig.layerName == 'maintenanceRoad')))) {
+      if (!assetConfig.authorizationPolicy.editModeAccess()) {
         me.editModeToggle.reset();
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());

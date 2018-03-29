@@ -5,7 +5,7 @@
     var me = this;
 
     this.formEditModeAccess = function(selectedAsset, linkId) {
-      return selectedAsset.getAdministrativeClass(linkId) === "State";
+      return selectedAsset.getAdministrativeClass(linkId) !== "State";
     };
 
   };

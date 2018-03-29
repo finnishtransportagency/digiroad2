@@ -35,13 +35,17 @@
     };
 
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
-        me.editModeToggle.reset();
-      } else {
-        me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
-      }
-      element.show();
+      me.getShow();
     }
+
+    // function show() {
+    //   if (!assetConfig.authorizationPolicy.editModeAccess()) {
+    //     me.editModeToggle.reset();
+    //   } else {
+    //     me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+    //   }
+    //   element.show();
+    // }
 
     function hide() {
       element.hide();

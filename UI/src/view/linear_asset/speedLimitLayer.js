@@ -158,7 +158,7 @@ window.SpeedLimitLayer = function(params) {
       if (!closestSpeedLimitLink) {
         return;
       }
-      if (!authorizationPolicy.formEditModeAccess(closestSpeedLimitLink)) {
+      if (authorizationPolicy.formEditModeAccess(closestSpeedLimitLink)) {
         if (isWithinCutThreshold(closestSpeedLimitLink.distance)) {
           moveTo(closestSpeedLimitLink.point[0], closestSpeedLimitLink.point[1]);
         } else {
@@ -188,7 +188,7 @@ window.SpeedLimitLayer = function(params) {
       }
 
       var nearestSpeedLimit = nearest.feature.getProperties();
-      if(!authorizationPolicy.formEditModeAccess(nearestSpeedLimit)){
+      if(authorizationPolicy.formEditModeAccess(nearestSpeedLimit)){
         var splitProperties = calculateSplitProperties(nearestSpeedLimit, mousePoint);
         selectedSpeedLimit.splitSpeedLimit(nearestSpeedLimit.id, splitProperties);
 
@@ -245,7 +245,7 @@ window.SpeedLimitLayer = function(params) {
   var showDialog = function (speedLimits) {
 
     speedLimits = _.filter(speedLimits, function(asset){
-      return !authorizationPolicy.formEditModeAccess(asset);
+      return authorizationPolicy.formEditModeAccess(asset);
     });
 
     activateSelectionStyle(speedLimits);

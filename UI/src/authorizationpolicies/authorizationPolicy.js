@@ -7,18 +7,26 @@
       me.userRoles = roles;
     });
 
+    this.isUser = function(role) {
+      return _.contains(me.userRoles, role);
+    };
+
+    this.getRoles = function() {
+      return me.userRoles;
+    };
+
     this.editModeAccess = function() {
-      return (_.contains(me.userRoles, 'operator') || _.contains(me.userRoles, 'premium'));
+      return me.isUser('operator') || me.isUser('premium');
     };
 
     this.editModeTool = function(toolType, asset, roadLink) {};
 
     this.formEditModeAccess = function() {
-      return false;
+      return me.isUser('operator');
     };
 
     this.workListAccess = function(){
-      return (_.contains(me.userRoles, 'operator') || _.contains(me.userRoles, 'premium'));
+      return me.isUser('operator') || me.isUser('premium');
     };
 
   };

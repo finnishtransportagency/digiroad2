@@ -165,7 +165,7 @@
 
   function validateAdministrativeClass(selectedLinearAsset, authorizationPolicy){
     var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
-      return authorizationPolicy.formEditModeAccess(selected);
+      return !authorizationPolicy.formEditModeAccess(selected);
     });
     return !_.isEmpty(selectedAssets);
   }
