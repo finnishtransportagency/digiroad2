@@ -73,10 +73,11 @@
 
     var _renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({ count: count,  editElement: '' }));
-      selectedLinearAsset.setValue =  _setValue;
-      selectedLinearAsset.removeValue = removeValue;
-      container.find('.form-elements-container').html(formElements.renderForm(selectedLinearAsset).find('.editable'));
-      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), assetTypeConfiguration);
+      container.find('.form-elements-container').html(formElements.renderForm(selectedLinearAsset, assetTypeConfiguration.formFields).find('.editable'));
+      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), assetTypeConfiguration, '',{
+        setValue: _setValue,
+        removeValue: removeValue
+      } );
     };
 
 

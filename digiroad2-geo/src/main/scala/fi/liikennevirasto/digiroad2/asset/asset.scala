@@ -191,6 +191,7 @@ object PropertyTypes {
   val ReadOnly = "read-only"
   val CheckBox = "checkbox"
   val Number = "number"
+  val IntegerProp = "integer"
 }
 
 object MassTransitStopValidityPeriod {

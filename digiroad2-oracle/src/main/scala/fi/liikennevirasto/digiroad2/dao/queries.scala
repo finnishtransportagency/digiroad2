@@ -153,6 +153,9 @@ object Queries {
     """
   }
 
+  def updateNumberProperty(assetId: Long, propertyId: Long, value: Double) =
+    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
+
   def updateNumberProperty(assetId: Long, propertyId: Long, value: Int) =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
 

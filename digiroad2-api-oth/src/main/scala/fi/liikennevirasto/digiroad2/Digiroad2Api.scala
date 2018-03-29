@@ -850,7 +850,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
       //TODO Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset
-      case DamagedByThaw.typeId =>
+      //TODO remove, only for teest
+      case DamagedByThaw.typeId | PavedRoad.typeId =>
         value.extractOpt[Seq[NewMultiValLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MultiValue(x.value), x.sideCode, 0, None))
       case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
@@ -1377,7 +1378,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
       case MaintenanceRoadAsset.typeId => maintenanceRoadService
-      case PavedRoad.typeId => pavingService
+      case PavedRoad.typeId => multiValueLinearAssetService
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService

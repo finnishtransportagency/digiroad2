@@ -5,16 +5,12 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.linearasset.{MultiAssetValue, MultiValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
-import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
-import _root_.oracle.sql.STRUCT
-import com.github.tototoshi.slick.MySQLJodaSupport._
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
 case class MultiValueAssetRow(id: Long, linkId: Long, sideCode: Int, value: MultiValuePropertyRow,
@@ -46,8 +42,8 @@ class MultiValueLinearAssetDao {
           join #$idTableName i on i.id = pos.link_id
                       left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
                       left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
-                      left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'checkbox')
+                      left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
+                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
@@ -83,8 +79,8 @@ class MultiValueLinearAssetDao {
           join #$idTableName i on i.id = a.id
                       left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
                       left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
-                      left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'checkbox')
+                      left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
+                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.floating = 0 """.as[MultiValueAssetRow].list
     }
@@ -222,17 +218,17 @@ class MultiValueLinearAssetDao {
           updateSingleChoiceProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.value.toString).toLong).execute
         }
 
-      case MultipleChoice  =>
+      case MultipleChoice | CheckBox =>
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
 
-      case Number | CheckBox =>
+      case Number | IntegerProp =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteNumberProperty(assetId, propertyId).execute
         } else if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertNumberProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.value.toString)).execute
+          insertNumberProperty(assetId, propertyId, propertyValues.head.value.toString.toDouble).execute
         } else {
-          updateNumberProperty(assetId, propertyId, Integer.valueOf(propertyValues.head.value.toString)).execute
+          updateNumberProperty(assetId, propertyId, propertyValues.head.value.toString.toDouble).execute
         }
 
       case ReadOnly | ReadOnlyNumber | ReadOnlyText =>
@@ -303,6 +299,13 @@ class MultiValueLinearAssetDao {
       v =>
         insertMultipleChoiceValue(assetId, propertyId, v).execute
     }
+  }
+
+  def getAssetRequiredProperties(typeId: Int): Map[String, String] ={
+    val requiredProperties =
+      sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
+
+    requiredProperties
   }
 
 }

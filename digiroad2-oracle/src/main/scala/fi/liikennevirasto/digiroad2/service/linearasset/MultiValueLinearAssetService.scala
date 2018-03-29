@@ -24,7 +24,6 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
   val roadName_FI = "osoite_suomeksi"
   val roadName_SE = "osoite_ruotsiksi"
 
-  //TODO check if make sense remove asset type
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(ids)
@@ -58,10 +57,10 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     dao.updateExpiration(assetId, expired = true, username)
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
     //Create New Asset
-    val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
+    val newAssetIdCreated = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
       measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
 
-    Some(newAssetIDcreate)
+    Some(newAssetIdCreated)
   }
 
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
@@ -69,6 +68,8 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
       return ids
 
     val assetTypeId = assetDao.getAssetTypeId(ids)
+    validateRequiredProperties(assetTypeId.head._2, value.asInstanceOf[MultiValue].value.properties)
+
     val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
     ids.flatMap { id =>
@@ -93,7 +94,9 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
       case MultiValue(multiTypeProps) =>
         val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
         val defaultValues = multiValueLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-        multiValueLinearAssetDao.updateAssetProperties(id, properties ++ defaultValues.toSet)
+        val props = properties ++ defaultValues.toSet
+//        validateRequiredProperties(typeId, props)
+        multiValueLinearAssetDao.updateAssetProperties(id, props)
       case _ => None
     }
     id
@@ -164,5 +167,16 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
       newExistingIdsToReturn ++ created
     }
+  }
+
+  private def validateRequiredProperties(typeId: Int, properties: Seq[MultiTypeProperty]): Unit = {
+    val mandatoryProperties: Map[String, String] = multiValueLinearAssetDao.getAssetRequiredProperties(typeId)
+    val nonEmptyMandatoryProperties: Seq[MultiTypeProperty] = properties.filter { property =>
+      mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
+    }
+    val missingProperties = mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
+
+    if (missingProperties.nonEmpty)
+      throw new MissingMandatoryPropertyException(missingProperties)
   }
 }

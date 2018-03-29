@@ -32,22 +32,23 @@
       var properties = _.find(value.properties, function(property){ return property.publicId === field.publicId; });
 
       var values = [];
+      var exists;
+
       if(!_.isObject(inputValue))
         values.push({ value : inputValue });
 
       else {
-        var exists = _.some(properties.values, function (val) { return val.value === inputValue.value; });
-        values = _.filter(properties.values, function (val) { return val.value !== inputValue.value; });
-
-        if (inputValue.checked) {
-          if (!exists)
-            values.push({value: inputValue.value});
+        if(properties) {
+            exists = _.some(properties.values, function (val) { return val.value === inputValue.value; });
+            values = _.filter(properties.values, function (val) { return val.value !== inputValue.value; });
         }
+        if(inputValue.checked && !exists)
+            values.push({value: inputValue.value});
         else{
-          if (exists)
             values = _.filter(values, function(val) { return  val.value !== inputValue.value; });
         }
       }
+
       if(properties) {
         properties.values = values;
       }
@@ -68,16 +69,15 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
-    me.editModeRender = function (field, currentValue, setValue, asset) {
-      var value = _.first(currentValue, function(values) { return values.value ; });
+    me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
+      var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
+      var required = _.isUndefined(field.required) ? '' : 'required';
+      var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
 
       var defaultValue = field.defaultValue;
       if(defaultValue && _.isEmpty(_value))
-          _value = defaultValue;
-
-      var disabled = _.isUndefined(value) ? 'disabled' : '';
-      var required = _.isUndefined(field.required) ? '' : 'required';
+        _value = defaultValue;
 
       var element = $('' +
         '<div class="form-group">' +
@@ -129,19 +129,15 @@
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
 
       var value = _.first(fieldValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '';
+      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
-
-      var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(_value))
-        _value = defaultValue;
 
       var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
 
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' +required+ ' class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
+        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' +required+ ' class="form-control" value=' + _value + '  id="' + className + '" '+ disabled+'>' +
         unit +
         '</div>');
 
@@ -195,9 +191,11 @@
         '</div>');
 
       element.find('input[type=text]').on('keyup', function(){
-        var isNumber = !isNaN($(this).val());
-        assetTypeConfiguration.selectedLinearAsset.setValidation(isNumber);
-        me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
+        var value = $(this).val();
+        var isNumber = !isNaN(value);
+        var isInteger = isNumber ? Number(value) === parseInt(value, 10) : false;
+        assetTypeConfiguration.selectedLinearAsset.setValidValues(isInteger);
+        me.inputElementHandler(assetTypeConfiguration, value, field, setValue, asset);
       });
       return element;
     };
@@ -209,50 +207,50 @@
     var className = assetTypeConfiguration.className;
 
     me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
-      fieldValue = _.map(fieldValue, function(curr) { return curr.value; });
+      fieldValue = _.first(fieldValue, function(curr) { return curr.value; });
       var template =  _.template(
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label +'</label>' +
-        '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>" fieldType ="<%- fieldType %>" <%- required %>><%= optionTags %> </select>' +
+        '  <select <%- disabled %> class="form-control <%- className %>" name ="<%- name %>" fieldType ="<%- fieldType %>" <%- required %>><option value="" selected disabled hidden></option><%= optionTags %> </select>' +
         '</div>');
 
       var required = _.isUndefined(field.required) ? '' : 'required';
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
-      var unit =  field.unit ? field.unit : '';
+
+      var selectedValue = _.isEmpty(fieldValue) ? (field.defaultValue ? field.defaultValue : '') : fieldValue.value;
 
       var optionTags = _.map(field.values, function(value) {
-        var selected = value.id === value ? " selected" : "";
-        return '<option value="' + value.id + '"' + selected + '>' + value.label + ' ' + unit + '</option>';
+        var selected = value.id.toString() === selectedValue ? " selected" : "";
+        return '<option value="' + value.id + '"' + selected + '>' + value.label + '</option>';
       }).join('');
-
 
       var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId, fieldType: field.type, required: required}));
 
-      var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(fieldValue))
-        fieldValue = String(defaultValue);
-
-      _.forEach(fieldValue, function(current){
-        element.find('option[value="'+current+'"]').attr('selected', true);
-      });
+      // var defaultValue = field.defaultValue;
+      // if(defaultValue && _.isEmpty(fieldValue))
+      //   fieldValue = String(defaultValue);
+      //
+      // // _.forEach(fieldValue, function(current){
+      // //   element.find('option[value="'+current+'"]').attr('selected', true);
+      // // });
 
       element.find('select').on('change', function(){
         me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
 
       return element;
-
     };
 
     me.viewModeRender = function (field, currentValue) {
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '-';
+      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
 
-      var defaultValue = field.defaultValue;
-      if(defaultValue && !value)
-        _value = defaultValue;
+      // var defaultValue = field.defaultValue;
+      // if(defaultValue && !value)
+      //   _value = defaultValue;
 
-      var printValue = _.find(field.values, function(value) { return value.id === Number(_value) ; }).label;
+      var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
+      var printValue = _.isUndefined(someValue) ? _value : someValue.label;
 
       return $('' +
         '<div class="form-group">' +
@@ -280,24 +278,29 @@
 
       var required = _.isUndefined(field.required) ? '' : 'required';
 
+        var defaultValue = field.defaultValue;
+        if(defaultValue && _.isEmpty(fieldValue))
+            fieldValue = defaultValue;
+
+      var checkedValue = _.isEmpty(fieldValue) ? (field.defaultValue ? String(field.defaultValue) : '') : fieldValue;
+
       var divCheckBox = _.map(field.values, function(value) {
+        var checked =  _.find(checkedValue, function (checkedValue) {return checkedValue === String(value.id);}) ? " checked" : "";
         return '' +
           '<div class = "checkbox">' +
-          ' <label>'+ value.label + '<input type = "checkbox" fieldType = "' + field.type + '" '+required+' class="multiChoice" name = "'+field.publicId+'" value="'+value.id+'" '+ disabled+'></label>' +
+          ' <label>'+ value.label + '<input type = "checkbox" fieldType = "' + field.type + '" '+required+' class="multiChoice" name = "'+field.publicId+'" value="'+value.id+'" '+ disabled+' ' + checked + '></label>' +
           '</div>';
       }).join('');
+
       var element =  $(template({divCheckBox: divCheckBox}));
 
-      var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(fieldValue))
-        fieldValue = defaultValue;
-
-      _.forEach(fieldValue, function(current){
-        element.find(':input[value="'+current+'"]').attr('checked', true);
-      });
+      //
+      //
+      // _.forEach(fieldValue, function(current){
+      //   element.find(':input[value="'+current+'"]').attr('checked', true);
+      // });
 
       element.find('input').on('click', function(){
-
         var val = {
           checked : $(this).prop('checked'),
           value : $(this).val()
@@ -315,15 +318,19 @@
       if(defaultValue && _.isEmpty(values))
         values = defaultValue;
 
-      var template = _.template('<div class="form-group">' +
-        '   <label class="control-label">' + field.label + '</label>' +
-        '   <p class="form-control-static">' +
-        ' <%= divCheckBox %>  ' +
-        '</p>' +
-        '</div>' );
+        var item = _.map(values, function (value) {
+            var label = _.find(field.values, function (fieldValue) {return fieldValue.id.toString() === value.toString();}).label;
+           return '<li>' + label + '</li>';
+        }).join('');
 
-      return $(template({divCheckBox : values}));
+        var template = _.template('<div class="form-group">' +
+            '   <label class="control-label">' + field.label + '</label>' +
+            '<ul class="choice-group">' +
+            ' <%= item %>  ' +
+            '</ul>' +
+            '</div>' );
 
+        return $(template({item: item}));
     };
   };
 
@@ -390,26 +397,25 @@
     me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
 
       var disabled = _.isEmpty(assetValue) ? 'disabled' : '';
-      var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(fieldValue))
-        fieldValue = String(defaultValue);
+      var defaultValue = _.isUndefined(field.defaultValue) ? 0 : field.defaultValue;
 
+      var value = _.isEmpty(fieldValue) ? defaultValue : parseInt(fieldValue[0].value);
       var required = _.isUndefined(field.required) ? '' : 'required';
+      var checked = !!parseInt(value) ? 'checked' : '';
 
       var element = $('' +
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label+'</label>' +
         '<div class="choice-group"> ' +
-        '<input type = "checkbox" fieldType = "' + field.type + '" '+required+' class="multiChoice" name = "' + field.publicId + '"'+ disabled+'>' +
+        '<input type = "checkbox" fieldType = "' + field.type + '" '+required+' class="multiChoice" name = "' + field.publicId + '" value=' +String(value)+' '+disabled+' '+checked+'>' +
         '</div>'+
         '</div>');
 
-
-      var initValue = !_.isEmpty(fieldValue) ? 1 :0;
-      element.find("input[type=checkbox]").attr('checked', !_.isEmpty(fieldValue));
-      element.find('input').attr('value', initValue);
-
-
+      // var checked = value === defaultValue ;
+      // element.find("input[type=checkbox]").attr('checked', !!parseInt(value));
+      // element.find('input').attr('value', value);
+      // if(assetValue != value)
+      //  me.inputElementHandler(assetTypeConfiguration, value, field, setValue, asset);
       element.find('input').on('click', function(){
         var val  = $(this).prop('checked') ? 1: 0;
         element.find('input').attr('value', val);
@@ -420,7 +426,7 @@
     };
 
     me.viewModeRender = function (field, currentValue) {
-      var curr = _.isEmpty(currentValue) ? 0 : currentValue[0].value;
+      var curr = _.isEmpty(currentValue) ? '' : currentValue[0].value;
 
       var template = _.template('<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
@@ -429,31 +435,32 @@
         '</p>' +
         '</div>' );
 
-      var values = _.find(field.values, function(value) {return value.id === Number(curr); }).label;
-      return $(template({divCheckBox : values}));
+      var someValue = _.find(field.values, function(value) {return String(value.id) === curr; });
+      var value = someValue ? someValue.label : '-';
+      return $(template({divCheckBox : value}));
     };
   };
 
-  var SaveButton = function(assetTypeConfiguration) {
+  var SaveButton = function(assetTypeConfiguration, formStructure) {
 
     var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
       assetTypeConfiguration.selectedLinearAsset.save();
     });
 
-    var updateStatus = function() {
+    var updateStatus = function(formStructure) {
      var saveButton = $('.save');
 
-     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing() && assetTypeConfiguration.selectedLinearAsset.hasValidValues())
+     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing(formStructure) && assetTypeConfiguration.selectedLinearAsset.hasValidValues())
        saveButton.prop('disabled',!assetTypeConfiguration.selectedLinearAsset.isSaveable());
      else{
-         saveButton.prop('disabled', true);
+       saveButton.prop('disabled', true);
        }
     };
 
-    updateStatus();
+    updateStatus(formStructure);
 
-    eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
-      updateStatus();
+    eventbus.on(events('valueChanged'), function() {
+      updateStatus(formStructure);
     });
 
     return {
@@ -523,7 +530,7 @@
       _assetTypeConfiguration = assetTypeConfiguration;
 
       eventbus.on(events('selected', 'cancelled'), function () {
-        rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset));
+        rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset, formStructure));
 
         if (assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
           me.bindEvents(rootElement, assetTypeConfiguration, 'a');
@@ -548,7 +555,7 @@
 
       eventbus.on('application:readOnly', function(readOnly){
         if(assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
-          rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset));
+          rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset, formStructure));
           rootElement.find('.read-only-title').toggle(readOnly);
           rootElement.find('.edit-mode-title').toggle(!readOnly);
           me.bindEvents(rootElement, assetTypeConfiguration);
@@ -580,7 +587,9 @@
         var fieldValues = [];
         var assetValues = selectedAsset.get()[0].value;
         if (assetValues) {
-          fieldValues = _.find(selectedAsset.get()[0].value.properties, function (property) { return property.publicId === field.publicId; }).values;
+          var existingProperty = _.find(selectedAsset.get()[0].value.properties, function (property) { return property.publicId === field.publicId; });
+          if(!_.isUndefined(existingProperty))
+            fieldValues = existingProperty.values;
         }
         var fieldType = _.find(availableFieldTypes, function (availableFieldType) { return availableFieldType.name === field.type; }).field;
         var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(field, fieldValues, assetValues, setAsset, asset);
@@ -590,12 +599,12 @@
       return fieldGroupElement;
     };
 
-    me.renderForm = function (selectedAsset) {
+    me.renderForm = function (selectedAsset, formStructure) {
       var assetTypeConfiguration = _assetTypeConfiguration;
       var isReadOnly =  validateAdministrativeClass(selectedAsset, assetTypeConfiguration.editConstrains) || applicationModel.isReadOnly();
       var asset = selectedAsset.get();
 
-      var created = createBody(selectedAsset);
+      var created = createBody(selectedAsset, formStructure);
       var body  = created.body;
 
       if(selectedAsset.isSplitOrSeparated()) {
@@ -666,7 +675,7 @@
       }
     }
 
-    function createBody(asset) {
+    function createBody(asset, formStructure) {
       var assetTypeConfiguration = _assetTypeConfiguration;
       var info = {
         modifiedBy :  asset.getModifiedBy() || '-',
@@ -723,12 +732,12 @@
           '</footer>'
       );
 
-      body.find('.linear-asset-header').append( new SaveButton(assetTypeConfiguration).element).append(new CancelButton(assetTypeConfiguration).element);
-      body.find('.linear-asset-footer').append( new VerificationButton(assetTypeConfiguration).element).append( new SaveButton(assetTypeConfiguration).element).append(new CancelButton(assetTypeConfiguration).element);
+      body.find('.linear-asset-header').append( new SaveButton(assetTypeConfiguration, formStructure).element).append(new CancelButton(assetTypeConfiguration).element);
+      body.find('.linear-asset-footer').append( new VerificationButton(assetTypeConfiguration).element).append( new SaveButton(assetTypeConfiguration, formStructure).element).append(new CancelButton(assetTypeConfiguration).element);
       return { body : body, separateButton: toSeparateButton};
     }
 
-    me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode) {
+    me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode, selectedLinearAsset) {
       var inputElement = rootELement.find('.form-editable-' + generateClassName(sideCode));
       var toggleElement = rootELement.find('.radio input.' + generateClassName(sideCode));
       var valueRemovers = {
@@ -739,8 +748,8 @@
         a: assetTypeConfiguration.selectedLinearAsset.setAValue,
         b: assetTypeConfiguration.selectedLinearAsset.setBValue
       };
-      var removeValue = valueRemovers[sideCode] || assetTypeConfiguration.selectedLinearAsset.removeValue;
-      var setValue = valueSetters[sideCode] ||  assetTypeConfiguration.selectedLinearAsset.setValue;
+      var removeValue = selectedLinearAsset ? selectedLinearAsset.removeValue : valueRemovers[sideCode] || assetTypeConfiguration.selectedLinearAsset.removeValue;
+      var setValue = selectedLinearAsset ? selectedLinearAsset.setValue : valueSetters[sideCode] ||  assetTypeConfiguration.selectedLinearAsset.setValue;
       toggleElement.on('change', function(event) {
         var disabled = $(event.currentTarget).val() === 'disabled';
         var input = inputElement.find('.form-control, .choice-group .multiChoice').not('.edit-control-group.choice-group');
