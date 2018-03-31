@@ -165,6 +165,22 @@ object Queries {
   def existsNumberProperty =
     "select id from number_property_value where asset_id = ? and property_id = ?"
 
+  def insertDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) = {
+    sqlu"""
+      insert into date_property_value(id, property_id, asset_id, date_time)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $dateTime)
+    """
+  }
+
+  def updateDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) =
+    sqlu"update date_property_value set date_time = $dateTime where asset_id = $assetId and property_id = $propertyId"
+
+  def deleteDateProperty(assetId: Long, propertyId: Long) =
+    sqlu"delete from date_property_value where asset_id = $assetId and property_id = $propertyId"
+
+  def existsDateProperty =
+    "select id from date_property_value where asset_id = ? and property_id = ?"
+
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)

@@ -339,17 +339,17 @@
     var me = this;
 
     me.editModeRender = function (field, fieldValue, assetValue, setValue, asset) {
-      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var someValue = _.first(fieldValue, function(values) { return values.value ; });
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = !_.isUndefined(field.required);
-
+      var value = _.isEmpty(someValue) ? (field.defaultValue ? field.defaultValue : '') : someValue.value;
 
       var addDatePickers = function (field, html) {
         var $dateElement = html.find('#' + field.publicId);
         dateutil.addDependentDatePicker($dateElement);
       };
 
-      var html = $('' +
+      var datePicker = $('' +
         '<div class="form-group">' +
         '<label class="control-label">' + field.label + '</label>' +
         '</div>');
@@ -360,19 +360,19 @@
                                                 .attr('placeholder',"pp.kk.vvvv")
                                                 .attr('disabled', disabled)
                                                 .attr('fieldType', field.type)
+                                                .attr('value', value )
                                                 .attr('name', field.publicId).on('keyup datechange', _.debounce(function (target) {
         // tab press
         if (target.keyCode === 9) {
           return;
         }
         var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
-        field.type = 'text';
         me.inputElementHandler(assetTypeConfiguration, propertyValue, field, setValue, asset);
       }, 500));
 
-      html.append(elements);
-      addDatePickers(field, html);
-      return html;
+      datePicker.append(elements);
+      addDatePickers(field, datePicker);
+      return datePicker;
     };
 
 

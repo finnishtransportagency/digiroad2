@@ -30,6 +30,7 @@ class MultiValueLinearAssetDao {
                when tp.value_fi is not null then tp.value_fi
                when np.value is not null then to_char(np.value)
                when e.value is not null then to_char(e.value)
+               when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
                else null
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -40,11 +41,12 @@ class MultiValueLinearAssetDao {
           join lrm_position pos on al.position_id = pos.id
           join property p on p.asset_type_id = a.asset_type_id
           join #$idTableName i on i.id = pos.link_id
-                      left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
-                      left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
-                      left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
-                      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
-                      left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
+          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
+          left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
+          left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and (p.property_type = 'date')
+          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
           #$filterExpired""".as[MultiValueAssetRow].list
@@ -67,6 +69,7 @@ class MultiValueLinearAssetDao {
                when tp.value_fi is not null then tp.value_fi
                when np.value is not null then to_char(np.value)
                when e.value is not null then to_char(e.value)
+               when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
                else null
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -81,6 +84,7 @@ class MultiValueLinearAssetDao {
                       left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
                       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
+                      left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and (p.property_type = 'date')
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.floating = 0 """.as[MultiValueAssetRow].list
     }
@@ -231,6 +235,18 @@ class MultiValueLinearAssetDao {
           updateNumberProperty(assetId, propertyId, propertyValues.head.value.toString.toDouble).execute
         }
 
+      case Date =>
+        val formatter = ISODateTimeFormat.dateOptionalTimeParser()
+
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty) {
+          deleteDateProperty(assetId, propertyId).execute
+        } else if (datePropertyValueDoesNotExist(assetId, propertyId)) {
+          insertDateProperty(assetId, propertyId, formatter.parseDateTime(propertyValues.head.value.toString)).execute
+        } else {
+          updateDateProperty(assetId, propertyId, formatter.parseDateTime(propertyValues.head.value.toString)).execute
+        }
+
       case ReadOnly | ReadOnlyNumber | ReadOnlyText =>
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
 
@@ -240,6 +256,10 @@ class MultiValueLinearAssetDao {
 
   private def numberPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
     Q.query[(Long, Long), Long](existsNumberProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def datePropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsDateProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
