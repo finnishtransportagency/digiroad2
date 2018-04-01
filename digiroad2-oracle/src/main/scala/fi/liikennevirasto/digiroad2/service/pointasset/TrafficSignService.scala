@@ -250,7 +250,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup]): Seq[PersistedTrafficSign] = {
     val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
     optGroupType match {
-      case Some(groupType) => assets.filter(asset => TrafficSignType.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.toInt).group == groupType)
+      case Some(groupType) => assets.filter(asset => TrafficSignTypeGroup.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.toInt) == groupType)
       case _ => assets
     }
   }

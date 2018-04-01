@@ -324,9 +324,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       service.create(IncomingTrafficSign(0.0, 20.0, 388553075, propertiesSpeedLimit, 1, None), testUser.username, roadLink)
       service.create(IncomingTrafficSign(0.0, 20.0, 388553075, propertiesMaximumRestrictions, 1, None), testUser.username, roadLink)
 
-      val assets = service.getTrafficSignByRadius(roadLink.geometry.last, 50, Some(SpeedLimits))
+      val assets = service.getTrafficSignByRadius(roadLink.geometry.last, 50, Some(TrafficSignTypeGroup.SpeedLimits))
 
-      assets.size should be(2)
+      assets.size should be(1)
 
       val asset = assets.head
       asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
