@@ -39,7 +39,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
     val trafficSingsByRadius = getGeometryPosition(first, last, speedLimitSideCode).flatMap { case (position, sideCode) =>
       trafficSignService.getTrafficSignByRadius(position, radiusDistance, Some(SpeedLimits))
-        .filter(_.validityDirection == sideCode)
+        .filter(sign => SideCode.apply(sign.validityDirection) == sideCode)
     }.filter(_.linkId == speedLimit.linkId)
 
     if (trafficSingsByRadius.nonEmpty) {
