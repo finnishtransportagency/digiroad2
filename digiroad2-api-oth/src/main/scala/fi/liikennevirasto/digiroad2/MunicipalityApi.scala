@@ -198,7 +198,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             x.linkId,
             x.startMeasure.toLong,
             x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
-            x.properties.find(_.name == "name").map { name => name.value }
+            x.properties.find(_.name == "name").map { name => name.value },
+            x.properties.find(_.name == "code").map { code => code.value }.get
           ))
       case TrafficLights.typeId =>
         parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
@@ -318,7 +319,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             x.linkId,
             x.startMeasure.toLong,
               x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
-              x.properties.find(_.name == "name").map { name => name.value }
+              x.properties.find(_.name == "name").map { name => name.value },
+              x.properties.find(_.name == "code").map { code => code.value }.get
           ))
       case TrafficLights.typeId =>
         parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
@@ -344,10 +346,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case PedestrianCrossings.typeId  => Seq(Map("value" -> "1" , "name" -> getAssetName(typeId)))
       case RailwayCrossings.typeId  => Seq(
         Map( "name" -> "name",
-          "value" ->  pointAsset.asInstanceOf[RailwayCrossing].name
-        ),
+          "value" ->  pointAsset.asInstanceOf[RailwayCrossing].name),
         Map("name" -> "safetyEquipment",
-          "value" -> pointAsset.asInstanceOf[RailwayCrossing].safetyEquipment)
+          "value" -> pointAsset.asInstanceOf[RailwayCrossing].safetyEquipment),
+        //TODO check if realy need to send this new field
+        Map("code" -> "code",
+          "value" -> pointAsset.asInstanceOf[RailwayCrossing].code)
       )
       case TrafficLights.typeId  => Seq(Map("value" -> "1" , "name" -> getAssetName(typeId)))
     }

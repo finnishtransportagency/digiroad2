@@ -120,7 +120,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
   when(mockObstacleService.getById(1)).thenReturn(Some(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, NormalLinkInterface)))
-  when(mockRailwayCrossingService.getById(1)).thenReturn(Some(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, None, NormalLinkInterface)))
+  when(mockRailwayCrossingService.getById(1)).thenReturn(Some(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
   when(mockTrafficLightService.getById(1)).thenReturn(Some(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 
   when(mockPedestrianCrossingService.create(any[IncomingPedestrianCrossing], any[String], any[RoadLink])).thenReturn(1L)
@@ -130,7 +130,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   when(mockPedestrianCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 0, 235, None, None, None, None, NormalLinkInterface)))
   when(mockObstacleService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(Obstacle(1, 1000, 0, 0, 0, false, 1L, 235, 2, None, None, None, None, NormalLinkInterface)))
-  when(mockRailwayCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(RailwayCrossing(1, 1000, 0, 0, 0, false, 1L, 235, 1, None, None, None, None, None, NormalLinkInterface)))
+  when(mockRailwayCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(RailwayCrossing(1, 1000, 0, 0, 0, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
   when(mockTrafficLightService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 
 
