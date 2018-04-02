@@ -98,6 +98,55 @@
       $('#work-list .work-list').html(unknownLimits);
     };
 
+    this.generateWorkList = function (listP, stateHistory) {
+      var searchbox = $('<div class="filter-box">' +
+        '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
+
+      var title = 'Tuntemattomien nopeusrajoitusten lista';
+      $('#work-list').html('' +
+        '<div style="overflow: auto;">' +
+        '<div class="page">' +
+        '<div class="content-box">' +
+        '<header id="work-list-header">' + title +
+        '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
+        '</header>' +
+        '<div class="work-list">' +
+        '</div>' +
+        '</div>' +
+        '</div>'
+      );
+
+      listP.then(function (limits) {
+        var element = $('#work-list .work-list');
+        if (limits.length == 1){
+          showFormBtnVisible = false;
+          me.createVerificationForm(_.first(limits));
+        } else {
+          if (stateHistory) {
+            showFormBtnVisible = false;
+            me.createVerificationForm(_.find(limits, function (limit) {
+              return limit.name === stateHistory.municipality;
+            }));
+            $('#' + stateHistory.position).scrollView().focus();
+          }
+          else {
+            var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
+            element.html($('<div class="municipality-list">').append(unknownLimits));
+
+            if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
+              searchbox.insertBefore('#tableData');
+
+            $('#searchBox').on('keyup', function (event) {
+              var currentInput = event.currentTarget.value;
+
+              var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
+              $('#tableData tbody').html(unknownLimits);
+            });
+          }
+        }
+      });
+    };
+
     $.fn.scrollView = function () {
       return this.each(function () {
         $('html, body').animate({
