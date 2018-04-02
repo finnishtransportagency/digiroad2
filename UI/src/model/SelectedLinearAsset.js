@@ -359,41 +359,21 @@
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
 
-    this.requiredPropertiesMissing = function (formStructure) {
-
-      var hasRequiredFields = _.filter(formStructure.fields, function(form) { return form.required; });
+    this.requiredPropertiesMissing = function () {
 
       return !_.every(selection, function(asset){
-        if((!asset.value || _.isEmpty(asset.value) || _.isEmpty(asset.value.properties)) && hasRequiredFields)
-          return false;
+        if(!asset.value || _.isEmpty(asset.value) || _.isEmpty(asset.value.properties))
+          return true;
 
-        if(asset.value || asset.value.properties && hasRequiredFields) {
-          var mapped = _.map(asset.value.properties, function(a) { return a.publicId; });
+        return _.every(asset.value.properties, function(property){
+          if(!property.required)
+            return true;
 
-          return _.every(hasRequiredFields, function (required) {
+          if(_.isEmpty(property.values))
+            return false;
 
-            var property = _.find(asset.value.properties, function(a) { return a.publicId === required.publicId; });
-            return _.contains(mapped, required.publicId) && _.some(property.values, function (value) {
-                  return value && !_.isEmpty(''+value.value);
-                });
-
-          });
-        }
-
-
-        // return !_.every(selection, function(asset){
-        //   if(!asset.value || _.isEmpty(asset.value) || _.isEmpty(asset.value.properties))
-        //     return true;
-        //
-        //   return _.every(asset.value.properties, function(property){
-        //     if(!property.required)
-        //       return true;
-        //
-        //     if(_.isEmpty(property.values))
-        //       return false;
-        //
-        //     return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
-        //   });
+          return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
+        });
       });
     };
 

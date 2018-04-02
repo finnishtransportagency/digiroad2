@@ -298,9 +298,7 @@
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
        massLimitation : asset.editControlLabels.massLimitations,
-       typeId : asset.typeId,
-       formFields: _.find(formFields, function(form) { return form.typeId ===  asset.typeId;}) ?
-                          _.find(formFields, function(form) { return form.typeId ===  asset.typeId;}).attributes : []
+       typeId : asset.typeId
      });
      return acc;
     }, {});

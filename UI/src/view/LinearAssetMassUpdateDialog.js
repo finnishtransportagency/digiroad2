@@ -42,17 +42,48 @@
       if (validator(value)) {
 
         if(!currentValue)
-          currentValue  = { properties: [] };
+          currentValue = value;
 
-        currentValue.properties.push({
-            publicId: value.properties[0].publicId,
-            value: value.properties[0].value
-        });
-        $('button.save').prop('disabled', '');
-      } else {
+        else{
+          var properties = _.find(currentValue.properties, function(property){ return property.publicId === value.properties[0].publicId; });
+          if (properties) 
+            properties.values = value.properties[0].values;
+
+          else{
+            currentValue.properties.push({
+              publicId: value.properties[0].publicId,
+              values: value.properties[0].values,
+              propertyType: value.properties[0].propertyType,
+              required: value.properties[0].required
+            });
+          }
+        }
+
+        if(requiredPropertiesMissing())
+          $('button.save').prop('disabled', '');
+        else
+          $('button.save').prop('disabled', 'disabled');
+      }
+
+      else {
         $('button.save').prop('disabled', 'disabled');
       }
     }
+
+    function requiredPropertiesMissing() {
+
+      return _.every(currentValue.properties, function(property){
+        if(!property.required)
+          return true;
+
+        if(_.isEmpty(property.values))
+          return false;
+
+        return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
+      });
+
+    }
+
 
 
     function removeValue() {
@@ -73,11 +104,11 @@
 
     var _renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({ count: count,  editElement: '' }));
-      container.find('.form-elements-container').html(formElements.renderForm(selectedLinearAsset, assetTypeConfiguration.formFields).find('.editable'));
-      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), assetTypeConfiguration, '',{
-        setValue: _setValue,
-        removeValue: removeValue
-      } );
+      var selectedMulti = _.clone(selectedLinearAsset);
+      selectedMulti.setValue =  _setValue;
+      selectedMulti.removeValue = removeValue;
+      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti).find('.editable'));
+      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), assetTypeConfiguration, '', selectedMulti);
     };
 
 

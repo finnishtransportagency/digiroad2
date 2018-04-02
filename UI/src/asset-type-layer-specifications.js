@@ -37,26 +37,6 @@
     trWidthLimits: 370
   };
 
-  root.formFields = [
-    //TODO remove this Only use for tests
-    {
-      typeId : assetType.pavedRoad,
-      attributes : {
-        fields: [
-          { publicId: 'date_1',  label:'date_1', type: 'date', weight: 7 },
-          { publicId: 'public_checkbox_1',  label:'checkbox_1', type: 'checkbox', values: [{label: 'checked1', id: 1 }, {label: 'not checked1', id: 0 }], defaultValue: 0, weight: 8 },
-          { publicId: 'public_text_1',  label:'text_1', type: 'text', weight: 1 , required: true},
-          { publicId: 'public_text_2',  label:'text_2', type: 'text', weight: 2, defaultValue: "texto de default"},
-          { publicId: 'public_number_1',  label:'number_1', type: 'number', weight: 3, unit: "cm", required: true, defaultValue: 1 },
-          { publicId: 'single_choice_1',  label:'single_choice_1', type: 'single_choice', values: [{id: 1, label: 'single_choice_enum_1'}, {id: 2, label: 'single_choice_enum_2'},
-            {id: 3, label: 'single_choice_enum_3'},  {id: 4, label: 'single_choice_enum_4'}, {id: 5, label: 'single_choice_enum_5'}], defaultValue : 3, weight: 4},
-
-          { publicId: 'multiple_choice_1',  label:'multiple_choice_1', type: 'multiple_choice', values: [{id: 1, label: "multiple_choice_11"}, {id: 2, label: "multiple_choice_12"},
-            {id: 3, label: "multiple_choice_13"}, {id: 4, label: "multiple_choice_14"},  {id: 99, label: "multiple_choice_199"}], required: true, weight: 5}
-        ]}
-    }
-  ];
-
   root.assetGroups = {
     trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
   };
@@ -247,7 +227,7 @@
       title: 'Kelirikko',
       newTitle: 'Uusi kelirikko',
       className: 'road-damaged-by-thaw',
-      isSeparable: false,
+      isSeparable: true,
       allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Kelirikko',
@@ -261,7 +241,18 @@
       form: new AssetFormFactory( {
           fields : [
             //TODO: On US:1142 fill the publicId with the one defined for the input
-            { publicId: '',  label:'rajoitus', type: 'number', weigth: 1 }
+            // { publicId: '',  label:'rajoitus', type: 'number', weigth: 1 }
+            // {label: 'singleChoice1', type: 'single_choice', publicId: "single_choice_1", values: [{id: 1, label: 'single_choice_enum_1'}, {id: 2, label: 'single_choice_enum_2'}, {id: 3, label: 'single_choice_enum_3'}, {id: 4, label: 'single_choice_enum_4'}, {id: 5, label: 'single_choice_enum_5'}, {id: 99, label: 'Ei tietoa'}], weight: 3},
+            // {label: "Text2", type: 'text', publicId: "public_text_2", weight: 2 },
+            // {label: "Text", type: 'text', publicId: "public_text_1", required: true, weight: 1 },
+            // {label: "TextArea", type: 'long_text', publicId: "public_text_area_1", weight: 2 },
+            {label: "multipleChoice", type: 'multiple_choice', publicId: "multiple_choice_1", values: [{id: 1, label: 'multiple_choice_11'}, {id: 2, label: 'multiple_choice_12'}, {id: 3, label: 'multiple_choice_13'}, {id: 4, label: 'multiple_choice_14'}, {id: 99, label: 'multiple_choice_199'}], weight: 4 , required: true},
+            // {label: "checkbox", type: 'checkbox', publicId: "public_checkbox_1", values: [{id: 1, label: 'checked1'}, {id: 0, label: 'not checked1'}], weight: 5 }
+            // {label: "Date", type: 'date', publicId: "public_data_1", weight: 8 }
+            // {label: "Integer", type: 'integer', publicId: "public_integer_1", weight: 8 },
+             {label: "Numeric", type: 'number', publicId: "public_number_1", weight: 9, defaultValue: 1}
+            // {label: "readOnlyNumber", type: 'read_only_number', publicId: "public_number_1", weight: 11 }
+            // {label: "readOnlyText", type: 'read_only_text', publicId: "public_number_1", weight: 10 }
           ]
         }),
       isVerifiable: false
@@ -345,7 +336,7 @@
       //       {id: 3, label: "multiple_choice_13"}, {id: 4, label: "multiple_choice_14"},  {id: 99, label: "multiple_choice_199"}], required: true, weight: 5}
       //   ]
       // },
-      form: new AssetFormFactory( _.find(formFields, function(form) { return form.typeId === assetType.pavedRoad;}).attributes )
+    //  form: new AssetFormFactory( _.find(formFields, function(form) { return form.typeId === assetType.pavedRoad;}).attributes )
     },
     {
       typeId: assetType.trafficVolume,
