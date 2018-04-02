@@ -152,7 +152,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       join municipality m on s.municipality_code = m.id
       """
 
-    var filterAdministrativeClass = administrativeClass match {
+    val filterAdministrativeClass = administrativeClass match {
       case Some(ac) if ac == Municipality => s" where s.administrative_class != ${State.value}"
       case Some(ac) if ac == State => s" where s.administrative_class = ${ac.value}"
       case _ => ""
@@ -174,7 +174,19 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     addCountsFor(limitsByMunicipality)
   }
 
-  /**
+  def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
+
+    val municipalitiesQuery =
+      s"""
+      select m.id, m.name_fi from municipality m
+      where m.id in (select MUNICIPALITY_CODE from UNKNOWN_SPEED_LIMIT uk where uk.administrative_class != ${State.value} )
+      """
+
+    Q.queryNA[(Long, String)](municipalitiesQuery).list
+  }
+
+
+    /**
     * Returns data for municipality validation. Used by OracleSpeedLimitDao.splitSpeedLimit.
     */
   def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)] = {

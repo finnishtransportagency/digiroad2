@@ -3,16 +3,29 @@
     MunicipalityWorkList.call(this);
     var me = this;
     this.hrefDir = "#work-list/speedLimit/municipality";
+    this.title = 'Tuntemattomien nopeusrajoitusten lista';
     var municipalityList;
     var showFormBtnVisible = true;
+    var municipalityId;
+    var municipalityName;
+
 
     this.bindEvents = function () {
+      eventbus.on('municipalities:select', function(listP) {
+        $('.container').hide();
+        $('#work-list').show();
+        $('body').addClass('scrollable');
+        municipalityList = listP;
+        me.generateWorkList(listP);
+      });
+
+
       eventbus.on('speedLimitMunicipality:select', function(listP, stateHistory) {
         $('.container').hide();
         $('#work-list').show();
         $('body').addClass('scrollable');
         municipalityList = listP;
-        me.generateWorkList(listP, stateHistory);
+        me.generateSpeedLimitWorkList(listP, stateHistory);
       });
     };
 
@@ -21,7 +34,7 @@
       $('.filter-box').hide();
       if (showFormBtnVisible)
         $('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
-          me.generateWorkList(municipalityList);
+          me.generateWorkList(municipalityList, title);
         }));
       me.reloadForm(municipality);
     };
@@ -38,14 +51,15 @@
         });
       };
       var idLink = function (municipality) {
-        return $('<a class="work-list-item"/>').attr('href', me.hrefDir).html(municipality.name).click(function(){
+        return $('<a class="work-list-item"/>').attr('href', me.hrefDir +'/'+municipality.id).html(municipality.name).click(function(){
           me.createVerificationForm(municipality);
         });
+
       };
       return $('<table id="tableData"/>').append(tableContentRows(municipalityValues));
     };
 
-    this.workListItemTable = function(layerName, workListItems, municipalityName) {
+    this.workListItemTable = function(workListItems, layerName, municipalityId) {
       var municipalityHeader = function(municipalityName, totalCount) {
         var countString = totalCount && layerName !== 'speedLimit' ? ' (yhteensä ' + totalCount + ' kpl)' : '';
         return $('<h2/>').html(municipalityName + countString);
@@ -59,15 +73,15 @@
         });
       };
       var idLink = function(id, index) {
-        var link = '#' + layerName + '/' + id;
-        return $('<a class="work-list-item"/>').attr('href', link + '/' +municipalityName +'/'+ index).attr('id', index).html(link);
+        var link = '#' + layerName + '/' + id  ;
+        return $('<a class="work-list-item"/>').attr('href', link + '/municipality/' +municipalityId +'/'+ index).attr('id', index).html(link);
       };
       var floatingValidator = function() {
         return $('<span class="work-list-item"> &nbsp; *</span>');
       };
       var assetLink = function(asset, index) {
         var link = '#' + layerName + '/' + asset.id;
-        var workListItem = $('<a class="work-list-item"/>').attr('href', link + '/' +municipalityName +'/'+ index).attr('id', index).html(link);
+        var workListItem = $('<a class="work-list-item"/>').attr('href', link + '/' +municipalityId +'/'+ index).attr('id', index).html(link);
         if(asset.floatingReason === 1) //floating reason equal to RoadOwnerChanged
           workListItem.append(floatingValidator);
         return workListItem;
@@ -91,17 +105,17 @@
       $('#formTable').remove();
 
       var unknownSpeedLimits = _.clone(municipality);
+      municipalityId = unknownSpeedLimits.id;
+      municipalityName = unknownSpeedLimits.name;
+
       delete unknownSpeedLimits.id;
       delete unknownSpeedLimits.name;
 
-      var unknownLimits = _.map(unknownSpeedLimits, _.partial(me.workListItemTable, 'speedLimit'));
+      var unknownLimits = _.map(unknownSpeedLimits, _.partial(me.workListItemTable, _,  'speedLimit', municipalityId));
       $('#work-list .work-list').html(unknownLimits);
     };
 
-    this.generateWorkList = function (listP, stateHistory) {
-      var searchbox = $('<div class="filter-box">' +
-        '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
-
+    this.generateSpeedLimitWorkList = function (listP, stateHistory) {
       var title = 'Tuntemattomien nopeusrajoitusten lista';
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
@@ -118,30 +132,17 @@
 
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
-        if (limits.length == 1){
+        if(stateHistory) {
           showFormBtnVisible = false;
-          me.createVerificationForm(_.first(limits));
-        } else {
-          if (stateHistory) {
-            showFormBtnVisible = false;
-            me.createVerificationForm(_.find(limits, function (limit) {
-              return limit.name === stateHistory.municipality;
-            }));
-            $('#' + stateHistory.position).scrollView().focus();
-          }
-          else {
-            var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
-            element.html($('<div class="municipality-list">').append(unknownLimits));
-
-            if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
-              searchbox.insertBefore('#tableData');
-
-            $('#searchBox').on('keyup', function (event) {
-              var currentInput = event.currentTarget.value;
-
-              var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
-              $('#tableData tbody').html(unknownLimits);
-            });
+          me.createVerificationForm(_.find(limits, function (limit) {
+            return limit.id === stateHistory.municipality;
+          }));
+          $('#' + stateHistory.position).scrollView().focus();
+        }
+        else {
+          if (limits.length === 1){
+            showFormBtnVisible = true;
+            me.createVerificationForm(_.first(limits));
           }
         }
       });
