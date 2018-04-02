@@ -27,22 +27,9 @@
 
     var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"/>');
 
-    this.predicate = function () {
-      return assetConfig.readOnly;
-    };
-
     function show() {
       me.getShow();
     }
-
-    // function show() {
-    //   if (!assetConfig.authorizationPolicy.editModeAccess()) {
-    //     me.editModeToggle.reset();
-    //   } else {
-    //     me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
-    //   }
-    //   element.show();
-    // }
 
     function hide() {
       element.hide();

@@ -313,7 +313,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        readOnly: true,
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         isVerifiable: true
       },
       {
@@ -504,7 +504,7 @@
         label: new TRSpeedLimitAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         style: new TRSpeedLimitStyle(),
-        readOnly: true
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy()
       }
     ];
 
@@ -644,7 +644,7 @@
           title: 'Rajoitus',
           showUnit: true
         },
-        authorizationPolicy: new TrPointLimitAuthorizationPolicy(),
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new HeightLimitLabel(Math.pow(5, 2))
       },
@@ -663,7 +663,7 @@
           title: 'Rajoitus',
           showUnit: true
         },
-        authorizationPolicy: new TrPointLimitAuthorizationPolicy(),
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new WidthLimitLabel(Math.pow(5, 2))
       }
@@ -684,7 +684,7 @@
           title: 'Painorajoitus',
           showUnit: true
         },
-        authorizationPolicy: new TrPointLimitAuthorizationPolicy(),
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new WeightLimitLabel(),
         propertyData: [
