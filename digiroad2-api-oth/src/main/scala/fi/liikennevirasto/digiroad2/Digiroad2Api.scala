@@ -1077,7 +1077,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipality = params.get("id").getOrElse(halt(BadRequest("Missing municipality id"))).toInt
     getUnknowns(Some(Municipality), Some(municipality)).map {
       unknowns =>
-        Map( "id" -> unknowns._2.get("municipalityId"),
+        Map( "id" -> municipality,
              "name" -> unknowns._1,
               unknowns._1 -> unknowns._2
         )

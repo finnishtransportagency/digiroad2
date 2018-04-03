@@ -21,6 +21,7 @@ import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParamet
 class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
   def MassQueryThreshold = 500
+  case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
@@ -47,6 +48,15 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       val linkSource = r.nextInt()
 
       PersistedSpeedLimit(id, linkId, SideCode(sideCode), value, startMeasure, endMeasure, modifiedBy, modifiedDateTime, createdBy, createdDateTime, vvhTimeStamp, geomModifiedDate, linkSource = LinkGeomSource(linkSource))
+    }
+  }
+
+  implicit val getUnknown = new GetResult[UnknownLimit] {
+    def apply(r: PositionedResult) = {
+      val linkId = r.nextLong()
+      val municipality = r.nextString()
+      val administrativeClass = AdministrativeClass(r.nextInt()).toString
+      UnknownLimit (linkId, municipality, administrativeClass)
     }
   }
 
@@ -142,7 +152,6 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Returns unknown speed limits by municipality. Used by SpeedLimitService.getUnknown.
     */
   def getUnknownSpeedLimits(municipalities: Option[Set[Int]], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
-    case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val optionalMunicipalities = municipalities.map(_.mkString(","))
     val unknownSpeedLimitQuery =
@@ -159,12 +168,11 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
 
     val sql = optionalMunicipalities match {
-      case Some(m) => unknownSpeedLimitQuery + s" and municipality_code in ($m) " + filterAdministrativeClass
+      case Some(m) => unknownSpeedLimitQuery + filterAdministrativeClass + s" and s.municipality_code in ($m) "
       case _ => unknownSpeedLimitQuery  + filterAdministrativeClass
     }
 
-    val limitsByMunicipality = Q.queryNA[(Long, String, Int)](sql).list
-      .map(toUnknownLimit)
+    val limitsByMunicipality = Q.queryNA[UnknownLimit](sql).list
       .groupBy(_.municipality)
       .mapValues {
         _.groupBy(_.administrativeClass)
@@ -510,10 +518,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       val municipalityCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Municipality.value).map(_._3).getOrElse(0)
       val stateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == State.value).map(_._3).getOrElse(0)
       val privateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Private.value).map(_._3).getOrElse(0)
-      val municipalityId = unknownSpeedLimitCounts.find(x => x._1 == municipality).map(_._4).getOrElse(0)
 
       val valuesWithCounts = values +
-        ("municipalityId" ->  municipalityId) +
         ("municipalityCount" -> municipalityCount) +
         ("stateCount" -> stateCount) +
         ("privateCount" -> privateCount) +
