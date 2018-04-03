@@ -18,19 +18,6 @@ root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, appli
         me.enumeratedPropertyValues = event.enumeratedPropertyValues;
     });
 
-    console.log("BindEvent called");
-
-    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
-      console.log("on assetEnumeratedPropertyValues:fetched");
-      console.log(typeId);
-      console.log(event.assetType);
-      console.log(event.enumeratedPropertyValues);
-      console.log(event);
-      if(event.assetType == typeId) {
-        enumeratedPropertyValues = event.enumeratedPropertyValues;
-      }
-    });
-
     backend.getAssetEnumeratedPropertyValues(typeId);
 
     eventbus.on('application:readOnly', function(readOnly) {
