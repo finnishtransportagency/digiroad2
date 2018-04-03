@@ -18,7 +18,7 @@
     ]
   }];
 
-  function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
+  function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
 
     console.log("BindEvent called");
@@ -57,13 +57,14 @@
             rootElement.find('button.delete').hide();
           }
         } else {
-          rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+          rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+          rootElement.find('button#cancel-button').prop('disabled', false);
         }
       }
     });
 
     eventbus.on(layerName + ':changed', function() {
-      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
@@ -96,7 +97,9 @@
 
     rootElement.find('input[type="text"]').on('input change', function (event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({name: eventTarget.val()});
+      var obj = {};
+      obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
+      selectedAsset.set(obj);
     });
 
     rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
@@ -369,6 +372,11 @@
         '    </div>';
     } else if (asset.safetyEquipment) {
       return '' +
+        '    <div class="form-group editable form-railway-crossing">' +
+        '        <label class="control-label">' + 'Tasoristeystunnus' + '</label>' +
+        '        <p class="form-control-static">' + (asset.code || '–') + '</p>' +
+        '        <input type="text" class="form-control" name="code" value="' + (asset.code || '')  + '">' +
+        '    </div>' +
         '    <div class="form-group editable form-railway-crossing">' +
         '      <label class="control-label">Turvavarustus</label>' +
         '      <p class="form-control-static">' + safetyEquipments[asset.safetyEquipment] + '</p>' +

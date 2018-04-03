@@ -574,6 +574,10 @@
           singleFloatingAssetLabel: 'tasoristeyksen',
           manyFloatingAssetsLabel: 'tasoristeykset',
           newAssetLabel: 'tasoristeys'
+        },
+        saveCondition: function(selectedAsset) {
+            var selected = selectedAsset .get();
+          return selected.code ? selected.code != '' : false;
         }
       },
       {

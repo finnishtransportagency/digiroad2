@@ -32,7 +32,7 @@ object OracleRailwayCrossingDao {
     val query =
       s"""
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value,
-        tpv.value_fi, tpvCode.value_cfi a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source
+        tpv.value_fi as name, tpvCode.value_fi as code, a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -117,6 +117,7 @@ object OracleRailwayCrossingDao {
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
     updateSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
     deleteTextProperty(id, getNamePropertyId).execute
+    deleteTextProperty(id, getCodePropertyId).execute
     railwayCrossing.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
     insertTextProperty(id, getCodePropertyId, railwayCrossing.code).execute
 
