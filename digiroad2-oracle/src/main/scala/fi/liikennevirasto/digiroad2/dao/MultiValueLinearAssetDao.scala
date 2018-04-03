@@ -25,7 +25,7 @@ class MultiValueLinearAssetDao {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
-        select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type,
+        select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
                when tp.value_fi is not null then tp.value_fi
                when np.value is not null then to_char(np.value)
@@ -64,7 +64,7 @@ class MultiValueLinearAssetDao {
   def fetchMultiValueLinearAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
     val assets = MassQuery.withIds(ids) { idTableName =>
       sql"""
-        select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type,
+        select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
                when tp.value_fi is not null then tp.value_fi
                when np.value is not null then to_char(np.value)
@@ -118,6 +118,7 @@ class MultiValueLinearAssetDao {
       MultiTypeProperty(
         publicId = row.value.publicId,
         propertyType = row.value.propertyType,
+        required = row.value.required,
         values = rows.flatMap(assetRow =>
           assetRow.value.propertyValue match {
             case Some(value) => Some(MultiTypePropertyValue(value))
@@ -139,10 +140,12 @@ class MultiValueLinearAssetDao {
 
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
+      val propertyRequired = r.nextBoolean()
       val propertyValue = r.nextObjectOption()
       val value = MultiValuePropertyRow(
         publicId = propertyPublicId,
         propertyType = propertyType,
+        required = propertyRequired,
         propertyValue = propertyValue)
       val createdBy = r.nextStringOption()
       val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -166,7 +169,7 @@ class MultiValueLinearAssetDao {
   def propertyDefaultValues(assetTypeId: Long): List[MultiTypeProperty] = {
     implicit val getDefaultValue = new GetResult[MultiTypeProperty] {
       def apply(r: PositionedResult) = {
-        MultiTypeProperty(publicId = r.nextString, propertyType = r.nextString(), values = List(MultiTypePropertyValue(r.nextString)))
+        MultiTypeProperty(publicId = r.nextString, propertyType = r.nextString(), required = r.nextBoolean(), values = List(MultiTypePropertyValue(r.nextString)))
       }
     }
     sql"""

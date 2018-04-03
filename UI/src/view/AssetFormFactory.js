@@ -453,20 +453,18 @@
       assetTypeConfiguration.selectedLinearAsset.save();
     });
 
-    var updateStatus = function() {
-     var saveButton = $('.save');
-
+    var updateStatus = function(element) {
      if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing() && assetTypeConfiguration.selectedLinearAsset.hasValidValues())
-       saveButton.prop('disabled',!assetTypeConfiguration.selectedLinearAsset.isSaveable());
+       element.prop('disabled',!assetTypeConfiguration.selectedLinearAsset.isSaveable());
      else{
-       saveButton.prop('disabled', true);
+       element.prop('disabled', true);
        }
     };
 
-    updateStatus();
+    updateStatus(element);
 
     eventbus.on(events('valueChanged'), function() {
-      updateStatus();
+      updateStatus(element);
     });
 
     return {

@@ -173,7 +173,7 @@ abstract class AbstractProperty {
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue]) extends AbstractProperty
-case class MultiTypeProperty(publicId: String, propertyType: String, values: Seq[MultiTypePropertyValue])
+case class MultiTypeProperty(publicId: String, propertyType: String,  required: Boolean = false, values: Seq[MultiTypePropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
 case class MultiTypePropertyValue(value: Any)
