@@ -49,28 +49,28 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
   val multiTypePropSeq = MultiAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", Seq(MultiTypePropertyValue("Dummy Text"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!"))),
-      MultiTypeProperty("mittarajoitus", "number", Seq(MultiTypePropertyValue("1000")))
+      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text"))),
+      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!"))),
+      MultiTypeProperty("mittarajoitus", "number", required = false, Seq(MultiTypePropertyValue("1000")))
     ))
   val multiTypePropSeq1 =MultiAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", Seq(MultiTypePropertyValue("Dummy Text One"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text One"))),
+      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
   val multiTypePropSeq2 =MultiAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", Seq(MultiTypePropertyValue("Dummy Text Two"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text Two"))),
+      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
   val multiTypePropSeq3 =MultiAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", Seq(MultiTypePropertyValue("Dummy Text Five"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text Five"))),
+      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
   val multiTypePropSeq4 =MultiAssetValue(
     Seq(
-      MultiTypeProperty("mittarajoitus", "number", Seq(MultiTypePropertyValue("1000")))
+      MultiTypeProperty("mittarajoitus", "number", required = false, Seq(MultiTypePropertyValue("1000")))
     ))
 
   val propertyData = MultiValue(multiTypePropSeq)
