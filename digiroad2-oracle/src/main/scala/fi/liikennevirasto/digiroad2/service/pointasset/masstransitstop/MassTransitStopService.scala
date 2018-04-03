@@ -26,7 +26,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
 case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                                          validityDirection: Option[Int], bearing: Option[Int],
                                          validityPeriod: Option[String], floating: Boolean,
-                                         propertyData: Seq[Property]) extends FloatingAsset
+                                         propertyData: Seq[Property], municipalityCode: Int) extends FloatingAsset
 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
@@ -494,7 +494,7 @@ trait MassTransitStopService extends PointAssetOperations {
     (MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
-      propertyData = persistedStop.propertyData), floatingReason)
+      propertyData = persistedStop.propertyData, municipalityCode = persistedStop.municipalityCode), floatingReason)
   }
 
   private def eventBusMassTransitStop(stop: PersistedMassTransitStop, municipalityName: String) = {

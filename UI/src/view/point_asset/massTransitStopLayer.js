@@ -419,7 +419,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var closeAsset = function() {
     deselectAsset(selectedAsset);
-    eventbus.trigger('application:controledTR',false);
+    eventbus.trigger('application:controlledTR',false);
   };
 
   var destroyAsset = function(backendAsset) {

@@ -202,7 +202,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/user/roles") {
-    userProvider.getCurrentUser().configuration.roles
+    Map(
+      "roles" -> userProvider.getCurrentUser().configuration.roles,
+      "municipalities" -> userProvider.getCurrentUser().configuration.authorizedMunicipalities)
   }
 
   get("/massTransitStops/:nationalId") {
@@ -222,7 +224,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "bearing" -> stop.bearing,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
-        "propertyData" -> stop.propertyData)
+        "propertyData" -> stop.propertyData,
+        "municipalityCode" -> stop.municipalityCode)
     }
 
     if (massTransitStopReturned._2) {

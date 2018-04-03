@@ -140,7 +140,7 @@
         poistaSelected = false;
         var container = $("#feature-attributes").empty();
         var header = busStopHeader();
-        readOnly = controlledByTR();
+        readOnly = authorizationPolicy.formEditModeAccess();
         var wrapper;
         if(readOnly){
           wrapper = $('<div />').addClass('wrapper read-only');
@@ -345,7 +345,7 @@
           return choice.publicId === property.publicId;
         }).values;
 
-        if(!authorizationPolicy.editModeAccess() && property.publicId == 'tietojen_yllapitaja'){
+        if(authorizationPolicy.reduceChoices(property)){
           enumValues = _.filter(enumValues, function(value){
             return value.propertyValue != '2';
           });
@@ -763,10 +763,8 @@
           readOnly = true;
         }
 
-        if(!isBusStopExpired && isTRMassTransitStop && !authorizationPolicy.editModeAccess()){
+        if(authorizationPolicy.isActiveTrStopWithoutPermission(isBusStopExpired, isTRMassTransitStop))
           readOnly = true;
-        }
-
       }
 
       function streetViewTemplates(longi,lati,heading) {
@@ -798,32 +796,16 @@
         }
       };
 
-      var controlledByTR = function () {
-        if(applicationModel.isReadOnly()){
-          return true;
-        }
-
-        var properties = selectedMassTransitStopModel.getProperties();
-
-        var owner = _.find(properties, function(property) {
-          return property.publicId === "tietojen_yllapitaja"; });
-
-        var condition = typeof owner != 'undefined' &&
-          typeof owner.values != 'undefined' &&  owner.values > 0 && _.contains(_.map(owner.values, function (value) {
-          return value.propertyValue;
-        }), "2");
-
-         if(authorizationPolicy.editModeAccess() === true && condition) {
-           eventbus.trigger('application:controledTR',condition);
-           return false;
-         } else {
-           eventbus.trigger('application:controledTR',false);
-           return condition;
-         }
-      };
-
       var isReadOnlyEquipment = function(property) {
-        return property.publicId === 'aikataulu' || property.publicId === 'roska_astia' || property.publicId === 'pyorateline' || property.publicId === 'valaistus' || property.publicId === 'penkki';
+        var readOnlyEquipment = [
+          'aikataulu',
+          'roska_astia',
+          'pyorateline',
+          'valaistus',
+          'penkki'];
+
+        var publicId = property.publicId;
+        return _.contains(readOnlyEquipment, publicId);
       };
 
       eventbus.on('asset:modified', function(){
@@ -841,7 +823,7 @@
 
       eventbus.on('application:readOnly', function(data) {
         if(selectedMassTransitStopModel.getId() !== undefined) {
-          readOnly = controlledByTR();
+          readOnly = authorizationPolicy.formEditModeAccess();
         } else {
           readOnly = data;
         }
