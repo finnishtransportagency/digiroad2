@@ -151,9 +151,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Returns unknown speed limits by municipality. Used by SpeedLimitService.getUnknown.
     */
-  def getUnknownSpeedLimits(municipalities: Option[Set[Int]], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
+  def getUnknownSpeedLimits(municipalities: Set[Int], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
-    val optionalMunicipalities = municipalities.map(_.mkString(","))
     val unknownSpeedLimitQuery =
       """
       select s.link_id, m.name_fi, s.administrative_class
@@ -167,9 +166,10 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       case _ => ""
     }
 
-    val sql = optionalMunicipalities match {
-      case Some(m) => unknownSpeedLimitQuery + filterAdministrativeClass + s" and s.municipality_code in ($m) "
-      case _ => unknownSpeedLimitQuery  + filterAdministrativeClass
+    val sql = if (municipalities.isEmpty) {
+      unknownSpeedLimitQuery + filterAdministrativeClass
+    } else {
+      unknownSpeedLimitQuery + filterAdministrativeClass + s" and s.municipality_code in (${municipalities.mkString(",")}) "
     }
 
     val limitsByMunicipality = Q.queryNA[UnknownLimit](sql).list

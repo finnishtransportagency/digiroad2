@@ -1101,12 +1101,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
 
     val municipalities = user.isOperator() match {
-        case true => None
-        case false => Some(user.configuration.authorizedMunicipalities)
+        case true => Set.empty[Int]
+        case false => user.configuration.authorizedMunicipalities
     }
 
     val includedMunicipalities = municipality match {
-      case Some(municipalityId) => Some(Set(municipalityId))
+      case Some(municipalityId) => Set(municipalityId)
       case _ => municipalities
     }
 
