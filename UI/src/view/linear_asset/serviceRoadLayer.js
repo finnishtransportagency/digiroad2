@@ -5,17 +5,17 @@
         var style = params.style,
             collection = params.collection;
 
-        var isResponsibilityStyle = true;
+        var isResponsibilityTypeStyle = true;
 
         this.getLayerStyle = function(feature)  {
-            if(isResponsibilityStyle)
+            if(isResponsibilityTypeStyle)
                 return style.browsingStyleProvider.getStyle(feature, {zoomLevel: me.uiState.zoomLevel});
             else
                 return style.rightOfUseStyle.getStyle(feature, {zoomLevel: me.uiState.zoomLevel});
         };
 
         eventbus.on('serviceRoad:responsibility', function(value) {
-            isResponsibilityStyle = value;
+          isResponsibilityTypeStyle = value;
             eventbus.trigger('maintenanceRoads:fetched', collection.getAll());
         });
 
