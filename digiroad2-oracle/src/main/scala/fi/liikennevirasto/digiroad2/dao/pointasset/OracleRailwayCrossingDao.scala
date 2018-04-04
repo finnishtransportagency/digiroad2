@@ -108,6 +108,7 @@ object OracleRailwayCrossingDao {
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
     insertSingleChoiceProperty(id, getSafetyEquipmentPropertyId, asset.safetyEquipment).execute
     asset.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
+    insertTextProperty(id, getCodePropertyId, asset.code).execute
     id
   }
 

@@ -577,7 +577,7 @@
         },
         saveCondition: function(selectedAsset) {
             var selected = selectedAsset .get();
-          return selected.code ? selected.code != '' : false;
+          return selected.code ? selected.code !== '' : false;
         }
       },
       {
