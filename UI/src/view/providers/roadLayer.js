@@ -43,7 +43,7 @@ var RoadStyles = function() {
           return enabled &&ol.events.condition.singleClick(events);
         },
         style : function(feature) {
-           return roadStyle.provider().selection.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+           return roadStyle.provider().selection.getStyle(feature, {zoomLevel: Math.round(uiState.zoomLevel)});
         }
     });
     map.addInteraction(selectControl);
@@ -108,7 +108,7 @@ var RoadStyles = function() {
     }
 
     function vectorLayerStyle(feature) {
-      return getStyleProvider().getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      return getStyleProvider().getStyle(feature, {zoomLevel: Math.round(uiState.zoomLevel)});
     }
 
     function toggleRoadTypeWithSpecifiedStyle(){

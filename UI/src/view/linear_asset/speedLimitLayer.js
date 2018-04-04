@@ -30,7 +30,7 @@ window.SpeedLimitLayer = function(params) {
   var vectorLayerHistory = new ol.layer.Vector({
     source : vectorSourceHistory,
     style : function(feature) {
-      return style.historyStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+      return style.historyStyle.getStyle( feature, {zoomLevel: Math.round(uiState.zoomLevel)});
     }
   });
 
@@ -41,7 +41,7 @@ window.SpeedLimitLayer = function(params) {
   var vectorLayer = new ol.layer.Vector({
     source : vectorSource,
     style : function(feature) {
-      return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+      return style.browsingStyle.getStyle( feature, {zoomLevel: Math.round(uiState.zoomLevel)});
     }
   });
   vectorLayer.set('name', layerName);
@@ -225,7 +225,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
-    style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
+    style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: Math.round(uiState.zoomLevel)}); },
     onInteractionEnd: onInteractionEnd,
     onSelect: OnSelect,
     filterGeometry: function(feature) { return true; }

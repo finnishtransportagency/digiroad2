@@ -14,7 +14,7 @@
     var vectorLayer = new ol.layer.Vector({
       source : vectorSource,
       style : function(feature) {
-        return style.browsingStyleProviderReadOnly.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+        return style.browsingStyleProviderReadOnly.getStyle(feature, {zoomLevel: Math.round(uiState.zoomLevel)});
       }
     });
 
