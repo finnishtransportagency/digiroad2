@@ -385,8 +385,8 @@
       return $.getJSON('api/speedlimits/unknown/state');
     };
 
-    this.getUnknownLimitsMunicipality = function() {
-      return $.getJSON('api/speedlimits/unknown/municipality');
+    this.getUnknownLimitsMunicipality = function(id) {
+      return $.getJSON('api/speedlimits/unknown/municipality?id='+id);
     };
 
     this.getFloatinPedestrianCrossings = function() {
@@ -429,6 +429,10 @@
 
     this.getUnverifiedMunicipalities = function() {
       return $.getJSON('api/municipalities/unverified');
+    };
+
+    this.getMunicipalitiesWithUnknowns = function(){
+      return $.getJSON('api/speedLimits/municipalities');
     };
 
     this.getAssetTypesByMunicipality = function(municipalityCode) {

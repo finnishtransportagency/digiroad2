@@ -1069,26 +1069,47 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/speedlimits/unknown") (getUnknowns(None))
+  get("/speedlimits/unknown") (getUnknowns(None, None))
 
-  get("/speedlimits/unknown/state") (getUnknowns(Some(State)))
+  get("/speedlimits/unknown/state") (getUnknowns(Some(State), None))
 
   get("/speedlimits/unknown/municipality") {
-    getUnknowns(Some(Municipality)).map {
+    val municipality = params.get("id").getOrElse(halt(BadRequest("Missing municipality id"))).toInt
+    getUnknowns(Some(Municipality), Some(municipality)).map {
       unknowns =>
-        Map( "id" -> unknowns._2.get("municipalityId"),
+        Map( "id" -> municipality,
              "name" -> unknowns._1,
               unknowns._1 -> unknowns._2
         )
     }
   }
 
-  def getUnknowns(administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] ={
+  get("/speedLimits/municipalities"){
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
+
+    speedLimitService.getMunicipalitiesWithUnknown(Some(Municipality)).sortBy(_._2).map { municipality =>
+      Map("id" -> municipality._1,
+        "name" -> municipality._2)
+    }
+  }
+
+  def getUnknowns(administrativeClass: Option[AdministrativeClass], municipality: Option[Int]): Map[String, Map[String, Any]] ={
+    val user = userProvider.getCurrentUser()
+
+    val municipalities = user.isOperator() match {
+        case true => Set.empty[Int]
+        case false => user.configuration.authorizedMunicipalities
+    }
+
+    val includedMunicipalities = municipality match {
+      case Some(municipalityId) => Set(municipalityId)
+      case _ => municipalities
+    }
+
     speedLimitService.getUnknown(includedMunicipalities, administrativeClass)
   }
 

@@ -65,7 +65,7 @@
         'asset/:id': 'massTransitStop',
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
-        'speedLimit/:linkId(/:municipalityName/:position)': 'speedLimit',
+        'speedLimit/:linkId(/municipality/:municipalityId/:position)': 'speedLimit',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
         'obstacles/:id': 'obstacles',
@@ -88,7 +88,7 @@
         'widthLimit/:id': 'widthLimit',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/speedLimit/state' : 'speedLimitStateWorkList',
-        'work-list/speedLimit/municipality' : 'speedLimitMunicipalitiesWorkList',
+        'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
@@ -148,9 +148,9 @@
         });
       },
 
-      speedLimit: function (linkId, municipalityName,  position) {
+      speedLimit: function (linkId, municipalityId,  position) {
         if(position)
-          this.stateHistory = {municipality: municipalityName, position: position};
+          this.stateHistory = {municipality: Number(municipalityId), position: position};
 
         applicationModel.selectLayer('speedLimit');
         backend.getRoadLinkByLinkId(linkId, function (response) {
@@ -219,13 +219,16 @@
         eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimitsState());
       },
 
-      speedLimitMunicipalitiesWorkList: function () {
-        if(!this.stateHistory)
-          eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality());
+      speedLimitMunicipalitiesWorkList: function (id) {
+        if(id || this.stateHistory) {
+          var municipalityId = id ? id : this.stateHistory.municipality;
+          eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality(municipalityId), this.stateHistory);
+        }
         else
-          eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality(), this.stateHistory);
+          eventbus.trigger('municipalities:select', backend.getMunicipalitiesWithUnknowns());
 
         this.stateHistory = null;
+
       },
 
       linkPropertyWorkList: function () {

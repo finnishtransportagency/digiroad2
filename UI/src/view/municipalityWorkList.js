@@ -4,6 +4,7 @@
     var me = this;
     this.roles = {};
     this.hrefDir = "#work-list/municipality";
+    this.title = 'Tietolajien kuntasivu';
     var backend;
     var municipalityList;
     var showFormBtnVisible = true;
@@ -134,12 +135,11 @@
       var searchbox = $('<div class="filter-box">' +
         '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
 
-      var title = 'Tietolajien kuntasivu';
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
         '<div class="page">' +
         '<div class="content-box">' +
-        '<header id="work-list-header">' + title +
+        '<header id="work-list-header">' + me.title +
         '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
         '</header>' +
         '<div class="work-list">' +

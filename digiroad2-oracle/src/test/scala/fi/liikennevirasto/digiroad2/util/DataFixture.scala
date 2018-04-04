@@ -383,7 +383,7 @@ object DataFixture {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
     val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
-    val unknowns = speedLimitService.getUnknown(None, None)
+    val unknowns = speedLimitService.getUnknown(Set(), None)
     unknowns.foreach { case (_, mapped) =>
       mapped.foreach {
         case (_, x) =>

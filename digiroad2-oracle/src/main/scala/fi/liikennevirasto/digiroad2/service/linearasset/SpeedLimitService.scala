@@ -109,9 +109,15 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Returns unknown speed limits for Digiroad2Api /speedlimits/unknown GET endpoint.
     */
-  def getUnknown(municipalities: Option[Set[Int]], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
+  def getUnknown(municipalities: Set[Int], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
     withDynSession {
       dao.getUnknownSpeedLimits(municipalities, administrativeClass)
+    }
+  }
+
+  def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
+    withDynSession {
+      dao.getMunicipalitiesWithUnknown(administrativeClass)
     }
   }
 
