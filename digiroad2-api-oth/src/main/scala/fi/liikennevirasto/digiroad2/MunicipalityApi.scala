@@ -199,7 +199,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             x.startMeasure.toLong,
             x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
             x.properties.find(_.name == "name").map { name => name.value },
-            x.properties.find(_.name == "code").map { code => code.value }.get
+            x.properties.find(_.name == "railwayCrossingId").map { code => code.value }.get
           ))
       case TrafficLights.typeId =>
         parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
@@ -320,7 +320,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             x.startMeasure.toLong,
               x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
               x.properties.find(_.name == "name").map { name => name.value },
-              x.properties.find(_.name == "code").map { code => code.value }.get
+              x.properties.find(_.name == "railwayCrossingId").map { code => code.value }.get
           ))
       case TrafficLights.typeId =>
         parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
@@ -349,7 +349,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           "value" ->  pointAsset.asInstanceOf[RailwayCrossing].name),
         Map("name" -> "safetyEquipment",
           "value" -> pointAsset.asInstanceOf[RailwayCrossing].safetyEquipment),
-        Map("name" -> "code",
+        Map("name" -> "railwayCrossingId",
           "value" -> pointAsset.asInstanceOf[RailwayCrossing].code)
       )
       case TrafficLights.typeId  => Seq(Map("value" -> "1" , "name" -> getAssetNameProp(typeId).head))
@@ -544,7 +544,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case PavedRoad.typeId => Seq("hasPavement")
       case NumberOfLanes.typeId => Seq("value")
       case MassTransitLane.typeId => Seq("hasLane")
-      case RailwayCrossings.typeId  => Seq("safetyEquipment", "name", "code")
+      case RailwayCrossings.typeId  => Seq("safetyEquipment", "name", "railwayCrossingId")
       case _ => Seq("asset")
     }
   }

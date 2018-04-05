@@ -205,11 +205,11 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       "obstacle" -> """ "properties": [{"value": 2, "name": "obstacleType"}]""",
       "traffic_light" -> """ "properties": [{"name": "hasTrafficLight", "value" : 0}]""",
       "traffic_light" -> """ "properties": [{"name": "hasTrafficLight", "value" : 1}]""",
-      "railway_crossing" -> """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "someCode", "name": "code"}, {"value": "someName", "name": "name"}]""",
-      "railway_crossing" -> """ "properties": [{"value": 2, "name": "safetyEquipment"} , {"value": "someCode", "name": "code"}, {"value": "someName", "name": "name"}]""",
-      "railway_crossing" -> """ "properties": [{"value": 3, "name": "safetyEquipment"} , {"value": "someCode", "name": "code"}, {"value": "someName", "name": "name"}]""",
-      "railway_crossing" -> """ "properties": [{"value": 4, "name": "safetyEquipment"} , {"value": "someCode", "name": "code"}, {"value": "someName", "name": "name"}]""",
-      "railway_crossing" -> """ "properties": [{"value": 5, "name": "safetyEquipment"} , {"value": "someCode", "name": "code"}, {"value": "someName", "name": "name"}]"""
+      "railway_crossing" -> """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]""",
+      "railway_crossing" -> """ "properties": [{"value": 2, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]""",
+      "railway_crossing" -> """ "properties": [{"value": 3, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]""",
+      "railway_crossing" -> """ "properties": [{"value": 4, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]""",
+      "railway_crossing" -> """ "properties": [{"value": 5, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]"""
     )
 
   val assetInfoInvalidProp: Seq[(String, String, String)] =
@@ -244,11 +244,11 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   val pointAssetInfoInvalidProp: Seq[(String, String, String)] =
     Seq(
-      ("railway_crossing", """ "properties": [{"value": "", "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "code"}]""", "The property name safetyEquipment doesn't exist or is not valid for this type of asset."),
-      ("railway_crossing", """ "properties": [{"value": 0, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "code"}]""", "The property values for the property with name safetyEquipment is not valid."),
-      ("railway_crossing", """ "properties": [{"value": 6, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "code"}]""", "The property values for the property with name safetyEquipment is not valid."),
-      ("railway_crossing", """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "", "name": "code"}]""", "The property name code doesn't exist or is not valid for this type of asset."),
-      ("railway_crossing", """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "", "name": "name"}, {"value": "someCode", "name": "code"}]""", "The property name name doesn't exist or is not valid for this type of asset."),
+      ("railway_crossing", """ "properties": [{"value": "", "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "railwayCrossingId"}]""", "The property name safetyEquipment doesn't exist or is not valid for this type of asset."),
+      ("railway_crossing", """ "properties": [{"value": 0, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "railwayCrossingId"}]""", "The property values for the property with name safetyEquipment is not valid."),
+      ("railway_crossing", """ "properties": [{"value": 6, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "railwayCrossingId"}]""", "The property values for the property with name safetyEquipment is not valid."),
+      ("railway_crossing", """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "", "name": "railwayCrossingId"}]""", "The property name railwayCrossingId doesn't exist or is not valid for this type of asset."),
+      ("railway_crossing", """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "", "name": "name"}, {"value": "someCode", "name": "railwayCrossingId"}]""", "The property name name doesn't exist or is not valid for this type of asset."),
       ("pedestrian_crossing", """ "properties": [{"name": "hasPedestrianCrossing", "value": ""}]""", "The property name hasPedestrianCrossing doesn't exist or is not valid for this type of asset."),
       ("pedestrian_crossing", """ "properties": [{"name": "hasPedestrianCrossing", "value": 2}]""", "The property values for the property with name hasPedestrianCrossing are not valid."),
       ("obstacle", """ "properties": [{"value": "", "name": "obstacleType"}]""", "The property name obstacleType doesn't exist or is not valid for this type of asset."),
