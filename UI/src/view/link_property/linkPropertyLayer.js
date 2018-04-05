@@ -80,8 +80,8 @@
       var vectorLayerStyle = function(feature) {
           var currentLayerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
           if(currentLayerProvider.default)
-              return currentLayerProvider.default.getStyle(feature, {zoomLevel: uiState.zoomLevel});
-          return currentLayerProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+              return currentLayerProvider.default.getStyle(feature, {zoomLevel: Math.round(uiState.zoomLevel)});
+          return currentLayerProvider.getStyle(feature, {zoomLevel: Math.round(uiState.zoomLevel)});
       };
 
       var hideLayer = function(){
@@ -214,7 +214,7 @@
     var selectToolControl = new SelectToolControl(applicationModel, roadLayer.layer, map, {
       style: function(feature){
           var provider = linkPropertyLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), currentRenderIntent);
-          return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});
+          return provider.getStyle(feature, {zoomLevel: Math.round(roadLayer.getZoomLevel())});
       },
       onInteractionEnd: onInteractionEnd,
       onSelect: selectRoadLink

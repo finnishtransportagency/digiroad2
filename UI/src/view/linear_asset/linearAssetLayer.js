@@ -157,7 +157,7 @@ root.LinearAssetLayer  = function(params) {
   var vectorLayer = new ol.layer.Vector({
     source : vectorSource,
     style : function(feature) {
-      return style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      return style.browsingStyleProvider.getStyle(feature, {zoomLevel: Math.round(uiState.zoomLevel)});
     }
   });
 
@@ -209,7 +209,7 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
-    style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
+    style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: Math.round(uiState.zoomLevel)})); },
     onInteractionEnd: onInteractionEnd,
     onSelect: onSelect
   });
