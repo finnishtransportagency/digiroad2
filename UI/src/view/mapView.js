@@ -90,7 +90,7 @@
     map.on('moveend', function(event) {
       var target = document.getElementById(map.getTarget());
       target.style.cursor = '';
-      applicationModel.moveMap(zoomlevels.getViewZoom(map)), map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
+      applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
     });
 
     map.on('pointermove', function(event) {
