@@ -1,8 +1,8 @@
 (function(root) {
   root.AuthorizationPolicy = function() {
     var me = this;
-    this.userRoles = [];
-    this.municipalities = [];
+    me.userRoles = [];
+    me.municipalities = [];
 
     eventbus.on('roles:fetched', function(userInfo) {
       me.userRoles = userInfo.roles;
@@ -28,6 +28,10 @@
 
     this.hasRightsInMunicipality = function(municipalityCode){
       return _.contains(me.municipalities, municipalityCode);
+    };
+
+    this.filterRoadLinks = function(roadLink){
+      return (me.isMunicipalityMaintainer() && roadLink.administrativeClass != 'State' && me.hasRightsInMunicipality(roadLink.municipalityCode)) || (me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode)) || me.isOperator();
     };
 
     this.editModeAccess = function() {

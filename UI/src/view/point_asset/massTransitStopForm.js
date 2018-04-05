@@ -189,6 +189,7 @@
           header.append(buttons);
           return header;
         }
+        eventbus.trigger('mtsdraggable', readOnly);
       };
 
       var getStreetView = function() {

@@ -22,18 +22,22 @@
       return !isExpired && isTrStop && !isElyMaintainerOrOperator(selectedMassTransitStopModel.getMunicipalityCode());
     };
 
-
     /** Rules:
     * Municipality maintainer: can update bus stops and other asset types inside own municipalities on admin class 2(municipality) and 3(private)
     * Ely maintainer: can update bus stops and other asset types inside own ELY-area on admin class 1(state) and 2(municipality) and 3(private)
     * Operator: no restrictions
     * */
-    function assetSpecificAccess(municipalityCode){
-      if(me.isMunicipalityMaintainer() || me.isElyMaintainer())
-        return me.hasRightsInMunicipality(municipalityCode);
-      else
-        return me.isOperator();
-    }
+
+    this.getAccess = function(adminClass, municipalityCode) {
+      return (me.isMunicipalityMaintainer() && adminClass != 'state' && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
+    };
+
+    this.assetSpecificAccess = function(){
+      var getMunicipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
+      var municipalityCode = !_.isUndefined(getMunicipalityCode) ? getMunicipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
+
+      return (me.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isAdminClassState() && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
+    };
 
     this.formEditModeAccess = function () {
       if(applicationModel.isReadOnly()){
@@ -41,7 +45,6 @@
       }
 
       var properties = selectedMassTransitStopModel.getProperties();
-      var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
 
       var owner = _.find(properties, function(property) {
         return property.publicId === "tietojen_yllapitaja"; });
@@ -50,9 +53,11 @@
             return value.propertyValue;
           }), "2");
 
+      var hasAccess = this.assetSpecificAccess();
+
       eventbus.trigger('application:controlledTR',condition);
       /**boolean inverted because it is used for 'isReadOnly' in mass transit stop form*/
-      return !assetSpecificAccess(municipalityCode);
+      return !hasAccess;
     };
   };
 })(this);

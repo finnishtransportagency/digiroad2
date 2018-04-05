@@ -376,7 +376,7 @@
 
     function excludeRoadByAdminClass(roadCollection) {
       return _.filter(roadCollection, function (roads) {
-        return authorizationPolicy.formEditModeAccess(selectedAsset, roads.linkId);
+        return authorizationPolicy.filterRoadLinks(roads);
       });
     }
 

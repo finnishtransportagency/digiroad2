@@ -113,7 +113,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
 
-    backend.getUserRoles();
+    // backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
@@ -387,7 +387,7 @@
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
     applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
-
+    backend.getUserRoles();
     return map;
   };
 
