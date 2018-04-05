@@ -17,7 +17,9 @@
         [ 1, 'Tiekunnan osakkuus'],
         [ 2, 'LiVin hallinnoimalla maa-alueella'],
         [ 3, 'Kevyen liikenteen väylä'],
-        [ 4, 'Tuntematon']
+        [ 4, 'Muu sopimus'],
+        [ 5, 'Potentiaalinen käyttöoikeus'],
+        [ 6, 'Tuntematon']
       ];
 
       var responsibilityLegend = '<div class="responsibility-legend">' + _.map(responsibilityValues, function(responsibilityValue) {
