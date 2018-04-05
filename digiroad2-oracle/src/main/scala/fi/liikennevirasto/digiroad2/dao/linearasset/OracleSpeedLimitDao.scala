@@ -161,7 +161,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       """
 
     val filterAdministrativeClass = administrativeClass match {
-      case Some(ac) if ac == Municipality => s" where s.administrative_class != ${State.value}"
+      case Some(ac) if ac == Municipality => s" where s.administrative_class not in ( ${State.value}, ${Private.value})"
       case Some(ac) if ac == State => s" where s.administrative_class = ${ac.value}"
       case _ => ""
     }
@@ -187,7 +187,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     val municipalitiesQuery =
       s"""
       select m.id, m.name_fi from municipality m
-      where m.id in (select MUNICIPALITY_CODE from UNKNOWN_SPEED_LIMIT uk where uk.administrative_class != ${State.value} )
+      where m.id in (select MUNICIPALITY_CODE from UNKNOWN_SPEED_LIMIT uk where uk.administrative_class not in ( ${State.value} , ${Private.value} ))
       """
 
     Q.queryNA[(Long, String)](municipalitiesQuery).list
