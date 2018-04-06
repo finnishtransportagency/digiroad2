@@ -1000,7 +1000,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/speedlimits") {
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val municipalities: Set[Int] = Set()
 
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
@@ -1027,7 +1027,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
             "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
             "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
-            "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS")
+            "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS"),
+            "municipalityCode" -> extractIntValue(link.attributes, "municipalityCode")
           )
         }
       }

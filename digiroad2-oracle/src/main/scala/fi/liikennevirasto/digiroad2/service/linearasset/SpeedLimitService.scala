@@ -416,9 +416,14 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     speedLimit.copy(attributes = speedLimit.attributes ++ Map("ROAD_ADMIN_CLASS" -> roadLink.administrativeClass))
   }
 
+  private def addMunicipalityCodeAttribute(speedLimit: SpeedLimit, roadLink: RoadLink): SpeedLimit = {
+    speedLimit.copy(attributes = speedLimit.attributes ++ Map("municipalityCode" -> roadLink.municipalityCode))
+  }
+
   private def enrichSpeedLimitAttributes(speedLimits: Seq[SpeedLimit], roadLinksForSpeedLimits: Map[Long, RoadLink]): Seq[SpeedLimit] = {
     val speedLimitAttributeOperations: Seq[(SpeedLimit, RoadLink) => SpeedLimit] = Seq(
-      addRoadAdministrationClassAttribute
+      addRoadAdministrationClassAttribute,
+      addMunicipalityCodeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
