@@ -84,9 +84,9 @@
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function (assets) {
         var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
         me.removeLayerFeatures();
-        if(map.getView().getZoom() >= minZoomForContent){
+        if(zoomlevels.getViewZoom(map) >= minZoomForContent){
           vectorLayer.getSource().addFeatures(features);
-          vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
+          vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
         }
       });
     };
@@ -96,7 +96,7 @@
     };
 
     var getGroupedFeatures = function (assets) {
-      var assetGroups = assetGrouping.groupByDistance(assets, map.getView().getZoom());
+      var assetGroups = assetGrouping.groupByDistance(assets, zoomlevels.getViewZoom(map));
       var modifiedAssets = _.forEach(assetGroups, function (assetGroup) {
         _.map(assetGroup, function (asset) {
           asset.lon = _.head(assetGroup).lon;

@@ -58,7 +58,7 @@ window.SpeedLimitLayer = function(params) {
 
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
-    adjustStylesByZoomLevel(map.getView().getZoom());
+    adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
     collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
       eventbus.trigger('layer:speedLimit:' + event);
     });
@@ -482,7 +482,7 @@ window.SpeedLimitLayer = function(params) {
   var drawSpeedLimits = function(speedLimits, layerToUse) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var offsetBySideCode = function(speedLimit) {
-      return GeometryUtils.offsetBySideCode(map.getView().getZoom(), speedLimit);
+      return GeometryUtils.offsetBySideCode(zoomlevels.getViewZoom(map), speedLimit);
     };
     var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });

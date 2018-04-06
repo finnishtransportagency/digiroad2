@@ -63,7 +63,7 @@
      * Overrides the layer.js refreshView method
      */
     this.refreshView = function() {
-      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), draw);
+      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map), draw);
     };
 
     /**
@@ -96,7 +96,7 @@
         selectedManoeuvreSource.open(event.selected[0].getProperties().linkId);
       } else {
         _.each(event.deselected, function(feature){
-            feature.setStyle(manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()}));
+            feature.setStyle(manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: zoomlevels.getViewZoom(map)}));
         });
         unselectManoeuvre();
       }
@@ -114,7 +114,7 @@
 
       if(selectedFeatures){
           _.each(selectedFeatures, function(feature){
-              var style = manoeuvreStyle.getSelectedStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
+              var style = manoeuvreStyle.getSelectedStyle().getStyle(feature, {zoomLevel: zoomlevels.getViewZoom(map)});
               style.setStroke(_.merge(style.getStroke(), new ol.style.Stroke({color: '#00f'})));
               feature.setStyle(style);
           });
@@ -136,7 +136,7 @@
 
     var selectControl = new SelectToolControl(application, roadLayer.layer, map, {
         style : function(feature){
-            return manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
+            return manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: zoomlevels.getViewZoom(map)});
         },
         onSelect: selectManoeuvre,
         draggable : false,
@@ -284,7 +284,7 @@
     var draw = function() {
       selectControl.deactivate();
       var linksWithManoeuvres = manoeuvresCollection.getAll();
-      roadLayer.drawRoadLinks(linksWithManoeuvres, map.getView().getZoom());
+      roadLayer.drawRoadLinks(linksWithManoeuvres, zoomlevels.getViewZoom(map));
       drawDashedLineFeatures(linksWithManoeuvres);
       drawIntermediateFeatures(linksWithManoeuvres);
       drawMultipleSourceFeatures(linksWithManoeuvres);
@@ -321,7 +321,7 @@
     };
 
     var handleManoeuvreSaved = function(eventListener) {
-      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom(), function() {
+      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map), function() {
         concludeManoeuvreSaved(eventListener);
         unselectManoeuvre();
       });
