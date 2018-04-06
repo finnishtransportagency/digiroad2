@@ -206,6 +206,12 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
+  def getPotencialServiceAssets(): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      maintenanceDAO.fetchPotentialServiceRoads()
+    }
+  }
+
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String ,List[Long]]] ={
     val unchecked = withDynTransaction {
       maintenanceDAO.getUncheckedMaintenanceRoad(areas)

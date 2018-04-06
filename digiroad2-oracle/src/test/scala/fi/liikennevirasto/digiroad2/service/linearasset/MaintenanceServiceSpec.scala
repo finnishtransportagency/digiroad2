@@ -250,4 +250,59 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     }
 
   }
+
+  test("Get only maintenance that have kayttooikeus = 9 "){
+    val propKayttooikeus = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propHuoltovastuu = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(propKayttooikeus, propHuoltovastuu, propTiehoitokunta)
+
+    val propKayttooikeus1 = Properties("huoltotie_kayttooikeus", "single_choice", "9")
+    val propHuoltovastuu1 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta1 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq1 :Seq[Properties] = List(propKayttooikeus1, propHuoltovastuu1, propTiehoitokunta1)
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    val maintenanceRoad1 = MaintenanceRoad(propertiesSeq1)
+
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None),
+                          NewLinearAsset(388562361l, 0, 20, maintenanceRoad1, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+      newAssets.length should be(2)
+
+      val assets = maintenanceDao.fetchPotentialServiceRoads()
+      assets.size should be(1)
+      assets.foreach {
+        asset => asset.value.get.asInstanceOf[MaintenanceRoad].properties.find(_.publicId == "huoltotie_kayttooikeus").get.value should be ("9")
+      }
+    }
+  }
+
+  test("Get only maintenance that doesn' have kayttooikeus = 9 "){
+    val propKayttooikeus = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propHuoltovastuu = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(propKayttooikeus, propHuoltovastuu, propTiehoitokunta)
+
+    val propKayttooikeus1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propHuoltovastuu1 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta1 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq1 :Seq[Properties] = List(propKayttooikeus1, propHuoltovastuu1, propTiehoitokunta1)
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    val maintenanceRoad1 = MaintenanceRoad(propertiesSeq1)
+
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None),
+          NewLinearAsset(388562361l, 0, 20, maintenanceRoad1, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+      newAssets.length should be(2)
+
+      val assets = maintenanceDao.fetchPotentialServiceRoads()
+      assets.size should be (0)
+    }
+  }
 }

@@ -8,7 +8,7 @@
     };
 
     var findValue = function(asset, publicId) {
-      return _.find(asset.value, function(a) { return a.publicId === publicId; }).value
+      return _.find(asset.value, function(a) { return a.publicId === publicId; }).value;
     };
 
     this.renderOverlays = function(linearAssets) {
