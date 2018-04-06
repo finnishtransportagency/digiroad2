@@ -91,13 +91,27 @@ trait LinearAssetOperations {
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
-    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val assetsWithAttributes = addAttributes(linearAssets, roadLinks)
+    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
-    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val assetsWithAttributes = addAttributes(linearAssets, roadLinks)
+    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
+
+  private def addAttributes(assets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+    val linkData = roadLinks.map(rl => (rl.linkId, rl)).toMap
+
+    val assetsWithAttributes = assets.map { asset =>
+      if(linkData.contains(asset.linkId))
+        asset.copy(attributes = asset.attributes ++ Map("municipality" -> linkData(asset.linkId).municipalityCode))
+      else
+        asset
+    }
+    assetsWithAttributes
   }
 
   def getByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {

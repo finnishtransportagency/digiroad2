@@ -24,6 +24,35 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   val maintenanceRoadAssetTypeId: Int = 290
 
+  override def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    val assetsWithAttributes = addAttributes(linearAssets, roadLinks)
+
+    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
+
+  override def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    val assetsWithAttributes = addAttributes(linearAssets, roadLinks)
+    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
+
+  private def addAttributes(assets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+    val linkData = roadLinks.map(rl => (rl.linkId, rl)).toMap
+
+    val assetsWithAttributes = assets.map { asset =>
+      if(linkData.contains(asset.linkId)){
+        val area = polygonTools.getAreaByGeometry(linkData(asset.linkId).geometry, Measures(asset.startMeasure, asset.endMeasure), None)
+        asset.copy(attributes = asset.attributes ++ Map("area" -> area))
+      }
+      else
+        asset
+    }
+    assetsWithAttributes
+  }
+
   /*
  * Creates new Maintenance asset and updates existing. Used by the Digiroad2Context.MaintenanceRoadSaveProjected actor.
  */

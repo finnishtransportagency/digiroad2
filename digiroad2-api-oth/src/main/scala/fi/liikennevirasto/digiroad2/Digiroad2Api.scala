@@ -680,16 +680,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets") {
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       val usedService = getLinearAssetService(typeId)
-      val assets = if(user.isServiceRoadMaintainer())
-        usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
-      else
-        usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)
+      val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
       if(params("withRoadAddress").toBoolean)
         mapLinearAssets(usedService.withRoadAddress(assets))
       else
@@ -721,16 +717,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets/complementary"){
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       val usedService = getLinearAssetService(typeId)
-      val assets = if(user.isServiceRoadMaintainer())
-        usedService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
-      else
-        usedService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities)
+      val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
       if(params("withRoadAddress").toBoolean)
         mapLinearAssets(usedService.withRoadAddress(assets))
       else
@@ -793,6 +785,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "createdAt" -> link.createdDateTime,
           "verifiedBy" -> link.verifiedBy,
           "verifiedAt" -> link.verifiedDate,
+          "area" -> extractIntValue(link.attributes, "area"),
+          "municipalityCode" -> extractIntValue(link.attributes, "municipality"),
           "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
           "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
           "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
