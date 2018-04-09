@@ -28,10 +28,6 @@
     * Operator: no restrictions
     * */
 
-    this.getAccess = function(adminClass, municipalityCode) {
-      return (me.isMunicipalityMaintainer() && adminClass != 'state' && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
-    };
-
     this.assetSpecificAccess = function(){
       var getMunicipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
       var municipalityCode = !_.isUndefined(getMunicipalityCode) ? getMunicipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;

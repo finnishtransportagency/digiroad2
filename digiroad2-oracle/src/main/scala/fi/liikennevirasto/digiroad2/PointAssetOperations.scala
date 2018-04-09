@@ -100,9 +100,7 @@ trait PointAssetOperations {
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
 
-      val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
-        user.isAuthorizedToRead(persistedAsset.municipalityCode)
-      }.map { (persistedAsset: PersistedAsset) =>
+      val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.map { (persistedAsset: PersistedAsset) =>
         val (floating, assetFloatingReason) = isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
         adjustment(roadLinks, changeInfo, persistedAsset, floating, assetFloatingReason)  match {
           case Some(adjustment) =>

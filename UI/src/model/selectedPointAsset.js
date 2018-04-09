@@ -19,7 +19,8 @@
       isSelected: isSelected,
       getAdministrativeClass: getAdministrativeClass,
       checkSelectedSign: checkSelectedSign,
-      setPropertyByPublicId: setPropertyByPublicId
+      setPropertyByPublicId: setPropertyByPublicId,
+      getMunicipalityCode: getMunicipalityCode
     };
 
     function place(asset) {
@@ -115,6 +116,11 @@
       var administrativeClass = road ? road.getData().administrativeClass : null;
       return _.isNull(administrativeClass) || _.isUndefined(administrativeClass) ? undefined : administrativeClass;
 
+    }
+
+    function getMunicipalityCode(linkId){
+      if(!linkId && current)
+        return roadCollection.getRoadLinkByLinkId(current.linkId).getData().municipalityCode;
     }
 
     function getSelectedTrafficSignValue() {
