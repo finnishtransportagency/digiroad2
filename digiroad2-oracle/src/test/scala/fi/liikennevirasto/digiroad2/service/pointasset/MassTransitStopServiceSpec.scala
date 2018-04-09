@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MunicipalityInfo, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -1386,4 +1386,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.propertyValue should be ("user_road_name_fi")
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.propertyValue should be ("user_road_name_se")
   }
+
+  test("Find more than one busStop with same passengerId"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
+      val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
+
+      val roadLink = Seq(RoadLink(11, List(Point(0.0,0.0), Point(10.0, 0.0)), 10, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(21, List(Point(0.0,0.0), Point(20.0, 0.0)), 20, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))))
+
+      val ids = Seq(RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2"))),
+          SimpleProperty("matkustajatunnus", Seq(PropertyValue("1000")))
+        )), "masstransitstopservice_spec", roadLink.head),
+      RollbackMassTransitStopService.create(NewMassTransitStop(15.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2"))),
+          SimpleProperty("matkustajatunnus", Seq(PropertyValue("1000")))
+        )), "masstransitstopservice_spec", roadLink.last))
+
+      val result = service.getMassTransitStopByPassengerId("1000", _ => Unit)
+      result should have size 2
+      result.find(_.get.id == ids.head).head.get.municipalityName should be (Some("Kauniainen"))
+      result.find(_.get.id == ids.last).last.get.municipalityName should be (Some("Helsinki"))
+      }
+    }
 }

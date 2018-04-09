@@ -156,6 +156,26 @@
           return returnObject;
       });
     };
+
+    /**
+     * Search by mass transit stop passenger id
+     *
+     * @param input
+     * @returns {*}
+     */
+    var  massTransitStopPassengerIdSearch = function(input) {
+      return $.when(backend.getMassTransitStopByPassengerIdForSearch(input.text)).then(function(result) {
+        var toCoordinates = function (r) {
+          var title = input.text + ', ' + r.municipalityName;
+          return {title: title, lon: r.lon, lat: r.lat, nationalId: r.nationalId, resultType: "Mtstop"};
+        };
+
+        if (result.length > 0)
+          return _.map(result, toCoordinates);
+        return $.Deferred().reject('Haulla ei löytynyt tuloksia');
+      });
+    };
+
     /**
      * Get road address coordinates
      *
@@ -215,6 +235,7 @@
         road: getCoordinatesFromRoadAddress,
         idOrRoadNumber: idOrRoadNumber,
         liviId: massTransitStopLiviIdSearch,
+        passengerId:  massTransitStopPassengerIdSearch,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
 
