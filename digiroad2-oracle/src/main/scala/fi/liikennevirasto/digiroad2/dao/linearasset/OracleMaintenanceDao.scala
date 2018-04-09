@@ -146,6 +146,9 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     var propNameFi = "Potentiaalinen kayttooikeus"
 
     val filter = floatingFilter ++ expiredFilter
+    var condition =  s"""where a.asset_type_id = ${MaintenanceRoadAsset.typeId} $filter and exists (select * from single_choice_value s1
+                         join enumerated_value en on s1.enumerated_value_id = en.id and en.VALUE =  $valueToBeFetch and en.name_fi = '$propNameFi'
+                         where  s1.asset_id = a.id)"""
 
     val query =  s"""
                    select a.id, t.id, t.property_id, t.value_fi, p.property_type, p.public_id, p.required, pos.link_id,
@@ -159,7 +162,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                       join lrm_position pos on al.position_id = pos.id
                       join text_property_value t on t.asset_id = a.id
                       join property p on p.id = t.property_id
-                   where a.asset_type_id =  ${MaintenanceRoadAsset.typeId} $filter
+                      $condition
                    union
                    select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
                       pos.link_id, pos.side_code,
@@ -173,9 +176,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                      join single_choice_value s on s.asset_id = a.id
                      join enumerated_value e on e.id = s.enumerated_value_id
                      join property p on p.id = e.property_id
-                   where a.asset_type_id = ${MaintenanceRoadAsset.typeId} $filter and exists (select * from single_choice_value s1
-                                        join enumerated_value en on s1.enumerated_value_id = en.id and en.VALUE =  $valueToBeFetch and en.name_fi = '$propNameFi'
-                                        where  s1.asset_id = a.id) """
+                     $condition """
 
     val assets = Q.queryNA[ServiceRoad](query).iterator.toSeq
 
