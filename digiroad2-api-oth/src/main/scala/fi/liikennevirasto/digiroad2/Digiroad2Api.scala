@@ -69,14 +69,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     with CorsSupport
     with RequestHeaderAuthentication
     with GZipSupport {
-    val serviceRoadTypeid=290
-    val trafficVolumeTypeid=170
-    val roadWidthTypeId = 120
-    val pavingTypeId = 110
-    val lightingTypeId = 100
-    val trafficSignTypeId = 300
+  val serviceRoadTypeid=290
+  val trafficVolumeTypeid=170
+  val roadWidthTypeId = 120
+  val pavingTypeId = 110
+  val lightingTypeId = 100
+  val trafficSignTypeId = 300
 
-    val logger = LoggerFactory.getLogger(getClass)
+  val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
 
@@ -232,36 +232,36 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-/**
-  * Returns empty result as Json message, not as page not found
-*/
-    get("/massTransitStopsSafe/:nationalId") {
-      def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
-        if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
-          halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
-      }
-      val nationalId = params("nationalId").toLong
-      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
-      massTransitStopReturned._1 match {
-        case Some(stop) =>
-          Map ("id" -> stop.id,
-            "nationalId" -> stop.nationalId,
-            "stopTypes" -> stop.stopTypes,
-            "lat" -> stop.lat,
-            "lon" -> stop.lon,
-            "validityDirection" -> stop.validityDirection,
-            "bearing" -> stop.bearing,
-            "validityPeriod" -> stop.validityPeriod,
-            "floating" -> stop.floating,
-            "propertyData" -> stop.propertyData,
-            "success" -> true)
-        case None =>
-          Map("success" -> false)
-      }
+  /**
+    * Returns empty result as Json message, not as page not found
+    */
+  get("/massTransitStopsSafe/:nationalId") {
+    def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+        halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
     }
+    val nationalId = params("nationalId").toLong
+    val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+    massTransitStopReturned._1 match {
+      case Some(stop) =>
+        Map ("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating,
+          "propertyData" -> stop.propertyData,
+          "success" -> true)
+      case None =>
+        Map("success" -> false)
+    }
+  }
   /**
   Returns empty result as Json message, not as page not found
-  */
+    */
   get("/massTransitStopsSafe/:nationalId") {
     def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
       if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
@@ -533,11 +533,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/roadlinks/:linkId") {
-      val linkId = params("linkId").toLong
-      roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
-        case (id, middlePoint,source) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source.value)
-      }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
-    }
+    val linkId = params("linkId").toLong
+    roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
+      case (id, middlePoint,source) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source.value)
+    }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
+  }
 
   get("/roadlinks/history") {
     response.setHeader("Access-Control-Allow-Headers", "*")
@@ -594,7 +594,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false => Some(user.configuration.authorizedAreas)
     }
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId)
+    if(typeId == MaintenanceRoadAsset.typeId)
       maintenanceRoadService.getUncheckedLinearAssets(includedAreas)
     else
       BadRequest("Linear Asset type not allowed")
@@ -736,7 +736,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     zoom >= minVisibleZoom && zoom < maxZoom match {
       case true =>
-        mapLinearAssets(maintenanceRoadService.getByZoomLevel())
+        mapLinearAssets(maintenanceRoadService.getByZoomLevel)
       case false =>
         getLinearAssets(user, municipalities, typeId)
     }
@@ -753,7 +753,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     zoom >= minVisibleZoom && zoom < maxZoom match {
       case true =>
-        mapLinearAssets(maintenanceRoadService.getWithComplementaryByZoomLevel())
+        mapLinearAssets(maintenanceRoadService.getWithComplementaryByZoomLevel)
       case false =>
         getLinearAssetsWithComplementary(user, municipalities, typeId)
     }
@@ -957,10 +957,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/linearassets/unverified"){
-      val user = userProvider.getCurrentUser()
-      val includedMunicipalities = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
-      val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val usedService = getLinearAssetService(typeId)
     usedService.getUnverifiedLinearAssets(typeId, includedMunicipalities.toSet)
   }
@@ -1181,9 +1181,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
     if (!user.isServiceRoadMaintainer())
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
-      halt(Unauthorized("User not authorized"))
-    }
+      if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
+        halt(Unauthorized("User not authorized"))
+      }
   }
 
   private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
@@ -1348,11 +1348,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
       .mapValues(
-      _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
-                             "assetName" -> assetType.assetTypeName,
-                             "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-                             "verified_by"   -> assetType.verifiedBy.getOrElse(""),
-                             "verified"   -> assetType.verified)))
+        _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
+          "assetName" -> assetType.assetTypeName,
+          "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "verified_by"   -> assetType.verifiedBy.getOrElse(""),
+          "verified"   -> assetType.verified)))
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {
@@ -1415,7 +1415,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case Some(typeId) => validateAdministrativeClass(typeId)(link.administrativeClass)
         case _ => None
       }
-     service.create(asset, user.username, link)
+      service.create(asset, user.username, link)
     }
   }
 
