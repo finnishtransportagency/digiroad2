@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -1113,6 +1114,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     speedLimitService.getUnknown(includedMunicipalities, administrativeClass)
   }
 
+
+  get("/speedLimits/inaccurate") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccess(user))
+
+    user.isOperator() match {
+      case true =>
+        speedLimitService.getSpeedLimitsWithInaccurates()
+      case false =>
+          speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
+    }
+  }
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()

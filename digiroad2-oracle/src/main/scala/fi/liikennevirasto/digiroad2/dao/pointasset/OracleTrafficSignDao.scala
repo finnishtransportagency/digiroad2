@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, PropertyValue, SimpleProperty}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -65,6 +66,15 @@ object OracleTrafficSignDao {
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
     queryToPersistedTrafficSign(queryWithFilter)
+  }
+
+  def fetchByRadius(position : Point, meters: Int): Seq[PersistedTrafficSign] = {
+    val topLeft = Point(position.x - meters, position.y - meters)
+    val bottomRight = Point(position.x + meters, position.y + meters)
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val filter = s"Where $boundingBoxFilter"
+    fetchByFilter(query => query + filter).
+      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
   }
 
   private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
