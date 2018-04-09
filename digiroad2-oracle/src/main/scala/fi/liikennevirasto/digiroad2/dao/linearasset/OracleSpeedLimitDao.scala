@@ -96,6 +96,11 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
   }
 
+  /**
+    * Returns speed limits by asset id. Used by SpeedLimitService.loadSpeedLimit.
+    */
+  def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = getSpeedLimitLinksByIds(Set(id))
+
   def getSpeedLimitLinksByIds(ids: Set[Long]): Seq[SpeedLimit] = {
     val speedLimits = MassQuery.withIds(ids) { idTableName =>
       sql"""select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source

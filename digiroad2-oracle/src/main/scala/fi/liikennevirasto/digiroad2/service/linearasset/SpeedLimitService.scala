@@ -519,12 +519,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     )
   }
 
-  def getSpeedLimitAssetsByIds(ids: Set[Long]): Seq[SpeedLimit] = {
-    withDynTransaction {
-      dao.getSpeedLimitLinksByIds(ids)
-    }
-  }
-
   def getSpeedLimitsWithInaccurates(municipalities: Set[Int]= Set(), adminClassList: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
 
     case class WrongSpeedLimit(linkId: Long, municipality: String, administrativeClass: String)

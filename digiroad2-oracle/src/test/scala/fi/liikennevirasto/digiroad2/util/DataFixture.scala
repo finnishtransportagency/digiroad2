@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -1018,7 +1018,7 @@ object DataFixture {
     println(DateTime.now())
 
     val polygonTools: PolygonTools = new PolygonTools()
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new OracleSpeedLimitDao(null, null)
 
     //Expire all inaccuratedAssets
     OracleDatabase.withDynTransaction {
@@ -1292,10 +1292,6 @@ object DataFixture {
         updateAreasOnAsset()
       case Some("update_OTH_BS_with_TR_info") =>
         updateOTHBusStopWithTRInfo()
-      case Some("import_speed_limit_asset_from_TR_to_OTH") =>
-        importSpeedLimitAssetFromTR()
-      case Some("update_speed_limit_asset_from_TR_to_OTH") =>
-        updateSpeedLimitAssetFromTR()
       case Some("verify_inaccurate_speed_limit_assets") =>
         verifyInaccurateSpeedLimits()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
