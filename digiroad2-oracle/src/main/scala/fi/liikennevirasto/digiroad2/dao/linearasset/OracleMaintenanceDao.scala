@@ -148,26 +148,34 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val filter = floatingFilter ++ expiredFilter
 
     val query =  s"""
-                 select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
-                 case
-                    when tp.value_fi is not null then tp.value_fi
-                    when e.value is not null then to_char(e.value)
-                    else null
-                 end as value,
-                 a.created_by, a.created_date, a.modified_by, a.modified_date,
-                 case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
-                 pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date
-                 from asset a
-                 join asset_link al on a.id = al.asset_id
-                 join lrm_position pos on al.position_id = pos.id
-                 join property p on p.asset_type_id = a.asset_type_id
-                 left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-                 left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id
-                 left join enumerated_value e on s.enumerated_value_id = e.id
-                 where a.asset_type_id = ${MaintenanceRoadAsset.typeId} $filter
-                 and exists (select * from single_choice_value s1
-                              join enumerated_value en on s1.enumerated_value_id = en.id and en.VALUE = $valueToBeFetch and en.name_fi = '$propNameFi'
-                              where  s1.asset_id = a.id) """
+                   select a.id, t.id, t.property_id, t.value_fi, p.property_type, p.public_id, p.required, pos.link_id,
+                      pos.side_code, pos.start_measure,
+                      pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
+                      a.modified_by, a.modified_date,
+                      case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
+                      a.verified_by, a.verified_date
+                   from asset a
+                      join asset_link al on a.id = al.asset_id
+                      join lrm_position pos on al.position_id = pos.id
+                      join text_property_value t on t.asset_id = a.id
+                      join property p on p.id = t.property_id
+                   where a.asset_type_id =  ${MaintenanceRoadAsset.typeId} $filter
+                   union
+                   select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
+                      pos.link_id, pos.side_code,
+                      pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
+                      a.created_date, a.modified_by, a.modified_date,
+                      case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
+                      a.verified_by, a.verified_date
+                   from asset a
+                     join asset_link al on a.id = al.asset_id
+                     join lrm_position pos on al.position_id = pos.id
+                     join single_choice_value s on s.asset_id = a.id
+                     join enumerated_value e on e.id = s.enumerated_value_id
+                     join property p on p.id = e.property_id
+                   where a.asset_type_id = ${MaintenanceRoadAsset.typeId} $filter and exists (select * from single_choice_value s1
+                                        join enumerated_value en on s1.enumerated_value_id = en.id and en.VALUE =  $valueToBeFetch and en.name_fi = '$propNameFi'
+                                        where  s1.asset_id = a.id) """
 
     val assets = Q.queryNA[ServiceRoad](query).iterator.toSeq
 
@@ -186,28 +194,28 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
+      val valueId = r.nextLong()
+      val propertyId = r.nextString()
+      val value = r.nextString()
+      val propertyType = r.nextString()
+      val publicId = r.nextString()
+      val required = r.nextBoolean()
       val linkId = r.nextLong()
       val sideCode = r.nextInt()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
-      val publicId = r.nextString()
-      val propertyType = r.nextString()
-      val required = r.nextBoolean()
-      val value = r.nextString()
+      val vvhTimeStamp= r.nextLong()
+      val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextStringOption()
       val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean()
-      val assetTypeId = r.nextInt()
-      val vvhTimeStamp= r.nextLong()
-      val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-
-      ServiceRoad(id, linkId, sideCode, value, startMeasure, endMeasure, publicId, propertyType, required, createdBy, createdDate, modifiedBy, modifiedDate, expired, assetTypeId, vvhTimeStamp,geomModifiedDate, linkSource, verifiedBy, verifiedDate)
+      ServiceRoad(id, linkId, sideCode, value, startMeasure, endMeasure, publicId, propertyType, required, createdBy, createdDate, modifiedBy, modifiedDate, expired, MaintenanceRoadAsset.typeId, vvhTimeStamp,geomModifiedDate, linkSource, verifiedBy, verifiedDate)
     }
   }
 

@@ -679,20 +679,42 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    getLinearAssets(user, municipalities, typeId)
+  }
+
+
+  private def getLinearAssets(user: User, municipalities: Set[Int], typeId: Int) = {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       val usedService = getLinearAssetService(typeId)
-      val assets = if(user.isServiceRoadMaintainer())
+      val assets = if (user.isServiceRoadMaintainer())
         usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
       else
         usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)
-      if(params("withRoadAddress").toBoolean)
+      if (params("withRoadAddress").toBoolean)
         mapLinearAssets(usedService.withRoadAddress(assets))
       else
         mapLinearAssets(assets)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  get("/serviceRoad") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val usedService = getLinearAssetService(typeId)
+    val minVisibleZoom = 2
+    val maxZoom = 10
+
+    zoom >= minVisibleZoom && zoom < maxZoom match {
+      case true =>
+        mapLinearAssets(maintenanceRoadService.getByZoomLevel())
+      case false =>
+        getLinearAssets(user, municipalities, typeId)
     }
   }
 
