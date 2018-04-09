@@ -2,9 +2,8 @@ package fi.liikennevirasto.digiroad2.dao
 
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-case class MunicipalityInfo(id: Int, ely: Int)
+case class MunicipalityInfo(id: Int, ely: Int, name: String)
 
-case class MunicipalityInfo(id: Int, name: String)
 class MunicipalityDao {
 
   def getMunicipalities: Seq[Int] = {
@@ -35,10 +34,10 @@ class MunicipalityDao {
     val filter = if (codes.nonEmpty) {"where id in (" + codes.mkString(",") + ")" } else ""
 
     sql"""
-      select id, name_fi from municipality
+      select id, ely_nro, name_fi from municipality
       #$filter
-    """.as[(Int, String)].list
-      .map{ case(id, name) =>
-        MunicipalityInfo(id, name)}
+    """.as[(Int, Int, String)].list
+      .map{ case(id, ely, name) =>
+        MunicipalityInfo(id, ely, name)}
   }
 }
