@@ -258,6 +258,20 @@
       };
     });
 
+    this.getServiceRoadAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
+      return {
+        url: 'api/serviceRoad?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
+      };
+    });
+
+
+    this.getServiceRoadAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
+      return {
+        url: 'api/serviceRoad/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
+      };
+    });
+
+
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",

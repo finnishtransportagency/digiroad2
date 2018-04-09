@@ -488,7 +488,8 @@
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
         isVerifiable: false,
-        layer : ServiceRoadLayer
+        layer : ServiceRoadLayer,
+        collection: ServiceRoadCollection
       },
       {
         typeId: assetType.numberOfLanes,

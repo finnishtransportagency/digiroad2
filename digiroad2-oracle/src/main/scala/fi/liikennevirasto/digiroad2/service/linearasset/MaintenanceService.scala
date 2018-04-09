@@ -219,6 +219,13 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     LinearAssetPartitioner.partition(filledTopology, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
+  def getWithComplementaryByZoomLevel () = {
+    val linearAssets  = getPotencialServiceAssets()
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil,Set.empty)))
+    LinearAssetPartitioner.partition(filledTopology, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
+
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String ,List[Long]]] ={
     val unchecked = withDynTransaction {
       maintenanceDAO.getUncheckedMaintenanceRoad(areas)
