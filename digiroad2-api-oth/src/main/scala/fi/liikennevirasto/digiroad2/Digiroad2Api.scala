@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -738,7 +739,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      mapMassLinearAssets(linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities))
+      val massLinearAssets = linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities)
+      if(params("withRoadAddress").toBoolean)
+        mapMassLinearAssets(linearMassLimitationService.withRoadAddress(massLinearAssets))
+      else
+        mapMassLinearAssets(massLinearAssets)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -751,7 +756,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      mapMassLinearAssets(linearMassLimitationService.getWithComplementaryByBoundingBox(boundingRectangle, municipalities))
+      val massLinearAssets = linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities)
+      if(params("withRoadAddress").toBoolean)
+        mapMassLinearAssets(linearMassLimitationService.withRoadAddress(massLinearAssets))
+      else
+        mapMassLinearAssets(massLinearAssets)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -793,7 +802,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         Map(
           "points" -> link.geometry,
           "sideCode" -> link.sideCode,
-          "values" -> link.value.map(_.toJson)
+          "values" -> link.value.map(_.toJson),
+          "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
+          "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
+          "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
+          "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
+          "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
+          "administrativeClass" -> link.administrativeClass.value
         )
       }
     }
@@ -959,7 +974,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/speedlimit/sid/") {
     val segmentID = params.get("segmentid").getOrElse(halt(BadRequest("Bad coordinates")))
-    val speedLimit = speedLimitService.find(segmentID.toLong)
+    val speedLimit = speedLimitService.getSpeedLimitById(segmentID.toLong)
     speedLimit match {
       case Some(speedLimit) => {
         roadLinkService.getRoadLinkMiddlePointByLinkId(speedLimit.linkId) match {
@@ -1049,13 +1064,62 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/speedlimits/unknown") {
+  get("/speedlimits/unknown") (getUnknowns(None, None))
+
+  get("/speedlimits/unknown/state") (getUnknowns(Some(State), None))
+
+  get("/speedlimits/unknown/municipality") {
+    val municipality = params.get("id").getOrElse(halt(BadRequest("Missing municipality id"))).toInt
+    getUnknowns(Some(Municipality), Some(municipality)).map {
+      unknowns =>
+        Map( "id" -> municipality,
+             "name" -> unknowns._1,
+              unknowns._1 -> unknowns._2
+        )
+    }
+  }
+
+  get("/speedLimits/municipalities"){
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    speedLimitService.getUnknown(includedMunicipalities)
+
+    speedLimitService.getMunicipalitiesWithUnknown(Some(Municipality)).sortBy(_._2).map { municipality =>
+      Map("id" -> municipality._1,
+        "name" -> municipality._2)
+    }
+  }
+
+  def getUnknowns(administrativeClass: Option[AdministrativeClass], municipality: Option[Int]): Map[String, Map[String, Any]] ={
+    val user = userProvider.getCurrentUser()
+
+    val municipalities = user.isOperator() match {
+        case true => Set.empty[Int]
+        case false => user.configuration.authorizedMunicipalities
+    }
+
+    val includedMunicipalities = municipality match {
+      case Some(municipalityId) => Set(municipalityId)
+      case _ => municipalities
+    }
+
+    speedLimitService.getUnknown(includedMunicipalities, administrativeClass)
+  }
+
+
+  get("/speedLimits/inaccurate") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccess(user))
+
+    user.isOperator() match {
+      case true =>
+        speedLimitService.getSpeedLimitsWithInaccurates()
+      case false =>
+          speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
+    }
   }
 
   put("/speedlimits") {
@@ -1067,9 +1131,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
       case Some(value) =>
-        val updatedIds = speedLimitService.updateValues(ids, value, user.username, validateUserMunicipalityAccess(user))
-        val createdIds = speedLimitService.create(newLimits, value, user.username, validateUserMunicipalityAccess(user))
-        speedLimitService.get(updatedIds ++ createdIds)
+        val updatedIds = speedLimitService.updateValues(ids, value, user.username, validateUserMunicipalityAccess(user)).toSet
+        val createdIds = speedLimitService.create(newLimits, value, user.username, validateUserMunicipalityAccess(user)).toSet
+        speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
@@ -1109,7 +1173,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "value").extract[Int],
       user.username,
       validateUserMunicipalityAccess(user)).headOption match {
-      case Some(id) => speedLimitService.find(id)
+      case Some(id) => speedLimitService.getSpeedLimitById(id)
       case _ => BadRequest("Speed limit creation failed")
     }
   }

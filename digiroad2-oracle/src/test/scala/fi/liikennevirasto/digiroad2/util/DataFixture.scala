@@ -8,16 +8,19 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
 import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
+import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -29,12 +32,6 @@ object DataFixture {
   lazy val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val propertiesDigiroad: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
 
@@ -59,6 +56,11 @@ object DataFixture {
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
+
+  lazy val userProvider: UserProvider = {
+    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+  }
+
   lazy val eventbus: DigiroadEventBus = {
     new DigiroadEventBus
   }
@@ -67,6 +69,14 @@ object DataFixture {
   }
   lazy val speedLimitService: SpeedLimitService = {
     new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
+  }
+
+  lazy val trafficSignService: TrafficSignService = {
+    new TrafficSignService(roadLinkService, userProvider)
+  }
+
+  lazy val speedLimitValidator: SpeedLimitValidator = {
+    new SpeedLimitValidator(trafficSignService)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
@@ -86,6 +96,11 @@ object DataFixture {
   lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
     new OracleLinearAssetDao(vvhClient, roadLinkService)
   }
+
+  lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
+    new InaccurateAssetDAO()
+  }
+
   lazy val roadAddressDao : RoadAddressDAO = {
     new RoadAddressDAO()
   }
@@ -117,7 +132,7 @@ object DataFixture {
   }
 
   def getProperty(name: String) = {
-    val property = propertiesDigiroad.getProperty(name)
+    val property = dr2properties.getProperty(name)
     if(property != null)
       property
     else
@@ -383,7 +398,7 @@ object DataFixture {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
     val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
-    val unknowns = speedLimitService.getUnknown(None)
+    val unknowns = speedLimitService.getUnknown(Set(), None)
     unknowns.foreach { case (_, mapped) =>
       mapped.foreach {
         case (_, x) =>
@@ -995,7 +1010,50 @@ object DataFixture {
       }
     }
 
-    println("\nFill Road Width in missing and incomplete road links")
+    println("Complete at time: " + DateTime.now())
+  }
+
+  def verifyInaccurateSpeedLimits(): Unit = {
+    println("Start inaccurate SpeedLimit verification\n")
+    println(DateTime.now())
+
+    val polygonTools: PolygonTools = new PolygonTools()
+    val dao = new OracleSpeedLimitDao(null, null)
+
+    //Expire all inaccuratedAssets
+    OracleDatabase.withDynTransaction {
+      inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
+    }
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+    OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+
+    municipalities.foreach { municipality =>
+      println("Working on... municipality -> " + municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality)
+
+      OracleDatabase.withDynTransaction {
+        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.map(_.linkId).toSet))
+
+      val inaccurateAssets =  speedLimits.flatMap{speedLimit =>
+          val roadLink = roadLinks.find(_.linkId == speedLimit.linkId).get
+          speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, roadLink) match {
+            case Some(inaccurateAsset) =>
+              Some(inaccurateAsset, roadLink.administrativeClass)
+            case _ => None
+          }
+        }
+
+        inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
+          inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
+        }
+      }
+    }
+
+    println("Ended inaccurate SpeedLimit verification\n")
     println(DateTime.now())
   }
 
@@ -1234,6 +1292,8 @@ object DataFixture {
         updateAreasOnAsset()
       case Some("update_OTH_BS_with_TR_info") =>
         updateOTHBusStopWithTRInfo()
+      case Some("verify_inaccurate_speed_limit_assets") =>
+        verifyInaccurateSpeedLimits()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1241,7 +1301,7 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | verify_inaccurate_speed_limit_assets")
     }
   }
 }

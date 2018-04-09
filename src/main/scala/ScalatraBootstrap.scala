@@ -39,7 +39,11 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.pavingService,
       Digiroad2Context.roadWidthService,
       Digiroad2Context.manoeuvreService,
-      Digiroad2Context.assetService
+      Digiroad2Context.assetService,
+      Digiroad2Context.obstacleService,
+      Digiroad2Context.pedestrianCrossingService,
+      Digiroad2Context.railwayCrossingService,
+      Digiroad2Context.trafficLightService
     ), "/api/municipality/*")
     context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.vvhClient,
       Digiroad2Context.roadAddressService, Digiroad2Context.projectService, Digiroad2Context.roadNetworkService), "/api/viite/*")
