@@ -38,7 +38,7 @@
     };
 
     this.predicate = function () {
-      return assetConfig.authorizationPolicy.editModeAccess() /*_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium')  || _.contains(me.roles, 'serviceRoadMaintainer')*/;
+      return assetConfig.authorizationPolicy.editModeAccess();
     };
 
     var element = $('<div class="panel-group service-road"/>');

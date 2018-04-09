@@ -9,7 +9,7 @@
     };
 
     this.formEditModeAccess = function(selectedAsset) {
-      return selectedAsset.administrativeClass !== 1;
+      return (me.isUser('serviceRoadMaintainer') && me.hasRightsInArea(selectedAsset.area)) || me.isUser('operator');
     };
 
   };

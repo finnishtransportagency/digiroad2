@@ -65,7 +65,8 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.trailerTruckWeightLimit,
@@ -87,7 +88,8 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.axleWeightLimit,
@@ -109,7 +111,8 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.bogieWeightLimit,
@@ -131,7 +134,8 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.heightLimit,
@@ -152,7 +156,8 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.lengthLimit,
@@ -173,7 +178,8 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.widthLimit,
@@ -195,7 +201,8 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.litRoad,
@@ -524,7 +531,8 @@
           manyFloatingAssetsLabel: 'suojatiet',
           newAssetLabel: 'suojatie'
         },
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.obstacles,
@@ -541,7 +549,8 @@
           singleFloatingAssetLabel: 'esterakennelman',
           manyFloatingAssetsLabel: 'esterakennelmat',
           newAssetLabel: 'esterakennelma'
-        }
+        },
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.railwayCrossings,
@@ -557,7 +566,8 @@
           singleFloatingAssetLabel: 'tasoristeyksen',
           manyFloatingAssetsLabel: 'tasoristeykset',
           newAssetLabel: 'tasoristeys'
-        }
+        },
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.directionalTrafficSigns,
@@ -573,7 +583,8 @@
           singleFloatingAssetLabel: 'opastustaulun',
           manyFloatingAssetsLabel: 'opastustaulut',
           newAssetLabel: 'opastustaulu'
-        }
+        },
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.servicePoints,
@@ -588,7 +599,8 @@
           singleFloatingAssetLabel: 'palvelupisteen',
           manyFloatingAssetsLabel: 'palvelupisteet',
           newAssetLabel: 'palvelupiste'
-        }
+        },
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.trafficLights,
@@ -605,7 +617,8 @@
           manyFloatingAssetsLabel: 'liikennevalot',
           newAssetLabel: 'liikennevalo'
         },
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.trafficSigns,
