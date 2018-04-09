@@ -5,9 +5,10 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Weekday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
-import fi.liikennevirasto.digiroad2.service.pointasset.{ObstacleService, PavingService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -35,6 +36,9 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val mockPavingService = MockitoSugar.mock[PavingService]
   val mockRoadWidthService = MockitoSugar.mock[RoadWidthService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
+  val mockPedestrianCrossingService = MockitoSugar.mock[PedestrianCrossingService]
+  val mockRailwayCrossingService = MockitoSugar.mock[RailwayCrossingService]
+  val mockTrafficLightService = MockitoSugar.mock[TrafficLightService]
 
   val roadLink = RoadLink(1000L, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
@@ -111,8 +115,24 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockManoeuvreService.createManoeuvre(any[String], any[NewManoeuvre])).thenReturn(10)
   when(mockManoeuvreService.find(any[Long])).thenReturn(Some(Manoeuvre(1, manoeuvreElement, Set.empty, Nil, None, None, "", DateTime.now(), "")))
 
-  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavingService, mockRoadWidthService, mockManoeuvreService, mockAssetService)
+  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavingService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService)
   addServlet(municipalityApi, "/*")
+
+  when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
+  when(mockObstacleService.getById(1)).thenReturn(Some(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, NormalLinkInterface)))
+  when(mockRailwayCrossingService.getById(1)).thenReturn(Some(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, None, NormalLinkInterface)))
+  when(mockTrafficLightService.getById(1)).thenReturn(Some(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
+
+  when(mockPedestrianCrossingService.create(any[IncomingPedestrianCrossing], any[String], any[RoadLink])).thenReturn(1L)
+  when(mockObstacleService.create(any[IncomingObstacle], any[String], any[RoadLink])).thenReturn(1L)
+  when(mockRailwayCrossingService.create(any[IncomingRailwayCrossing], any[String], any[RoadLink])).thenReturn(1L)
+  when(mockTrafficLightService.create(any[IncomingTrafficLight], any[String], any[RoadLink])).thenReturn(1L)
+
+  when(mockPedestrianCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 0, 235, None, None, None, None, NormalLinkInterface)))
+  when(mockObstacleService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(Obstacle(1, 1000, 0, 0, 0, false, 1L, 235, 2, None, None, None, None, NormalLinkInterface)))
+  when(mockRailwayCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(RailwayCrossing(1, 1000, 0, 0, 0, false, 1L, 235, 1, None, None, None, None, None, NormalLinkInterface)))
+  when(mockTrafficLightService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
+
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
     val credentials = username + ":" + password
@@ -142,6 +162,14 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       "number_of_lanes" -> """ "properties": [{"value": 2, "name": "value"}]"""
     )
 
+  val pointAssetInfo =
+    Map(
+      "pedestrian_crossing" -> """ "properties": [{"name": "hasPedestrianCrossing", "value": 1}]""",
+      "obstacle" -> """ "properties": [{"value": 2, "name": "obstacleType"}]""",
+      "traffic_light" -> """ "properties": [{"name": "hasTrafficLight", "value" : 1}]""",
+      "railway_crossing" -> """ "properties": [{"value": 2, "name": "safetyEquipment"}]"""
+    )
+
   def testUserAuth(assetURLName: String) = {
     get("/" + assetURLName + "?municipalityCode=235") {
       withClue("assetName " + assetURLName) {
@@ -163,6 +191,17 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   def createLinearAsset(assetInfo: (String, String)) = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, "sideCode": 1, """ + prop + """}]"""
+
+    postJsonWithUserAuth("/" + assetURLName, requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+      withClue("assetName " + assetURLName) {
+        status should be(200)
+      }
+    }
+  }
+
+  def createPointAsset(assetInfo: (String, String)) = {
+    val (assetURLName, prop) = assetInfo
+    val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "sideCode": 1, """ + prop + """}]"""
 
     postJsonWithUserAuth("/" + assetURLName, requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       withClue("assetName " + assetURLName) {
@@ -240,6 +279,18 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     deleteWithUserAuth("/" + assetURLName + "/1", getAuthorizationHeader("kalpa", "")) {
       withClue("assetName " + assetURLName) {
         status should be(401)
+      }
+    }
+  }
+
+  def assetNotDeletedWithStateAdministrativeClass(assetURLName: String) = {
+    val newRoadLinks = Seq(RoadLink(1000L, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1000), false)).thenReturn(newRoadLinks)
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(1000), false)).thenReturn(newRoadLinks)
+
+    deleteWithUserAuth("/235/" + assetURLName + "/1", getAuthorizationHeader("kalpa", "kalpa")) {
+      withClue("assetName " + assetURLName) {
+        status should equal(422)
       }
     }
   }
@@ -325,8 +376,13 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     assetInfo.foreach(createLinearAsset)
   }
 
+  test("create new point asset", Tag("db")) {
+    pointAssetInfo.foreach(createPointAsset)
+  }
+
   test("create new asset without link id", Tag("db")) {
     assetInfo.keySet.foreach(createWithoutLinkId)
+    pointAssetInfo.keySet.foreach(createWithoutLinkId)
   }
 
   test("create new asset without a valid SideCode", Tag("db")) {
@@ -347,10 +403,12 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   test("asset is not created if linkId has AdministrativeClass State"){
     assetInfo.foreach(assetNotCreatedWithStateAdministrativeClass)
+    pointAssetInfo.foreach(assetNotCreatedWithStateAdministrativeClass)
   }
 
   test("delete asset with wrong authentication", Tag("db")){
     assetInfo.keySet.foreach(deleteAssetWithWrongAuthentication)
+    pointAssetInfo.keySet.foreach(deleteAssetWithWrongAuthentication)
   }
 
   test("asset is updated with newer timestamp and differing measures"){
@@ -377,8 +435,14 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     assetInfo.foreach(notUpdatedWithoutValidSidecode)
   }
 
-  test("asset is not upade if linkId has AdministrativeClass State"){
+  test("asset is not updated if linkId has AdministrativeClass State"){
     assetInfo.foreach(assetNotUpdatedWithStateAdministrativeClass)
+    pointAssetInfo.foreach(assetNotUpdatedWithStateAdministrativeClass)
+  }
+
+  test("asset is not deleted if linkId has AdministrativeClass State"){
+    assetInfo.keySet.foreach(assetNotDeletedWithStateAdministrativeClass)
+    pointAssetInfo.keySet.foreach(assetNotDeletedWithStateAdministrativeClass)
   }
 
   test("encode lighting limit") {

@@ -6,26 +6,26 @@ require.config({
     'backbone': '../../node_modules/backbone/backbone',
     'chai': '../../node_modules/chai/chai',
     'EventBus': '../src/utils/eventbus',
-    "SelectedMassTransitStop": '../src/model/SelectedMassTransitStop',
+    "SelectedMassTransitStop": '../src/model/selectedMassTransitStop',
     'Backend': '../src/utils/backend-utils',
     'validitydirections': '../src/utils/validity-directions',
-    'GeometryUtils': '../src/utils/GeometryUtils',
-    'SpeedLimitsCollection': '../src/model/SpeedLimitsCollection',
-    'RoadCollection': '../src/model/RoadCollection',
-    'AssetsVerificationCollection': '../src/model/AssetsVerificationCollection',
-    'SelectedSpeedLimit': '../src/model/SelectedSpeedLimit',
+    'GeometryUtils': '../src/utils/geometryUtils',
+    'AssetsVerificationCollection': '../src/controller/assetsVerificationCollection',
+    'SpeedLimitsCollection': '../src/controller/speedLimitsCollection',
+    'RoadCollection': '../src/controller/roadCollection',
+    'SelectedSpeedLimit': '../src/model/selectedSpeedLimit',
     'zoomlevels': '../src/utils/zoom-levels',
     'geometrycalculator': '../src/utils/geometry-calculations',
-    'LocationInputParser': '../src/utils/LocationInputParser',
+    'LocationInputParser': '../src/utils/locationInputParser',
     'assetGrouping': '../src/assetgrouping/asset-grouping',
-    'AssetsTestData': '../test_data/AssetsTestData',
-    'RoadLinkTestData': '../test_data/RoadLinkTestData',
-    'UserRolesTestData': '../test_data/UserRolesTestData',
-    'EnumeratedPropertyValuesTestData': '../test_data/EnumeratedPropertyValuesTestData',
-    'AssetPropertyNamesTestData': '../test_data/AssetPropertyNamesTestData',
-    'SpeedLimitsTestData': '../test_data/SpeedLimitsTestData',
-    'SpeedLimitSplitTestData': '../test_data/SpeedLimitSplitTestData',
-    'AssetTypePropertiesTestData': '../test_data/AssetTypePropertiesTestData'
+    'AssetsTestData': '../test_data/assetsTestData',
+    'RoadLinkTestData': '../test_data/roadLinkTestData',
+    'UserRolesTestData': '../test_data/userRolesTestData',
+    'EnumeratedPropertyValuesTestData': '../test_data/enumeratedPropertyValuesTestData',
+    'AssetPropertyNamesTestData': '../test_data/assetPropertyNamesTestData',
+    'SpeedLimitsTestData': '../test_data/speedLimitsTestData',
+    'SpeedLimitSplitTestData': '../test_data/speedLimitSplitTestData',
+    'AssetTypePropertiesTestData': '../test_data/assetTypePropertiesTestData'
   },
   shim: {
     'jquery': {exports: '$'},
@@ -81,11 +81,11 @@ require.config({
   waitSeconds: 10
 });
 require(['lodash',
-  'SelectedMassTransitStopSpec',
-  'geometry-calculations-spec',
-  'MassTransitStopGroupingSpec',
-  'SelectedSpeedLimitSpec',
-  'LocationInputParserSpec'], function (lodash) {
+  'unit-tests/selectedMassTransitStopSpec',
+  'unit-tests/geometry-calculations-spec',
+  'unit-tests/massTransitStopGroupingSpec',
+  'unit-tests/selectedSpeedLimitSpec',
+  'unit-tests/locationInputParserSpec'], function (lodash) {
   window._ = lodash;
   window.applicationModel = {
     getWithRoadAddress : function(){

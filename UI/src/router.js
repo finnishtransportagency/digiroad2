@@ -84,6 +84,9 @@
         this.route(/^$/, function () {
           applicationModel.selectLayer('massTransitStop');
         });
+
+        this.stateHistory = null;
+
       },
 
       routes: {
@@ -91,7 +94,7 @@
         'asset/:id': 'massTransitStop',
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
-        'speedLimit/:linkId': 'speedLimit',
+        'speedLimit/:linkId(/municipality/:municipalityId/:position)': 'speedLimit',
         'speedLimitErrors/:id': 'speedLimitErrors',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
@@ -99,7 +102,7 @@
         'railwayCrossings/:id': 'railwayCrossings',
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
         'trafficSigns/:id': 'trafficSigns',
-        'maintenanceRoad/:linkId': 'maintenanceRoad',
+        'maintenanceRoad/:id': 'maintenanceRoad',
         'litRoad/:id': 'litRoad',
         'roadWidth/:id': 'roadWidth',
         'numberOfLanes/:id': 'numberOfLanes',
@@ -114,6 +117,8 @@
         'lengthLimit/:id': 'lengthLimit',
         'widthLimit/:id': 'widthLimit',
         'work-list/speedLimit': 'speedLimitWorkList',
+        'work-list/speedLimit/state' : 'speedLimitStateWorkList',
+        'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
         'work-list/speedLimitErrors': 'speedLimitErrorsWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -174,19 +179,18 @@
         });
       },
 
-      speedLimit: function (linkId) {
-        var roadLinkReceived = backend.getRoadLinkByLinkId(linkId);
-        var layerSelected = eventbus.oncePromise('layer:speedLimit:shown');
+      speedLimit: function (linkId, municipalityId,  position) {
+        if(position)
+          this.stateHistory = {municipality: Number(municipalityId), position: position};
+
         applicationModel.selectLayer('speedLimit');
-        $.when(layerSelected).then(function () {
-          var mapMoved = $.when(roadLinkReceived).then(function (response) {
-            var promise = eventbus.oncePromise('layer:speedLimit:moved');
-            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
-            return promise;
+        backend.getRoadLinkByLinkId(linkId, function (response) {
+          eventbus.once('speedLimits:fetched', function () {
+            var asset = models.selectedSpeedLimit.getSpeedLimit(response.id);
+            models.selectedSpeedLimit.open(asset, true);
+            models.selectedSpeedLimit.cancel();
           });
-          $.when(mapMoved).then(function () {
-            eventbus.trigger('speedLimit:selectByLinkId', parseInt(linkId, 10));
-          });
+          mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
         });
       },
 
@@ -240,6 +244,22 @@
 
       speedLimitWorkList: function () {
         eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
+      },
+
+      speedLimitStateWorkList: function () {
+        eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimitsState());
+      },
+
+      speedLimitMunicipalitiesWorkList: function (id) {
+        if(id || this.stateHistory) {
+          var municipalityId = id ? id : this.stateHistory.municipality;
+          eventbus.trigger('speedLimitMunicipality:select', backend.getUnknownLimitsMunicipality(municipalityId), this.stateHistory);
+        }
+        else
+          eventbus.trigger('municipalities:select', backend.getMunicipalitiesWithUnknowns());
+
+        this.stateHistory = null;
+
       },
 
       speedLimitErrorsWorkList: function () {

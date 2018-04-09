@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset
 
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 sealed trait LinkGeomSource{
@@ -47,7 +47,7 @@ sealed trait LinkType
 object LinkType {
   val values = Set(Motorway, MultipleCarriageway, SingleCarriageway, Freeway, Roundabout, SlipRoad,
                    RestArea, CycleOrPedestrianPath, PedestrianZone, ServiceOrEmergencyRoad, EnclosedTrafficArea,
-                   TractorRoad, MotorwayServiceAccess, CableFerry, UnknownLinkType)
+                   TractorRoad, MotorwayServiceAccess, CableFerry, SpecialTransportWithoutGate, SpecialTransportWithGate, UnknownLinkType)
 
   def apply(value: Int): LinkType = {
     values.find(_.value == value).getOrElse(UnknownLinkType)
@@ -66,6 +66,8 @@ case object ServiceOrEmergencyRoad extends LinkType { def value = 10 }
 case object EnclosedTrafficArea extends LinkType { def value = 11 }
 case object TractorRoad extends LinkType { def value = 12 }
 case object MotorwayServiceAccess extends LinkType { def value = 13 }
+case object SpecialTransportWithoutGate extends LinkType { def value = 14 }
+case object SpecialTransportWithGate extends LinkType { def value = 15 }
 case object CableFerry extends LinkType { def value = 21 }
 case object UnknownLinkType extends LinkType { def value = 99 }
 
@@ -224,13 +226,14 @@ sealed trait AssetTypeInfo {
   def geometryType: String
   val label: String
 }
+//TODO change the type to be optional since manoeuvre are stored in a separated table and geometry type can be a type and the label can be a toString override
 object AssetTypeInfo {
   val values =  Set(SpeedLimitAsset,TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
                     HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw,
                     NumberOfLanes, CongestionTendency, MassTransitLane, TrafficVolume, WinterSpeedLimit,
                     Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
-                    TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, UnknownAssetTypeId)
+                    TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, UnknownAssetTypeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
@@ -272,3 +275,9 @@ case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryT
 case object Manoeuvres extends AssetTypeInfo { val typeId = 999; def geometryType = "linear"; val label = "Manoeuvre" }
 case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit" }
 case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""}
+case object TrWidthLimit extends  AssetTypeInfo {val typeId = 370; def geometryType = "point"; val label = "TrWidthLimit"}
+case object TrHeightLimit extends  AssetTypeInfo {val typeId = 360; def geometryType = "point"; val label = "TrHeightLimit"}
+case object TrTrailerTruckWeightLimit extends  AssetTypeInfo {val typeId = 330; def geometryType = "point"; val label = "TrTrailerTruckWeightLimit"}
+case object TrBogieWeightLimit extends  AssetTypeInfo {val typeId = 350; def geometryType = "point"; val label = "TrBogieWeightLimit"}
+case object TrAxleWeightLimit extends  AssetTypeInfo {val typeId = 340; def geometryType = "point"; val label = "TrAxleWeightLimit"}
+case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometryType = "point"; val label = "TrWeightLimit"}
