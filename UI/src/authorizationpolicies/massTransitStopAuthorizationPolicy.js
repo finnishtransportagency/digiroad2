@@ -12,9 +12,7 @@
      * tietojen ylläpitäjä = bus stop maintainer. Return false if user is not operator/busStopMaintainer, meaning that maintainer cannot be changed to ELY-keskus in form unless authorized.
     * */
     this.reduceChoices = function(stopProperty) {
-      var getMunicipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
-      var municipalityCode = !_.isUndefined(getMunicipalityCode) ? getMunicipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
-      return stopProperty.publicId == 'tietojen_yllapitaja' && !isElyMaintainerOrOperator(municipalityCode);
+      return stopProperty.publicId == 'tietojen_yllapitaja' && !isElyMaintainerOrOperator(selectedMassTransitStopModel.getRoadLink().getData().municipalityCode);
     };
 
     /**
@@ -31,8 +29,7 @@
     * */
 
     this.assetSpecificAccess = function(){
-      var getMunicipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
-      var municipalityCode = !_.isUndefined(getMunicipalityCode) ? getMunicipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
+      var municipalityCode = selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
       return (me.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isAdminClassState() && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
     };
 

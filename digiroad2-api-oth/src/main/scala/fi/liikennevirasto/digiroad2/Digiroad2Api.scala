@@ -225,8 +225,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "bearing" -> stop.bearing,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
-        "propertyData" -> stop.propertyData,
-        "municipalityCode" -> stop.municipalityCode)
+        "propertyData" -> stop.propertyData)
     }
 
     if (massTransitStopReturned._2) {
@@ -1131,6 +1130,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
+    if (!user.isServiceRoadMaintainer())
     if (!user.isAuthorizedToWrite(municipality)) {
       halt(Unauthorized("User not authorized"))
     }
