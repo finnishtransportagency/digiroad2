@@ -2,21 +2,35 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{Roundabout, State, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.oracle.ImportLogService.getClass
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import org.slf4j.LoggerFactory
 
 case class RoundaboutChangeSet(trafficDirectionChanges: Seq[RoadLink] = Seq.empty)
 
 object RoundaboutProcessor {
 
+  val logger = LoggerFactory.getLogger(getClass)
+
+  private def isCompletedRoundabout(firstLink: RoadLink, nextLink: RoadLink, acc: Seq[RoadLink]): Boolean = {
+    if(acc.size < 3){
+      (firstLink.linkId == nextLink.linkId && GeometryUtils.areAdjacent(firstLink.geometry.head, firstLink.geometry.last)) ||
+      (firstLink.linkId != nextLink.linkId && GeometryUtils.areAdjacent(firstLink.geometry, nextLink.geometry.head) && GeometryUtils.areAdjacent(firstLink.geometry, nextLink.geometry.last))
+    }else{
+      firstLink.linkId != nextLink.linkId && GeometryUtils.areAdjacent(firstLink.geometry, nextLink.geometry)
+    }
+  }
+
   private def findRoundaboutRecursive(firstLink: RoadLink, nextLink: RoadLink, roadLinks: Seq[RoadLink], acc: Seq[RoadLink] = Seq.empty, withIncomplete: Boolean = true): (Seq[RoadLink], Seq[RoadLink]) = {
     val (adjacents, rest) = roadLinks.partition(r => GeometryUtils.areAdjacent(r.geometry, nextLink.geometry))
     adjacents match{
-      case Seq() if acc.size < 3 && !withIncomplete => {
-        println(s"findRoundaboutRecursive: ")
-        acc.foreach(ac => println(s" acc:  linkIc: ${ac.linkId}"))
+      case Seq() if isCompletedRoundabout(firstLink, nextLink, acc) =>
+        (acc :+ nextLink, rest)
+      case Seq() if !withIncomplete => {
+        logger.info(s"The roundabout was ignored, with the following road links ${acc.map(_.linkId).mkString(", ")}")
         (Seq.empty, rest)
       }
-      case Seq() if GeometryUtils.areAdjacent(firstLink.geometry, nextLink.geometry) =>
+      case Seq() =>
         (acc :+ nextLink, rest)
       case adjs =>
           findRoundaboutRecursive(firstLink, adjs.head, rest ++ adjs.tail, acc :+ nextLink, withIncomplete)

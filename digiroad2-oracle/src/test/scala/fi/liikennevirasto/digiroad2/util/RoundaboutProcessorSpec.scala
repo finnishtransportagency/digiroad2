@@ -210,4 +210,27 @@ class RoundaboutProcessorSpec extends FunSuite with Matchers {
     groupedRoundabouts.find(_.size == roundabout2.size).get.forall(roundabout2.map(_.linkId).contains) should be (true)
   }
 
+  test("Grouping roundabout with less than 3 links") {
+
+    val roundabout1 = Seq(
+      RoadLink(442443, Seq(Point(384985, 6671649), Point(384980, 6671646), Point(384972, 6671647), Point(384970, 6671649)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(442445, Seq(Point(384970, 6671649), Point(384968, 6671653), Point(384969, 6671660), Point(384985, 6671649)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
+
+    val roundabout2 = Seq(
+      RoadLink(442444, Seq(Point(38498510, 6671649), Point(384980, 6671646), Point(384972, 6671647), Point(38498510, 6671649)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
+
+    val roundabout3 = Seq(
+      RoadLink(442447, Seq(Point(38498530, 6671649), Point(384980, 6671646), Point(384972, 6671647), Point(38498520, 6671649)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
+
+    val groupedRoundabouts = RoundaboutProcessor.groupByRoundabout(roundabout1 ++ roundabout2 ++ roundabout3, false).map(_.map(_.linkId))
+
+    groupedRoundabouts.size should be (2)
+    groupedRoundabouts.find(_.size == roundabout1.size).get.forall(roundabout1.map(_.linkId).contains) should be (true)
+    groupedRoundabouts.find(_.size == roundabout2.size).get.forall(roundabout2.map(_.linkId).contains) should be (true)
+
+  }
+
 }

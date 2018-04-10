@@ -23,10 +23,7 @@ sealed trait RoadLinkDAO{
 
 
   def insertValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by )
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, ${value}, $username
-                   from dual
-                   where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
+    insertValues(linkProperty, username, value)
   }
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {

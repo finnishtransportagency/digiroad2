@@ -258,7 +258,7 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val point = GeometryUtils.middlePoint(Seq(geometry1, geometry2, geometry3, geometry4))
 
     point.x should be(1)
-    point.x should be(1)
+    point.y should be(1)
   }
 
   test("calculate angle of a vector") {
