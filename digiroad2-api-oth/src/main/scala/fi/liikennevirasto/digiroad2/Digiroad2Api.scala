@@ -204,7 +204,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/user/roles") {
     Map(
       "roles" -> userProvider.getCurrentUser().configuration.roles,
-      "municipalities" -> userProvider.getCurrentUser().configuration.authorizedMunicipalities)
+      "municipalities" -> userProvider.getCurrentUser().configuration.authorizedMunicipalities,
+      "areas" -> userProvider.getCurrentUser().configuration.authorizedAreas)
   }
 
   get("/massTransitStops/:nationalId") {
@@ -527,11 +528,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
-    val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
 
     params.get("bbox")
-      .map(getRoadLinksFromVVH(municipalities))
+      .map(getRoadLinksFromVVH(Set()))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
@@ -716,7 +715,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/linearassets/complementary"){
-    val user = userProvider.getCurrentUser()
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
@@ -1133,8 +1131,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
-    if (!user.isServiceRoadMaintainer())
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
+    if (!user.isAuthorizedToWrite(municipality)) {
       halt(Unauthorized("User not authorized"))
     }
   }
@@ -1282,9 +1279,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val asset = service.getById(params("id").toLong)
     asset match {
       case None => halt(NotFound("Asset with given id not found"))
-      case Some(foundAsset) =>
-        validateUserMunicipalityAccess(user)(foundAsset.municipalityCode)
-        foundAsset
+      case Some(foundAsset) => foundAsset
     }
   }
   get("/municipalities/unverified") {

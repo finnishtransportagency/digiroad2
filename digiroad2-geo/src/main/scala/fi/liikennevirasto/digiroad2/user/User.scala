@@ -1,8 +1,5 @@
 package fi.liikennevirasto.digiroad2.user
 
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.asset._
-
 case class Configuration(
                         zoom: Option[Long] = None,
                         east: Option[Long] = None,
@@ -35,14 +32,12 @@ case class User(id: Long, username: String, configuration: Configuration) {
     configuration.roles(Role.Premium) || configuration.roles(Role.Operator) || configuration.roles(Role.BusStopMaintainer)
   }
 
-  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty
-
   def isAuthorizedToRead(municipalityCode: Int): Boolean = true
 
-  def isAuthorizedToWrite(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean = isAuthorizedFor(municipalityCode, administrativeClass)
+  def isAuthorizedToWrite(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode)
 
-  private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean =
-    (isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)) || (isBusStopMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)) || isOperator()
+  private def isAuthorizedFor(municipalityCode: Int): Boolean =
+    isOperator() || isBusStopMaintainer() || configuration.authorizedMunicipalities.contains(municipalityCode)
 }
 
 object Role {
