@@ -220,7 +220,7 @@
           enabled: 'Valaistus',
           disabled: 'Ei valaistusta'
         },
-        authorizationPolicy: new StateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true
       },
@@ -240,7 +240,7 @@
           enabled: 'Kelirikko',
           disabled: 'Ei kelirikkoa'
         },
-        authorizationPolicy: new StateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isVerifiable: false
       },
       {
@@ -261,7 +261,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        authorizationPolicy: new StateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true
       },
@@ -299,7 +299,7 @@
           enabled: 'Päällyste',
           disabled: 'Ei päällystettä'
         },
-        authorizationPolicy: new StateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isVerifiable: false
       },
       {
@@ -339,7 +339,7 @@
           enabled: 'Joukkoliikennekaista',
           disabled: 'Ei joukkoliikennekaistaa'
         },
-        authorizationPolicy: new StateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isVerifiable: true
       },
       {
@@ -361,7 +361,8 @@
         },
         possibleValues: [100, 80, 70, 60],
         style : new WinterSpeedLimitStyle(),
-        isVerifiable: false
+        isVerifiable: false,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.prohibition,
@@ -378,7 +379,8 @@
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta'
         },
-        isVerifiable: true
+        isVerifiable: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -395,7 +397,8 @@
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta'
         },
-        isVerifiable: true
+        isVerifiable: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.europeanRoads,
@@ -413,7 +416,7 @@
           enabled: 'Eurooppatienumero(t)',
           disabled: 'Ei eurooppatienumeroa'
         },
-        authorizationPolicy: new StateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false
       },
@@ -434,7 +437,8 @@
           disabled: 'Ei liittymänumeroa'
         },
         label: new LinearAssetLabelMultiValues(),
-        isVerifiable: false
+        isVerifiable: false,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.maintenanceRoad,
@@ -487,7 +491,8 @@
           disabled: 'Ei tietoa'
         },
         label: new LinearAssetLabel(),
-        isVerifiable: true
+        isVerifiable: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       }
     ];
 
@@ -639,7 +644,7 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
-        authorizationPolicy: new TrafficSignAuthorizationPolicy(),
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true
       },
       {

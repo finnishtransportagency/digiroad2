@@ -196,10 +196,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Filter stops by authorization") {
+  test("Stops should not be filtered by authorization") {
     runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(User(0, "test", Configuration()), boundingBoxWithKauniainenAssets)
-      stops should be(empty)
+      stops should not be(empty)
     }
   }
 

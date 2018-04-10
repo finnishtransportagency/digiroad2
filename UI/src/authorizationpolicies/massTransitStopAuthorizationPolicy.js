@@ -5,14 +5,16 @@
     var me = this;
 
     function isElyMaintainerOrOperator(municipalityCode) {
-      return (me.isUser('busStopMaintainer') && me.hasRightsInMunicipality(municipalityCode)) || me.isUser('operator');
+      return (me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
     }
 
     /**
      * tietojen ylläpitäjä = bus stop maintainer. Return false if user is not operator/busStopMaintainer, meaning that maintainer cannot be changed to ELY-keskus in form unless authorized.
     * */
     this.reduceChoices = function(stopProperty) {
-      return stopProperty.publicId == 'tietojen_yllapitaja' && !isElyMaintainerOrOperator(selectedMassTransitStopModel.getMunicipalityCode());
+      var getMunicipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
+      var municipalityCode = !_.isUndefined(getMunicipalityCode) ? getMunicipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
+      return stopProperty.publicId == 'tietojen_yllapitaja' && !isElyMaintainerOrOperator(municipalityCode);
     };
 
     /**
@@ -31,7 +33,6 @@
     this.assetSpecificAccess = function(){
       var getMunicipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
       var municipalityCode = !_.isUndefined(getMunicipalityCode) ? getMunicipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
-
       return (me.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isAdminClassState() && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
     };
 

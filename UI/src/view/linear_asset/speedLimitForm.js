@@ -1,6 +1,6 @@
 (function (root) {
   var unit = 'km/h';
-  var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+  var authorizationPolicy = new LinearAssetAuthorizationPolicy();
   var template = function(selectedSpeedLimit) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
