@@ -109,7 +109,6 @@
 
     if (!application.isReadOnly()){
       var style = manoeuvreStyle.getSelectedStyle().getStyle(features, {zoomLevel: zoomlevels.getViewZoom(map)});
-      style.setStroke(_.merge(style.getStroke(), new ol.style.Stroke({color: '#00f'})));
       features.setStyle(style);
     }
 
