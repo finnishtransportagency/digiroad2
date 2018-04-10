@@ -268,7 +268,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016,8,1))
       ))
-      val (stop, showStatusCode) = RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      val (stop, showStatusCode, municipalityCode) = RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
 
       showStatusCode should be (false)
@@ -295,7 +295,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
       ))
 
-      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      val (stop, showStatusCode, municipalityCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) if(equipment.isMaster) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
@@ -333,7 +333,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
       )
 
-      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      val (stop, showStatusCode, municipalityCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
@@ -365,7 +365,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
       )
 
-      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      val (stop, showStatusCode, municipalityCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
@@ -397,7 +397,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
       )
 
-      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      val (stop, showStatusCode, municipalityCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
@@ -413,7 +413,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback{
 
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(None)
-      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      val (stop, showStatusCode, municipalityCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
 
       stop.size should be (1)
       stop.map(_.nationalId).get should be (85755)
@@ -960,7 +960,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
-      val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
+      val (stop, showStatusCode, municipalityCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
       service.deleteMassTransitStopData(stop.head.id)
       verify(mockTierekisteriClient).deleteMassTransitStop("OTHJ85755")
       service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._1.isEmpty should be(true)
@@ -971,7 +971,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("delete fails if a TR kept mass transit stop is not found") {
     val eventbus = MockitoSugar.mock[DigiroadEventBus]
     val service = new TestMassTransitStopServiceWithDynTransaction(eventbus, mockRoadLinkService)
-    val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
+    val (stop, showStatusCode, municipalityCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
     when(mockTierekisteriClient.deleteMassTransitStop(any[String])).thenThrow(new TierekisteriClientException("foo"))
     intercept[TierekisteriClientException] {
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
@@ -1258,7 +1258,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       sqlu"""update text_property_value set value_fi='livi114873' where asset_id = 300008 and value_fi = 'OTHJ85755'""".execute
       when(mockTierekisteriClient.fetchMassTransitStop("livi114873")).thenReturn(Some(trStop))
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
-      val (stopOpt, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      val (stopOpt, showStatusCode, municipalityCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       val stop = stopOpt.get
       RollbackMassTransitStopServiceWithTierekisteri.updateExistingById(stop.id,
         None, stop.propertyData.map(p =>
@@ -1313,7 +1313,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       sqlu"""delete from text_property_value where id = $propertyValueId""".execute
       val dbResult = sql"""SELECT value_fi FROM text_property_value where id = $propertyValueId""".as[String].list
       dbResult.size should be(0)
-      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(1, _ => Unit)
+      val (stop, showStatusCode, municipalityCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(1, _ => Unit)
       stop.isDefined should be(true)
       val liviIdentifierProperty = stop.get.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.isEmpty should be(true)
