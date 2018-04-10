@@ -17,7 +17,7 @@ case class User(id: Long, username: String, configuration: Configuration) {
 
   def isViewer() = configuration.roles(Role.Viewer)
 
-  def isServiceRoadMaintainer(): Boolean= configuration.roles(Role.ServiceRoadMaintainer)
+  def isServiceRoadMaintainer(): Boolean= configuration.roles(Role.ServiceRoadMaintainer) && configuration.roles.size == 1
 
   def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
 
