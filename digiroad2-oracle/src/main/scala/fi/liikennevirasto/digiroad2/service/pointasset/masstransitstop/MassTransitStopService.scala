@@ -26,7 +26,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
 case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                                          validityDirection: Option[Int], bearing: Option[Int],
                                          validityPeriod: Option[String], floating: Boolean,
-                                         propertyData: Seq[Property], municipalityCode: Int) extends FloatingAsset
+                                         propertyData: Seq[Property]) extends FloatingAsset
 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
