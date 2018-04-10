@@ -65,6 +65,7 @@
 
     eventbus.on(layerName + ':changed', function() {
       rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+      rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {

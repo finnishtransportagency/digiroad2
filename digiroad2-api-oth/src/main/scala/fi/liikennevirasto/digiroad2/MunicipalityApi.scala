@@ -205,7 +205,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
     }
 
-    asset.map { value =>
+   val newAsset =  asset.map { value =>
       validateMeasures(Set(value.mValue), value.linkId)
       roadLinkService.getRoadLinkAndComplementaryFromVVH(value.linkId) match {
         case Some(link) => service.toIncomingAsset(value, link).map {
@@ -214,8 +214,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         }
         case None => halt(NotFound(s"Roadlink with ${value.linkId} does not exist"))
       }
-    }
-    getPointAssetById(typeId, assetId)
+    }.get
+
+    getPointAssetById(typeId, newAsset.getOrElse(halt(NotFound("asset not found"))))
   }
 
   def updateSpeedLimitAsset(assetId: Long, parsedBody: JValue, linkId: Long): (SpeedLimit, RoadLink) = {
