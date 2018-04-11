@@ -551,13 +551,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Saves road link property data from UI. Used by Digiroad2Api /linkproperties PUT endpoint.
     */
   def updateLinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType,
-                           direction: TrafficDirection, administrativeClass: AdministrativeClass, username: Option[String], municipalityValidation: Int => Unit): Option[RoadLink] = {
+                           direction: TrafficDirection, administrativeClass: AdministrativeClass, username: Option[String], municipalityValidation: (Int, AdministrativeClass) => Unit): Option[RoadLink] = {
     val vvhRoadLink = vvhClient.roadLinkData.fetchByLinkId(linkId) match {
       case Some(vvhRoadLink) => Some(vvhRoadLink)
       case None => vvhClient.complementaryData.fetchByLinkId(linkId)
     }
     vvhRoadLink.map { vvhRoadLink =>
-      municipalityValidation(vvhRoadLink.municipalityCode)
+      municipalityValidation(vvhRoadLink.municipalityCode, vvhRoadLink.administrativeClass)
       withDynTransaction {
         setLinkProperty("traffic_direction", "traffic_direction", "", direction.value, linkId, username, Some(vvhRoadLink.trafficDirection.value), None, None, None)
         if (functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", "", functionalClass, linkId, username, None, None, None, None)

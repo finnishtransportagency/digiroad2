@@ -644,12 +644,12 @@ trait LinearAssetOperations {
   /**
     * Saves linear asset when linear asset is split to two parts in UI (scissors icon). Used by Digiroad2Api /linearassets/:id POST endpoint.
     */
-  def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).
         getOrElse(throw new IllegalStateException("Road link no longer available"))
-      municipalityValidation(roadLink.municipalityCode)
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
@@ -699,11 +699,11 @@ trait LinearAssetOperations {
   /**
     * Saves linear assets when linear asset is separated to two sides in UI. Used by Digiroad2Api /linearassets/:id/separate POST endpoint.
     */
-  def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-      municipalityValidation(roadLink.municipalityCode)
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val newExistingIdsToReturn = valueTowardsDigitization match {
         case None => dao.updateExpiration(id, expired = true, username).toSeq

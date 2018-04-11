@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleMaintenanceDao}
@@ -252,7 +252,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   /**
     * Saves linear asset when linear asset is split to two parts in UI (scissors icon).
     */
-  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = maintenanceDAO.fetchMaintenancesByIds(maintenanceRoadAssetTypeId, Set(id)).head
       val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linearAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))

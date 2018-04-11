@@ -171,7 +171,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Returns data for municipality validation. Used by OracleSpeedLimitDao.splitSpeedLimit.
     */
-  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)] = {
+  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
     val links = sql"""
       select pos.link_id, pos.start_measure, pos.end_measure
       from ASSET a
@@ -185,7 +185,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     links.map { case (linkId, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
       val truncatedGeometry = GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, startMeasure, endMeasure)
-      (linkId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode, vvhRoadLink.linkSource)
+      (linkId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode, vvhRoadLink.linkSource, vvhRoadLink.administrativeClass)
     }
   }
 
@@ -271,9 +271,9 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Used by SpeedLimitService.create.
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: Int,
-                       vvhTimeStamp: Long, municipalityValidation: (Int) => Unit): Option[Long] = {
+                       vvhTimeStamp: Long, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
     val roadlink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId)
-    municipalityValidation(roadlink.get.municipalityCode)
+    municipalityValidation(roadlink.get.municipalityCode, roadlink.get.administrativeClass)
     createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadlink.get.linkSource)
   }
 
@@ -352,16 +352,16 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Splits speed limit by given split measure. Updates old asset and creates new asset. Returns new asset id.
     * Used by SpeedLimitService.split.
     */
-  def splitSpeedLimit(id: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: (Int) => Unit): Long = {
-    def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)]) = {
-      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
+  def splitSpeedLimit(id: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Long = {
+    def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]) = {
+      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
       vvhLinks
     }
 
     val (startMeasure, endMeasure, sideCode, vvhTimeStamp) = getLinkGeometryData(id)
-    val link: (Long, Double, (Point, Point), LinkGeomSource) =
-      withMunicipalityValidation(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id)).headOption.map { case (linkId, length, geometry, _, linkSource) =>
-        (linkId, length, GeometryUtils.geometryEndpoints(geometry), linkSource)
+    val link: (Long, Double, (Point, Point), LinkGeomSource, AdministrativeClass) =
+      withMunicipalityValidation(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id)).headOption.map { case (linkId, length, geometry, _, linkSource, adminClass) =>
+        (linkId, length, GeometryUtils.geometryEndpoints(geometry), linkSource, adminClass)
       }.get
 
     Queries.updateAssetModified(id, username).execute

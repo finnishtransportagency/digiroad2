@@ -41,6 +41,8 @@ case class User(id: Long, username: String, configuration: Configuration) {
 
   def isAuthorizedToWrite(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode)
 
+  def isAuthorizedToWrite(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean = isAuthorizedFor(municipalityCode, administrativeClass)
+
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
     isOperator() || isBusStopMaintainer() || configuration.authorizedMunicipalities.contains(municipalityCode)
 
