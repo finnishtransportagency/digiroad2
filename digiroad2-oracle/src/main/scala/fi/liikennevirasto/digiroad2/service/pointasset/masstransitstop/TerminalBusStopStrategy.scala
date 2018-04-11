@@ -80,12 +80,12 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     (resultAsset, TerminalPublishInfo(Some(resultAsset), children, Seq()))
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
 
-    municipalityValidation(asset.municipalityCode)
+    municipalityValidation(asset.municipalityCode, roadLink.administrativeClass)
 
     // Enrich properties with old administrator, if administrator value is empty in CSV import
     val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)

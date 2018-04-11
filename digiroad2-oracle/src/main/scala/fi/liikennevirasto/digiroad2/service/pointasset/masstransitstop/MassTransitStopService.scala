@@ -60,7 +60,7 @@ trait AbstractBusStopStrategy {
 
   def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit
 
-  def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
+  def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
   def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo]
 
   protected def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
@@ -275,7 +275,7 @@ trait MassTransitStopService extends PointAssetOperations {
     StaticQuery.queryNA[(Long, String, Long, Option[Long])](queryFilter(query)).list
   }
 
-  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): MassTransitStopWithProperties = {
 
    val (currentStrategy, publishInfo, persistedAsset ) =  withDynTransaction {
       val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
@@ -312,14 +312,12 @@ trait MassTransitStopService extends PointAssetOperations {
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
-  def getMassTransitStopByNationalIdWithTRWarnings(nationalId: Long, municipalityValidation: Int => Unit): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
+  def getMassTransitStopByNationalIdWithTRWarnings(nationalId: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
     withDynTransaction {
       val persistedStopOption = fetchPointAssets(massTransitStopDao.withNationalId(nationalId)).headOption
       persistedStopOption match {
         case Some(persistedStop) =>
           val roadLink = fetchRoadLink(persistedStop.linkId)
-
-          municipalityValidation(persistedStop.municipalityCode)
 
           val strategy = getStrategy(persistedStop)
           val (enrichedStop, error) = strategy.enrichBusStop(persistedStop, roadLink)

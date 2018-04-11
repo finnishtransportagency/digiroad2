@@ -150,7 +150,7 @@ trait CsvImporter {
     val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation)
     optionalAsset match {
       case Some(asset) =>
-        massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, () => _)
+        massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, (_, _) => Unit)
       case None => throw new AssetNotFoundException(externalId)
     }
   }
@@ -167,7 +167,7 @@ trait CsvImporter {
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, () => _))
+        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, (_, _) => Unit))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(externalId)
     }

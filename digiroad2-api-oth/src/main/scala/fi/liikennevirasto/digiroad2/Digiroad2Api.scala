@@ -208,12 +208,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/massTransitStops/:nationalId") {
-    def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
-      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
-        halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
-    }
     val nationalId = params("nationalId").toLong
-    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
     val massTransitStop = massTransitStopReturned._1.map { stop =>
       Map("id" -> stop.id,
         "nationalId" -> stop.nationalId,
@@ -239,12 +235,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   * Returns empty result as Json message, not as page not found
 */
     get("/massTransitStopsSafe/:nationalId") {
-      def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
-        if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
-          halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
-      }
       val nationalId = params("nationalId").toLong
-      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
       massTransitStopReturned._1 match {
         case Some(stop) =>
           Map ("id" -> stop.id,
@@ -257,6 +249,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "validityPeriod" -> stop.validityPeriod,
             "floating" -> stop.floating,
             "propertyData" -> stop.propertyData,
+            "municipalityCode" -> massTransitStopReturned._3,
             "success" -> true)
         case None =>
           Map("success" -> false)
@@ -266,12 +259,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   Returns empty result as Json message, not as page not found
   */
   get("/massTransitStopsSafe/:nationalId") {
-    def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
-      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
-        halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
-    }
     val nationalId = params("nationalId").toLong
-    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
     massTransitStopReturned._1 match {
       case Some(stop) =>
         Map("id" -> stop.id,
@@ -284,6 +273,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "validityPeriod" -> stop.validityPeriod,
           "floating" -> stop.floating,
           "propertyData" -> stop.propertyData,
+          "municipalityCode" -> massTransitStopReturned._3,
           "success" -> true)
       case None =>
         Map("success" -> false)
@@ -348,8 +338,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   put("/massTransitStops/:id") {
-    def validateMunicipalityAuthorization(id: Long)(municipalityCode: Int): Unit = {
-      if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
+    def validateMunicipalityAuthorization(id: Long)(municipalityCode: Int, administrativeClass: AdministrativeClass): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode, administrativeClass))
         halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)

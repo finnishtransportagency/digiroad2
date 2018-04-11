@@ -77,7 +77,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     (resultAsset, PublishInfo(Some(resultAsset)))
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     if (properties.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(properties.toSeq, roadLink)
@@ -86,7 +86,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
 
-    municipalityValidation(asset.municipalityCode)
+    municipalityValidation(asset.municipalityCode, roadLink.administrativeClass)
 
     massTransitStopDao.updateAssetLastModified(asset.id, username)
 
