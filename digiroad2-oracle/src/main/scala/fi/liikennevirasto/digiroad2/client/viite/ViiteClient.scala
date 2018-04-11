@@ -9,7 +9,8 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriClientExcep
 import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
-import org.apache.http.client.methods.{HttpGet, HttpRequestBase}
+import org.apache.http.client.methods.{HttpGet, HttpPost, HttpRequestBase}
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats, StreamInput}
@@ -40,7 +41,7 @@ trait ViiteClientOperations {
     request.addHeader("Authorization", "Basic " + auth.getAuthInBase64)
   }
 
-  protected def request[T](url: String): Either[T, ViiteError] = {
+  protected def get[T](url: String): Either[T, ViiteError] = {
     val request = new HttpGet(url)
     addAuthorizationHeader(request)
     val response = client.execute(request)
@@ -54,6 +55,24 @@ trait ViiteClientOperations {
       Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
     } catch {
       case e: Exception => Right(ViiteError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  protected def post(url: String, trEntity: ViiteType, createJson: (ViiteType) => StringEntity): Option[TierekisteriError] = {
+    val request = new HttpPost(url)
+    addAuthorizationHeader(request)
+    request.setEntity(createJson(trEntity))
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        return Some(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response)), url))
+      }
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
     } finally {
       response.close()
     }
@@ -155,4 +174,5 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
     //TODO lrm position id, discontinuaty, startMValue, endMValue, SideCode, expired, geometry,  can be delete also
     Some(RoadAddress(id, roadNumber, roadPartNumber, trackCode, 1, startAddrM, endAddrM, None, None, 0, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, floating, Seq(), false, None, None, None ))
   }
+
 }
