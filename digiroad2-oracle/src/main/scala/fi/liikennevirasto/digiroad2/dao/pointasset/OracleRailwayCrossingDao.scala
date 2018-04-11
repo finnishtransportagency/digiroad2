@@ -157,6 +157,10 @@ object OracleRailwayCrossingDao {
   private def getCodePropertyId: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("tasoristeystunnus").first
   }
+
+  def getCodeMaxSize: Long  = {
+    StaticQuery.query[String, Long](Queries.getPropertyMaxSize).apply("tasoristeystunnus").first
+  }
 }
 
 

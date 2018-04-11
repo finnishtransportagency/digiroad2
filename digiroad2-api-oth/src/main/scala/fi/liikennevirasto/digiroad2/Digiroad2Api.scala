@@ -1240,9 +1240,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/railwayCrossings")(getPointAssets(railwayCrossingService))
   get("/railwayCrossings/:id")(getPointAssetById(railwayCrossingService))
   get("/railwayCrossings/floating")(getFloatingPointAssets(railwayCrossingService))
-  put("/railwayCrossings/:id")(updatePointAsset(railwayCrossingService))
+  put("/railwayCrossings/:id") {
+    checkPropertySize(railwayCrossingService)
+    updatePointAsset(railwayCrossingService)
+  }
   delete("/railwayCrossings/:id")(deletePointAsset(railwayCrossingService))
-  post("/railwayCrossings")(createNewPointAsset(railwayCrossingService))
+
+  post("/railwayCrossings"){
+    checkPropertySize(railwayCrossingService)
+    createNewPointAsset(railwayCrossingService)
+  }
+
+  private def checkPropertySize(service: RailwayCrossingService): Unit = {
+    val asset = (parsedBody \ "asset").extractOrElse[IncomingRailwayCrossing](halt(BadRequest("Malformed asset")))
+    val code = asset.code.length
+    val maxSize = railwayCrossingService.getCodeMaxSize
+
+    if(code > maxSize)
+      halt(BadRequest("Railway id property is too big"))
+  }
+
 
   get("/directionalTrafficSigns")(getPointAssets(directionalTrafficSignService))
   get("/directionalTrafficSigns/:id")(getPointAssetById(directionalTrafficSignService))
@@ -1377,8 +1394,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     if (user.isServiceRoadMaintainer())
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
-    val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
-
+    val asset = (parsedBody \ "asset").extractOrElse[service.IncomingAsset](halt(BadRequest("Malformed asset")))
     for (link <- roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       optTypeID match {

@@ -90,6 +90,8 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
       point =>  IncomingRailwayCrossing(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingRailwayCrossingtAsset].safetyEquipment, asset.asInstanceOf[IncomingRailwayCrossingtAsset].name, asset.asInstanceOf[IncomingRailwayCrossingtAsset].code)
     }
   }
+
+  def getCodeMaxSize : Long  =   withDynTransaction { OracleRailwayCrossingDao.getCodeMaxSize }
 }
 
 

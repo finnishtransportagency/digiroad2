@@ -376,7 +376,7 @@
         '    <div class="form-group editable form-railway-crossing">' +
         '        <label class="control-label">' + 'Tasoristeystunnus' + '</label>' +
         '        <p class="form-control-static">' + (asset.code || '–') + '</p>' +
-        '        <input type="text" class="form-control" name="code" value="' + (asset.code || '')  + '">' +
+        '        <input type="text" class="form-control"  maxlength="15" name="code" value="' + (asset.code || '')  + '">' +
         '    </div>' +
         '    <div class="form-group editable form-railway-crossing">' +
         '      <label class="control-label">Turvavarustus</label>' +
