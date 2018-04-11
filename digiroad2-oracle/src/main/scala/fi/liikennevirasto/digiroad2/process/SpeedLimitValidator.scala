@@ -101,17 +101,21 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
   }
 
 
-  def checkInaccurateSpeedLimitValuesWithTrafficSigns(speedLimit: SpeedLimit, roadLink: RoadLink, trafficSgins: Seq[PersistedTrafficSign]): Option[SpeedLimit]= {
+  def checkInaccurateSpeedLimitValuesWithTrafficSigns(speedLimit: SpeedLimit, roadLink: RoadLink, persistedTrafficSigns: Seq[PersistedTrafficSign]): Option[SpeedLimit]= {
     val minimumAllowedLength = 2
 
-    val trafficSignsOnLinkId = trafficSgins
+    val trafficSignsOnLinkId = persistedTrafficSigns
       .filter(trafficSign => trafficSign.mValue >= (speedLimit.startMeasure + minimumAllowedLength) && trafficSign.mValue <= (speedLimit.endMeasure - minimumAllowedLength))
       .filter(filterBySide(_, speedLimit, roadLink))
 
     val trafficSigns = if (trafficSignsOnLinkId.nonEmpty) {
       trafficSignsOnLinkId
     } else {
-      getTrafficSingsByRadius(speedLimit, roadLink)
+      persistedTrafficSigns match {
+        case Seq() => Seq()
+        case _ =>
+          getTrafficSingsByRadius(speedLimit, roadLink)
+      }
     }
     trafficSigns.flatMap { trafficSign =>
       speedLimitValueValidator(speedLimit, trafficSign)
