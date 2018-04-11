@@ -267,6 +267,11 @@ trait PointAssetOperations {
     fetchPointAssets(withFilter(filter))
   }
 
+  def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Seq[Long]): Seq[PersistedAsset] = {
+    val filter = s"where a.asset_type_id = $typeId and lp.link_Id in (${linkIds.mkString(",")})"
+    fetchPointAssets(withFilter(filter))
+  }
+
   def expire(id: Long, username: String): Long = {
     withDynSession {
       expireWithoutTransaction(id, username)

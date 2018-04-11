@@ -1033,15 +1033,18 @@ object DataFixture {
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
 
       OracleDatabase.withDynTransaction {
-        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.map(_.linkId).toSet))
+        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet))
+        val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(speedLimits.map(_.linkId))
 
-      val inaccurateAssets =  speedLimits.flatMap{speedLimit =>
-          val roadLink = roadLinks.find(_.linkId == speedLimit.linkId).get
-          speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, roadLink) match {
+        val inaccurateAssets =  speedLimits.flatMap{speedLimit =>
+          val roadLink = roadLinks.get(speedLimit.linkId).get.head
+          println(s"Proncessing speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
+          speedLimitValidator.checkInaccurateSpeedLimitValuesWithTrafficSigns(speedLimit, roadLink, trafficSigns.filter(_.linkId == speedLimit.linkId)) match {
             case Some(inaccurateAsset) =>
+              println(s"Inaccurate asset ${inaccurateAsset.id} found ")
               Some(inaccurateAsset, roadLink.administrativeClass)
             case _ => None
           }
