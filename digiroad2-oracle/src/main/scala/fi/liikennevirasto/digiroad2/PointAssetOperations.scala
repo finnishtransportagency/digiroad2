@@ -272,7 +272,7 @@ trait PointAssetOperations {
 
   def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[Long]): Seq[PersistedAsset] = {
     MassQuery.withIds(linkIds) { idTableName =>
-      val filter = s"join #$idTableName i on i.id = lp.link_id where a.asset_type_id = $typeId"
+      val filter = s"join $idTableName i on i.id = lp.link_id where a.asset_type_id = $typeId"
       fetchPointAssets(withFilter(filter))
     }
   }
