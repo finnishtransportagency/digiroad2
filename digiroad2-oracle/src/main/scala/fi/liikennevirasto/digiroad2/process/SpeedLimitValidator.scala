@@ -111,11 +111,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
     val trafficSigns = if (trafficSignsOnLinkId.nonEmpty) {
       trafficSignsOnLinkId
     } else {
-      persistedTrafficSigns match {
-        case Seq() => Seq()
-        case _ =>
-          getTrafficSingsByRadius(speedLimit, roadLink)
-      }
+      getTrafficSingsByRadius(speedLimit, roadLink)
     }
     trafficSigns.flatMap { trafficSign =>
       speedLimitValueValidator(speedLimit, trafficSign)
