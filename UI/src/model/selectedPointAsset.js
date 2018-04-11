@@ -118,9 +118,8 @@
 
     }
 
-    function getMunicipalityCode(linkId){
-      if(!linkId && current)
-        return roadCollection.getRoadLinkByLinkId(current.linkId).getData().municipalityCode;
+    function getMunicipalityCode(){
+      return !_.isUndefined(current.municipalityCode) ?  current.municipalityCode: roadCollection.getRoadLinkByLinkId(current.linkId).getData().municipalityCode;
     }
 
     function getSelectedTrafficSignValue() {

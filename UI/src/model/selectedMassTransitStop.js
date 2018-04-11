@@ -180,7 +180,7 @@
     };
 
     var getMunicipalityCode = function() {
-      return currentAsset.payload.municipalityCode;
+     return !_.isUndefined(currentAsset.payload.municipalityCode) ? currentAsset.payload.municipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
     };
 
     var pikavuoroIsAlone = function()

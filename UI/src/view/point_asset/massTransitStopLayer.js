@@ -63,12 +63,15 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         selectedMassTransitStopModel.change(feature.getProperties().data);
         movementPermissionConfirmed = false;
         overrideMessageAllow = true;
+        if(selectedMassTransitStopModel.exists() && !authorizationPolicy.formEditModeAccess() && !applicationModel.isReadOnly())
+          dragControl.activate();
       });
     }
     else {
       if(event.deselected.length > 0) {
         selectedMassTransitStopModel.close();
       }
+      dragControl.deactivate();
     }
   }
 
@@ -687,7 +690,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   function toggleMode(readOnly) {
     if(applicationModel.isReadOnly() || readOnly){
       dragControl.deactivate();
-    } else {
+    } else if(selectedMassTransitStopModel.exists() && !authorizationPolicy.formEditModeAccess()) {
       dragControl.activate();
     }
   }
@@ -758,9 +761,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
-    eventListener.listenTo(eventbus, 'mtsdraggable', function(nonDraggable) {
-      toggleMode(nonDraggable);
-    });
+    // eventListener.listenTo(eventbus, 'mtsdraggable', function(nonDraggable) {
+    //   toggleMode(nonDraggable);
+    // });
   };
 
   var startListening = function() {
