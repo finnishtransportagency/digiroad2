@@ -23,7 +23,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     def addRoadAddressProperties(oldProperties: Seq[Property]): Seq[Property] = {
       roadLinkOption match {
         case Some(roadLink) =>
-          roadAddressesService.getRoadAddressPropertiesByLinkId(Point(asset.lon, asset.lat), asset.linkId, roadLink, oldProperties)
+          roadAddressesService.getRoadAddressPropertiesByLinkId(asset, roadLink, oldProperties)
         case _ => oldProperties
       }
     }

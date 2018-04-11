@@ -1,11 +1,13 @@
 package fi.liikennevirasto.digiroad2.service
 
-import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, CycleOrPedestrianPath}
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, Property, PropertyTypes, PropertyValue}
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.TractorRoad
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkLike, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{Point, DigiroadEventBus, GeometryUtils}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
+import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -21,6 +23,7 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
 
   val roadAddressDAO = new RoadAddressDAO()
   val logger = LoggerFactory.getLogger(getClass)
+  val geometryTransform = new GeometryTransform
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -66,24 +69,18 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
     }
   }
 
-  def getRoadAddressPropertiesByLinkId(assetCoordinates: Point, linkId: Long, roadLink: RoadLinkLike, oldProperties: Seq[Property]): Seq[Property] = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
-    roadAddressDAO.getByLinkIdAndMeasures(linkId, mValue, mValue).flatMap { ra =>
-      val addrMValue = ra.addrAt(mValue).toString()
+  def getRoadAddressPropertiesByLinkId(persistedStop: PersistedMassTransitStop, roadLink: RoadLinkLike, oldProperties: Seq[Property]): Seq[Property] = {
+    val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get)
 
-      val newRoadAddressProperties =
-        Seq(
-          new Property(0, roadNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.roadNumber.toString(), Some(ra.roadNumber.toString())))),
-          new Property(0, roadPartNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.roadPartNumber.toString(), Some(ra.roadPartNumber.toString())))),
-          new Property(0, startMeasurePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(addrMValue, Some(addrMValue)))),
-          new Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.track.value.toString(), Some(ra.track.value.toString())))),
-          new Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(ra.sideCode.value.toString(), Some(ra.sideCode.value.toString()))))
-        )
+    val newRoadAddressProperties =
+      Seq(
+        Property(0, roadNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.road.toString, Some(address.road.toString)))),
+        Property(0, roadPartNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.roadPart.toString, Some(address.roadPart.toString)))),
+        Property(0, startMeasurePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.addrM.toString, Some(address.addrM.toString)))),
+        Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.track.value.toString, Some(address.track.value.toString)))),
+        Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(roadSide.value.toString, Some(roadSide.value.toString))))
+      )
 
-      return oldProperties.filterNot(op => newRoadAddressProperties.map(_.publicId).contains(op.publicId)) ++ newRoadAddressProperties
-    }
-
-    oldProperties
+    oldProperties.filterNot(op => newRoadAddressProperties.map(_.publicId).contains(op.publicId)) ++ newRoadAddressProperties
   }
-
 }
