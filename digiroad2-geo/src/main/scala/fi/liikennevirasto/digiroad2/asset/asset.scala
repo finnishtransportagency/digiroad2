@@ -90,6 +90,30 @@ case object Municipality extends AdministrativeClass { def value = 2 }
 case object Private extends AdministrativeClass { def value = 3 }
 case object Unknown extends AdministrativeClass { def value = 99 }
 
+
+
+sealed trait InformationSource {
+  def value: Int
+}
+
+object InformationSource{
+  val values = Set(RoadRegistry, MunicipalityMaintenainer, MmlNls, UnknownSource)
+
+  def apply(value: Int): InformationSource = {
+    values.find(_.value == value).getOrElse(UnknownSource)
+  }
+}
+
+//1 = FTA/ Road registry (Liikennevirasto / Tierekisteri)
+case object RoadRegistry extends InformationSource { def value = 1 }
+//2 = Maintainer (municipality maintainer)
+case object MunicipalityMaintenainer extends InformationSource { def value = 2 }
+//3 = MML/NLS (Maanmittauslaitos)
+case object MmlNls extends InformationSource { def value = 3 }
+
+case object UnknownSource extends InformationSource { def value = 99 }
+
+
 object FunctionalClass {
   val Unknown: Int = 99
 }

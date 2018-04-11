@@ -154,7 +154,8 @@ case class PieceWiseLinearAsset(id: Long, linkId: Long, sideCode: SideCode, valu
 case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime])
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime],
+                                informationSource: Option[Int])
 
 case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
