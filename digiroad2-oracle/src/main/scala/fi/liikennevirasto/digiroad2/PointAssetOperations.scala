@@ -7,13 +7,16 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 sealed trait FloatingReason {
   def value: Int
@@ -267,9 +270,11 @@ trait PointAssetOperations {
     fetchPointAssets(withFilter(filter))
   }
 
-  def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Seq[Long]): Seq[PersistedAsset] = {
-    val filter = s"where a.asset_type_id = $typeId and lp.link_Id in (${linkIds.mkString(",")})"
-    fetchPointAssets(withFilter(filter))
+  def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[Long]): Seq[PersistedAsset] = {
+    MassQuery.withIds(linkIds) { idTableName =>
+      val filter = s"join #$idTableName i on i.id = pos.link_id where a.asset_type_id = $typeId"
+      fetchPointAssets(withFilter(filter))
+    }
   }
 
   def expire(id: Long, username: String): Long = {

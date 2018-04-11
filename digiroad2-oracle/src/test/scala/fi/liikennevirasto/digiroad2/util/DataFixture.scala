@@ -1037,7 +1037,7 @@ object DataFixture {
 
       OracleDatabase.withDynTransaction {
         val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet))
-        val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(speedLimits.map(_.linkId))
+        val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(speedLimits.map(_.linkId).toSet)
 
         val inaccurateAssets =  speedLimits.flatMap{speedLimit =>
           val roadLink = roadLinks.get(speedLimit.linkId).get.head
