@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkServi
 class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService, val eventbus: DigiroadEventBus) extends AbstractBusStopStrategy {
 
   lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(eventbus, roadLinkService)
+    new RoadAddressesService
   }
 
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
