@@ -1109,7 +1109,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
 
-  get("/speedLimits/inaccurate") {
+  get("/speedLimits/inaccurates") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
     municipalityCode.foreach(validateUserMunicipalityAccess(user))
