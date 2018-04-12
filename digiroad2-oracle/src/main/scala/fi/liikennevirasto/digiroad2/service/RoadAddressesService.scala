@@ -15,11 +15,8 @@ case class ChangedRoadAddress(roadAddress : RoadAddress, link: RoadLink)
 
 class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService ) {
 
-
-
   val roadAddressDAO = new RoadAddressDAO()
   val logger = LoggerFactory.getLogger(getClass)
-//  val geometryTransform = new GeometryTransform
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -64,6 +61,4 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
       }
     }
   }
-
-
 }
