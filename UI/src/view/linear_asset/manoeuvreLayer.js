@@ -11,6 +11,7 @@
 
     var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     var mode = "view";
+    var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
 
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     Layer.call(this, layerName, roadLayer);
@@ -259,7 +260,7 @@
       if (!selectedManoeuvreSource.isDirty()) {
         selectControl.activate();
       }
-      if (selectedManoeuvreSource.exists()) {
+      if (selectedManoeuvreSource.exists() && authorizationPolicy.formEditModeAccess(selectedManoeuvreSource)) {
         var manoeuvreSource = selectedManoeuvreSource.get();
 
         indicatorLayer.getSource().clear();
@@ -366,6 +367,7 @@
           }));
         })
         .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
+        .reject(function(adjacentLink) { return !authorizationPolicy.editModeAccessByLink(adjacentLink);})
         .value();
     };
 
@@ -384,6 +386,7 @@
           }));
         })
         .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
+        .reject(function(adjacentLink) { return !authorizationPolicy.editModeAccessByLink(adjacentLink);})
         .value();
     };
 

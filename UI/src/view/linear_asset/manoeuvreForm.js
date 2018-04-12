@@ -1,6 +1,8 @@
 (function (root) {
   root.ManoeuvreForm = function(selectedManoeuvreSource) {
 
+    var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
+
     /*
     * HTML Templates
     */
@@ -160,7 +162,11 @@
       }
 
       // Listen to view/edit mode button
-      eventbus.on('application:readOnly', toggleMode);
+      eventbus.on('application:readOnly', function(readOnly){
+        if('manoeuvre' ===  applicationModel.getSelectedLayer()) {
+          toggleMode(readOnly || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy));
+        }
+      });
 
       // Listen to road link selection on map
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
@@ -252,7 +258,7 @@
           })));
         });
 
-        toggleMode(applicationModel.isReadOnly());
+        toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy))
 
         var manoeuvreData = function(formGroupElement) {
           var firstTargetLinkId = parseInt(formGroupElement.attr('linkId'), 10);
@@ -475,6 +481,7 @@
             selectedManoeuvreSource.setExceptions(manoeuvre.manoeuvreId, manoeuvre.exceptions);
           }
         };
+        toggleMode(validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || applicationModel.isReadOnly());
       });
 
       eventbus.on('manoeuvres:unselected', function() {
@@ -665,4 +672,10 @@
     };
     return days[period.days];
   }
+
+  function validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy){
+    if(selectedManoeuvreSource.exists())
+      return !authorizationPolicy.formEditModeAccess(selectedManoeuvreSource);
+  }
+
 })(this);
