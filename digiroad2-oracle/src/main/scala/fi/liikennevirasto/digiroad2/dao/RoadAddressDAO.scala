@@ -81,9 +81,8 @@ class RoadAddressDAO {
       s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue" + withValidatyCheck
   }
 
-  def withLinkIdAndMeasure(linkId: Long, startM: Long, endM: Long)(query: String): String = {
-    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure >= $endM " +
-      s" AND floating='0'" + withValidatyCheck
+  def withLinkIdAndMeasure(linkId: Long, measure: Long)(query: String): String = {
+    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $measure AND pos.end_Measure >= $measure AND floating = 0" + withValidatyCheck
   }
 
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {

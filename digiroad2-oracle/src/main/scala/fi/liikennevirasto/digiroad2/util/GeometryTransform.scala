@@ -107,7 +107,7 @@ class GeometryTransform {
       RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
     }
 
-    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong)).headOption
+    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue.toLong)).headOption
 
     //If there is no roadAddress in VIITE try to find it in VKM
     if(roadAddress.isEmpty)
@@ -131,19 +131,20 @@ class GeometryTransform {
     (address, roadSide )
   }
 
-  def resolveAddressAndLocation(linkId: Long, startM: Long, endM: Long, sideCode: SideCode) : Seq[RoadAddressDTO] = {
-    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, startM, endM))
-    roadAddress
-      .filter( road => compareSideCodes(sideCode, road))
-      .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
-      grouped =>
-        grouped._2.minBy(t => t.startMValue).copy(endMValue = grouped._2.maxBy(t => t.endMValue).endMValue)
-    }.toSeq
-  }
-
-  def compareSideCodes(sideCode: SideCode, roadAddress: RoadAddressDTO): Boolean = {
-    (sideCode == SideCode.BothDirections || sideCode == SideCode.Unknown || roadAddress.sideCode == SideCode.BothDirections || roadAddress.sideCode == SideCode.Unknown) || sideCode == roadAddress.sideCode
-  }
+  //TODO check if it is needed
+//  def resolveAddressAndLocation(linkId: Long, startM: Long, endM: Long, sideCode: SideCode) : Seq[RoadAddressDTO] = {
+//    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, startM))
+//    roadAddress
+//      .filter( road => compareSideCodes(sideCode, road))
+//      .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
+//      grouped =>
+//        grouped._2.minBy(t => t.startMValue).copy(endMValue = grouped._2.maxBy(t => t.endMValue).endMValue)
+//    }.toSeq
+//  }
+//
+//  def compareSideCodes(sideCode: SideCode, roadAddress: RoadAddressDTO): Boolean = {
+//    (sideCode == SideCode.BothDirections || sideCode == SideCode.Unknown || roadAddress.sideCode == SideCode.BothDirections || roadAddress.sideCode == SideCode.Unknown) || sideCode == roadAddress.sideCode
+//  }
 }
 
 //TODO remove VKM when VIITE is 100% done
