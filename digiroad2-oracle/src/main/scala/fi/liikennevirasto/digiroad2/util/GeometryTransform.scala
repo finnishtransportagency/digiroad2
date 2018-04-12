@@ -107,7 +107,7 @@ class GeometryTransform {
       RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
     }
 
-    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue.toLong)).headOption
+    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue)).headOption
 
     //If there is no roadAddress in VIITE try to find it in VKM
     if(roadAddress.isEmpty)

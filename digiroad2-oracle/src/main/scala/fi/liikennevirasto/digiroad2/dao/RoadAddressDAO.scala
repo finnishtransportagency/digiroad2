@@ -81,7 +81,7 @@ class RoadAddressDAO {
       s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue" + withValidatyCheck
   }
 
-  def withLinkIdAndMeasure(linkId: Long, measure: Long)(query: String): String = {
+  def withLinkIdAndMeasure(linkId: Long, measure: Double)(query: String): String = {
     query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $measure AND pos.end_Measure >= $measure AND floating = 0" + withValidatyCheck
   }
 
