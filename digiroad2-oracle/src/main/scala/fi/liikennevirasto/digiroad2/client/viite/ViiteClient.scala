@@ -172,7 +172,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
     val endMValue = convertToDouble(getMandatoryFieldValue(data, "endMValue")).get
     val floating = convertToBoolean(getMandatoryFieldValue(data, "floating")).get
     //TODO lrm position id, discontinuaty, startMValue, endMValue, SideCode, expired, geometry,  can be delete also
-    Some(RoadAddress(id, roadNumber, roadPartNumber, trackCode, 1, startAddrM, endAddrM, None, None, 0, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, floating, Seq(), false, None, None, None ))
+    Some(RoadAddress(id, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, floating, Seq(), false, None, None, None ))
   }
 
 }
