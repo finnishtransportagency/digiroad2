@@ -354,5 +354,23 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       }
     }
   }
+
+  test("update roadWidth and check if informationSource is Municipality Maintainer "){
+
+    val service = createService()
+    val toInsert = Seq(NewLinearAsset(5000, 0, 50, NumericValue(4000), BothDirections.value, 0, None), NewLinearAsset(5001, 0, 50, NumericValue(3000), BothDirections.value, 0, None))
+    runWithRollback {
+      val assetsIds = service.create(toInsert, RoadWidth.typeId, "test")
+      val updated = service.update(assetsIds, NumericValue(1500), "userTest")
+
+      val assetsUpdated = service.getPersistedAssetsByIds(RoadWidth.typeId, updated.toSet)
+
+      assetsUpdated.length should be (2)
+      assetsUpdated.foreach{asset =>
+        asset.informationSource should be (Some(2))
+        asset.value should be (Some(NumericValue(1500)))
+      }
+    }
+  }
 }
 

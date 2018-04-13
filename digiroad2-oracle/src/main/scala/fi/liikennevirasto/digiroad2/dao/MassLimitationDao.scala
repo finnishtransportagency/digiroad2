@@ -8,7 +8,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class MassLimitationDao {
 
@@ -16,8 +16,8 @@ class MassLimitationDao {
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
   def fetchLinearAssetsByLinkIds(assetTypeId: Seq[Int], linkIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
-      val assets = sql"""
+   MassQuery.withIds(linkIds.toSet) { idTableName =>
+       sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
@@ -31,10 +31,34 @@ class MassLimitationDao {
           where a.asset_type_id in (#${assetTypeId.mkString(",")})
           and (a.valid_to > sysdate or a.valid_to is null)
           and a.floating = 0"""
-        .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
-      assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource)
-      }
+        .as[PersistedLinearAsset].list
+    }
+  }
+
+  implicit val getLinearAsset = new GetResult[PersistedLinearAsset] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+      val sideCode = r.nextInt()
+      val value = r.nextIntOption().map(NumericValue)
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val createdBy = r.nextStringOption()
+      val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val modifiedBy = r.nextStringOption()
+      val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expired = r.nextBoolean()
+      val typeId = r.nextInt()
+      val vvhTimeStamp = r.nextLong()
+      val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = LinkGeomSource.apply(r.nextInt())
+      val verifiedBy = r.nextStringOption()
+      val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val informationSource = r.nextIntOption()
+
+
+      PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate,
+        linkSource, verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }
   }
 }

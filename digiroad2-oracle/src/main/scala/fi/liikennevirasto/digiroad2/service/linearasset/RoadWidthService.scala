@@ -104,14 +104,14 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case _ =>
             Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
               0, GeometryUtils.geometryLength(roadLink.geometry), Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId,
-              changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls.value)))
+              changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls)))
         }
       case (Some(roadLink), changeInfo, assets) =>
         //if the asset was created by changeInfo and there is a new changeInfo, expire and crete a new asset
         assets.filter(asset => expiredAssets.map(_._2).contains(asset.linkId)).map { asset =>
         PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
           asset.startMeasure, asset.endMeasure, asset.createdBy, asset.createdDateTime, Some("vvh_mtkclass_default"), None, false, LinearAssetTypes.RoadWidthAssetTypeId,
-          changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls.value))}
+          changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls))}
       case _ =>
         None
     }.toSeq

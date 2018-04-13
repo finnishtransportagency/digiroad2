@@ -98,13 +98,42 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
+
+
+  implicit val getLinearAsset = new GetResult[PersistedLinearAsset] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+      val sideCode = r.nextInt()
+      val value = r.nextIntOption().map(NumericValue)
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val createdBy = r.nextStringOption()
+      val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val modifiedBy = r.nextStringOption()
+      val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expired = r.nextBoolean()
+      val typeId = r.nextInt()
+      val vvhTimeStamp = r.nextLong()
+      val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = LinkGeomSource.apply(r.nextInt())
+      val verifiedBy = r.nextStringOption()
+      val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val informationSource = r.nextIntOption()
+
+
+      PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate,
+        linkSource, verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
+    }
+  }
+
   /**
     * Iterates a set of asset ids with a property id and returns linear assets. Used by LinearAssetService.getPersistedAssetsByIds,
     * LinearAssetService.split and LinearAssetService.separate.
     */
   def fetchLinearAssetsByIds(ids: Set[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(ids) { idTableName =>
-      val assets = sql"""
+      sql"""
         select a.id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
@@ -116,10 +145,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join #$idTableName i on i.id = a.id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.floating = 0
-      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
-      assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource)
-      }
+      """.as[PersistedLinearAsset].list
     }
   }
 
@@ -128,7 +154,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def fetchAssetsWithTextualValuesByIds(ids: Set[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(ids) { idTableName =>
-      val assets = sql"""
+      sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
@@ -140,10 +166,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join #$idTableName i on i.id = a.id
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.floating = 0
-      """.as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
-      assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource)
-      }
+      """.as[PersistedLinearAsset].list
     }
   }
 
@@ -153,7 +176,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
     MassQuery.withIds(linkIds.toSet) { idTableName =>
-      val assets = sql"""
+      sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
@@ -167,10 +190,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
           #$filterExpired"""
-        .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
-      assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource)
-      }
+        .as[PersistedLinearAsset].list
     }
   }
 
@@ -201,7 +221,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def fetchAssetsWithTextualValuesByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(linkIds.toSet) { idTableName =>
-      val assets = sql"""
+      sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
@@ -215,10 +235,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           where a.asset_type_id = $assetTypeId
           and (a.valid_to > sysdate or a.valid_to is null)
           and a.floating = 0"""
-        .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
-      assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource)
-      }
+        .as[PersistedLinearAsset].list
     }
   }
 
@@ -269,7 +286,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       }
       PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
         asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, prohibitionAssetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
-        asset.verifiedBy, asset.verifiedDate, asset.informationSource)
+        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
 
@@ -321,7 +338,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       }
       PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
         asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, prohibitionAssetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
-        asset.verifiedBy, asset.verifiedDate, asset.informationSource)
+        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
 
@@ -350,7 +367,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
     assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-      PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource)
+      PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }
   }
 

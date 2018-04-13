@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, PropertyTypes}
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, PersistedLinearAsset, Properties}
+import fi.liikennevirasto.digiroad2.asset.{InformationSource, LinkGeomSource, PropertyTypes}
+import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, NumericValue, PersistedLinearAsset, Properties}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
@@ -74,7 +74,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       }
       PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy,
                            createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate,
-                           LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource)
+                           LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
 
@@ -135,7 +135,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       }
       PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate,
                           modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource),
-                          verifiedBy, verifiedDate, informationSource)
+                          verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
 

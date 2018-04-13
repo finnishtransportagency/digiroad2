@@ -1,10 +1,10 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
-import javax.sql.DataSource
 
+import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode, SpeedLimitAsset}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import org.joda.time.format.{DateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -414,7 +414,7 @@ class AssetDataImporter {
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
       // TODO: when linear assets get included in change history
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
 
