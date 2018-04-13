@@ -76,8 +76,8 @@ class RoadAddressesService {
   }
 
   /**
-    * Returns all the current road address on the given
-    * @param linkIds
+    * Returns all the current road address on the given road link
+    * @param linkIds The road link ids
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
