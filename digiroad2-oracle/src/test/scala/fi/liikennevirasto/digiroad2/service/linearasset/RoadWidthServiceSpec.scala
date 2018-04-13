@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
@@ -184,7 +185,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should not create new road with if the road doesn't have MTKClass attribute") {
+  test("Should not create new road width if the road doesn't have MTKClass attribute") {
 
     val newLinkId2 = 5001
     val newLinkId1 = 5000
@@ -322,5 +323,36 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("create roadWidth and check if informationSource is Municipality Maintainer "){
+
+    val service = createService()
+    val toInsert = Seq(NewLinearAsset(5000, 0, 50, NumericValue(4000), BothDirections.value, 0, None), NewLinearAsset(5001, 0, 50, NumericValue(3000), BothDirections.value, 0, None))
+    runWithRollback {
+      val assetsIds = service.create(toInsert, RoadWidth.typeId, "test")
+      val assetsCreated = service.getPersistedAssetsByIds(RoadWidth.typeId, assetsIds.toSet)
+
+      assetsCreated.length should be (2)
+      assetsCreated.foreach{asset =>
+        asset.informationSource should be (Some(2))
+      }
+    }
+  }
+
+  test("check if roadWidth created because of changes has informationSource as MmlNls") {
+    val municipalityCode = 235
+    val roadLinks = createRoadLinks(municipalityCode)
+    val service = createService()
+
+    val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    runWithRollback {
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (newAssets, changeSet) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => Seq(), initChangeSet)
+      changeSet.expiredAssetIds should have size 0
+      newAssets.foreach { asset =>
+        asset.informationSource should be(Some(3))
+
+      }
+    }
+  }
 }
 
