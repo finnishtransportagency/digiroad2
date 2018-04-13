@@ -18,7 +18,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData) = throw new UnsupportedOperationException("Not supported method")
+  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress]) = throw new UnsupportedOperationException("Not supported method")
 
   override val tierekisteriClient = new TierekisteriTrafficSignSpeedLimitClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -169,13 +169,13 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
     }
   }
 
-  protected def generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData]): Unit = {
+  protected def generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData], existingRoadAddresses: Seq[ViiteRoadAddress]): Unit = {
     def getViiteRoadAddress(roadSide: RoadSide) = {
       val allViiteRoadAddress = roadSide match {
         case RoadSide.Left =>
-          getAllViiteRoadAddress(roadNumber, Seq(Track.LeftSide, Track.Combined)).sortBy(r => (-r._1.roadPartNumber, -r._1.startAddrMValue))
+          filterRoadAddressByNumberAndTracks(existingRoadAddresses, roadNumber, Seq(Track.LeftSide, Track.Combined)).sortBy(r => (-r._1.roadPartNumber, -r._1.startAddrMValue))
         case _ =>
-          getAllViiteRoadAddress(roadNumber, Seq(Track.RightSide, Track.Combined)).sortBy(r => (r._1.roadPartNumber, r._1.startAddrMValue))
+          filterRoadAddressByNumberAndTracks(existingRoadAddresses, roadNumber, Seq(Track.RightSide, Track.Combined)).sortBy(r => (r._1.roadPartNumber, r._1.startAddrMValue))
       }
       val linkTypes = roadLinkService.getAllLinkType(allViiteRoadAddress.flatMap(_._2).map(_.linkId))
 
@@ -255,10 +255,12 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
           //Get all TelematicSpeedLimit
           val trTelematicSpeedLimitAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber)
           val trAssets = getAllTierekisteriAssets(roadNumber) ++ trTelematicSpeedLimitAssets
+          //Get all the existing road address for the road number
+          val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
           //Generate all speed limits of the right side of the road
-          generateOneSideSpeedLimits(roadNumber, RoadSide.Right, trAssets, trUrbanAreaAssets)
+          generateOneSideSpeedLimits(roadNumber, RoadSide.Right, trAssets, trUrbanAreaAssets, roadAddresses)
           //Generate all speed limits of the left side of the road
-          generateOneSideSpeedLimits(roadNumber, RoadSide.Left, trAssets, trUrbanAreaAssets)
+          generateOneSideSpeedLimits(roadNumber, RoadSide.Left, trAssets, trUrbanAreaAssets, roadAddresses)
         }
     }
   }
@@ -271,41 +273,43 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
         withDynTransaction {
           println("\nExpiring Speed Limits at Road Number: " + roadNumber)
 
-          //Fetch asset changes from Tierekisteri
-          val trHistoryAssets = getAllTierekisteriHistoryAssets(roadNumber, lastExecution)
+          //Fetch asset changes from Tierekister
+          val trHistoryAssets = getAllTierekisteriHistoryAssets(roadNumber, lastExecution) ++
+            tierekisteriClientTelematicSpeedLimit.fetchHistoryAssetData(roadNumber, Some(lastExecution))
+          val trHistoryAssetsUA = tierekisteriClientUA.fetchHistoryAssetData(roadNumber, Some(lastExecution))
 
-          //Expire all the assets that have changes in tierekisteri
-          val expiredAssetSides = trHistoryAssets.foldLeft(Seq.empty[RoadSide]) {
-            case (roadSideProcessed, trAssetData) =>
-              //If the road side was already process we ignore it
-              if (roadSideProcessed.contains(trAssetData.roadSide)) {
-                roadSideProcessed
-              } else {
-                //Get all existing road address in viite and expire all the assets on top of this roads
-                val roadAddressLink = getAllViiteRoadAddress(trAssetData.roadNumber, Seq(trAssetData.track))
-                expireAssets(roadAddressLink.map(_._1.linkId))
-                roadSideProcessed ++ Seq(trAssetData.roadSide)
-              }
-          }
+          if (trHistoryAssets.nonEmpty || trHistoryAssetsUA.nonEmpty) {
+            val expiredAssetTracks = (trHistoryAssets.map(_.track) ++ (if (trHistoryAssetsUA.nonEmpty) Seq(Track.RightSide, Track.LeftSide) else Seq())).distinct
+            val roadSideProcessed = (trHistoryAssets.map(_.roadSide) ++ (if (trHistoryAssetsUA.nonEmpty) Seq(RoadSide.Right, RoadSide.Left) else Seq())).distinct
 
-          //Creates assets on side Expired
-          expiredAssetSides.foreach {
-            expiredAssetSide =>
-              val trTelematicSpeedAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber).filter(_.track.value == expiredAssetSide.value)
-              //Get Urban Areas from Tierekisteri
-              val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber).filter(_.track.value == expiredAssetSide.value)
-              val trAssets = getAllTierekisteriAssets(roadNumber).filter(_.roadSide == expiredAssetSide) ++ trTelematicSpeedAssets
-              expiredAssetSide match {
-                case RoadSide.Right =>
-                  println("\nCreate Speed Limits at Road Number: " + roadNumber + ", on Side: " + RoadSide.Right.toString())
-                  //Generate all speed limits of the right side of the road
-                  generateOneSideSpeedLimits(roadNumber, RoadSide.Right, trAssets, trUrbanAreaAssets)
-                case RoadSide.Left =>
-                  println("\nCreate Speed Limits at Road Number: " + roadNumber + ", on Side: " + RoadSide.Left.toString())
-                  //Generate all speed limits of the left side of the road
-                  generateOneSideSpeedLimits(roadNumber, RoadSide.Left, trAssets, trUrbanAreaAssets)
-                case _ => None
-              }
+            //Expire all the assets that have changes in tierekisteri
+            val roadAddress = roadAddressService.getAllByRoadNumber(roadNumber)
+            val roadAddressLink = filterRoadAddressByNumberAndTracks(roadAddress, roadNumber, expiredAssetTracks)
+            expireAssets(roadAddressLink.map(_._1.linkId))
+
+            //Get Telematic Speed Screen from Tierekisteri
+            val trTelematicSpeedAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber)
+            //Get Urban Areas from Tierekisteri
+            val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber)
+            val trAssets = getAllTierekisteriAssets(roadNumber) ++ trTelematicSpeedAssets
+
+            //Creates assets on side Expired
+            roadSideProcessed.foreach {
+              expiredAssetSide =>
+                val trAssetBySide = trAssets.filter(_.track.value == expiredAssetSide.value)
+                val trUrbanAreaAssetsBySide = trUrbanAreaAssets.filter(_.track.value == expiredAssetSide.value)
+                expiredAssetSide match {
+                  case RoadSide.Right =>
+                    println("\nCreate Speed Limits at Road Number: " + roadNumber + ", on Side: " + RoadSide.Right.toString())
+                    //Generate all speed limits of the right side of the road
+                    generateOneSideSpeedLimits(roadNumber, RoadSide.Right, trAssetBySide, trUrbanAreaAssetsBySide, roadAddress)
+                  case RoadSide.Left =>
+                    println("\nCreate Speed Limits at Road Number: " + roadNumber + ", on Side: " + RoadSide.Left.toString())
+                    //Generate all speed limits of the left side of the road
+                    generateOneSideSpeedLimits(roadNumber, RoadSide.Left, trAssetBySide, trUrbanAreaAssetsBySide, roadAddress)
+                  case _ => None
+                }
+            }
           }
         }
     }

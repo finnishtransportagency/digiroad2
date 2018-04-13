@@ -17,6 +17,33 @@ class RoadAddressesService {
   val logger = LoggerFactory.getLogger(getClass)
 
   /**
+    * Return all the current existing road numbers
+    * @return
+    */
+  def getAllRoadNumbers(): Seq[Long] ={
+    throw new NotImplementedError
+  }
+
+  /**
+    * Returns all the existing road address for given road number
+    * @param roadNumber The road number
+    * @return
+    */
+  def getAllByRoadNumber(roadNumber: Long): Seq[RoadAddress] = {
+    throw new NotImplementedError
+  }
+
+  /**
+    * Returns all the existing road address for the given road number and road parts
+    * @param roadNumber The road number
+    * @param roadParts All the road number parts
+    * @return
+    */
+  def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long]): Seq[RoadAddress] = {
+    throw new NotImplementedError
+  }
+
+  /**
     * Returns the current road address for the given road, road part and track code at road address measure
     * @param road Road number
     * @param roadPart Road part number
@@ -38,13 +65,22 @@ class RoadAddressesService {
   }
 
   /**
-    * returns the road address at given road link id and geometry measures
+    * Returns the road address at given road link id and geometry measures
     * @param linkId Road link ID
     * @param startMeasure Start measure
     * @param endMeasure End measure
     * @return
     */
-  def getByLrmPosition(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[RoadAddress] = {
+  def getAllByLrmPositions(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[RoadAddress] = {
+    throw new NotImplementedError
+  }
+
+  /**
+    * Returns all the current road address on the given
+    * @param linkIds
+    * @return
+    */
+  def getAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
     throw new NotImplementedError
   }
 

@@ -143,7 +143,7 @@ class GeometryTransform {
   }
 
   def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[RoadAddressDTO] = {
-    val roadAddress = roadAddressService.getByLrmPosition(linkId, startM, endM)
+    val roadAddress = roadAddressService.getAllByLrmPositions(linkId, startM, endM)
     roadAddress
       .filter( road => compareSideCodes(sideCode, road))
       .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
