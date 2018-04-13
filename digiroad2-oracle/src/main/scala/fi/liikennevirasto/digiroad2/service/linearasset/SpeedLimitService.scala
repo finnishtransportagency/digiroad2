@@ -206,16 +206,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     (filledTopology, roadLinksByLinkId)
   }
 
-  def withRoadAddress(pieceWiseLinearAssets: Seq[Seq[SpeedLimit]]): Seq[Seq[SpeedLimit]] ={
-    val addressData = roadLinkServiceImplementation.getRoadAddressesByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)).toSet).map(a => (a.linkId, a)).toMap
-    pieceWiseLinearAssets.map(
-      _.map(pwa =>
-        if (addressData.contains(pwa.linkId))
-          pwa.copy(attributes = pwa.attributes ++ addressData(pwa.linkId).asAttributes)
-        else
-          pwa
-      ))
-  }
+//  def withRoadAddress(pieceWiseLinearAssets: Seq[Seq[SpeedLimit]]): Seq[Seq[SpeedLimit]] ={
+//    val addressData = roadLinkServiceImplementation.getRoadAddressesByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)).toSet).map(a => (a.linkId, a)).toMap
+//    pieceWiseLinearAssets.map(
+//      _.map(pwa =>
+//        if (addressData.contains(pwa.linkId))
+//          pwa.copy(attributes = pwa.attributes ++ addressData(pwa.linkId).asAttributes)
+//        else
+//          pwa
+//      ))
+//  }
 
   /**
     * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.

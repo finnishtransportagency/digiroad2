@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop}
@@ -39,6 +39,7 @@ case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double
 case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
+                   val roadAddressService: RoadAddressesService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
@@ -433,7 +434,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
-    val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
+    val roadLinks = if(withRoadAddress) roadAddressService.roadLinkWithRoadAddress(roadLinkSeq) else roadLinkSeq
     partitionRoadLinks(roadLinks)
   }
 
@@ -441,7 +442,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
-    val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
+    val roadLinks = if(withRoadAddress) roadAddressService.roadLinkWithRoadAddress(roadLinkSeq) else roadLinkSeq
     partitionRoadLinks(roadLinks)
   }
 
@@ -683,7 +684,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       else
         usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)
       if(params("withRoadAddress").toBoolean)
-        mapLinearAssets(usedService.withRoadAddress(assets))
+        mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
       else
         mapLinearAssets(assets)
     } getOrElse {
@@ -724,7 +725,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       else
         usedService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities)
       if(params("withRoadAddress").toBoolean)
-        mapLinearAssets(usedService.withRoadAddress(assets))
+        mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
       else
         mapLinearAssets(assets)
     } getOrElse {
@@ -1003,7 +1004,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val speedLimits = if(params("withRoadAddress").toBoolean) speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)) else speedLimitService.get(boundingRectangle, municipalities)
+      val speedLimits = if(params("withRoadAddress").toBoolean) roadAddressService.speedLimitWithRoadAddress(speedLimitService.get(boundingRectangle, municipalities)) else speedLimitService.get(boundingRectangle, municipalities)
       speedLimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
