@@ -63,8 +63,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         selectedMassTransitStopModel.change(feature.getProperties().data);
         movementPermissionConfirmed = false;
         overrideMessageAllow = true;
-        if(selectedMassTransitStopModel.exists() && !authorizationPolicy.formEditModeAccess() && !applicationModel.isReadOnly())
-          dragControl.activate();
       });
     }
     else {
@@ -469,6 +467,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       return null;
     }), null);
 
+    if(!authorizationPolicy.formEditModeAccess() && !applicationModel.isReadOnly())
+        dragControl.activate();
+
     selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
     terminalSource.clear();
     terminalSource.addFeatures(features);
@@ -761,9 +762,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
-    // eventListener.listenTo(eventbus, 'mtsdraggable', function(nonDraggable) {
-    //   toggleMode(nonDraggable);
-    // });
   };
 
   var startListening = function() {
