@@ -333,7 +333,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
       assetsCreated.length should be (2)
       assetsCreated.foreach{asset =>
-        asset.informationSource should be (Some(2))
+        asset.informationSource should be (Some(MunicipalityMaintenainer))
       }
     }
   }
@@ -349,7 +349,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val (newAssets, changeSet) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo, (_) => Seq(), initChangeSet)
       changeSet.expiredAssetIds should have size 0
       newAssets.foreach { asset =>
-        asset.informationSource should be(Some(3))
+        asset.informationSource should be(Some(MmlNls))
 
       }
     }
@@ -367,7 +367,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
       assetsUpdated.length should be (2)
       assetsUpdated.foreach{asset =>
-        asset.informationSource should be (Some(2))
+        asset.informationSource should be (Some(MunicipalityMaintenainer))
         asset.value should be (Some(NumericValue(1500)))
       }
     }

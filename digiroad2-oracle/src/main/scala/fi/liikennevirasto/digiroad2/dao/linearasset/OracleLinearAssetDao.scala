@@ -219,6 +219,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
+  //TODO: Change convert to PersistedLinearAsset with textual value instead of NumericValue!!!
   def fetchAssetsWithTextualValuesByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
