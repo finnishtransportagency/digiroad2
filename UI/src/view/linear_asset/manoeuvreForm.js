@@ -258,7 +258,7 @@
           })));
         });
 
-        toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy))
+        toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy));
 
         var manoeuvreData = function(formGroupElement) {
           var firstTargetLinkId = parseInt(formGroupElement.attr('linkId'), 10);
