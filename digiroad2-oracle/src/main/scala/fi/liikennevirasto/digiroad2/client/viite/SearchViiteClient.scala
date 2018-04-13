@@ -15,7 +15,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
 
   override protected def restApiEndPoint: String = vvhRestApiEndPoint
 
-  override protected def serviceName: String = "/search/"
+  override protected def serviceName: String = "search/"
 
   def fetchAllRoadNumbers(): Seq[Long] = {
     get[Seq[Long]](serviceName + "road_numbers") match {
@@ -26,6 +26,13 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
 
   def fetchAllByRoadNumber(roadNumber: Long, tracks: Seq[Track]) = {
     fetchRoadAddress(serviceName + "road_address/" + roadNumber, tracks.map(t => "tracks" -> t.value.toString).toMap)
+  }
+
+  def fetchAllBySection(roadNumber: Long, roadPartNumbers: Seq[Long], tracks: Seq[Track]) = {
+    post[Map[String, Any], List[Map[String, Any]]]("road_address/" + roadNumber, Map("roadParts" -> roadPartNumbers, "tracks" -> tracks), ra => new StringEntity(Serialization.write(ra), ContentType.APPLICATION_JSON)) match {
+      case Left(roadAddresses) => roadAddresses.flatMap(mapFields)
+      case Right(error) => throw new ViiteClientException(error.toString)
+    }
   }
 
   def fetchAllBySection(roadNumber: Long, roadPartNumber: Long, tracks: Seq[Track]) = {
@@ -40,7 +47,11 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
     fetchRoadAddress(serviceName + "road_address/" + roadNumber + "/" + roadPartNumber + "/" + startAddrM + "/" + endAddrM)
   }
 
-  def fetchByLrmPosition(linkId: Long, startMeasure: Double, endMeasure: Double) = {
+  def fetchByLrmPosition(linkId: Long, startMeasure: Double) = {
+    fetchRoadAddress(serviceName + "road_address/", Map("linkId" -> linkId.toString, "startMeasure" -> startMeasure.toString))
+  }
+
+  def fetchByLrmPositions(linkId: Long, startMeasure: Double, endMeasure: Double) = {
     fetchRoadAddress(serviceName + "road_address/", Map("linkId" -> linkId.toString, "startMeasure" -> startMeasure.toString, "endMeasure" -> endMeasure.toString))
   }
 

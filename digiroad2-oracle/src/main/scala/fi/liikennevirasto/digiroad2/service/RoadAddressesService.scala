@@ -1,12 +1,16 @@
 package fi.liikennevirasto.digiroad2.service
 
+import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.TractorRoad
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
@@ -16,12 +20,22 @@ class RoadAddressesService {
 
   val logger = LoggerFactory.getLogger(getClass)
 
+  lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+
+  lazy val viiteClient: SearchViiteClient = {
+    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+  }
+
   /**
     * Return all the current existing road numbers
     * @return
     */
   def getAllRoadNumbers(): Seq[Long] ={
-    throw new NotImplementedError
+    viiteClient.fetchAllRoadNumbers()
   }
 
   /**
@@ -30,7 +44,7 @@ class RoadAddressesService {
     * @return
     */
   def getAllByRoadNumber(roadNumber: Long): Seq[RoadAddress] = {
-    throw new NotImplementedError
+    viiteClient.fetchAllByRoadNumber(roadNumber, Seq())
   }
 
   /**
@@ -40,7 +54,7 @@ class RoadAddressesService {
     * @return
     */
   def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long]): Seq[RoadAddress] = {
-    throw new NotImplementedError
+    viiteClient.fetchAllBySection(roadNumber, roadParts, Seq())
   }
 
   /**
@@ -52,7 +66,7 @@ class RoadAddressesService {
     * @return
     */
   def getByRoadSection(road: Long, roadPart: Long, track: Track, addrMeasure: Long) : Option[RoadAddress] = {
-    throw  new NotImplementedError
+    viiteClient.fetchAllBySection(road, roadPart, addrMeasure, Seq(track)).headOption
   }
 
   /**
@@ -61,7 +75,7 @@ class RoadAddressesService {
     * @param mValue Road geometry measure
     */
   def getByLrmPosition(linkId: Long, mValue: Double): Option[RoadAddress] = {
-    throw new NotImplementedError
+    viiteClient.fetchByLrmPosition(linkId, mValue).headOption
   }
 
   /**
@@ -72,7 +86,7 @@ class RoadAddressesService {
     * @return
     */
   def getAllByLrmPositions(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[RoadAddress] = {
-    throw new NotImplementedError
+    viiteClient.fetchByLrmPositions(linkId, startMeasure, endMeasure)
   }
 
   /**
@@ -81,7 +95,7 @@ class RoadAddressesService {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
-    throw new NotImplementedError
+    viiteClient.fetchAllByLinkIds(linkIds)
   }
 
   /**
