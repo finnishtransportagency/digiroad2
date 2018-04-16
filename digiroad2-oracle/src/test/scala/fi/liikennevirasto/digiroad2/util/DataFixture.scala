@@ -932,10 +932,13 @@ object DataFixture {
     val minOfLength: Double = 0
 
     //Get All Municipalities
-    val municipalities: Seq[Int] =
-    OracleDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+//    val municipalities: Seq[Int] =
+//    OracleDatabase.withDynSession {
+//      Queries.getMunicipalities
+//    }
+
+    val municipalities = Seq(235, 79, 49)
+
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
