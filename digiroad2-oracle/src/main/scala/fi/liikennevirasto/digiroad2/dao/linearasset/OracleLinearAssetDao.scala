@@ -491,6 +491,19 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
+    * Updates asset information Source in db.
+    **/
+  def updateInformationSource(typeId:Long, assetId: Long, informationSource: InformationSource): Unit = {
+    sqlu"""
+      update asset
+      set informationSource = ${informationSource.value}
+      where id = $assetId and asset_type_id = $typeId
+    """.execute
+  }
+
+
+
+  /**
     * Sets floating flag of linear assets true in db. Used in LinearAssetService.drop.
     */
   def floatLinearAssets(ids: Set[Long]): Unit = {
