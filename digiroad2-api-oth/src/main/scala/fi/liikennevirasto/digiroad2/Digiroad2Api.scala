@@ -1393,11 +1393,21 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   delete("/servicePoints/:id") {
-    val id = params("id").toLong
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
-    servicePointService.expire(id, user.username)
+    val id = params("id").toLong
+    servicePointService.getPersistedAssetsByIds(Set(id)).headOption.foreach { a =>
+      (a.lon, a.lat) match {
+        case (lon, lat) =>
+          roadLinkService.getClosestRoadlinkFromVVH(user, Point(lon, lat)) match {
+            case None =>
+              halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
+            case Some(link) =>
+              validateUserMunicipalityAccess(user)(link.municipalityCode, link.administrativeClass)
+          }
+        case _ => halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
+      }
+      servicePointService.expire(id, user.username)
+    }
   }
 
   private def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)) = {

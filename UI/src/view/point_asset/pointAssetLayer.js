@@ -50,7 +50,7 @@
           var administrativeClass = obtainAdministrativeClass(properties);
           var asset = _.merge({}, properties, {administrativeClass: administrativeClass});
           selectedAsset.open(asset);
-          if(authorizationPolicy.formEditModeAccess(selectedAsset) && !applicationModel.isReadOnly())
+          if(authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) && !applicationModel.isReadOnly())
             dragControl.activate();
       }
       else {
@@ -235,7 +235,7 @@
     function toggleMode(readOnly) {
       if(readOnly){
         dragControl.deactivate();
-      } else if(selectedAsset.exists() && authorizationPolicy.formEditModeAccess(selectedAsset)) {
+      } else if(selectedAsset.exists() && authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection)) {
         dragControl.activate();
       }
     }

@@ -605,7 +605,7 @@
           manyFloatingAssetsLabel: 'palvelupisteet',
           newAssetLabel: 'palvelupiste'
         },
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new ServicePointAuthorizationPolicy()
       },
       {
         typeId: assetType.trafficLights,
