@@ -624,7 +624,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             halt(BadRequest(s"The property values for the property with name hasPedestrianCrossing are not valid."))
         }
         case RailwayCrossings.typeId  =>
-//          extractSafetyEquipmentProperty("safetyEquipment", prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
             extractPropertyValue("safetyEquipment", prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
             if (!Seq(1,2,3,4,5).contains(value))
               halt(BadRequest(s"The property values for the property with name safetyEquipment is not valid."))
