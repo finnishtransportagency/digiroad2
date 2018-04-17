@@ -372,7 +372,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val propertyToValidation = properties.find {
       property => property.publicId.equals("tietojen_yllapitaja") && property.values.exists(p => p.propertyValue.equals("2"))
     }
-    if ((propertyToValidation.size >= 1) && (!user.isBusStopMaintainer())) {
+    if ((propertyToValidation.size >= 1) && (!user.isBusStopMaintainer() && !user.isOperator)) {
       halt(MethodNotAllowed("User not authorized, User needs to be BusStopMaintainer for do that action."))
     }
   }
@@ -413,7 +413,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
-    validateUserRights(roadLink)
+    validateUserMunicipalityAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
@@ -1116,6 +1116,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(Unauthorized("User not authorized"))
     }
   }
+
   private def validateUserMunicipalityAccessByMunicipality(user: User)(municipality: Int) : Unit = {
     if (!user.isAuthorizedToWrite(municipality)) {
       halt(Unauthorized("User not authorized"))
