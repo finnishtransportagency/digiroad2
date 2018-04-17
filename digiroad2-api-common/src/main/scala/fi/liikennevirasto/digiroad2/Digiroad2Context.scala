@@ -192,13 +192,6 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
-    try {
-      projectService.updateProjectsWaitingResponseFromTR()
-    } catch {
-      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
-    }
-  }
 
   val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")

@@ -15,7 +15,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
 
   override protected def restApiEndPoint: String = vvhRestApiEndPoint
 
-  override protected def serviceName: String = "search/"
+  override protected def serviceName: String = vvhRestApiEndPoint + "search/"
 
   def fetchAllRoadNumbers(): Seq[Long] = {
     get[Seq[Long]](serviceName + "road_numbers") match {
@@ -56,7 +56,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
   }
 
   def fetchAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
-    post[Seq[Long], List[Map[String, Any]]]("road_address", linkIds, ids => new StringEntity(Serialization.write(ids), ContentType.APPLICATION_JSON)) match {
+    post[Seq[Long], List[Map[String, Any]]](serviceName + "road_address", linkIds, ids => new StringEntity(Serialization.write(ids), ContentType.APPLICATION_JSON)) match {
       case Left(roadAddresses) => roadAddresses.flatMap(mapFields)
       case Right(error) => throw new ViiteClientException(error.toString)
     }
