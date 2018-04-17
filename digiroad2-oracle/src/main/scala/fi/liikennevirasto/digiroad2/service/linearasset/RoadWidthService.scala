@@ -95,7 +95,6 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val assetsLastModification = if(newAssetIds.isEmpty) Map[Long, AssetLastModification]() else {
       fetchModifications(newAssetIds.toSeq).groupBy(_.linkId)
     }
- //TODO: check values of information source
     val newAssets = changedAssets.flatMap{
       case (Some(roadLink), changeInfo, assets) if assets.isEmpty =>
         assetsLastModification.get(roadLink.linkId) match {
