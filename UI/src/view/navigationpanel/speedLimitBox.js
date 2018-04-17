@@ -2,7 +2,7 @@
   root.SpeedLimitBox = function (selectedSpeedLimit) {
     ActionPanelBox.call(this);
     var me = this;
-    var authorizationPolicy = new LinearAssetAuthorizationPolicy();
+    var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
 
     this.header = function () {
       return 'Nopeusrajoitukset';
