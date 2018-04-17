@@ -250,6 +250,26 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def roadWidthToApi(roadWidthAssets: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
+    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+
+    roadWidthAssets.filterNot(isUnknown).map { asset =>
+      Map("id" -> asset.id,
+        "points" -> asset.geometry,
+        geometryWKTForLinearAssets(asset.geometry),
+        "value" -> valueToApi(asset.value),
+        "side_code" -> asset.sideCode.value,
+        "linkId" -> asset.linkId,
+        "startMeasure" -> asset.startMeasure,
+        "endMeasure" -> asset.endMeasure,
+        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
+        lastModifiedBy(asset.createdBy, asset.modifiedBy),
+        "linkSource" -> asset.linkSource.value,
+        "informationSource" -> asset.informationSource.get.value
+      )
+    }
+  }
+
   def pedestrianCrossingsToApi(crossings: Seq[PedestrianCrossing]): Seq[Map[String, Any]] = {
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
       Map("id" -> pedestrianCrossing.id,
@@ -507,7 +527,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
         case "mass_transit_lanes" => linearAssetsToApi(160, municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
-        case "widths" => linearAssetsToApi(120, municipalityNumber)
+        case "widths" => roadWidthToApi(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
         case "paved_roads" => linearAssetsToApi(110, municipalityNumber)
         case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)
