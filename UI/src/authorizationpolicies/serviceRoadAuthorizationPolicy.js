@@ -5,11 +5,11 @@
     var me = this;
 
     this.editModeAccess = function() {
-      return me.isUser('serviceRoadMaintainer') || me.isUser('operator');
+      return me.isServiceRoadMaintainer() || me.isOperator();
     };
 
     this.formEditModeAccess = function(selectedAsset) {
-      return (me.isUser('serviceRoadMaintainer') && me.hasRightsInArea(selectedAsset.area)) || me.isUser('operator');
+      return (me.isServiceRoadMaintainer() && me.hasRightsInArea(selectedAsset.area)) || me.isUser('operator');
     };
 
   };

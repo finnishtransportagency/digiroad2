@@ -17,7 +17,7 @@ case class User(id: Long, username: String, configuration: Configuration) {
 
   def isViewer() = configuration.roles(Role.Viewer)
 
-  def isServiceRoadMaintainer(): Boolean= configuration.roles(Role.ServiceRoadMaintainer) && configuration.roles.size == 1
+  def isServiceRoadMaintainer(): Boolean = configuration.roles(Role.ServiceRoadMaintainer)
 
   def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
 
@@ -43,11 +43,16 @@ case class User(id: Long, username: String, configuration: Configuration) {
 
   def isAuthorizedToWrite(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean = isAuthorizedFor(municipalityCode, administrativeClass)
 
+  def isAuthorizedToWriteInArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean = isAuthorizedForArea(areaCode, administrativeClass)
+
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
     isOperator() || isBusStopMaintainer() || configuration.authorizedMunicipalities.contains(municipalityCode)
 
   private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean =
     (isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)) || (isBusStopMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)) || isOperator()
+
+  private def isAuthorizedForArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean =
+    isOperator() || (isServiceRoadMaintainer() && configuration.authorizedAreas.contains(areaCode))
 }
 
 object Role {

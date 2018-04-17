@@ -31,6 +31,10 @@
       return me.isUser('operator');
     };
 
+    this.isServiceRoadMaintainer = function(){
+      return me.isUser('serviceRoadMaintainer');
+    };
+
     this.hasRightsInMunicipality = function(municipalityCode){
       return _.contains(me.municipalities, municipalityCode);
     };
