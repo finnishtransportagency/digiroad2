@@ -18,11 +18,11 @@
     };
 
     this.fetch = function(boundingBox, center, zoom) {
-      return fetch(boundingBox, backend.getServiceRoadAssets(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom), center);
+      return fetch(boundingBox, backend.getServiceRoadAssets(boundingBox, applicationModel.getWithRoadAddress(), zoom), center);
     };
 
     this.fetchAssetsWithComplementary = function(boundingBox, center, zoom) {
-      return fetch(boundingBox, backend.getServiceRoadAssetsWithComplementary(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom), center);
+      return fetch(boundingBox, backend.getServiceRoadAssetsWithComplementary(boundingBox, applicationModel.getWithRoadAddress(), zoom), center);
     };
 
     var fetch = function(boundingBox, assets, center) {

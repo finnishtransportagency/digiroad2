@@ -18,7 +18,7 @@ import slick.jdbc.StaticQuery.interpolation
 class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
 
-  case class ServiceRoad(id: Long, linkId: Long, sideCode: Int, value: String, startMeasure: Double,
+  case class ServiceRoadRow(id: Long, linkId: Long, sideCode: Int, value: String, startMeasure: Double,
                          endMeasure: Double, publicId: String, propertyType: String, required:Boolean, createdBy: Option[String], createdDate: Option[DateTime],
                          modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean, assetTypeId: Int, vvhTimeStamp: Long,
                          geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime])
@@ -178,7 +178,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                      join property p on p.id = e.property_id
                      $condition """
 
-    val assets = Q.queryNA[ServiceRoad](query).iterator.toSeq
+    val assets = Q.queryNA[ServiceRoadRow](query).iterator.toSeq
 
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
@@ -191,7 +191,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }.toSeq
   }
 
-  implicit val getAsset = new GetResult[ServiceRoad] {
+  implicit val getAsset = new GetResult[ServiceRoadRow] {
 
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
@@ -216,11 +216,11 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      ServiceRoad(id, linkId, sideCode, value, startMeasure, endMeasure, publicId, propertyType, required, createdBy, createdDate, modifiedBy, modifiedDate, expired, MaintenanceRoadAsset.typeId, vvhTimeStamp,geomModifiedDate, linkSource, verifiedBy, verifiedDate)
+      ServiceRoadRow(id, linkId, sideCode, value, startMeasure, endMeasure, publicId, propertyType, required, createdBy, createdDate, modifiedBy, modifiedDate, expired, MaintenanceRoadAsset.typeId, vvhTimeStamp,geomModifiedDate, linkSource, verifiedBy, verifiedDate)
     }
   }
 
-  def assetRowToProperty(assetRows: Iterable[ServiceRoad]): Seq[Properties] = {
+  def assetRowToProperty(assetRows: Iterable[ServiceRoadRow]): Seq[Properties] = {
     assetRows.groupBy(_.value).map { case (key, rows) =>
       val row = rows.head
       Properties( row.publicId, row.propertyType, row.value)
