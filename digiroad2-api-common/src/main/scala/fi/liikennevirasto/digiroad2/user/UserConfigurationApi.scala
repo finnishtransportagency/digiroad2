@@ -38,7 +38,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     userProvider.getUser(user.username) match {
       case Some(name) => Conflict("User already exists: " + name)
       case None =>
-        userProvider.createUser(user.username, user.configuration)
+        userProvider.createUser(user.username, user.configuration, user.name)
         userProvider.getUser(user.username)
     }
   }
@@ -85,9 +85,9 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi lisätä käyttäjiä"))
     }
-    val (username, elyNumber, municipalities, roleName, authorizationArea) =
+    val (username, elyNumber, municipalities, roleName, authorizationArea, name) =
       (request.getParameter("username"), request.getParameter("elyNumber"),
-        request.getParameter("municipalityNumbers"), request.getParameter("roleName"), request.getParameter("authorizationArea"))
+        request.getParameter("municipalityNumbers"), request.getParameter("roleName"), request.getParameter("authorizationArea"), request.getParameter("name"))
 
     val municipalitiesOfEly = splitToInts(elyNumber) match {
       case None => Set()
@@ -112,10 +112,10 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
 
   userProvider.getUser(username) match {
       case Some(u) =>
-        val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers.toSet, authorizedAreas = authorizedAreas, roles = roles))
+        val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers.toSet, authorizedAreas = authorizedAreas, roles = roles), name = Some(name))
         userProvider.saveUser(updatedUser)
       case None =>
-        userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet, authorizedAreas = authorizedAreas, roles = roles))
+        userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet, authorizedAreas = authorizedAreas, roles = roles), Some(name))
     }
   }
 
