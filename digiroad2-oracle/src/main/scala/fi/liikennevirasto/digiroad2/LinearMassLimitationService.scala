@@ -62,16 +62,4 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLim
     val values = assets.map(a => AssetTypes(a.typeId, a.value.getOrElse(NumericValue(0)).asInstanceOf[NumericValue].value.toString))
     MassLimitationAsset(assets.head.linkId, roadLink.administrativeClass, assets.head.sideCode, Some(MassLimitationValue(values)), geometry)
   }
-
-  def withRoadAddress(massLimitationAsset: Seq[Seq[MassLimitationAsset]]): Seq[Seq[MassLimitationAsset]] = {
-    throw new NotImplementedError
-//    val addressData = roadLinkService.getRoadAddressesByLinkIds(massLimitationAsset.flatMap(pwa => pwa.map(_.linkId)).toSet).map(a => (a.linkId, a)).toMap
-//    massLimitationAsset.map(
-//      _.map(pwa =>
-//        if (addressData.contains(pwa.linkId))
-//          pwa.copy(attributes = pwa.attributes ++ addressData(pwa.linkId).asAttributes)
-//        else
-//          pwa
-//      ))
-  }
 }

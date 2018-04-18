@@ -742,7 +742,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       validateBoundingBox(boundingRectangle)
       val massLinearAssets = linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities)
       if(params("withRoadAddress").toBoolean)
-        mapMassLinearAssets(linearMassLimitationService.withRoadAddress(massLinearAssets))
+        mapMassLinearAssets(roadAddressService.massLimitationWithRoadAddress(massLinearAssets))
       else
         mapMassLinearAssets(massLinearAssets)
     } getOrElse {
@@ -759,7 +759,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       validateBoundingBox(boundingRectangle)
       val massLinearAssets = linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities)
       if(params("withRoadAddress").toBoolean)
-        mapMassLinearAssets(linearMassLimitationService.withRoadAddress(massLinearAssets))
+        mapMassLinearAssets(roadAddressService.massLimitationWithRoadAddress(massLinearAssets))
       else
         mapMassLinearAssets(massLinearAssets)
     } getOrElse {

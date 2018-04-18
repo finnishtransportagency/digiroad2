@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -111,6 +111,17 @@ class RoadAddressesService {
       else
         rl
     )
+  }
+
+  def massLimitationWithRoadAddress(massLimitationAsset: Seq[Seq[MassLimitationAsset]]): Seq[Seq[MassLimitationAsset]] = {
+        val addressData = getAllByLinkIds(massLimitationAsset.flatMap(pwa => pwa.map(_.linkId))).map(a => (a.linkId, a)).toMap
+        massLimitationAsset.map(
+          _.map(pwa =>
+            if (addressData.contains(pwa.linkId))
+              pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
+            else
+              pwa
+          ))
   }
 
   /**
