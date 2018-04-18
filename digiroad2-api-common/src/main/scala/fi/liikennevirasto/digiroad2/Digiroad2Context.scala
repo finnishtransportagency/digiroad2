@@ -186,7 +186,7 @@ object Digiroad2Context {
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
 
-  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkOTHService), name = "linkPropertyUpdater")
+  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
@@ -201,11 +201,11 @@ object Digiroad2Context {
   }
 
   lazy val linearMassLimitationService: LinearMassLimitationService = {
-    new LinearMassLimitationService(roadLinkOTHService, new MassLimitationDao)
+    new LinearMassLimitationService(roadLinkService, new MassLimitationDao)
   }
 
   lazy val speedLimitService: SpeedLimitService = {
-    new SpeedLimitService(eventbus, vvhClient, roadLinkOTHService)
+    new SpeedLimitService(eventbus, vvhClient, roadLinkService)
   }
 
   lazy val userProvider: UserProvider = {
@@ -225,7 +225,7 @@ object Digiroad2Context {
   }
 
   lazy val linearAssetDao: OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient, roadLinkOTHService)
+    new OracleLinearAssetDao(vvhClient, roadLinkService)
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
@@ -235,10 +235,6 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
-  }
-
-  lazy val roadLinkOTHService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
@@ -269,31 +265,31 @@ object Digiroad2Context {
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
     }
-    new ProductionMassTransitStopService(eventbus, roadLinkOTHService)
+    new ProductionMassTransitStopService(eventbus, roadLinkService)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
-    new MaintenanceService(roadLinkOTHService, eventbus)
+    new MaintenanceService(roadLinkService, eventbus)
   }
 
   lazy val pavingService: PavingService = {
-    new PavingService(roadLinkOTHService, eventbus)
+    new PavingService(roadLinkService, eventbus)
   }
 
   lazy val roadWidthService: RoadWidthService = {
-    new RoadWidthService(roadLinkOTHService, eventbus)
+    new RoadWidthService(roadLinkService, eventbus)
   }
 
   lazy val linearAssetService: LinearAssetService = {
-    new LinearAssetService(roadLinkOTHService, eventbus)
+    new LinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val onOffLinearAssetService: OnOffLinearAssetService = {
-    new OnOffLinearAssetService(roadLinkOTHService, eventbus, linearAssetDao)
+    new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
   }
 
   lazy val prohibitionService: ProhibitionService = {
-    new ProhibitionService(roadLinkOTHService, eventbus)
+    new ProhibitionService(roadLinkService, eventbus)
   }
 
   lazy val textValueLinearAssetService: TextValueLinearAssetService = {
@@ -305,59 +301,59 @@ object Digiroad2Context {
   }
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = {
-    new PedestrianCrossingService(roadLinkOTHService)
+    new PedestrianCrossingService(roadLinkService)
   }
 
   lazy val trafficLightService: TrafficLightService = {
-    new TrafficLightService(roadLinkOTHService)
+    new TrafficLightService(roadLinkService)
   }
 
   lazy val obstacleService: ObstacleService = {
-    new ObstacleService(roadLinkOTHService)
+    new ObstacleService(roadLinkService)
   }
 
   lazy val railwayCrossingService: RailwayCrossingService = {
-    new RailwayCrossingService(roadLinkOTHService)
+    new RailwayCrossingService(roadLinkService)
   }
 
   lazy val directionalTrafficSignService: DirectionalTrafficSignService = {
-    new DirectionalTrafficSignService(roadLinkOTHService)
+    new DirectionalTrafficSignService(roadLinkService)
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkOTHService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider)
   }
 
   lazy val manoeuvreService = {
-    new ManoeuvreService(roadLinkOTHService)
+    new ManoeuvreService(roadLinkService)
   }
 
   lazy val weightLimitService: WeightLimitService = {
-    new TotalWeightLimitService(roadLinkOTHService)
+    new TotalWeightLimitService(roadLinkService)
   }
 
   lazy val axleWeightLimitService: AxleWeightLimitService = {
-    new AxleWeightLimitService(roadLinkOTHService)
+    new AxleWeightLimitService(roadLinkService)
   }
 
   lazy val bogieWeightLimitService: BogieWeightLimitService = {
-    new BogieWeightLimitService(roadLinkOTHService)
+    new BogieWeightLimitService(roadLinkService)
   }
 
   lazy val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = {
-    new TrailerTruckWeightLimitService(roadLinkOTHService)
+    new TrailerTruckWeightLimitService(roadLinkService)
   }
 
   lazy val heightLimitService: HeightLimitService = {
-    new HeightLimitService(roadLinkOTHService)
+    new HeightLimitService(roadLinkService)
   }
 
   lazy val widthLimitService: WidthLimitService = {
-    new WidthLimitService(roadLinkOTHService)
+    new WidthLimitService(roadLinkService)
   }
 
   lazy val pointMassLimitationService: PointMassLimitationService = {
-    new PointMassLimitationService(roadLinkOTHService, new OraclePointMassLimitationDao)
+    new PointMassLimitationService(roadLinkService, new OraclePointMassLimitationDao)
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
