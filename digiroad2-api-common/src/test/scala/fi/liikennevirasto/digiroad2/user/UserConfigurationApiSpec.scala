@@ -13,10 +13,11 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val TestUsername = "Test" + UUID.randomUUID().toString
+  val RealName = "John" + UUID.randomUUID().toString
   addServlet(classOf[UserConfigurationApi], "/userconfig/*")
 
   test("create user record", Tag("db")) {
-    val user = User(0, TestUsername, Configuration(authorizedMunicipalities = Set(1, 2, 3), roles = Set(Role.Operator, Role.Administrator)))
+    val user = User(0, TestUsername, Configuration(authorizedMunicipalities = Set(1, 2, 3), roles = Set(Role.Operator, Role.Administrator)), Some(RealName))
     postJsonWithUserAuth("/userconfig/user", write(user)) {
       status should be (200)
       val u = parse(body).extract[User]
@@ -24,6 +25,7 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
       u.username should be (TestUsername.toLowerCase)
       u.configuration.authorizedMunicipalities should contain only (1, 2, 3)
       u.configuration.roles should contain only (Role.Operator, Role.Administrator)
+      u.name should be (RealName)
     }
     postJsonWithUserAuth("/userconfig/user", write(user)) {
       status should be (409)
@@ -36,6 +38,7 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
       val u = parse(body).extract[User]
       u.username should be ("test49")
       u.configuration.authorizedMunicipalities should contain only 49
+      u.name should be ("Real Name")
     }
     getWithUserAuth("/userconfig/user/nonexistent") {
       status should be (404)
