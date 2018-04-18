@@ -238,8 +238,8 @@ object Digiroad2Context {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
-  lazy val roadLinkOTHService: RoadLinkOTHService = {
-    new RoadLinkOTHService(vvhClient, eventbus, new JsonSerializer)
+  lazy val roadLinkOTHService: RoadLinkService = {
+    new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
   lazy val roadAddressesService: RoadAddressesService = {

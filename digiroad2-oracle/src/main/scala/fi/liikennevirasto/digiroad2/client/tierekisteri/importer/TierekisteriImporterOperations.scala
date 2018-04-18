@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkOTHService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
@@ -24,7 +24,7 @@ trait TierekisteriAssetImporterOperations {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  lazy val roadLinkService = new RoadLinkOTHService(vvhClient, eventbus, new DummySerializer)
+  lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
 
   lazy val assetDao: OracleAssetDao = new OracleAssetDao
@@ -140,26 +140,6 @@ trait TierekisteriAssetImporterOperations {
     else
       endAddress.addressMValueToLRM(section.endAddressMValue.get)
   }
-
-//  protected def getAllViiteRoadAddress(section: AddressSection) = {
-  //    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressSinglePart(section.roadNumber, section.roadPartNumber, section.track.value, section.startAddressMValue, section.endAddressMValue))
-  //    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(addresses.map(ra => ra.linkId).toSet).filter(_.administrativeClass == State).filter(filterViiteRoadAddress)
-  //    addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
-  //  }
-  //
-  //  protected def getAllViiteRoadAddress(roadNumber: Long, tracks: Seq[Track]) = {
-  //    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, tracks.map(_.value).toSet))
-  //    val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
-  //    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State).filter(filterViiteRoadAddress)
-  //    addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
-  //  }
-  //
-  //  protected def getAllViiteRoadAddress(roadNumber: Long, roadPart: Long) = {
-  //    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, roadPart))
-  //    val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
-  //    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State).filter(filterViiteRoadAddress)
-  //    addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
-  //  }
 
   protected def filterRoadAddressByNumberAndTracks(roadAddresses: Seq[ViiteRoadAddress], roadNumber: Long, tracks: Seq[Track]) = {
     val addresses = roadAddresses.filter(ra => ra.roadNumber == roadNumber && tracks.exists(t => t == ra.track))

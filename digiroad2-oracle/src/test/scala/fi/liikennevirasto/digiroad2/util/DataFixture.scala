@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
@@ -45,8 +45,8 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
-  lazy val roadLinkService: RoadLinkOTHService = {
-    new RoadLinkOTHService(vvhClient, eventbus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkService = {
+    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   }
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(roadLinkService)
@@ -342,7 +342,7 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val batchSize = 1000
     var obstaclesFound = true
     var lastIdUpdate : Long = 0
@@ -388,7 +388,7 @@ object DataFixture {
 
   def checkUnknownSpeedlimits(): Unit = {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
     val unknowns = speedLimitService.getUnknown(Set(), None)
     unknowns.foreach { case (_, mapped) =>
@@ -637,7 +637,7 @@ object DataFixture {
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val assetTypeId = 110
 
     lazy val linearAssetService: LinearAssetService = {
@@ -797,7 +797,7 @@ object DataFixture {
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
@@ -907,7 +907,7 @@ object DataFixture {
     println(DateTime.now())
 
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {
       new RoadWidthService(roadLinkService, new DummyEventBus)

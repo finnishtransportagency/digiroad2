@@ -1661,28 +1661,3 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
 }
-
-//TODO all of thaat class can be deleted after the OTH and Viite Separation
-class RoadLinkOTHService(vvhClient: VVHClient, eventbus: DigiroadEventBus, vvhSerializer: VVHSerializer) extends RoadLinkService(vvhClient, eventbus, vvhSerializer){
-
-  override protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
-    super.enrichRoadLinksFromVVH( vvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads), changes)
-  }
-
-  override protected def enrichCacheRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
-    super.enrichRoadLinksFromVVH(vvhRoadLinks, changes)
-  }
-
-  override protected def readCachedGeometry(geometryFile: File): Seq[RoadLink] = {
-    def getFeatureClass(roadLink: RoadLink): Int ={
-      val mtkClass = roadLink.attributes("MTKCLASS")
-      if (mtkClass != null) // Complementary geometries have no MTK Class
-        mtkClass.asInstanceOf[BigInt].intValue()
-      else
-        0
-    }
-
-    //12312 -> FeatureClass.WinterRoads
-    super.readCachedGeometry(geometryFile).filterNot(r => getFeatureClass(r) == 12312)
-  }
-}
