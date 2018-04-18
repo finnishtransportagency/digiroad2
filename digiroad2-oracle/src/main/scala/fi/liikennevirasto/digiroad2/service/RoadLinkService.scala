@@ -1415,7 +1415,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   protected def readCachedGeometry(geometryFile: File): Seq[RoadLink] = {
-    vvhSerializer.readCachedGeometry(geometryFile)
+    def getFeatureClass(roadLink: RoadLink): Int ={
+      val mtkClass = roadLink.attributes("MTKCLASS")
+      if (mtkClass != null) // Complementary geometries have no MTK Class
+        mtkClass.asInstanceOf[BigInt].intValue()
+      else
+        0
+    }
+
+    vvhSerializer.readCachedGeometry(geometryFile).filterNot(r => getFeatureClass(r) == 12312)
   }
 
   private def getCachedRoadLinks(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
