@@ -68,7 +68,6 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
       }
     }
     val trAsset = assetInfo.trAsset.asInstanceOf[TierekisteriAssetData]
-    print("assetType" -> trAsset.asInstanceOf[TierekisteriAssetData].assetType.trafficSignType)
     trAsset.assetType.trafficSignType match {
       case TrafficSignType.SpeedLimit  =>
         toInt(trAsset.assetValue)
@@ -93,9 +92,26 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
   }
 
   private def filterSectionTrafficSigns(trafficSigns: Seq[TierekisteriAssetData], roadAddress: ViiteRoadAddress, roadSide: RoadSide): Seq[TierekisteriAssetData] ={
-    trafficSigns.filter(trSign => trSign.assetType.trafficSignType.group == TrafficSignTypeGroup.SpeedLimits &&
+    val signs = trafficSigns.filter(trSign => trSign.assetType.trafficSignType.group == TrafficSignTypeGroup.SpeedLimits &&
       trSign.endRoadPartNumber == roadAddress.roadPartNumber && trSign.startAddressMValue >= roadAddress.startAddrMValue &&
-      trSign.startAddressMValue <= roadAddress.endAddrMValue && roadSide == trSign.roadSide)
+      trSign.startAddressMValue <= roadAddress.endAddrMValue && (trSign.roadSide == RoadSide.Left || trSign.roadSide == RoadSide.Right))
+
+    val currentTrack = roadSide match {
+      case RoadSide.Left => Track.LeftSide
+      case RoadSide.Right => Track.RightSide
+      case _ => Track.Unknown
+    }
+
+    roadAddress.track match {
+      case Track.Combined =>
+        signs.filter(trSign => (trSign.track == Track.Combined && roadSide == trSign.roadSide) || trSign.track == currentTrack )
+      case Track.LeftSide =>
+        signs.filter(trSign => trSign.track == Track.LeftSide)
+      case Track.RightSide =>
+        signs.filter(trSign => trSign.track == Track.RightSide)
+      case _ =>
+        Seq()
+    }
   }
 
   def generateUrbanTrafficSign(trAsset: TierekisteriUrbanAreaData, roadSide: RoadSide): Seq[TierekisteriTrafficSignData]= {
