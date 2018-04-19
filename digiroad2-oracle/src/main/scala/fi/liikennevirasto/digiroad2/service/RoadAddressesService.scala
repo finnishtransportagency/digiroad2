@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink,
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
+import org.apache.http.conn.HttpHostConnectException
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -104,24 +105,36 @@ class RoadAddressesService {
     * @return
     */
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
-    val addressData = getAllByLinkIds(roadLinks.map(_.linkId)).map(a => (a.linkId, a)).toMap
-    roadLinks.map(rl =>
-      if (addressData.contains(rl.linkId))
-        rl.copy(attributes = rl.attributes ++ roadAddressAttributes(addressData(rl.linkId)))
-      else
-        rl
-    )
+    try {
+      val addressData = groupRoadAddress(getAllByLinkIds(roadLinks.map(_.linkId))).map(a => (a.linkId, a)).toMap
+      roadLinks.map(rl =>
+        if (addressData.contains(rl.linkId))
+          rl.copy(attributes = rl.attributes ++ roadAddressAttributes(addressData(rl.linkId)))
+        else
+          rl
+      )
+    } catch {
+      case hhce: HttpHostConnectException =>
+        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        roadLinks
+    }
   }
 
   def massLimitationWithRoadAddress(massLimitationAsset: Seq[Seq[MassLimitationAsset]]): Seq[Seq[MassLimitationAsset]] = {
-        val addressData = getAllByLinkIds(massLimitationAsset.flatMap(pwa => pwa.map(_.linkId))).map(a => (a.linkId, a)).toMap
-        massLimitationAsset.map(
-          _.map(pwa =>
-            if (addressData.contains(pwa.linkId))
-              pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
-            else
-              pwa
-          ))
+    try {
+      val addressData = groupRoadAddress(getAllByLinkIds(massLimitationAsset.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
+      massLimitationAsset.map(
+        _.map(pwa =>
+          if (addressData.contains(pwa.linkId))
+            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
+          else
+            pwa
+        ))
+    } catch {
+      case hhce: HttpHostConnectException =>
+        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        massLimitationAsset
+    }
   }
 
   /**
@@ -130,14 +143,20 @@ class RoadAddressesService {
     * @return
     */
   def linearAssetWithRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] ={
-    val addressData = getAllByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId))).map(a => (a.linkId, a)).toMap
-    pieceWiseLinearAssets.map(
-      _.map(pwa =>
-        if (addressData.contains(pwa.linkId))
-          pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
-        else
-          pwa
-      ))
+    try{
+      val addressData = groupRoadAddress(getAllByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
+      pieceWiseLinearAssets.map(
+        _.map(pwa =>
+          if (addressData.contains(pwa.linkId))
+            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
+          else
+            pwa
+        ))
+    } catch {
+      case hhce: HttpHostConnectException =>
+        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        pieceWiseLinearAssets
+    }
   }
 
   /**
@@ -146,14 +165,20 @@ class RoadAddressesService {
     * @return
     */
   def speedLimitWithRoadAddress(speedLimits: Seq[Seq[SpeedLimit]]): Seq[Seq[SpeedLimit]] ={
-    val addressData = getAllByLinkIds(speedLimits.flatMap(pwa => pwa.map(_.linkId))).map(a => (a.linkId, a)).toMap
-    speedLimits.map(
-      _.map(pwa =>
-        if (addressData.contains(pwa.linkId))
-          pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
-        else
-          pwa
-      ))
+    try{
+      val addressData = groupRoadAddress(getAllByLinkIds(speedLimits.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
+      speedLimits.map(
+        _.map(pwa =>
+          if (addressData.contains(pwa.linkId))
+            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
+          else
+            pwa
+        ))
+    } catch {
+      case hhce: HttpHostConnectException =>
+        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        speedLimits
+    }
   }
 
   private def roadAddressAttributes(roadAddress: RoadAddress) = {
@@ -165,6 +190,12 @@ class RoadAddressesService {
       "VIITE_START_ADDR" -> roadAddress.startAddrMValue,
       "VIITE_END_ADDR" -> roadAddress.endAddrMValue
     )
+  }
+
+  private def groupRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] ={
+    roadAddresses.groupBy(ra => (ra.linkId, ra.roadNumber, ra.roadPartNumber)).mapValues(ras => (ras.minBy(_.startAddrMValue),ras.maxBy(_.endAddrMValue))).map{
+      case (key, (startRoadAddress, endRoadAddress)) => startRoadAddress.copy(endAddrMValue = endRoadAddress.endAddrMValue)
+    }.toSeq
   }
 
   @deprecated
