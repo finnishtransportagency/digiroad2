@@ -647,7 +647,32 @@
           // check if administrative class is State
           return selectedAsset.getAdministrativeClass(linkId) === "State";
         },
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        saveCondition: function (selectedAsset) {
+          var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+          var validations = [
+            { types: [1, 2, 3, 4], validate: function (someValue) { return !_.isNaN(parseInt(someValue)) && _.contains(possibleSpeedLimitsValues, parseInt(someValue)); }},
+            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return !_.isNaN(parseInt(someValue)) ; }}
+          ];
+
+          var getPropertyValues = function(name) {
+            var prop = _.find(selectedAsset.get().propertyData, function (type) {
+              return type.name === name;
+            });
+            return prop.values ? prop.values : [] ;
+          };
+
+           function getPropertyValue(name) {
+            return _.chain(getPropertyValues(name))
+              .flatten()
+              .map(function (values) { return values.propertyValue;})
+              .first()
+              .value();
+          }
+
+          var functionFn = _.find(validations, function(validation){ return _.contains(validation.types, parseInt(getPropertyValue('Tyyppi')));});
+          return functionFn ?  functionFn.validate(getPropertyValue('Arvo')) : true;
+        }
       },
       {
         typeId: assetType.trHeightLimits,
