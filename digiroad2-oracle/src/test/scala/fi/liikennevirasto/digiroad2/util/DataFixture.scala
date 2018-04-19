@@ -1245,20 +1245,25 @@ object DataFixture {
         println(s"Start updating assets with Information Source")
 
         existingAssets.foreach { asset =>
-          if(asset.createdBy.contains("vvh_mtkclass_default") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated")))
-            oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
+          if(asset.createdBy.contains("vvh_mtkclass_default") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))){
+            if(!asset.informationSource.contains(MunicipalityMaintenainer))
+              oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
+          }
           else{
             if((asset.createdBy.contains("dr1_conversion") || asset.createdBy.contains("vvh_generated"))&& asset.modifiedBy.isEmpty) {
-              if (roadWithMTKClass.exists(_.linkId == asset.linkId)) {
-                println(s"Asset with ${asset.id} created by dr1_conversion or vvh_generated and with valid MTKCLASS")
-                oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
+              if(!asset.informationSource.contains(MunicipalityMaintenainer)) {
+                if (roadWithMTKClass.exists(_.linkId == asset.linkId)) {
+                  println(s"Asset with ${asset.id} created by dr1_conversion or vvh_generated and with valid MTKCLASS")
+                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
+                } else
+                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
               }
-              else
-                oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
             }
             else {
-              if (asset.createdBy.contains("batch_process_roadWidth") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated")))
-                oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, RoadRegistry)
+              if (asset.createdBy.contains("batch_process_roadWidth") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
+                if (!asset.informationSource.contains(MunicipalityMaintenainer))
+                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, RoadRegistry)
+              }
               else{
                 if( isKIdentifier(asset.createdBy) || isKIdentifier(asset.modifiedBy) )
                   oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
