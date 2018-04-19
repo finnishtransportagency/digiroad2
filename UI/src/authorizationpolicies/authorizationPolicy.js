@@ -61,5 +61,9 @@
       return me.isUser('operator') || me.isUser('premium');
     };
 
+    this.isState = function(selectedInfo){
+      return selectedInfo.administrativeClass === "State" || selectedInfo.administrativeClass === 1;
+    };
+
   };
 })(this);
