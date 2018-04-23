@@ -58,6 +58,20 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
   }
 
+  put("/user/:username/name") {
+    val name = parsedBody.extract[String]
+    params.get("username").flatMap {
+      userProvider.getUser
+    }.map { u =>
+      val updatedUser = u.copy(name = Some(name))
+      userProvider.saveUser(updatedUser)
+      updatedUser
+    } match {
+      case Some(updated) => updated
+      case None => NotFound("User not found: " + params("username"))
+    }
+  }
+
   put("/municipalitiesbatch") {
     request.body.lines.foreach { line =>
       val elements = line.trim.split(";").toIndexedSeq
@@ -69,13 +83,14 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
           case Some(numbers) => municipalityProvider.getMunicipalities(numbers.toSet).toSet
         }
         val municipalities = parseInputToInts(elements, 2).getOrElse(Set()).toSet
+        val name = elements.lift(3).getOrElse("").trim
         val (username, municipalityNumbers) = (elements.head, municipalitiesOfEly ++ municipalities)
         userProvider.getUser(username) match {
           case Some(u) =>
-            val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers))
+            val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers), name = Some(name))
             userProvider.saveUser(updatedUser)
           case None =>
-            userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers))
+            userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers), Some(name))
         }
       }
     }

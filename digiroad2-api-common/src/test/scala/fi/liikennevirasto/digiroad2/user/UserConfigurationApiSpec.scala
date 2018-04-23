@@ -75,22 +75,25 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   test("batch load users with municipalities") {
     val batchString =
       s"""
-        test2; ; 4, 5, 6, 49, 235
-        test49; ; 1, 2, 3, 49
-        newuser; ; 2, 3, 6
-        testEly; 0;
+        test2; ; 4, 5, 6, 49, 235; Name from batch
+        test49; ; 1, 2, 3, 49; Replaced name from batch
+        newuser; ; 2, 3, 6; Another name from batch
+        testEly; 0; ;
       """
     try {
       putJsonWithUserAuth("/userconfig/municipalitiesbatch", batchString, Map("Content-type" -> "text/plain")) {
         getWithUserAuth("/userconfig/user/test2") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only (4, 5, 6, 49, 235)
+          parse(body).extract[User].name.get should be ("Name from batch")
         }
         getWithUserAuth("/userconfig/user/test49") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only (1, 2, 3, 49)
-          parse(body).extract[User].name.get should be ("Real Name")
+          parse(body).extract[User].name.get should be ("Replaced name from batch")
         }
         getWithUserAuth("/userconfig/user/newuser") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only (2, 3, 6)
+          parse(body).extract[User].name.get should be ("Another name from batch")
+
         }
         getWithUserAuth("/userconfig/user/testEly") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only (35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
@@ -102,6 +105,8 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
       provider.deleteUser("testEly")
       putJsonWithUserAuth("/userconfig/user/test2/municipalities", write(List(235, 49)), Map("Content-type" -> "application/json")) {}
       putJsonWithUserAuth("/userconfig/user/test49/municipalities", write(List(49)), Map("Content-type" -> "application/json")) {}
+      putJsonWithUserAuth("/userconfig/user/test2/name", write(""), Map("Content-type" -> "application/json")) {}
+      putJsonWithUserAuth("/userconfig/user/test49/name", write("Real Name"), Map("Content-type" -> "application/json")) {}
     }
   }
 
