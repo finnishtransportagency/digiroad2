@@ -81,13 +81,8 @@ class RoadAddressDAO {
       s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue" + withValidatyCheck
   }
 
-  def withLinkIdAndMeasure(linkId: Long, startM: Long, endM: Long, road: Option[Int] = None)(query: String): String = {
-
-    val qfilter = (road) match {
-      case Some(road) => "AND road_number = " + road
-      case (_) => " "
-    }
-    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " + qfilter + withValidatyCheck
+  def withLinkIdAndMeasure(linkId: Long, measure: Double)(query: String): String = {
+    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $measure AND pos.end_Measure >= $measure AND floating = 0" + withValidatyCheck
   }
 
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
@@ -151,10 +146,10 @@ class RoadAddressDAO {
 		  """.as[Long].list
   }
 
-  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Double, endM: Double): Seq[RoadAddress] = {
+  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startAddressM: Double, endAdressM: Double): Seq[RoadAddress] = {
     val where =
-      s""" where (( ra.start_addr_m >= $startM and ra.end_addr_m <= $endM ) or ( $startM >= ra.start_addr_m and $startM < ra.end_addr_m) or
-         ( $endM > ra.start_addr_m and $endM <= ra.end_addr_m)) and ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
+      s""" where (( ra.start_addr_m >= $startAddressM and ra.end_addr_m <= $endAdressM ) or ( $startAddressM >= ra.start_addr_m and $startAddressM < ra.end_addr_m) or
+         ( $endAdressM > ra.start_addr_m and $endAdressM <= ra.end_addr_m)) and ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
          and ra.floating = 0 """ + withValidatyCheck
 
     val query =
@@ -168,45 +163,6 @@ class RoadAddressDAO {
       $where
       """
     queryRoadAddresses(query)
-  }
-
-  def getByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double, includeFloating: Boolean = false, includeHistory: Boolean = true,
-                             includeTerminated: Boolean = true): List[RoadAddress] = {
-
-    val where =
-      s""" where pos.link_id = $linkId and
-         (( pos.start_measure >= $startM and pos.end_measure <= $endM ) or
-         ( $endM >= pos.start_measure and $endM <= pos.end_measure)) """
-
-    val floating = if (!includeFloating)
-      "AND floating='0'"
-    else
-      ""
-
-    val history = if (!includeHistory)
-      "AND ra.end_date is null"
-    else
-      ""
-
-    val valid = if (!includeTerminated)
-      "AND ra.terminated = 0"
-    else
-      ""
-
-    val query =
-      s"""
-			 select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
-       pos.side_code, ra.floating, t.X, t.Y, t2.X, t2.Y,
-       case when ra.valid_to <= sysdate then 1 else 0 end as expired, ra.created_by, ra.start_date, pos.modified_date
-       from road_address ra cross join
-       TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-       TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-       join lrm_position pos on ra.lrm_position_id = pos.id
-			 $where $floating $history $valid $withValidatyCheck
-		  """
-
-    queryList(query)
   }
 
   implicit val getTrack = GetResult[Track](r => Track.apply(r.nextInt()))

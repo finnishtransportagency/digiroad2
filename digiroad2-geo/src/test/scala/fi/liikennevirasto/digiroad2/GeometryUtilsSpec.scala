@@ -248,4 +248,32 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val geometry2 = List(Point(1.0, 1.0), Point(1.0, 0.0), Point(0.0, 0.0))
     geometryMoved(1.0)(geometry1, geometry2) should be (true)
   }
+
+  test("Project stop location on two-point geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val location: Point = Point(0.5, 0.5)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(0.5)
+  }
+
+  test("Project stop location on three-point geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 0.5))
+    val location: Point = Point(1.2, 0.25)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(1.25)
+  }
+
+  test("Project stop location to beginning of geometry if point lies behind geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val location: Point = Point(-0.5, 0.0)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(0.0)
+  }
+
+  test("Project stop location to the end of geometry if point lies beyond geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val location: Point = Point(1.5, 0.5)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(1.0)
+  }
 }

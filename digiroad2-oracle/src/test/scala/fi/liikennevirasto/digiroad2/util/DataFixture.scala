@@ -93,6 +93,11 @@ object DataFixture {
   lazy val geometryTransform: GeometryTransform = {
     new GeometryTransform()
   }
+
+  lazy val geometryVKMTransform: VKMGeometryTransform = {
+    new VKMGeometryTransform()
+  }
+
   lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
     new OracleLinearAssetDao(vvhClient, roadLinkService)
   }
@@ -558,7 +563,7 @@ object DataFixture {
     val busStops = trBusStops.flatMap{
       trStop =>
         try {
-          val stopPointOption = withDynSession{ geometryTransform.addressToCoords(trStop.roadAddress.road, trStop.roadAddress.roadPart, trStop.roadAddress.track, trStop.roadAddress.mValue) }
+          val stopPointOption = withDynSession{ geometryVKMTransform.addressToCoords(trStop.roadAddress).headOption }
 
           stopPointOption match {
             case Some(stopPoint) =>
