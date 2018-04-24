@@ -262,7 +262,7 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-      new PointAssetForm(pointAsset, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
+      new PointAssetForm(pointAsset, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend, pointAsset.saveCondition || function() {return true;});
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {

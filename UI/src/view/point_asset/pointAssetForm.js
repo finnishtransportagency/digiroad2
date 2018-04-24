@@ -1,11 +1,11 @@
 (function (root) {
-root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, applicationModel, backend) {
+root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, applicationModel, backend, saveCondition) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(pointAsset, editConstrains, roadCollection, applicationModel, backend);
+  bindEvents(pointAsset, editConstrains, roadCollection, applicationModel, backend, saveCondition);
 
-  function bindEvents(pointAsset, editConstrains, roadCollection, applicationModel, backend) {
+  function bindEvents(pointAsset, editConstrains, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
     var typeId = pointAsset.typeId;
     var selectedAsset = pointAsset.selectedPointAsset;
@@ -41,13 +41,15 @@ root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, appli
             rootElement.find('button.delete').hide();
           }
         } else {
-          rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+          rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+          rootElement.find('button#cancel-button').prop('disabled', false);
         }
       }
     });
 
     eventbus.on(layerName + ':changed', function() {
-      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+      rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
@@ -159,7 +161,7 @@ root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, appli
       selectedAsset.set({ services: newServices });
     });
 
-    rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select').on('change', function (event) {
+    rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select').on('change input', function (event) {
       var eventTarget = $(event.currentTarget);
       var propertyPublicId = eventTarget.attr('id');
       var propertyValue = $(event.currentTarget).val();
