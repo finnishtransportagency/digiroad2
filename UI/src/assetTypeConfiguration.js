@@ -655,23 +655,8 @@
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return !_.isNaN(parseInt(someValue)) ; }}
           ];
 
-          var getPropertyValues = function(name) {
-            var prop = _.find(selectedAsset.get().propertyData, function (type) {
-              return type.name === name;
-            });
-            return prop.values ? prop.values : [] ;
-          };
-
-           function getPropertyValue(name) {
-            return _.chain(getPropertyValues(name))
-              .flatten()
-              .map(function (values) { return values.propertyValue;})
-              .first()
-              .value();
-          }
-
-          var functionFn = _.find(validations, function(validation){ return _.contains(validation.types, parseInt(getPropertyValue('Tyyppi')));});
-          return functionFn ?  functionFn.validate(getPropertyValue('Arvo')) : true;
+          var functionFn = _.find(validations, function(validation){ return _.contains(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
+          return functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
         }
       },
       {
