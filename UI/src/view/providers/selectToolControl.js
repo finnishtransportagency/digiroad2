@@ -6,6 +6,9 @@
         var initialized = false;
         var isPolygonActive = false;
         var isRectangleActive = false;
+        var currentSelectInteract = new ol.interaction.Select({});
+        var multiSelectInitialized = false;
+        var selectedFeatures = [];
 
         var settings = _.extend({
             onDragStart: function(){},
@@ -13,6 +16,7 @@
             onSelect: function() {},
             style: function(){},
             enableSelect: function(){ return true; },
+            enableBoxSelect: function(){ return false; },
             backgroundOpacity: 0.15,
             draggable : true,
             filterGeometry : function(feature){
@@ -22,7 +26,7 @@
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
-            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event); }
+            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) && settings.enableBoxSelect(); }
         });
 
         var drawInteraction = new ol.interaction.Draw({
@@ -55,8 +59,22 @@
             interactionEnd(extent);
         });
 
+        var multiSelectInteraction = new ol.interaction.Select({
+            layers: [layer],
+            condition: function (events) {
+                return enabled && ol.events.condition.click(events);
+            },
+            toggleCondition: function (events) {
+                return ol.events.condition.platformModifierKeyOnly(events);
+            },
+            style: settings.style,
+            filter : settings.filterGeometry
+        });
+
+        multiSelectInteraction.set('name', layer.get('name'));
+
         function interactionEnd(extent) {
-            var selectedFeatures = [];
+            selectedFeatures = [];
             layer.getSource().forEachFeatureIntersectingExtent(extent, function (feature) {
                 selectedFeatures.push(feature.getProperties());
             });
@@ -91,12 +109,43 @@
             settings.onSelect(evt);
         });
 
+        multiSelectInteraction.on('select',  function(evt){
+            if(evt.selected.length > 0 && settings.enableSelect(evt))
+                unhighlightLayer();
+            else
+                highlightLayer();
+
+            selectedFeatures.push(evt.selected[0].getProperties());
+            settings.onMultipleSelect(evt);
+        });
+
+        $(window).keydown(function (e) {
+            if (e.ctrlKey && !multiSelectInitialized && enabled && !application.isReadOnly()) {
+                map.removeInteraction(currentSelectInteract);
+                currentSelectInteract = multiSelectInteraction;
+                map.addInteraction(currentSelectInteract);
+                multiSelectInitialized = true;
+            }
+        });
+
+        $(window).keyup(function (e) {
+            if (e.keyCode === 17 && multiSelectInitialized && enabled) {
+                clear();
+                map.removeInteraction(currentSelectInteract);
+                currentSelectInteract = selectInteraction;
+                map.addInteraction(currentSelectInteract);
+                multiSelectInitialized = false;
+                settings.onInteractionEnd(selectedFeatures);
+                selectedFeatures = [];
+            }
+        });
+
         var toggleDragBox = function() {
-          if (!application.isReadOnly() && enabled && settings.draggable) {
+          if (!application.isReadOnly() && enabled && settings.draggable && settings.enableBoxSelect()) {
             destroyDragBoxInteraction();
             map.addInteraction(dragBoxInteraction);
           } else {
-            if ((!settings.draggable && enabled) || application.isReadOnly())
+            if ((!settings.draggable && enabled) || application.isReadOnly() || !settings.enableBoxSelect())
               destroyDragBoxInteraction();
           }
         };
@@ -129,12 +178,13 @@
             enabled = true;
 
             if(!initialized){
-                map.addInteraction(selectInteraction);
+                currentSelectInteract = selectInteraction;
+                map.addInteraction(currentSelectInteract);
                 initialized = true;
             }
             mapDoubleClickEventKey = map.on('dblclick', function () {
                 _.defer(function(){
-                    if(selectInteraction.getFeatures().getLength() < 1 && zoomlevels.getViewZoom(map) <= 13 && enabled){
+                    if(currentSelectInteract.getFeatures().getLength() < 1 && zoomlevels.getViewZoom(map) <= 13 && enabled){
                         map.getView().setZoom(zoomlevels.getViewZoom(map)+1);
                     }
                 });
@@ -156,7 +206,7 @@
             isPolygonActive = true;
             isRectangleActive = false;
             map.removeInteraction(drawSquare);
-            map.addInteraction(selectInteraction);
+            map.addInteraction(currentSelectInteract);
             map.addInteraction(drawInteraction);
         };
 
@@ -164,7 +214,7 @@
             isRectangleActive = true;
             isPolygonActive = false;
             map.removeInteraction(drawInteraction);
-            map.addInteraction(selectInteraction);
+            map.addInteraction(currentSelectInteract);
             map.addInteraction(drawSquare);
         };
 
@@ -176,14 +226,14 @@
         };
 
         var clear = function(){
-            selectInteraction.getFeatures().clear();
+            currentSelectInteract.getFeatures().clear();
             highlightLayer();
         };
 
         var removeFeatures = function (match) {
-            _.each(selectInteraction.getFeatures().getArray(), function(feature){
+            _.each(currentSelectInteract.getFeatures().getArray(), function(feature){
                 if(match(feature)) {
-                    selectInteraction.getFeatures().remove(feature);
+                    currentSelectInteract.getFeatures().remove(feature);
                 }
             });
         };
@@ -195,7 +245,7 @@
 
         var addNewFeature = function (features, highlightLayer) {
             _.each(features, function(feature){
-                selectInteraction.getFeatures().push(feature);
+                currentSelectInteract.getFeatures().push(feature);
             });
 
             if(!highlightLayer)
@@ -230,7 +280,7 @@
         eventbus.on('application:readOnly', toggleDragBox);
 
         return {
-            getSelectInteraction: function(){ return selectInteraction; },
+            getSelectInteraction: function(){ return currentSelectInteract; },
             addSelectionFeatures: addSelectionFeatures,
             addNewFeature : addNewFeature,
             toggleDragBox: toggleDragBox,

@@ -196,6 +196,21 @@ root.LinearAssetLayer  = function(params) {
     }
   };
 
+  var onMultipleSelect = function(evt) {
+    if(evt.selected.length !== 0) {
+      var feature = evt.selected[0];
+      var properties = feature.getProperties();
+    }else{
+      if (selectedLinearAsset.exists()) {
+        selectedLinearAsset.close();
+        readOnlyLayer.showLayer();
+        if(hasTrafficSignReadOnlyLayer){
+          trafficSignReadOnlyLayer.highLightLayer();
+        }
+      }
+    }
+  };
+
   var verifyClickEvent = function(properties, evt){
     var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
     selectedLinearAsset.open(properties, singleLinkSelect);
@@ -215,7 +230,8 @@ root.LinearAssetLayer  = function(params) {
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return feature.setStyle(me.getLayerStyle(feature)); },
     onInteractionEnd: onInteractionEnd,
-    onSelect: onSelect
+    onSelect: onSelect,
+    onMultipleSelect: onMultipleSelect
   });
 
   var showDialog = function (linearAssets) {
