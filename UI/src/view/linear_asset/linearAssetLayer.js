@@ -360,11 +360,11 @@ root.LinearAssetLayer  = function(params) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
     if (isComplementaryChecked) {
-      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
+      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
         eventbus.trigger('layer:linearAsset');
       });
     } else {
-      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
+      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
         eventbus.trigger('layer:linearAsset');
       });
     }

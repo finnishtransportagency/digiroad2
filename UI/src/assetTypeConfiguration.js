@@ -464,7 +464,16 @@
           disabled: 'Ei huoltotietä'
         },
         possibleValues: [
-          {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus", value: [{typeId: 1, title: 'Tieoikeus'},{typeId: 2, title: 'Tiekunnan osakkuus'},{typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},{typeId: 4, title: 'Kevyen liikenteen väylä'},{typeId: 99, title: 'Tuntematon'}]},
+          {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus",
+                  value: [
+                          {typeId: 1, title: 'Tieoikeus'},
+                          {typeId: 2, title: 'Tiekunnan osakkuus'},
+                          {typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},
+                          {typeId: 4, title: 'Kevyen liikenteen väylä'},
+                          {typeId: 6, title: 'Muu sopimus'},
+                          {typeId: 9, title: 'Potentiaalinen käyttöoikeus'},
+                          {typeId: 99, title: 'Tuntematon'}
+                          ]},
           {'name': 'Huoltovastuu', 'propType': 'single_choice', 'id': "huoltotie_huoltovastuu", value: [{typeId: 1, title: 'LiVi'}, {typeId: 2, title: 'Muu'}, {typeId: 99, title: 'Ei tietoa'}]},
           {'name': "Tiehoitokunta", 'propType': 'text', 'id': "huoltotie_tiehoitokunta" },
           {'name': "Yhteyshenkilö", 'propType': 'header' },
@@ -479,7 +488,8 @@
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
         isVerifiable: false,
-        layer : ServiceRoadLayer
+        layer : ServiceRoadLayer,
+        collection: ServiceRoadCollection
       },
       {
         typeId: assetType.numberOfLanes,

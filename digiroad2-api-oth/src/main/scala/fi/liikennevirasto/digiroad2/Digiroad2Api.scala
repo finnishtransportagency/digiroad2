@@ -70,14 +70,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     with CorsSupport
     with RequestHeaderAuthentication
     with GZipSupport {
-    val serviceRoadTypeid=290
-    val trafficVolumeTypeid=170
-    val roadWidthTypeId = 120
-    val pavingTypeId = 110
-    val lightingTypeId = 100
-    val trafficSignTypeId = 300
+  val serviceRoadTypeid=290
+  val trafficVolumeTypeid=170
+  val roadWidthTypeId = 120
+  val pavingTypeId = 110
+  val lightingTypeId = 100
+  val trafficSignTypeId = 300
 
-    val logger = LoggerFactory.getLogger(getClass)
+  val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
 
@@ -528,11 +528,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/roadlinks/:linkId") {
-      val linkId = params("linkId").toLong
-      roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
-        case (id, middlePoint,source) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source.value)
-      }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
-    }
+    val linkId = params("linkId").toLong
+    roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
+      case (id, middlePoint,source) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source.value)
+    }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
+  }
 
   get("/roadlinks/history") {
     response.setHeader("Access-Control-Allow-Headers", "*")
@@ -589,7 +589,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false => Some(user.configuration.authorizedAreas)
     }
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId)
+    if(typeId == MaintenanceRoadAsset.typeId)
       maintenanceRoadService.getUncheckedLinearAssets(includedAreas)
     else
       BadRequest("Linear Asset type not allowed")
@@ -674,15 +674,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    getLinearAssets(user, municipalities, typeId)
+  }
+
+  private def getLinearAssets(user: User, municipalities: Set[Int], typeId: Int) = {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       val usedService = getLinearAssetService(typeId)
-      val assets = if(user.isServiceRoadMaintainer())
+      val assets = if (user.isServiceRoadMaintainer())
         usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
       else
         usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)
-      if(params("withRoadAddress").toBoolean)
+      if (params("withRoadAddress").toBoolean)
         mapLinearAssets(usedService.withRoadAddress(assets))
       else
         mapLinearAssets(assets)
@@ -690,6 +694,62 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
+
+  get("/linearassets/complementary"){
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    getLinearAssetsWithComplementary(user, municipalities, typeId)
+  }
+
+  private def getLinearAssetsWithComplementary(user: User, municipalities: Set[Int], typeId: Int) = {
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      val usedService = getLinearAssetService(typeId)
+      val assets = if (user.isServiceRoadMaintainer())
+        usedService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
+      else
+        usedService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities)
+      if (params("withRoadAddress").toBoolean)
+        mapLinearAssets(usedService.withRoadAddress(assets))
+      else
+        mapLinearAssets(assets)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  get("/serviceRoad") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val minVisibleZoom = 2
+    val maxZoom = 10
+
+    zoom >= minVisibleZoom && zoom < maxZoom match {
+      case true =>
+        mapLinearAssets(maintenanceRoadService.getByZoomLevel)
+      case false =>
+        getLinearAssets(user, municipalities, MaintenanceRoadAsset.typeId)
+    }
+  }
+
+  get("/serviceRoad/complementary") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val minVisibleZoom = 2
+    val maxZoom = 10
+
+    zoom >= minVisibleZoom && zoom < maxZoom match {
+      case true =>
+        mapLinearAssets(maintenanceRoadService.getWithComplementaryByZoomLevel)
+      case false =>
+        getLinearAssetsWithComplementary(user, municipalities, MaintenanceRoadAsset.typeId)
+    }
+  }
+
 
   get("/getMunicipalityInfo") {
     params.get("bbox").map { bbox =>
@@ -711,26 +771,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
 
-  get("/linearassets/complementary"){
-    val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    params.get("bbox").map { bbox =>
-      val boundingRectangle = constructBoundingRectangle(bbox)
-      validateBoundingBox(boundingRectangle)
-      val usedService = getLinearAssetService(typeId)
-      val assets = if(user.isServiceRoadMaintainer())
-        usedService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)
-      else
-        usedService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities)
-      if(params("withRoadAddress").toBoolean)
-        mapLinearAssets(usedService.withRoadAddress(assets))
-      else
-        mapLinearAssets(assets)
-    } getOrElse {
-      BadRequest("Missing mandatory 'bbox' parameter")
-    }
-  }
+
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()
@@ -907,10 +948,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/linearassets/unverified"){
-      val user = userProvider.getCurrentUser()
-      val includedMunicipalities = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
-      val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val usedService = getLinearAssetService(typeId)
     usedService.getUnverifiedLinearAssets(typeId, includedMunicipalities.toSet)
   }
@@ -1180,9 +1221,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
     if (!user.isServiceRoadMaintainer())
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
-      halt(Unauthorized("User not authorized"))
-    }
+      if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
+        halt(Unauthorized("User not authorized"))
+      }
   }
 
   private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
@@ -1347,11 +1388,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
       .mapValues(
-      _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
-                             "assetName" -> assetType.assetTypeName,
-                             "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-                             "verified_by"   -> assetType.verifiedBy.getOrElse(""),
-                             "verified"   -> assetType.verified)))
+        _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
+          "assetName" -> assetType.assetTypeName,
+          "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "verified_by"   -> assetType.verifiedBy.getOrElse(""),
+          "verified"   -> assetType.verified)))
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {
@@ -1414,7 +1455,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case Some(typeId) => validateAdministrativeClass(typeId)(link.administrativeClass)
         case _ => None
       }
-     service.create(asset, user.username, link)
+      service.create(asset, user.username, link)
     }
   }
 

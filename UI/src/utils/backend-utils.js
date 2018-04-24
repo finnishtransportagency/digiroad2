@@ -262,6 +262,20 @@
       };
     });
 
+    this.getServiceRoadAssets = latestResponseRequestor(function(boundingBox, withRoadAddress, zoom) {
+      return {
+        url: 'api/serviceRoad?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
+      };
+    });
+
+
+    this.getServiceRoadAssetsWithComplementary = latestResponseRequestor(function(boundingBox, withRoadAddress, zoom) {
+      return {
+        url: 'api/serviceRoad/complementary?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
+      };
+    });
+
+
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
