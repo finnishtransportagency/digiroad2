@@ -5,10 +5,11 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
 case class TerminalPublishInfo(asset: Option[PersistedMassTransitStop], detachAsset: Seq[Long], attachedAsset: Seq[Long]) extends AbstractPublishInfo
 
-class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus)
+class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 {
   private val radiusMeters = 200
   private val terminalChildrenPublicId = "liitetyt_pysakit"

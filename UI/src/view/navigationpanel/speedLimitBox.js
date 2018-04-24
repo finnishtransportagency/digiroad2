@@ -56,7 +56,7 @@
       return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium');
     };
 
-    this.municipalityShit = function () {
+    this.municipalityVerified = function () {
       return true;
     };
 
@@ -99,6 +99,10 @@
         } else {
           eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
         }
+      });
+
+      eventbus.on('speedLimits:enableTrafficSigns', function(){
+        $(me.expanded).find('#trafficSignsCheckbox').prop('checked', true).trigger("change");
       });
     };
 

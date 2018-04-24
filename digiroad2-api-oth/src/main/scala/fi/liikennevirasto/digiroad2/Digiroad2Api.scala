@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -232,58 +233,52 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  /**
-    * Returns empty result as Json message, not as page not found
-    */
-  get("/massTransitStopsSafe/:nationalId") {
-    def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+/**
+  * Returns empty result as Json message, not as page not found
+*/
+    get("/massTransitStopsSafe/:nationalId") {
+      def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+        if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+          halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
+      }
+      val nationalId = params("nationalId").toLong
+      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+      massTransitStopReturned._1 match {
+        case Some(stop) =>
+          Map ("id" -> stop.id,
+            "nationalId" -> stop.nationalId,
+            "stopTypes" -> stop.stopTypes,
+            "lat" -> stop.lat,
+            "lon" -> stop.lon,
+            "validityDirection" -> stop.validityDirection,
+            "bearing" -> stop.bearing,
+            "validityPeriod" -> stop.validityPeriod,
+            "floating" -> stop.floating,
+            "propertyData" -> stop.propertyData,
+            "success" -> true)
+        case None =>
+          Map("success" -> false)
+      }
+    }
+
+  get("/massTransitStops/passenger/:passengerId") {
+    def validateMunicipalityAuthorization(passengerId: String)(municipalityCode: Int): Unit = {
       if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
-        halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
+        halt(Unauthorized("User not authorized for mass transit stop " + passengerId))
     }
-    val nationalId = params("nationalId").toLong
-    val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
-    massTransitStopReturned._1 match {
-      case Some(stop) =>
-        Map ("id" -> stop.id,
-          "nationalId" -> stop.nationalId,
-          "stopTypes" -> stop.stopTypes,
-          "lat" -> stop.lat,
-          "lon" -> stop.lon,
-          "validityDirection" -> stop.validityDirection,
-          "bearing" -> stop.bearing,
-          "validityPeriod" -> stop.validityPeriod,
-          "floating" -> stop.floating,
-          "propertyData" -> stop.propertyData,
-          "success" -> true)
-      case None =>
-        Map("success" -> false)
-    }
-  }
-  /**
-  Returns empty result as Json message, not as page not found
-    */
-  get("/massTransitStopsSafe/:nationalId") {
-    def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
-      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
-        halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
-    }
-    val nationalId = params("nationalId").toLong
-    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
-    massTransitStopReturned._1 match {
-      case Some(stop) =>
-        Map("id" -> stop.id,
-          "nationalId" -> stop.nationalId,
-          "stopTypes" -> stop.stopTypes,
-          "lat" -> stop.lat,
-          "lon" -> stop.lon,
-          "validityDirection" -> stop.validityDirection,
-          "bearing" -> stop.bearing,
-          "validityPeriod" -> stop.validityPeriod,
-          "floating" -> stop.floating,
-          "propertyData" -> stop.propertyData,
-          "success" -> true)
-      case None =>
-        Map("success" -> false)
+    val passengerId = params("passengerId")
+    val massTransitStopsReturned = massTransitStopService.getMassTransitStopByPassengerId(passengerId, validateMunicipalityAuthorization(passengerId))
+    massTransitStopsReturned.map { massTransitStopReturned =>
+      massTransitStopReturned match {
+        case Some(stop) =>
+          Map("nationalId" -> stop.nationalId,
+            "lat" -> stop.lat,
+            "lon" -> stop.lon,
+            "municipalityName" -> stop.municipalityName.getOrElse(""),
+            "success" -> true)
+        case None =>
+          Map("success" -> false)
+      }
     }
   }
 
@@ -1110,13 +1105,62 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/speedlimits/unknown") {
+  get("/speedlimits/unknown") (getUnknowns(None, None))
+
+  get("/speedlimits/unknown/state") (getUnknowns(Some(State), None))
+
+  get("/speedlimits/unknown/municipality") {
+    val municipality = params.get("id").getOrElse(halt(BadRequest("Missing municipality id"))).toInt
+    getUnknowns(Some(Municipality), Some(municipality)).map {
+      unknowns =>
+        Map( "id" -> municipality,
+             "name" -> unknowns._1,
+              unknowns._1 -> unknowns._2
+        )
+    }
+  }
+
+  get("/speedLimits/municipalities"){
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    speedLimitService.getUnknown(includedMunicipalities)
+
+    speedLimitService.getMunicipalitiesWithUnknown(Some(Municipality)).sortBy(_._2).map { municipality =>
+      Map("id" -> municipality._1,
+        "name" -> municipality._2)
+    }
+  }
+
+  def getUnknowns(administrativeClass: Option[AdministrativeClass], municipality: Option[Int]): Map[String, Map[String, Any]] ={
+    val user = userProvider.getCurrentUser()
+
+    val municipalities = user.isOperator() match {
+        case true => Set.empty[Int]
+        case false => user.configuration.authorizedMunicipalities
+    }
+
+    val includedMunicipalities = municipality match {
+      case Some(municipalityId) => Set(municipalityId)
+      case _ => municipalities
+    }
+
+    speedLimitService.getUnknown(includedMunicipalities, administrativeClass)
+  }
+
+
+  get("/speedLimits/inaccurates") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccess(user))
+
+    user.isOperator() match {
+      case true =>
+        speedLimitService.getSpeedLimitsWithInaccurates()
+      case false =>
+          speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
+    }
   }
 
   put("/speedlimits") {
@@ -1333,9 +1377,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/municipalities/unverified") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-    linearAssetService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_._2).map { municipality =>
-      Map("id" -> municipality._1,
-        "name" -> municipality._2)
+    linearAssetService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
+      Map("id" -> municipality.id,
+        "name" -> municipality.name)
     }
   }
 

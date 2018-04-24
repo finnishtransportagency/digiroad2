@@ -358,7 +358,7 @@ root.LinearAssetLayer  = function(params) {
 
   this.refreshView = function() {
     vectorLayer.setVisible(true);
-    adjustStylesByZoomLevel(map.getView().getZoom());
+    adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
     if (isComplementaryChecked) {
       collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
         eventbus.trigger('layer:linearAsset');

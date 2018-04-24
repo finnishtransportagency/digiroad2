@@ -26,7 +26,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
 case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                                          validityDirection: Option[Int], bearing: Option[Int],
                                          validityPeriod: Option[String], floating: Boolean,
-                                         propertyData: Seq[Property]) extends FloatingAsset
+                                         propertyData: Seq[Property], municipalityName: Option[String] = None) extends FloatingAsset
 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
@@ -124,9 +124,9 @@ trait MassTransitStopService extends PointAssetOperations {
       properties.map(epv => epv.publicId -> epv.values).toMap
     }
   }
-  lazy val defaultBusStopStrategy = new BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus)
-  lazy val tierekisteriBusStopStrategy = new TierekisteriBusStopStrategy(typeId, massTransitStopDao, roadLinkService, tierekisteriClient, geometryTransform, eventbus)
-  lazy val terminalBusStopStrategy = new TerminalBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus)
+  lazy val defaultBusStopStrategy = new BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
+  lazy val tierekisteriBusStopStrategy = new TierekisteriBusStopStrategy(typeId, massTransitStopDao, roadLinkService, tierekisteriClient, eventbus, geometryTransform)
+  lazy val terminalBusStopStrategy = new TerminalBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedMassTransitStop] = {
     getByMunicipality(municipalityCode, true)
@@ -344,6 +344,23 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  def getMassTransitStopByPassengerId(passengerId: String, municipalityValidation: Int => Unit): Seq[Option[MassTransitStopWithProperties]] = {
+    def getMassTransitsStops(busStopIds: Seq[Long]) = {
+      val persistedStops = fetchPointAssets(massTransitStopDao.withNationalIds(busStopIds)).toList
+      persistedStops.map(_.municipalityCode).foreach(municipalityValidation)
+      val municipalities = municipalityDao.getMunicipalitiesNameAndIdByCode(persistedStops.map(_.municipalityCode).toSet)
+
+      persistedStops.map { persistedStop =>
+       Some(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink, (id) => municipalities.find(_.id == id).map(_.name)))(persistedStop))
+      }
+    }
+
+      withDynTransaction {
+        val busStopIds = massTransitStopDao.getNationalIdsByPassengerId(passengerId)
+        if (busStopIds.nonEmpty) getMassTransitsStops(busStopIds) else Seq()
+      }
+  }
+
   /**
   * This method returns mass transit stop by livi-id. It's utilized by livi-id search functionality.
     *
@@ -488,13 +505,13 @@ trait MassTransitStopService extends PointAssetOperations {
     persistedAsset.id
   }
 
-  private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[RoadLinkLike])
+  private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[RoadLinkLike], getMunicipalityName: Int => Option[String] = _ => None)
                                                           (persistedStop: PersistedMassTransitStop): (MassTransitStopWithProperties, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
     (MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
-      propertyData = persistedStop.propertyData), floatingReason)
+      propertyData = persistedStop.propertyData, municipalityName = getMunicipalityName(persistedStop.municipalityCode)), floatingReason)
   }
 
   private def eventBusMassTransitStop(stop: PersistedMassTransitStop, municipalityName: String) = {

@@ -89,7 +89,7 @@
     this.radioButton = function () {};
     this.predicate = function () {};
     this.legendName = function () {};
-    this.municipalityShit = function () {};
+    this.municipalityVerified = function () {};
 
     this.elements = function (){
       return { expanded: $([
@@ -118,7 +118,7 @@
           $(me.expanded).append(me.toolSelection.element);
           $(me.expanded).append(me.editModeToggle.element);
         }
-        if(me.municipalityShit()){
+        if(me.municipalityVerified()){
           $(me.expanded).find('.panel-header').css('display', 'flex');
           $(me.expanded).find('.panel-header').append(verificationIcon);
         }

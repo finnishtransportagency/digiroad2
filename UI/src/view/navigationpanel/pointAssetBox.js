@@ -59,7 +59,7 @@
       return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium');
     };
 
-    this.municipalityShit = function () {
+    this.municipalityVerified = function () {
       return assetConfig.hasMunicipalityValidation;
     };
 

@@ -105,6 +105,7 @@
 
     new WorkListView().initialize();
     new VerificationWorkList().initialize();
+    new SpeedLimitWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
 
     backend.getUserRoles();
@@ -261,7 +262,7 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
+      new PointAssetForm(pointAsset, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend, pointAsset.saveCondition || function() {return true;});
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
@@ -383,7 +384,7 @@
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
-    applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
+    applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };

@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Queries}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -784,7 +784,7 @@ trait LinearAssetOperations {
     }
   }
 
-  def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[(Int, String)] = {
+  def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[MunicipalityInfo] = {
     withDynSession {
       municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
     }
