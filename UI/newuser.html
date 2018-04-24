@@ -9,131 +9,142 @@
 
     <script type="text/javascript">
 
-        function municipalities(){
-            if($("input[name='municipalitiesCheckbox']").is(':checked')) {
-              $("input[name='operatorCheckbox']").prop('disabled', true);
-              $("input[name='elysCheckbox']").prop('disabled', true);
-              $("input[name='areasCheckbox']").prop('disabled', true);
-              $(".municipalities").show();
+        var operatorCheckbox = "input[id='operatorCheckbox']";
+        var municipalityCheckbox = "input[id='municipalitiesCheckbox']";
+        var elysCheckbox = "input[id='elysCheckbox']";
+        var areasCheckbox = "input[id='areasCheckbox']";
+        var municipalities;
+        var roleName = [];
+        var areas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+        var elys = [ {name: "hvenanmaa", id: 0},
+                     {name: "Lapin", id: 1},
+                     {name: "Pohjois-Pohjanmaan", id: 2},
+                     {name: "Etelä-Pohjanmaan", id: 3},
+                     {name: "Keski-Suomen", id: 4},
+                     {name: "Pohjois-Savon", id: 5},
+                     {name: "Pirkanmaan", id: 6},
+                     {name: "Varsinais-Suomen", id: 7},
+                     {name: "Kaakkois-Suomen", id: 8},
+                     {name: "Uudenmaan", id: 9}];
+
+        var userSpecs =[{ role: "municipality", enabledCheckbox: [ municipalityCheckbox ], disabledCheckbox: [ operatorCheckbox, elysCheckbox, areasCheckbox]   },
+                        { role: "ely", enabledCheckbox: [ elysCheckbox, areasCheckbox ], disabledCheckbox: [operatorCheckbox,  municipalityCheckbox]  },
+                        { role: "operator" ,  enabledCheckbox: [operatorCheckbox, areasCheckbox], disabledCheckbox: [ elysCheckbox,  municipalityCheckbox ] },
+                        { role: "areas",  enabledCheckbox: [ areasCheckbox, elysCheckbox, operatorCheckbox ], disabledCheckbox: [ municipalityCheckbox] },
+                        { role: "default", enabledCheckbox: [ areasCheckbox, elysCheckbox, operatorCheckbox, municipalityCheckbox], disabledCheckbox: [] }];
+
+
+        function onChangeEvent() {
+          var specs;
+          if ($(municipalityCheckbox).is(':checked')) {
+            specs = _.find(userSpecs, function (spec) {return spec.role === "municipality"});
+          } else {
+            if ($(elysCheckbox).is(':checked')) {
+              specs = _.find(userSpecs, function (spec) {return spec.role === "ely"});
+            } else {
+              if ($(operatorCheckbox).is(':checked')) {
+                specs = _.find(userSpecs, function (spec) {return spec.role === "operator"});
+              } else {
+                if ($(areasCheckbox).is(':checked')) {
+                  specs = _.find(userSpecs, function (spec) {return spec.role === "areas"});
+                } else {
+                  specs = _.find(userSpecs, function (spec) {return spec.role === "default"});
+                }
+              }
             }
-            else {
-              $("input[name='operatorCheckbox']").prop('disabled', false);
-              $("input[name='elysCheckbox']").prop('disabled', false);
-              $("input[name='areasCheckbox']").prop('disabled', false);
-              $(".municipalities").hide();
-            }
+          }
+          _.forEach(specs.enabledCheckbox, function (checkbox) {$(checkbox).prop('disabled', false);});
+          _.forEach(specs.disabledCheckbox, function (checkbox) {$(checkbox).prop('disabled', true);});
         }
 
-        function enablingMunicipalities(enable){
-            $("input[name='municipalitiesCheckbox'], #municipalities_search, #municipalities_search_to, " +
-                "#municipalities_search_rightSelected, #municipalities_search_leftSelected, #left_municipalities, #right_municipalities").prop('disabled', enable);
+        function isMunicipality(){
+          if($(municipalityCheckbox).is(':checked')){
+            $(".municipalities").show();
+          }
+          else{  $(".municipalities").hide();}
         }
 
-        function elys(){
-            setElys();
-            if($("input[name='elysCheckbox']").is(':checked')) {
-                $(".elys").show();
-                enablingMunicipalities(true);
-                $("input[name='operatorCheckbox']").prop('disabled', true);
-            }
-            else {
-                $(".elys").hide();
-                enablingMunicipalities(false);
-                $("input[name='operatorCheckbox']").prop('disabled', false);
-            }
+        function isEly(){
+          setElys();
+          if($(elysCheckbox).is(':checked')){
+            $(".elys").show();
+            roleName.push('busStopMaintainer');
+          }
+          else {
+            $(".elys").hide();
+            delete roleName['busStopMaintainer'];
+          }
+
         }
 
-        function maintenanceAreas(){
-            setMaintenaceAreas();
-            if($("input[name='areasCheckbox']").is(':checked')) {
-                $(".maintenanceAreas").show();
-                enablingMunicipalities(true);
-            }
-            else{
-                $(".maintenanceAreas").hide();
-                enablingMunicipalities(false);
-            }
+        function isAreaMaintenance() {
+          setMaintenaceAreas();
+          if($(areasCheckbox).is(':checked')){
+            $(".maintenanceAreas").show();
+            roleName.push('serviceRoadMaintainer');
+          }
+          else {
+            $(".maintenanceAreas").hide();
+            delete roleName['serviceRoadMaintainer'];
+          }
         }
 
         function isOperator() {
-            if($("input[name='operatorCheckbox']").is(':checked')) {
-                enablingMunicipalities(true);
-                $("input[name='elysCheckbox']").prop('disabled', true);
-            }
-            else {
-                $("input[name='elysCheckbox']").prop('disabled', false);
-                enablingMunicipalities(false);
+          if($(operatorCheckbox).is(':checked'))
+            roleName.push('operator');
+          else
+            delete roleName['operator'];
 
-            }
         }
 
-        function getInputData(){
-            var username = $( "input[name=username]" ).val();
-            var name = $("input[name=fullname]" ).val();
-
-            var municipalities = _.map($(".form-group.municipalities").find("#municipalities_search_to option"), function(option) { return option.value; });
-            var elys = _.map($(".form-group.elys").find("#elys_search_to option"), function(option) { return option.value; });
-            var areas = _.map($(".form-group.maintenanceAreas").find("#multiselect_to option"), function(option) { return option.value; });
-
-            return {
-                username: username,
-                name: name,
-                municipalities: municipalities,
-                elys: elys,
-                areas: areas
+        function getMunicipalities(){
+            if(_.isEmpty($('.municipalities').find("#municipalities_search").find('option'))) {
+                if(_.isEmpty(municipalities)) {
+                  $.ajax({
+                    url: "api/municipalities",
+                    type: "get",
+                    success: function (result) {
+                      municipalities = result;
+                      setMunicipalities();
+                    },
+                    error: function () {
+                      municipalities = []
+                    }
+                  });
+                }else
+                  setMunicipalities();
             }
         }
 
         function setMunicipalities(){
-            var municipalities = [];
-            $.ajax({
-                url: "api/municipalities",
-                type: "get",
-                success:  function(result){
-                    municipalities = result;
-                    _.forEach(municipalities, function(municipality) {
-                        $('.municipalities').find("select[name*='from']").append($('<option>', {
-                            value: municipality.id,
-                            text: municipality.name
-                        }));
-                    });
-                },
-                error: function () {
-                    municipalities = []
-                }
-            });
+          _.forEach(municipalities, function (municipality) {
+            $('.municipalities').find("#municipalities_search").append($('<option>', {
+              value: municipality.id,
+              text: municipality.name
+            }));
+          });
         }
 
         function setElys() {
-            var elys = [
-                {"name": "hvenanmaa", "id": 0},
-                {"name": "Lapin", "id": 1},
-                {"name": "Pohjois-Pohjanmaan", "id": 2},
-                {"name": "Etelä-Pohjanmaan", "id": 3},
-                {"name": "Keski-Suomen", "id": 4},
-                {"name": "Pohjois-Savon", "id": 5},
-                {"name": "Pirkanmaan", "id": 6},
-                {"name": "Varsinais-Suomen", "id": 7},
-                {"name": "Kaakkois-Suomen", "id": 8},
-                {"name": "Uudenmaan", "id": 9}];
-
+          if(_.isEmpty($('.elys').find("#elys_search").find('option'))) {
             _.forEach(elys, function (ely) {
-                $('.elys').find("select[name*='from']").append($('<option>', {
-                    value: ely.id,
-                    text: ely.name + '( ' + ely.id + ' )'
-                }));
+              $('.elys').find("#elys_search").append($('<option>', {
+                value: ely.id,
+                text: ely.name + '( ' + ely.id + ' )'
+              }));
             });
+          }
         }
 
         function setMaintenaceAreas() {
-            var areas = [1,2,3,4,5,6,7,8,9,10,11,12];
-
+          if(_.isEmpty($('.maintenanceAreas').find("#multiselect").find('option'))) {
             _.forEach(areas, function (area) {
-                $('.maintenanceAreas').find("select[name*='from']").append($('<option>', {
-                    value: area,
-                    text: area
-                }));
+              $('.maintenanceAreas').find("#multiselect").append($('<option>', {
+                value: area,
+                text: area
+              }));
             });
+          }
         }
 
         function saveFormData() {
@@ -145,20 +156,39 @@
                 success: function () {
                     new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
                         successCallback: function(){
-                            ajaxRequestPost(inputs.username, 'Käyttäjän "' + inputs.username + '" tietoja muokattu', showCreatedUser);
+                            ajaxRequestPost(inputs.username, 'Käyttäjän "' + inputs.username + '" tietoja muokattu', showCreatedUser, inputs);
                         }
                     });
                 },
                 error: function (errorValue) {
                     if (errorValue.status === 404) {
-                        ajaxRequestPost(inputs.username, 'Uusi käyttäjä "' + inputs.username + '" luotu', showCreatedUser);
+                        ajaxRequestPost(inputs.username, 'Uusi käyttäjä "' + inputs.username + '" luotu', showCreatedUser, inputs);
                     }
                 }
             });
             return false;
         }
 
-        function ajaxRequestPost(username, successResponseValue, func) {
+        function getInputData(){
+          var username = $( "input[name=username]" ).val();
+          var name = $("input[name=fullname]" ).val();
+
+          var municipalities = _.map($(".form-group.municipalities").find("#municipalities_search_to option"), function(option) { return option.value; }).join(',');
+          var elys = _.map($(".form-group.elys").find("#elys_search_to option"), function(option) { return option.value; }).join(',');
+          var areas = _.map($(".form-group.maintenanceAreas").find("#multiselect_to option"), function(option) { return option.value; }).join(',');
+
+
+          return {
+            username: username,
+            name: name,
+            municipalityNumbers: municipalities,
+            elyNumber: elys,
+            authorizationArea: areas,
+            roleName: roleName
+          }
+        }
+
+        function ajaxRequestPost(username, successResponseValue, func, inputs) {
             $.ajax({
                 type: "POST",
                 url: "api/userconfig/newuser",
@@ -182,11 +212,23 @@
             }
         }
 
+        function cancel() {
+          $( "input[name=username]" ).val('');
+          $("input[name=fullname]" ).val('');
+
+          $('.maintenanceAreas').find("#multiselect, select[name*='authorizationArea']").find('option').remove();
+          $('.elys').find("#elys_search, select[name*='elyNumber']").find('option').remove();
+          $('.municipalities').find("#municipalities_search, select[name*='municipalityNumbers']").find('option').remove();
+          getMunicipalities();
+          setMaintenaceAreas();
+          setElys();
+        }
+
         jQuery(document).ready(function($) {
             $('#municipalities_search').multiselect({
                 search: {
-                    left: '<input type="text" id = "left_municipalities" name="q" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
-                    right: '<input type="text" id = "right_municipalities" name="q" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
+                    left: '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
+                    right: '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
@@ -195,8 +237,8 @@
 
             $('#elys_search').multiselect({
                 search: {
-                    left: '<input type="text" name="q" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
-                    right: '<input type="text" name="q" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
+                    left: '<input type="text" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
+                    right: '<input type="text" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
@@ -207,7 +249,7 @@
                 $('#multiselect').multiselect();
             });
         });
-        setMunicipalities();
+        getMunicipalities();
 
     </script>
     <!-- Google Analytics loaded asynchronously -->
@@ -230,10 +272,10 @@
                 <label class="control-label">K&auml;ytt&auml;j&auml;tunnus</label>
                 <input type="text" name="username" class="form-control" style="width: 29%;margin-right: 23%;">
                 <label class="control-label">Nimi</label>
-                <input type="text" name="fullName" class="form-control" style="width: 43%; margin-right: 10%;">
+                <input type="text" name="name" class="form-control" style="width: 43%; margin-right: 10%;">
 
                 <div class="checkbox">
-                    <input type="checkbox" name="municipalitiesCheckbox" class="form-control" style="width: 6%;" onchange="municipalities()">
+                    <input type="checkbox" id ="municipalitiesCheckbox" name="roleName" value="" class="form-control" style="width: 6%;" onchange="onChangeEvent(), isMunicipality()">
                     <label class="control-label" style="width: 42%; font-size: 12px; line-height: 15px; padding-top: 0%; padding-left: 0%;">Kuntaylläpitäjä</label>
 
 
@@ -241,7 +283,7 @@
 
                         <div class="row" style="min-width: 360px;">
                             <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="from[]" id="municipalities_search" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
+                                <select id="municipalities_search" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
                                 </select>
                             </div>
 
@@ -251,21 +293,21 @@
                             </div>
 
                             <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="to[]" id="municipalities_search_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
+                                <select name="municipalityNumbers" id="municipalities_search_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="checkbox">
-                    <input type="checkbox" name="elysCheckbox" class="form-control" style="width: 6%;" onchange="elys()">
+                    <input type="checkbox" id="elysCheckbox" name="roleName" class="form-control" value="busStopMaintainer"  style="width: 6%;" onchange="onChangeEvent(), isEly()">
                     <label class="control-label"  style="font-size: 12px; line-height: 15px; padding-top: 0%; padding-left: 0%; width: 38%;  ">Ely-ylläpitäjä</label>
 
                     <div class="form-group elys"  style="clear: both;border-bottom: none; display: none">
 
                         <div class="row" style="min-width: 360px;">
                             <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="from[]" id="elys_search" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
+                                <select  id="elys_search" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
                                 </select>
                             </div>
 
@@ -275,7 +317,7 @@
                             </div>
 
                             <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="to[]" id="elys_search_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
+                                <select name="elyNumber" id="elys_search_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
                             </div>
                         </div>
                     </div>
@@ -283,19 +325,19 @@
                 </div>
 
                 <div class="checkbox">
-                    <input type="checkbox" name="operatorCheckbox" class="form-control" style="width: 6%;" onchange="isOperator()">
+                    <input type="checkbox" name="roleName" id = "operatorCheckbox" class="form-control" value="operator" style="width: 6%;" onchange="onChangeEvent(), isOperator()">
                     <label class="control-label" style="width: 34%; font-size: 12px; line-height: 15px; padding-top: 0%; padding-left: 0%;">Operaattori</label>
                 </div>
 
                 <div class="checkbox">
-                    <input type="checkbox" name="areasCheckbox" class="form-control" style="width: 6%;" onchange="maintenanceAreas()">
+                    <input type="checkbox" id="areasCheckbox" name="roleName" value="serviceRoadMaintainer" class="form-control" style="width: 6%;" onchange="onChangeEvent(), isAreaMaintenance()">
                     <label class="control-label" style="width: 62%; font-size: 12px;line-height: 15px; padding-top: 0%; padding-left: 0%;">Huoltoteiden ylläpitäjä</label>
 
                     <div class="form-group maintenanceAreas"  style="clear: both;border-bottom: none; display: none">
 
                         <div class="row" style="min-width: 360px;">
                             <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="from[]" id="multiselect" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
+                                <select id="multiselect" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
                                 </select>
                             </div>
 
@@ -305,7 +347,7 @@
                             </div>
 
                             <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="to[]" id="multiselect_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
+                                <select name="authorizationArea" id="multiselect_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
                             </div>
                         </div>
                     </div>
@@ -314,7 +356,7 @@
 
             <div class="form-group form-controls">
                 <button type="submit" class="save btn btn-primary" style="float: none;">Tallenna</button>
-                <button class="cancel btn btn-secondary" style="float: none;">Peruuta</button>
+                <button type="button" class="cancel btn btn-secondary" style="float: none;" onclick="cancel()">Peruuta</button>
             </div>
         </form>
     </div>
