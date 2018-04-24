@@ -1,7 +1,7 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
-    var authorizationPolicy = new LinearAssetAuthorizationPolicy();
+    var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',

@@ -424,7 +424,7 @@
       var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
       manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
      // highlightOverlayFeatures(destinationRoadLinkList);
-      if (!application.isReadOnly()) {
+      if (!application.isReadOnly() && authorizationPolicy.editModeAccessByLink(roadLink)) {
         drawIndicators(tLinks);
         drawIndicators(aLinks);
       }
@@ -451,7 +451,8 @@
         if(manoeuvre) {
 
           indicatorLayer.getSource().clear();
-          drawIndicators(manoeuvre.adjacentLinks);
+
+          drawIndicators(_.filter(manoeuvre.adjacentLinks, function(link){return authorizationPolicy.editModeAccessByLink(link);}));
           selectControl.deactivate();
 
           var targetMarkers = _.chain(manoeuvre.adjacentLinks)

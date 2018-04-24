@@ -54,11 +54,11 @@
     this.editModeTool = function(toolType, asset, roadLink) {};
 
     this.formEditModeAccess = function() {
-      return me.isUser('operator');
+      return me.isOperator();
     };
 
     this.workListAccess = function(){
-      return me.isUser('operator') || me.isUser('premium');
+      return me.isOperator();
     };
 
     this.isState = function(selectedInfo){
