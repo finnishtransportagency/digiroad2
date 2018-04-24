@@ -1,14 +1,12 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import java.sql.Connection
-
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
 import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
-import java.sql.{Timestamp, Connection}
 import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
 import scala.math.BigDecimal.RoundingMode
@@ -169,6 +167,27 @@ object Queries {
     sqlu"""
       insert into date_property_value(id, property_id, asset_id, date_time)
       values (primary_key_seq.nextval, $propertyId, $assetId, $dateTime)
+    """
+  }
+
+  def updateTimePeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
+    sqlu"""
+      update validity_period_property_value
+      set period_week_day = ${validityPeriodValue.periodWeekDay}, type = ${validityPeriodValue.propertyType},
+          start_hour = ${validityPeriodValue.startHour}, end_hour =  ${validityPeriodValue.endHour},
+          start_minute =  ${validityPeriodValue.startMinute}, end_minute = ${validityPeriodValue.startMinute}
+      where asset_id = $assetId and property_id = $propertyId
+      """
+  }
+
+  def deleteTimePeriodProperty(assetId: Long, propertyId: Long) =
+    sqlu"delete from validity_period_property_value where asset_id = $assetId and property_id = $propertyId"
+
+  def insertTimePeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
+    sqlu"""
+      insert into validity_period_property_value(id, property_id, asset_id, type, period_week_day, start_hour, end_hour, start_minute, end_minute)
+      values (primary_key_seq.nextval, $propertyId, $assetId, ${validityPeriodValue.propertyType}, ${validityPeriodValue.periodWeekDay}, ${validityPeriodValue.startHour},
+      ${validityPeriodValue.endHour}, ${validityPeriodValue.startMinute}, ${validityPeriodValue.endMinute})
     """
   }
 

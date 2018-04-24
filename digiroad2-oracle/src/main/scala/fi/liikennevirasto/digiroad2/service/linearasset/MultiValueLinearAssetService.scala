@@ -95,7 +95,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
         val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
         val defaultValues = multiValueLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
-//        validateRequiredProperties(typeId, props)
+        validateRequiredProperties(typeId, props)
         multiValueLinearAssetDao.updateAssetProperties(id, props)
       case _ => None
     }

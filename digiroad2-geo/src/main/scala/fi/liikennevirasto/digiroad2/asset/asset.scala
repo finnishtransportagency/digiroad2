@@ -177,8 +177,26 @@ case class MultiTypeProperty(publicId: String, propertyType: String,  required: 
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
 case class MultiTypePropertyValue(value: Any)
+case class ValidityPeriodValue(periodWeekDay: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, propertyType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
+
+object ValidityPeriodValue {
+  def fromMap(map: Map[String, Any]): ValidityPeriodValue = {
+    ValidityPeriodValue(
+      map("periodWeekDay").asInstanceOf[BigInt].toInt,
+      map("startHour").asInstanceOf[BigInt].toInt,
+      map("endHour").asInstanceOf[BigInt].toInt,
+      map("startMinute").asInstanceOf[BigInt].toInt,
+      map("endMinute").asInstanceOf[BigInt].toInt,
+
+      if (map.contains("propertyType")) {
+        map("propertyType") match {
+          case Some(value) => Some(value.asInstanceOf[BigInt].toInt)
+          case _ => None}
+      } else None)
+  }
+}
 
 object PropertyTypes {
   val SingleChoice = "single_choice"
@@ -192,6 +210,7 @@ object PropertyTypes {
   val CheckBox = "checkbox"
   val Number = "number"
   val IntegerProp = "integer"
+  val TimePeriod = "time_period"
 }
 
 object MassTransitStopValidityPeriod {

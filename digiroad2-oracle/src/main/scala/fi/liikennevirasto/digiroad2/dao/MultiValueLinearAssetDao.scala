@@ -45,7 +45,8 @@ class MultiValueLinearAssetDao {
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
-          left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and (p.property_type = 'date')
+          left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
+          left join validity_period_property_value vpp on vpp.asset_id = a.id and vpp.property_id = p.id and p.property_type = 'time_period'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
@@ -84,7 +85,8 @@ class MultiValueLinearAssetDao {
                       left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
                       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
-                      left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and (p.property_type = 'date')
+                      left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
+                      left join validity_period_property_value vpp on vpp.asset_id = a.id and vpp.property_id = p.id and p.property_type = 'time_period'
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.floating = 0 """.as[MultiValueAssetRow].list
     }
@@ -250,6 +252,20 @@ class MultiValueLinearAssetDao {
           updateDateProperty(assetId, propertyId, formatter.parseDateTime(propertyValues.head.value.toString)).execute
         }
 
+      case TimePeriod =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty) {
+          deleteTimePeriodProperty(assetId, propertyId).execute
+        } else {
+          val validityPeriodValue = ValidityPeriodValue.fromMap(propertyValues.head.value.asInstanceOf[Map[String, Any]])
+
+          if (datePropertyValueDoesNotExist(assetId, propertyId)) {
+            insertTimePeriodProperty(assetId, propertyId, validityPeriodValue).execute
+          } else {
+            updateTimePeriodProperty(assetId, propertyId, validityPeriodValue).execute
+          }
+        }
+
       case ReadOnly | ReadOnlyNumber | ReadOnlyText =>
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
 
@@ -288,6 +304,7 @@ class MultiValueLinearAssetDao {
         }
 
       case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.value.toString).execute
+
       case Date =>
         val formatter = ISODateTimeFormat.dateOptionalTimeParser()
         val optionalDateTime = propertyValues.headOption match {

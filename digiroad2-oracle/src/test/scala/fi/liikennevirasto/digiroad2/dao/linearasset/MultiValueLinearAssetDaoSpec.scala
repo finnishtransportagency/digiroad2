@@ -72,6 +72,18 @@ class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
       sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by)
             VALUES ($propId7, $assetId, $propId6, $textValue, sysdate, $testUser)""".execute
 
+      //Date property value
+      sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
+           VALUES ($propId6, $assetTypeId, 'date', 0, $testUser, 'test_data_date', null)""".execute
+      sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by)
+            VALUES ($propId7, $assetId, $propId6, $textValue, sysdate, $testUser)""".execute
+
+      //Time property value
+      sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
+           VALUES ($propId6, $assetTypeId, 'time_period', 0, $testUser, 'test_data_time_period', null)""".execute
+      sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by)
+            VALUES ($propId7, $assetId, $propId6, $textValue, sysdate, $testUser)""".execute
+
       val persistedAssets = dao.fetchMultiValueLinearAssetsByLinkIds(999, Seq(linkId))
 
       persistedAssets.size should be(1)
