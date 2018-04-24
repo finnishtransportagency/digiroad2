@@ -281,27 +281,31 @@
     };
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-     acc[asset.layerName] = new LinearAssetLayer({
-       map: map,
-       application: applicationModel,
-       collection: asset.collection,
-       selectedLinearAsset: asset.selectedLinearAsset,
-       roadCollection: models.roadCollection,
-       roadLayer: roadLayer,
-       layerName: asset.layerName,
-       multiElementEventCategory: asset.multiElementEventCategory,
-       singleElementEventCategory: asset.singleElementEventCategory,
-       style: asset.style || new PiecewiseLinearAssetStyle(),
-       formElements: AssetFormElementsFactory.construct(asset),
-       assetLabel: asset.label,
-       roadAddressInfoPopup: roadAddressInfoPopup,
-       editConstrains : asset.editConstrains || function() {return false;},
-       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
-       massLimitation : asset.editControlLabels.massLimitations,
-       typeId : asset.typeId
-     });
-     return acc;
+
+      var parameters ={
+        map: map,
+        application: applicationModel,
+        collection: asset.collection,
+        selectedLinearAsset: asset.selectedLinearAsset,
+        roadCollection: models.roadCollection,
+        roadLayer: roadLayer,
+        layerName: asset.layerName,
+        multiElementEventCategory: asset.multiElementEventCategory,
+        singleElementEventCategory: asset.singleElementEventCategory,
+        style: asset.style || new PiecewiseLinearAssetStyle(),
+        formElements: AssetFormElementsFactory.construct(asset),
+        assetLabel: asset.label,
+        roadAddressInfoPopup: roadAddressInfoPopup,
+        editConstrains: asset.editConstrains || function () {return false;},
+        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
+        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
+        massLimitation: asset.editControlLabels.massLimitations,
+        typeId: asset.typeId
+      };
+
+      acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
+      return acc;
+
     }, {});
 
     var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
