@@ -17,7 +17,8 @@
             draggable : true,
             filterGeometry : function(feature){
                 return feature.getGeometry() instanceof ol.geom.LineString;
-            }
+            },
+            layers: []
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
@@ -102,11 +103,26 @@
 
 
         var highlightLayer = function(){
-            layer.setOpacity(1);
+          layer.setOpacity(1);
+
+          _.each(settings.layers, function(cLayer){
+            if(cLayer.setOpacity)
+              cLayer.setOpacity(1);
+
+            if(cLayer.highLightLayer)
+              cLayer.highLightLayer();
+          });
         };
 
         var unhighlightLayer = function(){
-            layer.setOpacity(settings.backgroundOpacity);
+          layer.setOpacity(settings.backgroundOpacity);
+
+          _.each(settings.layers, function(cLayer){
+            if(cLayer.setOpacity)
+              cLayer.setOpacity(settings.backgroundOpacity);
+            if(cLayer.unHighLightLayer)
+              cLayer.unHighLightLayer();
+          });
         };
 
         var activate = function() {

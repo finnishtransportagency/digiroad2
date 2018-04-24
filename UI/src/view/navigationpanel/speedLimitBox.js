@@ -100,6 +100,10 @@
           eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
         }
       });
+
+      eventbus.on('speedLimits:enableTrafficSigns', function(){
+        $(me.expanded).find('#trafficSignsCheckbox').prop('checked', true).trigger("change");
+      });
     };
 
     return {

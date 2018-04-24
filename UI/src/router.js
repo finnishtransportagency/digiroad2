@@ -18,9 +18,10 @@
   }
 
     function fetchSpeedLimitEvent (asset, result) {
-      eventbus.once('speedLimits:fetched', function() {
-        var speedLimit = asset.getSpeedLimit(result.id);
+        eventbus.once('speedLimits:redrawed', function() {
+        var speedLimit = asset.getSpeedLimitById(result.id);
         if (speedLimit) {
+          eventbus.trigger('speedLimits:enableTrafficSigns');
           asset.open(speedLimit, true);
           applicationModel.setSelectedTool('Select');
         }
