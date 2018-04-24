@@ -227,8 +227,12 @@
         jQuery(document).ready(function($) {
             $('#municipalities_search').multiselect({
                 search: {
-                    left: '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
-                    right: '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
+                    left:
+                        '<label class="control-label labelBoxLeft">Kaikki kunnat</>' +
+                        '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
+                    right:
+                        '<label class="control-label labelBoxRight">Valitut Kunnat</>' +
+                        '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
@@ -237,16 +241,23 @@
 
             $('#elys_search').multiselect({
                 search: {
-                    left: '<input type="text" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
-                    right: '<input type="text" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
+                    left:
+                    '<label class="control-label labelBoxLeft Ely">Kaikki Elyt</>' +
+                    '<input type="text" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
+                    right:
+                    '<label class="control-label labelBoxRight Ely">Valitut Elyt</>' +
+                    '<input type="text" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
                 }
             });
 
-            jQuery(document).ready(function($) {
-                $('#multiselect').multiselect();
+            $('#multiselect').multiselect({
+              search: {
+                left: '<label class="control-label labelBoxLeft Areas">Kaikki ylläpitoalueett</label>',
+                right: '<label class="control-label labelBoxRight Areas">Valitut ylläpitoalueett</label>'
+              }
             });
         });
         getMunicipalities();
@@ -267,29 +278,29 @@
     <div class="container"></div>
     <div class="content-box form-box">
         <header>Luo uusi k&auml;ytt&auml;j&auml;</header>
-        <form class="form form-horizontal" role="form" onsubmit="return saveFormData()">
+        <form class="form form-horizontal" id="newuser" role="form" onsubmit="return saveFormData()">
             <div class="form-group">
                 <label class="control-label">K&auml;ytt&auml;j&auml;tunnus</label>
-                <input type="text" name="username" class="form-control" style="width: 29%;margin-right: 23%;">
+                <input id="username" type="text" name="username" class="form-control">
                 <label class="control-label">Nimi</label>
-                <input type="text" name="name" class="form-control" style="width: 43%; margin-right: 10%;">
+                <input id="name" type="text" name="name" class="form-control">
 
                 <div class="checkbox">
-                    <input type="checkbox" id ="municipalitiesCheckbox" name="roleName" value="" class="form-control" style="width: 6%;" onchange="onChangeEvent(), isMunicipality()">
-                    <label class="control-label" style="width: 42%; font-size: 12px; line-height: 15px; padding-top: 0%; padding-left: 0%;">Kuntaylläpitäjä</label>
+                    <input type="checkbox" id ="municipalitiesCheckbox" name="roleName" value="" class="form-control" onchange="onChangeEvent(), isMunicipality()">
+                    <label class="control-label" id="labelCheckboxMunicipality">Kuntaylläpitäjä</label>
 
 
-                    <div class="form-group municipalities"  style="clear: both;border-bottom: none; display: none">
+                    <div class="form-group municipalities"  style="display: none">
 
-                        <div class="row" style="min-width: 360px;">
-                            <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select id="municipalities_search" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
+                        <div class="row">
+                            <div class="col-xs-5" >
+                                <select id="municipalities_search" class="form-control" multiple="multiple">
                                 </select>
                             </div>
 
-                            <div class="col-xs-2" style=" max-width: 24px; display: inline-block;">
-                                <button type="button" id="municipalities_search_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" style="width: 24px;"> > </button>
-                                <button type="button" id="municipalities_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" style="width: 24px;"> < </button>
+                            <div class="col-xs-2" >
+                                <button type="button" id="municipalities_search_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" > > </button>
+                                <button type="button" id="municipalities_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" > < </button>
                             </div>
 
                             <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
@@ -300,24 +311,24 @@
                 </div>
 
                 <div class="checkbox">
-                    <input type="checkbox" id="elysCheckbox" name="roleName" class="form-control" value="busStopMaintainer"  style="width: 6%;" onchange="onChangeEvent(), isEly()">
-                    <label class="control-label"  style="font-size: 12px; line-height: 15px; padding-top: 0%; padding-left: 0%; width: 38%;  ">Ely-ylläpitäjä</label>
+                    <input type="checkbox" id="elysCheckbox" name="roleName" class="form-control" value="busStopMaintainer"   onchange="onChangeEvent(), isEly()">
+                    <label class="control-label"  id="labelCheckboxEly" >Ely-ylläpitäjä</label>
 
-                    <div class="form-group elys"  style="clear: both;border-bottom: none; display: none">
+                    <div class="form-group elys"  style="display: none">
 
-                        <div class="row" style="min-width: 360px;">
-                            <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select  id="elys_search" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
+                        <div class="row">
+                            <div class="col-xs-5" >
+                                <select  id="elys_search" class="form-control" multiple="multiple" >
                                 </select>
                             </div>
 
-                            <div class="col-xs-2" style=" max-width: 24px; display: inline-block;">
-                                <button type="button" id="elys_search_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" style="width: 24px;"> > </button>
-                                <button type="button" id="elys_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" style="width: 24px;"> < </button>
+                            <div class="col-xs-2">
+                                <button type="button" id="elys_search_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" > > </button>
+                                <button type="button" id="elys_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" > < </button>
                             </div>
 
-                            <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="elyNumber" id="elys_search_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
+                            <div class="col-xs-5" >
+                                <select name="elyNumber" id="elys_search_to" class="form-control" multiple="multiple"></select>
                             </div>
                         </div>
                     </div>
@@ -325,29 +336,29 @@
                 </div>
 
                 <div class="checkbox">
-                    <input type="checkbox" name="roleName" id = "operatorCheckbox" class="form-control" value="operator" style="width: 6%;" onchange="onChangeEvent(), isOperator()">
-                    <label class="control-label" style="width: 34%; font-size: 12px; line-height: 15px; padding-top: 0%; padding-left: 0%;">Operaattori</label>
+                    <input type="checkbox" name="roleName" id = "operatorCheckbox" class="form-control" value="operator"  onchange="onChangeEvent(), isOperator()">
+                    <label class="control-label" id="labelCheckboxOperator">Operaattori</label>
                 </div>
 
                 <div class="checkbox">
-                    <input type="checkbox" id="areasCheckbox" name="roleName" value="serviceRoadMaintainer" class="form-control" style="width: 6%;" onchange="onChangeEvent(), isAreaMaintenance()">
-                    <label class="control-label" style="width: 62%; font-size: 12px;line-height: 15px; padding-top: 0%; padding-left: 0%;">Huoltoteiden ylläpitäjä</label>
+                    <input type="checkbox" id="areasCheckbox" name="roleName" value="serviceRoadMaintainer" class="form-control"  onchange="onChangeEvent(), isAreaMaintenance()">
+                    <label class="control-label" id="labelCheckboxArea" >Huoltoteiden ylläpitäjä</label>
 
-                    <div class="form-group maintenanceAreas"  style="clear: both;border-bottom: none; display: none">
+                    <div class="form-group maintenanceAreas"  style="display: none">
 
-                        <div class="row" style="min-width: 360px;">
-                            <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select id="multiselect" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;">
+                        <div class="row" >
+                            <div class="col-xs-5" >
+                                <select id="multiselect" class="form-control" multiple="multiple" >
                                 </select>
                             </div>
 
-                            <div class="col-xs-2" style=" max-width: 24px; display: inline-block;">
-                                <button type="button" id="multiselect_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" style="width: 24px;"> > </button>
-                                <button type="button" id="multiselect_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" style="width: 24px;"> < </button>
+                            <div class="col-xs-2" >
+                                <button type="button" id="multiselect_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" > > </button>
+                                <button type="button" id="multiselect_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary"> < </button>
                             </div>
 
-                            <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="authorizationArea" id="multiselect_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
+                            <div class="col-xs-5" >
+                                <select name="authorizationArea" id="multiselect_to" class="form-control" multiple="multiple" ></select>
                             </div>
                         </div>
                     </div>

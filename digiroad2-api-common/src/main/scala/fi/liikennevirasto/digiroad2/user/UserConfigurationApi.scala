@@ -101,7 +101,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
       halt(Forbidden("Vain operaattori voi lisätä käyttäjiä"))
     }
     val (username, roleName, name) =
-      (request.getParameter("username"), request.getParameterValues("roleName"), request.getParameter("name"))
+      (request.getParameter("username"), request.getParameterValues("roleName").mkString(","), request.getParameter("name"))
 
     val elyNumber = request.getParameterValues("elyNumber") == null match {
       case false => request.getParameterValues("elyNumber").mkString(",")
