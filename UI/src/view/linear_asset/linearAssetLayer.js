@@ -151,15 +151,19 @@ root.LinearAssetLayer  = function(params) {
     };
   };
 
-  var uiState = { zoomLevel: 9 };
+  this.uiState = { zoomLevel: 9 };
 
   var vectorSource = new ol.source.Vector();
   var vectorLayer = new ol.layer.Vector({
     source : vectorSource,
     style : function(feature) {
-      return style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      return me.getLayerStyle(feature);
     }
   });
+
+  this.getLayerStyle = function(feature)  {
+      return style.browsingStyleProvider.getStyle(feature, {zoomLevel: me.uiState.zoomLevel});
+  };
 
   vectorLayer.set('name', layerName);
   vectorLayer.setOpacity(1);
@@ -202,14 +206,14 @@ root.LinearAssetLayer  = function(params) {
     var selectedAssets = selectedLinearAsset.get();
     var features = style.renderFeatures(selectedAssets);
     if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
     selectToolControl.addSelectionFeatures(features);
     readOnlyLayer.hideLayer();
     unHighLightReadOnlyLayer();
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
-    style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
+    style: function(feature){ return feature.setStyle(me.getLayerStyle(feature)); },
     onInteractionEnd: onInteractionEnd,
     onSelect: onSelect
   });
@@ -223,7 +227,7 @@ root.LinearAssetLayer  = function(params) {
 
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
      LinearAssetMassUpdateDialog.show({
@@ -261,7 +265,7 @@ root.LinearAssetLayer  = function(params) {
   }
 
   var adjustStylesByZoomLevel = function(zoom) {
-    uiState.zoomLevel = zoom;
+    me.uiState.zoomLevel = zoom;
   };
 
   var changeTool = function(tool) {
@@ -354,13 +358,13 @@ root.LinearAssetLayer  = function(params) {
 
   this.refreshView = function() {
     vectorLayer.setVisible(true);
-    adjustStylesByZoomLevel(map.getView().getZoom());
+    adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
     if (isComplementaryChecked) {
-      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
+      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
         eventbus.trigger('layer:linearAsset');
       });
     } else {
-      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
+      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
         eventbus.trigger('layer:linearAsset');
       });
     }
@@ -398,8 +402,8 @@ root.LinearAssetLayer  = function(params) {
     var markerContainer = function(link, position) {
         var anchor, offset;
         if(assetLabel){
-            anchor = assetLabel.getMarkerAnchor(uiState.zoomLevel);
-            offset = assetLabel.getMarkerOffset(uiState.zoomLevel);
+            anchor = assetLabel.getMarkerAnchor(me.uiState.zoomLevel);
+            offset = assetLabel.getMarkerOffset(me.uiState.zoomLevel);
         }
 
         var imageSettings = {src: 'images/center-marker2.svg'};
@@ -467,7 +471,7 @@ root.LinearAssetLayer  = function(params) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
     readOnlyLayer.showLayer();
     if(assetLabel) {
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), me.uiState.zoomLevel));
     }
   };
 
@@ -479,7 +483,7 @@ root.LinearAssetLayer  = function(params) {
     if (selectedLinearAsset.exists()) {
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-          features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
+          features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
@@ -491,7 +495,7 @@ root.LinearAssetLayer  = function(params) {
     linearAssetCutter.deactivate();
   };
 
-  var show = function(map) {
+  this.showLayer = function(map) {
     startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
@@ -532,7 +536,7 @@ root.LinearAssetLayer  = function(params) {
     }
   };
 
-  var hideLayer = function() {
+  this.hideLayer = function() {
     reset();
     hideReadOnlyLayer();
     vectorLayer.setVisible(false);
@@ -551,8 +555,8 @@ root.LinearAssetLayer  = function(params) {
 
   return {
     vectorLayer: vectorLayer,
-    show: show,
-    hide: hideLayer,
+    show: me.showLayer,
+    hide: me.hideLayer,
     minZoomForContent: me.minZoomForContent
   };
 };

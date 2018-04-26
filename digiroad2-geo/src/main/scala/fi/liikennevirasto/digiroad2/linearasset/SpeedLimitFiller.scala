@@ -538,10 +538,15 @@ object SpeedLimitFiller {
         GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
       0, to.length)
 
-    val changeSet = assetId match {
-      case 0 => changedSet
-      case _ => changedSet.copy(adjustedMValues =  changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newSideCode)))
-    }
+    val changeSet =
+      if ((Math.abs(newStart - newEnd) > 0) && assetId != 0) {
+        changedSet.copy(
+          adjustedMValues = changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)),
+          adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newSideCode))
+        )
+      }
+      else
+        changedSet
 
     (SpeedLimit(id = assetId, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
       asset.value, geometry, newStart, newEnd, modifiedBy = asset.modifiedBy, modifiedDateTime = asset.modifiedDateTime,

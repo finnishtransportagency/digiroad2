@@ -38,9 +38,9 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdMap.keySet)
 
     createGeoJson(maintenanceAssets.flatMap{
-      case maintenanceAsset =>
+       maintenanceAsset =>
         roadLinks.find(_.linkId == maintenanceAsset.linkId).map {
-          case roadLink =>
+          roadLink =>
             (maintenanceAsset, roadLink)
         }
     })

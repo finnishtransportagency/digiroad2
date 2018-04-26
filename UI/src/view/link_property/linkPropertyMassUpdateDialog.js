@@ -33,6 +33,8 @@
       {value: 11, text: 'Liitännäisliikennealue'},
       {value: 12, text: 'Ajopolku'},
       {value: 13, text: 'Huoltoaukko moottoritiellä'},
+      {value: 14, text: 'Erikoiskuljetusyhteys ilman puomia'},
+      {value: 15, text: 'Erikoiskuljetusyhteys puomilla'},
       {value: 21, text: 'Lautta/lossi'}
     ];
 

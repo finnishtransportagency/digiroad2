@@ -464,7 +464,16 @@
           disabled: 'Ei huoltotietä'
         },
         possibleValues: [
-          {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus", value: [{typeId: 1, title: 'Tieoikeus'},{typeId: 2, title: 'Tiekunnan osakkuus'},{typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},{typeId: 4, title: 'Kevyen liikenteen väylä'},{typeId: 99, title: 'Tuntematon'}]},
+          {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus",
+                  value: [
+                          {typeId: 1, title: 'Tieoikeus'},
+                          {typeId: 2, title: 'Tiekunnan osakkuus'},
+                          {typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},
+                          {typeId: 4, title: 'Kevyen liikenteen väylä'},
+                          {typeId: 6, title: 'Muu sopimus'},
+                          {typeId: 9, title: 'Potentiaalinen käyttöoikeus'},
+                          {typeId: 99, title: 'Tuntematon'}
+                          ]},
           {'name': 'Huoltovastuu', 'propType': 'single_choice', 'id': "huoltotie_huoltovastuu", value: [{typeId: 1, title: 'LiVi'}, {typeId: 2, title: 'Muu'}, {typeId: 99, title: 'Ei tietoa'}]},
           {'name': "Tiehoitokunta", 'propType': 'text', 'id': "huoltotie_tiehoitokunta" },
           {'name': "Yhteyshenkilö", 'propType': 'header' },
@@ -478,7 +487,9 @@
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
-        isVerifiable: true
+        isVerifiable: false,
+        layer : ServiceRoadLayer,
+        collection: ServiceRoadCollection
       },
       {
         typeId: assetType.numberOfLanes,
@@ -647,7 +658,17 @@
           // check if administrative class is State
           return selectedAsset.getAdministrativeClass(linkId) === "State";
         },
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        saveCondition: function (selectedAsset) {
+          var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+          var validations = [
+            { types: [1, 2, 3, 4], validate: function (someValue) { return !_.isNaN(parseInt(someValue)) && _.contains(possibleSpeedLimitsValues, parseInt(someValue)); }},
+            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return !_.isNaN(parseInt(someValue)) ; }}
+          ];
+
+          var functionFn = _.find(validations, function(validation){ return _.contains(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
+          return functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
+        }
       },
       {
         typeId: assetType.trHeightLimits,

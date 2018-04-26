@@ -15,7 +15,7 @@
     var enabledExperimentalAssets = isExperimental ? assetConfiguration.experimentalAssetsConfig : [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
-      var collection = new LinearAssetsCollection(backend, verificationCollection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.hasMunicipalityValidation);
+      var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec) ;
       var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
       return _.merge({}, spec, {
         collection: collection,
@@ -105,6 +105,7 @@
 
     new WorkListView().initialize();
     new VerificationWorkList().initialize();
+    new SpeedLimitWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
 
     backend.getUserRoles();
@@ -261,7 +262,7 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(pointAsset.typeId, pointAsset.selectedPointAsset, pointAsset.collection, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend);
+      new PointAssetForm(pointAsset, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend, pointAsset.saveCondition || function() {return true;});
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
@@ -280,27 +281,31 @@
     };
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-     acc[asset.layerName] = new LinearAssetLayer({
-       map: map,
-       application: applicationModel,
-       collection: asset.collection,
-       selectedLinearAsset: asset.selectedLinearAsset,
-       roadCollection: models.roadCollection,
-       roadLayer: roadLayer,
-       layerName: asset.layerName,
-       multiElementEventCategory: asset.multiElementEventCategory,
-       singleElementEventCategory: asset.singleElementEventCategory,
-       style: asset.style || new PiecewiseLinearAssetStyle(),
-       formElements: AssetFormElementsFactory.construct(asset),
-       assetLabel: asset.label,
-       roadAddressInfoPopup: roadAddressInfoPopup,
-       editConstrains : asset.editConstrains || function() {return false;},
-       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
-       massLimitation : asset.editControlLabels.massLimitations,
-       typeId : asset.typeId
-     });
-     return acc;
+
+      var parameters ={
+        map: map,
+        application: applicationModel,
+        collection: asset.collection,
+        selectedLinearAsset: asset.selectedLinearAsset,
+        roadCollection: models.roadCollection,
+        roadLayer: roadLayer,
+        layerName: asset.layerName,
+        multiElementEventCategory: asset.multiElementEventCategory,
+        singleElementEventCategory: asset.singleElementEventCategory,
+        style: asset.style || new PiecewiseLinearAssetStyle(),
+        formElements: AssetFormElementsFactory.construct(asset),
+        assetLabel: asset.label,
+        roadAddressInfoPopup: roadAddressInfoPopup,
+        editConstrains: asset.editConstrains || function () {return false;},
+        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
+        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
+        massLimitation: asset.editControlLabels.massLimitations,
+        typeId: asset.typeId
+      };
+
+      acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
+      return acc;
+
     }, {});
 
     var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
@@ -379,7 +384,7 @@
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
-    applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
+    applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };

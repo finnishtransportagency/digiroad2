@@ -9,7 +9,7 @@
 
     eventbus.on('map:moved', function (event) {
       //Municipality name could be shown at 5 km zoom level (level 5 = 5 Km)
-      if (map.getView().getZoom() >= 5) {
+      if (zoomlevels.getViewZoom(map) >= 5) {
         var centerLonLat = map.getView().getCenter();
         backend.getMunicipalityFromCoordinates(centerLonLat[0], centerLonLat[1], function (vkmResult) {
               var municipalityInfo = vkmResult.kunta ? vkmResult.kunta : "Tuntematon";

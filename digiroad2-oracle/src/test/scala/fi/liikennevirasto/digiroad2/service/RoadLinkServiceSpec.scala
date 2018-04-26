@@ -202,7 +202,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
 
-  test("Autogenerate properties for tractor road and drive path") {
+  test("Autogenerate properties for tractor road, drive path, cycle or cpedestrian path, special transport with and without gate") {
     OracleDatabase.withDynTransaction {
       val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
       val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -218,7 +218,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
           VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
           VVHRoadlink(456l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.TractorRoad),
           VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers),
-          VVHRoadlink(111l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.CycleOrPedestrianPath))).future)
+          VVHRoadlink(111l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.CycleOrPedestrianPath),
+          VVHRoadlink(222l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.SpecialTransportWithoutGate),
+          VVHRoadlink(333l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.SpecialTransportWithGate))).future)
 
       sqlu"""delete from incomplete_link where municipality_code = 91""".execute
       sqlu"""insert into incomplete_link(id, link_id, municipality_code) values(3123123123, 456, 91)""".execute
@@ -235,6 +237,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       roadLinks.find(_.linkId == 111).get.functionalClass should be(8)
       roadLinks.find(_.linkId == 111).get.linkType should be(CycleOrPedestrianPath)
+
+      roadLinks.find(_.linkId == 222).get.functionalClass should be(99)
+      roadLinks.find(_.linkId == 222).get.linkType should be(SpecialTransportWithoutGate)
+
+      roadLinks.find(_.linkId == 333).get.functionalClass should be(99)
+      roadLinks.find(_.linkId == 333).get.linkType should be(SpecialTransportWithGate)
 
       dynamicSession.rollback()
     }

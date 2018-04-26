@@ -23,6 +23,7 @@
     this.bindExternalEventHandlers = function() {};
 
     this.workListItemTable = function(layerName, workListItems, municipalityName) {
+
       var municipalityHeader = function(municipalityName, totalCount) {
         var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
         return $('<h2/>').html(municipalityName + countString);
@@ -74,8 +75,9 @@
     };
 
     this.generateWorkList = function(layerName, listP) {
-      var title = {
-        speedLimit: 'Tuntemattomien nopeusrajoitusten lista',
+      var layerInfo = {
+        speedLimit: {Title: 'Tuntemattomien nopeusrajoitusten lista',  SourceLayer: 'speedLimit'},
+        speedLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'speedLimit'},
         linkProperty: 'Korjattavien linkkien lista',
         massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
         pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',
@@ -86,12 +88,16 @@
         trafficSigns: 'Geometrian ulkopuolelle jääneet liikennemerkit',
         maintenanceRoad: 'Tarkistamattomien huoltoteiden lista'
       };
+
+      var sourceLayer = (layerInfo[layerName].SourceLayer) ? layerInfo[layerName].SourceLayer : layerName;
+      var title = (layerInfo[layerName].Title) ? layerInfo[layerName].Title : layerInfo[layerName];
+
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
         '<div class="page">' +
         '<div class="content-box">' +
-        '<header>' + title[layerName] +
-        '<a class="header-link" href="#' + layerName + '">Sulje lista</a>' +
+        '<header>' + title +
+        '<a class="header-link" href="#' + sourceLayer + '">Sulje lista</a>' +
         '</header>' +
         '<div class="work-list">' +
         '</div>' +

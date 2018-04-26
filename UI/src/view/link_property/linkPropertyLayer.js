@@ -64,7 +64,7 @@
 
       var handleRoadsVisibility = function() {
           if (_.isObject(vectorLayer)) {
-              vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
+              vectorLayer.setVisible(zoomlevels.getViewZoom(map) >= minimumContentZoomLevel());
           }
       };
 
@@ -240,12 +240,12 @@
       var roadLinks = roadCollection.getAll();
       var roadLinkHistory =  roadCollection.getAllHistory();
 
-      roadLayer.drawRoadLinks(roadLinks, map.getView().getZoom());
+      roadLayer.drawRoadLinks(roadLinks, zoomlevels.getViewZoom(map));
       //The sortBy is used to order the addition of the features. This is used in order to the dashed lines always be in the same position
       roadLayer.layer.getSource().addFeatures(drawDashedLineFeaturesIfApplicable(_.sortBy(roadLinks, function(rl) { return rl.linkId; })));
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
 
-      historyLayer.drawRoadLinks(roadLinkHistory, map.getView().getZoom());
+      historyLayer.drawRoadLinks(roadLinkHistory, zoomlevels.getViewZoom(map));
       historyLayer.layer.getSource().addFeatures(drawDashedLineFeaturesIfApplicable(roadLinkHistory));
       me.drawOneWaySigns(historyLayer.layer, roadLinkHistory);
 
@@ -302,7 +302,7 @@
     };
 
     var drawDashedLineFeaturesForType = function(roadLinks) {
-      var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
+      var dashedLinkTypes = [2, 4, 6, 8, 12, 15, 21];
       var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedLinkTypes, roadLink.linkType) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);

@@ -9,6 +9,12 @@
     getAssetZoomLevelIfNotCloser: function(zoom) {
       return zoom < 10 ? 10 : zoom;
     },
+    shouldShowAssets: function (layerName, zoom) {
+      return layerName === 'maintenanceRoad' && Math.round(zoom) >= 2 && Math.round(zoom) < 10;
+    },
+    getViewZoom : function(map){
+      return Math.round(map.getView().getZoom());
+    },
     minZoomForAssets: 10,
     minZoomForRoadLinks: 10,
     maxZoomLevel: 12

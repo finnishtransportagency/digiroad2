@@ -370,7 +370,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
 
   def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[Polygon]) = {
-    polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
+    Await.result(Future.sequence(polygons.map(getLinkIdsFromVVHWithComplementaryByPolygonF)), Duration.Inf).flatten
   }
 
   /**
@@ -388,6 +388,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     val (complementaryResult, result) = Await.result(fut, Duration.Inf)
     complementaryResult ++ result
+  }
+
+  def getLinkIdsFromVVHWithComplementaryByPolygonF(polygon :Polygon): Future[Seq[Long]] = {
+    Future(getLinkIdsFromVVHWithComplementaryByPolygon(polygon))
   }
 
   /**
@@ -413,6 +417,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
     else (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes), changes)
 
+  }
+
+  def getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction:Boolean = true): Seq[RoadLink] = {
+    val fut = for{
+      f1Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
+      f2Result <- vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)
+    } yield (f1Result, f2Result)
+
+    val (complementaryLinks, links) = Await.result(fut, Duration.Inf)
+
+    if(newTransaction){
+      withDynTransaction {
+        enrichRoadLinksFromVVH(links ++ complementaryLinks)
+      }
+    }
+    else enrichRoadLinksFromVVH(links ++ complementaryLinks)
   }
 
   def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])= {
@@ -1006,6 +1026,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.DrivePath => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithoutGate, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithGate, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case _ => roadLink //similar logic used in roadaddressbuilder
       }
     }
