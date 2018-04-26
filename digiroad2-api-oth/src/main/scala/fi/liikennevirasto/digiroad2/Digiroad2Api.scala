@@ -719,12 +719,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val massLinearAssets = linearMassLimitationService.getByBoundingBox(boundingRectangle, municipalities)
+      val massLinearAssets = linearMassLimitationService.getByBoundingBox(boundingRectangle, Set())
       if(params("withRoadAddress").toBoolean)
         mapMassLinearAssets(linearMassLimitationService.withRoadAddress(massLinearAssets))
       else
