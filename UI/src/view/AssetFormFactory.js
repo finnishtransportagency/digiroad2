@@ -447,6 +447,160 @@
     };
   };
 
+  var TimePeriodField = function(assetTypeConfiguration){
+    DynamicField.call(this, assetTypeConfiguration);
+    var me = this;
+    var className = assetTypeConfiguration.className;
+
+    me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
+      function dayOrder(period) {
+        var days = {
+          Weekday: 0,
+          Saturday: 1,
+          Sunday: 2
+        };
+        return days[period.days];
+      }
+      var existingValidityPeriodElements =
+        _(assetValue ? assetValue.validityPeriods : '')
+          .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+          .map(validityPeriodElement)
+          .join('');
+
+      function newValidityPeriodElement() {
+        return '' +
+          '<li><div class="form-group new-validity-period">' +
+          '  <select class="form-control select">' +
+          '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+          '    <option value="Weekday">Ma–Pe</option>' +
+          '    <option value="Saturday">La</option>' +
+          '    <option value="Sunday">Su</option>' +
+          '  </select>' +
+          '</div></li>';
+      }
+
+      var dayLabels = {
+        Weekday: "Ma–Pe",
+        Saturday: "La",
+        Sunday: "Su"
+      };
+
+      function validityPeriodElement(period) {
+        return '' +
+          '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
+          '  <button class="delete btn-delete">x</button>' +
+          '  <label class="control-label">' +
+          dayLabels[period.days] +
+          '  </label>' +
+          hourElement(period.startHour, 'start') +
+          '  <span class="minute-separator"></span>' +
+          minutesElement(period.startMinute, 'start') +
+          '  <span class="hour-separator"> - </span>' +
+          hourElement(period.endHour, 'end') +
+          '  <span class="minute-separator"></span>' +
+          minutesElement(period.endMinute, 'end') +
+          '</div></li>';
+      }
+
+      function hourElement(selectedHour, type) {
+        var className = type + '-hour';
+        return '' +
+          '<select class="form-control sub-control select ' + className + '">' +
+          hourOptions(selectedHour, type) +
+          '</select>';
+      }
+
+      function minutesElement(selectedMinute, type) {
+        var className = type + '-minute';
+        return '' +
+          '<select class="form-control sub-control select ' + className + '">' +
+          minutesOptions(selectedMinute) +
+          '</select>';
+      }
+
+      function hourOptions(selectedOption, type) {
+        var range = type === 'start' ? _.range(0, 24) : _.range(1, 25);
+        return _.map(range, function (hour) {
+          var selected = hour === selectedOption ? 'selected' : '';
+          return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
+        }).join('');
+      }
+
+      function minutesOptions(selectedOption) {
+        var range = _.range(0, 60, 5);
+        return _.map(range, function (minute) {
+          var selected = minute === selectedOption ? 'selected' : '';
+          return '<option value="' + minute + '" ' + selected + '>' + (minute<10 ? '0' + minute : minute) + '</option>';
+        }).join('');
+      }
+
+
+      var template = _.template('' +
+       '<div class="validity-period-group">' +
+      ' <ul>' +
+      '   <%= existingValidityPeriodElements %>' +
+      newValidityPeriodElement() +
+      ' </ul>');
+
+      var element = $(template({existingValidityPeriodElements: existingValidityPeriodElements}));
+
+      var manoeuvreData = function(formGroupElement) {
+        return {
+
+          validityPeriods: extractValidityPeriods(formGroupElement)
+
+        };
+      };
+
+      function extractValidityPeriods(element) {
+        var periodElements = element.find('.existing-validity-period');
+        return _.map(periodElements, function (element) {
+          return {
+            startHour: parseInt($(element).find('.start-hour').val(), 10),
+            startMinute: parseInt($(element).find('.start-minute').val(), 10),
+            endHour: parseInt($(element).find('.end-hour').val(), 10),
+            endMinute: parseInt($(element).find('.end-minute').val(), 10),
+            days: parseInt( dayOrder({days: $(element).data('days')}), 10)
+          };
+        });
+      }
+
+      function updateValidityPeriods(element) {
+        var validityPeriods = extractValidityPeriods(element);
+
+        // var manoeuvre = manoeuvreData(element);
+        // selectedManoeuvreSource.setValidityPeriods(manoeuvreId, manoeuvre.validityPeriods);
+        // element.find('input').on('click', function(){
+        //   var val  = $(this).prop('checked') ? 1: 0;
+        //   element.find('input').attr('value', val);
+          me.inputElementHandler(assetTypeConfiguration, validityPeriods, field, setValue, asset);
+      }
+
+      element.on('click', '.existing-validity-period .delete', function(event) {
+        $(event.target).parent().parent().remove();
+        updateValidityPeriods($(event.delegateTarget));
+      });
+
+      element.on('change', '.existing-validity-period .select', function(event) {
+        updateValidityPeriods($(event.delegateTarget));
+      });
+
+      element.on('change', '.new-validity-period select', function(event) {
+        $(event.target).closest('.validity-period-group ul').append(newValidityPeriodElement());
+        $(event.target).parent().parent().replaceWith(validityPeriodElement({
+          days: $(event.target).val(),
+          startHour: 0,
+          startMinute: 0,
+          endHour: 24,
+          endMinute: 0
+        }));
+        updateValidityPeriods($(event.delegateTarget));
+      });
+
+      return element;
+    };
+  };
+
   var SaveButton = function(assetTypeConfiguration) {
 
     var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
@@ -583,7 +737,8 @@
         {name: 'text', field: new TextualField(assetTypeConfiguration)},
         {name: 'checkbox', field: new CheckboxField(assetTypeConfiguration)},
         {name: 'read_only_number', field: new ReadOnlyFields(assetTypeConfiguration)},
-        {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)}
+        {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)},
+        {name: 'time_period', field: new TimePeriodField(assetTypeConfiguration)}
       ];
 
       var fieldGroupElement = $('<div class = "input-unit-combination" >');

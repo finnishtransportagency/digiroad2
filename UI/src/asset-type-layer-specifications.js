@@ -322,21 +322,20 @@
       },
       isVerifiable: false,
       //TODO revert this code
-      // formFields: function() {
-      //   fields = [
-      //     { publicId: 'date_1',  label:'date_1', type: 'date', weight: 7 },
-      //     { publicId: 'public_checkbox_1',  label:'checkbox_1', type: 'checkbox', values: [{label: 'checked1', id: 1 }, {label: 'not checked1', id: 0 }], defaultValue: 0, weight: 8 },
-      //     { publicId: 'public_text_1',  label:'text_1', type: 'text', weight: 1 , required: true},
-      //     { publicId: 'public_text_2',  label:'text_2', type: 'text', weight: 2, defaultValue: "texto de default"},
-      //     { publicId: 'public_number_1',  label:'number_1', type: 'number', weight: 3, unit: "cm", required: true, defaultValue: 1 },
-      //     { publicId: 'single_choice_1',  label:'single_choice_1', type: 'single_choice', values: [{id: 1, label: 'single_choice_enum_1'}, {id: 2, label: 'single_choice_enum_2'},
-      //       {id: 3, label: 'single_choice_enum_3'},  {id: 4, label: 'single_choice_enum_4'}, {id: 5, label: 'single_choice_enum_5'}], defaultValue : 3, weight: 4},
-      //
-      //     { publicId: 'multiple_choice_1',  label:'multiple_choice_1', type: 'multiple_choice', values: [{id: 1, label: "multiple_choice_11"}, {id: 2, label: "multiple_choice_12"},
-      //       {id: 3, label: "multiple_choice_13"}, {id: 4, label: "multiple_choice_14"},  {id: 99, label: "multiple_choice_199"}], required: true, weight: 5}
-      //   ]
-      // },
-    //  form: new AssetFormFactory( _.find(formFields, function(form) { return form.typeId === assetType.pavedRoad;}).attributes )
+      form: new AssetFormFactory({
+        fields : [
+          // { publicId: 'date_1',  label:'date_1', type: 'date', weight: 7 },
+          // { publicId: 'public_checkbox_1',  label:'checkbox_1', type: 'checkbox', values: [{label: 'checked1', id: 1 }, {label: 'not checked1', id: 0 }], defaultValue: 0, weight: 8 },
+          { publicId: 'public_text_1',  label:'text_1', type: 'text', weight: 1 , required: true}
+          // { publicId: 'public_text_2',  label:'text_2', type: 'text', weight: 2, defaultValue: "texto de default"},
+          // { publicId: 'public_number_1',  label:'number_1', type: 'number', weight: 3, unit: "cm", required: true, defaultValue: 1 },
+          // { publicId: 'single_choice_1',  label:'single_choice_1', type: 'single_choice', values: [{id: 1, label: 'single_choice_enum_1'}, {id: 2, label: 'single_choice_enum_2'},
+          //   {id: 3, label: 'single_choice_enum_3'},  {id: 4, label: 'single_choice_enum_4'}, {id: 5, label: 'single_choice_enum_5'}], defaultValue : 3, weight: 4},
+          //
+          // { publicId: 'multiple_choice_1',  label:'multiple_choice_1', type: 'multiple_choice', values: [{id: 1, label: "multiple_choice_11"}, {id: 2, label: "multiple_choice_12"},
+          //   {id: 3, label: "multiple_choice_13"}, {id: 4, label: "multiple_choice_14"},  {id: 99, label: "multiple_choice_199"}], required: true, weight: 5}
+        ]
+      })
     },
     {
       typeId: assetType.trafficVolume,
@@ -378,7 +377,12 @@
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
       },
-      isVerifiable: true
+      isVerifiable: true,
+      form: new AssetFormFactory({
+        fields: [
+          {label: "Numeric", type: 'time_period', publicId: "public_period_time", weight: 9, defaultValue: 1}
+        ]
+      })
     },
     {
       typeId: assetType.winterSpeedLimit,
