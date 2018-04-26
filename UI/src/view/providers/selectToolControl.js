@@ -14,6 +14,7 @@
             onDragStart: function(){},
             onInteractionEnd: function(){},
             onSelect: function() {},
+            onMultipleSelect: function() {},
             style: function(){},
             enableSelect: function(){ return true; },
             enableBoxSelect: function(){ return false; },
@@ -109,13 +110,17 @@
             settings.onSelect(evt);
         });
 
-        multiSelectInteraction.on('select',  function(evt){
-            if(evt.selected.length > 0 && settings.enableSelect(evt))
+        multiSelectInteraction.on('select', function (evt) {
+            if (evt.selected.length > 0 && settings.enableSelect(evt) && _.isUndefined(evt.selected[0].getProperties().value)) {
+                selectedFeatures.push(evt.selected[0].getProperties());
                 unhighlightLayer();
-            else
-                highlightLayer();
+            }
+            else if (evt.deselected.length > 0) {
+                selectedFeatures = _.filter(selectedFeatures, function (sf) {
+                    return sf.linkId !== evt.deselected[0].getProperties().linkId;
+                });
+            }
 
-            selectedFeatures.push(evt.selected[0].getProperties());
             settings.onMultipleSelect(evt);
         });
 
