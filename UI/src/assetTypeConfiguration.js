@@ -65,7 +65,8 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.trailerTruckWeightLimit,
@@ -87,7 +88,8 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.axleWeightLimit,
@@ -109,7 +111,8 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.bogieWeightLimit,
@@ -131,7 +134,8 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.heightLimit,
@@ -152,7 +156,8 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.lengthLimit,
@@ -173,7 +178,8 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.widthLimit,
@@ -195,7 +201,8 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.litRoad,
@@ -218,7 +225,8 @@
           return selectedAsset.administrativeClass === 1;
         },
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.damagedByThaw,
@@ -265,7 +273,8 @@
           return selectedAsset.administrativeClass === 1;
         },
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.congestionTendency,
@@ -305,7 +314,8 @@
           //check if administrative class is State
           return selectedAsset.administrativeClass === 1;
         },
-        isVerifiable: false
+        isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.trafficVolume,
@@ -348,7 +358,8 @@
           //check if administrative class is State
           return selectedAsset.administrativeClass === 1;
         },
-        isVerifiable: true
+        isVerifiable: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.winterSpeedLimit,
@@ -369,7 +380,8 @@
         },
         possibleValues: [100, 80, 70, 60],
         style : new WinterSpeedLimitStyle(),
-        isVerifiable: false
+        isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.prohibition,
@@ -386,7 +398,8 @@
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta'
         },
-        isVerifiable: true
+        isVerifiable: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -403,7 +416,8 @@
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta'
         },
-        isVerifiable: true
+        isVerifiable: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.europeanRoads,
@@ -426,7 +440,8 @@
           return selectedAsset.administrativeClass === 1;
         },
         label: new LinearAssetLabelMultiValues(),
-        isVerifiable: false
+        isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.exitNumbers,
@@ -445,7 +460,8 @@
           disabled: 'Ei liittymänumeroa'
         },
         label: new LinearAssetLabelMultiValues(),
-        isVerifiable: false
+        isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.maintenanceRoad,
@@ -489,7 +505,8 @@
         label : new ServiceRoadLabel(),
         isVerifiable: false,
         layer : ServiceRoadLayer,
-        collection: ServiceRoadCollection
+        collection: ServiceRoadCollection,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.numberOfLanes,
@@ -508,7 +525,8 @@
           disabled: 'Ei tietoa'
         },
         label: new LinearAssetLabel(),
-        isVerifiable: true
+        isVerifiable: true,
+        isMultipleLinkSelectionAllowed: true
       }
     ];
 

@@ -309,7 +309,8 @@
         hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
         trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
         massLimitation: asset.editControlLabels.massLimitations,
-        typeId: asset.typeId
+        typeId: asset.typeId,
+        isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed
       };
 
       acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);

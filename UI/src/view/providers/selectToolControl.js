@@ -1,5 +1,5 @@
 (function(root) {
-    root.SelectToolControl = function(application, layer, map, options) {
+    root.SelectToolControl = function(application, layer, map, isMultipleLinkSelectionAllowed, options) {
 
         var mapDoubleClickEventKey;
         var enabled = false;
@@ -63,7 +63,7 @@
         var multiSelectInteraction = new ol.interaction.Select({
             layers: [layer],
             condition: function (events) {
-                return enabled && ol.events.condition.click(events);
+                return enabled && ol.events.condition.click(events) && isMultipleLinkSelectionAllowed;
             },
             toggleCondition: function (events) {
                 return ol.events.condition.platformModifierKeyOnly(events);

@@ -14,7 +14,8 @@ root.LinearAssetLayer  = function(params) {
       editConstrains = params.editConstrains,
       massLimitation = params.massLimitation,
       hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
-      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
+      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer,
+      isMultipleLinkSelectionAllowed = params.isMultipleLinkSelectionAllowed;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
@@ -227,7 +228,7 @@ root.LinearAssetLayer  = function(params) {
     unHighLightReadOnlyLayer();
   };
 
-  var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
+  var selectToolControl = new SelectToolControl(application, vectorLayer, map, isMultipleLinkSelectionAllowed, {
     style: function(feature){ return feature.setStyle(me.getLayerStyle(feature)); },
     onInteractionEnd: onInteractionEnd,
     onSelect: onSelect,
