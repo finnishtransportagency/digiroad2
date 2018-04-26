@@ -16,10 +16,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
 import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
