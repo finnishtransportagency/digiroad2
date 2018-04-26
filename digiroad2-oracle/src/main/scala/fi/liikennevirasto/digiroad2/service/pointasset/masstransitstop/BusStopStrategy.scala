@@ -44,9 +44,8 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
           try {
             getRoadAddressPropertiesByLinkId(asset, roadLink, oldProperties)
           } catch {
-            case e: RoadAddressException => {
+            case e: RoadAddressException =>
               oldProperties
-            }
           }
         case _ => oldProperties
       }
