@@ -401,4 +401,19 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
       unVerifiedAssets should be(empty)
     }
   }
+
+  test("Create new linear asset with validity period property") {
+    runWithRollback {
+      val propId = Sequences.nextPrimaryKeySeqValue
+      val typeId = 160
+      val value = Map("days" -> BigInt(1), "startHour" -> BigInt(0), "endHour" -> BigInt(0), "startMinute" -> BigInt(24), "endMinute" -> BigInt(0))
+      val propertyData  = MultiValue(MultiAssetValue(Seq(MultiTypeProperty("public_validity_period", "time_period", false, Seq(MultiTypePropertyValue(value))))))
+
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
+      newAssets.length should be(1)
+      val asset = ServiceWithDao.getPersistedAssetsByIds(typeId, newAssets.toSet).head
+      asset.value should be (Some(propertyData))
+    }
+  }
+
 }

@@ -173,7 +173,7 @@ object Queries {
   def updateTimePeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
     sqlu"""
       update validity_period_property_value
-      set period_week_day = ${validityPeriodValue.periodWeekDay}, type = ${validityPeriodValue.propertyType},
+      set period_week_day = ${validityPeriodValue.days}, type = ${validityPeriodValue.periodType},
           start_hour = ${validityPeriodValue.startHour}, end_hour =  ${validityPeriodValue.endHour},
           start_minute =  ${validityPeriodValue.startMinute}, end_minute = ${validityPeriodValue.startMinute}
       where asset_id = $assetId and property_id = $propertyId
@@ -186,7 +186,7 @@ object Queries {
   def insertTimePeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
     sqlu"""
       insert into validity_period_property_value(id, property_id, asset_id, type, period_week_day, start_hour, end_hour, start_minute, end_minute)
-      values (primary_key_seq.nextval, $propertyId, $assetId, ${validityPeriodValue.propertyType}, ${validityPeriodValue.periodWeekDay}, ${validityPeriodValue.startHour},
+      values (primary_key_seq.nextval, $propertyId, $assetId, ${validityPeriodValue.periodType}, ${validityPeriodValue.days}, ${validityPeriodValue.startHour},
       ${validityPeriodValue.endHour}, ${validityPeriodValue.startMinute}, ${validityPeriodValue.endMinute})
     """
   }

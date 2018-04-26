@@ -46,7 +46,6 @@ class MultiValueLinearAssetDao {
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
           left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
-          left join validity_period_property_value vpp on vpp.asset_id = a.id and vpp.property_id = p.id and p.property_type = 'time_period'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
@@ -86,7 +85,6 @@ class MultiValueLinearAssetDao {
                       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
                       left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
-                      left join validity_period_property_value vpp on vpp.asset_id = a.id and vpp.property_id = p.id and p.property_type = 'time_period'
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.floating = 0 """.as[MultiValueAssetRow].list
     }
@@ -348,5 +346,45 @@ class MultiValueLinearAssetDao {
     requiredProperties
   }
 
+
+  def getValidityPeriodPropertyValue(ids: Set[Long], typeId: Int) : Map[Long, Seq[MultiTypeProperty]] = {
+    val assets = MassQuery.withIds (ids) {
+      idTableName =>
+        sql"""
+          select vpp.asset_id, p.public_id, p.property_type, p.required, vpp.period_week_day, vpp.start_hour, vpp.end_hour, vpp.start_minute, vpp.end_minute, vpp.type
+          from validity_period_property_value vpp
+          join property p on p.asset_type_id = $typeId and p.property_type = 'time_period'
+          join #$idTableName i on i.id = vpp.asset_id
+          where vpp.property_id = p.id
+        """.as[ValidityPeriodRow].list
+    }
+    assets.groupBy(_.assetId).mapValues{ assetGroup =>
+      assetGroup.groupBy(_.publicId).map { case (_, values) =>
+        val row = values.head
+        MultiTypeProperty(row.publicId, row.propertyType, row.required, values.map(_.value))
+      }.toSeq
+    }
+  }
+
+  case  class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: MultiTypePropertyValue )
+
+  implicit val getValidityPeriodRow = new GetResult[ValidityPeriodRow] {
+    def apply(r: PositionedResult) = {
+      val assetId = r.nextLong
+      val publicId = r.nextString
+      val propertyType = r.nextString
+      val required = r.nextBoolean
+      val value = ValidityPeriodValue(
+        days = r.nextInt,
+        startHour = r.nextInt,
+        endHour = r.nextInt,
+        startMinute = r.nextInt,
+        endMinute = r.nextInt,
+        periodType = r.nextIntOption
+      )
+
+      ValidityPeriodRow(assetId, publicId, propertyType, required, MultiTypePropertyValue(ValidityPeriodValue.toMap(value)))
+    }
+  }
 }
 

@@ -177,24 +177,35 @@ case class MultiTypeProperty(publicId: String, propertyType: String,  required: 
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
 case class MultiTypePropertyValue(value: Any)
-case class ValidityPeriodValue(periodWeekDay: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, propertyType: Option[Int] = None)
+case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 
 object ValidityPeriodValue {
   def fromMap(map: Map[String, Any]): ValidityPeriodValue = {
     ValidityPeriodValue(
-      map("periodWeekDay").asInstanceOf[BigInt].toInt,
+      map("days").asInstanceOf[BigInt].toInt,
       map("startHour").asInstanceOf[BigInt].toInt,
       map("endHour").asInstanceOf[BigInt].toInt,
       map("startMinute").asInstanceOf[BigInt].toInt,
       map("endMinute").asInstanceOf[BigInt].toInt,
 
-      if (map.contains("propertyType")) {
-        map("propertyType") match {
+      if (map.contains("periodType")) {
+        map("periodType") match {
           case Some(value) => Some(value.asInstanceOf[BigInt].toInt)
           case _ => None}
       } else None)
+  }
+
+  def toMap(value: ValidityPeriodValue):  Map[String, Any] = {
+    Map(
+      "days" -> value.days,
+      "startHour" -> value.startHour,
+      "endHour" -> value.endHour,
+      "startMinute" -> value.startMinute,
+      "endMinute" -> value.endMinute,
+      "periodType" -> value.periodType
+    )
   }
 }
 
