@@ -1,8 +1,9 @@
-package fi.liikennevirasto.digiroad2.verification.oracle
+package fi.liikennevirasto.digiroad2.dao
+
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.VerificationInfo
+import fi.liikennevirasto.digiroad2.service.VerificationInfo
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
