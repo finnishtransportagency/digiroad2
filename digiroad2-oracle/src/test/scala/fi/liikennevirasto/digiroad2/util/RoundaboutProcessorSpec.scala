@@ -24,7 +24,7 @@ class RoundaboutProcessorSpec extends FunSuite with Matchers {
     val (roadLinksWithDirections, _) = RoundaboutProcessor.setTrafficDirection(roadLinks)
 
     getTrafficDirection(442445, roadLinksWithDirections) should be (TrafficDirection.AgainstDigitizing)
-    getTrafficDirection(442443, roadLinksWithDirections) should be (TrafficDirection.AgainstDigitizing)
+    getTrafficDirection(442443, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
     getTrafficDirection(442442, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
     getTrafficDirection(442444, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
   }
@@ -71,6 +71,24 @@ class RoundaboutProcessorSpec extends FunSuite with Matchers {
     getTrafficDirection(438841, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
   }
 
+  test("Set traffic direction to Roundabouts road links real case 4"){
+    val roadLinks = Seq(
+      RoadLink(1994740, Seq(Point(492905.449, 6707352.469), Point(492904.561, 6707358.171), Point(492905.511, 6707363.632), Point(492909.785, 6707368.382), Point(492917.209, 6707370.535)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(1994739, Seq(Point(492941.523, 6707361.033), Point(492938.044, 6707366.245), Point(492931.327, 6707370.967), Point(492925.431, 6707371.581), Point(492917.209, 6707370.535)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(1994741, Seq(Point(492928.555, 6707340.825), Point(492935.907, 6707346.06), Point(492939.944, 6707351.759), Point(492941.132, 6707356.271), Point(492941.523, 6707361.033)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(1994748, Seq(Point(492920.105, 6707340.825), Point(492924.433, 6707340.355), Point(492928.555, 6707340.825)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(1994747, Seq(Point(492920.105, 6707340.825), Point(492915.247, 6707341.547), Point(492910.26, 6707344.635), Point(492906.461, 6707348.435), Point(492905.449, 6707352.469)), 2, State, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
+
+    val (roadLinksWithDirections, _) = RoundaboutProcessor.setTrafficDirection(roadLinks)
+
+    getTrafficDirection(1994740, roadLinksWithDirections) should be (TrafficDirection.AgainstDigitizing)
+    getTrafficDirection(1994739, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
+    getTrafficDirection(1994741, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
+    getTrafficDirection(1994748, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
+    getTrafficDirection(1994747, roadLinksWithDirections) should be (TrafficDirection.AgainstDigitizing)
+  }
+
   test("Set traffic direction to Roundabouts road links when the roundabout is a square (extreme case)"){
 
     val roadLinks = Seq(
@@ -82,18 +100,18 @@ class RoundaboutProcessorSpec extends FunSuite with Matchers {
 
     val (roadLinksWithDirections, _) = RoundaboutProcessor.setTrafficDirection(roadLinks)
 
-    getTrafficDirection(1, roadLinksWithDirections) should be (TrafficDirection.AgainstDigitizing)
+    getTrafficDirection(1, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
     getTrafficDirection(2, roadLinksWithDirections) should be (TrafficDirection.AgainstDigitizing)
     getTrafficDirection(3, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
-    getTrafficDirection(4, roadLinksWithDirections) should be (TrafficDirection.TowardsDigitizing)
+    getTrafficDirection(4, roadLinksWithDirections) should be (TrafficDirection.AgainstDigitizing)
   }
 
   test("Set traffic direction to Roundabouts road links when the roundabout is a triangle (extreme case)"){
 
     val roadLinks = Seq(
-      RoadLink(1, Seq(Point(35, 30), Point(20, 35), Point(25, 40)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
-      RoadLink(2, Seq(Point(25, 40), Point(35, 40), Point(45, 40)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
-      RoadLink(3, Seq(Point(45, 40), Point(35, 35), Point(35, 30)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+      RoadLink(1, Seq(Point(10, 10), Point(20, 30), Point(30, 50)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(2, Seq(Point(30, 50), Point(40, 30), Point(50, 10)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(3, Seq(Point(10, 10), Point(30, 10), Point(50, 10)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None)
     )
 
     val (roadLinksWithDirections, _) = RoundaboutProcessor.setTrafficDirection(roadLinks)

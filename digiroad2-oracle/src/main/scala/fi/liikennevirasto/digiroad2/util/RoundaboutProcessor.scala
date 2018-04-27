@@ -82,9 +82,9 @@ object RoundaboutProcessor {
         else if(startPoint.y < endPoint.y)
           setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.TowardsDigitizing, changeSet)
         else if(startPoint.x < endPoint.x)
-          setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.AgainstDigitizing, changeSet)
-        else
           setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.TowardsDigitizing, changeSet)
+        else
+          setRoundaboutChangeSet(pRoadLinks, roadLink, TrafficDirection.AgainstDigitizing, changeSet)
     }
   }
 
