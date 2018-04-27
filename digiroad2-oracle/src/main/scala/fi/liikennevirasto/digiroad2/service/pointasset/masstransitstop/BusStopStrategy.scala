@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddressException}
 
 class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService, val eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends AbstractBusStopStrategy {
 
@@ -41,7 +41,12 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     def addRoadAddressProperties(oldProperties: Seq[Property]): Seq[Property] = {
       roadLinkOption match {
         case Some(roadLink) =>
-          getRoadAddressPropertiesByLinkId(asset, roadLink, oldProperties)
+          try {
+            getRoadAddressPropertiesByLinkId(asset, roadLink, oldProperties)
+          } catch {
+            case e: RoadAddressException =>
+              oldProperties
+          }
         case _ => oldProperties
       }
     }
