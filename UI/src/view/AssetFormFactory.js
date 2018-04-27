@@ -136,7 +136,7 @@
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' +required+ ' class="form-control" value=' + _value + '  id="' + className + '" '+ disabled+'>' +
+        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' +required+ ' class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
         unit +
         '</div>');
 
@@ -224,14 +224,6 @@
 
       var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId, fieldType: field.type, required: required}));
 
-      // var defaultValue = field.defaultValue;
-      // if(defaultValue && _.isEmpty(fieldValue))
-      //   fieldValue = String(defaultValue);
-      //
-      // // _.forEach(fieldValue, function(current){
-      // //   element.find('option[value="'+current+'"]').attr('selected', true);
-      // // });
-
       element.find('select').on('change', function(){
         me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
@@ -292,12 +284,6 @@
 
       var element =  $(template({divCheckBox: divCheckBox}));
 
-      //
-      //
-      // _.forEach(fieldValue, function(current){
-      //   element.find(':input[value="'+current+'"]').attr('checked', true);
-      // });
-
       element.find('input').on('click', function(){
         var val = [];
         $('.multiChoice-'+sideCode+':checked').each(function(i){
@@ -305,15 +291,6 @@
         });
         me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
       });
-
-
-      // element.find('input').on('click', function(){
-      //   var val = {
-      //     checked : $(this).prop('checked'),
-      //     value : $(this).val()
-      //   };
-      //   me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
-      // });
 
       return element;
     };
@@ -417,11 +394,6 @@
         '</div>'+
         '</div>');
 
-      // var checked = value === defaultValue ;
-      // element.find("input[type=checkbox]").attr('checked', !!parseInt(value));
-      // element.find('input').attr('value', value);
-      // if(assetValue != value)
-      //  me.inputElementHandler(assetTypeConfiguration, value, field, setValue, asset);
       element.find('input').on('click', function(){
         var val  = $(this).prop('checked') ? 1: 0;
         element.find('input').attr('value', val);
@@ -447,14 +419,14 @@
     };
   };
 
-  var SaveButton = function(assetTypeConfiguration) {
+  var SaveButton = function(assetTypeConfiguration, formStructure) {
 
     var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
       assetTypeConfiguration.selectedLinearAsset.save();
     });
 
     var updateStatus = function(element) {
-     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing() && assetTypeConfiguration.selectedLinearAsset.hasValidValues())
+     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing(formStructure) && assetTypeConfiguration.selectedLinearAsset.hasValidValues() && !assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparatedEqual())
        element.prop('disabled',!assetTypeConfiguration.selectedLinearAsset.isSaveable());
      else{
        element.prop('disabled', true);
@@ -736,8 +708,8 @@
           '</footer>'
       );
 
-      body.find('.linear-asset-header').append( new SaveButton(assetTypeConfiguration).element).append(new CancelButton(assetTypeConfiguration).element);
-      body.find('.linear-asset-footer').append( new VerificationButton(assetTypeConfiguration).element).append( new SaveButton(assetTypeConfiguration).element).append(new CancelButton(assetTypeConfiguration).element);
+      body.find('.linear-asset-header').append( new SaveButton(assetTypeConfiguration, formStructure).element).append(new CancelButton(assetTypeConfiguration).element);
+      body.find('.linear-asset-footer').append( new VerificationButton(assetTypeConfiguration).element).append( new SaveButton(assetTypeConfiguration, formStructure).element).append(new CancelButton(assetTypeConfiguration).element);
       return { body : body, separateButton: toSeparateButton};
     }
 
@@ -806,8 +778,6 @@
       });
       return value;
     }
-
-
 
     function addBodyEvents(rootElement, assetTypeConfiguration, isReadOnly) {
       rootElement.find('.form-controls').toggle(!isReadOnly);

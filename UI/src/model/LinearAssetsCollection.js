@@ -160,6 +160,7 @@
     };
 
     this.splitLinearAsset = function(id, split, callback) {
+      debugger;
       var link = _.find(_.flatten(linearAssets), { id: id });
 
       var left = _.cloneDeep(link);
