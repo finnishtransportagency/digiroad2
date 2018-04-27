@@ -16,21 +16,21 @@
         var municipalities;
         var roleName = [];
         var areas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-        var elys = [ {name: "hvenanmaa", id: 0},
-                     {name: "Lapin", id: 1},
-                     {name: "Pohjois-Pohjanmaan", id: 2},
-                     {name: "Etelä-Pohjanmaan", id: 3},
-                     {name: "Keski-Suomen", id: 4},
-                     {name: "Pohjois-Savon", id: 5},
-                     {name: "Pirkanmaan", id: 6},
-                     {name: "Varsinais-Suomen", id: 7},
-                     {name: "Kaakkois-Suomen", id: 8},
-                     {name: "Uudenmaan", id: 9}];
+        var elys = [ {name: "Ahvenanmaa", id: 0},
+                     {name: "Lappi", id: 1},
+                     {name: "Pohjois-Pohjanmaa", id: 2},
+                     {name: "Etelä-Pohjanmaa", id: 3},
+                     {name: "Keski-Suomi", id: 4},
+                     {name: "Pohjois-Savo", id: 5},
+                     {name: "Pirkanmaa", id: 6},
+                     {name: "Varsinais-Suomi", id: 7},
+                     {name: "Kaakkois-Suomi", id: 8},
+                     {name: "Uusimaa", id: 9}];
 
         var userSpecs =[{ role: "municipality", enabledCheckbox: [ municipalityCheckbox ], disabledCheckbox: [ operatorCheckbox, elysCheckbox, areasCheckbox]   },
                         { role: "ely", enabledCheckbox: [ elysCheckbox, areasCheckbox ], disabledCheckbox: [operatorCheckbox,  municipalityCheckbox]  },
-                        { role: "operator" ,  enabledCheckbox: [operatorCheckbox, areasCheckbox], disabledCheckbox: [ elysCheckbox,  municipalityCheckbox ] },
-                        { role: "areas",  enabledCheckbox: [ areasCheckbox, elysCheckbox, operatorCheckbox ], disabledCheckbox: [ municipalityCheckbox] },
+                        { role: "operator" ,  enabledCheckbox: [operatorCheckbox], disabledCheckbox: [ elysCheckbox,  municipalityCheckbox, areasCheckbox ] },
+                        { role: "areas",  enabledCheckbox: [ areasCheckbox, elysCheckbox ], disabledCheckbox: [ municipalityCheckbox, operatorCheckbox ] },
                         { role: "default", enabledCheckbox: [ areasCheckbox, elysCheckbox, operatorCheckbox, municipalityCheckbox], disabledCheckbox: [] }];
 
 
@@ -228,11 +228,11 @@
             $('#municipalities_search').multiselect({
                 search: {
                     left:
-                        '<label class="control-label labelBoxLeft">Kaikki kunnat</>' +
-                        '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
+                        '<label class="control-label labelBoxLeft">Kaikki kunnat</label>' +
+                        '<input type="text" name="from[]" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
                     right:
-                        '<label class="control-label labelBoxRight">Valitut Kunnat</>' +
-                        '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
+                        '<label class="control-label labelBoxRight">Valitut Kunnat</label>' +
+                        '<input type="text" name="to[]" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
@@ -243,10 +243,10 @@
                 search: {
                     left:
                     '<label class="control-label labelBoxLeft Ely">Kaikki Elyt</>' +
-                    '<input type="text" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
+                    '<input type="text" class="form-control" placeholder="ELY-keskus" style="width: 151px;" />',
                     right:
                     '<label class="control-label labelBoxRight Ely">Valitut Elyt</>' +
-                    '<input type="text" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
+                    '<input type="text" class="form-control" placeholder="ELY-keskus" style="width: 151px;" />'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
@@ -255,8 +255,8 @@
 
             $('#multiselect').multiselect({
               search: {
-                left: '<label class="control-label labelBoxLeft Areas">Kaikki ylläpitoalueett</label>',
-                right: '<label class="control-label labelBoxRight Areas">Valitut ylläpitoalueett</label>'
+                left: '<label class="control-label labelBoxLeft Areas">Kaikki ylläpitoalueet</label>',
+                right: '<label class="control-label labelBoxRight Areas">Valitut ylläpitoalueet</label>'
               }
             });
         });

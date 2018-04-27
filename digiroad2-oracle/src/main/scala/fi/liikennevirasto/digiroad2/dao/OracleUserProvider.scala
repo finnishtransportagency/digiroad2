@@ -27,8 +27,8 @@ class OracleUserProvider extends UserProvider {
   def createUser(username: String, config: Configuration, name: Option[String] = None) = {
     OracleDatabase.withDynSession {
       sqlu"""
-        insert into service_user (id, username, configuration, name)
-        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name)
+        insert into service_user (id, username, configuration, name, created_at)
+        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name, sysdate)
       """.execute
     }
   }
@@ -42,7 +42,7 @@ class OracleUserProvider extends UserProvider {
 
   def saveUser(user: User): User = {
     OracleDatabase.withDynSession {
-      sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name} where lower(username) = ${user.username.toLowerCase}""".execute
+      sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name}, modified_at = sysdate where lower(username) = ${user.username.toLowerCase}""".execute
       user
     }
   }

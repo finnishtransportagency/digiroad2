@@ -101,7 +101,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
       halt(Forbidden("Vain operaattori voi lisätä käyttäjiä"))
     }
     val (username, roleName, name) =
-      (request.getParameter("username"), request.getParameterValues("roleName").mkString(","), request.getParameter("name"))
+      (request.getParameter("username"), request.getParameterValues("roleName"), request.getParameter("name"))
 
     val elyNumber = request.getParameterValues("elyNumber") == null match {
       case false => request.getParameterValues("elyNumber").mkString(",")
@@ -125,14 +125,11 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
     val municipalityNumbers =  municipalitiesOfEly ++ splitToInts(municipalities).getOrElse(Set())
 
-    val availableRoles = Set(Role.BusStopMaintainer, Role.Operator, Role.Premium, Role.ServiceRoadMaintainer)
-    val roles = availableRoles.find(_ == roleName) match{
-      case Some(role) => Set[String](role)
-      case _ => Set[String]()
-    }
+    val availableRoles = Set(Role.BusStopMaintainer, Role.Operator, Role.ServiceRoadMaintainer)
+    val roles: Set[String] = roleName.filter(availableRoles.contains).toSet
 
     val authorizedAreas = splitToInts(authorizationArea) match {
-      case Some(authIds) if roleName == Role.ServiceRoadMaintainer  =>
+      case Some(authIds) if roles.contains(Role.ServiceRoadMaintainer)  =>
         if(authIds.toSet.subsetOf((1 to 12).toSet))
           authIds.toSet
         else
