@@ -2,7 +2,7 @@
 
     var getPropertyValues = function (name, selectedAsset) {
       var prop = _.find(selectedAsset.propertyData, function (type) {
-        return type.name === name;
+        return type.localizedName === name;
       });
       return prop.values ? prop.values : [];
     };
