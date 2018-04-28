@@ -453,17 +453,10 @@
     var className = assetTypeConfiguration.className;
 
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
-      function dayOrder(period) {
-        var days = {
-          Weekday: 0,
-          Saturday: 1,
-          Sunday: 2
-        };
-        return days[period.days];
-      }
+
       var existingValidityPeriodElements =
-        _(assetValue ? assetValue.validityPeriods : '')
-          .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+        _(_.map(fieldValue, function(values) { return values.value ; }))
+          .sortByAll('days', 'startHour', 'startMinute', 'endHour', 'endMinute')
           .map(validityPeriodElement)
           .join('');
 
@@ -472,20 +465,18 @@
           '<li><div class="form-group new-validity-period">' +
           '  <select class="form-control select">' +
           '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
-          '    <option value="Weekday">Ma–Pe</option>' +
-          '    <option value="Saturday">La</option>' +
-          '    <option value="Sunday">Su</option>' +
+          '    <option value="0">Ma–Pe</option>' +
+          '    <option value="1">La</option>' +
+          '    <option value="2">Su</option>' +
           '  </select>' +
           '</div></li>';
       }
 
-      var dayLabels = {
-        Weekday: "Ma–Pe",
-        Saturday: "La",
-        Sunday: "Su"
-      };
+
 
       function validityPeriodElement(period) {
+        var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
+
         return '' +
           '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
           '  <button class="delete btn-delete">x</button>' +
@@ -560,7 +551,7 @@
             startMinute: parseInt($(element).find('.start-minute').val(), 10),
             endHour: parseInt($(element).find('.end-hour').val(), 10),
             endMinute: parseInt($(element).find('.end-minute').val(), 10),
-            days: parseInt( dayOrder({days: $(element).data('days')}), 10)
+            days: parseInt($(element).find('select').val(), 10)
           };
         });
       }
@@ -598,6 +589,25 @@
       });
 
       return element;
+    };
+
+    me.viewModeRender = function (field, currentValue) {
+       var validityPeriodTable = _.map(currentValue, function(value) {
+         var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
+         var period = value.value;
+        return '' +
+          '<li>' + dayLabels[period.days] + " " + period.startHour + ":" + ("0" + period.startMinute).slice(-2)  + " - " + period.endHour + ":" + ("0" + period.endMinute).slice(-2) + '</li>';
+      }).join('');
+
+    return $('' +
+      '<div class="form-group">' +
+      '<p>' +
+      '<ul class="form-control-static">' +
+      validityPeriodTable +
+      '</ul>' +
+      '</p>' +
+      '</div>' );
+
     };
   };
 

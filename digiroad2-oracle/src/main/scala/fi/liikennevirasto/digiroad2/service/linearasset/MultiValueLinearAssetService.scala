@@ -183,20 +183,25 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
   def enrichPersistedLinearAssetProperties(persistedLinearAsset: Seq[PersistedLinearAsset]) : Seq[PersistedLinearAsset] = {
 
     val assetIds = persistedLinearAsset.map(_.id)
-    val properties = multiValueLinearAssetDao.getValidityPeriodPropertyValue(assetIds.toSet, persistedLinearAsset.head.typeId)
 
-    persistedLinearAsset.groupBy(_.id).flatMap{
-      case (id, assets) =>
-        properties.get(id) match {
-          case Some(props) => assets.map(a => a.copy(value = a.value match {
+    if (assetIds.nonEmpty) {
+      val properties = multiValueLinearAssetDao.getValidityPeriodPropertyValue(assetIds.toSet, persistedLinearAsset.head.typeId)
+      persistedLinearAsset.groupBy(_.id).flatMap {
+        case (id, assets) =>
+          properties.get(id) match {
+            case Some(props) => assets.map(a => a.copy(value = a.value match {
               case Some(value) =>
                 val multiValue = value.asInstanceOf[MultiValue]
-                Some(multiValue.copy(value = MultiAssetValue(multiValue.value.properties ++ props)))
+                //If exist at least one property to enrich with value all null properties value could be filter out
+                Some(multiValue.copy(value = MultiAssetValue(multiValue.value.properties.filter(_.values.nonEmpty ) ++ props)))
               case _ =>
                 Some(MultiValue(MultiAssetValue(props)))
             }))
-          case _ => assets
-        }
-    }.toSeq
+            case _ => assets
+          }
+      }.toSeq
+    } else {
+      Seq.empty[PersistedLinearAsset]
+    }
   }
 }

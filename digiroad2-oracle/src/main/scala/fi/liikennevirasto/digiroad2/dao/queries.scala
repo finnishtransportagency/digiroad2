@@ -170,20 +170,23 @@ object Queries {
     """
   }
 
-  def updateTimePeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
-    sqlu"""
-      update validity_period_property_value
-      set period_week_day = ${validityPeriodValue.days}, type = ${validityPeriodValue.periodType},
-          start_hour = ${validityPeriodValue.startHour}, end_hour =  ${validityPeriodValue.endHour},
-          start_minute =  ${validityPeriodValue.startMinute}, end_minute = ${validityPeriodValue.startMinute}
-      where asset_id = $assetId and property_id = $propertyId
-      """
-  }
+//  def existsValidityPeriodProperty =
+//    "select id from date_property_value where asset_id = ? and property_id = ?"
 
-  def deleteTimePeriodProperty(assetId: Long, propertyId: Long) =
+//  def updateValidityPeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
+//    sqlu"""
+//      update validity_period_property_value
+//      set period_week_day = ${validityPeriodValue.days}, type = ${validityPeriodValue.periodType},
+//          start_hour = ${validityPeriodValue.startHour}, end_hour =  ${validityPeriodValue.endHour},
+//          start_minute =  ${validityPeriodValue.startMinute}, end_minute = ${validityPeriodValue.startMinute}
+//      where asset_id = $assetId and property_id = $propertyId
+//      """
+//  }
+
+  def deleteValidityPeriodProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from validity_period_property_value where asset_id = $assetId and property_id = $propertyId"
 
-  def insertTimePeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
+  def insertValidityPeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
     sqlu"""
       insert into validity_period_property_value(id, property_id, asset_id, type, period_week_day, start_hour, end_hour, start_minute, end_minute)
       values (primary_key_seq.nextval, $propertyId, $assetId, ${validityPeriodValue.periodType}, ${validityPeriodValue.days}, ${validityPeriodValue.startHour},

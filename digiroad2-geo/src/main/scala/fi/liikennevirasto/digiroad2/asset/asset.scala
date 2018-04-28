@@ -189,6 +189,10 @@ object ValidityPeriodValue {
       map("endHour").asInstanceOf[BigInt].toInt,
       map("startMinute").asInstanceOf[BigInt].toInt,
       map("endMinute").asInstanceOf[BigInt].toInt,
+//      map("periodType") match {
+//        case Some(value) => Some(value.asInstanceOf[BigInt].toInt)
+//        case _ => None
+//      })
 
       if (map.contains("periodType")) {
         map("periodType") match {
