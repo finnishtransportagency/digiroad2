@@ -568,7 +568,7 @@
     return $('' +
       '<div class="form-group">' +
       '<p>' +
-      '<ul class="form-control-static">' +
+      '<ul class="form-control-static validity-period-group">' +
       validityPeriodTable +
       '</ul>' +
       '</p>' +
