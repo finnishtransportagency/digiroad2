@@ -380,7 +380,7 @@
       isVerifiable: true,
       form: new AssetFormFactory({
         fields: [
-          {label: "Numeric", type: 'time_period', publicId: "public_validity_period", weight: 1}
+          {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1, required: true}
         ]
       })
     },

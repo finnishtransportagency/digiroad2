@@ -26,7 +26,7 @@
 
       var value = _.cloneDeep(asset.value);
 
-      if(!value || !value.properties)
+      if(!value || !value.properties || _.isUndefined(value.properties[0].publicId) )
         value = { properties: [] };
 
       var properties = _.find(value.properties, function(property){ return property.publicId === field.publicId; });
@@ -136,7 +136,7 @@
       var element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' +required+ ' class="form-control" value=' + _value + '  id="' + className + '" '+ disabled+'>' +
+        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' +required+ ' class="form-control" value="' + _value + '"  id="' + className + '" '+ disabled+'>' +
         unit +
         '</div>');
 
@@ -224,14 +224,6 @@
 
       var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId, fieldType: field.type, required: required}));
 
-      // var defaultValue = field.defaultValue;
-      // if(defaultValue && _.isEmpty(fieldValue))
-      //   fieldValue = String(defaultValue);
-      //
-      // // _.forEach(fieldValue, function(current){
-      // //   element.find('option[value="'+current+'"]').attr('selected', true);
-      // // });
-
       element.find('select').on('change', function(){
         me.inputElementHandler(assetTypeConfiguration, $(this).val(), field, setValue, asset);
       });
@@ -292,12 +284,6 @@
 
       var element =  $(template({divCheckBox: divCheckBox}));
 
-      //
-      //
-      // _.forEach(fieldValue, function(current){
-      //   element.find(':input[value="'+current+'"]').attr('checked', true);
-      // });
-
       element.find('input').on('click', function(){
         var val = [];
         $('.multiChoice-'+sideCode+':checked').each(function(i){
@@ -305,15 +291,6 @@
         });
         me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
       });
-
-
-      // element.find('input').on('click', function(){
-      //   var val = {
-      //     checked : $(this).prop('checked'),
-      //     value : $(this).val()
-      //   };
-      //   me.inputElementHandler(assetTypeConfiguration, val, field, setValue, asset);
-      // });
 
       return element;
     };
@@ -417,11 +394,6 @@
         '</div>'+
         '</div>');
 
-      // var checked = value === defaultValue ;
-      // element.find("input[type=checkbox]").attr('checked', !!parseInt(value));
-      // element.find('input').attr('value', value);
-      // if(assetValue != value)
-      //  me.inputElementHandler(assetTypeConfiguration, value, field, setValue, asset);
       element.find('input').on('click', function(){
         var val  = $(this).prop('checked') ? 1: 0;
         element.find('input').attr('value', val);
@@ -452,7 +424,9 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
+
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
+      var disabled = _.isEmpty(assetValue) ? 'disabled' : '';
 
       var existingValidityPeriodElements =
         _(_.map(fieldValue, function(values) { return values.value ; }))
@@ -463,7 +437,7 @@
       function newValidityPeriodElement() {
         return '' +
           '<li><div class="form-group new-validity-period">' +
-          '  <select class="form-control select">' +
+          '  <select class="form-control select" ' + disabled + '>' +
           '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
           '    <option value="0">Ma–Pe</option>' +
           '    <option value="1">La</option>' +
@@ -472,15 +446,13 @@
           '</div></li>';
       }
 
-
-
       function validityPeriodElement(period) {
         var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
 
         return '' +
           '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
           '  <button class="delete btn-delete">x</button>' +
-          '  <label class="control-label">' +
+          '  <label class="control-label daysf">' +
           dayLabels[period.days] +
           '  </label>' +
           hourElement(period.startHour, 'start') +
@@ -525,7 +497,6 @@
         }).join('');
       }
 
-
       var template = _.template('' +
        '<div class="validity-period-group">' +
       ' <ul>' +
@@ -535,13 +506,13 @@
 
       var element = $(template({existingValidityPeriodElements: existingValidityPeriodElements}));
 
-      var manoeuvreData = function(formGroupElement) {
-        return {
-
-          validityPeriods: extractValidityPeriods(formGroupElement)
-
-        };
-      };
+      // var manoeuvreData = function(formGroupElement) {
+      //   return {
+      //
+      //     validityPeriods: extractValidityPeriods(formGroupElement)
+      //
+      //   };
+      // };
 
       function extractValidityPeriods(element) {
         var periodElements = element.find('.existing-validity-period');
@@ -551,19 +522,13 @@
             startMinute: parseInt($(element).find('.start-minute').val(), 10),
             endHour: parseInt($(element).find('.end-hour').val(), 10),
             endMinute: parseInt($(element).find('.end-minute').val(), 10),
-            days: parseInt($(element).find('select').val(), 10)
+            days: parseInt($(element).data('days'), 10)
           };
         });
       }
 
       function updateValidityPeriods(element) {
         var validityPeriods = extractValidityPeriods(element);
-
-        // var manoeuvre = manoeuvreData(element);
-        // selectedManoeuvreSource.setValidityPeriods(manoeuvreId, manoeuvre.validityPeriods);
-        // element.find('input').on('click', function(){
-        //   var val  = $(this).prop('checked') ? 1: 0;
-        //   element.find('input').attr('value', val);
           me.inputElementHandler(assetTypeConfiguration, validityPeriods, field, setValue, asset);
       }
 
@@ -577,6 +542,7 @@
       });
 
       element.on('change', '.new-validity-period select', function(event) {
+        disabled = "";
         $(event.target).closest('.validity-period-group ul').append(newValidityPeriodElement());
         $(event.target).parent().parent().replaceWith(validityPeriodElement({
           days: $(event.target).val(),
@@ -611,15 +577,15 @@
     };
   };
 
-  var SaveButton = function(assetTypeConfiguration) {
+  var SaveButton = function(assetTypeConfiguration, formStructure) {
 
     var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
       assetTypeConfiguration.selectedLinearAsset.save();
     });
 
     var updateStatus = function(element) {
-     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing() && assetTypeConfiguration.selectedLinearAsset.hasValidValues())
-       element.prop('disabled',!assetTypeConfiguration.selectedLinearAsset.isSaveable());
+     if(!assetTypeConfiguration.selectedLinearAsset.requiredPropertiesMissing(formStructure) && assetTypeConfiguration.selectedLinearAsset.hasValidValues() && !assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparatedEqual())
+       element.prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isSaveable());
      else{
        element.prop('disabled', true);
        }
@@ -901,8 +867,8 @@
           '</footer>'
       );
 
-      body.find('.linear-asset-header').append( new SaveButton(assetTypeConfiguration).element).append(new CancelButton(assetTypeConfiguration).element);
-      body.find('.linear-asset-footer').append( new VerificationButton(assetTypeConfiguration).element).append( new SaveButton(assetTypeConfiguration).element).append(new CancelButton(assetTypeConfiguration).element);
+      body.find('.linear-asset-header').append( new SaveButton(assetTypeConfiguration, formStructure).element).append(new CancelButton(assetTypeConfiguration).element);
+      body.find('.linear-asset-footer').append( new VerificationButton(assetTypeConfiguration).element).append( new SaveButton(assetTypeConfiguration, formStructure).element).append(new CancelButton(assetTypeConfiguration).element);
       return { body : body, separateButton: toSeparateButton};
     }
 
@@ -971,8 +937,6 @@
       });
       return value;
     }
-
-
 
     function addBodyEvents(rootElement, assetTypeConfiguration, isReadOnly) {
       rootElement.find('.form-controls').toggle(!isReadOnly);

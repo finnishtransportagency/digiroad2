@@ -4,6 +4,8 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
+import scala.util.Try
+
 sealed trait LinkGeomSource{
   def value: Int
 }
@@ -184,21 +186,22 @@ case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int]
 object ValidityPeriodValue {
   def fromMap(map: Map[String, Any]): ValidityPeriodValue = {
     ValidityPeriodValue(
-      map("days").asInstanceOf[BigInt].toInt,
-      map("startHour").asInstanceOf[BigInt].toInt,
-      map("endHour").asInstanceOf[BigInt].toInt,
-      map("startMinute").asInstanceOf[BigInt].toInt,
-      map("endMinute").asInstanceOf[BigInt].toInt,
-//      map("periodType") match {
-//        case Some(value) => Some(value.asInstanceOf[BigInt].toInt)
-//        case _ => None
-//      })
-
+      getPropertyValuesByPublicId("days", map),
+      getPropertyValuesByPublicId("startHour", map),
+      getPropertyValuesByPublicId("endHour", map),
+      getPropertyValuesByPublicId("startMinute", map),
+      getPropertyValuesByPublicId("endMinute", map),
       if (map.contains("periodType")) {
         map("periodType") match {
-          case Some(value) => Some(value.asInstanceOf[BigInt].toInt)
+          case Some(value) => Some(getPropertyValuesByPublicId("periodType", map )
+          )
           case _ => None}
       } else None)
+  }
+  def getPropertyValuesByPublicId(property: String, mapValue: Map[String, Any]) = {
+    Try(mapValue(property).asInstanceOf[BigInt].toInt).getOrElse(mapValue(property).asInstanceOf[Int])
+//  def getValidityPeridoPropertyValue(asset: ): Int {
+//
   }
 
   def toMap(value: ValidityPeriodValue):  Map[String, Any] = {
@@ -207,9 +210,20 @@ object ValidityPeriodValue {
       "startHour" -> value.startHour,
       "endHour" -> value.endHour,
       "startMinute" -> value.startMinute,
-      "endMinute" -> value.endMinute,
-      "periodType" -> value.periodType
+      "endMinute" -> value.endMinute
+//      "periodType" -> value.periodType
     )
+  }
+
+  def duration(startHour: Int, startMinute: Int, endHour: Int, endMinute: Int ): Int = {
+    val startHourAndMinutes: Double = (startMinute / 60.0) + startHour
+    val endHourAndMinutes: Double = (endMinute / 60.0) + endHour
+
+    if (endHourAndMinutes > startHourAndMinutes) {
+      Math.ceil(endHourAndMinutes - startHourAndMinutes).toInt
+    } else {
+      Math.ceil(24 - startHourAndMinutes + endHourAndMinutes).toInt
+    }
   }
 }
 

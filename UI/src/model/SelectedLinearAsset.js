@@ -341,6 +341,11 @@
             if(this.isSplitOrSeparated())
               return checkFormsMandatoryFields(selection) && isValueDifferent(selection);
             return checkFormsMandatoryFields(selection);
+          case 'massTransitLanes':
+            var isfilled = _.every(_.map(selection, function(field) {return field.value.properties;}) , function(prop) {return !_.isUndefined(prop[0].values);});
+            if(this.isSplitOrSeparated())
+              return isfilled && !_.isEqual(selection[0].value.properties[0].values, selection[1].value.properties[0].values);
+            return isfilled  /*V4.0.0 lodash&& _.uniqWith(selection.value.properties[0].values, _.isEqual).length == selection.value.properties[0].values.length */;
           default:
             if (this.isSplitOrSeparated() && valuesDiffer())
               return validator(selection[0].value) && validator(selection[1].value);
@@ -359,21 +364,41 @@
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
 
-    this.requiredPropertiesMissing = function () {
+    this.requiredPropertiesMissing = function (formStructure) {
 
-      return !_.every(selection, function(asset){
-        if(!asset.value || _.isEmpty(asset.value) || _.isEmpty(asset.value.properties))
-          return true;
+      var requiredFields = _.filter(formStructure.fields, function(form) { return form.required; });
 
-        return _.every(asset.value.properties, function(property){
-          if(!property.required)
-            return true;
+      var assets = this.isSplitOrSeparated() ? _.filter(selection, function(asset){ return asset.value; }) : selection;
+
+      return !_.every(assets, function(asset){
+
+        return _.every(requiredFields, function(field){
+          if(!asset.value || _.isEmpty(asset.value))
+            return false;
+
+          var property  = _.find(asset.value.properties, function(p){ return p.publicId === field.publicId;});
+
+          if(!property)
+            return false;
 
           if(_.isEmpty(property.values))
             return false;
 
           return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
         });
+      });
+    };
+
+    this.isSplitOrSeparatedEqual = function(){
+      if (_.filter(selection, function(p){return p.values;}).length <= 1)
+        return false;
+
+      return _.every(selection[0].value.properties, function(property){
+          var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
+          if(!iProperty)
+            return false;
+
+          return _.isEqual(property.values, iProperty.values);
       });
     };
 

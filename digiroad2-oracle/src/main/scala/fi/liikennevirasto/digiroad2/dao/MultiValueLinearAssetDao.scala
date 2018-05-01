@@ -98,20 +98,6 @@ class MultiValueLinearAssetDao {
     }.values.toSeq
   }
 
-  //TODO never used, check if is suppose to use it
-//  private def queryToPersistedLinearAssets(query: String): Seq[PersistedLinearAsset] = {
-//    val rows = Q.queryNA[MultiValueAssetRow](query).iterator.toSeq
-//
-//    rows.groupBy(_.id).map { case (id, assetRows) =>
-//      val row = assetRows.head
-//      val value: MultiAssetValue = MultiAssetValue(assetRowToProperty(assetRows))
-//
-//      id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(MultiValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
-//        createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  vvhTimeStamp = row.vvhTimeStamp,
-//        geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate)
-//    }.values.toSeq
-//  }
-
   def assetRowToProperty(assetRows: Iterable[MultiValueAssetRow]): Seq[MultiTypeProperty] = {
     assetRows.groupBy(_.value.publicId).map { case (key, rows) =>
       val row = rows.head
@@ -256,9 +242,6 @@ class MultiValueLinearAssetDao {
             val validityPeriodValue = ValidityPeriodValue.fromMap(propertyValue.value.asInstanceOf[Map[String, Any]])
 
             insertValidityPeriodProperty(assetId, propertyId, validityPeriodValue).execute
-//            } else {
-//              updateValidityPeriodProperty(assetId, propertyId, validityPeriodValue).execute
-//            }
           }
         }
 
@@ -276,10 +259,6 @@ class MultiValueLinearAssetDao {
   private def datePropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
     Q.query[(Long, Long), Long](existsDateProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
-
-//  private def validityPeriodPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
-//    Q.query[(Long, Long), Long](existsValidityPeriodProperty).apply((assetId, propertyId)).firstOption.isEmpty
-//  }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
     Q.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
@@ -376,16 +355,16 @@ class MultiValueLinearAssetDao {
       val publicId = r.nextString
       val propertyType = r.nextString
       val required = r.nextBoolean
-      val value = ValidityPeriodValue(
-        days = r.nextInt,
-        startHour = r.nextInt,
-        endHour = r.nextInt,
-        startMinute = r.nextInt,
-        endMinute = r.nextInt,
-        periodType = r.nextIntOption
+      val value =
+        Map("days" -> r.nextInt,
+          "startHour" -> r.nextInt,
+          "endHour" -> r.nextInt,
+          "startMinute" -> r.nextInt,
+          "endMinute" -> r.nextInt,
+          "periodType" -> r.nextIntOption
       )
 
-      ValidityPeriodRow(assetId, publicId, propertyType, required, MultiTypePropertyValue(ValidityPeriodValue.toMap(value)))
+      ValidityPeriodRow(assetId, publicId, propertyType, required, MultiTypePropertyValue(value))
     }
   }
 }

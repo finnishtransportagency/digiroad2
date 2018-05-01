@@ -148,7 +148,6 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     }
   }
 
-
   override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = enrichPersistedLinearAssetProperties(multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id))).head
