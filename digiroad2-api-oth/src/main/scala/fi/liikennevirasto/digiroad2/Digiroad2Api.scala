@@ -714,7 +714,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case true =>
         mapLinearAssets(maintenanceRoadService.getByZoomLevel)
       case false =>
-        getLinearAssets(user, municipalities, MaintenanceRoadAsset.typeId)
+        getLinearAssets(MaintenanceRoadAsset.typeId)
     }
   }
 
@@ -729,7 +729,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case true =>
         mapLinearAssets(maintenanceRoadService.getWithComplementaryByZoomLevel)
       case false =>
-        getLinearAssetsWithComplementary(user, municipalities, MaintenanceRoadAsset.typeId)
+        getLinearAssetsWithComplementary(MaintenanceRoadAsset.typeId)
     }
   }
 
@@ -1162,20 +1162,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/speedLimits/inaccurates") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
-    municipalityCode.foreach(validateUserMunicipalityAccess(user))
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
 
     user.isOperator() match {
       case true =>
         speedLimitService.getSpeedLimitsWithInaccurates()
       case false =>
-          speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
+        speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
     }
   }
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
     val ids = (parsedBody \ "ids").extract[Seq[Long]]
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
@@ -1190,8 +1188,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     speedLimitService.split(params("speedLimitId").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       (parsedBody \ "existingValue").extract[Int],
@@ -1202,8 +1198,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     speedLimitService.separate(params("speedLimitId").toLong,
       (parsedBody \ "valueTowardsDigitization").extract[Int],
       (parsedBody \ "valueAgainstDigitization").extract[Int],
@@ -1270,8 +1264,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/manoeuvres") {
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[NewManoeuvre]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
 
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
@@ -1291,8 +1283,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   delete("/manoeuvres") {
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
 
     manoeuvreIds.foreach { manoeuvreId =>
@@ -1367,8 +1357,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def getGroupedPointAssets: Seq[MassLimitationPointAsset] = {
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     val typeIds = params.get("typeIds").getOrElse(halt(BadRequest("type Id parameters missing")))
     validateBoundingBox(bbox)

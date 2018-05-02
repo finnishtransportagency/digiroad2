@@ -2,7 +2,6 @@
   root.MunicipalityWorkList = function(){
     WorkListView.call(this);
     var me = this;
-    this.roles = {};
     this.hrefDir = "#work-list/municipality";
     this.title = 'Tietolajien kuntasivu';
     var backend;
@@ -14,13 +13,7 @@
 
     this.initialize = function(mapBackend){
       backend = mapBackend;
-      me.bindExternalEventHandlers();
       me.bindEvents();
-    };
-    this.bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        me.roles = roles;
-      });
     };
     this.bindEvents = function () {
       eventbus.on('municipality:select', function(listP) {

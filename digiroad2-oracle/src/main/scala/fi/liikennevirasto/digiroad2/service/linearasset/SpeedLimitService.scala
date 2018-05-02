@@ -331,28 +331,30 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Create new speed limit when value received from UI changes and expire the old one. Used by SpeeedLimitsService.updateValues.
     */
-  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
-    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)]): Unit = {
-      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
-    }
 
-    validateMunicipalities(dao.getLinksWithLengthFromVVH(20, id))
-
-    //Get all data from the speedLimit to update
-    val speedLimit = dao.getPersistedSpeedLimit(id).get
-
-    //Expire old speed limit
-    dao.updateExpiration(id, true, username)
-
-    //Create New Asset copy by the old one with new value
-    val newAssetId =
-      dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure),
-        speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate,
-        Some(username), Some(DateTime.now()), speedLimit.linkSource)
-
-    existOnInaccuratesList(id, newAssetId)
-    newAssetId
-  }
+  //TODO: check if needed
+//  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
+//    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)]): Unit = {
+//      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
+//    }
+//
+////    validateMunicipalities(dao.getLinksWithLengthFromVVH(20, id))
+//
+//    //Get all data from the speedLimit to update
+//    val speedLimit = dao.getPersistedSpeedLimit(id).get
+//
+//    //Expire old speed limit
+//    dao.updateExpiration(id, true, username)
+//
+//    //Create New Asset copy by the old one with new value
+//    val newAssetId =
+//      dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure),
+//        speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate,
+//        Some(username), Some(DateTime.now()), speedLimit.linkSource)
+//
+//    existOnInaccuratesList(id, newAssetId)
+//    newAssetId
+//  }
 
   def update(id: Long, newLimits: Seq[NewLinearAsset], username: String): Seq[Long] = {
     withDynTransaction {

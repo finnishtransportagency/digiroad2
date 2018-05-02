@@ -109,12 +109,11 @@
     MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
 
-    new WorkListView().initialize();
+    new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
-    new SpeedLimitWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
+    new SpeedLimitWorkList().initialize();
 
-    // backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
@@ -265,11 +264,12 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(
+    new PointAssetForm(
        pointAsset,
        roadCollection,
        applicationModel,
-       backend);
+       backend,
+       pointAsset.saveCondition || function() {return true;});
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
