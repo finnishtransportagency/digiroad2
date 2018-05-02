@@ -36,6 +36,8 @@ case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double
 
 case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
+case class NewMultiValLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: MultiAssetValue, sideCode: Int)
+
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
@@ -62,7 +64,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val widthLimitService: WidthLimitService = Digiroad2Context.widthLimitService,
                    val pointMassLimitationService: PointMassLimitationService = Digiroad2Context.pointMassLimitationService,
                    val assetService: AssetService = Digiroad2Context.assetService,
-                   val verificationService: VerificationService = Digiroad2Context.verificationService)
+                   val verificationService: VerificationService = Digiroad2Context.verificationService,
+                   val multiValueLinearAssetService: MultiValueLinearAssetService = Digiroad2Context.multiValueLinearAssetService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -858,6 +861,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
     val maintenanceRoadParameter: Option[Seq[Properties]] = value.extractOpt[Seq[Properties]]
     val textualParameter = value.extractOpt[String]
+    val multiValueParameter: Option[MultiAssetValue] = value.extractOpt[MultiAssetValue]
 
     val prohibition = prohibitionParameter match {
       case Some(Nil) => None
@@ -871,11 +875,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(x) => Some(MaintenanceRoad(x))
     }
 
+    val multiValueProps = multiValueParameter match {
+      case Some(MultiAssetValue(Nil)) => None
+      case None => None
+      case Some(x) => Some(MultiValue(x))
+    }
+
     numericValue
       .map(NumericValue)
       .orElse(textualParameter.map(TextualValue))
       .orElse(prohibition)
       .orElse(maintenanceRoad)
+      .orElse(multiValueProps)
   }
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
@@ -886,6 +897,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode, 0, None))
       case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
+      //TODO Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset
+      //TODO remove, only for teest
+      case DamagedByThaw.typeId | PavedRoad.typeId =>
+        value.extractOpt[Seq[NewMultiValLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MultiValue(x.value), x.sideCode, 0, None))
       case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
     }
@@ -1460,11 +1475,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
       case MaintenanceRoadAsset.typeId => maintenanceRoadService
-      case PavedRoad.typeId => pavingService
+      case PavedRoad.typeId => multiValueLinearAssetService
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
+      //TODO Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset
+      case DamagedByThaw.typeId =>  multiValueLinearAssetService
       case _ => linearAssetService
     }
   }

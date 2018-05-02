@@ -10,6 +10,9 @@
       europeanRoads: function() { return true; },
       exitNumbers: function() { return true; },
       maintenanceRoad: function() { return true; },
+      roadDamagedByThaw: function() { return true; },
+      //TODO remove this after tests
+      pavedRoad: function() { return true; },
       default: function(val) {
         if(_.isUndefined(val)) { return true; }
         else if(val > 0) { return true; }

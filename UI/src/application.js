@@ -250,15 +250,18 @@
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
-     LinearAssetForm.initialize(
-       linearAsset.selectedLinearAsset,
-       linearAsset.singleElementEventCategory,
-       AssetFormElementsFactory.construct(linearAsset),
-       linearAsset.newTitle,
-       linearAsset.title,
-       linearAsset.editConstrains || function() {return false;},
-       linearAsset.layerName,
-       linearAsset.isVerifiable);
+      if(linearAsset.form)
+        linearAsset.form.initialize(linearAsset);
+      else
+        LinearAssetForm.initialize(
+          linearAsset.selectedLinearAsset,
+          linearAsset.singleElementEventCategory,
+          AssetFormElementsFactory.construct(linearAsset),
+          linearAsset.newTitle,
+          linearAsset.title,
+          linearAsset.editConstrains || function() {return false;},
+          linearAsset.layerName,
+          linearAsset.isVerifiable);
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
@@ -281,7 +284,6 @@
     };
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-
       var parameters ={
         map: map,
         application: applicationModel,
@@ -293,7 +295,7 @@
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
         style: asset.style || new PiecewiseLinearAssetStyle(),
-        formElements: AssetFormElementsFactory.construct(asset),
+        formElements: asset.form ?  asset.form : AssetFormElementsFactory.construct(asset),
         assetLabel: asset.label,
         roadAddressInfoPopup: roadAddressInfoPopup,
         editConstrains: asset.editConstrains || function () {return false;},

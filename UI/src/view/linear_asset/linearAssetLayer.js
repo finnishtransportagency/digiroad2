@@ -239,7 +239,9 @@ root.LinearAssetLayer  = function(params) {
           selectedLinearAsset.closeMultiple();
         selectToolControl.deactivateDraw();},
         validator: selectedLinearAsset.validator,
-        formElements: params.formElements
+        formElements: params.formElements,
+       selectedLinearAsset: selectedLinearAsset,
+       assetTypeConfiguration: params
       });
   };
 
