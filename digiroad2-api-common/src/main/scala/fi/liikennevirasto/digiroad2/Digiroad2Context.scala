@@ -326,6 +326,10 @@ object Digiroad2Context {
     new VerificationService(eventbus, roadLinkService)
   }
 
+  lazy val municipalityService: MunicipalityService = {
+    new MunicipalityService(eventbus, roadLinkService)
+  }
+
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }
