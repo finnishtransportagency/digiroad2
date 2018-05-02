@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MassLimitationDao}
+import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStop, MassTransitStopService, MassTransitStopWithProperties}
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, RoadSide, Track}
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -42,11 +42,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
+  val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
+  val roadAddress = RoadAddress(None, 1, 1, Track.Combined, 1, None)
   when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
-    TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
+    TierekisteriMassTransitStop(2, "2", roadAddress, TRRoadSide.Unknown, StopType.Combined,
       false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
   )
+  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((roadAddress , RoadSide.Right))
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
   when(mockVVHRoadLinkClient.fetchByLinkId(1l))
@@ -143,6 +146,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val roadLinkService: RoadLinkService = mockRoadLinkService
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
   val testLinearAssetService = new LinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService

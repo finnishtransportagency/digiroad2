@@ -1,11 +1,10 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2.service
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, VerificationService}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
+import fi.liikennevirasto.digiroad2.dao.VerificationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.verification.oracle.VerificationDao
-import org.mockito.Mockito._
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

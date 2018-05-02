@@ -67,7 +67,7 @@
 
     var refreshView = function () {
       vectorLayer.setVisible(true);
-      adjustStylesByZoomLevel(map.getView().getZoom());
+      adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
       if(isComplementaryChecked) {
         collection.fetchReadOnlyAssetsWithComplementary(map.getView().calculateExtent(map.getSize())).then(function () {
           eventbus.trigger('layer:readOnlyLayer:' + event);

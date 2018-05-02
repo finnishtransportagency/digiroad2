@@ -15,7 +15,7 @@
     var enabledExperimentalAssets = isExperimental ? assetConfiguration.experimentalAssetsConfig : [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
-      var collection = new LinearAssetsCollection(backend, verificationCollection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.hasMunicipalityValidation);
+      var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec) ;
       var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
@@ -111,6 +111,7 @@
 
     new WorkListView().initialize();
     new VerificationWorkList().initialize();
+    new SpeedLimitWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
 
     // backend.getUserRoles();
@@ -254,10 +255,13 @@
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
-     LinearAssetForm.initialize(
-       linearAsset,
-       AssetFormElementsFactory.construct(linearAsset)
-     );
+      if(linearAsset.form)
+        linearAsset.form.initialize(linearAsset);
+      else
+        LinearAssetForm.initialize(
+            linearAsset,
+            AssetFormElementsFactory.construct(linearAsset)
+        );
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
@@ -287,7 +291,7 @@
     };
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-     acc[asset.layerName] = new LinearAssetLayer({
+      var parameters ={
        map: map,
        application: applicationModel,
        collection: asset.collection,
@@ -298,16 +302,18 @@
        multiElementEventCategory: asset.multiElementEventCategory,
        singleElementEventCategory: asset.singleElementEventCategory,
        style: asset.style || new PiecewiseLinearAssetStyle(),
-       formElements: AssetFormElementsFactory.construct(asset),
+       formElements: asset.form ?  asset.form : AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label,
        roadAddressInfoPopup: roadAddressInfoPopup,
        authorizationPolicy: asset.authorizationPolicy,
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
-       massLimitation : asset.editControlLabels.massLimitations,
-       typeId : asset.typeId
-     });
-     return acc;
+       massLimitation: asset.editControlLabels.massLimitations,
+       typeId: asset.typeId
+     };
+      acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
+      return acc;
+
     }, {});
 
     var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
@@ -386,7 +392,7 @@
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
-    applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
+    applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
     backend.getUserRoles();
     return map;
   };

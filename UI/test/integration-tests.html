@@ -20,6 +20,7 @@
     <script type="text/javascript" src="../src/utils/session.js"></script>
     <script type="text/javascript" src="../src/utils/date-utils.js"></script>
     <script type="text/javascript" src="../src/utils/backend-utils.js"></script>
+    <script type="text/javascript" src="../src/utils/property-utils.js"></script>
     <script type="text/javascript" src="../src/utils/zoom-levels.js"></script>
     <script type="text/javascript" src="../src/utils/validity-directions.js"></script>
     <title>Digiroad 2 Integration Tests</title>
@@ -86,6 +87,7 @@
 <script type="text/javascript" src="../src/view/point_asset/heightLimitLabel.js"></script>
 <script type="text/javascript" src="../src/view/point_asset/widthLimitLabel.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/linearAssetLayer.js"></script>
+<script type="text/javascript" src="../src/view/linear_asset/serviceRoadLayer.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/groupedLinearAssetLayer.js"></script>
 <script type="text/javascript" src="../src/view/point_asset/pointAssetLayer.js"></script>
 <script type="text/javascript" src="../src/view/point_asset/groupedPointAssetLayer.js"></script>
@@ -129,6 +131,7 @@
 <script type="text/javascript" src="../src/model/selectedMassTransitStop.js"></script>
 <script type="text/javascript" src="../src/controller/speedLimitsCollection.js"></script>
 <script type="text/javascript" src="../src/controller/linearAssetsCollection.js"></script>
+<script type="text/javascript" src="../src/controller/serviceRoadCollection.js"></script>
 <script type="text/javascript" src="../src/controller/pointAssetsCollection.js"></script>
 <script type="text/javascript" src="../src/model/selectedPointAsset.js"></script>
 <script type="text/javascript" src="../src/controller/roadCollection.js"></script>
@@ -157,13 +160,16 @@
 <script type="text/javascript" src="../src/view/workListView.js"></script>
 <script type="text/javascript" src="../src/view/municipalityWorkList.js"></script>
 <script type="text/javascript" src="../src/view/verificationWorkList.js"></script>
+<script type="text/javascript" src="../src/view/speedLimitWorkList.js"></script>
 <script type="text/javascript" src="../src/assetTypeConfiguration.js"></script>
+<script type="text/javascript" src="../src/view/assetFormFactory.js"></script>
 <script type="text/javascript" src="../src/application.js"></script>
 <script type="text/javascript" src="../src/view/providers/selectToolControl.js"></script>
 <script type="text/javascript" src="../src/view/point_asset/pointsCursorTool.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/linearAssetMassUpdateDialog.js"></script>
 <script type="text/javascript" src="../src/utils/script-loader.js"></script>
 <script type="text/javascript" src="../src/utils/environment-utils.js"></script>
+<script type="text/javascript" src="../src/utils/property-utils.js"></script>
 <script type="text/javascript" src="../src/assetgrouping/asset-grouping.js"></script>
 <script src="../../node_modules/web-console-reporter/WebConsole.js"></script>
 <script data-main="run-integration-tests" src="../../node_modules/requirejs/require.js"></script>

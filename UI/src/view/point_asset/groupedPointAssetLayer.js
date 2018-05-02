@@ -92,7 +92,7 @@
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+        roadLayer.drawRoadLinks(roadCollection.getAll(), zoomlevels.getViewZoom(map));
         selectControl.activate();
       });
       if(collection.complementaryIsActive())
@@ -113,7 +113,7 @@
           selectControl.clear();
           vectorLayer.getSource().addFeatures(features);
           if(assetLabel)
-            vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
+            vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
           applySelection();
         }
       });
@@ -130,7 +130,7 @@
     };
 
     var getGroupedFeatures = function (assets) {
-      var assetGroups = assetGrouping.groupByDistance(assets, map.getView().getZoom());
+      var assetGroups = assetGrouping.groupByDistance(assets, zoomlevels.getViewZoom(map));
       var modifiedAssets = _.forEach(assetGroups, function (assetGroup) {
         _.map(assetGroup, function (asset) {
           asset.lon = _.head(assetGroup).lon;

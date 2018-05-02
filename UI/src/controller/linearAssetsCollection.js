@@ -1,6 +1,10 @@
 (function(root) {
-  root.LinearAssetsCollection = function(backend, verificationCollection, typeId, singleElementEventCategory, multiElementEventCategory, hasMunicipalityValidation) {
-      var linearAssets = [];
+  root.LinearAssetsCollection = function(backend, verificationCollection, spec) {
+      var typeId = spec.typeId;
+      var singleElementEventCategory = spec.singleElementEventCategory;
+      var multiElementEventCategory = spec.multiElementEventCategory;
+      var hasMunicipalityValidation = spec.hasMunicipalityValidation;
+      this.linearAssets = [];
       var dirty = false;
       var selection = null;
       var self = this;
@@ -32,11 +36,11 @@
       };
 
       this.getAll = function () {
-          return maintainSelectedLinearAssetChain(linearAssets);
+          return maintainSelectedLinearAssetChain(self.linearAssets);
       };
 
       this.getById = function (Id) {
-          return _.find(_.flatten(linearAssets), {id: Id});
+          return _.find(_.flatten(self.linearAssets), {id: Id});
       };
 
     var generateUnknownLimitId = function(linearAsset) {
@@ -82,7 +86,7 @@
               return _.merge({}, linearAsset, { generatedId: generateUnknownLimitId(linearAsset) });
             });
           }) || [];
-        linearAssets = knownLinearAssets.concat(unknownLinearAssets);
+        self.linearAssets = knownLinearAssets.concat(unknownLinearAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
         verificationCollection.fetch(boundingBox, center, typeId, hasMunicipalityValidation);
       });
@@ -101,7 +105,7 @@
     };
 
     this.getGroup = function(segment) {
-      return _.find(linearAssets, function(linearAssetGroup) {
+      return _.find(self.linearAssets, function(linearAssetGroup) {
         return _.some(linearAssetGroup, function(s) { return isEqual(s, segment); });
       });
     };
@@ -137,9 +141,9 @@
         splitLinearAssets.created.value = newSegments[0].value;
       }
       else if (selection.length === 1) {
-        linearAssets = replaceOneSegment(linearAssets, selection[0], newSegments[0]);
+        self.linearAssets = replaceOneSegment(self.linearAssets, selection[0], newSegments[0]);
       } else {
-        linearAssets = replaceGroup(linearAssets, selection[0], newSegments);
+        self.linearAssets = replaceGroup(self.linearAssets, selection[0], newSegments);
       }
       return newSegments;
     };
@@ -160,7 +164,7 @@
     };
 
     this.splitLinearAsset = function(id, split, callback) {
-      var link = _.find(_.flatten(linearAssets), { id: id });
+      var link = _.find(_.flatten(self.linearAssets), { id: id });
 
       var left = _.cloneDeep(link);
       left.points = split.firstSplitVertices;

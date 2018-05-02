@@ -138,6 +138,10 @@
       }
     };
 
+    this.getSpeedLimitById = function(id) {
+      return collection.getById(id);
+    };
+
     var cancelCreation = function() {
       eventbus.trigger('speedLimit:unselect', self);
       if (isSeparated) {

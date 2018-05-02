@@ -69,7 +69,8 @@
       new StyleRule().where('linkType').isIn([5, 6]).use({ stroke: { color: '#0cd'}, icon: { src: 'images/link-properties/arrow-drop-cyan.svg' } }),
       new StyleRule().where('linkType').isIn([8, 9]).use({ stroke: { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg' } }),
       new StyleRule().where('linkType').isIn([7, 10, 11, 12]).use({ stroke: { color: '#1b0'}, icon: { src: 'images/link-properties/arrow-drop-green.svg' } }),
-      new StyleRule().where('linkType').isIn([13, 21]).use({ stroke: { color: '#f5d'}, icon: { src: 'images/link-properties/arrow-drop-pink.svg' } })
+      new StyleRule().where('linkType').isIn([13, 21]).use({ stroke: { color: '#f5d'}, icon: { src: 'images/link-properties/arrow-drop-pink.svg' } }),
+      new StyleRule().where('linkType').isIn([14, 15]).use({ stroke: { color: '#9d57df'}, icon: { src: 'images/link-properties/arrow-drop-lilac.svg' } })
     ];
     var unknownLinkTypeDefaultRules = [
       new StyleRule().where('linkType').is(99).use({ stroke: { color: '#000', opacity: 0.6}, icon: { src: 'images/link-properties/arrow-drop-black.svg' } })
@@ -80,6 +81,8 @@
 
     var verticalLevelRules = [
       new StyleRule().where('verticalLevel').is(-11).use({ stroke: { color: '#01b'}, icon: { src: 'images/link-properties/arrow-drop-blue.svg' } }),
+      new StyleRule().where('verticalLevel').is(-2).use({ stroke: { color: '#9d57df'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
+      new StyleRule().where('verticalLevel').is(-3).use({ stroke: { color: '#ffdf38'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
       new StyleRule().where('verticalLevel').is(-1).use({ stroke: { color: '#f00'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
       new StyleRule().where('verticalLevel').is(0).use({ stroke: { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg' } }),
       new StyleRule().where('verticalLevel').is(1).use({ stroke: { color: '#1b0'}, icon: { src: 'images/link-properties/arrow-drop-green.svg' } }),
