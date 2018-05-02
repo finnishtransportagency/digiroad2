@@ -55,6 +55,8 @@
           }
           _.forEach(specs.enabledCheckbox, function (checkbox) {$(checkbox).prop('disabled', false);});
           _.forEach(specs.disabledCheckbox, function (checkbox) {$(checkbox).prop('disabled', true);});
+
+         $(".save.btn.btn-primary, .cancel.btn.btn-secondary").prop('disabled', !anyBoxChecked());
         }
 
         function isMunicipality(){
@@ -148,44 +150,25 @@
         }
 
         function saveFormData() {
-            var inputs = getInputData();
+            var username = $( "input[name=username]" ).val();
             $.ajax({
                 //verify if user already exist, if exists open a confirm popup (ok -> update) , in case of error NotFound(404) insert a new user
-                url: "api/userconfig/user/" + inputs.username,
+                url: "api/userconfig/user/" + username,
                 type: "get",
                 success: function () {
                     new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
                         successCallback: function(){
-                            ajaxRequestPost(inputs.username, 'Käyttäjän "' + inputs.username + '" tietoja muokattu', showCreatedUser, inputs);
+                            ajaxRequestPost(username, 'Käyttäjän "' + username + '" tietoja muokattu', showCreatedUser);
                         }
                     });
                 },
                 error: function (errorValue) {
                     if (errorValue.status === 404) {
-                        ajaxRequestPost(inputs.username, 'Uusi käyttäjä "' + inputs.username + '" luotu', showCreatedUser, inputs);
+                        ajaxRequestPost(username, 'Uusi käyttäjä "' + username + '" luotu', showCreatedUser);
                     }
                 }
             });
             return false;
-        }
-
-        function getInputData(){
-          var username = $( "input[name=username]" ).val();
-          var name = $("input[name=fullname]" ).val();
-
-          var municipalities = _.map($(".form-group.municipalities").find("#municipalities_search_to option"), function(option) { return option.value; }).join(',');
-          var elys = _.map($(".form-group.elys").find("#elys_search_to option"), function(option) { return option.value; }).join(',');
-          var areas = _.map($(".form-group.maintenanceAreas").find("#multiselect_to option"), function(option) { return option.value; }).join(',');
-
-
-          return {
-            username: username,
-            name: name,
-            municipalityNumbers: municipalities,
-            elyNumber: elys,
-            authorizationArea: areas,
-            roleName: roleName
-          }
         }
 
         function ajaxRequestPost(username, successResponseValue, func, inputs) {
@@ -214,7 +197,7 @@
 
         function cancel() {
           $( "input[name=username]" ).val('');
-          $("input[name=fullname]" ).val('');
+          $("input[name=name]" ).val('');
 
           $('.maintenanceAreas').find("#multiselect, select[name*='authorizationArea']").find('option').remove();
           $('.elys').find("#elys_search, select[name*='elyNumber']").find('option').remove();
@@ -222,6 +205,10 @@
           getMunicipalities();
           setMaintenaceAreas();
           setElys();
+        }
+
+        function anyBoxChecked() {
+          return _.some([operatorCheckbox, municipalityCheckbox, elysCheckbox, areasCheckbox], function(checkbox){return $(checkbox).is(':checked');});
         }
 
         jQuery(document).ready(function($) {
@@ -366,8 +353,8 @@
             </div>
 
             <div class="form-group form-controls">
-                <button type="submit" class="save btn btn-primary" style="float: none;">Tallenna</button>
-                <button type="button" class="cancel btn btn-secondary" style="float: none;" onclick="cancel()">Peruuta</button>
+                <button type="submit" class="save btn btn-primary" style="float: none;" disabled>Tallenna</button>
+                <button type="button" class="cancel btn btn-secondary" style="float: none;" onclick="cancel()" disabled>Peruuta</button>
             </div>
         </form>
     </div>
