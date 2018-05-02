@@ -5,11 +5,7 @@
 
     me.viewModeRender = function (field, currentValue) {
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '-';
-
-      var defaultValue = field.defaultValue;
-      if(defaultValue && !value)
-        _value = defaultValue;
+      var _value = value ? value.value : (field.defaultValue ? field.defaultValue : '-');
 
       return $('' +
         '<div class="form-group">' +
@@ -72,11 +68,7 @@
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
       var value = _.first(fieldValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '';
-
-      var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(_value))
-        _value = defaultValue;
+      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
       var element = $('' +
         '<div class="form-group">' +
@@ -99,12 +91,8 @@
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
-      var defaultValue = field.defaultValue;
-
       var value = _.first(fieldValue, function(values) { return values.value ; });
-      var _value = value ? value.value : '';
-      if(defaultValue && _.isEmpty(_value))
-        _value = defaultValue;
+      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
       var element = $('' +
         '<div class="form-group">' +
@@ -126,7 +114,6 @@
 
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
-
       var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
       var required = _.isUndefined(field.required) ? '' : 'required';

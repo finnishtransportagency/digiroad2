@@ -487,7 +487,7 @@
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
-        isVerifiable: false,
+        isVerifiable: true,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection
       },

@@ -371,7 +371,7 @@
           if(!asset.value || _.isEmpty(asset.value))
             return false;
 
-          var property  = _.find(asset.value.properties, function(p){ return p.publicId == field.publicId});
+          var property  = _.find(asset.value.properties, function(p){ return p.publicId === field.publicId;});
 
           if(!property)
             return false;
@@ -389,7 +389,7 @@
         return false;
 
       return _.every(selection[0].value.properties, function(property){
-          var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId == property.publicId; });
+          var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
           if(!iProperty)
             return false;
 

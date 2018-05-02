@@ -288,14 +288,10 @@ class MultiValueLinearAssetDao {
         }
 
       case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.value.toString).execute
+
       case Date =>
         val formatter = ISODateTimeFormat.dateOptionalTimeParser()
-        val optionalDateTime = propertyValues.headOption match {
-          case None => None
-          case Some(x) if x.value.toString.trim.isEmpty => None
-          case Some(x) => Some(formatter.parseDateTime(x.value.toString))
-        }
-        updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute
+        updateCommonDateProperty(assetId, property.column, Some(formatter.parseDateTime(propertyValues.head.value.toString)))
 
       case ReadOnlyText | ReadOnlyNumber =>
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
