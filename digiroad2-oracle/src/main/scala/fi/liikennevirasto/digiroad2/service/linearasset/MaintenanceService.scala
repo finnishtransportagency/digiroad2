@@ -130,6 +130,13 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     id
   }
 
+  def createWithHistory(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, roadLink: Option[RoadLinkLike]): Long = {
+    withDynTransaction {
+      maintenanceDAO.expireMaintenanceAssetsByLinkids(Seq(linkId), typeId)
+      createWithoutTransaction(typeId, linkId, value, sideCode, measures, username, vvhClient.roadLinkData.createVVHTimeStamp(), roadLink)
+    }
+  }
+
   private def validateRequiredProperties(maintenanceRoad: MaintenanceRoad): Set[String] = {
     val mandatoryProperties: Map[String, String] = maintenanceDAO.getMaintenanceRequiredProperties(MaintenanceRoadAsset.typeId)
     val nonEmptyMandatoryProperties: Seq[Properties] = maintenanceRoad.properties.filter { property =>

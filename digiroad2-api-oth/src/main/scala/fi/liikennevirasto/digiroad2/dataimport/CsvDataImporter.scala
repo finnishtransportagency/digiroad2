@@ -494,11 +494,8 @@ class MaintenanceRoadCsvImporter extends CsvDataImporterOperations {
     Digiroad2Context.roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId)).map { roadlink =>
       val values = MaintenanceRoad(Seq(newKoProperty, orAccessProperty))
 
-      withDynTransaction {
-        maintenanceService.createWithoutTransaction(MaintenanceRoadAsset.typeId, linkId, values,
-          SideCode.BothDirections.value, Measures(0, roadlink.length), userProvider.getCurrentUser().username,
-          vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadlink))
-      }
+      maintenanceService.createWithHistory(MaintenanceRoadAsset.typeId, linkId, values,
+        SideCode.BothDirections.value, Measures(0, roadlink.length), userProvider.getCurrentUser().username, Some(roadlink))
     }
   }
 
