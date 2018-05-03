@@ -235,7 +235,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     linkIds.foreach { linkId =>
       sqlu"""
           update asset set valid_to = sysdate - 1/86400
-            where id =
+            where id in
             (SELECT a.id
                FROM asset a, asset_link al, lrm_position lp
               WHERE a.id = al.asset_id
