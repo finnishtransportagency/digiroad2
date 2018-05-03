@@ -368,8 +368,7 @@
             return link.linkId === adjacent.linkId;
           }));
         })
-        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
-        .reject(function(adjacentLink) { return !authorizationPolicy.editModeAccessByLink(adjacentLink);})
+        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points) || !authorizationPolicy.editModeAccessByLink(adjacentLink);})
         .value();
     };
 
@@ -380,8 +379,7 @@
             return link.linkId === adjacent.linkId;
           }));
         })
-        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
-        .reject(function(adjacentLink) { return !authorizationPolicy.editModeAccessByLink(adjacentLink);})
+        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points) || authorizationPolicy.editModeAccessByLink(adjacentLink);})
         .value();
     };
 

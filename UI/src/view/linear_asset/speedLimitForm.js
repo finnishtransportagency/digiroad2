@@ -1,6 +1,7 @@
 (function (root) {
   var unit = 'km/h';
   var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+  var userRole; //TODO: removing this causes failure in integration tests, fix tests
   var template = function(selectedSpeedLimit) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';

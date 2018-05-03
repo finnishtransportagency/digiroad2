@@ -240,7 +240,7 @@
           enabled: 'Kelirikko',
           disabled: 'Ei kelirikkoa'
         },
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false
       },
       {

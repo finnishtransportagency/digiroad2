@@ -446,11 +446,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-//  test("Assert user rights when fetching mass transit stop with id") {
-//    runWithRollback {
-//      an [Exception] should be thrownBy RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755, { municipalityCode => throw new Exception })
-//    }
-//  }
+  test("Fetching mass transit stop with id requires no rights") {
+    runWithRollback {
+      val stop =  RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755)
+      stop._1.get.id should be (300008)
+    }
+  }
 
   test("Update mass transit stop road link mml id") {
     runWithRollback {
