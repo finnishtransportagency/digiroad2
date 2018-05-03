@@ -361,12 +361,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("updating numerical limits should require an operator role") {
-    postJsonWithUserAuth("/linearassets", """{"value":6000, "typeId": 30, "ids": [11112]}""".getBytes, username = "test") {
-      status should equal(401)
-    }
-  }
-
   test("get directional traffic signs with bounding box") {
     getWithUserAuth("/directionalTrafficSigns?bbox=374419,6677198,374467,6677281") {
       status should equal(200)

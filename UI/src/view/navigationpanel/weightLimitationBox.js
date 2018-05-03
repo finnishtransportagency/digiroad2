@@ -30,17 +30,8 @@
 
     var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"/>');
 
-    this.predicate = function () {
-      return assetConfig.readOnly;
-    };
-
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
-        me.editModeToggle.reset();
-      } else {
-        me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
-      }
-      element.show();
+      me.getShow();
     }
 
     function hide() {

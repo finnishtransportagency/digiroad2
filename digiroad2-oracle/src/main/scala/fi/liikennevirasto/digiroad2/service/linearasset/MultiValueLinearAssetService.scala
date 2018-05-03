@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
-import fi.liikennevirasto.digiroad2.asset.{MultiTypeProperty, MultiTypePropertyValue, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, MultiTypeProperty, MultiTypePropertyValue, SideCode}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, MunicipalityDao, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -128,10 +128,11 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     }
   }
 
-  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
       val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linearAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
@@ -149,11 +150,11 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
   }
 
 
-  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-      municipalityValidation(roadLink.municipalityCode)
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val newExistingIdsToReturn = valueTowardsDigitization match {
         case None => dao.updateExpiration(id, expired = true, username).toSeq

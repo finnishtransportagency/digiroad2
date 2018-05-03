@@ -11,6 +11,7 @@
 
     var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     var mode = "view";
+    var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
 
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     Layer.call(this, layerName, roadLayer);
@@ -259,7 +260,7 @@
         unSelectManoeuvreFeatures(selectControl.getSelectInteraction().getFeatures().getArray());
       }
 
-      if (selectedManoeuvreSource.exists()) {
+      if (selectedManoeuvreSource.exists()  && authorizationPolicy.formEditModeAccess(selectedManoeuvreSource)) {
         var manoeuvreSource = selectedManoeuvreSource.get();
 
         var features = selectControl.getSelectInteraction().getFeatures();
@@ -367,7 +368,7 @@
             return link.linkId === adjacent.linkId;
           }));
         })
-        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
+        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points) || !authorizationPolicy.editModeAccessByLink(adjacentLink);})
         .value();
     };
 
@@ -378,7 +379,7 @@
             return link.linkId === adjacent.linkId;
           }));
         })
-        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
+        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points) || authorizationPolicy.editModeAccessByLink(adjacentLink);})
         .value();
     };
 
@@ -415,7 +416,7 @@
 
       manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
       manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
-      if (!application.isReadOnly()) {
+      if (!application.isReadOnly() && authorizationPolicy.editModeAccessByLink(roadLink)) {
         drawIndicators(tLinks);
         drawIndicators(aLinks);
       }
@@ -428,7 +429,8 @@
         if(manoeuvre) {
 
           indicatorLayer.getSource().clear();
-          drawIndicators(manoeuvre.adjacentLinks);
+
+          drawIndicators(_.filter(manoeuvre.adjacentLinks, function(link){return authorizationPolicy.editModeAccessByLink(link);}));
           selectControl.deactivate();
 
           var targetMarkers = _.chain(manoeuvre.adjacentLinks)

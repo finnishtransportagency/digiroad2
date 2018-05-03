@@ -1,6 +1,7 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
+    var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -182,6 +183,13 @@
       $("#adminClass").find("option[value = State ]").prop('disabled', true);
     }
 
+    function validateAdministrativeClass(selectedLinkProperty, authorizationPolicy){
+      var selectedAssets = _.filter(selectedLinkProperty.get(), function (selected) {
+        return !authorizationPolicy.formEditModeAccess(selected);
+      });
+      return !_.isEmpty(selectedAssets);
+    }
+
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
@@ -245,8 +253,7 @@
         rootElement.find('.administrative-class').change(function(event) {
           selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
         });
-        toggleMode(applicationModel.isReadOnly());
-        controlAdministrativeClasses(linkProperties.administrativeClass);
+        toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || applicationModel.isReadOnly());
       });
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
@@ -254,7 +261,9 @@
       eventbus.on('linkProperties:unselected', function() {
         rootElement.empty();
       });
-      eventbus.on('application:readOnly', toggleMode);
+      eventbus.on('application:readOnly', function(readOnly){
+        toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || readOnly);
+      });
       rootElement.on('click', '.link-properties button.save', function() {
         selectedLinkProperty.save();
       });

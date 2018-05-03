@@ -571,13 +571,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * Saves road link property data from UI.
     */
-  def updateLinkProperties(linkProperty: LinkProperties, username: Option[String], municipalityValidation: Int => Unit): Option[RoadLink] = {
+  def updateLinkProperties(linkProperty: LinkProperties, username: Option[String], municipalityValidation: (Int, AdministrativeClass) => Unit): Option[RoadLink] = {
     val vvhRoadLink = vvhClient.roadLinkData.fetchByLinkId(linkProperty.linkId) match {
       case Some(vvhRoadLink) => Some(vvhRoadLink)
       case None => vvhClient.complementaryData.fetchByLinkId(linkProperty.linkId)
     }
     vvhRoadLink.map { vvhRoadLink =>
-      municipalityValidation(vvhRoadLink.municipalityCode)
+      municipalityValidation(vvhRoadLink.municipalityCode, vvhRoadLink.administrativeClass)
       withDynTransaction {
         setLinkProperty(RoadLinkDAO.TrafficDirection, linkProperty, username, vvhRoadLink, None, None)
         if (linkProperty.functionalClass != FunctionalClass.Unknown) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, vvhRoadLink, None, None)

@@ -17,27 +17,33 @@
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec) ;
       var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
+      var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
-        selectedLinearAsset: selectedLinearAsset
+        selectedLinearAsset: selectedLinearAsset,
+        authorizationPolicy: authorizationPolicy
       });
     });
 
     var pointAssets = _.map(assetConfiguration.pointAssetsConfig, function(spec) {
       var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
+      var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
-        selectedPointAsset: selectedPointAsset
+        selectedPointAsset: selectedPointAsset,
+        authorizationPolicy: authorizationPolicy
       });
     });
 
     var groupedPointAssets = _.map(assetConfiguration.groupedPointAssetSpecs, function(spec) {
       var collection = _.isUndefined(spec.collection) ?  new GroupedPointAssetsCollection(backend, spec) : new spec.collection(backend, spec) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
+      var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
-        selectedPointAsset: selectedPointAsset
+        selectedPointAsset: selectedPointAsset,
+        authorizationPolicy: authorizationPolicy
       });
     });
 
@@ -103,12 +109,11 @@
     MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
 
-    new WorkListView().initialize();
+    new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
-    new SpeedLimitWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
+    new SpeedLimitWorkList().initialize();
 
-    backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
@@ -241,7 +246,6 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
     new TrafficSignToggle(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
-
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
     if (withTileMaps) { new TileMapCollection(map); }
@@ -254,22 +258,25 @@
         linearAsset.form.initialize(linearAsset);
       else
         LinearAssetForm.initialize(
-          linearAsset.selectedLinearAsset,
-          linearAsset.singleElementEventCategory,
-          AssetFormElementsFactory.construct(linearAsset),
-          linearAsset.newTitle,
-          linearAsset.title,
-          linearAsset.editConstrains || function() {return false;},
-          linearAsset.layerName,
-          linearAsset.isVerifiable);
+            linearAsset,
+            AssetFormElementsFactory.construct(linearAsset)
+        );
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-      new PointAssetForm(pointAsset, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel, backend, pointAsset.saveCondition || function() {return true;});
+    new PointAssetForm(
+       pointAsset,
+       roadCollection,
+       applicationModel,
+       backend,
+       pointAsset.saveCondition || function() {return true;});
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
-      GroupedPointAssetForm.initialize(pointAsset.typeIds, pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, roadCollection, pointAsset.propertyData);
+      GroupedPointAssetForm.initialize(
+        pointAsset,
+        roadCollection
+       );
     });
 
     var trafficSignReadOnlyLayer = function(layerName){
@@ -285,26 +292,25 @@
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
       var parameters ={
-        map: map,
-        application: applicationModel,
-        collection: asset.collection,
-        selectedLinearAsset: asset.selectedLinearAsset,
-        roadCollection: models.roadCollection,
-        roadLayer: roadLayer,
-        layerName: asset.layerName,
-        multiElementEventCategory: asset.multiElementEventCategory,
-        singleElementEventCategory: asset.singleElementEventCategory,
-        style: asset.style || new PiecewiseLinearAssetStyle(),
-        formElements: asset.form ?  asset.form : AssetFormElementsFactory.construct(asset),
-        assetLabel: asset.label,
-        roadAddressInfoPopup: roadAddressInfoPopup,
-        editConstrains: asset.editConstrains || function () {return false;},
-        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
-        massLimitation: asset.editControlLabels.massLimitations,
-        typeId: asset.typeId
-      };
-
+       map: map,
+       application: applicationModel,
+       collection: asset.collection,
+       selectedLinearAsset: asset.selectedLinearAsset,
+       roadCollection: models.roadCollection,
+       roadLayer: roadLayer,
+       layerName: asset.layerName,
+       multiElementEventCategory: asset.multiElementEventCategory,
+       singleElementEventCategory: asset.singleElementEventCategory,
+       style: asset.style || new PiecewiseLinearAssetStyle(),
+       formElements: asset.form ?  asset.form : AssetFormElementsFactory.construct(asset),
+       assetLabel: asset.label,
+       roadAddressInfoPopup: roadAddressInfoPopup,
+       authorizationPolicy: asset.authorizationPolicy,
+       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
+       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
+       massLimitation: asset.editControlLabels.massLimitations,
+       typeId: asset.typeId
+     };
       acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
       return acc;
 
@@ -328,7 +334,7 @@
        assetGrouping: new AssetGrouping(asset.groupingDistance),
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
-       editConstrains : asset.editConstrains || function() {return false;}
+       authorizationPolicy: asset.authorizationPolicy
      });
      return acc;
     }, {});
@@ -350,7 +356,7 @@
         allowGrouping: asset.allowGrouping,
         assetGrouping: new AssetGrouping(asset.groupingDistance),
         hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-        editConstrains : asset.editConstrains || function() {return false;},
+        authorizationPolicy: asset.authorizationPolicy,
         assetTypeIds: asset.typeIds
       });
       return acc;
@@ -387,7 +393,7 @@
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
     applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
-
+    backend.getUserRoles();
     return map;
   };
 

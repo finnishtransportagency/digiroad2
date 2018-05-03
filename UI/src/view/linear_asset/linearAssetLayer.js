@@ -11,10 +11,10 @@ root.LinearAssetLayer  = function(params) {
       layerName = params.layerName,
       assetLabel = params.assetLabel,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
-      editConstrains = params.editConstrains,
       massLimitation = params.massLimitation,
       hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
-      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
+      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer,
+      authorizationPolicy = params.authorizationPolicy;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
@@ -111,7 +111,7 @@ root.LinearAssetLayer  = function(params) {
       var closestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
       if (closestLinearAssetLink) {
         var nearestLineAsset = closestLinearAssetLink.feature.getProperties();
-        if (!editConstrains(nearestLineAsset)) {
+        if (authorizationPolicy.formEditModeAccess(nearestLineAsset)) {
           if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
             moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
           } else {
@@ -142,7 +142,7 @@ root.LinearAssetLayer  = function(params) {
       }
 
       var nearestLinearAsset = nearest.feature.getProperties();
-      if(!editConstrains(nearestLinearAsset)) {
+      if(authorizationPolicy.formEditModeAccess(nearestLinearAsset)) {
         var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
         selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
 
@@ -220,7 +220,7 @@ root.LinearAssetLayer  = function(params) {
 
   var showDialog = function (linearAssets) {
       linearAssets = _.filter(linearAssets, function(asset){
-          return asset && !(asset.geometry instanceof ol.geom.Point) && !editConstrains(asset);
+          return asset && !(asset.geometry instanceof ol.geom.Point) && authorizationPolicy.formEditModeAccess(asset);
       });
 
       selectedLinearAsset.openMultiple(linearAssets);

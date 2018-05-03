@@ -34,16 +34,10 @@
       toggleReadOnlyMode(mode);
     };
 
-    var hasNoRolesPermission = function(userRoles) {
-      return (((_.contains(userRoles, 'busStopMaintainer')) || (_.isEmpty(userRoles)) || (_.contains(userRoles, 'serviceRoadMaintainer'))) &&
-      !(_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium')));
-    };
-
     return {
       element: element,
       reset: reset,
-      toggleEditMode: toggleEditMode,
-      hasNoRolesPermission: hasNoRolesPermission
+      toggleEditMode: toggleEditMode
     };
   };
 }(this));

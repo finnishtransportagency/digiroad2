@@ -83,7 +83,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mocklinearAssetService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
 
   when(mockSpeedLimitService.getByMunicpalityAndRoadLinks(235)).thenReturn(Seq((SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface, Map()), roadLink)))
-  when(mockSpeedLimitService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long], any[Int => Unit].apply)).thenReturn(Seq(1L))
+  when(mockSpeedLimitService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long], any[(Int, AdministrativeClass) => Unit].apply)).thenReturn(Seq(1L))
   when(mockSpeedLimitService.update(any[Long], Seq(any[NewLinearAsset]), any[String])).thenReturn(Seq(3L))
   when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(1))).thenReturn(Seq(SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 1, None, false, LinkGeomSource.NormalLinkInterface, Map())))
   when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(3))).thenReturn(Seq(SpeedLimit(3, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 2, None, false, LinkGeomSource.NormalLinkInterface, Map())))

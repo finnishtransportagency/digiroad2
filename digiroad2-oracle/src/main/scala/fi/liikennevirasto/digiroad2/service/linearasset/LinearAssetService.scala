@@ -91,13 +91,37 @@ trait LinearAssetOperations {
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
-    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
+    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
-    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
+    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
+
+  private def addMunicipalityCodeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("municipality" -> roadLink.municipalityCode))
+  }
+
+  private def enrichLinearAssetAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+    val linearAssetAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
+      addMunicipalityCodeAttribute
+      //In the future if we need to add more attributes just add a method here
+    )
+
+    val linkData = roadLinks.map(rl => (rl.linkId, rl)).toMap
+
+    linearAssets.map(linearAsset =>
+      linearAssetAttributeOperations.foldLeft(linearAsset) { case (asset, operation) =>
+        linkData.get(asset.linkId).map{
+          roadLink =>
+            operation(asset, roadLink)
+        }.getOrElse(asset)
+      }
+    )
   }
 
   def getByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
@@ -630,12 +654,12 @@ trait LinearAssetOperations {
   /**
     * Saves linear asset when linear asset is split to two parts in UI (scissors icon). Used by Digiroad2Api /linearassets/:id POST endpoint.
     */
-  def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).
         getOrElse(throw new IllegalStateException("Road link no longer available"))
-      municipalityValidation(roadLink.municipalityCode)
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
@@ -685,11 +709,11 @@ trait LinearAssetOperations {
   /**
     * Saves linear assets when linear asset is separated to two sides in UI. Used by Digiroad2Api /linearassets/:id/separate POST endpoint.
     */
-  def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-      municipalityValidation(roadLink.municipalityCode)
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val newExistingIdsToReturn = valueTowardsDigitization match {
         case None => dao.updateExpiration(id, expired = true, username).toSeq

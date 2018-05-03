@@ -18,13 +18,13 @@
     };
 
     this.predicate = function () {
-      return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium');
+      return assetConfig.authorizationPolicy.editModeAccess();
     };
 
     var element = $('<div class="panel-group winter-speed-limits"/>');
 
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
+      if (!assetConfig.authorizationPolicy.editModeAccess()) {
         me.editModeToggle.reset();
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
