@@ -231,6 +231,22 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
   }
 
+  def expireMaintenanceAssetsByLinkids(linkIds: Seq[Long], typeId: Int): Unit = {
+    linkIds.foreach { linkId =>
+      sqlu"""
+          update asset set valid_to = sysdate - 1/86400
+            where id =
+            (SELECT a.id
+               FROM asset a, asset_link al, lrm_position lp
+              WHERE a.id = al.asset_id
+                AND al.position_id = lp.id
+                AND a.asset_type_id = $typeId
+                AND a.valid_to IS NULL
+                AND lp.link_id = $linkId)
+        """.execute
+    }
+  }
+
 
   /**
     * Updates MaintenanceRoad property. Used by MaintenanceService.updateProjected.
