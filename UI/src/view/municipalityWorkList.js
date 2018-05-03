@@ -2,23 +2,18 @@
   root.MunicipalityWorkList = function(){
     WorkListView.call(this);
     var me = this;
-    this.roles = {};
     this.hrefDir = "#work-list/municipality";
+    this.title = 'Tietolajien kuntasivu';
     var backend;
     var municipalityList;
     var showFormBtnVisible = true;
     var municipalityId;
     var municipalityName;
+    var authorizationPolicy = new AuthorizationPolicy();
 
     this.initialize = function(mapBackend){
       backend = mapBackend;
-      me.bindExternalEventHandlers();
       me.bindEvents();
-    };
-    this.bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        me.roles = roles;
-      });
     };
     this.bindEvents = function () {
       eventbus.on('municipality:select', function(listP) {
@@ -130,16 +125,15 @@
       return $('<table id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems)).append(deleteBtn).append(saveBtn);
     };
 
-    this.generateWorkList = function (listP, stateHistory) {
+    this.generateWorkList = function (listP) {
       var searchbox = $('<div class="filter-box">' +
         '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
 
-      var title = !_.isUndefined(stateHistory) ? 'Tuntemattomien nopeusrajoitusten lista' : 'Tietolajien kuntasivu';
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
         '<div class="page">' +
         '<div class="content-box">' +
-        '<header id="work-list-header">' + title +
+        '<header id="work-list-header">' + me.title +
         '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
         '</header>' +
         '<div class="work-list">' +
@@ -153,28 +147,20 @@
         if (limits.length == 1){
           showFormBtnVisible = false;
           me.createVerificationForm(_.first(limits));
-        } else {
-          if (stateHistory) {
-            showFormBtnVisible = false;
-            me.createVerificationForm(_.find(limits, function (limit) {
-              return limit.name === stateHistory.municipality;
-            }));
-            $('#' + stateHistory.position).scrollView().focus();
-          }
-          else {
-            var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
-            element.html($('<div class="municipality-list">').append(unknownLimits));
+        }
+        else {
+          var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
+          element.html($('<div class="municipality-list">').append(unknownLimits));
 
-            if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
-              searchbox.insertBefore('#tableData');
+          if (authorizationPolicy.workListAccess())
+            searchbox.insertBefore('#tableData');
 
-            $('#searchBox').on('keyup', function (event) {
-              var currentInput = event.currentTarget.value;
+          $('#searchBox').on('keyup', function (event) {
+            var currentInput = event.currentTarget.value;
 
-              var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
-              $('#tableData tbody').html(unknownLimits);
-            });
-          }
+            var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
+            $('#tableData tbody').html(unknownLimits);
+          });
         }
       });
     };

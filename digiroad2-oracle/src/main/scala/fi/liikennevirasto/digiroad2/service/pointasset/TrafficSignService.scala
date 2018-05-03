@@ -129,7 +129,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def createFloating(asset: IncomingTrafficSign, username: String, municipality: Int): Long = {
     withDynTransaction {
-       OracleTrafficSignDao.createFloating(asset, 0, username, municipality, VVHClient.createVVHTimeStamp(), LinkGeomSource.Unknown, floating = true)
+      OracleTrafficSignDao.createFloating(asset, 0, username, municipality, VVHClient.createVVHTimeStamp(), LinkGeomSource.Unknown, floating = true)
     }
   }
 
@@ -139,13 +139,13 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
-      case old if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
+      case old if old.bearing != updatedAsset.bearing || (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
         expireWithoutTransaction(id)
         OracleTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, value), value, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
-      case _  =>
+      case _ =>
         OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, value), value, municipality, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
     }
   }
@@ -165,7 +165,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       persistedAsset.validityDirection, persistedAsset.bearing)
 
     updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode,
-                            "vvh_generated", persistedAsset.linkSource, Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
+      "vvh_generated", persistedAsset.linkSource, Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
@@ -183,7 +183,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def getAssetValidityDirection(bearing: Int): Int = {
     bearing >= 270 || bearing < 90 match {
-      case true =>  AgainstDigitizing.value
+      case true => AgainstDigitizing.value
       case false => TowardsDigitizing.value
     }
   }
@@ -199,11 +199,11 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
     (latDifference <= 0 && linkBearing <= 90) || (latDifference >= 0 && linkBearing > 270) match {
       case true => TowardsDigitizing.value
-      case false =>  AgainstDigitizing.value
+      case false => AgainstDigitizing.value
     }
   }
 
-  def getAssetBearing(validityDirection: Int, geometry: Seq[Point] ): Int = {
+  def getAssetBearing(validityDirection: Int, geometry: Seq[Point]): Int = {
     val linkBearing = GeometryUtils.calculateBearing(geometry)
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
@@ -242,8 +242,16 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
           create(asset, userProvider.getCurrentUser().username, link)
         }.getOrElse(0L)
       }
-    }else{
+    } else {
       0L
+    }
+  }
+
+  def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup]): Seq[PersistedTrafficSign] = {
+    val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
+    optGroupType match {
+      case Some(groupType) => assets.filter(asset => TrafficSignTypeGroup.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.toInt) == groupType)
+      case _ => assets
     }
   }
 }

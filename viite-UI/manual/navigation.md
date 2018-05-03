@@ -1,3 +1,3 @@
-[K&auml;ytt&ouml;ohje suomeksi](index.md)
+[K&auml;ytt&ouml;ohje suomeksi](loppukayttajaohje.md)
 
 

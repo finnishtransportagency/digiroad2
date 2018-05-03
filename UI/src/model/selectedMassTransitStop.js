@@ -8,7 +8,8 @@
       'linkId',
       'nationalId',
       'validityDirection',
-      'floating'];
+      'floating',
+      'municipalityCode'];
     var massTransitStopTypePublicId = "pysakin_tyyppi";
     var administratorInfoPublicId = "tietojen_yllapitaja";
     var PRECONDITION_FAILED_412 = 412;
@@ -176,6 +177,10 @@
       return _.find(currentAsset.propertyMetadata, function(metadata) {
         return metadata.publicId === publicId;
       });
+    };
+
+    var getMunicipalityCode = function() {
+     return !_.isUndefined(currentAsset.payload.municipalityCode) ? currentAsset.payload.municipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
     };
 
     var pikavuoroIsAlone = function()
@@ -521,7 +526,8 @@
       getEndDate: getEndDate,
       isRoadNameDif: isRoadNameDif,
       setRoadNameFields: setRoadNameFields,
-      isTerminalChild: isTerminalChild
+      isTerminalChild: isTerminalChild,
+      getMunicipalityCode: getMunicipalityCode
     };
   };
 

@@ -129,7 +129,7 @@ var RoadStyles = function() {
 
     var handleRoadsVisibility = function() {
       if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
+        vectorLayer.setVisible(zoomlevels.getViewZoom(map) >= minimumContentZoomLevel());
       }
     };
 

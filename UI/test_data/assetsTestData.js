@@ -17,7 +17,7 @@
           linkSource: 1,
           validityDirection: 3,
           readOnly: true,
-          municipalityNumber: 235,
+          municipalityCode: 235,
           validityPeriod: 'current'
         }
       );

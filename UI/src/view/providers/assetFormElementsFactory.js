@@ -45,7 +45,8 @@
       { typeId: 15, title: 'Matkailuajoneuvo' },
       { typeId: 19, title: 'Sotilasajoneuvo' },
       { typeId: 13, title: 'Ajoneuvoyhdistelmä' },
-      { typeId: 14, title: 'Traktori tai maatalousajoneuvo' }
+      { typeId: 14, title: 'Traktori tai maatalousajoneuvo' },
+      { typeId: 28, title: 'Erikoiskuljetus'}
     ];
     var exceptionValues = [
       { typeId: 21, title: 'Huoltoajo' },
@@ -61,7 +62,8 @@
       { typeId: 15, title: 'Matkailuajoneuvo' },
       { typeId: 19, title: 'Sotilasajoneuvo' },
       { typeId: 13, title: 'Ajoneuvoyhdistelmä' },
-      { typeId: 14, title: 'Traktori tai maatalousajoneuvo' }
+      { typeId: 14, title: 'Traktori tai maatalousajoneuvo' },
+      { typeId: 28, title: 'Erikoiskuljetus'}
     ];
 
     return ProhibitionFormElements(prohibitionValues, exceptionValues);

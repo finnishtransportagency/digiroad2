@@ -53,9 +53,9 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
 
-  def passingMunicipalityValidation(code: Int): Unit = {}
+  def passingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = {}
 
-  def failingMunicipalityValidation(code: Int): Unit = {
+  def failingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = {
     throw new IllegalArgumentException
   }
 
@@ -170,11 +170,11 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       }
       id2 shouldBe None
     }
@@ -186,15 +186,15 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, (_, _) => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, (_, _) => ())
       }
       id2 shouldBe defined
       val id3 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       }
       id3 shouldBe None
     }
@@ -220,11 +220,11 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       val dao = daoWithRoadLinks(List(roadLink))
 
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
-      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, 40, 0, _ => ())
+      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(Some(linkId))
 
-      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, 40, 0, _ => ())
+      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }
@@ -242,11 +242,11 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       val roadLink2 = VVHRoadlink(linkId2, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink, roadLink2))
 
-      val allSpeedLimits = dao.getUnknownSpeedLimits(None, None)
+      val allSpeedLimits = dao.getUnknownSpeedLimits(Set(), None)
       allSpeedLimits("Kauniainen")("State").asInstanceOf[Seq[Long]].length should be(1)
       allSpeedLimits("Espoo")("State").asInstanceOf[Seq[Long]].length should be(1)
 
-      val kauniainenSpeedLimits = dao.getUnknownSpeedLimits(Some(Set(235)), None)
+      val kauniainenSpeedLimits = dao.getUnknownSpeedLimits(Set(235), None)
       kauniainenSpeedLimits("Kauniainen")("State").asInstanceOf[Seq[Long]].length should be(1)
       kauniainenSpeedLimits.keySet.contains("Espoo") should be(false)
     }

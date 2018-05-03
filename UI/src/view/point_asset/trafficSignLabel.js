@@ -170,7 +170,7 @@
             styles = styles.concat(me.getStyle(value, index));
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(styles);
-            feature.setProperties(asset);
+            feature.setProperties(_.omit(asset, 'geometry'));
             return feature;
           }
         });

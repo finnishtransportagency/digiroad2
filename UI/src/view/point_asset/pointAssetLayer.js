@@ -11,10 +11,10 @@
       layerName = params.layerName,
       newAsset = params.newAsset,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
-      editConstrains = params.editConstrains,
       assetLabel = params.assetLabel,
       allowGrouping = params.allowGrouping,
-      assetGrouping = params.assetGrouping;
+      assetGrouping = params.assetGrouping,
+      authorizationPolicy = params.authorizationPolicy;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -50,6 +50,8 @@
           var administrativeClass = obtainAdministrativeClass(properties);
           var asset = _.merge({}, properties, {administrativeClass: administrativeClass});
           selectedAsset.open(asset);
+          if(authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) && !applicationModel.isReadOnly())
+            dragControl.activate();
       }
       else {
         if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
@@ -57,13 +59,14 @@
         }else{
           applySelection();
         }
+        dragControl.deactivate();
       }
     }
 
     this.selectControl = selectControl;
 
     function isAllowedToDrag(features) {
-      if (selectedAsset.exists() && (layerName == 'trafficSigns' && editConstrains(selectedAsset)))
+      if (selectedAsset.exists() && (layerName == 'trafficSigns' && authorizationPolicy.formEditModeAccess(selectedAsset)))
         return [];
       return features;
     }
@@ -149,7 +152,7 @@
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+        roadLayer.drawRoadLinks(roadCollection.getAll(), zoomlevels.getViewZoom(map));
          selectControl.activate();
       });
       if(collection.complementaryIsActive())
@@ -170,7 +173,7 @@
           selectControl.clear();
           vectorLayer.getSource().addFeatures(features);
           if(assetLabel)
-            vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
+            vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
           applySelection();
         }
       });
@@ -187,7 +190,7 @@
     };
 
     var getGroupedFeatures = function (assets) {
-      var assetGroups = assetGrouping.groupByDistance(assets, map.getView().getZoom());
+      var assetGroups = assetGrouping.groupByDistance(assets, zoomlevels.getViewZoom(map));
       var modifiedAssets = _.forEach(assetGroups, function (assetGroup) {
         _.map(assetGroup, function (asset) {
           asset.lon = _.head(assetGroup).lon;
@@ -232,7 +235,7 @@
     function toggleMode(readOnly) {
       if(readOnly){
         dragControl.deactivate();
-      } else {
+      } else if(selectedAsset.exists() && authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection)) {
         dragControl.activate();
       }
     }
@@ -303,7 +306,7 @@
     }
 
     function handleMapClick(coordinates) {
-      if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
+      if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
         createNewAsset(coordinates);
       } else if (selectedAsset.isDirty()) {
         me.displayConfirmMessage();
@@ -314,15 +317,17 @@
       var selectedLon = coordinates.x;
       var selectedLat = coordinates.y;
       var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), selectedLon, selectedLat);
-      var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
-      var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-      var administrativeClass = obtainAdministrativeClass(nearestLine);
+      if(nearestLine.end && nearestLine.start){
+        var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
+        var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+        var administrativeClass = obtainAdministrativeClass(nearestLine);
 
-      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
+        var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
 
-      vectorLayer.getSource().addFeature(createFeature(asset));
-      selectedAsset.place(asset);
-      mapOverlay.show();
+        vectorLayer.getSource().addFeature(createFeature(asset));
+        selectedAsset.place(asset);
+        mapOverlay.show();
+      }
     }
 
     function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass) {
@@ -374,7 +379,7 @@
 
     function excludeRoadByAdminClass(roadCollection) {
       return _.filter(roadCollection, function (roads) {
-        return !editConstrains(selectedAsset, roads.linkId);
+        return authorizationPolicy.filterRoadLinks(roads);
       });
     }
 

@@ -188,6 +188,24 @@ object GeometryUtils {
     partitions.minBy { p => minimumDistance(point, p) }
   }
 
+  def middlePoint(geometries: Seq[Seq[Point]]): Point = {
+    val minX = geometries.map(_.map(_.x).min).min
+    val maxX = geometries.map(_.map(_.x).max).max
+    val minY = geometries.map(_.map(_.y).min).min
+    val maxY = geometries.map(_.map(_.y).max).max
+
+    Point(minX + ((maxX - minX) / 2), minY + ((maxY - minY) / 2))
+  }
+
+  def calculateAngle(target: Point, center: Point) = {
+    val theta = Math.atan2(target.y - center.y, target.x - center.x)
+    if(theta < 0)
+      theta + Math.PI*2
+    else
+      theta
+  }
+
+
   def minimumDistance(point: Point, segment: Seq[Point]): Double = {
     if (segment.size < 1) { return Double.NaN }
     if (segment.size < 2) { return point.distance2DTo(segment.head) }

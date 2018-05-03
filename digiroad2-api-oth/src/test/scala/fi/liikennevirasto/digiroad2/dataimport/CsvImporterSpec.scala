@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, RoadSide, Track}
 import org.mockito.Matchers
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -287,6 +288,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
     val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
+    val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
     when(mockMassTransitStopDao.getAssetAdministrationClass(any[Long])).thenReturn(None)
 
     class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
@@ -295,8 +297,10 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
       override val municipalityDao: MunicipalityDao = mockMunicipalityDao
+      override val geometryTransform: GeometryTransform = mockGeometryTransform
     }
 
+    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0, None) , RoadSide.Right))
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
     stops.foreach { case (id, administrativeClass) =>
       when(mockMassTransitStopService.getByNationalId(Matchers.eq(id), anyObject(), anyObject())).thenAnswer(new Answer[Option[Object]] {

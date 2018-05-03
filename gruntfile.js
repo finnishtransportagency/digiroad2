@@ -368,14 +368,14 @@ module.exports = function(grunt) {
   grunt.registerTask('test-concat', ['concat']);
 
   grunt.registerTask('save_deploy_info',
-    function() {
-      var options = this.options({
-        file: 'revision.properties'
-      });
+      function() {
+        var options = this.options({
+          file: 'revision.properties'
+        });
 
-      var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
-      grunt.file.write(options.file, data);
+        var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
+        grunt.file.write(options.file, data);
 
-    }
+      }
   );
 };

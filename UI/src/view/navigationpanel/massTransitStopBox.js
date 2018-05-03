@@ -2,6 +2,7 @@
   root.MassTransitStopBox = function (selectedMassTransitStop) {
     ActionPanelBox.call(this);
     var me = this;
+    var authorizationPolicy = new MassTransitStopAuthorizationPolicy();
 
     this.header = function () {
       return 'Joukkoliikenteen pysäkki';
@@ -133,8 +134,8 @@
         massTransitStopsCollection.selectValidityPeriod(asset.validityPeriod, true);
       }, this);
 
-      eventbus.on('roles:fetched', function(roles) {
-        if (!readOnly && _.contains(roles, 'operator') || _.contains(roles, 'premium') || _.isEmpty(roles) || _.contains(roles, 'busStopMaintainer')) {
+      eventbus.on('roles:fetched', function() {
+        if (authorizationPolicy.editModeAccess()) {
           me.toolSelection.reset();
           $(me.expanded).append(me.toolSelection.element);
           $(me.expanded).append(me.editModeToggle.element);
