@@ -27,7 +27,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
-    val assetsWithAttributes = addAttributes(linearAssets, roadLinks)
+    val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
 
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
@@ -35,22 +35,31 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
-    val assetsWithAttributes = addAttributes(linearAssets, roadLinks)
+    val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
-  private def addAttributes(assets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+  private def addPolygonAreaAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    val area = polygonTools.getAreaByGeometry(linearAsset.geometry, Measures(linearAsset.startMeasure, linearAsset.endMeasure), None)
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("area" -> area))
+  }
+
+  private def enrichMaintenanceRoadAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+    val maintenanceRoadAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
+      addPolygonAreaAttribute
+      //In the future if we need to add more attributes just add a method here
+    )
+
     val linkData = roadLinks.map(rl => (rl.linkId, rl)).toMap
 
-    val assetsWithAttributes = assets.map { asset =>
-      if(linkData.contains(asset.linkId)){
-        val area = polygonTools.getAreaByGeometry(linkData(asset.linkId).geometry, Measures(asset.startMeasure, asset.endMeasure), None)
-        asset.copy(attributes = asset.attributes ++ Map("area" -> area))
+    linearAssets.map(linearAsset =>
+      maintenanceRoadAttributeOperations.foldLeft(linearAsset) { case (asset, operation) =>
+        linkData.get(asset.linkId).map{
+          roadLink =>
+            operation(asset, roadLink)
+        }.getOrElse(asset)
       }
-      else
-        asset
-    }
-    assetsWithAttributes
+    )
   }
 
   /*
