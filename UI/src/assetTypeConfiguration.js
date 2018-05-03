@@ -248,7 +248,8 @@
           //check if administrative class is State
           return selectedAsset.administrativeClass === 1;
         },
-        isVerifiable: false
+        isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.width,
