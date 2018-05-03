@@ -1,7 +1,6 @@
 (function (root) {
   var unit = 'km/h';
   var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
-  var userRole; //TODO: removing this causes failure in integration tests, fix tests
   var template = function(selectedSpeedLimit) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
@@ -78,7 +77,7 @@
   var renderLinktoWorkList = function renderLinktoWorkList() {
     var notRendered = !$('#work-list-link').length;
     if(notRendered) {
-      if (!_.contains(userRole, 'operator')) {
+      if (!authorizationPolicy.workListAccess()) {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
           '<a id="work-list-link-errors" class="wrong-speed-limits" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a>' +
