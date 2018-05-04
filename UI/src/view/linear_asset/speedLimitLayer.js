@@ -316,8 +316,8 @@ window.SpeedLimitLayer = function(params) {
   var startListeningExtraEvents = function(){
     extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:hide', hideSpeedLimitsComplementary);
     extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:show', showSpeedLimitsComplementary);
-    extraEventListener.listenTo(eventbus, 'speedLimit:hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
-    extraEventListener.listenTo(eventbus, 'speedLimit:showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
+    extraEventListener.listenTo(eventbus, 'speedLimit-readOnlyTrafficSigns:hide', hideReadOnlyTrafficSigns);
+    extraEventListener.listenTo(eventbus, 'speedLimit-readOnlyTrafficSigns:show', showReadOnlyTrafficSigns);
   };
 
   var stopListeningExtraEvents = function(){
