@@ -91,7 +91,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     OracleObstacleDao.selectFloatings(floating, lastIdUpdate, batchSize)
   }
 
-  def updateFloatingAsset(obstacleUpdated: Obstacle) = {
+  def updateFloatingAsset(obstacleUpdated: Obstacle): Unit = {
     OracleObstacleDao.updateFloatingAsset(obstacleUpdated)
   }
 

@@ -12,6 +12,9 @@
       return ((me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(link.municipalityCode)) || me.isOperator();
     };
 
+    this.editModeAccessByFeatures = function(features) {
+      return ((me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(features.values_.municipalityCode)) || me.isOperator();
+    };
 
   };
 })(this);

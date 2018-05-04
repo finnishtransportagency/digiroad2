@@ -356,6 +356,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
+        "railwayCrossingId" -> railwayCrossing.code,
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
         "linkSource" -> railwayCrossing.linkSource.value)

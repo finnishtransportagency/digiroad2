@@ -1,9 +1,9 @@
 (function (root) {
-root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, applicationModel, backend, saveCondition) {
+root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(pointAsset, editConstrains, roadCollection, applicationModel, backend, saveCondition);
+  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition);
 
   function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
@@ -84,7 +84,9 @@ root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, appli
 
     rootElement.find('input[type="text"]').on('input change', function (event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({name: eventTarget.val()});
+      var obj = {};
+      obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
+      selectedAsset.set(obj);
     });
 
     rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
@@ -357,6 +359,11 @@ root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, appli
         '    </div>';
     } else if (asset.safetyEquipment) {
       return '' +
+        '    <div class="form-group editable form-railway-crossing">' +
+        '        <label class="control-label">' + 'Tasoristeystunnus' + '</label>' +
+        '        <p class="form-control-static">' + (asset.code || '–') + '</p>' +
+        '        <input type="text" class="form-control"  maxlength="15" name="code" value="' + (asset.code || '')  + '">' +
+        '    </div>' +
         '    <div class="form-group editable form-railway-crossing">' +
         '      <label class="control-label">Turvavarustus</label>' +
         '      <p class="form-control-static">' + safetyEquipments[asset.safetyEquipment] + '</p>' +
