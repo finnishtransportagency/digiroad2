@@ -33,7 +33,7 @@
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
 
-    var selectControl = new SelectToolControl(application, vectorLayer, map, {
+    var selectControl = new SelectToolControl(application, vectorLayer, map, false,{
         style : function (feature) {
             return style.browsingStyleProvider.getStyle(feature);
         },

@@ -72,7 +72,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   }
 
-  var selectControl = new SelectToolControl(applicationModel, assetLayer, map, {
+  var selectControl = new SelectToolControl(applicationModel, assetLayer, map, false, {
     style : function (feature) {
       var properties = feature.getProperties();
       if(properties.massTransitStop)
