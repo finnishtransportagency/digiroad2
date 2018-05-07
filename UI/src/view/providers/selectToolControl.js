@@ -7,7 +7,6 @@
         var isPolygonActive = false;
         var isRectangleActive = false;
         var multiSelectInitialized = false;
-        var selectedFeatures = [];
 
         var settings = _.extend({
             onDragStart: function(){},
@@ -74,7 +73,7 @@
         multiSelectInteraction.set('name', layer.get('name'));
 
         function interactionEnd(extent) {
-            selectedFeatures = [];
+            var selectedFeatures = [];
             layer.getSource().forEachFeatureIntersectingExtent(extent, function (feature) {
                 selectedFeatures.push(feature.getProperties());
             });
@@ -101,36 +100,39 @@
         });
 
         selectInteraction.on('select',  function(evt){
-            if(evt.selected.length > 0 && settings.enableSelect(evt))
-                unhighlightLayer();
-            else
-                highlightLayer();
-
+            if(evt.selected.length > 0 && settings.enableSelect(evt)){
+              unhighlightLayer();
+              map.removeInteraction(multiSelectInteraction);
+            }
+            else {
+              highlightLayer();
+              map.addInteraction(multiSelectInteraction);
+            }
             settings.onSelect(evt);
         });
 
         multiSelectInteraction.on('select', function (evt) {
-            if (evt.selected.length > 0 && settings.enableSelect(evt) && _.isUndefined(evt.selected[0].getProperties().value)) {
-                selectedFeatures.push(evt.selected[0].getProperties());
+            if (evt.selected.length > 0 && settings.enableSelect(evt)) {
                 multiSelectInitialized = true;
                 unhighlightLayer();
+                map.removeInteraction(selectInteraction);
             }
-            else if (evt.deselected.length > 0) {
-                selectedFeatures = _.filter(selectedFeatures, function (sf) {
-                    return sf.linkId !== evt.deselected[0].getProperties().linkId;
-                });
-            }
+
+            console.log( evt.target.getFeatures().getLength() +
+              ' selected features (last operation selected ' + evt.selected.length +
+              ' and deselected ' + evt.deselected.length + ' features)');
 
             settings.onMultipleSelect(evt);
         });
 
-        $(window).keyup(function (e) {
-            if (e.keyCode === 17 && multiSelectInitialized && enabled) {
-                clear();
-                multiSelectInitialized = false;
-                settings.onInteractionEnd(selectedFeatures);
-                selectedFeatures = [];
-            }
+        $(window).keyup(function (evt) {
+          if (!ol.events.condition.platformModifierKeyOnly(evt) && multiSelectInitialized && enabled) {
+            var properties = _.map(multiSelectInteraction.getFeatures().getArray(), function(feature) { return feature.getProperties(); });
+            clear();
+            multiSelectInitialized = false;
+            map.addInteraction(selectInteraction);
+            settings.onInteractionEnd(properties);
+          }
         });
 
         var toggleDragBox = function() {
@@ -244,8 +246,10 @@
 
         var addNewFeature = function (features, highlightLayer) {
             _.each(features, function(feature){
-                selectInteraction.getFeatures().push(feature);
+              if(multiSelectInitialized)
                 multiSelectInteraction.getFeatures().push(feature);
+              else
+                selectInteraction.getFeatures().push(feature);
             });
 
             if(!highlightLayer)

@@ -199,15 +199,11 @@ root.LinearAssetLayer  = function(params) {
 
   var onMultipleSelect = function(evt) {
     if(evt.selected.length !== 0) {
-      var feature = evt.selected[0];
-      var properties = feature.getProperties();
-    }else{
+      selectedLinearAsset.addSelection(_.map(evt.selected, function(feature){ return feature.getProperties();}));
+    }
+    else{
       if (selectedLinearAsset.exists()) {
-        selectedLinearAsset.close();
-        readOnlyLayer.showLayer();
-        if(hasTrafficSignReadOnlyLayer){
-          trafficSignReadOnlyLayer.highLightLayer();
-        }
+        selectedLinearAsset.removeSelection(_.map(evt.deselected, function(feature){ return feature.getProperties();}));
       }
     }
   };
@@ -480,15 +476,15 @@ root.LinearAssetLayer  = function(params) {
     vectorSource.clear();
     indicatorLayer.getSource().clear();
     var linearAssets = _.flatten(linearAssetChains);
-      decorateSelection();
-      drawLinearAssets(linearAssets);
+    drawLinearAssets(linearAssets);
+    decorateSelection();
   };
 
   var drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
     readOnlyLayer.showLayer();
     if(assetLabel) {
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), me.uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep( _.omit(linearAssets, 'geometry')), offsetBySideCode), me.uiState.zoomLevel));
     }
   };
 
@@ -498,16 +494,28 @@ root.LinearAssetLayer  = function(params) {
 
   var decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
-      var features = style.renderFeatures(selectedLinearAsset.get());
+
+      var vectorSourceFeatures = vectorSource.getFeatures();
+      var linearAssets = selectedLinearAsset.get();
+
+      var selectedFeatures = _.map(linearAssets, function(asset) {
+        return _.find(vectorSourceFeatures, function(feature) {
+          return feature.getProperties().linkId === asset.linkId &&
+                 feature.getProperties().startMeasure === asset.startMeasure &&
+                 feature.getProperties().endMeasure === asset.endMeasure; });
+      });
+
       if(assetLabel)
-          features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
-      selectToolControl.addSelectionFeatures(features);
+          selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
+
+      selectToolControl.addSelectionFeatures(selectedFeatures);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
         drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
       }
     }
   };
+
   var reset = function() {
     linearAssetCutter.deactivate();
   };
