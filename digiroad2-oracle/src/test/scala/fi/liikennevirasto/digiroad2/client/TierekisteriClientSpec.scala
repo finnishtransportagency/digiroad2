@@ -96,6 +96,18 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val tierekisteriWinterCareClass: TierekisteriWinterCareClassAssetClient = {
+    new TierekisteriWinterCareClassAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriGreenCareClass: TierekisteriGreenCareClassAssetClient = {
+    new TierekisteriGreenCareClassAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
   lazy val connectedToTierekisteri = testConnection
 
   private def testConnection: Boolean = {
@@ -664,6 +676,20 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val assetsTypeSpeedLimit = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLMTEKSTI= "100", fldNOPRA506 = "80"))
     assetsTypeSpeedLimit.size should be (1)
     assetsTypeSpeedLimit.map(_.assetValue).head should be ("100")
+  }
+
+  test("fetch winter care class data") {
+    assume(testConnection)
+    val assets = tierekisteriWinterCareClass.fetchActiveAssetData(45, 1, 3709)
+
+    assets.head.assetValue should be (0)
+  }
+
+  test("fetch green care class data") {
+    assume(testConnection)
+    val assets = tierekisteriGreenCareClass.fetchActiveAssetData(45, 1, 3709)
+
+    assets.head.assetValue should be (5)
   }
 
   def trSpeedLimitDataTest(speedLimitType: TRTrafficSignType, fldLIIKVAST: String = null, fldNOPRA506: String = null, fldLMTEKSTI: String = null ) = {
