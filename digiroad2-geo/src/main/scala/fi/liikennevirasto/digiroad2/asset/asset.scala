@@ -285,3 +285,4 @@ case object TrTrailerTruckWeightLimit extends  AssetTypeInfo {val typeId = 330; 
 case object TrBogieWeightLimit extends  AssetTypeInfo {val typeId = 350; def geometryType = "point"; val label = "TrBogieWeightLimit"}
 case object TrAxleWeightLimit extends  AssetTypeInfo {val typeId = 340; def geometryType = "point"; val label = "TrAxleWeightLimit"}
 case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometryType = "point"; val label = "TrWeightLimit"}
+case object CareClass extends  AssetTypeInfo {val typeId = 380; def geometryType = "linear"; val label = "CareClass"}

@@ -61,7 +61,7 @@ VALUES (primary_key_seq.nextval, 60, 'C-luokan väylät', ' ', 'db_migration_v16
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
 VALUES (primary_key_seq.nextval,'Viherhoitoluokka','db_migration_v165', sysdate);
 
-INSERT INTO PROPERTY (ID,ASSET_TYPE_ID,PROPERTY_TYPE, CRE ATED_BY, NAME_LOCALIZED_STRING_ID, PUBLIC_ID)
+INSERT INTO PROPERTY (ID,ASSET_TYPE_ID,PROPERTY_TYPE, CREATED_BY, NAME_LOCALIZED_STRING_ID, PUBLIC_ID)
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Hoitoluokat'),'single_choice', 'db_migration_v165', (SELECT ID FROM LOCALIZED_STRING WHERE VALUE_FI = 'Viherhoitoluokka' AND CREATED_BY='db_migration_v165'),'hoitoluokat_viherhoitoluokka');
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
