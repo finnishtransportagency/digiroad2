@@ -4,9 +4,31 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddressException}
 
-class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService, val eventbus: DigiroadEventBus) extends AbstractBusStopStrategy {
+class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService, val eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends AbstractBusStopStrategy {
+
+  private val roadNumberPublicId = "tie"          // Tienumero
+  private val roadPartNumberPublicId = "osa"      // Tieosanumero
+  private val startMeasurePublicId = "aet"        // Etaisyys
+  private val trackCodePublicId = "ajr"           // Ajorata
+  private val sideCodePublicId = "puoli"
+
+  def getRoadAddressPropertiesByLinkId(persistedStop: PersistedMassTransitStop, roadLink: RoadLinkLike, oldProperties: Seq[Property]): Seq[Property] = {
+    val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get)
+
+    val newRoadAddressProperties =
+      Seq(
+        Property(0, roadNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.road.toString, Some(address.road.toString)))),
+        Property(0, roadPartNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.roadPart.toString, Some(address.roadPart.toString)))),
+        Property(0, startMeasurePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.addrM.toString, Some(address.addrM.toString)))),
+        Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.track.value.toString, Some(address.track.value.toString)))),
+        Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(roadSide.value.toString, Some(roadSide.value.toString))))
+      )
+
+    oldProperties.filterNot(op => newRoadAddressProperties.map(_.publicId).contains(op.publicId)) ++ newRoadAddressProperties
+  }
 
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     publishInfo.asset match {
@@ -15,7 +37,20 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     }
   }
 
-  override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
+  override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
+    def addRoadAddressProperties(oldProperties: Seq[Property]): Seq[Property] = {
+      roadLinkOption match {
+        case Some(roadLink) =>
+          try {
+            getRoadAddressPropertiesByLinkId(asset, roadLink, oldProperties)
+          } catch {
+            case e: RoadAddressException =>
+              oldProperties
+          }
+        case _ => oldProperties
+      }
+    }
+
     asset.terminalId match {
       case Some(terminalId) =>
         val terminalAssetOption = massTransitStopDao.fetchPointAssets(massTransitStopDao.withId(terminalId)).headOption
@@ -32,9 +67,9 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
         val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalExternalId)
 
-        (asset.copy(propertyData = asset.propertyData ++ Seq(newProperty, newPropertyExtId)), false)
+        (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData ++ Seq(newProperty, newPropertyExtId))), false)
       case _ =>
-        (asset, false)
+        (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData)), false)
     }
   }
 
@@ -65,7 +100,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     (resultAsset, PublishInfo(Some(resultAsset)))
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     if (properties.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(properties.toSeq, roadLink)
@@ -74,7 +109,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
 
-    municipalityValidation(asset.municipalityCode)
+    municipalityValidation(asset.municipalityCode, roadLink.administrativeClass)
 
     massTransitStopDao.updateAssetLastModified(asset.id, username)
 

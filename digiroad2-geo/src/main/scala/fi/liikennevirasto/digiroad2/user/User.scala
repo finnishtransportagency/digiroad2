@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2.user
 
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.asset._
+
 case class Configuration(
                         zoom: Option[Long] = None,
                         east: Option[Long] = None,
@@ -14,7 +17,7 @@ case class User(id: Long, username: String, configuration: Configuration) {
 
   def isViewer() = configuration.roles(Role.Viewer)
 
-  def isServiceRoadMaintainer(): Boolean= configuration.roles(Role.ServiceRoadMaintainer)
+  def isServiceRoadMaintainer(): Boolean = configuration.roles(Role.ServiceRoadMaintainer)
 
   def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
 
@@ -28,16 +31,28 @@ case class User(id: Long, username: String, configuration: Configuration) {
     configuration.roles(Role.BusStopMaintainer)
   }
 
+  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty
+
   def hasEarlyAccess(): Boolean = {
     configuration.roles(Role.Premium) || configuration.roles(Role.Operator) || configuration.roles(Role.BusStopMaintainer)
   }
 
-  def isAuthorizedToRead(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode) || isViewer()
+  def isAuthorizedToRead(municipalityCode: Int): Boolean = true
 
   def isAuthorizedToWrite(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode)
 
+  def isAuthorizedToWrite(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean = isAuthorizedFor(municipalityCode, administrativeClass)
+
+  def isAuthorizedToWriteInArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean = isAuthorizedForArea(areaCode, administrativeClass)
+
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
-    isOperator() || isBusStopMaintainer() || configuration.authorizedMunicipalities.contains(municipalityCode)
+    isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
+
+  private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean =
+    (isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)) || (isBusStopMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)) || isOperator()
+
+  private def isAuthorizedForArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean =
+    isOperator() || (isServiceRoadMaintainer() && configuration.authorizedAreas.contains(areaCode))
 }
 
 object Role {

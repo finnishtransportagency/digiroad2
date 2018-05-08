@@ -35,6 +35,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
@@ -48,28 +49,28 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
   val multiTypePropSeq = MultiAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", Seq(MultiTypePropertyValue("Dummy Text"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!"))),
-      MultiTypeProperty("mittarajoitus", "number", Seq(MultiTypePropertyValue("1000")))
+      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text"))),
+      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!"))),
+      MultiTypeProperty("mittarajoitus", "number", required = false, Seq(MultiTypePropertyValue("1000")))
     ))
   val multiTypePropSeq1 =MultiAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", Seq(MultiTypePropertyValue("Dummy Text One"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text One"))),
+      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
   val multiTypePropSeq2 =MultiAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", Seq(MultiTypePropertyValue("Dummy Text Two"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text Two"))),
+      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
   val multiTypePropSeq3 =MultiAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", Seq(MultiTypePropertyValue("Dummy Text Five"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text Five"))),
+      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
   val multiTypePropSeq4 =MultiAssetValue(
     Seq(
-      MultiTypeProperty("mittarajoitus", "number", Seq(MultiTypePropertyValue("1000")))
+      MultiTypeProperty("mittarajoitus", "number", required = false, Seq(MultiTypePropertyValue("1000")))
     ))
 
   val propertyData = MultiValue(multiTypePropSeq)
@@ -124,7 +125,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
-      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(30, Set(newAssets.head)).head
+      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
       asset.expired should be (false)
       mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360l), newTransaction = false).head.linkSource.value should be (1)
@@ -145,7 +146,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
-      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(30, Set(newAssets.head)).head
+      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
       asset.expired should be (false)
       asset.verifiedBy.get should be ("testuser")
@@ -171,7 +172,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, Some(propertyData2), Some(propertyData3), "unittest", (i) => Unit)
+      val createdId = ServiceWithDao.separate(assetId, Some(propertyData2), Some(propertyData3), "unittest", (i, a) => Unit)
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId(1))).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
 
@@ -205,7 +206,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, None, Some(propertyData3), "unittest", (i) => Unit).filter(_ != assetId).head
+      val createdId = ServiceWithDao.separate(assetId, None, Some(propertyData3), "unittest", (i, a) => Unit).filter(_ != assetId).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
@@ -240,7 +241,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(propertyData2), None, "unittest", (i) => Unit)
+      val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(propertyData2), None, "unittest", (i, a) => Unit)
       newAssetIdAfterUpdate.size should be(1)
 
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(newAssetIdAfterUpdate.head)).head
@@ -272,7 +273,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val ids = ServiceWithDao.split(assetId, 2.0, Some(propertyData2), Some(propertyData3), "unittest", (i) => Unit)
+      val ids = ServiceWithDao.split(assetId, 2.0, Some(propertyData2), Some(propertyData3), "unittest", (i, a) => Unit)
 
       val createdId = ids(1)
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
@@ -295,7 +296,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Separation should call municipalityValidation") {
-    def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
+    def failingMunicipalityValidation(code: Int, adminClass: AdministrativeClass): Unit = { throw new IllegalArgumentException }
     runWithRollback {
       val (propId1, propId2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
 

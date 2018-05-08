@@ -78,14 +78,19 @@
       return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
     };
 
-    var datePickers;
+    var date = fromDateString(dateElement.val());
+
     var dateCallback = function () {
+      datePickers.date.setDate(datePickers.date.getDate());
       dateElement.trigger('datechange');
     };
 
-    datePickers = {
+    var datePickers = {
       date: dateutil.addNullableFinnishDatePicker(dateElement, dateCallback)
     };
+
+    datePickers.date.setDate(date);
+
   };
 
   dateutil.removeDatePickersFromDom = function () {

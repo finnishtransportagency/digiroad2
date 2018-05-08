@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Poi
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{Equipment, TierekisteriBusStopMarshaller, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkLike, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
@@ -61,7 +61,7 @@ object TierekisteriBusStopStrategyOperations{
   }
 }
 
-class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, geometryTransform: GeometryTransform, eventbus: DigiroadEventBus) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus)
+class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 {
   val toLiviId = "OTHJ%d"
   val MaxMovementDistanceMeters = 50
@@ -102,8 +102,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     }
   }
 
-  override def enrichBusStop(persistedStop: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
-    val enrichPersistedStop = { super.enrichBusStop(persistedStop)._1 }
+  override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
+    val enrichPersistedStop = { super.enrichBusStop(persistedStop, roadLinkOption)._1 }
     val properties = enrichPersistedStop.propertyData
     val liViProp = properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId)
     val liViId = liViProp.flatMap(_.values.headOption).map(_.propertyValue)
@@ -121,7 +121,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) =
     create(asset, username, point, roadLink, createTierekisteriBusStop)
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(props.toSeq, roadLink)
     }
@@ -131,7 +131,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
 
-    municipalityValidation(asset.municipalityCode)
+    municipalityValidation(asset.municipalityCode, roadLink.administrativeClass)
 
     // Enrich properties with old administrator, if administrator value is empty in CSV import
     val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)

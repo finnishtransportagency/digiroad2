@@ -37,7 +37,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/StyleRule.js', 'UI/src/view/TrafficSignLabel.js', 'UI/src/view/AssetStyle.js', 'UI/src/view/ServiceRoadLabel.js', 'UI/src/view/HeightLimitLabel.js', 'UI/src/view/WeightLimitLabel.js', 'UI/src/view/WidthLimitLabel.js', 'UI/src/view/MaintenanceRoadStyle.js', 'UI/src/view/WinterSpeedLimitStyle.js', 'UI/src/view/AssetLabel.js', 'UI/src/view/LinearAssetLabel.js', 'UI/src/model/TrafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
+          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/styleRule.js', 'UI/src/view/point_asset/trafficSignLabel.js', 'UI/src/view/providers/assetStyle.js', 'UI/src/view/linear_asset/serviceRoadLabel.js', 'UI/src/view/point_asset/heightLimitLabel.js', 'UI/src/view/point_asset/weightLimitLabel.js', 'UI/src/view/point_asset/widthLimitLabel.js', 'UI/src/view/linear_asset/serviceRoadStyle.js', 'UI/src/view/linear_asset/winterSpeedLimitStyle.js', 'UI/src/view/providers/assetLabel.js', 'UI/src/view/linear_asset/linearAssetLabel.js', 'UI/src/controller/assetsVerificationCollection.js', 'UI/src/controller/trafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
           'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
@@ -245,6 +245,7 @@ module.exports = function(grunt) {
 
           // Indicates whether 'mocha.run()' should be executed in
           // 'bridge.js'
+          timeout: 50000,
           run: false,
           log: true,
           reporter: 'Spec'
@@ -256,7 +257,7 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
           run: false,
           log: true,
-          timeout: 10000,
+          timeout: 50000,
           reporter: 'Spec'
         }
       },
@@ -364,15 +365,17 @@ module.exports = function(grunt) {
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 
+  grunt.registerTask('test-concat', ['concat']);
+
   grunt.registerTask('save_deploy_info',
-    function() {
-      var options = this.options({
-        file: 'revision.properties'
-      });
+      function() {
+        var options = this.options({
+          file: 'revision.properties'
+        });
 
-      var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
-      grunt.file.write(options.file, data);
+        var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
+        grunt.file.write(options.file, data);
 
-    }
+      }
   );
 };

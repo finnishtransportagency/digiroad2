@@ -19,6 +19,7 @@ case class RailwayCrossing(id: Long, linkId: Long,
                            municipalityCode: Int,
                            safetyEquipment: Int,
                            name: Option[String],
+                           code: String,
                            createdBy: Option[String] = None,
                            createdAt: Option[DateTime] = None,
                            modifiedBy: Option[String] = None,
@@ -31,13 +32,14 @@ object OracleRailwayCrossingDao {
     val query =
       s"""
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value,
-        tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source
+        tpv.value_fi as name, tpvCode.value_fi as code, a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
         left join single_choice_value scv on scv.asset_id = a.id
         left join enumerated_value ev on (ev.property_id = $getSafetyEquipmentPropertyId AND scv.enumerated_value_id = ev.id)
         left join text_property_value tpv on (tpv.property_id = $getNamePropertyId AND tpv.asset_id = a.id)
+        left join text_property_value tpvCode on (tpvCode.property_id = $getCodePropertyId AND tpvCode.asset_id = a.id)
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
     StaticQuery.queryNA[RailwayCrossing](queryWithFilter).iterator.toSeq
@@ -54,13 +56,14 @@ object OracleRailwayCrossingDao {
       val municipalityCode = r.nextInt()
       val safetyEquipment = r.nextInt()
       val name = r.nextStringOption()
+      val code = r.nextString()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
 
-      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
+      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, safetyEquipment, name, code, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
     }
   }
 
@@ -83,6 +86,7 @@ object OracleRailwayCrossingDao {
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
     insertSingleChoiceProperty(id, getSafetyEquipmentPropertyId, asset.safetyEquipment).execute
     asset.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
+    insertTextProperty(id, getCodePropertyId, asset.code).execute
     id
   }
   def create(asset: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime]): Long = {
@@ -104,6 +108,7 @@ object OracleRailwayCrossingDao {
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
     insertSingleChoiceProperty(id, getSafetyEquipmentPropertyId, asset.safetyEquipment).execute
     asset.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
+    insertTextProperty(id, getCodePropertyId, asset.code).execute
     id
   }
 
@@ -113,7 +118,9 @@ object OracleRailwayCrossingDao {
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
     updateSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
     deleteTextProperty(id, getNamePropertyId).execute
+    deleteTextProperty(id, getCodePropertyId).execute
     railwayCrossing.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
+    insertTextProperty(id, getCodePropertyId, railwayCrossing.code).execute
 
     adjustedTimeStampOption match {
       case Some(adjustedTimeStamp) =>
@@ -145,6 +152,14 @@ object OracleRailwayCrossingDao {
 
   private def getNamePropertyId: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("rautatien_tasoristeyksen_nimi").first
+  }
+
+  private def getCodePropertyId: Long = {
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("tasoristeystunnus").first
+  }
+
+  def getCodeMaxSize: Long  = {
+    StaticQuery.query[String, Long](Queries.getPropertyMaxSize).apply("tasoristeystunnus").first
   }
 }
 

@@ -16,12 +16,15 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
   private val ROAD_LINK_LOG = "road link import"
   private val TRAFFIC_SIGN_LOG = "traffic sign import"
+  private val MAINTENANCE_ROAD_LOG = "maintenance import"
   private val roadLinkCsvImporter = new RoadLinkCsvImporter
   private val trafficSignCsvImporter = new TrafficSignCsvImporter
+  private val maintenanceRoadCsvImporter = new MaintenanceRoadCsvImporter
 
   private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream): CsvDataImporterOperations = {
     assetType match {
       case "trafficsigns" => importTrafficSigns(csvFileInputStream)
+      case "maintenanceRoads" => importMaintenanceRoads(csvFileInputStream)
       case _ => importRoadLinks(csvFileInputStream)
     }
   }
@@ -76,6 +79,27 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
       csvFileInputStream.close()
     }
     redirect(url("/log/" + id + "/" + ROAD_LINK_LOG))
+  }
+
+  def importMaintenanceRoads(csvFileInputStream: InputStream): Nothing = {
+    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", MAINTENANCE_ROAD_LOG)
+    try {
+      val result = maintenanceRoadCsvImporter.importMaintenanceRoads(csvFileInputStream)
+      val response = result match {
+        case maintenanceRoadCsvImporter.ImportResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
+        case maintenanceRoadCsvImporter.ImportResult(Nil, excludedLinks, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
+        case _ => pretty(Extraction.decompose(result))
+      }
+      ImportLogService.save(id, response, MAINTENANCE_ROAD_LOG)
+    } catch {
+      case e: Exception => {
+        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), MAINTENANCE_ROAD_LOG) //error when saving log
+        throw e
+      }
+    } finally {
+      csvFileInputStream.close()
+    }
+    redirect(url("/log/" + id + "/" + MAINTENANCE_ROAD_LOG))
   }
 
   get("/log/:id/:assetTypeLog") {

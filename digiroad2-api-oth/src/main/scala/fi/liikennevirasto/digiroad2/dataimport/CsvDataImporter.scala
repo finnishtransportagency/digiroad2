@@ -7,9 +7,11 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.RoadLinkServiceDAO
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.Digiroad2Context
+import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, MaintenanceService}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -256,19 +258,19 @@ class RoadLinkCsvImporter extends CsvDataImporterOperations {
   def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String], hasTrafficDirectionChange: Boolean): Option[Long] = {
     try {
       if (hasTrafficDirectionChange) {
-        RoadLinkServiceDAO.getTrafficDirectionValue(roadLinkAttribute.linkId) match {
-          case Some(value) => RoadLinkServiceDAO.deleteTrafficDirection(roadLinkAttribute.linkId)
+        RoadLinkDAO.get(RoadLinkDAO.TrafficDirection, roadLinkAttribute.linkId) match {
+          case Some(value) => RoadLinkDAO.delete(RoadLinkDAO.TrafficDirection, roadLinkAttribute.linkId)
           case _ => None
         }
       }
 
       roadLinkAttribute.properties.map { prop =>
-        val optionalLinkTypeValue: Option[Int] = RoadLinkServiceDAO.getLinkProperty(prop.columnName, prop.columnName, roadLinkAttribute.linkId)
+        val optionalLinkTypeValue: Option[Int] = RoadLinkDAO.get(prop.columnName, roadLinkAttribute.linkId)
         optionalLinkTypeValue match {
           case Some(existingValue) =>
-            RoadLinkServiceDAO.updateExistingLinkPropertyRow(prop.columnName, prop.columnName, roadLinkAttribute.linkId, username, existingValue, prop.value.toString.toInt)
+            RoadLinkDAO.update(prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt, existingValue)
           case None =>
-            RoadLinkServiceDAO.insertNewLinkProperty(prop.columnName, prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt)
+            RoadLinkDAO.insert(prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt)
         }
       }
       None
@@ -412,6 +414,119 @@ class RoadLinkCsvImporter extends CsvDataImporterOperations {
           )
         }
       }
+    }
+  }
+}
+
+class MaintenanceRoadCsvImporter extends CsvDataImporterOperations {
+
+  type MalformedParameters = List[String]
+  type ParsedProperties = List[AssetProperty]
+  type ParsedAssetRow = (MalformedParameters, ParsedProperties)
+
+  case class IncompleteAsset(missingParameters: List[String], csvRow: String)
+  case class MalformedAsset(malformedParameters: List[String], csvRow: String)
+  case class ExcludedAsset(affectedRoadLinkType: String, csvRow: String)
+  case class ImportResult(incompleteAssets: List[IncompleteAsset] = Nil,
+                          malformedAssets: List[MalformedAsset] = Nil,
+                          excludedAssets: List[ExcludedAsset] = Nil)
+  case class AssetProperty(columnName: String, value: Any)
+  case class CsvAssetRow(properties: Seq[AssetProperty])
+
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  val maintenanceService: MaintenanceService = Digiroad2Context.maintenanceRoadService
+
+  private val intFieldMappings = Map(
+    "new_ko" -> "rightOfUse",
+    "or_access" -> "maintenanceResponsibility",
+    "linkid" -> "linkid"
+  )
+
+  val mappings = intFieldMappings
+
+  private val mandatoryFields = List("linkid", "new_ko", "or_access")
+
+  val MandatoryParameters: Set[String] = mappings.keySet ++ mandatoryFields
+
+  private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
+    MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
+  }
+
+  def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
+    csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'" } mkString ", "
+  }
+
+  private def verifyValueType(parameterName: String, parameterValue: String): ParsedAssetRow = {
+    parameterValue.forall(_.isDigit) match {
+      case true => (Nil, List(AssetProperty(columnName = intFieldMappings(parameterName), value = parameterValue.toInt)))
+      case false => (List(parameterName), Nil)
+    }
+  }
+
+  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
+    csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
+      val (key, value) = parameter
+
+      if (isBlank(value)) {
+        if (mandatoryFields.contains(key))
+          result.copy(_1 = List(key) ::: result._1, _2 = result._2)
+        else
+          result
+      } else {
+        if (intFieldMappings.contains(key)) {
+          val (malformedParameters, properties) = verifyValueType(key, value)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else
+          result
+      }
+    }
+  }
+
+  def getPropertyValue(maintenanceRoadAttributes: CsvAssetRow, propertyName: String) = {
+    maintenanceRoadAttributes.properties.find (prop => prop.columnName == propertyName).map(_.value).get
+  }
+
+  def createMaintenanceRoads(maintenanceRoadAttributes: CsvAssetRow): Unit = {
+    val linkId = getPropertyValue(maintenanceRoadAttributes, "linkid").asInstanceOf[Integer].toLong
+    val newKoProperty = Props("huoltotie_kayttooikeus", "single_choice", getPropertyValue(maintenanceRoadAttributes, "rightOfUse").toString())
+    val orAccessProperty = Props("huoltotie_huoltovastuu", "single_choice", getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility").toString())
+
+    Digiroad2Context.roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId)).map { roadlink =>
+      val values = MaintenanceRoad(Seq(newKoProperty, orAccessProperty))
+
+      maintenanceService.createWithHistory(MaintenanceRoadAsset.typeId, linkId, values,
+        SideCode.BothDirections.value, Measures(0, roadlink.length), userProvider.getCurrentUser().username, Some(roadlink))
+    }
+  }
+
+
+  def importMaintenanceRoads(inputStream: InputStream): ImportResult = {
+    val streamReader = new InputStreamReader(inputStream, "UTF-8")
+    val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
+      override val delimiter: Char = ';'
+    })
+    csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
+      val csvRow = row.map(r => (r._1.toLowerCase, r._2))
+      val missingParameters = findMissingParameters(csvRow)
+      val (malformedParameters, properties) = assetRowToProperties(csvRow)
+
+      if (missingParameters.nonEmpty || malformedParameters.nonEmpty) {
+        result.copy(
+          incompleteAssets = missingParameters match {
+            case Nil => result.incompleteAssets
+            case parameters => IncompleteAsset(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteAssets
+          },
+          malformedAssets = malformedParameters match {
+            case Nil => result.malformedAssets
+            case parameters => MalformedAsset(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedAssets
+          })
+
+      } else {
+        val parsedRow = CsvAssetRow(properties = properties)
+        createMaintenanceRoads(parsedRow)
+        result
+      }
+
     }
   }
 }

@@ -180,7 +180,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, LinearAssetTypes.ProhibitionAssetTypeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+      val createdId = ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i, _) => Unit)
       val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId(1))).head
       val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId.head)).head
 
@@ -206,7 +206,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), null)))
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, LinearAssetTypes.ProhibitionAssetTypeId)))
-      val ids = ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+      val ids = ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i, _) => Unit)
       val createdId = ids(1)
       val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId)).head
       val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(ids.head)).head
@@ -496,12 +496,6 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val assetTypeId = 170
     val geom = List(Point(0, 0), Point(300, 0))
     val len = GeometryUtils.geometryLength(geom)
-
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
     val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
       RoadLink(newLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))

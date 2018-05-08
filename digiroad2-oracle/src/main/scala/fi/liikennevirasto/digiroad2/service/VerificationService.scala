@@ -1,0 +1,79 @@
+package fi.liikennevirasto.digiroad2.service
+
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.dao.VerificationDao
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import org.joda.time.DateTime
+
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean)
+
+class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
+
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def dao: VerificationDao = new VerificationDao
+
+  def getAssetTypesByMunicipality(municipalityCode: Int): List[VerificationInfo] = {
+    withDynSession {
+      dao.getVerifiedAssetTypes(municipalityCode)
+    }
+  }
+
+  def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Seq[VerificationInfo] = {
+    withDynSession {
+      dao.getAssetVerification(municipalityCode, assetTypeId)
+    }
+  }
+
+  def getAssetVerificationById(id: Long, assetTypeId: Int): Option[VerificationInfo] = {
+    withDynSession {
+      dao.getAssetVerificationById(id)
+    }
+  }
+
+  def verifyAssetType(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
+    withDynSession {
+      if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
+        throw new IllegalStateException("Asset type not allowed")
+
+      assetTypeIds.foreach { typeId =>
+        dao.expireAssetTypeVerification(municipalityCode, typeId, userName)
+        dao.insertAssetTypeVerification(municipalityCode, typeId, userName)
+      }
+    }
+  }
+
+  def getMunicipalityInfo(bounds: BoundingRectangle): Option[Int] = {
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
+    val midPoint = Point((bounds.rightTop.x + bounds.leftBottom.x) / 2, (bounds.rightTop.y + bounds.leftBottom.y) / 2)
+
+    if(roadLinks.nonEmpty)
+      Some(roadLinks.minBy(road => GeometryUtils.minimumDistance(midPoint, road.geometry)).municipalityCode)
+    else
+      None
+  }
+
+  def getAssetVerificationInfo(typeId: Int, municipality: Int): Option[VerificationInfo] = {
+    getAssetVerification(municipality, typeId).headOption
+  }
+
+  def setAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], username: String): Seq[Long] = {
+    if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
+      throw new IllegalStateException("Asset type not allowed")
+
+    withDynTransaction {
+      assetTypeIds.map { assetTypeId =>
+        dao.insertAssetTypeVerification(municipalityCode, assetTypeId, username)
+      }
+    }.toSeq
+  }
+
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
+    withDynTransaction{
+      assetTypeIds.foreach { assetType =>
+        dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
+      }
+    }
+  }
+}

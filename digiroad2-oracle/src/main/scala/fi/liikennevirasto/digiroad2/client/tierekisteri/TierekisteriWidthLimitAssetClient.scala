@@ -19,16 +19,17 @@ class TierekisteriWidthLimitAssetClient(trEndPoint: String, trEnable: Boolean, h
   private val trReason = "LEVRAJTY"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriWidthLimitData] = {
-    val widthValue = convertToInt(getFieldValue(data, trWidth)).get
+    convertToInt(getFieldValue(data, trWidth)).map {
+      widthValue =>
 
-    //Mandatory field
-    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
-    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val roadSide = convertToInt(getMandatoryFieldValue(data, trRoadSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
-    val reason = convertToInt(getFieldValue(data, trReason)).map(WidthLimitReason.apply).getOrElse(WidthLimitReason.Unknown)
+        val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+        val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+        val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+        val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+        val roadSide = convertToInt(getMandatoryFieldValue(data, trRoadSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+        val reason = convertToInt(getFieldValue(data, trReason)).map(WidthLimitReason.apply).getOrElse(WidthLimitReason.Unknown)
 
-    Some(TierekisteriWidthLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, widthValue, reason))
+        TierekisteriWidthLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, widthValue, reason)
+    }
   }
 }

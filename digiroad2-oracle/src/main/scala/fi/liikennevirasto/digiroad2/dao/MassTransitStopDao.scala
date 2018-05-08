@@ -570,6 +570,15 @@ class MassTransitStopDao {
       and tp.value_fi = $liviId""".as[Long].list
   }
 
+  def getNationalIdsByPassengerId(passengerId: String): Seq[Long] = {
+    sql"""
+      select a.external_id
+      from text_property_value tp
+      join asset a on a.id = tp.asset_id
+      where tp.property_id = (select p.id from property p where p.public_id = 'matkustajatunnus')
+      and UPPER(tp.value_fi) = UPPER($passengerId)""".as[Long].list
+  }
+
   def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
   }
@@ -580,6 +589,10 @@ class MassTransitStopDao {
 
   def withNationalId(nationalId: Long)(query: String): String = {
     query + s" where a.external_id = $nationalId"
+  }
+
+  def withNationalIds(nationalIds: Seq[Long])(query: String): String = {
+    query + s" where a.external_id in (${nationalIds.mkString(",")})"
   }
 
   def countTerminalChildBusStops(assetId: Long): Int = {
