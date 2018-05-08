@@ -655,6 +655,7 @@
     };
   };
 
+  //TODO change the name to DynamicAssetForm
   root.AssetFormFactory = function (formStructure) {
     var me = this;
     var _assetTypeConfiguration;
@@ -680,14 +681,14 @@
 
       eventbus.on('layer:selected', function(layer) {
         if(assetTypeConfiguration.isVerifiable && assetTypeConfiguration.layerName === layer){
-          renderLinktoWorkList(layer);
+            renderLinkToWorkList(layer);
         }
         else {
           $('#information-content .form[data-layer-name="' + assetTypeConfiguration.layerName +'"]').remove();
         }
       });
 
-      eventbus.on('application:readOnly', function(readOnly){
+      eventbus.on('application:readOnly', function(){
         if(assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
           rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset));
           rootElement.find('.read-only-title').toggle(readOnly);
@@ -701,28 +702,28 @@
       }
     };
 
-    me.renderElements = function(selectedAsset, isReadOnly, sideCode, setAsset, asset) {
+    me.renderFormElements = function(asset, isReadOnly, sideCode, setAsset) {
       var assetTypeConfiguration = _assetTypeConfiguration;
       var availableFieldTypes = [
-        {name: 'long_text', field: new TextualLongField(assetTypeConfiguration)},
-        {name: 'single_choice', field: new SingleChoiceField(assetTypeConfiguration)},
-        {name: 'date', field: new DateField(assetTypeConfiguration)},
-        {name: 'multiple_choice', field: new MultiSelectField(assetTypeConfiguration)},
-        {name: 'integer', field: new IntegerField(assetTypeConfiguration)},
-        {name: 'number', field: new NumericalField(assetTypeConfiguration)},
-        {name: 'text', field: new TextualField(assetTypeConfiguration)},
-        {name: 'checkbox', field: new CheckboxField(assetTypeConfiguration)},
-        {name: 'read_only_number', field: new ReadOnlyFields(assetTypeConfiguration)},
-        {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)},
-        {name: 'time_period', field: new TimePeriodField(assetTypeConfiguration)}
+          {name: 'long_text', field: new TextualLongField(assetTypeConfiguration)},
+          {name: 'single_choice', field: new SingleChoiceField(assetTypeConfiguration)},
+          {name: 'date', field: new DateField(assetTypeConfiguration)},
+          {name: 'multiple_choice', field: new MultiSelectField(assetTypeConfiguration)},
+          {name: 'integer', field: new IntegerField(assetTypeConfiguration)},
+          {name: 'number', field: new NumericalField(assetTypeConfiguration)},
+          {name: 'text', field: new TextualField(assetTypeConfiguration)},
+          {name: 'checkbox', field: new CheckboxField(assetTypeConfiguration)},
+          {name: 'read_only_number', field: new ReadOnlyFields(assetTypeConfiguration)},
+          {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)},
+          {name: 'time_period', field: new TimePeriodField(assetTypeConfiguration)}
       ];
 
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
       _.each(_.sortBy(formStructure.fields, function(field){ return field.weight; }), function (field) {
         var fieldValues = [];
-        var assetValues = selectedAsset.get()[0].value;
+        var assetValues = asset.value;
         if (assetValues) {
-          var existingProperty = _.find(selectedAsset.get()[0].value.properties, function (property) { return property.publicId === field.publicId; });
+          var existingProperty = _.find(asset.value.properties, function (property) { return property.publicId === field.publicId; });
           if(!_.isUndefined(existingProperty))
             fieldValues = existingProperty.values;
         }
@@ -735,113 +736,152 @@
     };
 
     me.renderForm = function (selectedAsset) {
-      var assetTypeConfiguration = _assetTypeConfiguration;
-      var isReadOnly =  validateAdministrativeClass(selectedAsset, assetTypeConfiguration.editConstrains) || applicationModel.isReadOnly();
+      var isReadOnly = isReadOnly(selectedAsset);
       var asset = selectedAsset.get();
 
-      var created = createBody(selectedAsset);
-      var body  = created.body;
+      var body = createBodyElement(selectedAsset);
 
       if(selectedAsset.isSplitOrSeparated()) {
+        //Render form A
+        renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue);
 
-        var sideCodeClassA = generateClassName('a');
-        var radioA = singleValueEditElement(asset[0].value,  assetTypeConfiguration, 'a');
-        body.find('.form').append(radioA);
-        body.find('.form-editable-' + sideCodeClassA ).append(me.renderElements(selectedAsset, isReadOnly, 'a', selectedAsset.setAValue, asset[0]));
-
-        var sideCodeClassB = generateClassName('b');
-        var radioB = singleValueEditElement(asset[1].value,  assetTypeConfiguration, 'b');
-        body.find('.form').append(radioB);
-        body.find('.form-editable-' + sideCodeClassB).append(me.renderElements(selectedAsset, isReadOnly, 'b', selectedAsset.setBValue, asset[1]));
+        //Remder form B
+        renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue);
       }
       else
       {
-        var sideCodeClass = generateClassName('');
-        var radio = singleValueEditElement(asset[0].value, assetTypeConfiguration);
-        body.find('.form').append(radio);
-        body.find('.form-editable-' + sideCodeClass).append(me.renderElements(selectedAsset, isReadOnly, '', selectedAsset.setValue));
+        renderFormElements(asset[0], isReadOnly, '', selectedAsset.setValue);
       }
-      body.find('.form').append(created.separateButton);
-      addBodyEvents(body, assetTypeConfiguration, isReadOnly);
+
+      //Render separate button if is separable asset type
+      renderSeparateButtonElement(selectedAsset);
+
+      //Hide or show elements depending on the readonly mode
+      toggleBodyElements(body, isReadOnly);
       return body;
     };
 
-    function singleValueEditElement(currentValue, assetTypeConfiguration, sideCode) {
-      var withoutValue = _.isUndefined(currentValue) ? 'checked' : '';
-      var withValue = _.isUndefined(currentValue) ? '' : 'checked';
+    //TODO check if this is only used here if so we could
+    me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode, selectedLinearAsset) {
+          var inputElement = rootELement.find('.form-editable-' + generateClassName(sideCode));
+          var toggleElement = rootELement.find('.radio input.' + generateClassName(sideCode));
+          var valueRemovers = {
+              a: assetTypeConfiguration.selectedLinearAsset.removeAValue,
+              b: assetTypeConfiguration.selectedLinearAsset.removeBValue
+          };
+          var valueSetters = {
+              a: assetTypeConfiguration.selectedLinearAsset.setAValue,
+              b: assetTypeConfiguration.selectedLinearAsset.setBValue
+          };
+          var removeValue = selectedLinearAsset ? selectedLinearAsset.removeValue : valueRemovers[sideCode] || assetTypeConfiguration.selectedLinearAsset.removeValue;
+          var setValue = selectedLinearAsset ? selectedLinearAsset.setValue : valueSetters[sideCode] ||  assetTypeConfiguration.selectedLinearAsset.setValue;
+          toggleElement.on('change', function(event) {
+              var disabled = $(event.currentTarget).val() === 'disabled';
+              var input = inputElement.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+              input.attr('disabled', disabled);
+              if (disabled) {
+                  removeValue();
+              }
+              else{
+                  setValue(extractInputValues(input));
+              }
+          });
+      };
 
-      var unit = assetTypeConfiguration.unit ? currentValue ? currentValue + ' ' + assetTypeConfiguration.unit : '-' : currentValue ? 'on' : 'ei ole';
+    function isReadOnly(selectedAsset){
+        return checkEditConstrains(selectedAsset) || applicationModel.isReadOnly();
+    }
+
+    function renderSeparateButtonElement(selectedAsset, isReadOnly){
+        var assetTypeConfiguration = _assetTypeConfiguration;
+        if(selectedAsset.isSeparable() && !isReadOnly){
+          var separateElement = $(''+
+              '<div class="form-group editable">' +
+              '  <label class="control-label"></label>' +
+              '  <button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
+              '</div>');
+
+          separateElement.find('#separate-limit').on('click', function() { assetTypeConfiguration.selectedLinearAsset.separate(); });
+
+          body.find('.form').append(separateElement);
+        }
+    }
+
+    function renderFormElements(asset, isReadOnly, sideCode, setValueFn) {
+      var assetTypeConfiguration = _assetTypeConfiguration;
+      var sideCodeClass = generateClassName(sideCode);
+
+      var unit = assetTypeConfiguration.unit ? asset.value ? asset.value + ' ' + assetTypeConfiguration.unit : '-' : asset.value ? 'on' : 'ei ole';
 
       var formGroup = $('' +
-        '<div class="form-group editable form-editable-'+ generateClassName(sideCode) +'">' +
+        '<div class="form-group editable form-editable-'+ sideCodeClass +'">' +
         '  <label class="control-label">' + assetTypeConfiguration.editControlLabels.title + '</label>' +
         '  <p class="form-control-static ' + assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
         '</div>');
 
       formGroup.append($('' +
-        sideCodeMarker(sideCode) +
+        createSideCodeMarker(sideCode) +
         '<div class="edit-control-group choice-group">' +
         '  <div class="radio">' +
         '    <label>' + assetTypeConfiguration.editControlLabels.disabled +
         '      <input ' +
-        '      class="' + generateClassName(sideCode) + '" ' +
-        '      type="radio" name="' + generateClassName(sideCode) + '" ' +
-        '      value="disabled" ' + withoutValue + '/>' +
+        '      class="' + sideCodeClass + '" ' +
+        '      type="radio" name="' + sideCodeClass + '" ' +
+        '      value="disabled" ' + _.isUndefined(asset.value) ? 'checked' : '' + '/>' +
         '    </label>' +
         '  </div>' +
         '  <div class="radio">' +
         '    <label>' + assetTypeConfiguration.editControlLabels.enabled +
         '      <input ' +
-        '      class="' + generateClassName(sideCode) + '" ' +
-        '      type="radio" name="' + generateClassName(sideCode) + '" ' +
-        '      value="enabled" ' + withValue + '/>' +
+        '      class="' + sideCodeClass + '" ' +
+        '      type="radio" name="' + sideCodeClass + '" ' +
+        '      value="enabled" ' + _.isUndefined(asset.value) ? '' : 'checked' + '/>' +
         '    </label>' +
         '  </div>' +
         '</div>'));
 
-      return formGroup;
+      body.find('.form').append(formGroup);
+      body.find('.form-editable-' + sideCodeClass).append(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn));
     }
 
-    function sideCodeMarker(sideCode) {
-      if (_.isUndefined(sideCode)) {
+    function renderLinkToWorkList(layerName) {
+        $('#information-content').append('' +
+            '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
+            '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</a>' +
+            '</div>');
+    }
+
+    function createSideCodeMarker(sideCode) {
+      if (_.isUndefined(sideCode) || sideCode === '')
         return '';
-      } else {
-        return '<span class="marker">' + sideCode + '</span>';
-      }
+
+      return '<span class="marker">' + sideCode + '</span>';
     }
 
-    function createBody(asset) {
+    function createBodyElement(selectedAsset) {
       var assetTypeConfiguration = _assetTypeConfiguration;
       var info = {
-        modifiedBy :  asset.getModifiedBy() || '-',
-        modifiedDate : asset.getModifiedDateTime() ? ' ' + asset.getModifiedDateTime() : '',
-        createdBy : asset.getCreatedBy() || '-',
-        createdDate : asset.getCreatedDateTime() ? ' ' + asset.getCreatedDateTime() : '',
-        verifiedBy : asset.getVerifiedBy(),
-        verifiedDateTime : asset.getVerifiedDateTime()
+        modifiedBy :  selectedAsset.getModifiedBy() || '-',
+        modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + asset.getModifiedDateTime() : '',
+        createdBy : selectedAsset.getCreatedBy() || '-',
+        createdDate : selectedAsset.getCreatedDateTime() ? ' ' + asset.getCreatedDateTime() : '',
+        verifiedBy : selectedAsset.getVerifiedBy(),
+        verifiedDateTime : selectedAsset.getVerifiedDateTime()
       };
 
       var verifiedFields = function() {
-        return (asset.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
+        return (selectedAsset.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
           '<div class="form-group">' +
           '   <p class="form-control-static asset-log-info">Tarkistettu: ' + info.verifiedBy + ' ' + info.verifiedDateTime + '</p>' +
           '</div>' : '';
       };
 
-      var toSeparateButton =  function() {
-        return asset.isSeparable() ?
-          '<div class="form-group editable">' +
-          '  <label class="control-label"></label>' +
-          '  <button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
-          '</div>' : '';
-      };
-
       var title = function () {
-        if(asset.isUnknown() || asset.isSplit()) {
+        if(selectedAsset.isUnknown() || selectedAsset.isSplit()) {
           return '<span class="read-only-title" style="display: block">' +assetTypeConfiguration.title + '</span>' +
             '<span class="edit-mode-title" style="display: block">' + assetTypeConfiguration.newTitle + '</span>';
         }
-        return asset.count() === 1 ?
+        return selectedAsset.count() === 1 ?
           '<span>Segmentin ID: ' + asset.getId() + '</span>' : '<span>' + assetTypeConfiguration.title + '</span>';
 
       };
@@ -855,9 +895,9 @@
           '     <div class="form-group">' +
           '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + info.modifiedBy + info.modifiedDate + '</p>' +
           '     </div>' +
-          verifiedFields() +
+                verifiedFields() +
           '     <div class="form-group">' +
-          '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + asset.count() + '</p>' +
+          '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
           '     </div>' +
           '   </div>' +
           '</div>' +
@@ -869,35 +909,33 @@
 
       body.find('.linear-asset-header').append( new SaveButton(assetTypeConfiguration, formStructure).element).append(new CancelButton(assetTypeConfiguration).element);
       body.find('.linear-asset-footer').append( new VerificationButton(assetTypeConfiguration).element).append( new SaveButton(assetTypeConfiguration, formStructure).element).append(new CancelButton(assetTypeConfiguration).element);
-      return { body : body, separateButton: toSeparateButton};
+      return body;
     }
 
-    me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode, selectedLinearAsset) {
-      var inputElement = rootELement.find('.form-editable-' + generateClassName(sideCode));
-      var toggleElement = rootELement.find('.radio input.' + generateClassName(sideCode));
-      var valueRemovers = {
-        a: assetTypeConfiguration.selectedLinearAsset.removeAValue,
-        b: assetTypeConfiguration.selectedLinearAsset.removeBValue
-      };
-      var valueSetters = {
-        a: assetTypeConfiguration.selectedLinearAsset.setAValue,
-        b: assetTypeConfiguration.selectedLinearAsset.setBValue
-      };
-      var removeValue = selectedLinearAsset ? selectedLinearAsset.removeValue : valueRemovers[sideCode] || assetTypeConfiguration.selectedLinearAsset.removeValue;
-      var setValue = selectedLinearAsset ? selectedLinearAsset.setValue : valueSetters[sideCode] ||  assetTypeConfiguration.selectedLinearAsset.setValue;
-      toggleElement.on('change', function(event) {
-        var disabled = $(event.currentTarget).val() === 'disabled';
-        var input = inputElement.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
-        input.attr('disabled', disabled);
-        if (disabled) {
-          removeValue();
-        }
-        else{
-          setValue(extractInputValues(input));
-        }
-      });
-    };
+    function toggleBodyElements(rootElement, isReadOnly) {
+      rootElement.find('.form-controls').toggle(!isReadOnly);
+      rootElement.find('.editable .form-control-static').toggle(isReadOnly);
+      rootElement.find('.editable .edit-control-group').toggle(!isReadOnly);
+      rootElement.find('.read-only-title').toggle(isReadOnly);
+      rootElement.find('.edit-mode-title').toggle(!isReadOnly);
+    }
 
+    function generateClassName(sideCode) {
+      return sideCode ? _assetTypeConfiguration.className + '-' + sideCode : _assetTypeConfiguration.className;
+    }
+
+    function checkEditConstrains(selectedAsset){
+      var assetTypeConfiguration = _assetTypeConfiguration;
+
+      var editConstrains = assetTypeConfiguration.editConstrains || function() { return false; };
+
+      var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
+        return editConstrains(asset);
+      });
+      return !_.isEmpty(selectedAssets);
+    }
+
+    //TODO this should not be done here
     function extractInputValues(input) {
       var value = {};
 
@@ -937,44 +975,5 @@
       });
       return value;
     }
-
-    function addBodyEvents(rootElement, assetTypeConfiguration, isReadOnly) {
-      rootElement.find('.form-controls').toggle(!isReadOnly);
-      rootElement.find('.editable .form-control-static').toggle(isReadOnly);
-      rootElement.find('.editable .edit-control-group').toggle(!isReadOnly);
-      rootElement.find('#separate-limit').toggle(!isReadOnly);
-      rootElement.find('#separate-limit').on('click', function() { assetTypeConfiguration.selectedLinearAsset.separate(); });
-      rootElement.find('.read-only-title').toggle(isReadOnly);
-      rootElement.find('.edit-mode-title').toggle(!isReadOnly);
-    }
-
-    function generateClassName(sideCode) {
-      return sideCode ? _assetTypeConfiguration.className + '-' + sideCode : _assetTypeConfiguration.className;
-    }
-
-    function validateAdministrativeClass(selectedLinearAsset, editConstrains){
-      editConstrains = editConstrains || function() { return false; };
-
-      var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
-        return editConstrains(selected);
-      });
-      return !_.isEmpty(selectedAssets);
-    }
-
-    var renderLinktoWorkList = function renderLinktoWorkList(layerName) {
-      var textName;
-      switch(layerName) {
-        case "maintenanceRoad":
-          textName = "Tarkistamattomien huoltoteiden lista";
-          break;
-        default:
-          textName = "Vanhentuneiden kohteiden lista";
-      }
-
-      $('#information-content').append('' +
-        '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-        '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">' + textName + '</a>' +
-        '</div>');
-    };
   };
 })(this);
