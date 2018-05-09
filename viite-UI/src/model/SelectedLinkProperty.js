@@ -53,7 +53,7 @@
     var extractDataForDisplay = function(selectedData) {
       var extractUniqueValues = function(selectedData, property) {
         return _.chain(selectedData)
-          .pluck(property)
+          .map(property)
           .uniq()
           .value()
           .join(', ');
@@ -73,8 +73,8 @@
         var elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
         var trackCode = {trackCode: extractUniqueValues(selectedData, 'trackCode')};
         var discontinuity = {discontinuity: extractUniqueValues(selectedData, 'discontinuity')};
-        var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
-        var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
+        var startAddressM = {startAddressM: _.min(_.chain(selectedData).map('startAddressM').uniq().value())};
+        var endAddressM = {endAddressM: _.max(_.chain(selectedData).map('endAddressM').uniq().value())};
         var roadLinkSource = {roadLinkSource: extractUniqueValues(selectedData, 'roadLinkSource')};
 
         var roadNames = {
@@ -315,10 +315,10 @@
               return roads.linkId;
             });
             var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
-              return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
+              return !_.includes(_.map(previousAdjacents, 'linkId'), adj.linkId);
             }).concat(previousAdjacents);
             var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
-              return !_.contains(selectedLinkIds, prvAdj.linkId);
+              return !_.includes(selectedLinkIds, prvAdj.linkId);
             });
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
@@ -377,10 +377,10 @@
               return roads.linkId;
             });
             var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
-              return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
+              return !_.includes(_.map(previousAdjacents, 'linkId'), adj.linkId);
             }).concat(previousAdjacents);
             var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
-              return !_.contains(selectedLinkIds, prvAdj.linkId);
+              return !_.includes(selectedLinkIds, prvAdj.linkId);
             });
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
@@ -448,7 +448,7 @@
 
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'linkId');
-      current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
+      current = roadCollection.get(_.map(uniqueLinks, 'linkId'));
       _.forEach(current, function (selected) {
         selected.select();
       });
@@ -545,7 +545,7 @@
     };
 
     var addTargets = function(target, adjacents){
-      if(!_.contains(targets,target))
+      if(!_.includes(targets,target))
         targets.push(roadCollection.getRoadLinkByLinkId(parseInt(target)).getData());
       var targetData = _.filter(adjacents, function(adjacent){
         return adjacent.linkId == target;
@@ -703,14 +703,14 @@
       var currentLinkIds = _.map(current, function(curr){
         return curr.getData().linkId;
       });
-      return _.contains(currentLinkIds, linkId);
+      return _.includes(currentLinkIds, linkId);
     };
 
     var isLinkIdInFeaturesToKeep = function(linkId){
       var featuresToKeepLinkIds = _.map(featuresToKeep, function(fk){
         return fk.linkId;
       });
-      return _.contains(featuresToKeepLinkIds, linkId);
+      return _.includes(featuresToKeepLinkIds, linkId);
     };
 
     var count = function() {
@@ -773,7 +773,7 @@
         //Filter the features without said linkIds
         if(linkIdsToRemove.length !== 0){
           return _.reject(features, function(feature){
-            return _.contains(linkIdsToRemove, feature.roadLinkData.linkId);
+            return _.includes(linkIdsToRemove, feature.roadLinkData.linkId);
           });
         } else {
           return features;

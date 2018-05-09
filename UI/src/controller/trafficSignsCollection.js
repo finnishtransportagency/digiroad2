@@ -40,7 +40,7 @@
         var existingValue = _.first(_.find(asset.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values);
         if(!existingValue)
           return false;
-        return _.contains(getTrafficSignsToShow(), parseInt(existingValue.propertyValue));
+        return _.includes(getTrafficSignsToShow(), parseInt(existingValue.propertyValue));
       });
     };
 

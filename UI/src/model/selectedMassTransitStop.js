@@ -68,7 +68,7 @@
     };
 
     var pickProperties = function(properties, publicIds) {
-      return _.filter(properties, function(property) { return _.contains(publicIds, property.publicId); });
+      return _.filter(properties, function(property) { return _.includes(publicIds, property.publicId); });
     };
 
     var payloadWithProperties = function(payload, publicIds) {
@@ -143,7 +143,7 @@
     });
 
     eventbus.on('validityPeriod:changed', function(validityPeriods) {
-      if (currentAsset && (!_.contains(validityPeriods, currentAsset.validityPeriod) &&
+      if (currentAsset && (!_.includes(validityPeriods, currentAsset.validityPeriod) &&
         currentAsset.validityPeriod !== undefined)) {
         close();
       }

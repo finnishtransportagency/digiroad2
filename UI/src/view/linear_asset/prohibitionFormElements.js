@@ -284,7 +284,7 @@
       }
 
       function supportsExceptions(prohibitionType) {
-        return _.contains([2, 3, 23], prohibitionType);
+        return _.includes([2, 3, 23], prohibitionType);
       }
 
       function hasOrSupportsExceptions(prohibition) {

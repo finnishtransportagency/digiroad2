@@ -73,7 +73,7 @@
       ];
 
       var labelProperty = _.find(labelingProperties, function(properties) {
-        return _.contains(properties.signValue, trafficSign.type);
+        return _.includes(properties.signValue, trafficSign.type);
       });
 
 

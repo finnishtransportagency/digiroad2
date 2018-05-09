@@ -142,7 +142,7 @@
     }
 
     function checkSelectedSign(trafficSignsShowing){
-      if (current && (!_.contains(trafficSignsShowing, getSelectedTrafficSignValue()) &&
+      if (current && (!_.includes(trafficSignsShowing, getSelectedTrafficSignValue()) &&
         getSelectedTrafficSignValue() !== undefined)) {
         close();
       }

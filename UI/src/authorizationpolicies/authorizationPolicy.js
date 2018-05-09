@@ -12,11 +12,11 @@
     });
 
     this.isUser = function(role) {
-      return _.contains(me.userRoles, role);
+      return _.includes(me.userRoles, role);
     };
 
     this.isOnlyUser = function(role) {
-      return _.contains(me.userRoles, role) && me.userRoles.length === 1;
+      return _.includes(me.userRoles, role) && me.userRoles.length === 1;
     };
 
     this.isMunicipalityMaintainer = function(){
@@ -36,11 +36,11 @@
     };
 
     this.hasRightsInMunicipality = function(municipalityCode){
-      return _.contains(me.municipalities, municipalityCode);
+      return _.includes(me.municipalities, municipalityCode);
     };
 
     this.hasRightsInArea = function(area){
-      return _.contains(me.areas, area);
+      return _.includes(me.areas, area);
     };
 
     this.filterRoadLinks = function(roadLink){

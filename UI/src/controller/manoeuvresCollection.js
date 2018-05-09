@@ -174,12 +174,12 @@
 
           _.each(manoeuvre.linkIds, function(item){
             if(item != linkId)
-              previousAdjacentLinks = previousAdjacentLinks.concat(_.pluck(roadlinkAdjacents[item], 'linkId'));
+              previousAdjacentLinks = previousAdjacentLinks.concat(_.map(roadlinkAdjacents[item], 'linkId'));
           });
 
           var nextAdjacentLinks = _.filter(targetLink.adjacentLinks, function(item){
             //Remove from adjacents the previous adjacents links, all links from the chain and
-            return !_.contains(previousAdjacentLinks, item.linkId);// && !_.contains(manoeuvre.linkIds, item.linkId);
+            return !_.includes(previousAdjacentLinks, item.linkId);
           });
           callback(_.merge({}, modified, {"adjacentLinks": nextAdjacentLinks}));
         }
@@ -583,7 +583,7 @@
 
       var alteredTargets = _.map(targetLinks, function (t) {
         var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
-          return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId));
+          return !(rl.linkId === roadLink.linkId || _.includes(targetIds, rl.linkId));
         });
 
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
@@ -591,7 +591,7 @@
 
       var alteredAdjacents = _.map(adjacentLinks, function (t) {
         var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
-          return !(rl.linkId === roadLink.linkId || _.contains(adjacentIds, rl.linkId));
+          return !(rl.linkId === roadLink.linkId || _.includes(adjacentIds, rl.linkId));
         });
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
       });
@@ -635,7 +635,7 @@
       });
 
       if (!manoeuvre) {
-        var allManoeuvres = _.flatten(_.pluck(this.getAll(), 'manoeuvres'));
+        var allManoeuvres = _.flatten(_.map(this.getAll(), 'manoeuvres'));
 
         manoeuvre = _.find(allManoeuvres, function(m) {
           return _.some(manoeuvreSource.manoeuvres, function(item){
@@ -649,7 +649,7 @@
     var getDestinationRoadLinksBySource = function (manoeuvreSource) {
       var destinationRoadLinkList = [];
       manoeuvreSource.manoeuvres.forEach(function (m) {
-        if(!_.contains(destinationRoadLinkList,_.last(m.linkIds))){
+        if(!_.includes(destinationRoadLinkList,_.last(m.linkIds))){
           destinationRoadLinkList.push(_.last(m.linkIds));
         }
       });

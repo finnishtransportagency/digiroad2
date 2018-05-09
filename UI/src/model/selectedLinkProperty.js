@@ -24,7 +24,7 @@
     var extractDataForDisplay = function(selectedData) {
       var pickUniqueValues = function(selectedData, property) {
         return _.chain(selectedData)
-          .pluck(property)
+          .map(property)
           .uniq()
           .value();
       };
@@ -96,8 +96,8 @@
     };
 
     var openMultiple = function(links) {
-      var uniqueLinks = _.unique(links, 'linkId');
-      current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
+      var uniqueLinks = _.uniq(links, 'linkId');
+      current = roadCollection.get(_.map(uniqueLinks, 'linkId'));
       _.forEach(current, function (selected) {
         selected.select();
       });

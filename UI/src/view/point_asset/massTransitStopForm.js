@@ -288,7 +288,7 @@
           'puoli'];
 
         var publicId = property.publicId;
-        return _.contains(roadAddressProperties, publicId);
+        return _.includes(roadAddressProperties, publicId);
       };
 
       var readOnlyNumberHandler = function(property){
@@ -805,7 +805,7 @@
           'penkki'];
 
         var publicId = property.publicId;
-        return _.contains(readOnlyEquipment, publicId);
+        return _.includes(readOnlyEquipment, publicId);
       };
 
       eventbus.on('asset:modified', function(){

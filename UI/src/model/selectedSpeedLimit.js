@@ -35,8 +35,8 @@
 
     this.openMultiple = function(speedLimits) {
       var partitioned = _.groupBy(speedLimits, isUnknown);
-      var existingSpeedLimits = _.unique(partitioned[false] || [], 'id');
-      var unknownSpeedLimits = _.unique(partitioned[true] || [], 'generatedId');
+      var existingSpeedLimits = _.uniq(partitioned[false] || [], 'id');
+      var unknownSpeedLimits = _.uniq(partitioned[true] || [], 'generatedId');
 
       selection = existingSpeedLimits.concat(unknownSpeedLimits);
     };
@@ -61,7 +61,7 @@
 
       var payload = {
         newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x, 'linkId', 'startMeasure', 'endMeasure'); }),
-        ids: _.pluck(knownSpeedLimits, 'id'),
+        ids: _.map(knownSpeedLimits, 'id'),
         value: value
       };
       backend.updateSpeedLimits(payload, function() {
@@ -94,7 +94,7 @@
         if (self.isUnknown()) {
           return { newLimits: _.map(selection, function(s) { return _.pick(s, 'linkId', 'startMeasure', 'endMeasure'); }) };
         } else {
-          return { ids: _.pluck(selection, 'id') };
+          return { ids: _.map(selection, 'id') };
         }
       };
       var payload = _.merge({value: self.getValue()}, payloadContents());

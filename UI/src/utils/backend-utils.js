@@ -615,21 +615,18 @@
     }
 
     function latestResponseRequestor(getParameters) {
-      var deferred;
       var requests = new Bacon.Bus();
-      var responses = requests.debounce(200).flatMapLatest(function(params) {
-        return Bacon.$.ajax(params, true);
+      var deferred = requests.debounce(200).flatMapLatest(function(params) {
+        return Bacon.fromPromise(params, true);
       });
 
       return function() {
-        if (deferred) { deferred.reject(); }
-        deferred = responses.toDeferred();
         requests.push(getParameters.apply(undefined, arguments));
-        return deferred.promise();
+        return deferred.firstToPromise();
       };
     }
 
-    this.withVerificationInfo = function(){
+    this.withVerificationInfo = function(verificationData){
       self.getVerificationInfo = function(){
         return $.Deferred().resolve([]);
       };
@@ -736,5 +733,21 @@
       };
       return self;
     };
+
+    this.withMunicipalityFromCoordinatesData = function(fromCoordinatesData) {
+      self.getMunicipalityFromCoordinates = function(position, callback) {
+        callback(kuntakoodi);
+      };
+      return self;
+    };
+
+    this.withAssetTypePropertiesData = function(assetTypePropertiesData) {
+      self.getAssetTypeProperties = function(position, callback) {
+        callback(assetTypePropertiesData);
+      };
+      return self;
+    };
+
+
   };
 }(this));
