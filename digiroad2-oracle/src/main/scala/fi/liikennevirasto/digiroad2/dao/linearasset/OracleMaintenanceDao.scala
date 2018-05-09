@@ -1,20 +1,27 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, PropertyTypes}
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, PersistedLinearAsset, Properties}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, MaintenanceRoadAsset, PropertyTypes, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, PersistedLinearAsset, Properties, Value}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
+
+
+  case class ServiceRoadRow(id: Long, linkId: Long, sideCode: Int, value: String, startMeasure: Double,
+                         endMeasure: Double, publicId: String, propertyType: String, required:Boolean, createdBy: Option[String], createdDate: Option[DateTime],
+                         modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean, assetTypeId: Int, vvhTimeStamp: Long,
+                         geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime])
 
   /**
     * Iterates a set of link ids with MaintenanceRoad asset type id and floating flag and returns linear assets. Used by MaintenanceService.getByRoadLinks
@@ -132,8 +139,112 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }.toSeq
   }
 
+  def fetchPotentialServiceRoads(includeFloating: Boolean = false, includeExpire: Boolean = false ): Seq[PersistedLinearAsset] = {
+    val floatingFilter = if (includeFloating) "" else " and a.floating = 0"
+    val expiredFilter = if (includeExpire) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    var valueToBeFetch = "9"
+    var propNameFi = "Potentiaalinen kayttooikeus"
+
+    val filter = floatingFilter ++ expiredFilter
+    var condition =  s"""where a.asset_type_id = ${MaintenanceRoadAsset.typeId} $filter and exists (select * from single_choice_value s1
+                         join enumerated_value en on s1.enumerated_value_id = en.id and en.VALUE =  $valueToBeFetch and en.name_fi = '$propNameFi'
+                         where  s1.asset_id = a.id)"""
+
+    val query =  s"""
+                   select a.id, t.id, t.property_id, t.value_fi, p.property_type, p.public_id, p.required, pos.link_id,
+                      pos.side_code, pos.start_measure,
+                      pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
+                      a.modified_by, a.modified_date,
+                      case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
+                      a.verified_by, a.verified_date
+                   from asset a
+                      join asset_link al on a.id = al.asset_id
+                      join lrm_position pos on al.position_id = pos.id
+                      join text_property_value t on t.asset_id = a.id
+                      join property p on p.id = t.property_id
+                      $condition
+                   union
+                   select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
+                      pos.link_id, pos.side_code,
+                      pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
+                      a.created_date, a.modified_by, a.modified_date,
+                      case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
+                      a.verified_by, a.verified_date
+                   from asset a
+                     join asset_link al on a.id = al.asset_id
+                     join lrm_position pos on al.position_id = pos.id
+                     join single_choice_value s on s.asset_id = a.id
+                     join enumerated_value e on e.id = s.enumerated_value_id
+                     join property p on p.id = e.property_id
+                     $condition """
+
+    val assets = Q.queryNA[ServiceRoadRow](query).iterator.toSeq
+
+    assets.groupBy(_.id).map { case (id, assetRows) =>
+      val row = assetRows.head
+      val value : MaintenanceRoad = MaintenanceRoad(assetRowToProperty(assetRows))
+
+      PersistedLinearAsset(id, row.linkId, row.sideCode, Some(value), row.startMeasure, row.endMeasure, row.createdBy,
+        row.createdDate, row.modifiedBy, row.modifiedDate, row.expired, row.assetTypeId, row.vvhTimeStamp,
+        row.geomModifiedDate, LinkGeomSource.apply(row.linkSource), row.verifiedBy, row.verifiedDate)
+
+    }.toSeq
+  }
+
+  implicit val getAsset = new GetResult[ServiceRoadRow] {
+
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val valueId = r.nextLong()
+      val propertyId = r.nextString()
+      val value = r.nextString()
+      val propertyType = r.nextString()
+      val publicId = r.nextString()
+      val required = r.nextBoolean()
+      val linkId = r.nextLong()
+      val sideCode = r.nextInt()
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val vvhTimeStamp= r.nextLong()
+      val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val createdBy = r.nextStringOption()
+      val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val modifiedBy = r.nextStringOption()
+      val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expired = r.nextBoolean()
+      val linkSource = r.nextInt()
+      val verifiedBy = r.nextStringOption()
+      val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+
+      ServiceRoadRow(id, linkId, sideCode, value, startMeasure, endMeasure, publicId, propertyType, required, createdBy, createdDate, modifiedBy, modifiedDate, expired, MaintenanceRoadAsset.typeId, vvhTimeStamp,geomModifiedDate, linkSource, verifiedBy, verifiedDate)
+    }
+  }
+
+  def assetRowToProperty(assetRows: Iterable[ServiceRoadRow]): Seq[Properties] = {
+    assetRows.groupBy(_.value).map { case (key, rows) =>
+      val row = rows.head
+      Properties( row.publicId, row.propertyType, row.value)
+    }.toSeq
+  }
+
   def expireAllMaintenanceAssets(typeId: Int): Unit = {
     sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
+  }
+
+  def expireMaintenanceAssetsByLinkids(linkIds: Seq[Long], typeId: Int): Unit = {
+    linkIds.foreach { linkId =>
+      sqlu"""
+          update asset set valid_to = sysdate - 1/86400
+            where id in
+            (SELECT a.id
+               FROM asset a, asset_link al, lrm_position lp
+              WHERE a.id = al.asset_id
+                AND al.position_id = lp.id
+                AND a.asset_type_id = $typeId
+                AND a.valid_to IS NULL
+                AND lp.link_id = $linkId)
+        """.execute
+    }
   }
 
 

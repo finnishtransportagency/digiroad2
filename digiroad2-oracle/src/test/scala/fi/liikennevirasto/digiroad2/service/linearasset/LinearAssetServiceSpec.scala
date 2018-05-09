@@ -120,7 +120,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
+      val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i, _) => Unit)
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId(1))).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
 
@@ -144,7 +144,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, None, Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
+      val createdId = ServiceWithDao.separate(assetId, None, Some(NumericValue(3)), "unittest", (i, _) => Unit).filter(_ != assetId).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
@@ -169,7 +169,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit)
+      val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i, _) => Unit)
       newAssetIdAfterUpdate.size should be(1)
 
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(newAssetIdAfterUpdate.head)).head
@@ -191,7 +191,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val ids = ServiceWithDao.split(assetId, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
+      val ids = ServiceWithDao.split(assetId, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (_, _) => Unit)
 
       val createdId = ids(1)
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
@@ -214,7 +214,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Separation should call municipalityValidation") {
-    def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
+    def failingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = { throw new IllegalArgumentException }
     runWithRollback {
       val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head

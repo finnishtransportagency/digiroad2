@@ -27,8 +27,8 @@ object Queries {
       case _ => this
     }
   }
-
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String, propertyMaxCharacters: Option[Int] = None)
+  case class MultiValuePropertyRow(publicId: String, propertyType: String, required: Boolean = false, propertyValue: Option[Any])
 
   def bytesToPoint(bytes: Array[Byte]): Point = {
     val geometry = JGeometry.load(bytes)
@@ -108,6 +108,7 @@ object Queries {
 
   def propertyIdByPublicId = "select id from property where public_id = ?"
   def getPropertyIdByPublicId(id: String) = sql"select id from property where public_id = $id".as[Long].first
+  def getPropertyMaxSize = "select max_value_length from property where public_id = ?"
 
   def propertyTypeByPropertyId = "SELECT property_type FROM property WHERE id = ?"
 
@@ -153,6 +154,9 @@ object Queries {
     """
   }
 
+  def updateNumberProperty(assetId: Long, propertyId: Long, value: Double) =
+    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
+
   def updateNumberProperty(assetId: Long, propertyId: Long, value: Int) =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
 
@@ -161,6 +165,22 @@ object Queries {
 
   def existsNumberProperty =
     "select id from number_property_value where asset_id = ? and property_id = ?"
+
+  def insertDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) = {
+    sqlu"""
+      insert into date_property_value(id, property_id, asset_id, date_time)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $dateTime)
+    """
+  }
+
+  def updateDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) =
+    sqlu"update date_property_value set date_time = $dateTime where asset_id = $assetId and property_id = $propertyId"
+
+  def deleteDateProperty(assetId: Long, propertyId: Long) =
+    sqlu"delete from date_property_value where asset_id = $assetId and property_id = $propertyId"
+
+  def existsDateProperty =
+    "select id from date_property_value where asset_id = ? and property_id = ?"
 
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""

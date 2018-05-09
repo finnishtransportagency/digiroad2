@@ -138,7 +138,7 @@
       }
     };
 
-    this.getSpeedLimit = function(id) {
+    this.getSpeedLimitById = function(id) {
       return collection.getById(id);
     };
 

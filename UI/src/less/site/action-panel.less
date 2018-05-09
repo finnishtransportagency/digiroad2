@@ -310,6 +310,11 @@
 }
 
 .service-road-legend {
+
+  .right-use-legend {
+    display: none;
+  };
+
   .legend-entry {
     @labelWidth: 25px;
     .label {
@@ -317,12 +322,20 @@
       display: inline-block;
       margin-bottom: 0;
     }
+    .service-road-10, .service-road-11, .service-road-12 {
+      &:extend(.dotted-linear-asset);
+    }
 
     .service-road-0 { .linear-asset-legend-entry(@service-road-0, @linear-asset-node-5); }
     .service-road-1 { .linear-asset-legend-entry(@service-road-1, @linear-asset-node-3); }
     .service-road-2 {  .linear-asset-legend-entry(@service-road-2, @linear-asset-node-2); }
     .service-road-3 {  .linear-asset-legend-entry(@service-road-3, @linear-asset-node-1); }
-    .service-road-4 {  .linear-asset-legend-entry(@service-road-4, @linear-asset-node-4); }
+    .service-road-4 {  .linear-asset-legend-entry(@service-road-4, @linear-asset-node-10); }
+    .service-road-5 {  .linear-asset-legend-entry(@service-road-5, @linear-asset-node-11); }
+    .service-road-6 {  .linear-asset-legend-entry(@service-road-6, @linear-asset-node-4); }
+    .service-road-10 { .linear-asset-legend-entry(@service-road-0, @linear-asset-node-5); }
+    .service-road-11 { .linear-asset-legend-entry(@service-road-1, @linear-asset-node-3); }
+    .service-road-12 {  .linear-asset-legend-entry(@service-road-6, @linear-asset-node-4); }
   }
   .check-box-container{
     input {

@@ -415,7 +415,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     stop.roadAddress.road should be (25823)
     stop.roadAddress.track should be (Track.Combined)
     stop.roadAddress.roadPart should be (104)
-    stop.roadAddress.mValue should be (150)
+    stop.roadAddress.addrM should be (150)
     stop.equipments.values.forall(_.value == "ei tietoa") should be (true)
     stop.express should be (false)
   }

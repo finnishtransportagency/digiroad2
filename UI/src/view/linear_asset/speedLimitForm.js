@@ -1,7 +1,6 @@
 (function (root) {
   var unit = 'km/h';
-  var userRole;
-
+  var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
   var template = function(selectedSpeedLimit) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
@@ -78,17 +77,18 @@
   var renderLinktoWorkList = function renderLinktoWorkList() {
     var notRendered = !$('#work-list-link').length;
     if(notRendered) {
-      if (!_.contains(userRole, 'operator')) {
+      if (!authorizationPolicy.workListAccess()) {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
-          '   <a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
           '<a id="work-list-link-errors" class="wrong-speed-limits" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a>' +
+          '<a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
           '</div>'
       );
       }
       else {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
+          '   <a id="work-list-link-errors" class="wrong-speed-limits operator-user" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a>' +
           '   <p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p>' +
           '   <a id="work-list-link" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Kunnan Omistama</a>' +
           '   <a id="work-list-link" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Valtion Omistama</a>' +
@@ -145,24 +145,14 @@
         $('#work-list-link-errors').parent().remove();
       }
     });
-
-    eventbus.on('roles:fetched', function(roles) {
-      userRole = roles;
-    });
   };
 
   function validateAdministrativeClass(selectedSpeedLimit){
     var selectedSpeedLimits = _.filter(selectedSpeedLimit.get(), function (selected) {
-      return editConstrains(selected);
+      return !authorizationPolicy.formEditModeAccess(selected);
     });
     return !_.isEmpty(selectedSpeedLimits);
   }
-
-  var editConstrains = function(selectedAsset) {
-    return false;
-    //TODO revert this when DROTH-909
-    //return selectedAsset.administrativeClass === 'State';
-  };
 
   root.SpeedLimitForm = {
     initialize: function(selectedSpeedLimit) {

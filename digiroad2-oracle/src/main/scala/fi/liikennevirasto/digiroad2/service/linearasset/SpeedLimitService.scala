@@ -311,7 +311,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Saves speed limit value changes received from UI. Used by Digiroad2Api /speedlimits PUT endpoint.
     */
-  def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
+  def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       ids.flatMap(updateSpeedLimit(_, value, username, None, None, municipalityValidation))
     }
@@ -320,43 +320,45 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Create new speed limit when value received from UI changes and expire the old one. Used by SpeeedLimitsService.updateValues.
     */
-  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
-    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)]): Unit = {
-      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
-    }
 
-    validateMunicipalities(dao.getLinksWithLengthFromVVH(20, id))
-
-    //Get all data from the speedLimit to update
-    val speedLimit = dao.getPersistedSpeedLimit(id).get
-
-    //Expire old speed limit
-    dao.updateExpiration(id, true, username)
-
-    //Create New Asset copy by the old one with new value
-    val newAssetId =
-      dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure),
-        speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate,
-        Some(username), Some(DateTime.now()), speedLimit.linkSource)
-
-    existOnInaccuratesList(id, newAssetId)
-    newAssetId
-  }
+  //TODO: check if needed
+//  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
+//    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)]): Unit = {
+//      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
+//    }
+//
+////    validateMunicipalities(dao.getLinksWithLengthFromVVH(20, id))
+//
+//    //Get all data from the speedLimit to update
+//    val speedLimit = dao.getPersistedSpeedLimit(id).get
+//
+//    //Expire old speed limit
+//    dao.updateExpiration(id, true, username)
+//
+//    //Create New Asset copy by the old one with new value
+//    val newAssetId =
+//      dao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure),
+//        speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate,
+//        Some(username), Some(DateTime.now()), speedLimit.linkSource)
+//
+//    existOnInaccuratesList(id, newAssetId)
+//    newAssetId
+//  }
 
   def update(id: Long, newLimits: Seq[NewLinearAsset], username: String): Seq[Long] = {
     withDynTransaction {
       val updatedIds = newLimits.flatMap( limit =>
       limit.value match {
-        case NumericValue(intValue) => updateSpeedLimit(id, intValue, username, Some(Measures(limit.startMeasure, limit.endMeasure)), Some(limit.sideCode), _ => Unit)
+        case NumericValue(intValue) => updateSpeedLimit(id, intValue, username, Some(Measures(limit.startMeasure, limit.endMeasure)), Some(limit.sideCode), (_, _) => Unit)
         case _ => Seq()
       })
       updatedIds
     }
   }
 
-  def updateSpeedLimit(id: Long, value: Int, username: String, measures: Option[Measures] = None, sideCode: Option[Int] = None, municipalityValidation: Int => Unit): Option[Long] = {
-    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)]): Unit = {
-      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
+  def updateSpeedLimit(id: Long, value: Int, username: String, measures: Option[Measures] = None, sideCode: Option[Int] = None, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
+    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]): Unit = {
+      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
     }
 
     validateMunicipalities(dao.getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id))
@@ -403,7 +405,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Saves speed limit values when speed limit is split to two parts in UI (scissors icon). Used by Digiroad2Api /speedlimits/:speedLimitId/split POST endpoint.
     */
-  def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
+  def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[SpeedLimit] = {
     val (newId ,idUpdated) = withDynTransaction {
       (dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation) ,
       updateSpeedLimit(id, existingValue, username, None, None, municipalityValidation).get)
@@ -434,7 +436,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Saves speed limit values when speed limit is separated to two sides in UI. Used by Digiroad2Api /speedlimits/:speedLimitId/separate POST endpoint.
     */
-  def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
+  def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[SpeedLimit] = {
     val speedLimit = withDynTransaction { dao.getPersistedSpeedLimit(id) }
       .map(toSpeedLimit)
       .map(isSeparableValidation)
@@ -462,7 +464,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * This method was created for municipalityAPI, in future could be merge with the other create method.
     */
-  def create(newLimits: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp(),  municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def create(newLimits: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp(),  municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
       limit.value match {
@@ -478,7 +480,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Saves new speed limit from UI. Used by Digiroad2Api /speedlimits PUT and /speedlimits POST endpoints.
     */
-  def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
         dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.roadLinkData.createVVHTimeStamp(), municipalityValidation)
@@ -492,9 +494,14 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     speedLimit.copy(attributes = speedLimit.attributes ++ Map("ROAD_ADMIN_CLASS" -> roadLink.administrativeClass))
   }
 
+  private def addMunicipalityCodeAttribute(speedLimit: SpeedLimit, roadLink: RoadLink): SpeedLimit = {
+    speedLimit.copy(attributes = speedLimit.attributes ++ Map("municipalityCode" -> roadLink.municipalityCode))
+  }
+
   private def enrichSpeedLimitAttributes(speedLimits: Seq[SpeedLimit], roadLinksForSpeedLimits: Map[Long, RoadLink]): Seq[SpeedLimit] = {
     val speedLimitAttributeOperations: Seq[(SpeedLimit, RoadLink) => SpeedLimit] = Seq(
-      addRoadAdministrationClassAttribute
+      addRoadAdministrationClassAttribute,
+      addMunicipalityCodeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 

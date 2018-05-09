@@ -2,6 +2,7 @@
   root.SpeedLimitBox = function (selectedSpeedLimit) {
     ActionPanelBox.call(this);
     var me = this;
+    var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
 
     this.header = function () {
       return 'Nopeusrajoitukset';
@@ -53,7 +54,7 @@
     };
 
     this.predicate = function () {
-      return _.contains(me.roles, 'operator') || _.contains(me.roles, 'premium');
+      return authorizationPolicy.editModeAccess();
     };
 
     this.municipalityVerified = function () {
@@ -78,7 +79,7 @@
     };
 
     function show() {
-      if (me.editModeToggle.hasNoRolesPermission(me.roles)) {
+      if (!authorizationPolicy.editModeAccess()) {
         me.editModeToggle.reset();
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
@@ -99,6 +100,10 @@
         } else {
           eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
         }
+      });
+
+      eventbus.on('speedLimits:enableTrafficSigns', function(){
+        $(me.expanded).find('#trafficSignsCheckbox').prop('checked', true).trigger("change");
       });
     };
 

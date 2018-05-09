@@ -73,7 +73,7 @@ object RoadSide {
   case object Unknown extends RoadSide { def value = 0 }
 }
 
-case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, mValue: Int, deviation: Option[Double])
+case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, addrM: Int, deviation: Option[Double])
 class RoadAddressException(response: String) extends RuntimeException(response)
 class RoadPartReservedException(response: String) extends RoadAddressException(response)
 
@@ -90,16 +90,6 @@ class GeometryTransform {
 
   lazy val vkmGeometryTransform: VKMGeometryTransform = {
     new VKMGeometryTransform()
-  }
-
-  def addressToCoords(road: Long, roadPart: Long, track: Track, mValue: Double) : Option[Point] = {
-    val addressOption = roadAddressService.getByRoadSection(road, roadPart, track, mValue.toLong)
-
-    addressOption match {
-      case Some(address) =>
-        GeometryUtils.calculatePointFromLinearReference(address.geom, mValue-address.startAddrMValue)
-      case _ => None
-    }
   }
 
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
@@ -125,14 +115,14 @@ class GeometryTransform {
       return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, SideCode.apply(assetSideCode), road)
 
     val roadSide = roadAddress match {
-      case Some(addrSide) if (addrSide.sideCode.value == assetSideCode) => RoadSide.Right //TowardsDigitizing //
-      case Some(addrSide) if (addrSide.sideCode.value != assetSideCode) => RoadSide.Left //AgainstDigitizing //
+      case Some(addrSide) if addrSide.sideCode.value == assetSideCode => RoadSide.Right //TowardsDigitizing //
+      case Some(addrSide) if addrSide.sideCode.value != assetSideCode => RoadSide.Left //AgainstDigitizing //
       case _ => RoadSide.Unknown
     }
 
     val address = roadAddress match {
-      case Some(addr) if (addr.track.eq(Track.Unknown)) => throw new RoadAddressException("Invalid value for Track: %d".format(addr.track.value))
-      case Some(addr) if (addr.sideCode.value != assetSideCode) =>
+      case Some(addr) if addr.track.eq(Track.Unknown) => throw new RoadAddressException("Invalid value for Track: %d".format(addr.track.value))
+      case Some(addr) if addr.sideCode.value != assetSideCode =>
         if (assetSideCode == SideCode.AgainstDigitizing.value) towardsDigitizing(addr) else againstDigitizing(addr)
       case Some(addr) =>
         if (assetSideCode == SideCode.TowardsDigitizing.value) towardsDigitizing(addr) else againstDigitizing(addr)
@@ -140,20 +130,6 @@ class GeometryTransform {
     }
 
     (address, roadSide )
-  }
-
-  def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[RoadAddressDTO] = {
-    val roadAddress = roadAddressService.getAllByLrmPositions(linkId, startM, endM)
-    roadAddress
-      .filter( road => compareSideCodes(sideCode, road))
-      .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
-      grouped =>
-        grouped._2.minBy(t => t.startMValue).copy(endMValue = grouped._2.maxBy(t => t.endMValue).endMValue)
-    }.toSeq
-  }
-
-  def compareSideCodes(sideCode: SideCode, roadAddress: RoadAddressDTO): Boolean = {
-    (sideCode == SideCode.BothDirections || sideCode == SideCode.Unknown || roadAddress.sideCode == SideCode.BothDirections || roadAddress.sideCode == SideCode.Unknown) || sideCode == roadAddress.sideCode
   }
 }
 
@@ -289,7 +265,7 @@ class VKMGeometryTransform {
   }
 
   def addressToCoords(roadAddress: RoadAddress) : Seq[Point] = {
-    val params = Map(VkmRoad -> roadAddress.road, VkmRoadPart -> roadAddress.roadPart, VkmTrackCode -> roadAddress.track.value, VkmDistance -> roadAddress.mValue)
+    val params = Map(VkmRoad -> roadAddress.road, VkmRoadPart -> roadAddress.roadPart, VkmTrackCode -> roadAddress.track.value, VkmDistance -> roadAddress.addrM)
     request(vkmUrl + urlParamsReverse(params)) match {
       case Left(addressData) => mapCoordinates(addressData)
       case Right(error) => throw new RoadAddressException(error.toString)
@@ -321,7 +297,7 @@ class VKMGeometryTransform {
       val behind = coord - stepVector
       val front = coord + stepVector
       val addresses = coordsToAddresses(Seq(behind, coord, front), road, roadPart, includePedestrian = includePedestrian)
-      val mValues = addresses.map(ra => ra.mValue)
+      val mValues = addresses.map(ra => ra.addrM)
       val (first, second, third) = (mValues(0), mValues(1), mValues(2))
       if (first <= second && second <= third && first != third) {
         (addresses(1), RoadSide.Right)

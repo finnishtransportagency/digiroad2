@@ -1,7 +1,8 @@
 (function(root) {
   root.ActionPanelBox = function() {
     var me = this;
-    this.roles = {};
+    var authorizationPolicy = new AuthorizationPolicy();
+
 
     this.selectToolIcon = '<img src="images/select-tool.svg"/>';
     this.cutToolIcon = '<img src="images/cut-tool.svg"/>';
@@ -87,12 +88,18 @@
     this.labeling = function () {};
     this.checkboxPanel = function () {};
     this.predicate = function () {};
+    this.radioButton = function () {};
     this.legendName = function () {};
     this.municipalityVerified = function () {};
+
+    this.predicate = function () {
+      return authorizationPolicy.editModeAccess();
+    };
 
     this.elements = function (){
       return { expanded: $([
         me.panel(),
+        me.radioButton(),
         me.labeling(),
         me.checkboxPanel(),
         me.bindExternalEventHandlers(),
@@ -109,8 +116,8 @@
     };
 
     this.bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        me.roles = roles;
+
+      eventbus.on('roles:fetched', function() {
         if (me.predicate()) {
           me.toolSelection.reset();
           $(me.expanded).append(me.toolSelection.element);

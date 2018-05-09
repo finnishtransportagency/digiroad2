@@ -41,7 +41,7 @@
       showEditInstructionsPopup(readOnly);
     });
     
-    eventbus.on('application:controledTR', function(show) {
+    eventbus.on('application:controlledTR', function(show) {
       handleTRControlMessage(show);
     });
 
