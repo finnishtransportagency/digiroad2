@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddressDAO}
 import org.joda.time.format.DateTimeFormat
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}

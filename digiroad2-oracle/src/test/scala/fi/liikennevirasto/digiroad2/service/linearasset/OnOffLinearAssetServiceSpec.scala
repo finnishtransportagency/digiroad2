@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAs
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}

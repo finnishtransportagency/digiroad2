@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUt
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentCaptor
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -274,7 +274,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:update"), captor.capture())
+      verify(mockEventBus, times(1)).publish("linearAssets:update", captor.capture())
       captor.getValue.expiredAssetIds should be (Set(asset1,asset2,asset3))
 
       dynamicSession.rollback()
@@ -885,7 +885,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
         .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
-      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
+      verify(mockEventBus, times(1)).publish("linearAssets:saveProjectedLinearAssets", captor.capture())
       val projectedAssets = captor.getValue
       projectedAssets.length should be(1)
       projectedAssets.foreach { proj =>

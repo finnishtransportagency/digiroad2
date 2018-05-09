@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUt
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentCaptor
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -1454,7 +1454,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       verify(eventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), List(), List(), Set(asset)))
       val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
-      verify(eventBus, times(1)).publish(org.mockito.Matchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
+      verify(eventBus, times(1)).publish("speedLimits:saveProjectedSpeedLimits", captor.capture())
       verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
       apeedLimits.length should be(3)
