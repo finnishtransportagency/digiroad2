@@ -16,6 +16,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
+import fi.liikennevirasto.digiroad2.service.RoadAddressesService
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -83,8 +84,8 @@ class RoadPartReservedException(response: String) extends RoadAddressException(r
 class GeometryTransform {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
 
-  lazy val roadAddressDao : RoadAddressDAO = {
-    new RoadAddressDAO()
+  lazy val roadAddressService: RoadAddressesService = {
+    new RoadAddressesService()
   }
 
   lazy val vkmGeometryTransform: VKMGeometryTransform = {
@@ -107,7 +108,7 @@ class GeometryTransform {
       RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
     }
 
-    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue)).headOption
+    val roadAddress = roadAddressService.getByLrmPosition(linkId, mValue)
 
     //If there is no roadAddress in VIITE try to find it in VKM
     if(roadAddress.isEmpty)

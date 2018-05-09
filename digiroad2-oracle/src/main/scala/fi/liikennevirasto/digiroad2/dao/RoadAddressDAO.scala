@@ -11,8 +11,8 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
-case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long,
+case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+                       endDate: Option[DateTime] = None, linkId: Long,
                        startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false, geom: Seq[Point],
                        expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime]) {
   def addressMValueToLRM(addrMValue: Long): Option[Double] = {
@@ -198,8 +198,8 @@ class RoadAddressDAO {
     val resultList = Q.queryNA[RoadAddressRow](query).list
 
     resultList.map {row =>
-      RoadAddress(id = row.id, roadNumber = row.roadNumber, roadPartNumber = row.roadPartNumber, track = row.track, discontinuity = row.discontinuity, startAddrMValue = row.startAddrMValue, endAddrMValue = row.endAddrMValue, startDate = row.startDate,
-      endDate = row.endDate, lrmPositionId = row.lrmPositionId, linkId = row.linkId, startMValue = row.startMValue, endMValue = row.endMValue, sideCode = row.sideCode, floating = row.floating,
+      RoadAddress(id = row.id, roadNumber = row.roadNumber, roadPartNumber = row.roadPartNumber, track = row.track, startAddrMValue = row.startAddrMValue, endAddrMValue = row.endAddrMValue, startDate = row.startDate,
+      endDate = row.endDate, linkId = row.linkId, startMValue = row.startMValue, endMValue = row.endMValue, sideCode = row.sideCode, floating = row.floating,
       geom = row.geom, expired = row.expired, createdBy = row.createdBy, createdDate = row.createdDate, modifiedDate = row.modifiedDate)
     }
   }
@@ -213,8 +213,8 @@ class RoadAddressDAO {
       case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue, startDate, endDate, lrmPositionId,
       linkId, startMValue, endMValue, sideCode, floating, expired, createdBy, createdDate, modifiedDate) =>
 
-        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), discontinuity,
-          startAddrMValue, endAddrMValue, startDate, endDate, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode),
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track),
+          startAddrMValue, endAddrMValue, startDate, endDate, linkId, startMValue, endMValue, SideCode.apply(sideCode),
           floating, Seq(), expired, createdBy, createdDate, modifiedDate)
     }
   }

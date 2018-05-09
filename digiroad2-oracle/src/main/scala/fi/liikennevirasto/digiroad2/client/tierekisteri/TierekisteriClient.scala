@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri
 import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
 
+import fi.liikennevirasto.digiroad2.client.ErrorMessageConverter
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignType, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.util.TierekisteriAuthPropertyReader
 import org.apache.http.HttpStatus
@@ -160,8 +161,8 @@ trait TierekisteriClient{
   def addAuthorizationHeader(request: HttpRequestBase) = {
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
-
   }
+
   protected def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
     addAuthorizationHeader(request)
@@ -306,29 +307,5 @@ trait TierekisteriClient{
     if (fieldValue.isEmpty)
       throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
     fieldValue
-  }
-}
-
-object ErrorMessageConverter {
-  protected implicit val jsonFormats: Formats = DefaultFormats
-
-  def convertJSONToError(response: CloseableHttpResponse) = {
-    def inputToMap(json: StreamInput): Map[String, String] = {
-      try {
-        parse(json).values.asInstanceOf[Map[String, String]]
-      } catch {
-        case e: Exception => Map()
-      }
-    }
-    def errorMessageFormat = "%d: %s"
-    val message = inputToMap(StreamInput(response.getEntity.getContent)).getOrElse("message", "N/A")
-    response.getStatusLine.getStatusCode match {
-      case HttpStatus.SC_BAD_REQUEST => errorMessageFormat.format(HttpStatus.SC_BAD_REQUEST, message)
-      case HttpStatus.SC_LOCKED => errorMessageFormat.format(HttpStatus.SC_LOCKED, message)
-      case HttpStatus.SC_CONFLICT => errorMessageFormat.format(HttpStatus.SC_CONFLICT, message)
-      case HttpStatus.SC_INTERNAL_SERVER_ERROR => errorMessageFormat.format(HttpStatus.SC_INTERNAL_SERVER_ERROR, message)
-      case HttpStatus.SC_NOT_FOUND => errorMessageFormat.format(HttpStatus.SC_NOT_FOUND, message)
-      case _ => "Unspecified error: %s".format(message)
-    }
   }
 }
