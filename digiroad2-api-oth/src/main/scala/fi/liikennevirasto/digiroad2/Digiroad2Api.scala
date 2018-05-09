@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, LinkProperties, RoadLinkService, VerificationService}
+import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop}
@@ -39,6 +39,7 @@ case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Do
 case class NewMultiValLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: MultiAssetValue, sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
+                   val roadAddressService: RoadAddressesService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
@@ -675,7 +676,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val usedService = getLinearAssetService(typeId)
       val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
       if(params("withRoadAddress").toBoolean)
-        mapLinearAssets(usedService.withRoadAddress(assets))
+        mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
       else
         mapLinearAssets(assets)
     } getOrElse {
