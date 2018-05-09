@@ -325,10 +325,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var extractStopTypes = function(properties) {
     return _.chain(properties)
-        .where({ publicId: 'pysakin_tyyppi' })
-        .pluck('values')
+        .filter({ publicId: 'pysakin_tyyppi' })
+        .map('values')
         .flatten()
-        .pluck('propertyValue')
+        .map('propertyValue')
         .value();
   };
 

@@ -182,7 +182,7 @@
     };
 
     var getProperty = function (asset, publicId) {
-      return _.first(_.find(asset.propertyData, function (prop) {
+      return _.head(_.find(asset.propertyData, function (prop) {
         return prop.publicId === publicId;
       }).values);
     };

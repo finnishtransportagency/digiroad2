@@ -138,7 +138,7 @@
         }
         else {
           if (limits.length === 1){
-            me.createVerificationForm(_.first(limits));
+            me.createVerificationForm(_.head(limits));
           }
         }
       });

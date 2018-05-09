@@ -26,7 +26,7 @@
     };
 
     this.separate = function() {
-      selection = collection.separateLinearAsset(_.first(selection));
+      selection = collection.separateLinearAsset(_.head(selection));
       isSeparated = true;
       dirty = true;
       eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
@@ -392,7 +392,6 @@
           var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
           if(!iProperty)
             return false;
-
           return _.isEqual(property.values, iProperty.values);
       });
     };

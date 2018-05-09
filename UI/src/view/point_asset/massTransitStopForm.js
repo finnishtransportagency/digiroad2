@@ -534,7 +534,7 @@
           .filter(function(choice){
             return choice.publicId === property.publicId;
           })
-          .pluck('values')
+          .map('values')
           .flatten()
           .filter(function(x) { return !(x.propertyValue === '99' || x.propertyValue === '6'); })
           .value();
@@ -548,7 +548,7 @@
         element.addClass('choice-group');
 
         element = _.reduce(enumValues, function(element, value) {
-          value.checked = _.any(currentValue.values, function (prop) {
+          value.checked = _.some(currentValue.values, function (prop) {
             return prop.propertyValue == value.propertyValue;
           });
 

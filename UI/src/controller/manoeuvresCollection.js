@@ -50,7 +50,7 @@
           .filter(function(manoeuvre) {
             return manoeuvre.sourceLinkId === linkId;
           })
-          .pluck('firstTargetLinkId')
+          .map('firstTargetLinkId')
           .value();
     };
 
@@ -390,7 +390,7 @@
                 return intermediateLinkId === roadLink.linkId;
               });
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is source link for multiple manoeuvres
@@ -399,7 +399,7 @@
               multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] = manoeuvre.sourceLinkId in multipleSourceManoeuvresHMap ? multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] += 1 : 1;
               return multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] >= 2;
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is intermediate link for multiple manoeuvres
@@ -412,7 +412,7 @@
                 }
               });
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is destination link of some manoeuvre
@@ -420,7 +420,7 @@
             .filter(function(manoeuvre) {
               return manoeuvre.destLinkId === roadLink.linkId;
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is destination link for multiple manoeuvres
@@ -431,7 +431,7 @@
                 return multipleDestinationManoeuvresHMap[manoeuvre.destLinkId] >= 2;
               }
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is source and destination link for manoeuvres
@@ -443,7 +443,7 @@
                 return sourceDestinationManoeuvresHMap[sourceOrDestLinkId] >= 1;
               }
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is source link of some manoeuvre
@@ -479,12 +479,12 @@
         var firstTargetLinkId = manoeuvre.elements[0].destLinkId;
         var lastElementIndex = manoeuvre.elements.length - 1;
         var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
-        var linkIds = _.chain(manoeuvre.elements).pluck('sourceLinkId').value();
+        var linkIds = _.chain(manoeuvre.elements).map('sourceLinkId').value();
         var intermediateLinkIds = _.chain(manoeuvre.elements)
           .filter(function(element) {
             return element.elementType === 2;
           })
-          .pluck('sourceLinkId')
+          .map('sourceLinkId')
           .value();
         return _.merge({}, manoeuvre, {
           sourceLinkId: sourceLinkId,
@@ -517,7 +517,7 @@
         return manoeuvre.sourceLinkId === linkId;
       });
       var sortedManoeuvres = sortLinkManoeuvres(sourceLinkManoeuvres);
-      var latestModification = _.first(sortedManoeuvres);
+      var latestModification = _.head(sortedManoeuvres);
       return {
         modifiedAt: latestModification ? latestModification.modifiedDateTime : null,
         modifiedBy: latestModification ? latestModification.modifiedBy : null
@@ -559,7 +559,7 @@
             return manoeuvre.sourceLinkId === linkId && manoeuvre.intermediateLinkIds &&
                 manoeuvre.intermediateLinkIds.length > 0;
           })
-          .pluck('destLinkId')
+          .map('destLinkId')
           .value();
     };
 

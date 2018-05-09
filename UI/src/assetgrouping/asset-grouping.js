@@ -7,7 +7,7 @@
         return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < assetGroupingDistance;
       };
       while (_.isEmpty(items) === false) {
-        item = _.first(items);
+        item = _.head(items);
         var proximityStops = _.remove(items, findProximityStops);
         result.push(proximityStops);
       }

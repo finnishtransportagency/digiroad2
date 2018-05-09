@@ -437,7 +437,7 @@
               .filter(function (adjacentLink) {
                 return adjacentLink.linkId;
               })
-              .pluck('linkId')
+              .map('linkId')
               .value();
 
           markAdjacentFeatures(targetMarkers);

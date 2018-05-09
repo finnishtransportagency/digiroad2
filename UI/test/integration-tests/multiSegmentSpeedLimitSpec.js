@@ -90,12 +90,12 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         eventbus.trigger('map:moved', { selectedLayer: "speedLimit", zoom: 10, bbox: [374061, 6676946, 375292, 6678247] } );
       });
       it("maintains two features on map, only one of which is selected", function() {
-        var uniqueFeatures = _.uniq(testHelpers.getSpeedLimitFeatures(openLayersMap), function(f) {
+        var uniqueFeatures = _.uniqBy(testHelpers.getSpeedLimitFeatures(openLayersMap), function(f) {
           return f.getProperties().id;
         });
 
         expect(uniqueFeatures).to.have.length(2);
-        var uniqueFeaturesSelected = _.uniq(testHelpers.getSelectedSpeedLimitFeatures(openLayersMap), function(f) {
+        var uniqueFeaturesSelected = _.uniqBy(testHelpers.getSelectedSpeedLimitFeatures(openLayersMap), function(f) {
           return f.getProperties().id;
         });
         expect(uniqueFeaturesSelected).to.have.length(1);

@@ -59,7 +59,7 @@
           .join(', ');
       };
 
-      var properties = _.cloneDeep(_.first(selectedData));
+      var properties = _.cloneDeep(_.head(selectedData));
       var isMultiSelect = selectedData.length > 1;
       if (isMultiSelect) {
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',

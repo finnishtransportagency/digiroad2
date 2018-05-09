@@ -227,7 +227,7 @@
       return _.some(currentAsset.payload.properties, function(property) {
         return isRequiredProperty(property.publicId) && (
                 isChoicePropertyWithUnknownValue(property) ||
-                  _.all(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
+                  _.every(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
           );
       });
     };

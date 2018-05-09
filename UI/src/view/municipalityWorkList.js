@@ -146,7 +146,7 @@
         var element = $('#work-list .work-list');
         if (limits.length == 1){
           showFormBtnVisible = false;
-          me.createVerificationForm(_.first(limits));
+          me.createVerificationForm(_.head(limits));
         }
         else {
           var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();

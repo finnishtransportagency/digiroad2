@@ -2,7 +2,7 @@
 define(['chai', 'testHelpers'], function(chai, testHelpers) {
   var expect = chai.expect;
   var speedLimitsData = SpeedLimitsTestData.generate(1);
-  var speedLimit = _.first(_.flatten(speedLimitsData));
+  var speedLimit = _.head(_.flatten(speedLimitsData));
 
   var assertSpeedLimitIsSelectedWithLimitValue = function(openLayersMap, speedLimitId, limitValue) {
     var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {

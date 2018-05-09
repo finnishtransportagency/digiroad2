@@ -615,20 +615,38 @@
     }
 
     function latestResponseRequestor(getParameters) {
+      var deferred;
       var requests = new Bacon.Bus();
-      var deferred = requests.debounce(200).flatMapLatest(function(params) {
-        return Bacon.fromPromise(params, true);
+      var responses = requests.debounce(200).flatMapLatest(function(params) {
+        return Bacon.$.ajax(params, true);
       });
 
       return function() {
+        if (deferred) { deferred.reject(); }
+        deferred = responses.toDeferred();
         requests.push(getParameters.apply(undefined, arguments));
-        return deferred.firstToPromise();
+        return deferred.promise();
       };
     }
 
-    this.withVerificationInfo = function(verificationData){
+    // function latestResponseRequestor(getParameters) {
+    //   var deferred;
+    //   var requests = new Bacon.Bus();
+    //   var responses = requests.debounce(200).flatMapLatest(function(params) {
+    //     return Bacon.$.ajax(params, true);
+    //   });
+    //
+    //   return function() {
+    //     if (deferred) { deferred.reject(); }
+    //     deferred = responses.toDeferred();
+    //     requests.push(getParameters.apply(undefined, arguments));
+    //     return deferred.firstToPromise();
+    //   };
+    // }
+
+    this.withVerificationInfo = function(){
       self.getVerificationInfo = function(){
-        return $.Deferred().resolve([]);
+        return $.Deferred().resolve({verified: false});
       };
       return self;
     };
@@ -694,6 +712,16 @@
       return self;
     };
 
+    // var mockBaconDefered = function(resultData){
+    //   var then = function(callback){
+    //     callback(resultData);
+    //     return {then: then};
+    //   };
+    //   return {
+    //     then : then
+    //   };
+    // };
+
     this.withSpeedLimitsData = function(speedLimitsData) {
       self.getSpeedLimits = function(boundingBox, withRoadAddress) {
         return $.Deferred().resolve(speedLimitsData);
@@ -734,20 +762,19 @@
       return self;
     };
 
-    this.withMunicipalityFromCoordinatesData = function(fromCoordinatesData) {
-      self.getMunicipalityFromCoordinates = function(position, callback) {
-        callback(kuntakoodi);
+    this.withMunicipalityLocationData = function(municipalityLocationData){
+      self.getMunicipalityByBoundingBox = function(){
+        return $.Deferred().resolve(municipalityLocationData);
       };
       return self;
     };
 
-    this.withAssetTypePropertiesData = function(assetTypePropertiesData) {
-      self.getAssetTypeProperties = function(position, callback) {
-        callback(assetTypePropertiesData);
+    this.withMunicipalityCoordinateData = function(municipalityCoordinateData){
+      self.getMunicipalityFromCoordinates = function(x, y, callback){
+        return callback(municipalityCoordinateData);
       };
       return self;
     };
-
 
   };
 }(this));
