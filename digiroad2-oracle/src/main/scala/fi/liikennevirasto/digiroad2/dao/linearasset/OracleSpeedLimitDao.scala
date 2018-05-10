@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
+import java.util.NoSuchElementException
+
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -387,7 +389,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Splits speed limit by given split measure. Updates old asset and creates new asset. Returns new asset id.
     * Used by SpeedLimitService.split.
     */
-  def splitSpeedLimit(id: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Long = {
+  def splitSpeedLimit(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): (Long, Long) = {
     def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]) = {
       vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
       vvhLinks
@@ -399,12 +401,16 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
         (linkId, length, GeometryUtils.geometryEndpoints(geometry), linkSource, adminClass)
       }.get
 
-    Queries.updateAssetModified(id, username).execute
+    val speedLimit = getPersistedSpeedLimit(id).getOrElse(throw new NoSuchElementException)
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
-    updateMValues(id, existingLinkMeasures)
-    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, Measures(createdLinkMeasures._1, createdLinkMeasures._2), sideCode, value, Option(vvhTimeStamp), None, None, None, link._4).get
-    createdId
+    updateExpiration(id, true, username)
+
+    val existingId = createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(existingLinkMeasures._1, existingLinkMeasures._2),
+      sideCode, existingValue, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate, Some(username), Some(DateTime.now()), speedLimit.linkSource).get
+
+    val createdId = createSpeedLimit(username, link._1, Measures(createdLinkMeasures._1, createdLinkMeasures._2), sideCode, createdValue, Option(vvhTimeStamp), None, None, None, link._4).get
+    (existingId, createdId)
   }
 
   /**
@@ -482,7 +488,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Updates validity of asset in db.
     */
-  def updateExpiration(id: Long, expired: Boolean, username: String): Unit = {
+  def updateExpiration(id: Long, expired: Boolean, username: String) = {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = if (expired) {
       sqlu"update asset set valid_to = sysdate where id = $id".first

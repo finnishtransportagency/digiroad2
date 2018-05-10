@@ -80,7 +80,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for second split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 100, 120, "test", passingMunicipalityValidation)
+      val (createdId, _) = dao.splitSpeedLimit(200097, 100, 120, 60,  "test", passingMunicipalityValidation)
       val existing = dao.getPersistedSpeedLimit(200097).get
       val created = dao.getPersistedSpeedLimit(createdId).get
 
@@ -98,7 +98,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 50, 120, "test", passingMunicipalityValidation)
+      val (createdId, _) = dao.splitSpeedLimit(200097, 50, 120, 60, "test", passingMunicipalityValidation)
       val modified = dao.getPersistedSpeedLimit(200097).get
       val created = dao.getPersistedSpeedLimit(createdId).get
 
