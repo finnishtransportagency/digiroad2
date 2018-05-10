@@ -293,12 +293,10 @@
         };
 
         var createMultiStyles = function (value) {
-            var position = 1;
-            var styles = [];
-            styles.push(backgroundStyle(value, position), textStyle(value, position));
-            position++;
-            styles.push(backgroundStyle(value, position), textStyle(value, position));
-            return styles;
+            var stylePositions = [1,2];
+            return _.flatten(_.map(stylePositions, function(position){
+                return [backgroundStyle(value, position), textStyle(value, position)];
+            }));
         };
 
         var backgroundStyle = function(value, pos){
