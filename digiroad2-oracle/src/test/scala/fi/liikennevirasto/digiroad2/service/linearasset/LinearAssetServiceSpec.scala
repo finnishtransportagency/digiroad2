@@ -274,7 +274,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish("linearAssets:update", captor.capture())
+      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:update"), captor.capture())
       captor.getValue.expiredAssetIds should be (Set(asset1,asset2,asset3))
 
       dynamicSession.rollback()
@@ -885,7 +885,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
         .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
-      verify(mockEventBus, times(1)).publish("linearAssets:saveProjectedLinearAssets", captor.capture())
+      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
       val projectedAssets = captor.getValue
       projectedAssets.length should be(1)
       projectedAssets.foreach { proj =>

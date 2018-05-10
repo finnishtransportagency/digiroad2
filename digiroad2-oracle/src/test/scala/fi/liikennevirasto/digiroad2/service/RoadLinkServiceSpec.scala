@@ -270,7 +270,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, exactModifiedAtValue, Some("automatic_generation"), constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface))
       val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
 
-      verify(mockEventBus).publish("linkProperties:changed", changeSet)
+      verify(mockEventBus).publish(
+        org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
+        org.mockito.ArgumentMatchers.eq(changeSet))
 
       dynamicSession.rollback()
     }
@@ -753,7 +755,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       // Pass only incomplete road links with construction type 'in use' to be saved with actor
       val changeSet = RoadLinkChangeSet(Seq(), List(IncompleteLink(1,91,Municipality), IncompleteLink(4,91,Municipality)))
-      verify(mockEventBus).publish("linkProperties:changed", changeSet)
+      verify(mockEventBus).publish(
+        org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
+        org.mockito.ArgumentMatchers.eq(changeSet))
 
       dynamicSession.rollback()
     }
@@ -796,7 +800,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       // Pass only incomplete road links with link source normal
       val changeSet = RoadLinkChangeSet(List(), List(IncompleteLink(5,91,Municipality)))
-      verify(mockEventBus).publish("linkProperties:changed", changeSet)
+      verify(mockEventBus).publish(
+        org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
+        org.mockito.ArgumentMatchers.eq(changeSet))
 
       dynamicSession.rollback()
     }

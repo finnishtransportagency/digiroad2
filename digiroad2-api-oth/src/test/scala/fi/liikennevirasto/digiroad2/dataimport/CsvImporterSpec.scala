@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, RoadSide, Track}
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
@@ -68,8 +68,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("update name by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-    when(mockService.getMassTransitStopByNationalId(2l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(2, 2, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(2l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(2, 2, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val csv = createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "UpdatedAssetName"),
@@ -81,15 +81,15 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     val properties1 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("UpdatedAssetName"))))
     val properties2 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("Asset2Name"))))
-    verify(mockService).updateExistingById(1l, None, properties1, "CsvImportApiSpec", anyObject())
-    verify(mockService).updateExistingById(2l, None, properties2, "CsvImportApiSpec", anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties1), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(2l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties2), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("do not update name if field is empty in CSV", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val csv = createCSV(Map("Valtakunnallinen ID" -> 1))
@@ -98,7 +98,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val result = importer.importAssets(inputStream)
     result should equal(ImportResult())
 
-    verify(mockService).updateExistingById(1l, None, Set.empty, "CsvImportApiSpec", anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(Set.empty), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("validation fails if type is undefined", Tag("db")) {
@@ -132,7 +132,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "1,2 , 3 ,4")))
@@ -140,63 +140,63 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     importer.importAssets(csv) should equal(ImportResult())
 
     val properties = Set(SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("4"), PropertyValue("3"), PropertyValue("2"), PropertyValue("1"))))
-    verify(mockService).updateExistingById(1l, None, properties, "CsvImportApiSpec", anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("update asset admin id by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Ylläpitäjän tunnus" -> "NewAdminId")))
 
     importer.importAssets(csv) should equal(ImportResult())
     val properties = Set(SimpleProperty("yllapitajan_tunnus", Seq(PropertyValue("NewAdminId"))))
-    verify(mockService).updateExistingById(1l, None, properties, "CsvImportApiSpec", anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("Should not update asset LiVi id by CSV import (after Tierekisteri integration)", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "LiVi-tunnus" -> "Livi987654")))
 
     importer.importAssets(csv) should equal(ImportResult())
     val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654")))).filterNot(_.publicId == "yllapitajan_koodi")
-    verify(mockService).updateExistingById(1l, None, properties, "CsvImportApiSpec", anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("update asset stop code by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Matkustajatunnus" -> "H156")))
 
     importer.importAssets(csv) should equal(ImportResult())
     val properties = Set(SimpleProperty("matkustajatunnus", Seq(PropertyValue("H156"))))
-    verify(mockService).updateExistingById(1l, None, properties, "CsvImportApiSpec", anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("update additional information by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Lisätiedot" -> "Updated additional info")))
 
     importer.importAssets(csv) should equal(ImportResult())
     val properties = Set(SimpleProperty("lisatiedot", Seq(PropertyValue("Updated additional info"))))
-    verify(mockService).updateExistingById(1l, None, properties, "CsvImportApiSpec", anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   val exampleValues = Map(
@@ -226,7 +226,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1) ++ csvImporter.mappings.mapValues(exampleValues(_)._2)))
@@ -236,14 +236,14 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       SimpleProperty(key, Seq(PropertyValue(value._2)))
     }.filterNot(_.publicId == "yllapitajan_koodi").toSet
 
-    verify(mockService).updateExistingById(1l, None, properties, "CsvImportApiSpec", anyObject())
+    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("raise an error when updating non-existent asset", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(6l, anyObject())).thenReturn(None)
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(6l), anyObject())).thenReturn(None)
     val assetFields = Map("Valtakunnallinen ID" -> "6", "Pysäkin nimi" -> "AssetName")
 
     val importer = importerWithService(mockService, mockVVHClient)
@@ -259,7 +259,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockService.getMassTransitStopByNationalId(1l, anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
     val importer = importerWithService(mockService, mockVVHClient)
     val missingRequiredKeys = defaultKeys.filterNot(Set("Pysäkin nimi"))
@@ -281,9 +281,9 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
 
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     stops.foreach { case(id, administrativeClass) =>
-      when(mockVVHRoadLinkClient.fetchByLinkId(id)).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      when(mockVVHRoadLinkClient.fetchByLinkId(ArgumentMatchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
@@ -303,7 +303,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0, None) , RoadSide.Right))
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
     stops.foreach { case (id, administrativeClass) =>
-      when(mockMassTransitStopService.getByNationalId(id, anyObject(), anyObject())).thenAnswer(new Answer[Option[Object]] {
+      when(mockMassTransitStopService.getByNationalId(ArgumentMatchers.eq(id), anyObject(), anyObject())).thenAnswer(new Answer[Option[Object]] {
         override def answer(invocation: InvocationOnMock): Option[Object] = {
           val transformation: PersistedMassTransitStop => (Object, Object) = invocation.getArguments()(2).asInstanceOf[PersistedMassTransitStop => (Object, Object)]
           val stop = PersistedMassTransitStop(id, id, id, Nil, 235, 0.0, 0.0, 0.0, None, None, None, false, 0, Modification(None, None), Modification(None, None), Nil, NormalLinkInterface)
@@ -350,7 +350,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     result should equal(ImportResult())
 
     val properties = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName"))))
-    verify(mockMassTransitStopService).updateExistingById(1l, None, properties, "CsvImportApiSpec", anyObject())
+    verify(mockMassTransitStopService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("update asset on roads and streets when import is limited to roads and streets") {
@@ -364,8 +364,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     val properties1 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName1"))))
     val properties2 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName2"))))
-    verify(mockMassTransitStopService).updateExistingById(1l, None, properties1, "CsvImportApiSpec", anyObject())
-    verify(mockMassTransitStopService).updateExistingById(2l, None, properties2, "CsvImportApiSpec", anyObject())
+    verify(mockMassTransitStopService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties1), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockMassTransitStopService).updateExistingById(ArgumentMatchers.eq(2l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties2), ArgumentMatchers.eq("CsvImportApiSpec"), anyObject())
   }
 
   test("ignore updates on all other road types than private roads when import is limited to private roads") {

@@ -1454,7 +1454,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       verify(eventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), List(), List(), Set(asset)))
       val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
-      verify(eventBus, times(1)).publish("speedLimits:saveProjectedSpeedLimits", captor.capture())
+      verify(eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
       verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
       apeedLimits.length should be(3)
