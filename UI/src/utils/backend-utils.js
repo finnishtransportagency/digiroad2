@@ -629,24 +629,9 @@
       };
     }
 
-    // function latestResponseRequestor(getParameters) {
-    //   var deferred;
-    //   var requests = new Bacon.Bus();
-    //   var responses = requests.debounce(200).flatMapLatest(function(params) {
-    //     return Bacon.$.ajax(params, true);
-    //   });
-    //
-    //   return function() {
-    //     if (deferred) { deferred.reject(); }
-    //     deferred = responses.toDeferred();
-    //     requests.push(getParameters.apply(undefined, arguments));
-    //     return deferred.firstToPromise();
-    //   };
-    // }
-
     this.withVerificationInfo = function(){
       self.getVerificationInfo = function(){
-        return $.Deferred().resolve({verified: false});
+        return mockBaconDefered({verified: false});
       };
       return self;
     };
@@ -712,19 +697,9 @@
       return self;
     };
 
-    // var mockBaconDefered = function(resultData){
-    //   var then = function(callback){
-    //     callback(resultData);
-    //     return {then: then};
-    //   };
-    //   return {
-    //     then : then
-    //   };
-    // };
-
     this.withSpeedLimitsData = function(speedLimitsData) {
       self.getSpeedLimits = function(boundingBox, withRoadAddress) {
-        return $.Deferred().resolve(speedLimitsData);
+        return mockBaconDefered(speedLimitsData);
       };
       return self;
     };
@@ -764,7 +739,7 @@
 
     this.withMunicipalityLocationData = function(municipalityLocationData){
       self.getMunicipalityByBoundingBox = function(){
-        return $.Deferred().resolve(municipalityLocationData);
+        return mockBaconDefered(municipalityLocationData);
       };
       return self;
     };
@@ -775,6 +750,16 @@
       };
       return self;
     };
+
+    var mockBaconDefered = function(resultData){
+       var then = function(callback){
+        callback(resultData);
+        return {then: then};
+         };
+        return {
+       then : then
+      };
+      };
 
   };
 }(this));

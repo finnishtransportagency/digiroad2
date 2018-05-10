@@ -78,7 +78,7 @@
 
       return _.merge(
         {},
-        _.pick(payload, function(value, key) { return key != 'properties'; }),
+        _.pickBy(payload, function(value, key) { return key != 'properties'; }),
         {
           properties: pickProperties(payload.properties, publicIds)
         });

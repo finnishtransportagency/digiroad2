@@ -65,9 +65,9 @@ define(['AssetsTestData',
       .withSpeedLimitUpdate(speedLimitsTestData)
       .withPassThroughAssetCreation()
       .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate())
-      .withVerificationInfo()
       .withMunicipalityLocationData({verified: true})
-      .withMunicipalityCoordinateData({kuntakoodi: 230});
+      .withMunicipalityCoordinateData({kuntakoodi: 230})
+      .withVerificationInfo();
   };
 
   var clickVisibleEditModeButton = function() {

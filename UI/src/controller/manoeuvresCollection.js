@@ -331,7 +331,7 @@
         dirty = false;
         callback();
       };
-      var details = _.omit(updatedInfo, function(value, key) {
+      var details = _.omitBy(updatedInfo, function(value, key) {
         return _.some(removedManoeuvreIds, function(id) {
           return id === parseInt(key, 10);
         });

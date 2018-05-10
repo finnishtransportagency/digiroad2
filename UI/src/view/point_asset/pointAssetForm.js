@@ -397,7 +397,7 @@ root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, appli
           '  </div>': '');
     } else if (asset.services) {
       var services = _(asset.services)
-        .sortByAll('serviceType', 'id')
+        .sortBy('serviceType', 'id')
         .map(renderService)
         .join('');
 
