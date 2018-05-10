@@ -241,7 +241,13 @@
           disabled: 'Ei kelirikkoa'
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
-        isVerifiable: false
+        isVerifiable: false,
+        label: new RoadDamagedByThawLabel(),
+        form: new AssetFormFactory( {
+          fields : [
+            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1 }
+          ]
+        })
       },
       {
         typeId: assetType.width,

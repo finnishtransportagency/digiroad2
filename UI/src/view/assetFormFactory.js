@@ -752,15 +752,14 @@
         else {
           values = [];
           if(type === 'checkbox' && !$element.prop('checked')) {}
-          else values.push({ value : $element.val() });
+          else if(!_.isEmpty($element.val())) values.push({ value : $element.val() });
 
-          if(required || !_.isEmpty(values))
-            value.properties.push({
-              publicId: $element.attr('name'),
-              propertyType:  $element.attr('fieldType'),
-              required : $element.attr('required'),
-              values: values
-            });
+          value.properties.push({
+            publicId: $element.attr('name'),
+            propertyType:  $element.attr('fieldType'),
+            required : $element.attr('required'),
+            values: values
+          });
         }
       });
       return value;
