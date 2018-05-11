@@ -69,7 +69,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("split existing speed limit") {
     runWithRollback {
       val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(388562360l))).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
       val speedLimits = provider.split(200097, 100, 50, 60, "test", (_, _) => Unit)
 
       val existing = speedLimits(0)
@@ -1012,8 +1012,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(newRoadLink))
-
-      when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(any[Long])).thenReturn(Some(vvhRoadLink))
 
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
