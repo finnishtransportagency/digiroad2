@@ -66,25 +66,13 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     result
   }
 
-//TODO: Check this test
-//  test("Split should fail when user is not authorized for municipality") {
-//    runWithRollback {
-//      val dao = daoWithRoadLinks(List(roadLink))
-//      intercept[IllegalArgumentException] {
-//        val asset = SpeedLimit(200097, roadLink.linkId, BothDirections, TrafficDirection.UnknownDirection, Some(NumericValue(100)), Seq(Point(0,0), Point(0,200)), 0, 200, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface)
-//        dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
-//      }
-//    }
-//  }
-
   test("splitting one link speed limit " +
     "where split measure is after link middle point " +
     "modifies end measure of existing speed limit " +
     "and creates new speed limit for second split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val asset = dao.getSpeedLimitLinksByIds_(Set(200097)).head
-      //val asset = SpeedLimit(200097, roadLink.linkId, BothDirections, TrafficDirection.UnknownDirection, Some(NumericValue(100)), Seq(Point(0,0), Point(0,200)), 0, 136.788, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface)
+      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
       val (existingId, createdId) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
       val existing = dao.getPersistedSpeedLimit(existingId).get
       val created = dao.getPersistedSpeedLimit(createdId).get
@@ -103,7 +91,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val asset = dao.getSpeedLimitLinksByIds_(Set(200097)).head
+      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
       val (existingId, createdId) = dao.splitSpeedLimit(asset, roadLink, 50, 120, 60, "test")
       val modified = dao.getPersistedSpeedLimit(existingId).get
       val created = dao.getPersistedSpeedLimit(createdId).get
