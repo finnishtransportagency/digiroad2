@@ -424,11 +424,20 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Saves speed limit values when speed limit is split to two parts in UI (scissors icon). Used by Digiroad2Api /speedlimits/:speedLimitId/split POST endpoint.
     */
   def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[SpeedLimit] = {
-    val (newId ,idUpdated) = withDynTransaction {
-      dao.splitSpeedLimit(id, splitMeasure, existingValue, createdValue, username, municipalityValidation)
+    withDynTransaction {
+      getSpeedLimitById(id, newTransaction = false) match {
+        case Some(speedLimit) =>
+          val roadLink = roadLinkService.fetchVVHRoadlinkAndComplementary(speedLimit.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+          municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
+
+          val (newId ,idUpdated) = dao.splitSpeedLimit(speedLimit, roadLink, splitMeasure, existingValue, createdValue, username)
+
+          val assets = getSpeedLimitAssetsByIds(Set(idUpdated, newId), newTransaction = false)
+          assets.filter(asset => asset.id == idUpdated || asset.id == newId)
+
+        case _ => Seq()
+      }
     }
-    val assets = getSpeedLimitAssetsByIds(Set(idUpdated, newId))
-    Seq(assets.find(_.id == idUpdated).get, assets.find(_.id == newId).get)
   }
 
   private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit): SpeedLimit = {

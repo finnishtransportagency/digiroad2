@@ -11,7 +11,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -389,27 +389,15 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Splits speed limit by given split measure. Updates old asset and creates new asset. Returns new asset id.
     * Used by SpeedLimitService.split.
     */
-  def splitSpeedLimit(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): (Long, Long) = {
-    def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]) = {
-      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
-      vvhLinks
-    }
+  def splitSpeedLimit(speedLimit: SpeedLimit, vvhRoadLink: VVHRoadlink, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String): (Long, Long) = {
+    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (speedLimit.startMeasure, speedLimit.endMeasure))
 
-    val (startMeasure, endMeasure, sideCode, vvhTimeStamp) = getLinkGeometryData(id)
-    val link: (Long, Double, (Point, Point), LinkGeomSource, AdministrativeClass) =
-      withMunicipalityValidation(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id)).headOption.map { case (linkId, length, geometry, _, linkSource, adminClass) =>
-        (linkId, length, GeometryUtils.geometryEndpoints(geometry), linkSource, adminClass)
-      }.get
-
-    val speedLimit = getPersistedSpeedLimit(id).getOrElse(throw new NoSuchElementException)
-    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
-
-    updateExpiration(id, true, username)
+    updateExpiration(speedLimit.id, expired = true, username)
 
     val existingId = createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(existingLinkMeasures._1, existingLinkMeasures._2),
-      sideCode, existingValue, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate, Some(username), Some(DateTime.now()), speedLimit.linkSource).get
+      speedLimit.sideCode, existingValue, Some(speedLimit.vvhTimeStamp), speedLimit.createdDateTime, Some(username), Some(DateTime.now()), speedLimit.linkSource).get
 
-    val createdId = createSpeedLimit(username, link._1, Measures(createdLinkMeasures._1, createdLinkMeasures._2), sideCode, createdValue, Option(vvhTimeStamp), None, None, None, link._4).get
+    val createdId = createSpeedLimit(username, vvhRoadLink.linkId, Measures(createdLinkMeasures._1, createdLinkMeasures._2), speedLimit.sideCode, createdValue, Option(speedLimit.vvhTimeStamp), None, None, None, vvhRoadLink.linkSource).get
     (existingId, createdId)
   }
 
