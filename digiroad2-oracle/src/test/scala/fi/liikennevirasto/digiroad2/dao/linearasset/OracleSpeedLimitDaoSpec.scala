@@ -11,6 +11,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -69,7 +70,8 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
       intercept[IllegalArgumentException] {
-        dao.splitSpeedLimit(200097, 100, 120, "test", failingMunicipalityValidation)
+        val asset = SpeedLimit(200097, roadLink.linkId, BothDirections, TrafficDirection.UnknownDirection, Some(NumericValue(100)), Seq(Point(0,0), Point(0,200)), 0, 200, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface)
+        dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
       }
     }
   }
@@ -80,7 +82,8 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for second split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val (createdId, _) = dao.splitSpeedLimit(200097, 100, 120, 60,  "test", passingMunicipalityValidation)
+      val asset = SpeedLimit(200097, roadLink.linkId, BothDirections, TrafficDirection.UnknownDirection, Some(NumericValue(100)), Seq(Point(0,0), Point(0,200)), 0, 200, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface)
+      val (createdId, _) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
       val existing = dao.getPersistedSpeedLimit(200097).get
       val created = dao.getPersistedSpeedLimit(createdId).get
 
@@ -98,7 +101,8 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val (createdId, _) = dao.splitSpeedLimit(200097, 50, 120, 60, "test", passingMunicipalityValidation)
+      val asset = SpeedLimit(200097, roadLink.linkId, BothDirections, TrafficDirection.UnknownDirection, Some(NumericValue(100)), Seq(Point(0,0), Point(0,200)), 0, 200, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface)
+      val (createdId, _) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
       val modified = dao.getPersistedSpeedLimit(200097).get
       val created = dao.getPersistedSpeedLimit(createdId).get
 
