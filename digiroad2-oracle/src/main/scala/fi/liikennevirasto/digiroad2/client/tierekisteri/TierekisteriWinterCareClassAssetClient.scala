@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri
 
+import fi.liikennevirasto.digiroad2.asset.{MultiTypeProperty, MultiTypePropertyValue, PropertyTypes}
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.CloseableHttpClient
 
 case class TierekisteriWinterCareClassAssetData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                                track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int) extends TierekisteriAssetData
+                                               track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: MultiTypeProperty) extends TierekisteriAssetData
 
 class TierekisteriWinterCareClassAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
   override def tierekisteriRestApiEndPoint: String = trEndPoint
@@ -17,8 +18,9 @@ class TierekisteriWinterCareClassAssetClient(trEndPoint: String, trEnable: Boole
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriWinterCareClassAssetData] = {
 
+    val assetValue = MultiTypeProperty("hoitoluokat_talvihoitoluokka", PropertyTypes.SingleChoice, false, Seq(MultiTypePropertyValue(convertToInt(getMandatoryFieldValue(data, trCareClass)).get)))
+
     //Mandatory field
-    val assetValue = convertToInt(getMandatoryFieldValue(data, trCareClass)).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
     val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
