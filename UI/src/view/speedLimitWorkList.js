@@ -8,6 +8,7 @@
     var speedLimitList;
     var municipalityId;
     var municipalityName;
+    var authorizationPolicy = new AuthorizationPolicy();
 
 
     this.bindEvents = function () {
@@ -166,7 +167,7 @@
         var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
         element.html($('<div class="municipality-list">').append(unknownLimits));
 
-        if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
+        if (authorizationPolicy.workListAccess())
           searchbox.insertBefore('#tableData');
 
         $('#searchBox').on('keyup', function (event) {

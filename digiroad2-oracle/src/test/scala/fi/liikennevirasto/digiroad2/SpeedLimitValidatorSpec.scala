@@ -82,11 +82,11 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      10.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      10, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
     val trafficSign = Seq(PersistedTrafficSign(2, speedLimit.linkId, 9, 1, 9, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(Seq())
+    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
 
     val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
     val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
@@ -108,7 +108,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 1, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
       PersistedTrafficSign(2, speedLimit.linkId, 9, 1, 9, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(Seq())
+    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
 
     val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
     val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
@@ -132,7 +132,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     val trafficSignLast = Seq(PersistedTrafficSign(3, speedLimit.linkId, 22, 1, 1, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
       PersistedTrafficSign(4, speedLimit.linkId, 21, 1, 9, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(Seq())
+    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSignFirst ++ trafficSignLast)
 
     val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
     val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)

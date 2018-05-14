@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, LocalDate}
 
 trait LinearAsset extends PolyLine {
   val id: Long
@@ -48,6 +48,25 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
 }
 case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
   override def toJson: Any = massLimitation
+}
+
+case class MultiAssetValue(properties: Seq[MultiTypeProperty])
+case class MultiValue(value: MultiAssetValue) extends Value{
+  override def toJson: Any = value
+
+  override def equals(obj: scala.Any): Boolean = {
+    obj match {
+      case asset: MultiValue =>
+        value.properties.size == asset.value.properties.size && (value.properties.groupBy(_.publicId), asset.value.properties.groupBy(_.publicId)).zipped.forall {
+          case (asset1, asset2) => (asset1._2, asset2._2).zipped.forall {
+            case (prop1, prop2) => prop1.propertyType == prop2.propertyType && prop1.values.forall(
+              x =>  prop2.values.exists(_.value == x.value)
+            )
+          }
+        }
+      case _ => super.equals(obj)
+    }
+  }
 }
 
 case class AssetTypes(typeId: Int, value: String)

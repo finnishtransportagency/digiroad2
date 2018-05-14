@@ -2,6 +2,7 @@
   root.RoadLinkBox = function(linkPropertiesModel) {
     var className = 'road-link';
     var title = 'Tielinkki';
+    var authorizationPolicy = new AuthorizationPolicy();
 
     var roadLinkCheckBoxs = '<div class="panel-section">' +
           '<div class="check-box-container">' +
@@ -222,14 +223,10 @@
       });
     };
 
-    var userRoles;
-
     var bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        userRoles = roles;
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+      eventbus.on('roles:fetched', function() {
+        if (authorizationPolicy.editModeAccess())
           elements.expanded.append(editModeToggle.element);
-        }
       });
     };
 
@@ -246,7 +243,7 @@
     bindEventHandlers(elements.expanded);
 
     function show() {
-      if (editModeToggle.hasNoRolesPermission(userRoles)) {
+      if (!authorizationPolicy.editModeAccess()) {
         editModeToggle.reset();
       } else {
         editModeToggle.toggleEditMode(applicationModel.isReadOnly());

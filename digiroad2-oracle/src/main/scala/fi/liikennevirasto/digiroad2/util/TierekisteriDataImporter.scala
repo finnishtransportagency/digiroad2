@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
+import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -124,6 +125,13 @@ object TierekisteriDataImporter {
       val assetName = tierekisteriAssetImporter.getAssetName
       assetDao.getLastExecutionDate(assetId, s"batch_process_$assetName")
     }
+  }
+
+  //TODO delete this client after migrate the import asset to TierekisteriImporterOperations
+  lazy val tierekisteriTrafficVolumeAssetClient : TierekisteriTrafficVolumeAssetClient = {
+    new TierekisteriTrafficVolumeAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
   }
 
   //TODO migrate this import asset to TierekisteriImporterOperations
@@ -279,10 +287,16 @@ object TierekisteriDataImporter {
       if(availableAssetTypes.contains(assetType)){
         operation match {
           case "import" =>
-            importAssets(tierekisteriDataImporters.get(assetType).get)
+            if(assetType == "trafficVolume")
+              importTrafficVolumeAsset(tierekisteriTrafficVolumeAssetClient)
+            else
+              importAssets(tierekisteriDataImporters.get(assetType).get)
           case "update" =>
             val lastExecutionDate = getDateFromArgs(args)
-            updateAssets(tierekisteriDataImporters.get(assetType).get, lastExecutionDate)
+            if(assetType == "trafficVolume")
+              println("The asset type trafficVolume doesn't support update operation.")
+            else
+              updateAssets(tierekisteriDataImporters.get(assetType).get, lastExecutionDate)
         }
       }else{
         println(s"The asset type $assetType is not supported")

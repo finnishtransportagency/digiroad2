@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, _}
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -83,7 +83,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.fetchByLinkId(30)).thenReturn(Some(oldRoadLink))
 
-      val roadLink = service.updateLinkProperties(30, 8, CycleOrPedestrianPath, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
+      val linkProperty = LinkProperties(30, 8, CycleOrPedestrianPath, TrafficDirection.BothDirections, Municipality)
+      val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       roadLink.map(_.trafficDirection) should be(Some(TrafficDirection.BothDirections))
       roadLink.map(_.attributes("MTKCLASS")) should be (Some(12314))
       dynamicSession.rollback()
@@ -99,7 +100,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHRoadLinkClient.fetchByLinkId(1l))
         .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
+      val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality)
+      val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       roadLink.map(_.linkType) should be(Some(PedestrianZone))
       dynamicSession.rollback()
     }
@@ -114,7 +116,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHRoadLinkClient.fetchByLinkId(1l))
         .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Option("testuser"), { _ => })
+      val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private)
+      val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       roadLink.map(_.administrativeClass) should be(Some(Private))
       dynamicSession.rollback()
     }
@@ -150,11 +153,13 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       val roadLink = simulateQuery {
-        service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
+        val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality)
+        service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       }
       roadLink.map(_.trafficDirection) should be(Some(TrafficDirection.BothDirections))
       val roadLink2 = simulateQuery {
-        service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.TowardsDigitizing, Municipality, Option("testuser"), { _ => })
+        val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.TowardsDigitizing, Municipality)
+        service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       }
       roadLink2.map(_.trafficDirection) should be(Some(TrafficDirection.TowardsDigitizing))
       dynamicSession.rollback()
@@ -172,7 +177,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockVVHComplementaryClient.fetchByLinkId(1l)).thenReturn(None)
 
     val service = new RoadLinkOTHService(mockVVHClient, new DummyEventBus, new DummySerializer)
-    val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
+    val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality)
+    val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
     roadLink.map(_.linkType) should be(None)
   }
 
@@ -186,7 +192,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       var validatedCode = 0
-      service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { municipalityCode =>
+      val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality)
+      service.updateLinkProperties(linkProperty, Option("testuser"), { (municipalityCode, _) =>
         validatedCode = municipalityCode
       })
       validatedCode should be(91)
@@ -283,9 +290,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""insert into incomplete_link (id, link_id, municipality_code, administrative_class) values (43241231233, 1, 91, 1)""".execute
 
-      simulateQuery { service.updateLinkProperties(1, FunctionalClass.Unknown, Freeway, TrafficDirection.BothDirections, Municipality, Option("test"), _ => ()) }
-      simulateQuery { service.updateLinkProperties(1, 4, UnknownLinkType, TrafficDirection.BothDirections, Municipality, Option("test"), _ => ()) }
-
+      simulateQuery {
+        val linkProperty = LinkProperties(1, FunctionalClass.Unknown, Freeway, TrafficDirection.BothDirections, Municipality)
+        service.updateLinkProperties(linkProperty, Option("test"), { (_, _) => })
+      }
+      simulateQuery {
+        val linkProperty = LinkProperties(1, 4, UnknownLinkType, TrafficDirection.BothDirections, Municipality)
+        service.updateLinkProperties(linkProperty, Option("test"), { (_, _) => })
+      }
       val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
       incompleteLinks should be(empty)
 

@@ -215,6 +215,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
+      case Some(MultiValue(x)) => x.properties.flatMap { multiTypeProperty =>
+        multiTypeProperty.values.flatMap { v =>
+          Map("weightLimitation" -> v.value)
+        }
+      }
       case _ => value.map(_.toJson)
     }
   }
@@ -228,6 +233,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
+        case DamagedByThaw.typeId => multiValueLinearAssetService
         case _ => linearAssetService
       }
     }
@@ -376,6 +382,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
+        "railwayCrossingId" -> railwayCrossing.code,
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
         "linkSource" -> railwayCrossing.linkSource.value)

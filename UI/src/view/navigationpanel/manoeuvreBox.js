@@ -1,6 +1,7 @@
 (function(root) {
   root.ManoeuvreBox = function() {
     var layerName = 'manoeuvre';
+    var authorizationPolicy = new AuthorizationPolicy();
     var values = ['Ei kääntymisrajoitusta', 'Kääntymisrajoituksen lähde', 'Kääntymisrajoituksen lähde, useampi', 'Kääntymisrajoituksen välilinkki', 'Kääntymisrajoituksen välilinkki, useampi', 'Kääntymisrajoituksen kohde', 'Kääntymisrajoituksen kohde, useampi', 'Kääntymisrajoituksen lähde ja kohde'];
     var manoeuvreLegendTemplate = _.map(values, function(value, idx) {
       return '<div class="legend-entry">' +
@@ -29,14 +30,10 @@
       show: function() {}
     });
 
-    var userRoles;
-
     var bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        userRoles = roles;
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+      eventbus.on('roles:fetched', function() {
+        if (authorizationPolicy.editModeAccess())
           elements.expanded.append(editModeToggle.element);
-        }
       });
     };
 
@@ -47,7 +44,7 @@
       .hide();
 
     function show() {
-      if (editModeToggle.hasNoRolesPermission(userRoles)) {
+      if (!authorizationPolicy.editModeAccess()) {
         editModeToggle.reset();
       } else {
         editModeToggle.toggleEditMode(applicationModel.isReadOnly());

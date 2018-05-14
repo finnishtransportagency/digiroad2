@@ -2,7 +2,6 @@
   root.MunicipalityWorkList = function(){
     WorkListView.call(this);
     var me = this;
-    this.roles = {};
     this.hrefDir = "#work-list/municipality";
     this.title = 'Tietolajien kuntasivu';
     var backend;
@@ -10,16 +9,11 @@
     var showFormBtnVisible = true;
     var municipalityId;
     var municipalityName;
+    var authorizationPolicy = new AuthorizationPolicy();
 
     this.initialize = function(mapBackend){
       backend = mapBackend;
-      me.bindExternalEventHandlers();
       me.bindEvents();
-    };
-    this.bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        me.roles = roles;
-      });
     };
     this.bindEvents = function () {
       eventbus.on('municipality:select', function(listP) {
@@ -158,7 +152,7 @@
           var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
           element.html($('<div class="municipality-list">').append(unknownLimits));
 
-          if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
+          if (authorizationPolicy.workListAccess())
             searchbox.insertBefore('#tableData');
 
           $('#searchBox').on('keyup', function (event) {

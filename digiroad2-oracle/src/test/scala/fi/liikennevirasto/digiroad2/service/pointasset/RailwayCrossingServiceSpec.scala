@@ -85,10 +85,10 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   test("Update railway crossing with geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, 1, None), "jakke", roadLink )
+      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, 1, None, "testCode"), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
       oldAsset.modifiedAt.isDefined should equal(false)
-      val newId = service.update(id, IncomingRailwayCrossing(0.0, 10.0, 388553075, 2, None),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+      val newId = service.update(id, IncomingRailwayCrossing(0.0, 10.0, 388553075, 2, None, "testCode"),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -99,16 +99,17 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       updatedAsset.createdAt should equal (oldAsset.createdAt)
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.modifiedAt.isDefined should equal(true)
+      updatedAsset.code should equal ("testCode")
     }
   }
 
   test("Update railway crossing without geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, 2, None), "jakke", roadLink )
+      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, 2, None, "testCode"), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingRailwayCrossing(0.0, 20.0, 388553075,1, Some("nameTest")),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+      val newId = service.update(id, IncomingRailwayCrossing(0.0, 20.0, 388553075,1, Some("nameTest"), "testCode"),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
@@ -118,6 +119,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.safetyEquipment should equal(1)
       updatedAsset.name should equal (Some("nameTest"))
+      updatedAsset.code should equal ("testCode")
     }
   }
 }
