@@ -497,7 +497,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def updateInformationSource(typeId:Long, assetId: Long, informationSource: InformationSource): Unit = {
     sqlu"""
       update asset
-      set informationSource = ${informationSource.value}
+      set information_source = ${informationSource.value}
       where id = $assetId and asset_type_id = $typeId
     """.execute
   }
