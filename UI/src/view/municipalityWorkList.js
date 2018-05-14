@@ -23,6 +23,8 @@
         municipalityList = listP;
         me.generateWorkList(listP);
       });
+
+      eventbus.on('municipality:verified', me.reloadForm);
     };
 
     this.municipalityTable = function (municipalities, filter) {
@@ -61,8 +63,6 @@
         $('#work-list .work-list').append(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
       });
     };
-
-    eventbus.on('municipality:verified', me.reloadForm);
 
     var unknownLimitsTable = function (workListItems, municipalityName, municipalityId) {
       var selected = [];
