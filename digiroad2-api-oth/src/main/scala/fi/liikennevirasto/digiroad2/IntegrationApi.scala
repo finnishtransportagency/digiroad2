@@ -271,7 +271,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
         lastModifiedBy(asset.createdBy, asset.modifiedBy),
         "linkSource" -> asset.linkSource.value,
-        "informationSource" -> asset.informationSource.get.value
+        "informationSource" -> asset.informationSource.getOrElse("")
       )
     }
   }
