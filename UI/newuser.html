@@ -277,7 +277,7 @@
                     <label class="control-label" id="labelCheckboxMunicipality">Kuntaylläpitäjä</label>
 
 
-                    <div class="form-group municipalities"  style="display: none">
+                    <div class="form-group municipalities" style="display: none">
 
                         <div class="row">
                             <div class="col-xs-5" >
@@ -290,15 +290,15 @@
                                 <button type="button" id="municipalities_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" > < </button>
                             </div>
 
-                            <div class="col-xs-5" style="max-width: 151px; display: inline-block;">
-                                <select name="municipalityNumbers" id="municipalities_search_to" class="form-control" multiple="multiple" style="width: 151px; margin-top: 0;max-height: 72px;"></select>
+                            <div class="col-xs-5">
+                                <select name="municipalityNumbers" id="municipalities_search_to" class="form-control" multiple="multiple"></select>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="checkbox">
-                    <input type="checkbox" id="elysCheckbox" name="roleName" class="form-control" value="busStopMaintainer"   onchange="onChangeEvent(), isEly()">
+                    <input type="checkbox" id="elysCheckbox" name="roleName" class="form-control" value="busStopMaintainer" onchange="onChangeEvent(), isEly()">
                     <label class="control-label"  id="labelCheckboxEly" >Ely-ylläpitäjä</label>
 
                     <div class="form-group elys"  style="display: none">
@@ -353,8 +353,8 @@
             </div>
 
             <div class="form-group form-controls">
-                <button type="submit" class="save btn btn-primary" style="float: none;" disabled>Tallenna</button>
-                <button type="button" class="cancel btn btn-secondary" style="float: none;" onclick="cancel()" disabled>Peruuta</button>
+                <button type="submit" class="save btn btn-primary" disabled>Tallenna</button>
+                <button type="button" class="cancel btn btn-secondary" onclick="cancel()" disabled>Peruuta</button>
             </div>
         </form>
     </div>
