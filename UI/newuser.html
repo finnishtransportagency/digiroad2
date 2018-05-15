@@ -216,10 +216,10 @@
                 search: {
                     left:
                         '<label class="control-label labelBoxLeft">Kaikki kunnat</label>' +
-                        '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
+                        '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" />',
                     right:
                         '<label class="control-label labelBoxRight">Valitut Kunnat</label>' +
-                        '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
+                        '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" />'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
@@ -230,10 +230,10 @@
                 search: {
                     left:
                     '<label class="control-label labelBoxLeft Ely">Kaikki Elyt</>' +
-                    '<input type="text" class="form-control" placeholder="ELY-keskus" style="width: 151px;" />',
+                    '<input type="text" class="form-control" id = "left_elys" placeholder="ELY-keskus"/>',
                     right:
                     '<label class="control-label labelBoxRight Ely">Valitut Elyt</>' +
-                    '<input type="text" class="form-control" placeholder="ELY-keskus" style="width: 151px;" />'
+                    '<input type="text" class="form-control"  id = "right_elys" placeholder="ELY-keskus"/>'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
