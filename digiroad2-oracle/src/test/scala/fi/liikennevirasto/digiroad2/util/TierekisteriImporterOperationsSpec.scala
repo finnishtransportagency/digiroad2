@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
@@ -35,7 +35,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
   val mockTREuropeanRoadClient: TierekisteriEuropeanRoadAssetClient = MockitoSugar.mock[TierekisteriEuropeanRoadAssetClient]
   val mockTRSpeedLimitAssetClient: TierekisteriSpeedLimitAssetClient = MockitoSugar.mock[TierekisteriSpeedLimitAssetClient]
-  val multiValueDao = new MultiValueLinearAssetDao
+  val dynamicDao = new DynamicLinearAssetDao
   val mockGreenCareClassAssetClient: TierekisteriGreenCareClassAssetClient = MockitoSugar.mock[TierekisteriGreenCareClassAssetClient]
   val mockWinterCareClassAssetClient: TierekisteriWinterCareClassAssetClient = MockitoSugar.mock[TierekisteriWinterCareClassAssetClient]
 
@@ -1309,9 +1309,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val longEndAddressMValue = 500L
       val middleStartAddressMValue = 100L
       val middleEndAddressMValue = 300L
-      val greenAssetValue = MultiTypeProperty("hoitoluokat_viherhoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(MultiTypePropertyValue(4)))
-      val winterAssetValue = MultiTypeProperty("hoitoluokat_talvihoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(MultiTypePropertyValue(1)))
-      val middleWinterAssetValue = MultiTypeProperty("hoitoluokat_talvihoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(MultiTypePropertyValue(5)))
+      val greenAssetValue = DynamicProperty("hoitoluokat_viherhoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(DynamicPropertyValue(4)))
+      val winterAssetValue = DynamicProperty("hoitoluokat_talvihoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(DynamicPropertyValue(1)))
+      val middleWinterAssetValue = DynamicProperty("hoitoluokat_talvihoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(DynamicPropertyValue(5)))
 
       val winterAsset = TierekisteriWinterCareClassAssetData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, shortStartAddressMValue, shortEndAddressMValue, winterAssetValue)
       val middleWinterAsset = TierekisteriWinterCareClassAssetData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, middleStartAddressMValue, middleEndAddressMValue, middleWinterAssetValue)
@@ -1330,7 +1330,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testCareClassImporter.importAssets()
-      val assets = multiValueDao.fetchMultiValueLinearAssetsByLinkIds(testCareClassImporter.typeId, Seq(5002)).sortBy(_.id).toArray
+      val assets = dynamicDao.fetchDynamicLinearAssetsByLinkIds(testCareClassImporter.typeId, Seq(5002)).sortBy(_.id).toArray
 
       assets.size should be (5)
     }

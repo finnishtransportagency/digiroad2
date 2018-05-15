@@ -1,16 +1,16 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, MultiTypeProperty, MultiTypePropertyValue, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, DynamicProperty, DynamicPropertyValue, SideCode}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, MunicipalityDao, OracleAssetDao, Queries}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.joda.time.DateTime
 
-class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
+class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -18,7 +18,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: OracleAssetDao = new OracleAssetDao
-  def multiValueLinearAssetDao: MultiValueLinearAssetDao = new MultiValueLinearAssetDao
+  def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
   val roadName_FI = "osoite_suomeksi"
@@ -26,20 +26,20 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(ids)
+      dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(ids)
     }
   }
 
   override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(typeId, linkIds)
+      dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds)
     }
   }
   override protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
-        multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds)
+        dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds)
       }.filterNot(_.expired)
     existingAssets
   }
@@ -48,8 +48,8 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     //Get Old Asset
     val oldAsset =
       valueToUpdate match {
-        case MultiValue(multiTypeProps) =>
-          multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(assetId)).head
+        case DynamicValue(multiTypeProps) =>
+          dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(assetId)).head
         case _ => return None
       }
 
@@ -68,15 +68,15 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
       return ids
 
     val assetTypeId = assetDao.getAssetTypeId(ids)
-    validateRequiredProperties(assetTypeId.head._2, value.asInstanceOf[MultiValue].value.properties)
+    validateRequiredProperties(assetTypeId.head._2, value.asInstanceOf[DynamicValue].value.properties)
 
     val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
     ids.flatMap { id =>
       val typeId = assetTypeById(id)
       value match {
-        case MultiValue(multiTypeProps) =>
-          updateValueByExpiration(id, typeId, MultiValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
+        case DynamicValue(multiTypeProps) =>
+          updateValueByExpiration(id, typeId, DynamicValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
         case _ =>
           Some(id)
       }
@@ -91,24 +91,24 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
 
     value match {
-      case MultiValue(multiTypeProps) =>
+      case DynamicValue(multiTypeProps) =>
         val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
-        val defaultValues = multiValueLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+        val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
 //        validateRequiredProperties(typeId, props)
-        multiValueLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props)
       case _ => None
     }
     id
   }
 
-  def setPropertiesDefaultValues(properties: Seq[MultiTypeProperty], roadLink: Option[RoadLinkLike]): Seq[MultiTypeProperty] = {
+  def setPropertiesDefaultValues(properties: Seq[DynamicProperty], roadLink: Option[RoadLinkLike]): Seq[DynamicProperty] = {
     //To add Properties with Default Values we need to add the public ID to the Seq below
     val defaultPropertiesPublicId = Seq()
     val defaultProperties = defaultPropertiesPublicId.flatMap {
       key =>
         if (!properties.exists(_.publicId == key))
-          Some(MultiTypeProperty(publicId = key, propertyType = "", values = Seq.empty[MultiTypePropertyValue]))
+          Some(DynamicProperty(publicId = key, propertyType = "", values = Seq.empty[DynamicPropertyValue]))
         else
           None
     } ++ properties
@@ -130,7 +130,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
-      val linearAsset = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
+      val linearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id)).head
       val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linearAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
@@ -152,7 +152,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
   override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
-      val existing = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
+      val existing = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id)).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
@@ -170,9 +170,9 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     }
   }
 
-  private def validateRequiredProperties(typeId: Int, properties: Seq[MultiTypeProperty]): Unit = {
-    val mandatoryProperties: Map[String, String] = multiValueLinearAssetDao.getAssetRequiredProperties(typeId)
-    val nonEmptyMandatoryProperties: Seq[MultiTypeProperty] = properties.filter { property =>
+  private def validateRequiredProperties(typeId: Int, properties: Seq[DynamicProperty]): Unit = {
+    val mandatoryProperties: Map[String, String] = dynamicLinearAssetDao.getAssetRequiredProperties(typeId)
+    val nonEmptyMandatoryProperties: Seq[DynamicProperty] = properties.filter { property =>
       mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
     }
     val missingProperties = mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet

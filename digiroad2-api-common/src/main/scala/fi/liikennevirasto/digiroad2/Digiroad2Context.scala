@@ -326,8 +326,8 @@ object Digiroad2Context {
     new VerificationService(eventbus, roadLinkService)
   }
 
-  lazy val multiValueLinearAssetService: MultiValueLinearAssetService = {
-    new MultiValueLinearAssetService(roadLinkService, eventbus)
+  lazy val dynamicLinearAssetService: DynamicLinearAssetService = {
+    new DynamicLinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val revision: String = {

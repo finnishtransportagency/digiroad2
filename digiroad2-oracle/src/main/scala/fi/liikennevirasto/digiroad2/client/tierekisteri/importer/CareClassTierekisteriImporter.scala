@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriAssetDataClient, TierekisteriGreenCareClassAssetClient, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.MultiValueLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, MultiValueLinearAssetService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, DynamicLinearAssetService}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -13,8 +13,8 @@ case class AssetWithMeasures (roadLink: Option[VVHRoadlink], measures: Measures,
 
 class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
 
-  lazy val service: MultiValueLinearAssetService = new MultiValueLinearAssetService(roadLinkService, eventbus)
-  lazy val dao: MultiValueLinearAssetDao = new MultiValueLinearAssetDao
+  lazy val service: DynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService, eventbus)
+  lazy val dao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
   override def typeId: Int = CareClass.typeId
   override def assetName: String = "careClass"
@@ -144,7 +144,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
     }
   }
 
-  def getAssetValue(trAsset: TierekisteriAssetData): MultiTypeProperty = {
+  def getAssetValue(trAsset: TierekisteriAssetData): DynamicProperty = {
     if(trAsset.isInstanceOf[TierekisteriWinterCareClassAssetData])
       trAsset.asInstanceOf[TierekisteriWinterCareClassAssetData].assetValue
     else
