@@ -271,7 +271,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
         lastModifiedBy(asset.createdBy, asset.modifiedBy),
         "linkSource" -> asset.linkSource.value,
-        "informationSource" -> asset.informationSource.getOrElse("")
+        "informationSource" -> getInformationSource(asset.informationSource)
       )
     }
   }
@@ -324,6 +324,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .orElse(createdDateTime)
         .map(DateTimePropertyFormat.print)
         .getOrElse("")
+  }
+
+
+  def getInformationSource(informationSource: Option[InformationSource]): String = {
+    informationSource match{
+      case Some(info) => info.value.toString
+      case _ => ""
+    }
   }
 
   def lastModifiedBy(createdBy: Option[String], modifiedBy: Option[String]): (String, Boolean) = {
