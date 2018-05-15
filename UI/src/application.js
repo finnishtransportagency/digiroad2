@@ -113,7 +113,6 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
 
-    // backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;

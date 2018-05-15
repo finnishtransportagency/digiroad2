@@ -250,12 +250,6 @@ object Queries {
     """.as[Int].list
   }
 
-  def getMunicipalitiesInfo: Seq[(Int, String)] = {
-    sql"""
-      select id, name_fi from municipality
-    """.as[(Int, String)].list
-  }
-
   def getMunicipalitiesWithoutAhvenanmaa: Seq[Int] = {
     //The road_maintainer_id of Ahvenanmaa is 0
     sql"""

@@ -171,7 +171,7 @@
             return false;
         }
 
-        function ajaxRequestPost(username, successResponseValue, func, inputs) {
+        function ajaxRequestPost(username, successResponseValue, func) {
             $.ajax({
                 type: "POST",
                 url: "api/userconfig/newuser",
@@ -216,10 +216,10 @@
                 search: {
                     left:
                         '<label class="control-label labelBoxLeft">Kaikki kunnat</label>' +
-                        '<input type="text" name="from[]" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
+                        '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />',
                     right:
                         '<label class="control-label labelBoxRight">Valitut Kunnat</label>' +
-                        '<input type="text" name="to[]" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
+                        '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" style="width: 151px;" />'
                 },
                 fireSearch: function(value) {
                     return value.length >= 1;
