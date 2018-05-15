@@ -733,7 +733,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-
   get("/getMunicipalityInfo") {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
@@ -753,8 +752,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
-
-
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()
@@ -898,43 +895,20 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
-    val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
+    val existingAssetIds = (parsedBody \ "ids").extract[Set[Long]]
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
+    val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
 
-    if(typeId == MaintenanceRoadAsset.typeId){
-
-      val existingLinksAndMeasures = usedService.getPersistedAssetsByIds(typeId, existingAssets)
-        .map(a => (a.linkId, Measures(a.startMeasure, a.endMeasure)))
-        .map(a => (roadLinkService.fetchVVHRoadlinks(Set(a._1)).headOption, a._2))
-
-      existingLinksAndMeasures.foreach { asset =>
-        if (user.isAuthorizedToWriteInArea(maintenanceRoadService.getAssetArea(asset._1, asset._2), asset._1.get.administrativeClass))
-          halt(Unauthorized("User not authorized"))
-      }
-
-      val newLinks = roadLinkService.fetchVVHRoadlinks(newLinearAssets.map(_.linkId).toSet)
-
-      newLinks.foreach { asset =>
-        if (!user.isAuthorizedToWriteInArea(maintenanceRoadService.getAssetArea(Some(asset), Measures(newLinearAssets.find(_.linkId == asset.linkId).get.startMeasure, newLinearAssets.find(_.linkId == asset.linkId).get.endMeasure)), asset.administrativeClass))
-          halt(Unauthorized("User not authorized"))
-      }
-    } else {
-      val existingLinkIds = usedService.getPersistedAssetsByIds(typeId, existingAssets).map(_.linkId)
-      val linkIds = newLinearAssets.map(_.linkId) ++ existingLinkIds
-      val roadLinks = roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
-
-      roadLinks
-        .foreach(a => validateUserAccess(user, Some(typeId))(a.municipalityCode, a.administrativeClass))
-    }
+    validateUserRights(existingAssets, newLinearAssets, user, typeId)
     val updatedNumericalIds = if (valueOption.nonEmpty) {
       try {
-        valueOption.map(usedService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+        valueOption.map(usedService.update(existingAssetIds.toSeq, _, user.username)).getOrElse(Nil)
       } catch {
         case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
         case e: IllegalArgumentException => halt(BadRequest("Property not found"))
       }
     } else {
-      usedService.clearValue(existingAssets.toSeq, user.username)
+      usedService.clearValue(existingAssetIds.toSeq, user.username)
     }
 
     try {
@@ -979,15 +953,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val ids = (parsedBody \ "ids").extract[Set[Long]]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
-    if (typeId == TrafficVolume.typeId)
-      halt(BadRequest("Cannot delete 'traffic Volume' asset"))
     val usedService =  getLinearAssetService(typeId)
-    val linkIds = usedService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
-    roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
-      .foreach(a => validateUserAccess(user, Some(typeId))(a.municipalityCode, a.administrativeClass))
+    val existingAssets = usedService.getPersistedAssetsByIds(typeId, ids)
 
+    validateUserRights(existingAssets, Seq(), user, typeId)
     usedService.expire(ids.toSeq, user.username)
   }
 
@@ -1246,6 +1215,35 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val road = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
     if(!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
       halt(Unauthorized("User not authorized"))
+  }
+
+  private def validateUserRights(existingAssets: Seq[PersistedLinearAsset], newLinearAssets: Seq[NewLinearAsset], user: User, typeId: Int) : Unit = {
+    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
+
+    if (typeId == TrafficVolume.typeId)
+      halt(BadRequest("Cannot modify 'traffic Volume' asset"))
+
+    val roadLinks = roadLinkService.fetchVVHRoadlinksAndComplementary((existingAssets.map(_.linkId) ++ newLinearAssets.map(_.linkId)).toSet)
+    if (typeId == MaintenanceRoadAsset.typeId) {
+
+      val groupedRoadLinks = roadLinks.groupBy(_.linkId)
+      val assetInfo =
+        existingAssets.map { asset =>
+          val roadLink = groupedRoadLinks(asset.linkId).head
+          (roadLink, Measures(asset.startMeasure, asset.endMeasure), roadLink.administrativeClass)
+        } ++
+          newLinearAssets.map { asset =>
+            val roadLink = groupedRoadLinks(asset.linkId).head
+            (roadLink, Measures(asset.startMeasure, asset.endMeasure), roadLink.administrativeClass)
+          }
+      assetInfo.foreach { case (roadLink, measures, administrativeClass) =>
+        if (!user.isAuthorizedToWriteInArea(maintenanceRoadService.getAssetArea(Some(roadLink), measures), administrativeClass))
+          halt(Unauthorized("User not authorized"))
+      }
+    } else {
+      roadLinks.foreach(a => validateUserAccess(user, Some(typeId))(a.municipalityCode, a.administrativeClass))
+    }
   }
 
   private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
