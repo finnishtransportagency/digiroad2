@@ -385,6 +385,8 @@
     };
 
     this.isSplitOrSeparatedEqual = function(){
+      if(!this.isSplitOrSeparated()) return false;
+
       if (_.filter(selection, function(p){return p.value;}).length <= 1)
         return false;
 
