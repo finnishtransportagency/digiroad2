@@ -70,13 +70,13 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   }
 
-  def getPersistedSpeedLimitByIds(id: Set[Long], newTransaction: Boolean = true):  Seq[PersistedSpeedLimit] = {
+  def getPersistedSpeedLimitByIds(ids: Set[Long], newTransaction: Boolean = true):  Seq[PersistedSpeedLimit] = {
     if (newTransaction)
       withDynTransaction {
-        dao.getPersistedSpeedLimitByIds(id)
+        dao.getPersistedSpeedLimitByIds(ids)
       }
     else
-      dao.getPersistedSpeedLimitByIds(id)
+      dao.getPersistedSpeedLimitByIds(ids)
   }
 
 
