@@ -64,6 +64,22 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       newVerification.head.verifiedBy should equal (Some("testuser"))
     }
   }
+  test("get point asset verification and check if it has count"){
+    runWithRollback {
+      ServiceWithDao.setAssetTypeVerification(235, Set(10), "testuser")
+      val newVerification = ServiceWithDao.getAssetVerification(235, 10)
+      newVerification.head.counter should not be None
+    }
+  }
+
+  test("get linear asset verification and check if doesn't have count "){
+    runWithRollback {
+      ServiceWithDao.setAssetTypeVerification(235, Set(120), "testuser")
+      val newVerification = ServiceWithDao.getAssetVerification(235, 120)
+      newVerification.head.counter should be (None)
+    }
+  }
+
 
   test("remove asset type verification") {
     runWithRollback {
