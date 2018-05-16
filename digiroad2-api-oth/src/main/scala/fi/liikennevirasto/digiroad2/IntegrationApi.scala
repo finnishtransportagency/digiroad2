@@ -527,7 +527,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
-        case "care_class" =>   linearAssetsToApi(380, municipalityNumber)
+        case "care_classes" =>  linearAssetsToApi(380, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

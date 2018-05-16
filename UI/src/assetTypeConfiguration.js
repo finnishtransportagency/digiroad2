@@ -36,7 +36,8 @@
       trAxleWeightLimits: 340,
       trBogieWeightLimits: 350,
       trHeightLimits: 360,
-      trWidthLimits: 370
+      trWidthLimits: 370,
+      careClass: 380
     };
 
     var assetGroups = {
@@ -504,6 +505,63 @@
         label: new LinearAssetLabel(),
         isVerifiable: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy()
+      },
+      {
+        typeId: assetType.careClass,
+        singleElementEventCategory: 'careClass',
+        multiElementEventCategory: 'careClasses',
+        layerName: 'careClass',
+        title: 'Hoitoluokat',
+        newTitle: 'Uusi hoitoluokka',
+        className: 'careClass',
+        isSeparable: true,
+        unit: '',
+        allowComplementaryLinks: true,
+        editControlLabels: {
+          title: 'Hoitoluokka',
+          enabled: 'Hoitoluokka',
+          disabled: 'Ei hoitoluokkaa'
+        },
+        form: new AssetFormFactory({
+          fields : [
+            {
+              label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka",
+              values: [
+                {id: 0, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'},
+                {id: 1, label: '(Is) Normaalisti aina paljaana'},
+                {id: 2, label: '(I) Normaalisti paljaana'},
+                {id: 3, label: '(Ib) Osan talvea lumipintaisena'},
+                {id: 4, label: '(TIb) Ib-luokka taajamassa'},
+                {id: 5, label: '(II) Pääosin lumipintainen'},
+                {id: 6, label: '(III) Hiekoitus vain pahimmissa tilanteissa'},
+                {id: 7, label: '(K1) Hyvin hoidettu kevyen liikenteen väylä'},
+                {id: 8, label: '(K2) Merkitykseltään vähäisempi kevyen liikenteen väylä'},
+                {id: 9, label: '(ei talvih.) Kevyen liikenteen väylällä ei talvihoitoa'},
+                {id: 10, label: 'Pääkadut ja vilkkaat väylät'},
+                {id: 20, label: 'Kokoojakadut'},
+                {id: 30, label: 'Tonttikadut'},
+                {id: 40, label: 'A-luokan väylät'},
+                {id: 50, label: 'B-luokan väylät'},
+                {id: 60, label: 'C-luokan väylät'}
+              ]
+            },
+            {
+              label: 'Viherhoitoluokka', type: 'hidden_read_only_number', publicId: "hoitoluokat_viherhoitoluokka", hiddenEdit: true,
+              values: [
+                {id: 1, label: '(N1) 2-ajorataiset tiet'},
+                {id: 2, label: '(N2) Valta- ja kantatiet sekä vilkkaat seututiet'},
+                {id: 3, label: '(N3) Muut tiet'},
+                {id: 4, label: '(T1) Puistomainen taajamassa'},
+                {id: 5, label: '(T2) Luonnonmukainen taajamassa'},
+                {id: 6, label: '(E1) Puistomainen erityisalue'},
+                {id: 7, label: '(E2) Luonnonmukainen erityisalue'},
+                {id: 8, label: '(Y) Ympäristötekijä'}]
+            }
+          ]
+        }
+        ),
+        isVerifiable: false,
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy()
       }
     ];
 

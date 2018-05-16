@@ -152,6 +152,27 @@
     };
   };
 
+  //hides field when in edit mode, show in view mode
+  var HiddenReadOnlyFields = function(assetTypeConfiguration){
+    DynamicField.call(this, assetTypeConfiguration);
+    var me = this;
+
+    me.viewModeRender = function (field, currentValue) {
+      var value = _.first(currentValue, function(values) { return values.value ; });
+      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
+
+      var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
+      var printValue = _.isUndefined(someValue) ? _value : someValue.label;
+
+      return $('' +
+          '<div class="form-group">' +
+          '   <label class="control-label">' + field.label + '</label>' +
+          '   <p class="form-control-static">' + printValue + '</p>' +
+          '</div>'
+      );
+    };
+  };
+
   var IntegerField = function(assetTypeConfiguration){
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
@@ -542,7 +563,11 @@
         {name: 'text', field: new TextualField(assetTypeConfiguration)},
         {name: 'checkbox', field: new CheckboxField(assetTypeConfiguration)},
         {name: 'read_only_number', field: new ReadOnlyFields(assetTypeConfiguration)},
-        {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)}
+        {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)},
+        {name: 'hidden_read_only_number', field: new HiddenReadOnlyFields(assetTypeConfiguration)},
+
+
+
       ];
 
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
@@ -564,7 +589,7 @@
 
     me.renderForm = function (selectedAsset) {
       var assetTypeConfiguration = _assetTypeConfiguration;
-      var isReadOnly =  validateAdministrativeClass(selectedAsset, assetTypeConfiguration.editConstrains) || applicationModel.isReadOnly();
+      var isReadOnly =  validateAdministrativeClass(selectedAsset, assetTypeConfiguration.authorizationPolicy) || applicationModel.isReadOnly();
       var asset = selectedAsset.get();
 
       var created = createBody(selectedAsset);
@@ -752,15 +777,14 @@
         else {
           values = [];
           if(type === 'checkbox' && !$element.prop('checked')) {}
-          else values.push({ value : $element.val() });
+          else if(!_.isEmpty($element.val())) values.push({ value : $element.val() });
 
-          if(required || !_.isEmpty(values))
-            value.properties.push({
-              publicId: $element.attr('name'),
-              propertyType:  $element.attr('fieldType'),
-              required : $element.attr('required'),
-              values: values
-            });
+          value.properties.push({
+            publicId: $element.attr('name'),
+            propertyType:  $element.attr('fieldType'),
+            required : $element.attr('required'),
+            values: values
+          });
         }
       });
       return value;
@@ -780,11 +804,9 @@
       return sideCode ? _assetTypeConfiguration.className + '-' + sideCode : _assetTypeConfiguration.className;
     }
 
-    function validateAdministrativeClass(selectedLinearAsset, editConstrains){
-      editConstrains = editConstrains || function() { return false; };
-
+    function validateAdministrativeClass(selectedLinearAsset, authorizationPolicy){
       var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
-        return editConstrains(selected);
+        return !authorizationPolicy.formEditModeAccess(selected);
       });
       return !_.isEmpty(selectedAssets);
     }
