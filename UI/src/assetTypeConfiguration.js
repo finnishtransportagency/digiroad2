@@ -245,7 +245,7 @@
         label: new RoadDamagedByThawLabel(),
         form: new AssetFormFactory( {
           fields : [
-            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1 }
+            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg' }
           ]
         })
       },
