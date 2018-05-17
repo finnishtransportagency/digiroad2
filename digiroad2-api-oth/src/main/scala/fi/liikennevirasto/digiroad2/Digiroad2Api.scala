@@ -69,8 +69,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
-    with RequestHeaderAuthentication
-    with GZipSupport {
+    with RequestHeaderAuthentication {
   val serviceRoadTypeid=290
   val trafficVolumeTypeid=170
   val roadWidthTypeId = 120
@@ -622,17 +621,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   object TierekisteriInternalServerError {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(HttpStatus.SC_FAILED_DEPENDENCY, reason), body, headers)
+      ActionResult(HttpStatus.SC_FAILED_DEPENDENCY, body, headers)
   }
 
   object TierekisteriNotFoundWarning {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, reason), body, headers)
+      ActionResult(HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, body, headers)
   }
 
   object RoadAddressNotFound {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(HttpStatus.SC_PRECONDITION_FAILED, reason), body, headers)
+      ActionResult(HttpStatus.SC_PRECONDITION_FAILED, body, headers)
   }
 
   error {
