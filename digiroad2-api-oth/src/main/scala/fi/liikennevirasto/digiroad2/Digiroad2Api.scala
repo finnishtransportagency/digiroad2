@@ -1413,7 +1413,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "assetName" -> assetType.assetTypeName,
           "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
           "verified_by"   -> assetType.verifiedBy.getOrElse(""),
-          "verified"   -> assetType.verified)))
+          "verified"   -> assetType.verified,
+          "counter" -> assetType.counter)))
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {

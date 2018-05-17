@@ -745,8 +745,140 @@
       }
     ];
 
+    var assetTypeInfo = [
+      {
+        typeId: 10,
+        title: 'Joukkoliikenteen pysäkki'
+      },
+      {
+        typeId: 20,
+        title: 'Nopeusrajoitus'
+      },
+      {
+        typeId: assetType.totalWeightLimit,
+        title: 'Suurin sallittu massa'
+      },
+      {
+        typeId: assetType.trailerTruckWeightLimit,
+        title: 'Yhdistelmän suurin sallittu massa'
+      },
+      {
+        typeId: assetType.axleWeightLimit,
+        title: 'Suurin sallittu akselimassa'
+      },
+      {
+        typeId: assetType.bogieWeightLimit,
+        title: 'Suurin sallittu telimassa'
+      },
+      {
+        typeId: assetType.heightLimit,
+        title: 'Suurin sallittu korkeus'
+      },
+      {
+        typeId: assetType.lengthLimit,
+        title: 'Suurin sallittu pituus'
+      },
+      {
+        typeId: assetType.widthLimit,
+        title: 'Suurin sallittu leveys'
+      },
+      {
+        typeId: assetType.litRoad,
+        title: 'Valaistus'
+      },
+      {
+        typeId: assetType.damagedByThaw,
+        title: 'Kelirikko'
+      },
+      {
+        typeId: assetType.width,
+        title: 'Leveys'
+      },
+      {
+        typeId: assetType.congestionTendency,
+        title: 'Ruuhkaantumisherkkyys'
+      },
+      {
+        typeId: assetType.pavedRoad,
+        title: 'Päällyste'
+      },
+      {
+        typeId: assetType.trafficVolume,
+        title: 'Liikennemäärä'
+      },
+      {
+        typeId: assetType.massTransitLane,
+        title: 'Joukkoliikennekaista'
+      },
+      {
+        typeId: assetType.winterSpeedLimit,
+        title: 'Talvinopeusrajoitus'
+      },
+      {
+        typeId: assetType.prohibition,
+        title: 'Ajoneuvokohtaiset rajoitukset'
+      },
+      {
+        typeId: assetType.hazardousMaterialTransportProhibition,
+        title: 'VAK-rajoitus'
+      },
+      {
+        typeId: assetType.europeanRoads,
+        title: 'Eurooppatienumero'
+      },
+      {
+        typeId: assetType.exitNumbers,
+        title: 'Liittymänumero'
+      },
+      {
+        typeId: assetType.maintenanceRoad,
+        title: 'Rautateiden huoltotie'
+      },
+      {
+        typeId: assetType.numberOfLanes,
+        title: 'Kaistojen lukumäärä'
+      },
+      {
+        typeId: assetType.pedestrianCrossings,
+        title: 'Suojatie'
+      },
+      {
+        typeId: assetType.obstacles,
+        title: 'Esterakennelma'
+      },
+      {
+        typeId: assetType.railwayCrossings,
+        title: 'Rautatien tasoristeys'
+      },
+      {
+        typeId: assetType.directionalTrafficSigns,
+        title: 'Opastustaulu'
+      },
+      {
+        typeId: assetType.servicePoints,
+        title: 'Palvelupiste'
+      },
+      {
+        typeId: assetType.trafficLights,
+        title: 'Liikennevalo'
+      },
+      {
+        typeId: assetType.trafficSigns,
+        title: 'Liikennemerkit'
+      },
+      {
+        typeId: assetType.trHeightLimits,
+        title: 'TR suurin sallittu korkeus'
+      },
+      {
+        typeId: assetType.trWidthLimits,
+        title: 'TR suurin sallittu leveys'
+      }
+    ];
+
     return {
       assetTypes : assetType,
+      assetTypeInfo: assetTypeInfo,
       linearAssetsConfig : linearAssetSpecs,
       experimentalAssetsConfig : experimentalLinearAssetSpecs,
       pointAssetsConfig : pointAssetSpecs,
