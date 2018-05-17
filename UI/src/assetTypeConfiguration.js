@@ -873,6 +873,10 @@
       {
         typeId: assetType.trWidthLimits,
         title: 'TR suurin sallittu leveys'
+      },
+      {
+        typeId: 380,
+        title: 'Kääntymisrajoitus'
       }
     ];
 
