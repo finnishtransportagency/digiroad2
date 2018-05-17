@@ -429,6 +429,7 @@
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
+    var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -451,7 +452,7 @@
       [].concat(getLinearAsset(assetType.trafficVolume))
           .concat(getLinearAsset(assetType.congestionTendency))
           .concat(getLinearAsset(assetType.damagedByThaw))
-          .concat(getLinearAsset(assetType.careClass)),
+          .concat([careClassBox]),
       [manoeuvreBox]
         .concat(getLinearAsset(assetType.prohibition))
         .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))

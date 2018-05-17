@@ -561,7 +561,9 @@
         }
         ),
         isVerifiable: false,
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy()
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        layer: CareClassLayer,
+        style: new CareClassStyle()
       }
     ];
 

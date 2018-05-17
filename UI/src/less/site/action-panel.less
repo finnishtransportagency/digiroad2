@@ -410,6 +410,63 @@
   }
 }
 
+.care-class-legend {
+
+  .green-care-legend {
+    display: none;
+  };
+
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 0;
+    }
+    .fat-label {
+      padding-top: 8px;
+      font-weight: bold;
+      font-size: @font-size-base;
+    }
+    .care-class-10, .care-class-11, .care-class-12, .care-class-13, .care-class-14, .care-class-15 {
+      &:extend(.dotted-linear-asset);
+    }
+
+    .care-class-0 { .linear-asset-legend-entry(@care-class-0, @care-class-0); }
+    .care-class-1 { .linear-asset-legend-entry(@care-class-1, @linear-asset-node-4); }
+    .care-class-2 {  .linear-asset-legend-entry(@care-class-2, @linear-asset-node-10); }
+    .care-class-3 {  .linear-asset-legend-entry(@care-class-3, @care-class-3); }
+    .care-class-4 {  .linear-asset-legend-entry(@care-class-4, @linear-asset-node-3); }
+    .care-class-5 {  .linear-asset-legend-entry(@care-class-5, @linear-asset-node-5); }
+    .care-class-6 {  .linear-asset-legend-entry(@care-class-6, @linear-asset-node-1); }
+    .care-class-7 { .linear-asset-legend-entry(@care-class-7, @linear-asset-node-8); }
+    .care-class-8 { .linear-asset-legend-entry(@care-class-8, @linear-asset-node-2); }
+    .care-class-9 {  .linear-asset-legend-entry(@care-class-9, @care-class-9); }
+    .care-class-10 {  .linear-asset-legend-entry(@care-class-10, @care-class-10); }
+    .care-class-11 {  .linear-asset-legend-entry(@care-class-11, @care-class-11); }
+    .care-class-12 {  .linear-asset-legend-entry(@care-class-12, @care-class-12); }
+    .care-class-13 {  .linear-asset-legend-entry(@care-class-13, @care-class-13); }
+    .care-class-14 {  .linear-asset-legend-entry(@care-class-14, @care-class-14); }
+    .care-class-15 {  .linear-asset-legend-entry(@care-class-15, @care-class-15); }
+
+    .care-class-16 {  .linear-asset-legend-entry(@care-class-16, @care-class-16); }
+    .care-class-17 {  .linear-asset-legend-entry(@care-class-17, @linear-asset-node-3); }
+    .care-class-18 {  .linear-asset-legend-entry(@care-class-18, @linear-asset-node-11); }
+    .care-class-19 {  .linear-asset-legend-entry(@care-class-19, @linear-asset-node-5); }
+    .care-class-20 {  .linear-asset-legend-entry(@care-class-20, @linear-asset-node-1); }
+    .care-class-21 {  .linear-asset-legend-entry(@care-class-21, @linear-asset-node-8); }
+    .care-class-22 {  .linear-asset-legend-entry(@care-class-22, @linear-asset-node-2); }
+    .care-class-23 {  .linear-asset-legend-entry(@care-class-23, @linear-asset-node-4); }
+
+  }
+  .check-box-container{
+    input {
+      position: relative;
+      top: 2px;
+    }
+  }
+}
+
 .vertical-level-legend {
   .legend-entry {
     @labelWidth: 25px;
