@@ -524,7 +524,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadLinkService = new RoadLinkOTHService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
-    resultObstacle should be === (floatingObstacle)
+    resultObstacle should === (floatingObstacle)
 
   }
 
@@ -623,7 +623,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadLinkService = new RoadLinkOTHService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
-    resultObstacle should be === (floatingObstacle)
+    resultObstacle should === (floatingObstacle)
 
   }
 
@@ -652,7 +652,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadLinkService = new RoadLinkOTHService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
-    resultObstacle should be === (floatingObstacle)
+    resultObstacle should === (floatingObstacle)
 
   }
 

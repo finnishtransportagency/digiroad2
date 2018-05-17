@@ -137,14 +137,14 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
     val credentials = username + ":" + password
     val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials + "="
+    val authorizationToken = "Basic " + encodedCredentials
     get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
   }
 
   def getAuthorizationHeader[A](username: String, password: String): Map[String, String] = {
     val credentials = username + ":" + password
     val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials + "="
+    val authorizationToken = "Basic " + encodedCredentials
     Map("Authorization" -> authorizationToken)
   }
 

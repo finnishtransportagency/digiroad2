@@ -59,8 +59,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
-    with RequestHeaderAuthentication
-    with GZipSupport {
+    with RequestHeaderAuthentication {
 
   class Contains(r: Range) {
     def unapply(i: Int): Boolean = r contains i

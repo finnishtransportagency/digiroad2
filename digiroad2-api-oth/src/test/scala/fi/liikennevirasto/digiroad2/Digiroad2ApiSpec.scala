@@ -318,10 +318,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(200)
-      val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
+      val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      parsedBody.count(_.id.isEmpty) should be(1)
-      parsedBody.count(_.id.isDefined) should be(2)
+      parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
+      parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
     }
   }
 
@@ -340,10 +340,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get complementary numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(200)
-      val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
+      val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      parsedBody.count(_.id.isEmpty) should be(1)
-      parsedBody.count(_.id.isDefined) should be(2)
+      parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
+      parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
     }
   }
 
@@ -356,7 +356,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get mass Limitations Assets with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets/massLimitation?typeId=60&bbox=374037,6677013,374540,6677675&withRoadAddress=false") {
       status should equal(200)
-      val parsedBody = parse(body).extract[Seq[MassLinearAssetFromApi]]
+      val parsedBody = parse(body).extract[Seq[Seq[MassLinearAssetFromApi]]]
       parsedBody.size should be(1)
     }
   }
