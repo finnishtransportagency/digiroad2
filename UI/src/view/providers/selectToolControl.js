@@ -117,11 +117,6 @@
                 unhighlightLayer();
                 map.removeInteraction(selectInteraction);
             }
-
-            console.log( evt.target.getFeatures().getLength() +
-              ' selected features (last operation selected ' + evt.selected.length +
-              ' and deselected ' + evt.deselected.length + ' features)');
-
             settings.onMultipleSelect(evt);
         });
 
