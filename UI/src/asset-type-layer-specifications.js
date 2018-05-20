@@ -240,17 +240,11 @@
       },
       form: new AssetFormFactory( {
           fields : [
-            //TODO: On US:1142 fill the publicId with the one defined for the input
-            // { publicId: '',  label:'rajoitus', type: 'number', weigth: 1 }
-            // {label: 'singleChoice1', type: 'single_choice', publicId: "single_choice_1", values: [{id: 1, label: 'single_choice_enum_1'}, {id: 2, label: 'single_choice_enum_2'}, {id: 3, label: 'single_choice_enum_3'}, {id: 4, label: 'single_choice_enum_4'}, {id: 5, label: 'single_choice_enum_5'}, {id: 99, label: 'Ei tietoa'}], weight: 3},
-            // {label: "Text2", type: 'text', publicId: "public_text_2", weight: 2 },
-            // {label: "Text", type: 'text', publicId: "public_text_1", required: true, weight: 1 },
-            // {label: "TextArea", type: 'long_text', publicId: "public_text_area_1", weight: 2 },
-            {label: "multipleChoice", type: 'multiple_choice', publicId: "multiple_choice_1", values: [{id: 1, label: 'multiple_choice_11'}, {id: 2, label: 'multiple_choice_12'}, {id: 3, label: 'multiple_choice_13'}, {id: 4, label: 'multiple_choice_14'}, {id: 99, label: 'multiple_choice_199'}], weight: 4 , required: true},
+            // {label: "multipleChoice", type: 'multiple_choice', publicId: "multiple_choice_1", values: [{id: 1, label: 'multiple_choice_11'}, {id: 2, label: 'multiple_choice_12'}, {id: 3, label: 'multiple_choice_13'}, {id: 4, label: 'multiple_choice_14'}, {id: 99, label: 'multiple_choice_199'}], weight: 4 , required: true},
             // {label: "checkbox", type: 'checkbox', publicId: "public_checkbox_1", values: [{id: 1, label: 'checked1'}, {id: 0, label: 'not checked1'}], weight: 5 }
             // {label: "Date", type: 'date', publicId: "public_data_1", weight: 8 }
-            // {label: "Integer", type: 'integer', publicId: "public_integer_1", weight: 8 },
-             {label: "Numeric", type: 'number', publicId: "public_number_1", weight: 9, defaultValue: 1}
+             {label: "Integer", type: 'integer', publicId: "public_integer_1", weight: 1 },
+             {label: "Numeric", type: 'number', publicId: "public_number_1", weight: 2}
             // {label: "readOnlyNumber", type: 'read_only_number', publicId: "public_number_1", weight: 11 }
             // {label: "readOnlyText", type: 'read_only_text', publicId: "public_number_1", weight: 10 }
           ]
