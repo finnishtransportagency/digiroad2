@@ -525,7 +525,7 @@
         form: new AssetFormFactory({
           fields : [
             {
-              label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka",
+              label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka", defaultValue: "0",
               values: [
                 {id: 0, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'},
                 {id: 1, label: '(Is) Normaalisti aina paljaana'},

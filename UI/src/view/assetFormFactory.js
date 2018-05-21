@@ -241,7 +241,7 @@
 
     me.viewModeRender = function (field, currentValue) {
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
+      var _value = value ? value.value : '-';
 
       // var defaultValue = field.defaultValue;
       // if(defaultValue && !value)

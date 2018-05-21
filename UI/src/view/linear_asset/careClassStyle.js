@@ -37,12 +37,6 @@
       return solidLines.concat(dottedOverlay);
     };
 
-    // this.renderExpired = function(linearAssets) {
-    //   return me.lineFeatures(_.map(linearAssets, function(linearAsset) {
-    //     var expired = _.isUndefined(linearAsset.value);
-    //     return _.merge({}, linearAsset, { expired: expired }); }));
-    // };
-
     var winterCareClassRules = [
       new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "hoitoluokat_talvihoitoluokka")){return findValue(asset, "hoitoluokat_talvihoitoluokka"); }}).is(0).use({stroke: {color: '#880015'}}),
@@ -99,16 +93,11 @@
     me.greenCareStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.greenCareStyle.addRules(greenCareClassRules);
     me.greenCareStyle.addRules(careClassSizeRules);
-    // me.greenCareStyle.addRules(overlayStyleRules);
-    // me.greenCareStyle.addRules(winterCareClassRules);
-
 
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(winterCareClassRules);
     me.browsingStyleProvider.addRules(careClassSizeRules);
     me.browsingStyleProvider.addRules(overlayStyleRules);
-    // me.browsingStyleProvider.addRules(greenCareClassRules);
-
 
   };
 })(this);

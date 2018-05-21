@@ -11,7 +11,7 @@
       exitNumbers: function() { return true; },
       maintenanceRoad: function() { return true; },
       careClass: function(val) {
-        if(_.isUndefined(val.properties[0].values)) {return true;}
+        if(_.isUndefined(val) || _.isUndefined(val.properties[0].values)) {return true;}
         else if(val.properties[0].values.length > 0) {return true;}
       },
       default: function(val) {
