@@ -31,7 +31,7 @@ case class User(id: Long, username: String, configuration: Configuration) {
     configuration.roles(Role.BusStopMaintainer)
   }
 
-  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty
+  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty || (configuration.roles(Role.Premium) && configuration.roles.size == 1)
 
   def hasEarlyAccess(): Boolean = {
     configuration.roles(Role.Premium) || configuration.roles(Role.Operator) || configuration.roles(Role.BusStopMaintainer)
