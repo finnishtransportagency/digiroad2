@@ -35,7 +35,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
   val trAssetTypeClients: Seq[TierekisteriAssetDataClient] = Seq(greenCareTierekisteriClient, winterCareTierekisteriClient)
 
   override def importAssets(): Unit = {
-    val municipalities = getAllMunicipalities
+    val municipalities = Seq(851)
 
     municipalities.foreach { municipality =>
       withDynTransaction{
@@ -43,7 +43,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
       }
     }
 
-    val roadNumbers = getAllViiteRoadNumbers
+    val roadNumbers = Seq(29)
 
     withDynTransaction {
 

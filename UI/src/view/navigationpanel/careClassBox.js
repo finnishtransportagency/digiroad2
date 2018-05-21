@@ -77,24 +77,33 @@
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;
-      $(me.expanded).find('input[type=radio][name=labelRadio]').change(labelingHandler);
+      $(me.expanded).find('input[type=radio][name=labelRadio]').change(event, function() {
+        if(applicationModel.isDirty()){
+          //if the asset is dirty reselect winterCare and trigger the confirm since switching to green care should be impossible
+          $(me.expanded).find('input[type=radio][name=labelRadio][value=winterCare]').prop("checked", true);
+          $('.green-care-legend').hide();
+          $('.winter-care-legend').show();
+          eventbus.trigger('careClass:winterCare', true);
+          new Confirm();
+        } else {
+          if (this.value == 'winterCare') {
+            $('.green-care-legend').hide();
+            $('.winter-care-legend').show();
+            eventbus.trigger('careClass:winterCare', true);
+            me.showEditModeButton();
+          } else {
+            $('.green-care-legend').show();
+            $('.winter-care-legend').hide();
+            eventbus.trigger('careClass:winterCare', false);
+            applicationModel.setReadOnly(true);
+            me.hideEditModeButton();
+          }
+        }
+      });
       me.eventHandler();
       return me.getElement()
           .append(this.expanded)
           .hide();
-    };
-
-    var labelingHandler = function() {
-      if (this.value == 'winterCare') {
-        $('.green-care-legend').hide();
-        $('.winter-care-legend').show();
-        eventbus.trigger('careClass:winterCare', true);
-
-      } else {
-        $('.green-care-legend').show();
-        $('.winter-care-legend').hide();
-        eventbus.trigger('careClass:winterCare', false);
-      }
     };
 
     this.checkboxPanel = function () {
@@ -135,6 +144,17 @@
     };
 
     var element = $('<div class="panel-group care-class"/>');
+
+    this.hideEditModeButton = function() {
+      me.toolSelection.reset();
+      $(me.toolSelection.element).hide();
+      $(me.editModeToggle.element).hide();
+    };
+
+    this.showEditModeButton = function() {
+      me.editModeToggle.reset();
+      $(me.editModeToggle.element).show();
+    };
 
     function show() {
       if (!assetConfig.authorizationPolicy.editModeAccess()) {
