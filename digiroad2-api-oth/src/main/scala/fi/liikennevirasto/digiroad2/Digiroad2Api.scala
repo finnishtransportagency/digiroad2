@@ -1218,9 +1218,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateUserRights(existingAssets: Seq[PersistedLinearAsset], newLinearAssets: Seq[NewLinearAsset], user: User, typeId: Int) : Unit = {
-    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
-
     if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot modify 'traffic Volume' asset"))
 
