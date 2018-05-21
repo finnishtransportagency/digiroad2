@@ -40,7 +40,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   private def addPolygonAreaAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
-    val area = polygonTools.getAreaByGeometry(linearAsset.geometry, Measures(linearAsset.startMeasure, linearAsset.endMeasure), None)
+    val area = polygonTools.getAreaByGeometry(roadLink.geometry, Measures(linearAsset.startMeasure, linearAsset.endMeasure), None)
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("area" -> area))
   }
 
@@ -261,14 +261,14 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val linearAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil,Set.empty)))
-    LinearAssetPartitioner.partition(filledTopology, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
     val linearAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil,Set.empty)))
-    LinearAssetPartitioner.partition(filledTopology, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String ,List[Long]]] ={
