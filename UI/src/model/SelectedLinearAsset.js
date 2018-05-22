@@ -201,6 +201,10 @@
       return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
     };
 
+    var getPropertyB = function(propertyName) {
+      return _.has(selection[1], propertyName) ? selection[1][propertyName] : null;
+    };
+
     this.getId = function() {
       return getProperty('id');
     };
@@ -306,6 +310,10 @@
         selection[1].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
+    };
+
+    this.getBValue = function() {
+
     };
 
     this.removeValue = function() {
