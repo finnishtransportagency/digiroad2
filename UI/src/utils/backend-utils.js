@@ -187,6 +187,10 @@
       });
     };
 
+    this.getSpeedLimitErrors = function () {
+      return $.getJSON('api/speedLimits/inaccurates');
+    };
+
     this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox
@@ -257,6 +261,20 @@
         url: 'api/linearassets/massLimitation/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
       };
     });
+
+    this.getServiceRoadAssets = latestResponseRequestor(function(boundingBox, withRoadAddress, zoom) {
+      return {
+        url: 'api/serviceRoad?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
+      };
+    });
+
+
+    this.getServiceRoadAssetsWithComplementary = latestResponseRequestor(function(boundingBox, withRoadAddress, zoom) {
+      return {
+        url: 'api/serviceRoad/complementary?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
+      };
+    });
+
 
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
@@ -381,6 +399,14 @@
       return $.getJSON('api/speedlimits/unknown');
     };
 
+    this.getUnknownLimitsState = function() {
+      return $.getJSON('api/speedlimits/unknown/state');
+    };
+
+    this.getUnknownLimitsMunicipality = function(id) {
+      return $.getJSON('api/speedlimits/unknown/municipality?id='+id);
+    };
+
     this.getFloatinPedestrianCrossings = function() {
       return $.getJSON('api/pedestrianCrossings/floating');
     };
@@ -421,6 +447,10 @@
 
     this.getUnverifiedMunicipalities = function() {
       return $.getJSON('api/municipalities/unverified');
+    };
+
+    this.getMunicipalitiesWithUnknowns = function(){
+      return $.getJSON('api/speedLimits/municipalities');
     };
 
     this.getAssetTypesByMunicipality = function(municipalityCode) {
@@ -564,6 +594,10 @@
 
     this.getMassTransitStopByLiviIdForSearch = function(liviId) {
       return $.get('api/massTransitStops/livi/' + liviId);
+    };
+
+    this.getMassTransitStopByPassengerIdForSearch = function(passengerID) {
+      return $.get('api/massTransitStops/passenger/' + passengerID);
     };
 
     function createCallbackRequestor(getParameters) {

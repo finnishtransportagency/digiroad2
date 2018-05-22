@@ -5,7 +5,7 @@
     var me = this;
 
     this.editModeAccess = function() {
-      return me.isUser('operator');
+      return me.isOperator() || me.isElyMaintainer();
     };
   };
 })(this);

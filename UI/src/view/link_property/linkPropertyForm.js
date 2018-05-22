@@ -1,7 +1,7 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
-    var authorizationPolicy = new LinearAssetAuthorizationPolicy();
+    var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -35,12 +35,16 @@
       [11, 'Liitännäisliikennealue'],
       [12, 'Ajopolku'],
       [13, 'Huoltoaukko moottoritiellä'],
+      [14, 'Erikoiskuljetusyhteys ilman puomia'],
+      [15, 'Erikoiskuljetusyhteys puomilla'],
       [21, 'Lautta/lossi']
     ];
 
     var verticalLevelTypes= [
       [-11, 'Tunneli'],
-      [-1, 'Alikulku'],
+      [-3, 'Alikulku, taso 3'],
+      [-2, 'Alikulku, taso 2'],
+      [-1, 'Alikulku, taso 1'],
       [0, 'Maan pinnalla'],
       [1, 'Silta, Taso 1'],
       [2, 'Silta, Taso 2'],

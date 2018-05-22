@@ -45,7 +45,7 @@
     };
     this.displayConfirmMessage = function() { new Confirm(); };
     this.handleMapMoved = function(state) {
-      if (state.selectedLayer === layerName && state.zoom >= me.minZoomForContent) {
+      if (state.selectedLayer === layerName  && ( zoomlevels.shouldShowAssets(layerName,  state.zoom) || state.zoom >= me.minZoomForContent )) {
         if (!me.isStarted()) {
           me.start('moved');
         }
@@ -71,7 +71,7 @@
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);
-      if (map.getView().getZoom() >= me.minZoomForContent) {
+      if (zoomlevels.getViewZoom(map) >= me.minZoomForContent) {
         me.start('shown');
       }
     };

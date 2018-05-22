@@ -5,6 +5,7 @@
     var dirty = false;
     var originalLinearAssetValue = null;
     var isSeparated = false;
+    var isValid = true;
 
     var singleElementEvent = function(eventName) {
       return singleElementEventCategory + ':' + eventName;
@@ -357,5 +358,54 @@
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
+
+    this.requiredPropertiesMissing = function (formStructure) {
+
+      var requiredFields = _.filter(formStructure.fields, function(form) { return form.required; });
+
+      var assets = this.isSplitOrSeparated() ? _.filter(selection, function(asset){ return asset.value; }) : selection;
+
+      return !_.every(assets, function(asset){
+
+        return _.every(requiredFields, function(field){
+          if(!asset.value || _.isEmpty(asset.value))
+            return false;
+
+          var property  = _.find(asset.value.properties, function(p){ return p.publicId === field.publicId;});
+
+          if(!property)
+            return false;
+
+          if(_.isEmpty(property.values))
+            return false;
+
+          return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
+        });
+      });
+    };
+
+    this.isSplitOrSeparatedEqual = function(){
+      if(!this.isSplitOrSeparated()) return false;
+
+      if (_.filter(selection, function(p){return p.value;}).length <= 1)
+        return false;
+
+      return _.every(selection[0].value.properties, function(property){
+          var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
+          if(!iProperty)
+            return false;
+
+          return _.isEqual(property.values, iProperty.values);
+      });
+    };
+
+    this.hasValidValues = function () {
+       return isValid;
+    };
+
+    this.setValidValues = function (valid) {
+      isValid = valid;
+    };
+
   };
 })(this);

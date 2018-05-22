@@ -1,20 +1,24 @@
 (function (root) {
-  root.PointAssetForm = {
-    initialize: bindEvents
-  };
+root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
+  var me = this;
+  me.enumeratedPropertyValues = null;
 
-  var enumeratedPropertyValues = null;
+  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition);
 
-  function bindEvents(pointAsset, roadCollection, applicationModel, backend) {
-
-    var typeId = pointAsset.typeId,
-        selectedAsset = pointAsset.selectedPointAsset,
-        collection = pointAsset.collection,
-        layerName = pointAsset.layerName,
-        localizedTexts = pointAsset.formLabels,
-        authorizationPolicy = pointAsset.authorizationPolicy;
-
+  function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
+    var typeId = pointAsset.typeId;
+    var selectedAsset = pointAsset.selectedPointAsset;
+    var collection  = pointAsset.collection;
+    var layerName = pointAsset.layerName;
+    var localizedTexts = pointAsset.formLabels;
+    var authorizationPolicy = pointAsset.authorizationPolicy;
+
+
+    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
+      if(event.assetType == typeId)
+        me.enumeratedPropertyValues = event.enumeratedPropertyValues;
+    });
 
     backend.getAssetEnumeratedPropertyValues(typeId);
 
@@ -39,18 +43,15 @@
             rootElement.find('button.delete').hide();
           }
         } else {
-          rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+          rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+          rootElement.find('button#cancel-button').prop('disabled', false);
         }
       }
     });
 
-    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
-        if(event.assetType == typeId)
-            enumeratedPropertyValues = event.enumeratedPropertyValues;
-    });
-
     eventbus.on(layerName + ':changed', function() {
-      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+      rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
@@ -83,7 +84,9 @@
 
     rootElement.find('input[type="text"]').on('input change', function (event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({name: eventTarget.val()});
+      var obj = {};
+      obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
+      selectedAsset.set(obj);
     });
 
     rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
@@ -130,9 +133,9 @@
     }
 
     function checkTypeExtension(service, modifications)  {
-        var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
-          if(!serviceTypeExtensions[serviceType])
-            delete service.typeExtension;
+      var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
+      if(!serviceTypeExtensions[serviceType])
+        delete service.typeExtension;
     }
 
     rootElement.find('.form-service').on('change', '.new-service select', function (event) {
@@ -162,7 +165,7 @@
       selectedAsset.set({ services: newServices });
     });
 
-    rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select').on('change', function (event) {
+    rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select').on('change input', function (event) {
       var eventTarget = $(event.currentTarget);
       var propertyPublicId = eventTarget.attr('id');
       var propertyValue = $(event.currentTarget).val();
@@ -317,7 +320,7 @@
   var singleChoiceHandler = function (property, collection) {
     var propertyValue = (property.values.length === 0) ? '' : _.first(property.values).propertyValue;
     var propertyDisplayValue = (property.values.length === 0) ? '' : _.first(property.values).propertyDisplayValue;
-    var signTypes = _.map(_.filter(enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
+    var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
 
     var groups =  collection.getGroup(signTypes);
     var groupKeys = Object.keys(groups);
@@ -329,7 +332,7 @@
             { value: group.propertyValue,
               selected: propertyValue == group.propertyValue,
               text: group.propertyDisplayValue}
-              )[0].outerHTML; }))
+          )[0].outerHTML; }))
 
       )[0].outerHTML;}).join('');
 
@@ -357,6 +360,11 @@
     } else if (asset.safetyEquipment) {
       return '' +
         '    <div class="form-group editable form-railway-crossing">' +
+        '        <label class="control-label">' + 'Tasoristeystunnus' + '</label>' +
+        '        <p class="form-control-static">' + (asset.code || '–') + '</p>' +
+        '        <input type="text" class="form-control"  maxlength="15" name="code" value="' + (asset.code || '')  + '">' +
+        '    </div>' +
+        '    <div class="form-group editable form-railway-crossing">' +
         '      <label class="control-label">Turvavarustus</label>' +
         '      <p class="form-control-static">' + safetyEquipments[asset.safetyEquipment] + '</p>' +
         '      <select class="form-control" style="display:none">  ' +
@@ -370,7 +378,7 @@
         '    <div class="form-group editable form-railway-crossing">' +
         '        <label class="control-label">' + 'Nimi' + '</label>' +
         '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
-      '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
+        '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
         '    </div>';
     } else if (asset.validityDirection && !asset.propertyData) {
       return '' +
@@ -391,9 +399,9 @@
         '      <p class="form-control-static">' + (asset.limit ? (asset.limit + ' cm') : '–') + '</p>' +
         '  </div>' + '' +
         (asset.reason ? '<div class="form-group editable form-width">' +
-        '      <label class="control-label">Syy</label>' +
-        '      <p class="form-control-static">' + selectedReason.label + '</p>' +
-        '  </div>': '');
+          '      <label class="control-label">Syy</label>' +
+          '      <p class="form-control-static">' + selectedReason.label + '</p>' +
+          '  </div>': '');
     } else if (asset.services) {
       var services = _(asset.services)
         .sortByAll('serviceType', 'id')
@@ -544,4 +552,5 @@
     rootElement.find('.editable .form-control').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
   }
+  };
 })(this);

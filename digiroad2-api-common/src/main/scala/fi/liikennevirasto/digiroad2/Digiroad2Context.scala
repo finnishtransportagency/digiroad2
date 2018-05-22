@@ -330,6 +330,10 @@ object Digiroad2Context {
     new MunicipalityService(eventbus, roadLinkService)
   }
 
+  lazy val multiValueLinearAssetService: MultiValueLinearAssetService = {
+    new MultiValueLinearAssetService(roadLinkService, eventbus)
+  }
+
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }

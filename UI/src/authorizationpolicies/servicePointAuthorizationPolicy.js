@@ -7,7 +7,7 @@
     this.formEditModeAccess = function(selectedAsset, roadCollection) {
       var nearestLine = findNearestLine(selectedAsset, roadCollection);
       var municipalityCode = selectedAsset.getMunicipalityCodeByLinkId(nearestLine.linkId);
-      return (me.isMunicipalityMaintainer() && selectedAsset.getAdministrativeClass() != "State" && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
+      return (me.isMunicipalityMaintainer() && selectedAsset.getAdministrativeClass(nearestLine.linkId) != "State" && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
     };
 
     var findNearestLine = function(selectedAsset, roadCollection){

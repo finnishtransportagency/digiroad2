@@ -59,7 +59,7 @@ window.SpeedLimitLayer = function(params) {
 
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
-    adjustStylesByZoomLevel(map.getView().getZoom());
+    adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
     collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
       eventbus.trigger('layer:speedLimit:' + event);
     });
@@ -208,7 +208,6 @@ window.SpeedLimitLayer = function(params) {
       if (selectedSpeedLimit.exists()) {
         selectToolControl.clear();
         selectedSpeedLimit.close();
-        trafficSignReadOnlyLayer.highLightLayer();
       }
     }
   };
@@ -222,13 +221,13 @@ window.SpeedLimitLayer = function(params) {
   var highlightMultipleLinearAssetFeatures = function() {
     var selectedAsset = selectedSpeedLimit.get();
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedAsset));
-    trafficSignReadOnlyLayer.unHighLightLayer();
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
     onInteractionEnd: onInteractionEnd,
     onSelect: OnSelect,
+    layers: [trafficSignReadOnlyLayer],
     filterGeometry: function(feature) { return true; }
   });
 
@@ -306,6 +305,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged speedLimit:separated', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:selectByLinkId', selectSpeedLimitByLinkId);
+    eventListener.listenTo(eventbus, 'speedLimit:selected', speedLimitSelected);
     eventListener.listenTo(eventbus, 'speedLimits:massUpdateFailed', cancelSelection);
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
@@ -314,11 +314,15 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnselected);
   };
 
+  var offsetBySideCode = function (speedLimit) {
+      return GeometryUtils.offsetBySideCode(zoomlevels.getViewZoom(map), speedLimit);
+  };
+
   var startListeningExtraEvents = function(){
     extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:hide', hideSpeedLimitsComplementary);
     extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:show', showSpeedLimitsComplementary);
-    extraEventListener.listenTo(eventbus, 'speedLimit:hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
-    extraEventListener.listenTo(eventbus, 'speedLimit:showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
+    extraEventListener.listenTo(eventbus, 'speedLimit-readOnlyTrafficSigns:hide', hideReadOnlyTrafficSigns);
+    extraEventListener.listenTo(eventbus, 'speedLimit-readOnlyTrafficSigns:show', showReadOnlyTrafficSigns);
   };
 
   var stopListeningExtraEvents = function(){
@@ -385,6 +389,22 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
+  var speedLimitSelected = function() {
+    decorateSelection(vectorLayer);
+  };
+
+  var decorateSelection = function (layerToUse) {
+    if (selectedSpeedLimit.exists()) {
+      var feature = _.filter(layerToUse.getSource().getFeatures(), function(feature) { return selectedSpeedLimit.isSelected(feature.getProperties()); });
+      if (feature) {
+        selectToolControl.addSelectionFeatures(feature);
+      }
+      if (selectedSpeedLimit.isSplitOrSeparated()) {
+        drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
+      }
+    }
+  };
+
   var handleSpeedLimitSaved = function() {
     collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
     applicationModel.setSelectedTool('Select');
@@ -403,7 +423,6 @@ window.SpeedLimitLayer = function(params) {
     selectToolControl.activate();
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
-    trafficSignReadOnlyLayer.highLightLayer();
   };
 
   var handleSpeedLimitUnselected = function () {
@@ -478,13 +497,11 @@ window.SpeedLimitLayer = function(params) {
 
     var speedLimits = _.flatten(speedLimitChains);
     drawSpeedLimits(speedLimits, vectorLayer);
+     eventbus.trigger('speedLimits:redrawed', speedLimitChains);
   };
 
   var drawSpeedLimits = function(speedLimits, layerToUse) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
-    var offsetBySideCode = function(speedLimit) {
-      return GeometryUtils.offsetBySideCode(map.getView().getZoom(), speedLimit);
-    };
     var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
@@ -495,16 +512,7 @@ window.SpeedLimitLayer = function(params) {
     layerToUse.getSource().addFeatures(dottedLineFeatures(highSpeedLimits));
     layerToUse.getSource().addFeatures(limitSigns(speedLimitsWithAdjustments));
 
-    if (selectedSpeedLimit.exists()) {
-      selectToolControl.onSelect = function() {};
-      var feature = _.filter(layerToUse.getSource().getFeatures(), function(feature) { return selectedSpeedLimit.isSelected(feature.getProperties()); });
-      if (feature) {
-        selectToolControl.addSelectionFeatures(feature);
-      }
-      if (selectedSpeedLimit.isSplitOrSeparated()) {
-        drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
-      }
-    }
+    decorateSelection(layerToUse);
   };
 
   var dottedLineFeatures = function(speedLimits) {

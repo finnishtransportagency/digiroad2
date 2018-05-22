@@ -20,7 +20,7 @@
     };
 
     this.isMunicipalityMaintainer = function(){
-      return _.isEmpty(me.userRoles);
+      return _.isEmpty(me.userRoles) || me.isOnlyUser('premium');
     };
 
     this.isElyMaintainer = function(){
@@ -54,11 +54,15 @@
     this.editModeTool = function(toolType, asset, roadLink) {};
 
     this.formEditModeAccess = function() {
-      return me.isUser('operator');
+      return me.isOperator();
     };
 
     this.workListAccess = function(){
-      return me.isUser('operator') || me.isUser('premium');
+      return me.isOperator();
+    };
+
+    this.isState = function(selectedInfo){
+      return selectedInfo.administrativeClass === "State" || selectedInfo.administrativeClass === 1;
     };
 
   };

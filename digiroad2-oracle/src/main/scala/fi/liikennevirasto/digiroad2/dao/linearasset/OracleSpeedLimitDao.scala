@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
+import java.util.NoSuchElementException
+
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -9,7 +11,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -21,6 +23,7 @@ import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParamet
 class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
   def MassQueryThreshold = 500
+  case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
@@ -47,6 +50,15 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       val linkSource = r.nextInt()
 
       PersistedSpeedLimit(id, linkId, SideCode(sideCode), value, startMeasure, endMeasure, modifiedBy, modifiedDateTime, createdBy, createdDateTime, vvhTimeStamp, geomModifiedDate, linkSource = LinkGeomSource(linkSource))
+    }
+  }
+
+  implicit val getUnknown = new GetResult[UnknownLimit] {
+    def apply(r: PositionedResult) = {
+      val linkId = r.nextLong()
+      val municipality = r.nextString()
+      val administrativeClass = AdministrativeClass(r.nextInt()).toString
+      UnknownLimit (linkId, municipality, administrativeClass)
     }
   }
 
@@ -86,6 +98,11 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
   }
 
+  /**
+    * Returns speed limits by asset id. Used by SpeedLimitService.loadSpeedLimit.
+    */
+  def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = getSpeedLimitLinksByIds(Set(id))
+
   def getSpeedLimitLinksByIds(ids: Set[Long]): Seq[SpeedLimit] = {
     val speedLimits = MassQuery.withIds(ids) { idTableName =>
       sql"""select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source
@@ -105,6 +122,21 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       case (speedLimit) =>
       val vvhRoadLink = roadLinksWithComplementaryByLinkId.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException)
       SpeedLimit(speedLimit.id, speedLimit.linkId, speedLimit.sideCode, vvhRoadLink.trafficDirection, speedLimit.value.map(NumericValue), GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.modifiedBy, speedLimit.modifiedDate, speedLimit.createdBy, speedLimit.createdDate, speedLimit.vvhTimeStamp, speedLimit.geomModifiedDate, linkSource = vvhRoadLink.linkSource)
+    }
+  }
+
+  def getPersistedSpeedLimitByIds(ids: Set[Long]): Seq[PersistedSpeedLimit] = {
+    MassQuery.withIds(ids) { idTableName =>
+      sql"""select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source
+        from ASSET a
+        join ASSET_LINK al on a.id = al.asset_id
+        join LRM_POSITION pos on al.position_id = pos.id
+        join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
+        join #$idTableName i on i.id = a.id
+        where a.asset_type_id = 20
+        """.as[PersistedSpeedLimit].list
     }
   }
 
@@ -141,10 +173,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Returns unknown speed limits by municipality. Used by SpeedLimitService.getUnknown.
     */
-  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
-    case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
+  def getUnknownSpeedLimits(municipalities: Set[Int], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
-    val optionalMunicipalities = municipalities.map(_.mkString(","))
     val unknownSpeedLimitQuery =
       """
       select s.link_id, m.name_fi, s.administrative_class
@@ -152,13 +182,19 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       join municipality m on s.municipality_code = m.id
       """
 
-    val sql = optionalMunicipalities match {
-      case Some(m) => unknownSpeedLimitQuery + s" and municipality_code in ($m)"
-      case _ => unknownSpeedLimitQuery
+    val filterAdministrativeClass = administrativeClass match {
+      case Some(ac) if ac == Municipality => s" where s.administrative_class not in ( ${State.value}, ${Private.value})"
+      case Some(ac) if ac == State => s" where s.administrative_class = ${ac.value}"
+      case _ => ""
     }
 
-    val limitsByMunicipality = Q.queryNA[(Long, String, Int)](sql).list
-      .map(toUnknownLimit)
+    val sql = if (municipalities.isEmpty) {
+      unknownSpeedLimitQuery + filterAdministrativeClass
+    } else {
+      unknownSpeedLimitQuery + filterAdministrativeClass + s" and s.municipality_code in (${municipalities.mkString(",")}) "
+    }
+
+    val limitsByMunicipality = Q.queryNA[UnknownLimit](sql).list
       .groupBy(_.municipality)
       .mapValues {
         _.groupBy(_.administrativeClass)
@@ -168,7 +204,19 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     addCountsFor(limitsByMunicipality)
   }
 
-  /**
+  def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
+
+    val municipalitiesQuery =
+      s"""
+      select m.id, m.name_fi from municipality m
+      where m.id in (select MUNICIPALITY_CODE from UNKNOWN_SPEED_LIMIT uk where uk.administrative_class not in ( ${State.value} , ${Private.value} ))
+      """
+
+    Q.queryNA[(Long, String)](municipalitiesQuery).list
+  }
+
+
+    /**
     * Returns data for municipality validation. Used by OracleSpeedLimitDao.splitSpeedLimit.
     */
   def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
@@ -205,7 +253,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
   def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime): Seq[PersistedSpeedLimit] = {
-     sql"""
+    val speedLimits =  sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
          from asset a
@@ -225,7 +273,11 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            or
            (a.created_date > $sinceDate and a.created_date <= $untilDate)
          )
-    """.as[PersistedSpeedLimit].list
+    """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Boolean, Int)].list
+
+    speedLimits.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, expired, linkSource) =>
+      PersistedSpeedLimit(id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, expired, LinkGeomSource.apply(linkSource))
+    }
   }
 
   /**
@@ -281,7 +333,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Creates new speed limit. Returns id of new speed limit. SpeedLimitService.persistProjectedLimit and SpeedLimitService.separate.
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long], createdDate: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, linkSource: LinkGeomSource): Option[Long]  =
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, vvhTimeStamp, createdDate, modifiedBy, modifiedAt, roadLinkService.fetchVVHRoadlinksAndComplementary(Set(linkId)).map(_.linkSource).head)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, vvhTimeStamp, createdDate, modifiedBy, modifiedAt, linkSource)
 
   private def createSpeedLimitWithoutDuplicates(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource): Option[Long] = {
     val existingLrmPositions = fetchSpeedLimitsByLinkId(linkId).filter(sl => sideCode == SideCode.BothDirections || sl.sideCode == sideCode)
@@ -352,24 +404,16 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Splits speed limit by given split measure. Updates old asset and creates new asset. Returns new asset id.
     * Used by SpeedLimitService.split.
     */
-  def splitSpeedLimit(id: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Long = {
-    def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]) = {
-      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
-      vvhLinks
-    }
+  def splitSpeedLimit(speedLimit: PersistedSpeedLimit, vvhRoadLink: VVHRoadlink, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String): (Long, Long) = {
+    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (speedLimit.startMeasure, speedLimit.endMeasure))
 
-    val (startMeasure, endMeasure, sideCode, vvhTimeStamp) = getLinkGeometryData(id)
-    val link: (Long, Double, (Point, Point), LinkGeomSource, AdministrativeClass) =
-      withMunicipalityValidation(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id)).headOption.map { case (linkId, length, geometry, _, linkSource, adminClass) =>
-        (linkId, length, GeometryUtils.geometryEndpoints(geometry), linkSource, adminClass)
-      }.get
+    updateExpiration(speedLimit.id, expired = true, username)
 
-    Queries.updateAssetModified(id, username).execute
-    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
+    val existingId = createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(existingLinkMeasures._1, existingLinkMeasures._2),
+      speedLimit.sideCode, existingValue, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate, Some(username), Some(DateTime.now()),  vvhRoadLink.linkSource).get
 
-    updateMValues(id, existingLinkMeasures)
-    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, Measures(createdLinkMeasures._1, createdLinkMeasures._2), sideCode, value, Option(vvhTimeStamp), None, None, None, link._4).get
-    createdId
+    val createdId = createSpeedLimit(username, vvhRoadLink.linkId, Measures(createdLinkMeasures._1, createdLinkMeasures._2), speedLimit.sideCode, createdValue, Option(speedLimit.vvhTimeStamp), None, None, None, vvhRoadLink.linkSource).get
+    (existingId, createdId)
   }
 
   /**
@@ -447,7 +491,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Updates validity of asset in db.
     */
-  def updateExpiration(id: Long, expired: Boolean, username: String): Unit = {
+  def updateExpiration(id: Long, expired: Boolean, username: String) = {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = if (expired) {
       sqlu"update asset set valid_to = sysdate where id = $id".first
@@ -482,11 +526,11 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
 
   private def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
     val unknownSpeedLimitCounts = sql"""
-      select name_fi, s.administrative_class, count(*)
+      select name_fi, s.administrative_class, count(*), m.id
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
-      group by name_fi, administrative_class
-    """.as[(String, Int, Int)].list
+      group by name_fi, administrative_class, m.id
+    """.as[(String, Int, Int, Int)].list
 
     unknownLimitsByMunicipality.map { case (municipality, values) =>
       val municipalityCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Municipality.value).map(_._3).getOrElse(0)

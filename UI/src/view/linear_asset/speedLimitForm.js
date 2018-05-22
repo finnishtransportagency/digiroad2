@@ -77,10 +77,23 @@
   var renderLinktoWorkList = function renderLinktoWorkList() {
     var notRendered = !$('#work-list-link').length;
     if(notRendered) {
-      $('#information-content').append('' +
-        '<div class="form form-horizontal">' +
+      if (!authorizationPolicy.workListAccess()) {
+        $('#information-content').append('' +
+          '<div class="form form-horizontal">' +
+          '<a id="work-list-link-errors" class="wrong-speed-limits" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a>' +
           '<a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
-        '</div>');
+          '</div>'
+      );
+      }
+      else {
+        $('#information-content').append('' +
+          '<div class="form form-horizontal">' +
+          '   <a id="work-list-link-errors" class="wrong-speed-limits operator-user" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a>' +
+          '   <p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p>' +
+          '   <a id="work-list-link" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Kunnan Omistama</a>' +
+          '   <a id="work-list-link" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Valtion Omistama</a>' +
+          '</div>');
+      }
     }
   };
 
@@ -129,6 +142,7 @@
       }
       else {
         $('#work-list-link').parent().remove();
+        $('#work-list-link-errors').parent().remove();
       }
     });
   };

@@ -248,4 +248,57 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val geometry2 = List(Point(1.0, 1.0), Point(1.0, 0.0), Point(0.0, 0.0))
     geometryMoved(1.0)(geometry1, geometry2) should be (true)
   }
+
+  test("calculate middle point of multiple geometries") {
+    val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(2.0, 0.0))
+    val geometry2 = List(Point(2.0, 0.0), Point(2.0, 1.0), Point(2.0, 2.0))
+    val geometry3 = List(Point(2.0, 2.0), Point(1.0, 2.0), Point(0.0, 2.0))
+    val geometry4 = List(Point(0.0, 2.0), Point(0.0, 1.0), Point(0.0, 0.0))
+
+    val point = GeometryUtils.middlePoint(Seq(geometry1, geometry2, geometry3, geometry4))
+
+    point.x should be(1)
+    point.y should be(1)
+  }
+
+  test("calculate angle of a vector") {
+    val center = Point(5,15)
+    val p1 = Point(10, 20)
+    val p2 = Point(0,20)
+    val p3 = Point(0,10)
+    val p4 = Point(10,10)
+
+    Math.toDegrees(GeometryUtils.calculateAngle(p1, center)) should be(45)
+    Math.toDegrees(GeometryUtils.calculateAngle(p2, center)) should be(135)
+    Math.toDegrees(GeometryUtils.calculateAngle(p3, center)) should be(225)
+    Math.toDegrees(GeometryUtils.calculateAngle(p4, center)) should be(315)
+  }
+
+  test("Project stop location on two-point geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val location: Point = Point(0.5, 0.5)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(0.5)
+  }
+
+  test("Project stop location on three-point geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 0.5))
+    val location: Point = Point(1.2, 0.25)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(1.25)
+  }
+
+  test("Project stop location to beginning of geometry if point lies behind geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val location: Point = Point(-0.5, 0.0)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(0.0)
+  }
+
+  test("Project stop location to the end of geometry if point lies beyond geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val location: Point = Point(1.5, 0.5)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(1.0)
+  }
 }

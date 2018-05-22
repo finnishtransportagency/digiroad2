@@ -11,6 +11,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -65,26 +66,18 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     result
   }
 
-  test("Split should fail when user is not authorized for municipality") {
-    runWithRollback {
-      val dao = daoWithRoadLinks(List(roadLink))
-      intercept[IllegalArgumentException] {
-        dao.splitSpeedLimit(200097, 100, 120, "test", failingMunicipalityValidation)
-      }
-    }
-  }
-
   test("splitting one link speed limit " +
     "where split measure is after link middle point " +
     "modifies end measure of existing speed limit " +
     "and creates new speed limit for second split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 100, 120, "test", passingMunicipalityValidation)
-      val existing = dao.getPersistedSpeedLimit(200097).get
+      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
+      val (existingId, createdId) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
+      val existing = dao.getPersistedSpeedLimit(existingId).get
       val created = dao.getPersistedSpeedLimit(createdId).get
 
-      assertSpeedLimitEndPointsOnLink(200097, 388562360, 0, 100, dao)
+      assertSpeedLimitEndPointsOnLink(existingId, 388562360, 0, 100, dao)
       assertSpeedLimitEndPointsOnLink(createdId, 388562360, 100, 136.788, dao)
 
       existing.modifiedBy shouldBe Some("test")
@@ -98,11 +91,12 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 50, 120, "test", passingMunicipalityValidation)
-      val modified = dao.getPersistedSpeedLimit(200097).get
+      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
+      val (existingId, createdId) = dao.splitSpeedLimit(asset, roadLink, 50, 120, 60, "test")
+      val modified = dao.getPersistedSpeedLimit(existingId).get
       val created = dao.getPersistedSpeedLimit(createdId).get
 
-      assertSpeedLimitEndPointsOnLink(200097, 388562360, 50, 136.788, dao)
+      assertSpeedLimitEndPointsOnLink(existingId, 388562360, 50, 136.788, dao)
       assertSpeedLimitEndPointsOnLink(createdId, 388562360, 0, 50, dao)
 
       modified.modifiedBy shouldBe Some("test")
@@ -242,11 +236,11 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       val roadLink2 = VVHRoadlink(linkId2, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink, roadLink2))
 
-      val allSpeedLimits = dao.getUnknownSpeedLimits(None)
+      val allSpeedLimits = dao.getUnknownSpeedLimits(Set(), None)
       allSpeedLimits("Kauniainen")("State").asInstanceOf[Seq[Long]].length should be(1)
       allSpeedLimits("Espoo")("State").asInstanceOf[Seq[Long]].length should be(1)
 
-      val kauniainenSpeedLimits = dao.getUnknownSpeedLimits(Some(Set(235)))
+      val kauniainenSpeedLimits = dao.getUnknownSpeedLimits(Set(235), None)
       kauniainenSpeedLimits("Kauniainen")("State").asInstanceOf[Seq[Long]].length should be(1)
       kauniainenSpeedLimits.keySet.contains("Espoo") should be(false)
     }

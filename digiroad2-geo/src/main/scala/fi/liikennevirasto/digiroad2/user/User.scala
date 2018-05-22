@@ -31,7 +31,7 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
     configuration.roles(Role.BusStopMaintainer)
   }
 
-  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty
+  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty || (configuration.roles(Role.Premium) && configuration.roles.size == 1)
 
   def hasEarlyAccess(): Boolean = {
     configuration.roles(Role.Premium) || configuration.roles(Role.Operator) || configuration.roles(Role.BusStopMaintainer)
@@ -46,7 +46,7 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
   def isAuthorizedToWriteInArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean = isAuthorizedForArea(areaCode, administrativeClass)
 
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
-    isOperator() || isBusStopMaintainer() || configuration.authorizedMunicipalities.contains(municipalityCode)
+    isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 
   private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean =
     (isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)) || (isBusStopMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)) || isOperator()
