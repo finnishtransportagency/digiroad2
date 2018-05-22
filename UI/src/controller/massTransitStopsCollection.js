@@ -2,7 +2,7 @@
   root.MassTransitStopsCollection = function(backend, verificationCollection) {
     var assets = {};
     var isComplementaryActive = true;
-    var massTransitStopTypeId = 20;
+    var massTransitStopTypeId = 10;
     var validityPeriods = {
       current: true,
       future: false,
