@@ -7,8 +7,8 @@
     me.disabled = function() { return isDisabled ? 'disabled' : '';};
     me.required = function() { return _.isUndefined(fieldSettings.required) ? '' : 'required';};
 
-    me.hasValueToSet = function(value){
-      return !_.isUndefined(value) || !_.isUndefined(fieldSettings.defaultValue);
+    me.hasValueToSet = function(){
+      return !_.isUndefined(fieldSettings.defaultValue);
     };
 
     var createPropertyValue = function(value){
@@ -33,15 +33,8 @@
       return !fieldSettings.required || fieldSettings.required && me.hasValue();
     };
 
-    me.compare = function(fieldA, fieldB){
-      if(_.isUndefined(fieldA) && _.isUndefined(fieldB))
-        return true;
-      else
-       if (!_.isUndefined(fieldA) && !_.isUndefined(fieldB))
-         return _.isEqual(_.head(fieldA.getPropertyValue().values).value, _.head(fieldB.getPropertyValue().values).value);
-       else
-         return false;
-
+    me.compare = function(propertyValueA, propertyValueB){
+      return _.isEqual(_.head(propertyValueA.values).value, _.head(propertyValueB.values).value);
     };
 
     me.hasValue = function(){
@@ -102,7 +95,7 @@
         '   <input type="text" fieldType = "' + field.type + '" '+ me.required+' name="' + field.publicId + '" class="form-control ' + className + '" ' + me.disabled()  + ' value="' + _value + '" >' +
         '</div>');
 
-      if (me.hasValueToSet(value))
+      if (me.hasValueToSet())
         me.setSelectedValue(setValue, getValue);
 
       me.element.find('input[type=text]').on('keyup', function(){
@@ -127,14 +120,14 @@
         '   <textarea fieldType = "' + field.type + '" '+ me.required+' name="' + field.publicId + '" class="form-control ' + className + '" >' + _value  + '</textarea>' +
         '</div>');
 
-      if(!me.isDisabled()) {
-        if (me.hasValueToSet(value))
+
+        if (me.hasValueToSet())
           me.setSelectedValue(setValue, getValue);
+
 
         me.element.find('textarea').on('keyup', function () {
           me.setSelectedValue(setValue, getValue);
         });
-      }
 
       return me.element;
     };
@@ -167,7 +160,7 @@
           '</div>');
 
       if(!isDisabled) {
-        if (me.hasValueToSet(value))
+        if (me.hasValueToSet())
           me.setSelectedValue(setValue, getValue);
       }
 
@@ -223,10 +216,10 @@
         unit +
         '</div>');
 
-      if(!isDisabled) {
-        if (me.hasValueToSet(value))
-          me.setSelectedValue(setValue, getValue);
-      }
+
+      if (me.hasValueToSet())
+        me.setSelectedValue(setValue, getValue);
+
 
         me.element.find('input[type=text]').on('keyup', function () {
           me.setSelectedValue(setValue, getValue);
@@ -471,18 +464,18 @@
     var AvailableForms = function(){
       var formFields = {};
 
-      this.isDisabled = function(sideCode){
-        if(!formFields['sidecode_'+sideCode])
-          Error("The form of the sidecode " + sideCode + " doesn't exist");
-        return formFields['sidecode_'+sideCode].isDisabled;
-      };
-
-      this.setDisabled = function(disabled, sideCode){
-        if(!formFields['sidecode_'+sideCode])
-          Error("The form of the sidecode " + sideCode + " doesn't exist");
-
-        formFields['sidecode_'+sideCode].isDisabled = disabled;
-      };
+      // this.isDisabled = function(sideCode){
+      //   if(!formFields['sidecode_'+sideCode])
+      //     throw Error("The form of the sidecode " + sideCode + " doesn't exist");
+      //   return formFields['sidecode_'+sideCode].isDisabled;
+      // };
+      //
+      // this.setDisabled = function(disabled, sideCode){
+      //   if(!formFields['sidecode_'+sideCode])
+      //     throw Error("The form of the sidecode " + sideCode + " doesn't exist");
+      //
+      //   formFields['sidecode_'+sideCode].isDisabled = disabled;
+      // };
 
       this.addField = function(field, sideCode){
         if(!formFields['sidecode_'+sideCode])
@@ -492,7 +485,7 @@
 
       this.getFields = function(sideCode){
           if(!formFields['sidecode_'+sideCode])
-            Error("The form of the sidecode " + sideCode + " doesn't exist");
+            throw Error("The form of the sidecode " + sideCode + " doesn't exist");
           var form = formFields['sidecode_'+sideCode];
           return form ? form.fields : undefined;
       };
@@ -501,6 +494,13 @@
         return _.flatten(_.map(formFields, function(form) {
           return form.fields;
         }));
+      };
+
+      this.removeFields = function(sideCode){
+        if(!formFields['sidecode_'+sideCode])
+          throw Error("The form of the sidecode " + sideCode + " doesn't exist");
+
+        formFields['sidecode_'+sideCode] = { isDisabled: false, fields : [] };
       };
     };
 
@@ -511,14 +511,11 @@
       _assetTypeConfiguration = assetTypeConfiguration;
 
       eventbus.on(events('selected', 'cancelled'), function () {
-        rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset, true));
+        var selectedAsset = assetTypeConfiguration.selectedLinearAsset;
+        var isDisabled = _.isEmpty(_.find(selectedAsset.get(), function(asset){return !_.isUndefined(asset.value);}));
 
-        if (assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-          me.bindEvents(rootElement, assetTypeConfiguration, 'a');
-          me.bindEvents(rootElement, assetTypeConfiguration, 'b');
-        } else {
-          me.bindEvents(rootElement, assetTypeConfiguration, '');
-        }
+        rootElement.html(me.renderForm(selectedAsset, isDisabled));
+
       });
 
       eventbus.on(events('unselect'), function() {
@@ -537,7 +534,6 @@
       eventbus.on('application:readOnly', function(){
         if(_assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && _assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
           rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, applicationModel.isReadOnly()));
-          me.bindEvents(rootElement, _assetTypeConfiguration, '');
         }
       });
 
@@ -583,13 +579,13 @@
 
       if(selectedAsset.isSplitOrSeparated()) {
         //Render form A
-        renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue, selectedAsset.getValue, isDisabled, body);
+        renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue, selectedAsset.getValue, selectedAsset.removeAValue, isDisabled, body);
         //Remder form B
-        renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue, selectedAsset.getBValue, isDisabled, body);
+        renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue, selectedAsset.getBValue, selectedAsset.removeBValue, isDisabled, body);
       }
       else
       {
-        renderFormElements(asset[0], isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, isDisabled, body);
+        renderFormElements(asset[0], isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, selectedAsset.removeValue, isDisabled, body);
       }
 
       //Render separate button if is separable asset type
@@ -599,41 +595,6 @@
       toggleBodyElements(body, isReadOnly);
       return body;
     };
-
-    //TODO check if this is only used here if so we could
-    me.bindEvents = function(rootELement, assetTypeConfiguration, sideCode, selectedLinearAsset) {
-          var inputElement = rootELement.find('.form-editable-' + generateClassName(sideCode));
-          var toggleElement = rootELement.find('.radio input.' + generateClassName(sideCode));
-          var valueRemovers = {
-              a: assetTypeConfiguration.selectedLinearAsset.removeAValue,
-              b: assetTypeConfiguration.selectedLinearAsset.removeBValue
-          };
-          var valueSetters = {
-              a: assetTypeConfiguration.selectedLinearAsset.setAValue,
-              b: assetTypeConfiguration.selectedLinearAsset.setBValue
-          };
-          var removeValue = selectedLinearAsset ? selectedLinearAsset.removeValue : valueRemovers[sideCode] || assetTypeConfiguration.selectedLinearAsset.removeValue;
-          var setValue = selectedLinearAsset ? selectedLinearAsset.setValue : valueSetters[sideCode] ||  assetTypeConfiguration.selectedLinearAsset.setValue;
-          toggleElement.on('change', function(event) {
-              var disabled = $(event.currentTarget).val() === 'disabled';
-              var input = inputElement.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
-              input.attr('disabled', disabled);
-
-              if (disabled) {
-                removeValue();
-              }
-
-                // $('#feature-attributes').html(me.renderForm(assetTypeConfiguration.selectedLinearAsset, disabled));
-                //
-                // if (assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-                //   me.bindEvents($('#feature-attributes'), assetTypeConfiguration, 'a');
-                //   me.bindEvents($('#feature-attributes'), assetTypeConfiguration, 'b');
-                // } else {
-                //   me.bindEvents($('#feature-attributes'), assetTypeConfiguration, '');
-                // }
-
-          });
-      };
 
     function renderSeparateButtonElement(selectedAsset, body){
         if(selectedAsset.isSeparable() && !_isReadOnly(selectedAsset)){
@@ -649,7 +610,7 @@
         }
     }
 
-    function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled, body) {
+    function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, removeValueFn, isDisabled, body) {
       var sideCodeClass = generateClassName(sideCode);
 
       var unit = _assetTypeConfiguration.unit ? asset.value ? asset.value + ' ' + _assetTypeConfiguration.unit : '-' : asset.value ? 'on' : 'ei ole';
@@ -663,7 +624,7 @@
       var disableChecked = isDisabled ? 'checked' : '';
       var enableChecked = isDisabled ? '' : 'checked';
 
-      formGroup.append($('' +
+      var toggleElement = $('' +
         createSideCodeMarker(sideCode) +
         '<div class="edit-control-group choice-group">' +
         '  <div class="radio">' +
@@ -682,8 +643,27 @@
         '      value="enabled" ' + enableChecked + ' />' +
         '    </label>' +
         '  </div>' +
-        '</div>'));
+        '</div>');
 
+      toggleElement.find('.radio input').on('change', function(event) {
+        var inputElement = body.find('.form-editable-' + sideCodeClass);
+        var disabled = $(this).val() === 'disabled';
+        var input = inputElement.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+        input.attr('disabled', disabled);
+
+        if(disabled){
+          removeValueFn();
+        }
+        else{
+          setValueFn({ properties: [] });
+        }
+
+        forms.removeFields(sideCode);
+        body.find('.form-editable-' + sideCodeClass).find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+
+      });
+
+      formGroup.append(toggleElement);
       body.find('.form').append(formGroup);
       body.find('.form-editable-' + sideCodeClass).append(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
 
@@ -705,12 +685,11 @@
     }
 
     function createBodyElement(selectedAsset) {
-      // var assetTypeConfiguration = _assetTypeConfiguration;
       var info = {
         modifiedBy :  selectedAsset.getModifiedBy() || '-',
-        modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + asset.getModifiedDateTime() : '',
+        modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' : '-',
         createdBy : selectedAsset.getCreatedBy() || '-',
-        createdDate : selectedAsset.getCreatedDateTime() ? ' ' + asset.getCreatedDateTime() : '',
+        createdDate : selectedAsset.getCreatedDateTime() ? ' ' : '',
         verifiedBy : selectedAsset.getVerifiedBy(),
         verifiedDateTime : selectedAsset.getVerifiedDateTime()
       };
@@ -728,7 +707,7 @@
             '<span class="edit-mode-title" style="display: block">' + _assetTypeConfiguration.newTitle + '</span>';
         }
         return selectedAsset.count() === 1 ?
-          '<span>Segmentin ID: ' + asset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
+          '<span>Segmentin ID: ' + selectedAsset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
 
       };
 
@@ -782,25 +761,23 @@
     }
 
     me.isSplitOrSeparatedAllowed = function(){
-      var uniqProperties = _.unique(forms.getAllFields(), function(field) {
-          return field.getPropertyValue().publicId;
+      if(_.isEmpty(forms.getAllFields()))
+        return false;
+
+      return _.some(forms.getFields('a'), function(fieldA){
+        var propertyValueA = fieldA.getPropertyValue();
+
+        var propertyValueB = _.head(_.map(_.filter(forms.getFields('b'), function (fieldB) {
+          return propertyValueA.publicId === fieldB.getPropertyValue().publicId;
+        }), function(property) {return property.getPropertyValue();} ));
+
+
+        if(!fieldA.compare(propertyValueA, propertyValueB))
+          return true;
       });
-
-        return _.some(uniqProperties, function(field){
-          var fieldA = _.filter(forms.getFields('a'), function (fieldA) {
-            return field.getPropertyValue().publicId === fieldA.getPropertyValue().publicId;
-          });
-
-          var fieldB = _.filter(forms.getFields('b'), function (fieldB) {
-            return field.getPropertyValue().publicId === fieldB.getPropertyValue().publicId;
-          });
-
-          if(!field.compare(_.head(fieldA), _.head(fieldB)))
-            return true;
-        });
     };
 
-    me.isSaveable = function(){
+    me.isSaveable = function(sideCode){
         return _.every(forms.getAllFields(), function(field){
           return field.isValid();
         });
@@ -814,13 +791,12 @@
 
       var updateStatus = function(element) {
         if(!assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-          element.prop('disabled', !me.isSaveable());
-        } else{
+          element.prop('disabled', !(me.isSaveable() && assetTypeConfiguration.selectedLinearAsset.isDirty()));
+        } else
           element.prop('disabled', !(me.isSaveable() && me.isSplitOrSeparatedAllowed()));
-        }
       };
 
-      // updateStatus(element);
+      updateStatus(element);
 
       eventbus.on(events('valueChanged'), function() {
         updateStatus(element);
