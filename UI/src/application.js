@@ -8,7 +8,7 @@
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
-    var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
+    var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection, verificationCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
     var assetConfiguration = new AssetTypeConfiguration();
@@ -60,7 +60,7 @@
     };
 
     bindEvents(enabledLinearAssetSpecs, assetConfiguration.pointAssetsConfig);
-    window.massTransitStopsCollection = new MassTransitStopsCollection(backend);
+    window.massTransitStopsCollection = new MassTransitStopsCollection(backend, verificationCollection);
     window.selectedMassTransitStopModel = selectedMassTransitStopModel;
     var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
     var selectedPointAssetModels = _.pluck(pointAssets, "selectedPointAsset");

@@ -64,7 +64,7 @@
      * Overrides the layer.js refreshView method
      */
     this.refreshView = function() {
-      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map), draw);
+      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map), draw, map.getView().getCenter());
     };
 
     /**

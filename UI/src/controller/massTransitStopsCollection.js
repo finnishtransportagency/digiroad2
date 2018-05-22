@@ -1,7 +1,8 @@
 (function(root) {
-  root.MassTransitStopsCollection = function(backend) {
+  root.MassTransitStopsCollection = function(backend, verificationCollection) {
     var assets = {};
     var isComplementaryActive = true;
+    var massTransitStopTypeId = 20;
     var validityPeriods = {
       current: true,
       future: false,
@@ -35,6 +36,7 @@
           eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(backendAssets, assets));
         }
       });
+      verificationCollection.fetch(mapMoveEvent.bbox, mapMoveEvent.center, massTransitStopTypeId, true);
     };
 
     var getAllTerminalNearestStops = function(properties) {

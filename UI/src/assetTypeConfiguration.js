@@ -247,7 +247,8 @@
           fields : [
             { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1 }
           ]
-        })
+        }),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.width,
@@ -306,7 +307,8 @@
           disabled: 'Ei päällystettä'
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
-        isVerifiable: false
+        isVerifiable: false,
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.trafficVolume,
@@ -327,7 +329,8 @@
         },
         label: new LinearAssetLabel(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
-        isVerifiable: true
+        isVerifiable: true,
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.massTransitLane,
@@ -346,7 +349,8 @@
           disabled: 'Ei joukkoliikennekaistaa'
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
-        isVerifiable: true
+        isVerifiable: true,
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.winterSpeedLimit,
@@ -386,7 +390,8 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -404,7 +409,8 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.europeanRoads,
@@ -509,7 +515,8 @@
         },
         label: new LinearAssetLabel(),
         isVerifiable: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       }
     ];
 
@@ -554,7 +561,7 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
       },
       {
         typeId: assetType.obstacles,
@@ -572,7 +579,8 @@
           manyFloatingAssetsLabel: 'esterakennelmat',
           newAssetLabel: 'esterakennelma'
         },
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.railwayCrossings,
@@ -593,7 +601,8 @@
             var selected = selectedAsset .get();
           return selected.code ? selected.code !== '' : false;
         },
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.directionalTrafficSigns,
@@ -610,7 +619,8 @@
           manyFloatingAssetsLabel: 'opastustaulut',
           newAssetLabel: 'opastustaulu'
         },
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.servicePoints,
@@ -626,7 +636,8 @@
           manyFloatingAssetsLabel: 'palvelupisteet',
           newAssetLabel: 'palvelupiste'
         },
-        authorizationPolicy: new ServicePointAuthorizationPolicy()
+        authorizationPolicy: new ServicePointAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.trafficLights,

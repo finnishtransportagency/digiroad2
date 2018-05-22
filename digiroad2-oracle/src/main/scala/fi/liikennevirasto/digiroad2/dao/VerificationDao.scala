@@ -25,13 +25,13 @@ class VerificationDao {
                 atype.GEOMETRY_TYPE,
                 (CASE
                     WHEN atype.GEOMETRY_TYPE = 'point'
-                      THEN count(*)
+                      THEN count(a.id)
                       ELSE NULL
                 END) AS counting
                 FROM municipality m
                 JOIN asset_type atype ON atype.verifiable = 1
                 LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
-                LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID
+                LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID and a.municipality_code = m.id AND a.VALID_TO IS NULL
                 WHERE m.id = $municipalityId
                 GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
