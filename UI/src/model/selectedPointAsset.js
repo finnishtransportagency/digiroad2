@@ -152,7 +152,7 @@
       dirty = true;
       _.map(current.propertyData, function (prop) {
         if (prop.publicId === propertyPublicId) {
-          prop.values[0] = [{propertyValue: propertyValue, propertyDisplayValue: ''}];
+          prop.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
         }
       });
       eventbus.trigger(assetName + ':changed');
