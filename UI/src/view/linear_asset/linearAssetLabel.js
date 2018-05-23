@@ -186,7 +186,7 @@
         var correctValues = function(value){
           var valueLength = value.toString().length;
           if(value){
-            return value.match(/^[0-9|Ee]/) && valueLength < 4;
+            return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/) && valueLength < 4;
           }
           return true;
         };
