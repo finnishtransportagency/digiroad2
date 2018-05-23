@@ -256,7 +256,6 @@
             { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg' }
           ]
         }),
-        isVerifiable: false,
         isMultipleLinkSelectionAllowed: true
       },
       {
