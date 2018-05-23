@@ -35,11 +35,6 @@ class EmailOperations() {
 
   def sendEmail(email: Email): Unit = {
     val message = createMessage(email)
-    try{
-      Transport.send(message, auth.getUsername, auth.getPassword)
-      //TODO: update database table feedback
-    }catch {
-      case messagingException: MessagingException=> println(s"Error on email sending: ${messagingException.toString}" )
-    }
+    Transport.send(message, auth.getUsername, auth.getPassword)
   }
 }
