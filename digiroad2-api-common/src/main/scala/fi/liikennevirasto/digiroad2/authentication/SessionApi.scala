@@ -24,7 +24,7 @@ class SessionApi extends ScalatraServlet {
   }
 
   post("/user") {
-    val (username, municipalityNumber) = (request.getParameter("username"), request.getParameter("municipalityNumber"))
+    val (username, municipalityNumber, name) = (request.getParameter("username"), request.getParameter("municipalityNumber"), request.getParameter("name"))
     val configMap = defaultConfig(municipalityNumber)
     userProvider.getUser(username) match {
       case Some(u) => {
@@ -32,7 +32,7 @@ class SessionApi extends ScalatraServlet {
         BadRequest("User exists")
       }
       case _ => {
-        userProvider.createUser(username, configMap)
+        userProvider.createUser(username, configMap, Some(name))
         Ok("User created")
       }
     }

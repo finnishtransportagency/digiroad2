@@ -65,8 +65,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val pointMassLimitationService: PointMassLimitationService = Digiroad2Context.pointMassLimitationService,
                    val assetService: AssetService = Digiroad2Context.assetService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
+                   val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val multiValueLinearAssetService: MultiValueLinearAssetService = Digiroad2Context.multiValueLinearAssetService)
-  extends ScalatraServlet
+
+
+extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
@@ -1390,6 +1393,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(foundAsset) => foundAsset
     }
   }
+
+
+  get("/municipalities") {
+      municipalityService.getMunicipalities.map { municipality =>
+        Map("id" -> municipality._1,
+          "name" -> municipality._2)
+      }
+  }
+
   get("/municipalities/unverified") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
