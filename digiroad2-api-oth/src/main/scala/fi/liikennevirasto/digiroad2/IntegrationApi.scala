@@ -226,7 +226,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       }
       case Some(MultiValue(x)) if MassTransitLane.typeId == typeId => x.properties.map { massTransitLaneValue =>
 
-        Map("validityPeriods" -> massTransitLaneValue.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).flatMap(ValidityPeriodValue.fromMap).map {
+        Map("validityPeriods" -> massTransitLaneValue.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).map(ValidityPeriodValue.fromMap).map {
           a=> toTimeDomain(a)})
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
@@ -285,7 +285,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         lastModifiedBy(massTransitLane.createdBy, massTransitLane.modifiedBy),
         "linkSource" -> massTransitLane.linkSource.value,
         "validityPeriods" -> (massTransitLane.value match {
-          case Some(MultiValue(x)) => x.properties.flatMap(_.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).flatMap(ValidityPeriodValue.fromMap).map {
+          case Some(MultiValue(x)) => x.properties.flatMap(_.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).map(ValidityPeriodValue.fromMap).map {
             a=> toTimeDomain(a)})
           case _ => None
         })

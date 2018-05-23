@@ -11,22 +11,22 @@
       return !_.isUndefined(fieldSettings.defaultValue);
     };
 
-    var createPropertyValue = function(value){
+    me.createPropertyValue = function(values){
       return {
             publicId: fieldSettings.publicId,
             propertyType: fieldSettings.type,
             required : fieldSettings.required,
-            values: [ { value: value } ]
+            values: values
         };
     };
 
     me.getPropertyValue = function(){
       var value = me.getValue();
-      return createPropertyValue(value);
+      return me.createPropertyValue([{ value: value }]);
     };
 
     me.getPropertyDefaultValue = function(){
-      return createPropertyValue(fieldSettings.defaultValue);
+      return createPropertyValue([{ value: fieldSettings.defaultValue}]);
     };
 
     me.isValid = function(){
@@ -56,10 +56,6 @@
     me.viewModeRender = function (field, propertyValues) {
       var value = _.first(propertyValues, function(propertyValue) { return propertyValue.value ; });
       var _value = value ? value.value : '-';
-
-      var defaultValue = field.defaultValue;
-      if(defaultValue && !value)
-        _value = defaultValue;
 
       return $('' +
         '<div class="form-group">' +
@@ -267,10 +263,10 @@
 
     me.viewModeRender = function (field, currentValue) {
       var value = _.first(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
+      var _value = value ? value.value : '-';
 
       var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
-      var printValue = _.isUndefined(someValue) ? _value : someValue.label;
+      var printValue = someValue ? someValue.label: '-';
 
       return $('' +
         '<div class="form-group">' +
@@ -382,17 +378,17 @@
       return me.element;
     };
 
-    me.viewModeRender = function (field, currentValue) {
-      var first = _.first(currentValue, function(values) { return values.value ; });
-
-      var value =  first ? first.value : '';
-      return $('' +
-        '<div class="form-group">' +
-        '   <label class="control-label">' + field.label + '</label>' +
-        '   <p class="form-control-static">' + value + '</p>' +
-        '</div>'
-      );
-    };
+    // me.viewModeRender = function (field, currentValue) {
+    //   var value = _.first(currentValue, function(values) { return values.value ; });
+    //
+    //   var _value =  value ? value.value : '';
+    //   return $('' +
+    //     '<div class="form-group">' +
+    //     '   <label class="control-label">' + field.label + '</label>' +
+    //     '   <p class="form-control-static">' + _value + '</p>' +
+    //     '</div>'
+    //   );
+    // };
   };
 
   var CheckboxField = function(assetTypeConfiguration, field, isDisabled){
@@ -537,25 +533,39 @@
 
       me.element = $(template({existingValidityPeriodElements: existingValidityPeriodElements}));
 
+      me.getPropertyValue = function(){
+        var values = me.getValue();
+        return me.createPropertyValue(values);
+      };
+
+      me.compare = function(propertyValueA, propertyValueB){
+        var isEqual = function(valueA , valueB) {
+          return valueA.startHour === valueB.startHour && valueA.startMinute === valueB.startMinute && valueA.endHour === valueB.endHour && valueA.endMinute === valueB.endMinute && valueA.days === valueB.days
+        };
+
+        var isRemoved = function(firstProperty, secondProperty) {
+          _.remove(firstProperty.values, function (valuesA) {
+            return !_.isUndefined(_.find(secondProperty.values, function (valuesB) {
+              return isEqual(valuesB.value, valuesA.value);
+            }));
+          });
+          return _.isEmpty(firstProperty.values);
+        };
+        return isRemoved(_.cloneDeep(propertyValueA), _.cloneDeep(propertyValueB)) && isRemoved(_.cloneDeep(propertyValueB), _.cloneDeep(propertyValueA));
+      };
+
       me.getValue = function() {
-        // function extractValidityPeriods(element) {
         var periodElements = me.element.find('.existing-validity-period');
         return _.map(periodElements, function (element) {
-          return {
+          return { value: {
             startHour: parseInt($(element).find('.start-hour').val(), 10),
             startMinute: parseInt($(element).find('.start-minute').val(), 10),
             endHour: parseInt($(element).find('.end-hour').val(), 10),
             endMinute: parseInt($(element).find('.end-minute').val(), 10),
             days: parseInt($(element).data('days'), 10)
-          };
-        });
-        // }
+          }
+        }});
       };
-
-      // function updateValidityPeriods(element) {
-      //   // var validityPeriods = extractValidityPeriods(element);
-      //   me.setSelectedValue(setValue, getValue);
-      // }
 
       me.element.on('click', '.existing-validity-period .delete', function(event) {
         $(event.target).parent().parent().remove();
@@ -563,7 +573,6 @@
       });
 
       me.element.on('change', '.existing-validity-period .select', function(event) {
-        // updateValidityPeriods($(event.delegateTarget));
         me.setSelectedValue(setValue, getValue);
       });
 
@@ -577,7 +586,6 @@
           endHour: 24,
           endMinute: 0
         }));
-        // updateValidityPeriods($(event.delegateTarget));
         me.setSelectedValue(setValue, getValue);
       });
 
@@ -600,7 +608,6 @@
         '</ul>' +
         '</p>' +
         '</div>' );
-
     };
   };
 

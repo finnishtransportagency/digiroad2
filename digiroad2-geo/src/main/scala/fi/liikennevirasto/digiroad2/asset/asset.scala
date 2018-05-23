@@ -184,28 +184,25 @@ case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyN
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 
 object ValidityPeriodValue {
-  def fromMap(map: Map[String, Any]): Option[ValidityPeriodValue] = {
-    if (map.nonEmpty) {
-      Some(ValidityPeriodValue(
+  def fromMap(map: Map[String, Any]): ValidityPeriodValue = {
+    ValidityPeriodValue(
         getPropertyValuesByPublicId("days", map),
         getPropertyValuesByPublicId("startHour", map),
         getPropertyValuesByPublicId("endHour", map),
         getPropertyValuesByPublicId("startMinute", map),
         getPropertyValuesByPublicId("endMinute", map),
-        if (map.contains("periodType")) {
-          map("periodType") match {
-            case Some(value) => Some(getPropertyValuesByPublicId("periodType", map)
-            )
-            case _ => None
-          }
-        } else None)
-      )
-    } else
-      None
+        getOptionalPropertyValuesByPublicId("periodType", map))
   }
 
   def getPropertyValuesByPublicId(property: String, mapValue: Map[String, Any]): Int = {
     Try(mapValue(property).asInstanceOf[BigInt].toInt).getOrElse(mapValue(property).asInstanceOf[Int])
+  }
+
+  def getOptionalPropertyValuesByPublicId(property: String, mapValue: Map[String, Any]): Option[Int] = {
+    mapValue.get(property) match {
+      case Some(value) => Try(value.asInstanceOf[Option[BigInt]].map(_.toInt)).getOrElse(value.asInstanceOf[Option[Int]])
+      case _ => None
+    }
   }
 
   def toMap(value: ValidityPeriodValue):  Map[String, Any] = {

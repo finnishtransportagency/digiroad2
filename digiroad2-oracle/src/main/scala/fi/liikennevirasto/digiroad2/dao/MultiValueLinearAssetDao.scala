@@ -239,12 +239,14 @@ class MultiValueLinearAssetDao {
 
         if (propertyValues.nonEmpty) {
           propertyValues.map { propertyValue =>
-
-            ValidityPeriodValue.fromMap(propertyValue.value.asInstanceOf[Map[String, Any]]).map {
-              validityPeriodValue =>  insertValidityPeriodProperty(assetId, propertyId, validityPeriodValue).execute
+            propertyValue.value match {
+              case None =>
+              case _ =>
+                var validityPeriodValue = propertyValue.value.asInstanceOf[Map[String, Any]]
+                insertValidityPeriodProperty(assetId, propertyId, ValidityPeriodValue.fromMap(validityPeriodValue)).execute
+              }
             }
           }
-        }
 
       case ReadOnly | ReadOnlyNumber | ReadOnlyText =>
         logger.debug("Ignoring read only property in update: " + propertyPublicId)

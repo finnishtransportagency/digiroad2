@@ -312,10 +312,6 @@
       }
     };
 
-    this.getBValue = function() {
-
-    };
-
     this.removeValue = function() {
       self.setValue(undefined);
     };
