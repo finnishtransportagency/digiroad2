@@ -9,7 +9,8 @@ case class Email( to: String, from: String, cc: Option[String], bcc: Option[Stri
 
 class EmailOperations() {
 
-  protected val auth = new EmailAuthPropertyReader
+  //TODO: verify if host and port should be in a configurable file, as username and password
+  private val auth = new EmailAuthPropertyReader
   private def isNumeric(str:String): Boolean = str.matches("[-+]?\\d+(\\.\\d+)?")
 
   private def initEmail(smtpHost: String, smtpPort: String): MimeMessage = {

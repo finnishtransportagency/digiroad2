@@ -201,6 +201,7 @@ object Digiroad2Context {
     }
   }
 
+  //TODO: Change initial delay and interval
   system.scheduler.schedule(FiniteDuration(1, TimeUnit.MINUTES), FiniteDuration(2, TimeUnit.MINUTES)) {
      applicationFeedback.sendFeedbacks()
      System.out.println("System.scheduler executes for feedback feature")
