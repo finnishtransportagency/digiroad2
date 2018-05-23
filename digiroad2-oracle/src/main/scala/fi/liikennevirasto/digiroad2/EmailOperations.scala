@@ -29,7 +29,20 @@ class EmailOperations() {
     message.setSubject(email.subject)
     message.setText(email.body)
     message.setFrom(new InternetAddress(email.from))
+    setRecipients(message, email)
+  }
+
+  private def setRecipients(message: MimeMessage, email: Email): MimeMessage ={
     message.setRecipients(Message.RecipientType.TO, email.to)
+    email.cc match {
+      case Some(cc)  => message.setRecipients(Message.RecipientType.CC, cc)
+      case _ => None
+    }
+
+    email.bcc match {
+      case Some(bcc) => message.setRecipients(Message.RecipientType.BCC, bcc)
+      case _ => None
+    }
     message
   }
 

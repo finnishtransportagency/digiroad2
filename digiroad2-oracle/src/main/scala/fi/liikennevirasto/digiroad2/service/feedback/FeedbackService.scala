@@ -83,15 +83,18 @@ class FeedbackService extends Feedback {
   override def smtpPort: String = "2525"
 
 }
-
-object testFeedback{
-
-  def main(args:Array[String]) : Unit = {
-    val service = new FeedbackService()
-    val id =   service.insertApplicationFeedback(None, Some("feedback_test"), Some("Teste body..... subject is xpto"), None, false, None)
-
-    val x = service.getFeedbacksByIds(Set(id))
-    val not_sent = service.getNotSentFeedbacks
-    service.sendFeedbacks()
-  }
-}
+//
+//object testFeedback{
+//
+//  def main(args:Array[String]) : Unit = {
+//    val service = new FeedbackService()
+//   /* val id = */  service.insertApplicationFeedback(None, Some("feedback_test"), Some("Teste body..... subject is xpto........1"), None, false, None)
+//    service.insertApplicationFeedback(None, Some("feedback_test_2"), Some("Teste body..... subject is xpto........2"), None, false, None)
+//    service.insertApplicationFeedback(None, Some("feedback_test_3"), Some("Teste body..... subject is xpto........3"), None, false, None)
+//    service.insertApplicationFeedback(None, Some("feedback_test_4"), Some("Teste body..... subject is xpto........4"), None, false, None)
+//    service.insertApplicationFeedback(None, Some("feedback_test_5"), Some("Teste body..... subject is xpto........5"), None, false, None)
+//  /*  val x = service.getFeedbacksByIds(Set(id))
+//    val not_sent = service.getNotSentFeedbacks
+//    service.sendFeedbacks()*/
+//  }
+//}

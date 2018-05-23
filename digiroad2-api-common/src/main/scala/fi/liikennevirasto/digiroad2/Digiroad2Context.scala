@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MassLimitationDao}
+import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimi
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service._
+import fi.liikennevirasto.digiroad2.service.feedback.FeedbackService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -198,6 +199,11 @@ object Digiroad2Context {
     } catch {
       case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
     }
+  }
+
+  system.scheduler.schedule(FiniteDuration(1, TimeUnit.MINUTES), FiniteDuration(2, TimeUnit.MINUTES)) {
+     applicationFeedback.sendFeedbacks()
+     System.out.println("System.scheduler executes for feedback feature")
   }
 
   val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")
@@ -437,6 +443,8 @@ object Digiroad2Context {
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
+
+  lazy val applicationFeedback : FeedbackService = new FeedbackService()
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {
