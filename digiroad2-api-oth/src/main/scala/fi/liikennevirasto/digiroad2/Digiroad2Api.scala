@@ -1436,7 +1436,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     service.expire(id, user.username)
   }
 
-  private def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) {
+  private def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
@@ -1452,9 +1452,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
 
-    for (link <- roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId)) {
-     validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
-     service.create(asset, user.username, link)
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId).map{
+      link =>
+       validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
+       service.create(asset, user.username, link)
     }
   }
 

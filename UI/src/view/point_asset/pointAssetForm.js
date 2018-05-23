@@ -316,8 +316,8 @@ root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, appli
   };
 
   var singleChoiceHandler = function (property, collection) {
-    var propertyValue = (property.values.length === 0) ? '' : _.first(property.values).propertyValue;
-    var propertyDisplayValue = (property.values.length === 0) ? '' : _.first(property.values).propertyDisplayValue;
+    var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+    var propertyDisplayValue = (property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
     var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
 
     var groups =  collection.getGroup(signTypes);
@@ -397,7 +397,7 @@ root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, appli
           '  </div>': '');
     } else if (asset.services) {
       var services = _(asset.services)
-        .sortByAll('serviceType', 'id')
+        .sortBy('serviceType', 'id')
         .map(renderService)
         .join('');
 

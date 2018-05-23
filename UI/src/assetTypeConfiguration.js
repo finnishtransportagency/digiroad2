@@ -660,11 +660,11 @@
         saveCondition: function (selectedAsset) {
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
-            { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.contains(possibleSpeedLimitsValues, parseInt(someValue)); }},
+            { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d+$/.test(someValue) ; }}
           ];
 
-          var functionFn = _.find(validations, function(validation){ return _.contains(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
+          var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
           return functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
         }
       },

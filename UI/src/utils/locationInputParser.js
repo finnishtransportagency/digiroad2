@@ -38,7 +38,7 @@
   var parseRoad = function(input) {
     var parsed = _.map(_.words(input), _.parseInt);
     var output = { type: 'road', roadNumber: parsed[0], section: parsed[1], distance: parsed[2], lane: parsed[3] };
-    return _.omit(output, _.isUndefined);
+    return _.omitBy(output, _.isUndefined);
   };
 
   root.LocationInputParser = {

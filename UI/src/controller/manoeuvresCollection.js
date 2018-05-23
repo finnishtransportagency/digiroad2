@@ -50,7 +50,7 @@
           .filter(function(manoeuvre) {
             return manoeuvre.sourceLinkId === linkId;
           })
-          .pluck('firstTargetLinkId')
+          .map('firstTargetLinkId')
           .value();
     };
 
@@ -174,12 +174,12 @@
 
           _.each(manoeuvre.linkIds, function(item){
             if(item != linkId)
-              previousAdjacentLinks = previousAdjacentLinks.concat(_.pluck(roadlinkAdjacents[item], 'linkId'));
+              previousAdjacentLinks = previousAdjacentLinks.concat(_.map(roadlinkAdjacents[item], 'linkId'));
           });
 
           var nextAdjacentLinks = _.filter(targetLink.adjacentLinks, function(item){
             //Remove from adjacents the previous adjacents links, all links from the chain and
-            return !_.contains(previousAdjacentLinks, item.linkId);// && !_.contains(manoeuvre.linkIds, item.linkId);
+            return !_.includes(previousAdjacentLinks, item.linkId);
           });
           callback(_.merge({}, modified, {"adjacentLinks": nextAdjacentLinks}));
         }
@@ -331,7 +331,7 @@
         dirty = false;
         callback();
       };
-      var details = _.omit(updatedInfo, function(value, key) {
+      var details = _.omitBy(updatedInfo, function(value, key) {
         return _.some(removedManoeuvreIds, function(id) {
           return id === parseInt(key, 10);
         });
@@ -390,7 +390,7 @@
                 return intermediateLinkId === roadLink.linkId;
               });
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is source link for multiple manoeuvres
@@ -399,7 +399,7 @@
               multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] = manoeuvre.sourceLinkId in multipleSourceManoeuvresHMap ? multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] += 1 : 1;
               return multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] >= 2;
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is intermediate link for multiple manoeuvres
@@ -412,7 +412,7 @@
                 }
               });
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is destination link of some manoeuvre
@@ -420,7 +420,7 @@
             .filter(function(manoeuvre) {
               return manoeuvre.destLinkId === roadLink.linkId;
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is destination link for multiple manoeuvres
@@ -431,7 +431,7 @@
                 return multipleDestinationManoeuvresHMap[manoeuvre.destLinkId] >= 2;
               }
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is source and destination link for manoeuvres
@@ -443,7 +443,7 @@
                 return sourceDestinationManoeuvresHMap[sourceOrDestLinkId] >= 1;
               }
             })
-            .pluck('id')
+            .map('id')
             .value();
 
         // Check if road link is source link of some manoeuvre
@@ -479,12 +479,12 @@
         var firstTargetLinkId = manoeuvre.elements[0].destLinkId;
         var lastElementIndex = manoeuvre.elements.length - 1;
         var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
-        var linkIds = _.chain(manoeuvre.elements).pluck('sourceLinkId').value();
+        var linkIds = _.chain(manoeuvre.elements).map('sourceLinkId').value();
         var intermediateLinkIds = _.chain(manoeuvre.elements)
           .filter(function(element) {
             return element.elementType === 2;
           })
-          .pluck('sourceLinkId')
+          .map('sourceLinkId')
           .value();
         return _.merge({}, manoeuvre, {
           sourceLinkId: sourceLinkId,
@@ -517,7 +517,7 @@
         return manoeuvre.sourceLinkId === linkId;
       });
       var sortedManoeuvres = sortLinkManoeuvres(sourceLinkManoeuvres);
-      var latestModification = _.first(sortedManoeuvres);
+      var latestModification = _.head(sortedManoeuvres);
       return {
         modifiedAt: latestModification ? latestModification.modifiedDateTime : null,
         modifiedBy: latestModification ? latestModification.modifiedBy : null
@@ -559,7 +559,7 @@
             return manoeuvre.sourceLinkId === linkId && manoeuvre.intermediateLinkIds &&
                 manoeuvre.intermediateLinkIds.length > 0;
           })
-          .pluck('destLinkId')
+          .map('destLinkId')
           .value();
     };
 
@@ -583,7 +583,7 @@
 
       var alteredTargets = _.map(targetLinks, function (t) {
         var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
-          return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId));
+          return !(rl.linkId === roadLink.linkId || _.includes(targetIds, rl.linkId));
         });
 
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
@@ -591,7 +591,7 @@
 
       var alteredAdjacents = _.map(adjacentLinks, function (t) {
         var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
-          return !(rl.linkId === roadLink.linkId || _.contains(adjacentIds, rl.linkId));
+          return !(rl.linkId === roadLink.linkId || _.includes(adjacentIds, rl.linkId));
         });
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
       });
@@ -635,7 +635,7 @@
       });
 
       if (!manoeuvre) {
-        var allManoeuvres = _.flatten(_.pluck(this.getAll(), 'manoeuvres'));
+        var allManoeuvres = _.flatten(_.map(this.getAll(), 'manoeuvres'));
 
         manoeuvre = _.find(allManoeuvres, function(m) {
           return _.some(manoeuvreSource.manoeuvres, function(item){
@@ -649,7 +649,7 @@
     var getDestinationRoadLinksBySource = function (manoeuvreSource) {
       var destinationRoadLinkList = [];
       manoeuvreSource.manoeuvres.forEach(function (m) {
-        if(!_.contains(destinationRoadLinkList,_.last(m.linkIds))){
+        if(!_.includes(destinationRoadLinkList,_.last(m.linkIds))){
           destinationRoadLinkList.push(_.last(m.linkIds));
         }
       });

@@ -24,7 +24,7 @@
     var extractDataForDisplay = function(selectedData) {
       var pickUniqueValues = function(selectedData, property) {
         return _.chain(selectedData)
-          .pluck(property)
+          .map(property)
           .uniq()
           .value();
       };
@@ -39,7 +39,7 @@
           .filter(function (data) {
             return data.roadPartNumber == roadPartNumber;
           })
-          .pluck(property)
+          .map(property)
           .value());
       };
 
@@ -49,11 +49,11 @@
           .filter(function (data) {
             return data.roadPartNumber == roadPartNumber;
           })
-          .pluck(property)
+          .map(property)
           .value());
       };
 
-      var properties = _.cloneDeep(_.first(selectedData));
+      var properties = _.cloneDeep(_.head(selectedData));
       var isMultiSelect = selectedData.length > 1;
       if (isMultiSelect) {
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
@@ -96,8 +96,8 @@
     };
 
     var openMultiple = function(links) {
-      var uniqueLinks = _.unique(links, 'linkId');
-      current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
+      var uniqueLinks = _.uniq(links, 'linkId');
+      current = roadCollection.get(_.map(uniqueLinks, 'linkId'));
       _.forEach(current, function (selected) {
         selected.select();
       });
@@ -128,7 +128,7 @@
     var cancel = function() {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
-      var originalData = _.first(current).getData();
+      var originalData = _.head(current).getData();
       eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
     };
 

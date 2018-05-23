@@ -52,8 +52,8 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.apache.commons" % "commons-lang3" % "3.7",
-        "commons-codec" % "commons-codec" % "1.11",
+        "org.apache.commons" % "commons-lang3" % "3.2",
+        "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "com.typesafe.slick" %% "slick" % "3.0.0",
@@ -101,7 +101,7 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
-        "org.apache.httpcomponents" % "httpclient" % "4.5.5"
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -171,7 +171,7 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
-        "org.apache.httpcomponents" % "httpclient" % "4.5.5"
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -206,7 +206,7 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
-        "org.apache.httpcomponents" % "httpclient" % "4.5.5"
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -244,7 +244,7 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
-        "org.apache.httpcomponents" % "httpclient" % "4.5.5",
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.eclipse.jetty" % "jetty-webapp" % "9.2.10.v20150310" % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % "9.2.10.v20150310" % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.10.v20150310" % "container;compile",
@@ -261,8 +261,8 @@ object Digiroad2Build extends Build {
     .enablePlugins(GatlingPlugin)
     .settings(scalaVersion := ScalaVersion)
     .settings(libraryDependencies ++= Seq(
-    "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.3.1" % "test",
-    "io.gatling" % "gatling-test-framework" % "2.2.5" % "test"))
+    "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
+    "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),

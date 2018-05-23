@@ -11,7 +11,7 @@ object UpdateIncompleteLinkList {
     try {
       UpdateIncompleteLinkList.runUpdate()
     } finally {
-      Digiroad2Context.system.terminate()
+      Digiroad2Context.system.shutdown()
     }
   }
 

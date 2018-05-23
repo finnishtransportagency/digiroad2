@@ -72,13 +72,15 @@ module.exports = function(grunt) {
           port: 9001,
           base: ['dist', '.', 'UI'],
           middleware: function(connect, opts) {
+            var serveStatic = require('serve-static');
+            var serveIndex = require('serve-index');
             var config = [
               // Serve static files.
-              connect.static(opts.base[0]),
-              connect.static(opts.base[1]),
-              connect.static(opts.base[2]),
+              serveStatic(opts.base[0]),
+              serveStatic(opts.base[1]),
+              serveStatic(opts.base[2]),
               // Make empty directories browsable.
-              connect.directory(opts.base[2])
+              serveIndex(opts.base[2])
             ];
             var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
             config.unshift(proxy);
@@ -260,6 +262,9 @@ module.exports = function(grunt) {
           timeout: 50000,
           reporter: 'Spec'
         }
+      },
+      options: {
+        growlOnSuccess: false
       },
       viite_unit: {
         options: {

@@ -138,7 +138,7 @@
         }
         else {
           if (limits.length === 1){
-            me.createVerificationForm(_.first(limits));
+            me.createVerificationForm(_.head(limits));
           }
         }
       });
@@ -166,7 +166,7 @@
         var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
         element.html($('<div class="municipality-list">').append(unknownLimits));
 
-        if (_.contains(me.roles, 'operator') || _.contains(me.roles, 'premium'))
+        if (_.includes(me.roles, 'operator') || _.includes(me.roles, 'premium'))
           searchbox.insertBefore('#tableData');
 
         $('#searchBox').on('keyup', function (event) {

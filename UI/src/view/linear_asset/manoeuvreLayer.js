@@ -108,7 +108,7 @@
    */
     var selectManoeuvreFeatures = function (features) {
 
-    if (!application.isReadOnly()){
+    if (!application.isReadOnly() && authorizationPolicy.editModeAccessByFeatures(features)){
       var style = manoeuvreStyle.getSelectedStyle().getStyle(features, {zoomLevel: zoomlevels.getViewZoom(map)});
       features.setStyle(style);
     }
@@ -246,14 +246,15 @@
       roadLayer.layer.getSource().addFeatures(createSourceDestinationFeatures(sourceDestinationRoadLinks));
     };
 
-    var reselectManoeuvre = function(event) {
+    var reselectManoeuvre = function() {
       if (!selectedManoeuvreSource.isDirty()) {
         selectControl.activate();
       }
 
       if(!application.isReadOnly()){
         _.each(selectControl.getSelectInteraction().getFeatures().getArray(), function(feature){
-          feature.setStyle(manoeuvreStyle.getSelectedStyle().getStyle(feature, {zoomLevel: zoomlevels.getViewZoom(map)}));
+          if(authorizationPolicy.editModeAccessByFeatures(feature))
+            feature.setStyle(manoeuvreStyle.getSelectedStyle().getStyle(feature, {zoomLevel: zoomlevels.getViewZoom(map)}));
         });
 
       } else {
@@ -276,7 +277,7 @@
 
           var manoeuvreAdjacentLinks = _.isEmpty(addedManoeuvre) ?  adjacentLinks(manoeuvreSource) : addedManoeuvre.adjacentLinks;
 
-          markAdjacentFeatures(_.pluck(manoeuvreAdjacentLinks,'linkId'));
+          markAdjacentFeatures(_.map(manoeuvreAdjacentLinks,'linkId'));
           drawIndicators(manoeuvreAdjacentLinks);
         }
         redrawRoadLayer();
@@ -379,13 +380,13 @@
             return link.linkId === adjacent.linkId;
           }));
         })
-        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points) || authorizationPolicy.editModeAccessByLink(adjacentLink);})
+        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points) || !authorizationPolicy.editModeAccessByLink(adjacentLink);})
         .value();
     };
 
     var markAdjacentFeatures = function(adjacentLinkIds) {
       _.forEach(roadLayer.layer.getSource().getFeatures(), function(feature) {
-        feature.getProperties().adjacent = feature.getProperties().type === 'normal' && _.contains(adjacentLinkIds, feature.getProperties().linkId);
+        feature.getProperties().adjacent = feature.getProperties().type === 'normal' && _.includes(adjacentLinkIds, feature.getProperties().linkId);
       });
     };
 
@@ -404,8 +405,8 @@
       indicatorLayer.getSource().clear();
       var aLinks = adjacentLinks(roadLink);
       var tLinks = nonAdjacentTargetLinks(roadLink);
-      var adjacentLinkIds = _.pluck(aLinks, 'linkId');
-      var targetLinkIds = _.pluck(tLinks, 'linkId');
+      var adjacentLinkIds = _.map(aLinks, 'linkId');
+      var targetLinkIds = _.map(tLinks, 'linkId');
 
       if(application.isReadOnly()){
 
@@ -437,7 +438,7 @@
               .filter(function (adjacentLink) {
                 return adjacentLink.linkId;
               })
-              .pluck('linkId')
+              .map('linkId')
               .value();
 
           markAdjacentFeatures(targetMarkers);

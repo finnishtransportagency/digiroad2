@@ -26,7 +26,7 @@
     };
 
     this.separate = function() {
-      selection = collection.separateLinearAsset(_.first(selection));
+      selection = collection.separateLinearAsset(_.head(selection));
       isSeparated = true;
       dirty = true;
       eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
@@ -48,8 +48,8 @@
 
     this.openMultiple = function(linearAssets) {
       var partitioned = _.groupBy(linearAssets, isUnknown);
-      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
-      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
       selection = existingLinearAssets.concat(unknownLinearAssets);
       eventbus.trigger(singleElementEvent('multiSelected'));
     };
@@ -74,7 +74,7 @@
 
       var payload = {
         newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value: value, expired: false }); }),
-        ids: _.pluck(knownLinearAssets, 'id'),
+        ids: _.map(knownLinearAssets, 'id'),
         value: value,
         typeId: typeId
       };
@@ -109,7 +109,7 @@
         if (self.isUnknown()) {
           return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
         } else {
-          return { ids: _.pluck(selection, 'id') };
+          return { ids: _.map(selection, 'id') };
         }
       };
       var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
@@ -187,7 +187,7 @@
     this.verify = function() {
       eventbus.trigger(singleElementEvent('saving'));
       var knownLinearAssets = _.reject(selection, isUnknown);
-      var payload = {ids: _.pluck(knownLinearAssets, 'id'), typeId: typeId};
+      var payload = {ids: _.map(knownLinearAssets, 'id'), typeId: typeId};
       collection.verifyLinearAssets(payload);
       dirty = false;
       self.close();
@@ -269,7 +269,7 @@
           else
             return zipper[0].value !== zipper[1].value;
       });
-      return _.contains(mapped, true);
+      return _.includes(mapped, true);
     }
 
     function getRequiredFields(properties){
@@ -392,7 +392,6 @@
           var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
           if(!iProperty)
             return false;
-
           return _.isEqual(property.values, iProperty.values);
       });
     };

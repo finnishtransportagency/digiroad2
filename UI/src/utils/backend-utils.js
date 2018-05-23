@@ -631,7 +631,7 @@
 
     this.withVerificationInfo = function(){
       self.getVerificationInfo = function(){
-        return $.Deferred().resolve([]);
+        return mockBaconDefered({verified: false});
       };
       return self;
     };
@@ -699,7 +699,7 @@
 
     this.withSpeedLimitsData = function(speedLimitsData) {
       self.getSpeedLimits = function(boundingBox, withRoadAddress) {
-        return $.Deferred().resolve(speedLimitsData);
+        return mockBaconDefered(speedLimitsData);
       };
       return self;
     };
@@ -736,5 +736,30 @@
       };
       return self;
     };
+
+    this.withMunicipalityLocationData = function(municipalityLocationData){
+      self.getMunicipalityByBoundingBox = function(){
+        return mockBaconDefered(municipalityLocationData);
+      };
+      return self;
+    };
+
+    this.withMunicipalityCoordinateData = function(municipalityCoordinateData){
+      self.getMunicipalityFromCoordinates = function(x, y, callback){
+        return callback(municipalityCoordinateData);
+      };
+      return self;
+    };
+
+    var mockBaconDefered = function(resultData){
+       var then = function(callback){
+        callback(resultData);
+        return {then: then};
+         };
+        return {
+       then : then
+      };
+      };
+
   };
 }(this));
