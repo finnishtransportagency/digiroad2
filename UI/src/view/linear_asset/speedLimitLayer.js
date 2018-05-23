@@ -11,6 +11,7 @@ window.SpeedLimitLayer = function(params) {
   var isActive = false;
   var isActiveTrafficSigns = false;
   var extraEventListener = _.extend({running: false}, eventbus);
+  var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
@@ -157,7 +158,7 @@ window.SpeedLimitLayer = function(params) {
       if (!closestSpeedLimitLink) {
         return;
       }
-      if (!editConstrains(closestSpeedLimitLink)) {
+      if (authorizationPolicy.formEditModeAccess(closestSpeedLimitLink)) {
         if (isWithinCutThreshold(closestSpeedLimitLink.distance)) {
           moveTo(closestSpeedLimitLink.point[0], closestSpeedLimitLink.point[1]);
         } else {
@@ -187,7 +188,7 @@ window.SpeedLimitLayer = function(params) {
       }
 
       var nearestSpeedLimit = nearest.feature.getProperties();
-      if(!editConstrains(nearestSpeedLimit)){
+      if(authorizationPolicy.formEditModeAccess(nearestSpeedLimit)){
         var splitProperties = calculateSplitProperties(nearestSpeedLimit, mousePoint);
         selectedSpeedLimit.splitSpeedLimit(nearestSpeedLimit.id, splitProperties);
 
@@ -243,7 +244,7 @@ window.SpeedLimitLayer = function(params) {
   var showDialog = function (speedLimits) {
 
     speedLimits = _.filter(speedLimits, function(asset){
-      return !editConstrains(asset);
+      return authorizationPolicy.formEditModeAccess(asset);
     });
 
     activateSelectionStyle(speedLimits);
@@ -320,8 +321,8 @@ window.SpeedLimitLayer = function(params) {
   var startListeningExtraEvents = function(){
     extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:hide', hideSpeedLimitsComplementary);
     extraEventListener.listenTo(eventbus, 'speedLimit-complementaryLinks:show', showSpeedLimitsComplementary);
-    extraEventListener.listenTo(eventbus, 'speedLimit:hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
-    extraEventListener.listenTo(eventbus, 'speedLimit:showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
+    extraEventListener.listenTo(eventbus, 'speedLimit-readOnlyTrafficSigns:hide', hideReadOnlyTrafficSigns);
+    extraEventListener.listenTo(eventbus, 'speedLimit-readOnlyTrafficSigns:show', showReadOnlyTrafficSigns);
   };
 
   var stopListeningExtraEvents = function(){
@@ -590,12 +591,6 @@ window.SpeedLimitLayer = function(params) {
   var refreshSelectedView = function(){
     if(applicationModel.getSelectedLayer() == layerName)
       me.refreshView();
-  };
-
-  var editConstrains = function(selectedAsset) {
-    return false;
-    //TODO revert this when DROTH-909
-    //return selectedAsset.administrativeClass === 'State';
   };
 
   return {

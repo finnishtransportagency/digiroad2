@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode, TrafficDirection}
-import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.asset._
+import org.joda.time.{DateTime, LocalDate}
 
 trait LinearAsset extends PolyLine {
   val id: Long
@@ -48,6 +48,25 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
 }
 case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
   override def toJson: Any = massLimitation
+}
+
+case class MultiAssetValue(properties: Seq[MultiTypeProperty])
+case class MultiValue(value: MultiAssetValue) extends Value{
+  override def toJson: Any = value
+
+  override def equals(obj: scala.Any): Boolean = {
+    obj match {
+      case asset: MultiValue =>
+        value.properties.size == asset.value.properties.size && (value.properties.groupBy(_.publicId), asset.value.properties.groupBy(_.publicId)).zipped.forall {
+          case (asset1, asset2) => (asset1._2, asset2._2).zipped.forall {
+            case (prop1, prop2) => prop1.propertyType == prop2.propertyType && prop1.values.forall(
+              x =>  prop2.values.exists(_.value == x.value)
+            )
+          }
+        }
+      case _ => super.equals(obj)
+    }
+  }
 }
 
 case class AssetTypes(typeId: Int, value: String)
@@ -149,12 +168,13 @@ case class PieceWiseLinearAsset(id: Long, linkId: Long, sideCode: SideCode, valu
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                 createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
                                 vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass,
-                                attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime]) extends LinearAsset
+                                attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[InformationSource]) extends LinearAsset
 
 case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime])
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime],
+                                informationSource: Option[InformationSource])
 
 case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])

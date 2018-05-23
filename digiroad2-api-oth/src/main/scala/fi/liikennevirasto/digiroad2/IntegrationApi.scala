@@ -215,6 +215,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
+      case Some(MultiValue(x)) => x.properties.flatMap { multiTypeProperty =>
+        multiTypeProperty.values.flatMap { v =>
+          Map("weightLimitation" -> v.value)
+        }
+      }
       case _ => value.map(_.toJson)
     }
   }
@@ -228,6 +233,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
+        case DamagedByThaw.typeId => multiValueLinearAssetService
         case _ => linearAssetService
       }
     }
@@ -246,6 +252,26 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
         lastModifiedBy(asset.createdBy, asset.modifiedBy),
         "linkSource" -> asset.linkSource.value
+      )
+    }
+  }
+
+  def roadWidthToApi(roadWidthAssets: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
+    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+
+    roadWidthAssets.filterNot(isUnknown).map { asset =>
+      Map("id" -> asset.id,
+        "points" -> asset.geometry,
+        geometryWKTForLinearAssets(asset.geometry),
+        "value" -> valueToApi(asset.value),
+        "side_code" -> asset.sideCode.value,
+        "linkId" -> asset.linkId,
+        "startMeasure" -> asset.startMeasure,
+        "endMeasure" -> asset.endMeasure,
+        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
+        lastModifiedBy(asset.createdBy, asset.modifiedBy),
+        "linkSource" -> asset.linkSource.value,
+        "informationSource" -> getInformationSource(asset.informationSource)
       )
     }
   }
@@ -298,6 +324,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .orElse(createdDateTime)
         .map(DateTimePropertyFormat.print)
         .getOrElse("")
+  }
+
+
+  def getInformationSource(informationSource: Option[InformationSource]): String = {
+    informationSource match{
+      case Some(info) => info.value.toString
+      case _ => ""
+    }
   }
 
   def lastModifiedBy(createdBy: Option[String], modifiedBy: Option[String]): (String, Boolean) = {
@@ -356,6 +390,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
+        "railwayCrossingId" -> railwayCrossing.code,
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
         "linkSource" -> railwayCrossing.linkSource.value)
@@ -507,7 +542,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
         case "mass_transit_lanes" => linearAssetsToApi(160, municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
-        case "widths" => linearAssetsToApi(120, municipalityNumber)
+        case "widths" => roadWidthToApi(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
         case "paved_roads" => linearAssetsToApi(110, municipalityNumber)
         case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)

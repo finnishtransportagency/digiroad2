@@ -3,12 +3,10 @@
 
     root.RoadAddressInfoDataInitializer = {
         initialize : function(isExperimental){
-            eventbus.on('roles:fetched', function(roles) {
                 RoadAddressInfoData = {
-                    roles: roles,
+                    authorizationPolicy: new InfoPopupAuthorizationPolicy(),
                     isExperimental: isExperimental
                 };
-            });
         }
     };
 
@@ -64,8 +62,7 @@
         };
 
         var canDisplayRoadAddressInfo = function(){
-                return RoadAddressInfoData.roles &&
-                    (_.contains(RoadAddressInfoData.roles, 'operator') || _.contains(RoadAddressInfoData.roles, 'busStopMaintainer'));
+          return RoadAddressInfoData.authorizationPolicy.editModeAccess();
         };
 
         var overlay = new ol.Overlay(({

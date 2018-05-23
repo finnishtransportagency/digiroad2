@@ -11,6 +11,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -53,9 +54,9 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
 
-  def passingMunicipalityValidation(code: Int): Unit = {}
+  def passingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = {}
 
-  def failingMunicipalityValidation(code: Int): Unit = {
+  def failingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = {
     throw new IllegalArgumentException
   }
 
@@ -65,26 +66,18 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     result
   }
 
-  test("Split should fail when user is not authorized for municipality") {
-    runWithRollback {
-      val dao = daoWithRoadLinks(List(roadLink))
-      intercept[IllegalArgumentException] {
-        dao.splitSpeedLimit(200097, 100, 120, "test", failingMunicipalityValidation)
-      }
-    }
-  }
-
   test("splitting one link speed limit " +
     "where split measure is after link middle point " +
     "modifies end measure of existing speed limit " +
     "and creates new speed limit for second split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 100, 120, "test", passingMunicipalityValidation)
-      val existing = dao.getPersistedSpeedLimit(200097).get
+      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
+      val (existingId, createdId) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
+      val existing = dao.getPersistedSpeedLimit(existingId).get
       val created = dao.getPersistedSpeedLimit(createdId).get
 
-      assertSpeedLimitEndPointsOnLink(200097, 388562360, 0, 100, dao)
+      assertSpeedLimitEndPointsOnLink(existingId, 388562360, 0, 100, dao)
       assertSpeedLimitEndPointsOnLink(createdId, 388562360, 100, 136.788, dao)
 
       existing.modifiedBy shouldBe Some("test")
@@ -98,11 +91,12 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split", Tag("db")) {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 50, 120, "test", passingMunicipalityValidation)
-      val modified = dao.getPersistedSpeedLimit(200097).get
+      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
+      val (existingId, createdId) = dao.splitSpeedLimit(asset, roadLink, 50, 120, 60, "test")
+      val modified = dao.getPersistedSpeedLimit(existingId).get
       val created = dao.getPersistedSpeedLimit(createdId).get
 
-      assertSpeedLimitEndPointsOnLink(200097, 388562360, 50, 136.788, dao)
+      assertSpeedLimitEndPointsOnLink(existingId, 388562360, 50, 136.788, dao)
       assertSpeedLimitEndPointsOnLink(createdId, 388562360, 0, 50, dao)
 
       modified.modifiedBy shouldBe Some("test")
@@ -170,11 +164,11 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       }
       id2 shouldBe None
     }
@@ -186,15 +180,15 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, (_, _) => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, (_, _) => ())
       }
       id2 shouldBe defined
       val id3 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       }
       id3 shouldBe None
     }
@@ -220,11 +214,11 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       val dao = daoWithRoadLinks(List(roadLink))
 
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
-      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, 40, 0, _ => ())
+      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(Some(linkId))
 
-      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, 40, 0, _ => ())
+      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, 40, 0, (_, _) => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }

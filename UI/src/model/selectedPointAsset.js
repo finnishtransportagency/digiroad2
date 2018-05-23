@@ -19,7 +19,10 @@
       isSelected: isSelected,
       getAdministrativeClass: getAdministrativeClass,
       checkSelectedSign: checkSelectedSign,
-      setPropertyByPublicId: setPropertyByPublicId
+      setPropertyByPublicId: setPropertyByPublicId,
+      getMunicipalityCode: getMunicipalityCode,
+      getMunicipalityCodeByLinkId: getMunicipalityCodeByLinkId,
+      getCoordinates: getCoordinates
     };
 
     function place(asset) {
@@ -115,6 +118,23 @@
       var administrativeClass = road ? road.getData().administrativeClass : null;
       return _.isNull(administrativeClass) || _.isUndefined(administrativeClass) ? undefined : administrativeClass;
 
+    }
+
+    function getMunicipalityCodeByLinkId(linkId){
+      if(current && current.municipalityCode && !linkId)
+        return current.municipalityCode;
+      var road = roadCollection.getRoadLinkByLinkId(linkId);
+      var municipalityCode = road ? road.getData().municipalityCode : null;
+      return _.isNull(municipalityCode) || _.isUndefined(municipalityCode) ? undefined : municipalityCode;
+
+    }
+
+    function getMunicipalityCode(){
+      return !_.isUndefined(current.municipalityCode) ?  current.municipalityCode: roadCollection.getRoadLinkByLinkId(current.linkId).getData().municipalityCode;
+    }
+
+    function getCoordinates(){
+      return {lon: current.lon, lat: current.lat};
     }
 
     function getSelectedTrafficSignValue() {

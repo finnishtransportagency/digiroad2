@@ -30,7 +30,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388562361l))).thenReturn(Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388562361l))).thenReturn(Seq(RoadLink(388562361l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))
   when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set.empty[Long])).thenReturn(Seq())
 
@@ -53,7 +53,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
   when(mockMaintenanceDao.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, Seq(1)))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, maintenanceRoadAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, maintenanceRoadAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val maintenanceDao = new OracleMaintenanceDao(mockVVHClient, mockRoadLinkService)
@@ -334,7 +334,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       when(mockMaintenanceDao.fetchPotentialServiceRoads()).thenReturn(Seq(
-        PersistedLinearAsset(0, 388562361l,1, Some(maintenanceRoad), 0.0, 20.0, Some("testuser"), None, None, None, false, 290, 0, None, NormalLinkInterface, None, None)
+        PersistedLinearAsset(0, 388562361l,1, Some(maintenanceRoad), 0.0, 20.0, Some("testuser"), None, None, None, false, 290, 0, None, NormalLinkInterface, None, None, None)
       ))
 
       val assets = MaintenanceServiceWithDao.getByZoomLevel

@@ -25,10 +25,10 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   val mockOnOffLinearAssetService = MockitoSugar.mock[OnOffLinearAssetService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0,0), Point(0,500))))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mocklinearAssetService = MockitoSugar.mock[LinearAssetService]
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockAssetService = MockitoSugar.mock[AssetService]
@@ -42,58 +42,77 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   val roadLink = RoadLink(1000L, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
+  when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
+  when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0,0), Point(0,500))))
 
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(TotalWeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(TrailerTruckWeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TrailerTruckWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TrailerTruckWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(AxleWeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, AxleWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, AxleWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(BogieWeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, BogieWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, BogieWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(HeightLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, HeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, HeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(LengthLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, LengthLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, LengthLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(WidthLimit.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, WidthLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(TotalWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(TrailerTruckWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(AxleWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(BogieWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, BogieWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(HeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, HeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(LengthLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LengthLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(WidthLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, WidthLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(TotalWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(TrailerTruckWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(AxleWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(BogieWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, BogieWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(HeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, HeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(LengthLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LengthLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(WidthLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, WidthLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, WidthLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(TotalWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(TrailerTruckWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(AxleWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(BogieWeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, BogieWeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(HeightLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, HeightLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(LengthLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LengthLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(WidthLimit.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, WidthLimit.typeId, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(TotalWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(TrailerTruckWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(AxleWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(BogieWeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, BogieWeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(HeightLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, HeightLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(LengthLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LengthLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(WidthLimit.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, WidthLimit.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
-  when(mocklinearAssetService.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(2)), 0, 10, None, None, None, None, false, NumberOfLanes.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mocklinearAssetService.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(2)), 0, 10, None, None, None, None, false, NumberOfLanes.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(2)), 0, 10, None, None, None, None, false, NumberOfLanes.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mocklinearAssetService.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(2)), 0, 10, None, None, None, None, false, NumberOfLanes.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
   when(mocklinearAssetService.getByMunicipalityAndRoadLinks(NumberOfLanes.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(2)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, NumberOfLanes.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(2)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, NumberOfLanes.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
 
   when(mocklinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
   when(mocklinearAssetService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
 
   when(mockSpeedLimitService.getByMunicpalityAndRoadLinks(235)).thenReturn(Seq((SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface, Map()), roadLink)))
-  when(mockSpeedLimitService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long], any[Int => Unit].apply)).thenReturn(Seq(1L))
+  when(mockSpeedLimitService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long], any[(Int, AdministrativeClass) => Unit].apply)).thenReturn(Seq(1L))
   when(mockSpeedLimitService.update(any[Long], Seq(any[NewLinearAsset]), any[String])).thenReturn(Seq(3L))
   when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(1))).thenReturn(Seq(SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 1, None, false, LinkGeomSource.NormalLinkInterface, Map())))
   when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(3))).thenReturn(Seq(SpeedLimit(3, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 2, None, false, LinkGeomSource.NormalLinkInterface, Map())))
 
+  when(mockRoadWidthService.getPersistedAssetsByIds(RoadWidth.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(200)), 0, 10, None, None, None, None, false, RoadWidth.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockRoadWidthService.getPersistedAssetsByIds(RoadWidth.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(200)), 0, 10, None, None, None, None, false, RoadWidth.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockRoadWidthService.getByMunicipalityAndRoadLinks(RoadWidth.typeId, 235)).thenReturn(
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(200)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, RoadWidth.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
+  when(mockRoadWidthService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
+  when(mockRoadWidthService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
+
+  when(mockPavingService.getPersistedAssetsByIds(PavedRoad.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockPavingService.getPersistedAssetsByIds(PavedRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockPavingService.getByMunicipalityAndRoadLinks(PavedRoad.typeId, 235)).thenReturn(
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, PavedRoad.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
+  when(mockPavingService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
+  when(mockPavingService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
+
   when(mockOnOffLinearAssetService.getByMunicipalityAndRoadLinks(any[Int], any[Int])).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None), roadLink)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(LitRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LitRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(LitRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LitRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0, 0), Point(0, 500))))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockOnOffLinearAssetService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.updateWithTimeStamp(Seq(any[Long]), any[Value], any[String], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1.toLong))
@@ -120,8 +139,13 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
   when(mockObstacleService.getById(1)).thenReturn(Some(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, NormalLinkInterface)))
-  when(mockRailwayCrossingService.getById(1)).thenReturn(Some(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, None, NormalLinkInterface)))
+  when(mockRailwayCrossingService.getById(1)).thenReturn(Some(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
   when(mockTrafficLightService.getById(1)).thenReturn(Some(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
+
+  when(mockPedestrianCrossingService.getByMunicipality(235)).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
+  when(mockObstacleService.getByMunicipality(235)).thenReturn(Seq(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, NormalLinkInterface)))
+  when(mockRailwayCrossingService.getByMunicipality(235)).thenReturn(Seq(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
+  when(mockTrafficLightService.getByMunicipality(235)).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 
   when(mockPedestrianCrossingService.create(any[IncomingPedestrianCrossing], any[String], any[RoadLink])).thenReturn(1L)
   when(mockObstacleService.create(any[IncomingObstacle], any[String], any[RoadLink])).thenReturn(1L)
@@ -130,7 +154,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   when(mockPedestrianCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 0, 235, None, None, None, None, NormalLinkInterface)))
   when(mockObstacleService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(Obstacle(1, 1000, 0, 0, 0, false, 1L, 235, 2, None, None, None, None, NormalLinkInterface)))
-  when(mockRailwayCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(RailwayCrossing(1, 1000, 0, 0, 0, false, 1L, 235, 1, None, None, None, None, None, NormalLinkInterface)))
+  when(mockRailwayCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(RailwayCrossing(1, 1000, 0, 0, 0, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
   when(mockTrafficLightService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 
 
@@ -150,8 +174,18 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   val assetInfo =
     Map(
+      "lighting" -> """ "properties": [{"value":0, "name": "hasLighting"}]""",
       "lighting" -> """ "properties": [{"value": 1, "name": "hasLighting"}]""",
+      "speed_limit" -> """ "properties": [{"value": 30, "name": "value"}]""",
+      "speed_limit" -> """ "properties": [{"value": 40, "name": "value"}]""",
+      "speed_limit" -> """ "properties": [{"value": 50, "name": "value"}]""",
       "speed_limit" -> """ "properties": [{"value": 60, "name": "value"}]""",
+      "speed_limit" -> """ "properties": [{"value": 70, "name": "value"}]""",
+      "speed_limit" -> """ "properties": [{"value": 80, "name": "value"}]""",
+      "speed_limit" -> """ "properties": [{"value": 90, "name": "value"}]""",
+      "speed_limit" -> """ "properties": [{"value": 100, "name": "value"}]""",
+      "speed_limit" -> """ "properties": [{"value": 110, "name": "value"}]""",
+      "speed_limit" -> """ "properties": [{"value": 120, "name": "value"}]""",
       "total_weight_limit" -> """ "properties": [{"value": 1000, "name": "value"}]""",
       "trailer_truck_weight_limit" -> """ "properties": [{"value": 1000, "name": "value"}]""",
       "axle_weight_limit" -> """ "properties": [{"value": 1000, "name": "value"}]""",
@@ -159,18 +193,76 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       "height_limit" -> """ "properties": [{"value": 1000, "name": "value"}]""",
       "length_limit" -> """ "properties": [{"value": 1000, "name": "value"}]""",
       "width_limit" -> """ "properties": [{"value": 1000, "name": "value"}]""",
-      "number_of_lanes" -> """ "properties": [{"value": 2, "name": "value"}]"""
+      "number_of_lanes" -> """ "properties": [{"value": 2, "name": "value"}]""",
+      "road_width" -> """ "properties": [{"value": 100, "name": "value"}]""",
+      "public_transport_lane" -> """ "properties": [{"value": 0, "name": "hasLane"}]""",
+      "public_transport_lane" -> """ "properties": [{"value": 1, "name": "hasLane"}]""",
+      "pavement" -> """ "properties": [{"value": 0, "name": "hasPavement"}]""",
+      "pavement" -> """ "properties": [{"value": 1, "name": "hasPavement"}]"""
     )
 
   val pointAssetInfo =
     Map(
+      "pedestrian_crossing" -> """ "properties": [{"name": "hasPedestrianCrossing", "value": 0}]""",
       "pedestrian_crossing" -> """ "properties": [{"name": "hasPedestrianCrossing", "value": 1}]""",
+      "obstacle" -> """ "properties": [{"value": 1, "name": "obstacleType"}]""",
       "obstacle" -> """ "properties": [{"value": 2, "name": "obstacleType"}]""",
+      "traffic_light" -> """ "properties": [{"name": "hasTrafficLight", "value" : 0}]""",
       "traffic_light" -> """ "properties": [{"name": "hasTrafficLight", "value" : 1}]""",
-      "railway_crossing" -> """ "properties": [{"value": 2, "name": "safetyEquipment"}]"""
+      "railway_crossing" -> """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]""",
+      "railway_crossing" -> """ "properties": [{"value": 2, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]""",
+      "railway_crossing" -> """ "properties": [{"value": 3, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]""",
+      "railway_crossing" -> """ "properties": [{"value": 4, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]""",
+      "railway_crossing" -> """ "properties": [{"value": 5, "name": "safetyEquipment"} , {"value": "someCode", "name": "railwayCrossingId"}, {"value": "someName", "name": "name"}]"""
     )
 
-  def testUserAuth(assetURLName: String) = {
+  val assetInfoInvalidProp: Seq[(String, String, String)] =
+    Seq(
+      ( "lighting", """ "properties": [{"value": "", "name": "hasLighting"}]""", "The property name hasLighting doesn't exist or is not valid for this type of asset."),
+      ( "lighting", """ "properties": [{"value": 2, "name": "hasLighting"}]""", "The property values for the property with name hasLighting are not valid."),
+      ( "public_transport_lane", """ "properties": [{"value": "", "name": "hasLane"}]""", "The property name hasLane doesn't exist or is not valid for this type of asset."),
+      ( "public_transport_lane", """ "properties": [{"value": 2, "name": "hasLane"}]""", "The property values for the property with name hasLane are not valid."),
+      ( "speed_limit", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "speed_limit", """ "properties": [{"value": 20, "name": "value"}]""", "The property values for the property with name speed limit are not valid."),
+      ( "total_weight_limit", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "total_weight_limit", """ "properties": [{"value": 0, "name": "value"}]""", "The property values for TotalWeightLimit asset type are not valid."),
+      ( "trailer_truck_weight_limit", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "trailer_truck_weight_limit", """ "properties": [{"value": 0, "name": "value"}]""", "The property values for TrailerTruckWeightLimit asset type are not valid."),
+      ( "axle_weight_limit", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "axle_weight_limit", """ "properties": [{"value": 0, "name": "value"}]""", "The property values for AxleWeightLimit asset type are not valid."),
+      ( "bogie_weight_limit", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "bogie_weight_limit", """ "properties": [{"value": 0, "name": "value"}]""", "The property values for BogieWeightLimit asset type are not valid."),
+      ( "height_limit", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "height_limit", """ "properties": [{"value": 0, "name": "value"}]""", "The property values for HeightLimit asset type are not valid."),
+      ( "length_limit", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "length_limit", """ "properties": [{"value": 0, "name": "value"}]""", "The property values for LengthLimit asset type are not valid."),
+      ( "width_limit", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "width_limit", """ "properties": [{"value": 0, "name": "value"}]""", "The property values for WidthLimit asset type are not valid."),
+      ( "number_of_lanes", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "number_of_lanes", """ "properties": [{"value": "0", "name": "value"}]""", "The property values for NumberOfLanes asset type are not valid." ),
+      ( "road_width", """ "properties": [{"value": "", "name": "value"}]""", "The property name value doesn't exist or is not valid for this type of asset."),
+      ( "road_width", """ "properties": [{"value": "0", "name": "value"}]""", "The property values for RoadWidth asset type are not valid." ),
+      ( "pavement", """ "properties": [{"value": "", "name": "hasPavement"}]""", "The property name hasPavement doesn't exist or is not valid for this type of asset."),
+      ( "pavement", """ "properties": [{"value": "2", "name": "hasPavement"}]""", "The property values for the property with name hasPavement are not valid." )
+    )
+
+  val pointAssetInfoInvalidProp: Seq[(String, String, String)] =
+    Seq(
+      ("railway_crossing", """ "properties": [{"value": "", "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "railwayCrossingId"}]""", "The property name safetyEquipment doesn't exist or is not valid for this type of asset."),
+      ("railway_crossing", """ "properties": [{"value": 0, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "railwayCrossingId"}]""", "The property values for the property with name safetyEquipment is not valid."),
+      ("railway_crossing", """ "properties": [{"value": 6, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "someCode", "name": "railwayCrossingId"}]""", "The property values for the property with name safetyEquipment is not valid."),
+      ("railway_crossing", """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "someName", "name": "name"}, {"value": "", "name": "railwayCrossingId"}]""", "The property name railwayCrossingId doesn't exist or is not valid for this type of asset."),
+      ("railway_crossing", """ "properties": [{"value": 1, "name": "safetyEquipment"} , {"value": "", "name": "name"}, {"value": "someCode", "name": "railwayCrossingId"}]""", "The property name name doesn't exist or is not valid for this type of asset."),
+      ("pedestrian_crossing", """ "properties": [{"name": "hasPedestrianCrossing", "value": ""}]""", "The property name hasPedestrianCrossing doesn't exist or is not valid for this type of asset."),
+      ("pedestrian_crossing", """ "properties": [{"name": "hasPedestrianCrossing", "value": 2}]""", "The property values for the property with name hasPedestrianCrossing are not valid."),
+      ("obstacle", """ "properties": [{"value": "", "name": "obstacleType"}]""", "The property name obstacleType doesn't exist or is not valid for this type of asset."),
+      ("obstacle", """ "properties": [{"value": 3, "name": "obstacleType"}]""", "The property values for the property with name obstacleType are not valid."),
+      ("traffic_light", """ "properties": [{"name": "hasTrafficLight", "value" : ""}]""","The property name hasTrafficLight doesn't exist or is not valid for this type of asset."),
+      ("traffic_light", """ "properties": [{"name": "hasTrafficLight", "value" : 2}]""","The property values for the property with name hasTrafficLight are not valid.")
+    )
+
+
+  def testUserAuth(assetURLName: String) : Unit = {
     get("/" + assetURLName + "?municipalityCode=235") {
       withClue("assetName " + assetURLName) {
         status should equal(401)
@@ -183,12 +275,18 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
     getWithBasicUserAuth("/" + assetURLName + "?municipalityCode=235", "kalpa", "kalpa") {
       withClue("assetName " + assetURLName) {
+        println(response.getContent())
+        status should equal(200)
+      }
+    }
+    getWithBasicUserAuth("/" + assetURLName + "/1", "kalpa", "kalpa") {
+      withClue("assetName " + assetURLName) {
         status should equal(200)
       }
     }
   }
 
-  def createLinearAsset(assetInfo: (String, String)) = {
+  def createLinearAsset(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, "sideCode": 1, """ + prop + """}]"""
 
@@ -199,7 +297,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def createPointAsset(assetInfo: (String, String)) = {
+  def createPointAsset(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "sideCode": 1, """ + prop + """}]"""
 
@@ -210,7 +308,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def createWithoutLinkId(assetURLName: String) = {
+  def createWithoutLinkId(assetURLName: String) : Unit = {
     val requestPayload = """[{"startMeasure": 0, "createdAt": 2, "endMeasure": 200, "sideCode": 1}]"""
 
     postJsonWithUserAuth("/" + assetURLName, requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -220,9 +318,8 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def createWithoutValidProperties(assetURLName: String) = {
-    val requestPayload =
-      """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, "sideCode": 4, "properties" : []}]"""
+  def createWithoutValidProperties(assetURLName: String): Unit = {
+    val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, "sideCode": 4, "properties" : []}]"""
 
     postJsonWithUserAuth("/" + assetURLName, requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       withClue("assetName " + assetURLName) {
@@ -231,7 +328,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def createWithoutValidSideCode(assetInfo: (String, String)) = {
+  def createWithoutValidSideCode(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 1000, "sideCode": 1, """ + prop + """}]"""
 
@@ -242,7 +339,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def assetNotCreatedIfAssetLongerThanRoad(assetInfo: (String, String)) = {
+  def assetNotCreatedIfAssetLongerThanRoad(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """[{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 1000, "sideCode": 1, """ + prop + """}]"""
     postJsonWithUserAuth("/" + assetURLName, requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -252,7 +349,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def assetNotCeatedIfOneMeasureLessZero(assetInfo: (String, String)) = {
+  def assetNotCeatedIfOneMeasureLessZero(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """[{"linkId": 1000, "startMeasure": -1, "createdAt": "01.08.2017 14:33:47", "endMeasure": 200, "sideCode": 1, """ + prop + """}]"""
     postJsonWithUserAuth("/" + assetURLName, requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -262,7 +359,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def assetNotCreatedWithStateAdministrativeClass(assetInfo: (String, String)) = {
+  def assetNotCreatedWithStateAdministrativeClass(assetInfo: (String, String)) : Unit = {
     val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
 
@@ -275,7 +372,19 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def deleteAssetWithWrongAuthentication(assetURLName: String) = {
+  def assetNotCreatedWithInvalidePropertyValue(assetInfo: (String, String, String)) : Unit = {
+    val (assetURLName, prop, errorMessage) = assetInfo
+    val requestPayload = """[{"linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "endMeasure": 1000, "sideCode": 1, """ + prop + """}]"""
+
+    postJsonWithUserAuth("/" + assetURLName, requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+      withClue("assetName " + assetURLName) {
+        status should be(400)
+        response.getContent() should be (errorMessage)
+      }
+    }
+  }
+
+  def deleteAssetWithWrongAuthentication(assetURLName: String) : Unit = {
     deleteWithUserAuth("/" + assetURLName + "/1", getAuthorizationHeader("kalpa", "")) {
       withClue("assetName " + assetURLName) {
         status should be(401)
@@ -283,7 +392,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def assetNotDeletedWithStateAdministrativeClass(assetURLName: String) = {
+  def assetNotDeletedWithStateAdministrativeClass(assetURLName: String) : Unit = {
     val newRoadLinks = Seq(RoadLink(1000L, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1000), false)).thenReturn(newRoadLinks)
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(1000), false)).thenReturn(newRoadLinks)
@@ -295,7 +404,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def updatedWithNewerTimestampAndDifferingMeasures(assetInfo: (String, String)) = {
+  def updatedWithNewerTimestampAndDifferingMeasures(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 1502, "endMeasure": 16, "sideCode": 1, """ + prop + """}"""
     putJsonWithUserAuth("/" + assetURLName + "/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -305,7 +414,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def updatedWithEqualOrNewerTimestampButSameMeasures(assetInfo: (String, String)) = {
+  def updatedWithEqualOrNewerTimestampButSameMeasures(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 10, "sideCode": 1, """ + prop + """}"""
     putJsonWithUserAuth("/" + assetURLName + "/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -315,7 +424,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def notUpdatedIfTimestampIsOlderThanExistingAsset(assetInfo: (String, String)) = {
+  def notUpdatedIfTimestampIsOlderThanExistingAsset(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 15, "sideCode": 1, """ + prop + """}"""
     putJsonWithUserAuth("/" + assetURLName + "/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -325,7 +434,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def notUpdatedIfAssetLongerThanRoad(assetInfo: (String, String)) = {
+  def notUpdatedIfAssetLongerThanRoad(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 1000, "sideCode": 1, """ + prop + """}"""
     putJsonWithUserAuth("/" + assetURLName + "/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -335,7 +444,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def notUpdatedIfOneMeasureLessThanZero(assetInfo: (String, String)) = {
+  def notUpdatedIfOneMeasureLessThanZero(assetInfo: (String, String)) : Unit = {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """{"id": 1, "linkId": 1000, "startMeasure": -1, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 15, "sideCode": 1, """ + prop + """}"""
     putJsonWithUserAuth("/" + assetURLName + "/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -345,7 +454,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def notUpdatedWithoutValidSidecode(assetInfo: (String, String)) = {
+  def notUpdatedWithoutValidSidecode(assetInfo: (String, String)) : Unit= {
     val (assetURLName, prop) = assetInfo
     val requestPayload = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 15, "sideCode": 11, """ + prop + """}"""
     putJsonWithUserAuth("/" + assetURLName + "/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
@@ -355,7 +464,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  def assetNotUpdatedWithStateAdministrativeClass(assetInfo: (String, String)) = {
+  def assetNotUpdatedWithStateAdministrativeClass(assetInfo: (String, String)) : Unit = {
     val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
 
@@ -368,8 +477,20 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
-  test("Should require correct authentication for linear", Tag("db")) {
-    assetInfo.keySet.foreach(testUserAuth)
+  def notUpdatedWithoutValidProperties(assetInfo: (String, String, String)) : Unit= {
+    val (assetURLName, prop, errorMessage) = assetInfo
+    val requestPayload = """{"id": 1, "linkId": 1000, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 15, "sideCode": 1, """ + prop + """}"""
+    putJsonWithUserAuth("/" + assetURLName + "/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+      withClue("assetName " + assetURLName) {
+        status should equal(400)
+        response.getContent() should be(errorMessage)
+      }
+    }
+  }
+
+  test("Should require correct authentication", Tag("db")) {
+//    assetInfo.keySet.foreach(testUserAuth)
+    pointAssetInfo.keySet.foreach(testUserAuth)
   }
 
   test("create new linear asset", Tag("db")) {
@@ -391,6 +512,11 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   test("create new asset without valid properties", Tag("db")) {
     assetInfo.keySet.foreach(createWithoutValidProperties)
+  }
+
+  test("asset is not created with invalid properties", Tag("db")) {
+    assetInfoInvalidProp.foreach(assetNotCreatedWithInvalidePropertyValue)
+    pointAssetInfoInvalidProp.foreach(assetNotCreatedWithInvalidePropertyValue)
   }
 
   test("asset is not created if the asset is longer than the road"){
@@ -440,13 +566,18 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     pointAssetInfo.foreach(assetNotUpdatedWithStateAdministrativeClass)
   }
 
+  test("asset is not updated with invalid properties"){
+    assetInfoInvalidProp.foreach(notUpdatedWithoutValidProperties)
+    pointAssetInfoInvalidProp.foreach(notUpdatedWithoutValidProperties)
+  }
+
   test("asset is not deleted if linkId has AdministrativeClass State"){
     assetInfo.keySet.foreach(assetNotDeletedWithStateAdministrativeClass)
     pointAssetInfo.keySet.foreach(assetNotDeletedWithStateAdministrativeClass)
   }
 
   test("encode lighting limit") {
-    municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be(Seq(Map(
+    municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink))) should be(Seq(Map(
       "id" -> 1,
       "properties" -> Seq(Map("value" -> Some(1), "name" -> "hasLighting")),
       "linkId" -> 2000,
@@ -475,19 +606,19 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     ))
 
     withClue("assetName TotalWeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TotalWeightLimit.typeId , 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TotalWeightLimit.typeId , 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName TrailerTruckWeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName AxleWeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, AxleWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, AxleWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName BogieWeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName HeightLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, HeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, HeightLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName LengthLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, LengthLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, LengthLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink))) should be (mapAsset)}
     withClue("assetName WidthLimit" ) {
-      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, WidthLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None), roadLink))) should be (mapAsset)}
+      municipalityApi.linearAssetsToApi(Seq((PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, WidthLimit.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink))) should be (mapAsset)}
   }
 
   test("encode speed Limit Asset") {
@@ -514,6 +645,9 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       status should equal(401)
     }
     getWithBasicUserAuth("/manoeuvre?municipalityCode=235", "kalpa", "kalpa") {
+      status should equal(200)
+    }
+    getWithBasicUserAuth("/manoeuvre/1", "kalpa", "kalpa") {
       status should equal(200)
     }
   }

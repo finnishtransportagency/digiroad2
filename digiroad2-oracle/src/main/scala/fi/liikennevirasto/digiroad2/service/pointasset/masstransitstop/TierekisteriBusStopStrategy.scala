@@ -121,7 +121,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) =
     create(asset, username, point, roadLink, createTierekisteriBusStop)
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(props.toSeq, roadLink)
     }
@@ -131,7 +131,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
 
-    municipalityValidation(asset.municipalityCode)
+    municipalityValidation(asset.municipalityCode, roadLink.administrativeClass)
 
     // Enrich properties with old administrator, if administrator value is empty in CSV import
     val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)

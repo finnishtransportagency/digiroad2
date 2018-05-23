@@ -46,8 +46,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  def passingMunicipalityValidation(code: Int): Unit = {}
-  def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
+  def passingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = {}
+  def failingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = { throw new IllegalArgumentException }
 
   val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
@@ -58,7 +58,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(1l))).thenReturn(Seq(roadLink))
 
-      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
+      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_, _) => Unit)
 
       val createdLimit = provider.getSpeedLimitById(id.head).get
       createdLimit.value should equal(Some(NumericValue(30)))
@@ -66,11 +66,23 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
+    test("Split should fail when user is not authorized for municipality") {
+      runWithRollback {
+        intercept[IllegalArgumentException] {
+          val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+          when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
+
+          val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
+          provider.split(asset.id, 100, 120, 60, "test", failingMunicipalityValidation)
+        }
+      }
+    }
+
   test("split existing speed limit") {
     runWithRollback {
       val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(388562360l))).thenReturn(Seq(roadLink))
-      val speedLimits = provider.split(200097, 100, 50, 60, "test", (_) => Unit)
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
+      val speedLimits = provider.split(200097, 100, 50, 60, "test", (_, _) => Unit)
 
       val existing = speedLimits(0)
       val created = speedLimits(1)
@@ -1012,15 +1024,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(newRoadLink))
-
-      when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(any[Long])).thenReturn(Some(vvhRoadLink))
 
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
 //      println("Before split")
 //      before.foreach(_.foreach(printSL))
 
-      val split = service.split(18050499, 419.599, 100, 80, "split", { x: Int => })
+      val split = service.split(18050499, 419.599, 100, 80, "split", { (x: Int, y: AdministrativeClass) => })
 
       split should have size(2);
 

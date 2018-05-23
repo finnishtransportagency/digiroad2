@@ -66,6 +66,7 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -89,6 +90,7 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -112,6 +114,7 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -135,6 +138,7 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -157,7 +161,8 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.lengthLimit,
@@ -179,7 +184,8 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.widthLimit,
@@ -202,7 +208,8 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.litRoad,
@@ -220,10 +227,7 @@
           enabled: 'Valaistus',
           disabled: 'Ei valaistusta'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true
@@ -244,10 +248,14 @@
           enabled: 'Kelirikko',
           disabled: 'Ei kelirikkoa'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        isVerifiable: false,
+        label: new RoadDamagedByThawLabel(),
+        form: new AssetFormFactory( {
+          fields : [
+            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg' }
+          ]
+        }),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true
       },
@@ -269,10 +277,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true
@@ -311,10 +316,7 @@
           enabled: 'Päällyste',
           disabled: 'Ei päällystettä'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true
       },
@@ -336,7 +338,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        readOnly: true,
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         isVerifiable: true
       },
       {
@@ -355,10 +357,7 @@
           enabled: 'Joukkoliikennekaista',
           disabled: 'Ei joukkoliikennekaistaa'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true
       },
@@ -382,7 +381,8 @@
         possibleValues: [100, 80, 70, 60],
         style : new WinterSpeedLimitStyle(),
         isVerifiable: false,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.prohibition,
@@ -400,7 +400,8 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -418,7 +419,8 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.europeanRoads,
@@ -436,10 +438,7 @@
           enabled: 'Eurooppatienumero(t)',
           disabled: 'Ei eurooppatienumeroa'
         },
-        editConstrains : function(selectedAsset) {
-          //check if administrative class is State
-          return selectedAsset.administrativeClass === 1;
-        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true
@@ -462,6 +461,7 @@
         },
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -504,9 +504,10 @@
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
-        isVerifiable: false,
+        isVerifiable: true,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
+        authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -527,6 +528,7 @@
         },
         label: new LinearAssetLabel(),
         isVerifiable: true,
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       }
     ];
@@ -551,7 +553,7 @@
         label: new TRSpeedLimitAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         style: new TRSpeedLimitStyle(),
-        readOnly: true
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy()
       }
     ];
 
@@ -571,7 +573,8 @@
           manyFloatingAssetsLabel: 'suojatiet',
           newAssetLabel: 'suojatie'
         },
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.obstacles,
@@ -588,7 +591,8 @@
           singleFloatingAssetLabel: 'esterakennelman',
           manyFloatingAssetsLabel: 'esterakennelmat',
           newAssetLabel: 'esterakennelma'
-        }
+        },
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.railwayCrossings,
@@ -604,7 +608,12 @@
           singleFloatingAssetLabel: 'tasoristeyksen',
           manyFloatingAssetsLabel: 'tasoristeykset',
           newAssetLabel: 'tasoristeys'
-        }
+        },
+        saveCondition: function(selectedAsset) {
+            var selected = selectedAsset .get();
+          return selected.code ? selected.code !== '' : false;
+        },
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.directionalTrafficSigns,
@@ -620,7 +629,8 @@
           singleFloatingAssetLabel: 'opastustaulun',
           manyFloatingAssetsLabel: 'opastustaulut',
           newAssetLabel: 'opastustaulu'
-        }
+        },
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.servicePoints,
@@ -635,7 +645,8 @@
           singleFloatingAssetLabel: 'palvelupisteen',
           manyFloatingAssetsLabel: 'palvelupisteet',
           newAssetLabel: 'palvelupiste'
-        }
+        },
+        authorizationPolicy: new ServicePointAuthorizationPolicy()
       },
       {
         typeId: assetType.trafficLights,
@@ -652,7 +663,8 @@
           manyFloatingAssetsLabel: 'liikennevalot',
           newAssetLabel: 'liikennevalo'
         },
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.trafficSigns,
@@ -673,16 +685,13 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
-        editConstrains : function(selectedAsset, linkId) {
-          // check if administrative class is State
-          return selectedAsset.getAdministrativeClass(linkId) === "State";
-        },
+        authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         hasMunicipalityValidation: true,
         saveCondition: function (selectedAsset) {
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
-            { types: [1, 2, 3, 4], validate: function (someValue) { return !_.isNaN(parseInt(someValue)) && _.contains(possibleSpeedLimitsValues, parseInt(someValue)); }},
-            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return !_.isNaN(parseInt(someValue)) ; }}
+            { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.contains(possibleSpeedLimitsValues, parseInt(someValue)); }},
+            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d+$/.test(someValue) ; }}
           ];
 
           var functionFn = _.find(validations, function(validation){ return _.contains(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
@@ -704,9 +713,7 @@
           title: 'Rajoitus',
           showUnit: true
         },
-        editConstrains : function() {
-          return true;
-        },
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new HeightLimitLabel(Math.pow(5, 2))
       },
@@ -725,9 +732,7 @@
           title: 'Rajoitus',
           showUnit: true
         },
-        editConstrains : function() {
-          return true;
-        },
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new WidthLimitLabel(Math.pow(5, 2))
       }
@@ -748,9 +753,7 @@
           title: 'Painorajoitus',
           showUnit: true
         },
-        editConstrains : function() {
-          return true;
-        },
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
         label: new WeightLimitLabel(),
         propertyData: [
