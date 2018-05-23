@@ -241,11 +241,12 @@
       form: new AssetFormFactory( {
           fields : [
             // {label: "multipleChoice", type: 'multiple_choice', publicId: "multiple_choice_1", values: [{id: 1, label: 'multiple_choice_11'}, {id: 2, label: 'multiple_choice_12'}, {id: 3, label: 'multiple_choice_13'}, {id: 4, label: 'multiple_choice_14'}, {id: 99, label: 'multiple_choice_199'}], weight: 4 , required: true},
-             {label: "checkbox", type: 'checkbox', publicId: "public_checkbox_1", values: [{id: 1, label: 'checked1'}, {id: 0, label: 'not checked1'}], weight: 4, defaultValue: "1" },
+            //  {label: "checkbox", type: 'checkbox', publicId: "public_checkbox_1", values: [{id: 1, label: 'checked1'}, {id: 0, label: 'not checked1'}], weight: 4, defaultValue: "1" },
             //   {label: "Date", type: 'date', publicId: "public_data_1", weight: 3 },
              {label: "Integer", type: 'integer', publicId: "public_integer_1" , weight: 1 },
-             {label: "Numeric", type: 'number', publicId: "public_number_1", weight: 2}
-            // {label: "readOnlyNumber", type: 'read_only_number', publicId: "public_number_1", weight: 11 }
+             {label: "Numeric", type: 'number', publicId: "public_number_1", weight: 2},
+            {label: "", type: 'time_period', publicId: "public_validity_period", weight: 3}
+             // {label: "readOnlyNumber", type: 'read_only_number', publicId: "public_number_1", weight: 11 }
             // {label: "readOnlyText", type: 'read_only_text', publicId: "public_number_1", weight: 10 }
             //    { publicId: 'single_choice_1',  label:'single_choice_1', type: 'single_choice', values: [{id: 1, label: 'single_choice_enum_1'}, {id: 2, label: 'single_choice_enum_2', weight: 8}]}
           ]

@@ -82,19 +82,19 @@
     };
   };
 
-  var TextualField = function(assetTypeConfiguration, field){
-    DynamicField.call(this, field);
+  var TextualField = function(assetTypeConfiguration, field, isDisabled){
+    DynamicField.call(this, field, isDisabled);
     var me = this;
     var className =  assetTypeConfiguration.className;
 
-    me.editModeRender = function (fieldValue, assetValue, sideCode, setValue, getValue) {
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
       var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
       me.element = $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" fieldType = "' + field.type + '" '+ me.required+' name="' + field.publicId + '" class="form-control ' + className + '" ' + me.disabled()  + ' value="' + _value + '" >' +
+        '   <input type="text" fieldType = "' + field.type + '" '+ me.required() +' name="' + field.publicId + '" class="form-control ' + className + '" ' + me.disabled()  + ' value="' + _value + '" >' +
         '</div>');
 
       if (me.hasValueToSet())
@@ -107,25 +107,24 @@
         };
     };
 
-  var TextualLongField = function(assetTypeConfiguration, field){
-    DynamicField.call(this, field);
+  var TextualLongField = function(assetTypeConfiguration, field, isDisabled){
+    DynamicField.call(this, field, isDisabled);
     var me = this;
     var className = assetTypeConfiguration.className;
 
-    me.editModeRender = function (fieldValue, assetValue, sideCode, setValue, getValue) {
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
       var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
       me.element = $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <textarea fieldType = "' + field.type + '" '+ me.required+' name="' + field.publicId + '" class="form-control ' + className + '" >' + _value  + '</textarea>' +
+        '   <textarea fieldType = "' + field.type + '" '+ me.required() +' name="' + field.publicId + '" class="form-control ' + className + ' ' + me.disabled() + '" >' + _value  + '</textarea>' +
         '</div>');
 
 
-        if (me.hasValueToSet())
+        if (!isDisabled &&me.hasValueToSet())
           me.setSelectedValue(setValue, getValue);
-
 
         me.element.find('textarea').on('keyup', function () {
           me.setSelectedValue(setValue, getValue);
@@ -148,7 +147,7 @@
       return me.isRequired() && me.hasValue() &&  me.hasValidValue() || (!me.isRequired() && (!me.hasValue() ||  me.hasValue() && me.hasValidValue()));
     };
 
-    me.editModeRender = function (fieldValue, assetValue, sideCode, setValue, getValue) {
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
       var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
@@ -203,7 +202,7 @@
       return me.isRequired() && me.hasValue() &&  me.hasValidValue() || (!me.isRequired() && (!me.hasValue() ||  me.hasValue() && me.hasValidValue()));
     };
 
-    me.editModeRender = function (fieldValue, assetValue, sideCode, setValue, getValue) {
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
       var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
@@ -234,7 +233,7 @@
     var me = this;
     var className = assetTypeConfiguration.className;
 
-    me.editModeRender = function (fieldValue, assetValue, sideCode, setValue, getValue) {
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
       var value = _.first(fieldValue, function(values) { return values.value ; });
       var selectedValue = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
@@ -282,13 +281,14 @@
     };
   };
 
-  var MultiSelectField = function () {
-    DynamicField.call(this);
+  var MultiSelectField = function (assetTypeConfiguration, field, isDisabled){
+    DynamicField.call(this, field, isDisabled);
     var me = this;
 
-    me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, getValue) {
-      var disabled = _.isEmpty(assetValue) ? 'disabled' : '';
-      fieldValue = _.map(fieldValue, function(curr) { return curr.value; });
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
+      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var checkedValue = value ? value.value : field.defaultValue ? field.defaultValue : '';
+
       var template =  _.template(
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label+'</label>' +
@@ -297,29 +297,25 @@
         '</div>'+
         '</div>');
 
-        var defaultValue = field.defaultValue;
-        if(defaultValue && _.isEmpty(fieldValue))
-            fieldValue = defaultValue;
-
-      var checkedValue = _.isEmpty(fieldValue) ? (field.defaultValue ? String(field.defaultValue) : '') : fieldValue;
-
       var divCheckBox = _.map(field.values, function(value) {
         var checked =  _.find(checkedValue, function (checkedValue) {return checkedValue === String(value.id);}) ? " checked" : "";
         return '' +
           '<div class = "checkbox">' +
-          ' <label>'+ value.label + '<input type = "checkbox" fieldType = "' + field.type + '" '+me.required+' class="multiChoice-'+sideCode+'"  name = "'+field.publicId+'" value="'+value.id+'" '+ disabled+' ' + checked + '></label>' +
+          ' <label>'+ value.label + '<input type = "checkbox" fieldType = "' + field.type + '" '+me.required() +' class="multiChoice-'+sideCode+'"  name = "'+fieldValue.publicId+'" value="'+value.id+'" '+ me.disabled() +' ' + checked + '></label>' +
           '</div>';
       }).join('');
 
       me.element =  $(template({divCheckBox: divCheckBox}));
 
-      me.setSelectedValue(setValue, getValue);
+      if (!isDisabled && me.hasValueToSet())
+        me.setSelectedValue(setValue, getValue);
+
+      me.getValue = function() {
+        return _.map($('.multiChoice-'+sideCode+':checked'), function(fields) {
+          return fields.value; });
+      };
 
       me.element.find('input').on('click', function(){
-        var val = [];
-        $('.multiChoice-'+sideCode+':checked').each(function(i){
-          val[i] = $(this).val();
-        });
         me.setSelectedValue(setValue, getValue);
       });
 
@@ -328,10 +324,6 @@
 
     me.viewModeRender = function (field, currentValue) {
       var values =  _.map(currentValue, function (values) { return values.value ; });
-
-      var defaultValue = field.defaultValue;
-      if(defaultValue && _.isEmpty(values))
-        values = defaultValue;
 
         var item = _.map(values, function (value) {
             var label = _.find(field.values, function (fieldValue) {return fieldValue.id.toString() === value.toString();}).label;
@@ -353,7 +345,7 @@
     DynamicField.call(this, field, isDisabled);
     var me = this;
 
-    me.editModeRender = function (fieldValue, assetValue, sideCode, setValue, getValue) {
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
 
       var someValue = _.first(fieldValue, function(values) { return values.value ; });
       var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
@@ -390,7 +382,6 @@
       return me.element;
     };
 
-
     me.viewModeRender = function (field, currentValue) {
       var first = _.first(currentValue, function(values) { return values.value ; });
 
@@ -408,7 +399,7 @@
     DynamicField.call(this, field, isDisabled);
     var me = this;
 
-    me.editModeRender = function (fieldValue, assetValue, sideCode, setValue, getValue) {
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
       var value = _.first(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : "0";
 
@@ -426,7 +417,7 @@
         return $(me.element).prop('checked') ? 1: 0;
       };
 
-      me.hasValue = function(){ return true};
+      me.hasValue = function(){ return true;};
 
       me.setValue = function(value) {
         $(me.element).prop('checked', ~~(value === 0));
@@ -461,6 +452,158 @@
     };
   };
 
+  var TimePeriodField = function(assetTypeConfiguration, field, isDisabled){
+    DynamicField.call(this, field, isDisabled);
+    var me = this;
+    var className = assetTypeConfiguration.className;
+
+    me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
+
+      var existingValidityPeriodElements =
+        _(_.map(fieldValue, function(values) { return values.value ; }))
+          .sortByAll('days', 'startHour', 'startMinute', 'endHour', 'endMinute')
+          .map(validityPeriodElement)
+          .join('');
+
+      function newValidityPeriodElement() {
+        return '' +
+          '<li><div class="form-group new-validity-period">' +
+          '  <select class="form-control select" ' + me.disabled() + '>' +
+          '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+          '    <option value="0">Ma–Pe</option>' +
+          '    <option value="1">La</option>' +
+          '    <option value="2">Su</option>' +
+          '  </select>' +
+          '</div></li>';
+      }
+
+      function validityPeriodElement(period) {
+        var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
+
+        return '' +
+          '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
+          '  <button class="delete btn-delete">x</button>' +
+          '  <label class="control-label daysf">' +
+          dayLabels[period.days] +
+          '  </label>' +
+          hourElement(period.startHour, 'start') +
+          '  <span class="minute-separator"></span>' +
+          minutesElement(period.startMinute, 'start') +
+          '  <span class="hour-separator"> - </span>' +
+          hourElement(period.endHour, 'end') +
+          '  <span class="minute-separator"></span>' +
+          minutesElement(period.endMinute, 'end') +
+          '</div></li>';
+      }
+
+      function hourElement(selectedHour, type) {
+        var className = type + '-hour';
+        return '' +
+          '<select class="form-control sub-control select ' + className + '">' +
+          hourOptions(selectedHour, type) +
+          '</select>';
+      }
+
+      function minutesElement(selectedMinute, type) {
+        var className = type + '-minute';
+        return '' +
+          '<select class="form-control sub-control select ' + className + '">' +
+          minutesOptions(selectedMinute) +
+          '</select>';
+      }
+
+      function hourOptions(selectedOption, type) {
+        var range = type === 'start' ? _.range(0, 24) : _.range(1, 25);
+        return _.map(range, function (hour) {
+          var selected = hour === selectedOption ? 'selected' : '';
+          return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
+        }).join('');
+      }
+
+      function minutesOptions(selectedOption) {
+        var range = _.range(0, 60, 5);
+        return _.map(range, function (minute) {
+          var selected = minute === selectedOption ? 'selected' : '';
+          return '<option value="' + minute + '" ' + selected + '>' + (minute<10 ? '0' + minute : minute) + '</option>';
+        }).join('');
+      }
+
+      var template = _.template('' +
+        '<div class="validity-period-group">' +
+        ' <ul>' +
+        '   <%= existingValidityPeriodElements %>' +
+        newValidityPeriodElement() +
+        ' </ul>');
+
+      me.element = $(template({existingValidityPeriodElements: existingValidityPeriodElements}));
+
+      me.getValue = function() {
+        // function extractValidityPeriods(element) {
+        var periodElements = me.element.find('.existing-validity-period');
+        return _.map(periodElements, function (element) {
+          return {
+            startHour: parseInt($(element).find('.start-hour').val(), 10),
+            startMinute: parseInt($(element).find('.start-minute').val(), 10),
+            endHour: parseInt($(element).find('.end-hour').val(), 10),
+            endMinute: parseInt($(element).find('.end-minute').val(), 10),
+            days: parseInt($(element).data('days'), 10)
+          };
+        });
+        // }
+      };
+
+      // function updateValidityPeriods(element) {
+      //   // var validityPeriods = extractValidityPeriods(element);
+      //   me.setSelectedValue(setValue, getValue);
+      // }
+
+      me.element.on('click', '.existing-validity-period .delete', function(event) {
+        $(event.target).parent().parent().remove();
+        me.setSelectedValue(setValue, getValue);
+      });
+
+      me.element.on('change', '.existing-validity-period .select', function(event) {
+        // updateValidityPeriods($(event.delegateTarget));
+        me.setSelectedValue(setValue, getValue);
+      });
+
+      me.element.on('change', '.new-validity-period select', function(event) {
+        disabled = "";
+        $(event.target).closest('.validity-period-group ul').append(newValidityPeriodElement());
+        $(event.target).parent().parent().replaceWith(validityPeriodElement({
+          days: $(event.target).val(),
+          startHour: 0,
+          startMinute: 0,
+          endHour: 24,
+          endMinute: 0
+        }));
+        // updateValidityPeriods($(event.delegateTarget));
+        me.setSelectedValue(setValue, getValue);
+      });
+
+      return me.element;
+    };
+
+    me.viewModeRender = function (field, currentValue) {
+      var validityPeriodTable = _.map(currentValue, function(value) {
+        var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
+        var period = value.value;
+        return '' +
+          '<li>' + dayLabels[period.days] + " " + period.startHour + ":" + ("0" + period.startMinute).slice(-2)  + " - " + period.endHour + ":" + ("0" + period.endMinute).slice(-2) + '</li>';
+      }).join('');
+
+      return $('' +
+        '<div class="form-group">' +
+        '<p>' +
+        '<ul class="form-control-static validity-period-group">' +
+        validityPeriodTable +
+        '</ul>' +
+        '</p>' +
+        '</div>' );
+
+    };
+  };
+
   root.dynamicFormFields = [
       {name: 'long_text', fieldType: TextualLongField},
       {name: 'single_choice', fieldType: SingleChoiceField},
@@ -471,7 +614,8 @@
       {name: 'text', fieldType: TextualField},
       {name: 'checkbox', fieldType: CheckboxField},
       {name: 'read_only_number', fieldType: ReadOnlyFields},
-      {name: 'read_only_text', fieldType: ReadOnlyFields}
+      {name: 'read_only_text', fieldType: ReadOnlyFields},
+      {name: 'time_period', fieldType: TimePeriodField}
   ];
 
   //TODO change the name to DynamicAssetForm
@@ -515,9 +659,8 @@
       _assetTypeConfiguration = assetTypeConfiguration;
 
       eventbus.on(events('selected', 'cancelled'), function () {
-        var selectedAsset = assetTypeConfiguration.selectedLinearAsset;
-        var isDisabled = _.isEmpty(_.find(selectedAsset.get(), function(asset){return !_.isUndefined(asset.value);}));
-        rootElement.html(me.renderForm(selectedAsset, isDisabled));
+        var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
+        rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
 
       });
 
@@ -536,8 +679,7 @@
 
       eventbus.on('application:readOnly', function(){
         if(_assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && _assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
-          var selectedAsset = _assetTypeConfiguration.selectedLinearAsset;
-          var isDisabled = _.isEmpty(_.find(selectedAsset.get(), function(asset){return !_.isUndefined(asset.value);}));
+          var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
           rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled ));
         }
       });
@@ -552,8 +694,7 @@
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
       _.each(_.sortBy(formStructure.fields, function(field){ return field.weight; }), function (field) {
         var fieldValues = [];
-        var assetValues = asset.value;
-        if (assetValues) {
+        if (asset.value) {
           var existingProperty = _.find(asset.value.properties, function (property) { return property.publicId === field.publicId; });
           if(!_.isUndefined(existingProperty))
             fieldValues = existingProperty.values;
@@ -561,7 +702,7 @@
         var dynamicField = _.find(dynamicFormFields, function (availableFieldType) { return availableFieldType.name === field.type; });
         //TODO I think this is possible otherwise we can have a factory function on the dynamic field configurations
         var fieldType = new dynamicField.fieldType(_assetTypeConfiguration, field, isDisabled);
-        var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, assetValues, sideCode, setAsset, getValue);
+        var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
         //TODO We can add the new instance of the field here
         forms.addField(fieldType, sideCode);
 
@@ -584,9 +725,9 @@
 
       if(selectedAsset.isSplitOrSeparated()) {
         //Render form A
-        renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue, selectedAsset.getValue, selectedAsset.removeAValue, isDisabled, body);
+        renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue, selectedAsset.getValue, selectedAsset.removeAValue, false, body);
         //Remder form B
-        renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue, selectedAsset.getBValue, selectedAsset.removeBValue, isDisabled, body);
+        renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue, selectedAsset.getBValue, selectedAsset.removeBValue, false, body);
       }
       else
       {
@@ -664,6 +805,7 @@
           setValueFn({ properties: [] });
         }
 
+        // forms.removeFields(sideCode);
         body.find('.form-editable-' + sideCodeClass).find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
 
       });
