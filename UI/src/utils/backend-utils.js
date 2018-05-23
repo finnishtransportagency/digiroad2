@@ -601,32 +601,24 @@
     };
 
     function createCallbackRequestor(getParameters) {
-      var requestor = latestResponseRequestor(getParameters);
-      return function(parameter, callback) {
-        requestor(parameter).then(callback);
-      };
+      return latestResponseRequestor(getParameters);
     }
 
     function createCallbackRequestorWithParameters(getParameters) {
-      var requestor = latestResponseRequestor(getParameters);
-      return function(parameter, callback) {
-        requestor(parameter).then(callback);
-      };
+      return latestResponseRequestor(getParameters);
     }
 
     function latestResponseRequestor(getParameters) {
-      var deferred;
-      var requests = new Bacon.Bus();
-      var responses = requests.debounce(200).flatMapLatest(function(params) {
-        return Bacon.$.ajax(params, true);
-      });
 
-      return function() {
-        if (deferred) { deferred.reject(); }
-        deferred = responses.toDeferred();
-        requests.push(getParameters.apply(undefined, arguments));
-        return deferred.promise();
-      };
+      var request;
+
+      function doRequest(params, callback){
+          if(request)
+              request.abort();
+          request = $.ajax(getParameters(params)).done(callback);
+      }
+
+      return _.debounce(doRequest, 200);
     }
 
     this.withVerificationInfo = function(){
