@@ -2,12 +2,27 @@ package fi.liikennevirasto.digiroad2.dao.feedback
 
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import slick.jdbc.StaticQuery.interpolation
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.service.feedback.FeedbackInfo
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 class FeedbackDao {
+
+
+  def getApplicationFeedbackByStatus(status: Boolean): Seq[FeedbackInfo] = {
+    val feedbackFilter = if (status) " status = 1 " else " status = 0 "
+    val query =
+      s"""
+        select id, receiver, createdBy, createdAt, subject, body, status, statusDate
+        from feedback
+        where $feedbackFilter
+        """
+    StaticQuery.queryNA[FeedbackInfo](query).iterator.toSeq
+
+  }
 
   implicit val getFeedback = new GetResult[FeedbackInfo] {
     def apply(r: PositionedResult) = {
@@ -22,17 +37,6 @@ class FeedbackDao {
 
       FeedbackInfo(id, receiver, createdBy, createdAt, body, subject, status, statusDate)
     }
-  }
-
-  def getApplicationFeedbackByStatus(status: Boolean): Seq[FeedbackInfo] = {
-    val feedbackFilter = if (status) " status = 1 " else " status = 0 "
-    val query =
-      s"""
-        select id, receiver, createdBy, createdAt, subject, body, status, statusDate
-        from feedback
-        where $feedbackFilter
-        """
-    StaticQuery.queryNA[FeedbackInfo](query).iterator.toSeq
   }
 
   def getAllFeedbacks(): Seq[FeedbackInfo] = {
