@@ -239,9 +239,10 @@ class MultiValueLinearAssetDao {
 
         if (propertyValues.nonEmpty) {
           propertyValues.map { propertyValue =>
-            val validityPeriodValue = ValidityPeriodValue.fromMap(propertyValue.value.asInstanceOf[Map[String, Any]])
 
-            insertValidityPeriodProperty(assetId, propertyId, validityPeriodValue).execute
+            ValidityPeriodValue.fromMap(propertyValue.value.asInstanceOf[Map[String, Any]]).map {
+              validityPeriodValue =>  insertValidityPeriodProperty(assetId, propertyId, validityPeriodValue).execute
+            }
           }
         }
 

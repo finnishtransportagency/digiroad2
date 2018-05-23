@@ -332,6 +332,11 @@
       return dirty;
     };
 
+    this.setDirty = function(dirtyValue) {
+      dirty = dirtyValue;
+      eventbus.trigger(singleElementEvent('valueChanged'), self);
+    };
+
     this.isSelected = function(linearAsset) {
       return _.some(selection, function(selectedLinearAsset) {
         return isEqual(linearAsset, selectedLinearAsset);

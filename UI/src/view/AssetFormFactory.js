@@ -800,6 +800,7 @@
         forms.removeFields(sideCode);
         if(disabled){
           removeValueFn();
+          _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
         }
         else{
           setValueFn({ properties: [] });

@@ -245,7 +245,7 @@
             //   {label: "Date", type: 'date', publicId: "public_data_1", weight: 3 },
              {label: "Integer", type: 'integer', publicId: "public_integer_1" , weight: 1 },
              {label: "Numeric", type: 'number', publicId: "public_number_1", weight: 2},
-            {label: "", type: 'time_period', publicId: "public_validity_period", weight: 3}
+             {label: "", type: 'time_period', publicId: "public_validity_period1", weight: 3}
              // {label: "readOnlyNumber", type: 'read_only_number', publicId: "public_number_1", weight: 11 }
             // {label: "readOnlyText", type: 'read_only_text', publicId: "public_number_1", weight: 10 }
             //    { publicId: 'single_choice_1',  label:'single_choice_1', type: 'single_choice', values: [{id: 1, label: 'single_choice_enum_1'}, {id: 2, label: 'single_choice_enum_2', weight: 8}]}
