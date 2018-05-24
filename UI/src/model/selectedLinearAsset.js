@@ -46,6 +46,22 @@
      return collection.getById(id);
     };
 
+    this.addSelection = function(linearAssets){
+      var partitioned = _.groupBy(linearAssets, isUnknown);
+      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      selection = selection.concat(existingLinearAssets.concat(unknownLinearAssets));
+    };
+
+    this.removeSelection = function(linearAssets){
+      selection = _.filter(selection, function(asset){
+        if(isUnknown(asset))
+          return !_.some(linearAssets, function(iasset){ return iasset.generatedId === asset.generatedId;});
+
+        return !_.some(linearAssets, function(iasset){ return iasset.id === asset.id;});
+      });
+    };
+
     this.openMultiple = function(linearAssets) {
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.unique(partitioned[false] || [], 'id');

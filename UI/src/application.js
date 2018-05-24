@@ -226,9 +226,18 @@
         projection: 'EPSG:3067',
         zoom: startupParameters.zoom,
         resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625]
+      }),
+      interactions: ol.interaction.defaults({
+        dragPan: false
       })
     });
     map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
+    map.addInteraction(new ol.interaction.DragPan({
+      condition: function (mapBrowserEvent) {
+        var originalEvent = mapBrowserEvent.originalEvent;
+        return (!originalEvent.altKey && !originalEvent.shiftKey);
+      }
+    }));
     return map;
   };
 
@@ -309,8 +318,10 @@
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
        massLimitation: asset.editControlLabels.massLimitations,
-       typeId: asset.typeId
-     };
+       typeId: asset.typeId,
+       isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed
+
+      };
       acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
       return acc;
 
