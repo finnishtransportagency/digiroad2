@@ -15,7 +15,7 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Create new feedback") {
     runWithRollback {
-      val id = service.insertApplicationFeedback(Some("feedback_receiver"), Some("feedback_createdBy"), Some("Feedback body..."), Some("Feedback-Subject"), status = false, None)
+      val id = service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body..."))
       val feedbacks = service.getFeedbacksByIds(Set(id)).head
       feedbacks.body should be (Some("Feedback body..."))
       feedbacks.subject should be (Some("Feedback-Subject"))
@@ -27,9 +27,9 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
   test("Get all not sent feedbacks") {
     runWithRollback {
       val (id, id1, id2) =(
-        service.insertApplicationFeedback(Some("feedback_receiver"), Some("feedback_createdBy"), Some("Feedback body..."), Some("Feedback-Subject"), status = false, None),
-        service.insertApplicationFeedback(Some("feedback_receiver1"), Some("feedback_createdBy1"), Some("Feedback body 1..."), Some("Feedback-Subject1"), status = false, None),
-        service.insertApplicationFeedback(Some("feedback_receiver2"), Some("feedback_createdBy2"), Some("Feedback body 2..."), Some("Feedback-Subject2"), status = true, None))
+        service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body...")),
+        service.insertApplicationFeedback("feedback_createdBy1", Some("Feedback body 1...")),
+        service.insertApplicationFeedback("feedback_createdBy2", Some("Feedback body 2...")))
 
       val feedbacks = service.getNotSentFeedbacks
       feedbacks.length should be (2)
@@ -42,9 +42,9 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
   test("Get all feedbacks") {
     runWithRollback {
       val (id, id1, id2) =(
-        service.insertApplicationFeedback(Some("feedback_receiver"), Some("feedback_createdBy"), Some("Feedback body..."), Some("Feedback-Subject"), status = false, None),
-        service.insertApplicationFeedback(Some("feedback_receiver1"), Some("feedback_createdBy1"), Some("Feedback body 1..."), Some("Feedback-Subject1"), status = false, None),
-        service.insertApplicationFeedback(Some("feedback_receiver2"), Some("feedback_createdBy2"), Some("Feedback body 2..."), Some("Feedback-Subject2"), status = true, None))
+        service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body...")),
+        service.insertApplicationFeedback("feedback_createdBy1", Some("Feedback body 1...")),
+        service.insertApplicationFeedback("feedback_createdBy2", Some("Feedback body 2...")))
 
       val feedbacks = service.getAllFeedbacks
       feedbacks.length should be (3)
@@ -59,9 +59,9 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
   test("Update feedback status") {
     runWithRollback {
       val (id, id1, id2) =(
-        service.insertApplicationFeedback(Some("feedback_receiver"), Some("feedback_createdBy"), Some("Feedback body..."), Some("Feedback-Subject"), status = false, None),
-        service.insertApplicationFeedback(Some("feedback_receiver1"), Some("feedback_createdBy1"), Some("Feedback body 1..."), Some("Feedback-Subject1"), status = false, None),
-        service.insertApplicationFeedback(Some("feedback_receiver2"), Some("feedback_createdBy2"), Some("Feedback body 2..."), Some("Feedback-Subject2"), status = true, None))
+        service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body...")),
+        service.insertApplicationFeedback("feedback_createdBy1", Some("Feedback body 1...")),
+        service.insertApplicationFeedback("feedback_createdBy2", Some("Feedback body 2...")))
 
       service.updateApplicationFeedbackStatus(id1)
       val feedbacks = service.getNotSentFeedbacks
