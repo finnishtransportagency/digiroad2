@@ -18,7 +18,7 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
       val id = service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body..."))
       val feedbacks = service.getFeedbacksByIds(Set(id)).head
       feedbacks.body should be (Some("Feedback body..."))
-      feedbacks.subject should be (Some("Feedback-Subject"))
+      feedbacks.createdBy should be (Some("feedback_createdBy"))
       feedbacks.id should be (id)
     }
   }
@@ -30,6 +30,8 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
         service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body...")),
         service.insertApplicationFeedback("feedback_createdBy1", Some("Feedback body 1...")),
         service.insertApplicationFeedback("feedback_createdBy2", Some("Feedback body 2...")))
+
+      service.updateApplicationFeedbackStatus(id2)
 
       val feedbacks = service.getNotSentFeedbacks
       feedbacks.length should be (2)
@@ -64,6 +66,8 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
         service.insertApplicationFeedback("feedback_createdBy2", Some("Feedback body 2...")))
 
       service.updateApplicationFeedbackStatus(id1)
+      service.updateApplicationFeedbackStatus(id2)
+
       val feedbacks = service.getNotSentFeedbacks
       feedbacks.length should be (1)
       feedbacks.map(_.id) should contain (id)
