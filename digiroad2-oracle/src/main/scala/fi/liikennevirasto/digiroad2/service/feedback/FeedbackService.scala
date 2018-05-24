@@ -6,10 +6,14 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import javax.mail.MessagingException
 import org.joda.time.DateTime
 
+//TODO: Remove
+//case class FeedbackBody(feedbackType: String, headline: Option[String], freeText: Option[String], kIdentifier: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
 
 case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
+//case class NewFeedbackInfo(receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
+//                           subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
 trait Feedback {
 
@@ -24,9 +28,9 @@ trait Feedback {
   def smtpHost: String
   def smtpPort: String
 
-  def insertApplicationFeedback(receiver: Option[String], createdBy: Option[String], body: Option[String], subject: Option[String], status: Boolean, statusDate: Option[DateTime]): Long = {
+  def insertApplicationFeedback(username: String, body: Option[String]): Long = {
     withDynSession {
-      dao.insertFeedback(receiver, createdBy, body, subject, status, statusDate)
+      dao.insertFeedback(to, username, body, subject, status = false)
     }
   }
 
