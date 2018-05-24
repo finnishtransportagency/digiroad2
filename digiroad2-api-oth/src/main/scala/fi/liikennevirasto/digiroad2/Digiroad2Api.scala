@@ -755,23 +755,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
 
-  //TODO: Remove when the US ends
-//  val body = extractFeedbackBody(parsedBody \ "body")
-//  val user = userProvider.getCurrentUser()
-//  applicationFeedback.insertApplicationFeedback(user.username, body)
-
   post("/feedback"){
-//    val body = extractFeedbackBody(parsedBody \ "body")
     val body = (parsedBody \ "body").extractOpt[String]
     val user = userProvider.getCurrentUser()
     applicationFeedback.insertApplicationFeedback(user.username, body)
   }
-
-//  private def extractFeedbackBody(value: JValue): FeedbackBody = {
-//    value.extractOpt[FeedbackBody].map { x =>
-//      FeedbackBody(x.feedbackType, x.headline, x.freeText, x.kIdentifier, x.name, x.email, x.phoneNumber)
-//    }.get
-//  }
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()

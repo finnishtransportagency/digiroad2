@@ -136,7 +136,13 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
-        'work-list/:layerName': 'unverifiedLinearAssetWorkList'
+        'work-list/:layerName': 'unverifiedLinearAssetWorkList',
+        'feedback/application': 'applicationFeedback'
+      },
+
+      applicationFeedback: function(){
+
+
       },
 
       massTransitStop: function (id) {

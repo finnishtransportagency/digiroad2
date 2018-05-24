@@ -416,7 +416,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
           val (newId ,idUpdated) = dao.splitSpeedLimit(speedLimit, roadLink, splitMeasure, existingValue, createdValue, username)
 
-          val assets = getPersistedSpeedLimitByIds(Set(newId ,idUpdated), newTransaction = false)
+          val assets = getPersistedSpeedLimitByIds(Set(idUpdated, newId), newTransaction = false)
 
           val speedLimits = assets.map{ asset =>
             SpeedLimit(asset.id, asset.linkId, asset.sideCode, roadLink.trafficDirection, asset.value.map(NumericValue), GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure),

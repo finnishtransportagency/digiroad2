@@ -6,14 +6,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import javax.mail.MessagingException
 import org.joda.time.DateTime
 
-//TODO: Remove
-//case class FeedbackBody(feedbackType: String, headline: Option[String], freeText: Option[String], kIdentifier: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
-
 case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
-
-//case class NewFeedbackInfo(receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
-//                           subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
 trait Feedback {
 
