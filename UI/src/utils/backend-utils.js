@@ -601,24 +601,40 @@
     };
 
     function createCallbackRequestor(getParameters) {
-      return latestResponseRequestor(getParameters);
+        var requestor = latestResponseRequestor(getParameters);
+        return function(parameter, callback) {
+            requestor(parameter).then(callback);
+        };
     }
 
     function createCallbackRequestorWithParameters(getParameters) {
-      return latestResponseRequestor(getParameters);
+        var requestor = latestResponseRequestor(getParameters);
+        return function(parameter, callback) {
+            requestor(parameter).then(callback);
+        };
     }
 
     function latestResponseRequestor(getParameters) {
 
-      var request;
+        var deferred;
+        var request;
 
-      function doRequest(params, callback){
-          if(request)
-              request.abort();
-          request = $.ajax(getParameters(params)).done(callback);
-      }
+        function doRequest(){
 
-      return _.debounce(doRequest, 200);
+            if(request)
+                request.abort();
+
+            request = $.ajax(getParameters.apply(undefined, arguments)).done(function(result){
+                deferred.resolve(result);
+            });
+            return deferred;
+        }
+
+        return function(){
+            deferred = $.Deferred();
+            _.debounce(doRequest, 200).apply(undefined, arguments);
+            return deferred;
+        }
     }
 
     this.withVerificationInfo = function(){
