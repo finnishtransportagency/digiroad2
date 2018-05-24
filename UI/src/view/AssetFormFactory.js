@@ -7,7 +7,7 @@
     me.disabled = function() { return isDisabled ? 'disabled' : '';};
     me.required = function() { return _.isUndefined(fieldSettings.required) ? '' : 'required';};
 
-    me.hasValueToSet = function(){
+    me.hasDefaultValue = function(){
       return !_.isUndefined(fieldSettings.defaultValue);
     };
 
@@ -26,7 +26,11 @@
     };
 
     me.getPropertyDefaultValue = function(){
-      return createPropertyValue([{ value: fieldSettings.defaultValue}]);
+      return me.createPropertyValue([{ value: fieldSettings.defaultValue}]);
+    };
+
+    me.deletePropertyValue = function(){
+      return me.createPropertyValue([]);
     };
 
     me.isValid = function(){
@@ -69,7 +73,7 @@
 
     me.setSelectedValue = function(setValue, getValue){
 
-      var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : me.getPropertyDefaultValue();
+      var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.deletePropertyValue());
 
       var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
       var value = properties.concat(currentPropertyValue);
@@ -93,7 +97,7 @@
         '   <input type="text" fieldType = "' + field.type + '" '+ me.required() +' name="' + field.publicId + '" class="form-control ' + className + '" ' + me.disabled()  + ' value="' + _value + '" >' +
         '</div>');
 
-      if (me.hasValueToSet())
+      if (me.hasDefaultValue())
         me.setSelectedValue(setValue, getValue);
 
       me.element.find('input[type=text]').on('keyup', function(){
@@ -119,7 +123,7 @@
         '</div>');
 
 
-        if (!isDisabled &&me.hasValueToSet())
+        if (!isDisabled &&me.hasDefaultValue())
           me.setSelectedValue(setValue, getValue);
 
         me.element.find('textarea').on('keyup', function () {
@@ -156,7 +160,7 @@
           unit +
           '</div>');
 
-      if(!isDisabled && me.hasValueToSet())
+      if(!isDisabled && me.hasDefaultValue())
           me.setSelectedValue(setValue, getValue);
 
         me.element.find('input').on('keyup', function () {
@@ -212,7 +216,7 @@
         '</div>');
 
 
-      if (!isDisabled && me.hasValueToSet())
+      if (!isDisabled && me.hasDefaultValue())
         me.setSelectedValue(setValue, getValue);
 
 
@@ -251,7 +255,7 @@
         return me.element.find(":selected").val();
       };
 
-      if (!isDisabled && me.hasValueToSet())
+      if (!isDisabled && me.hasDefaultValue())
         me.setSelectedValue(setValue, getValue);
 
       me.element.find('select').on('change', function(){
@@ -303,7 +307,7 @@
 
       me.element =  $(template({divCheckBox: divCheckBox}));
 
-      if (!isDisabled && me.hasValueToSet())
+      if (!isDisabled && me.hasDefaultValue())
         me.setSelectedValue(setValue, getValue);
 
       me.getValue = function() {
@@ -370,25 +374,13 @@
         me.setSelectedValue(setValue, getValue);
       }, 500));
 
-      if (!isDisabled && me.hasValueToSet())
+      if (!isDisabled && me.hasDefaultValue())
         me.setSelectedValue(setValue, getValue);
 
       me.element.append(inputLabel);
       addDatePickers(field, me.element);
       return me.element;
     };
-
-    // me.viewModeRender = function (field, currentValue) {
-    //   var value = _.first(currentValue, function(values) { return values.value ; });
-    //
-    //   var _value =  value ? value.value : '';
-    //   return $('' +
-    //     '<div class="form-group">' +
-    //     '   <label class="control-label">' + field.label + '</label>' +
-    //     '   <p class="form-control-static">' + _value + '</p>' +
-    //     '</div>'
-    //   );
-    // };
   };
 
   var CheckboxField = function(assetTypeConfiguration, field, isDisabled){
@@ -419,7 +411,7 @@
         $(me.element).prop('checked', ~~(value === 0));
       };
 
-      if(!isDisabled && me.hasValueToSet()) {
+      if(!isDisabled && me.hasDefaultValue()) {
         me.setValue(me.getValue());
         me.setSelectedValue(setValue, getValue);
       }
@@ -540,7 +532,7 @@
 
       me.compare = function(propertyValueA, propertyValueB){
         var isEqual = function(valueA , valueB) {
-          return valueA.startHour === valueB.startHour && valueA.startMinute === valueB.startMinute && valueA.endHour === valueB.endHour && valueA.endMinute === valueB.endMinute && valueA.days === valueB.days
+          return valueA.startHour === valueB.startHour && valueA.startMinute === valueB.startMinute && valueA.endHour === valueB.endHour && valueA.endMinute === valueB.endMinute && valueA.days === valueB.days;
         };
 
         var isRemoved = function(firstProperty, secondProperty) {
@@ -563,8 +555,8 @@
             endHour: parseInt($(element).find('.end-hour').val(), 10),
             endMinute: parseInt($(element).find('.end-minute').val(), 10),
             days: parseInt($(element).data('days'), 10)
-          }
-        }});
+          }};
+        });
       };
 
       me.element.on('click', '.existing-validity-period .delete', function(event) {
@@ -813,9 +805,7 @@
           setValueFn({ properties: [] });
         }
 
-        // forms.removeFields(sideCode);
         body.find('.form-editable-' + sideCodeClass).find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
-
       });
 
       formGroup.append(toggleElement);
@@ -905,8 +895,6 @@
     }
 
     function checkEditConstrains(selectedAsset){
-      // var assetTypeConfiguration = _assetTypeConfiguration;
-
       var editConstrains = _assetTypeConfiguration.editConstrains || function() { return false; };
 
       var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
