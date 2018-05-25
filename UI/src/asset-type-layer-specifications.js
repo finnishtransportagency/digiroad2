@@ -238,7 +238,7 @@
         //check if administrative class is State
         return selectedAsset.administrativeClass === 1;
       },
-      form: new AssetFormFactory( {
+      form: new DynamicAssetForm( {
           fields : [
              // {label: "multipleChoice", type: 'multiple_choice', publicId: "multiple_choice_1", values: [{id: 1, label: 'multiple_choice_11'}, {id: 2, label: 'multiple_choice_12'}, {id: 3, label: 'multiple_choice_13'}, {id: 4, label: 'multiple_choice_14'}, {id: 99, label: 'multiple_choice_199'}], weight: 7},
             //  // {label: "checkbox", type: 'checkbox', publicId: "public_checkbox_1", values: [{id: 1, label: 'checked1'}, {id: 0, label: 'not checked1'}], weight: 6, defaultValue: "1" },
@@ -319,7 +319,7 @@
       },
       isVerifiable: false,
       //TODO revert this code
-      form: new AssetFormFactory({
+      form: new DynamicAssetForm({
         fields : [
           // { publicId: 'date_1',  label:'date_1', type: 'date', weight: 7 },
           // { publicId: 'public_checkbox_1',  label:'checkbox_1', type: 'checkbox', values: [{label: 'checked1', id: 1 }, {label: 'not checked1', id: 0 }], defaultValue: 0, weight: 8 },
@@ -375,7 +375,7 @@
         return selectedAsset.administrativeClass === 1;
       },
       isVerifiable: true,
-      form: new AssetFormFactory({
+      form: new DynamicAssetForm({
         fields: [
           {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1, required: true}
         ]

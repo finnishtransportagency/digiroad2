@@ -617,8 +617,7 @@
       {name: 'time_period', fieldType: TimePeriodField}
   ];
 
-  //TODO change the name to DynamicAssetForm
-  root.AssetFormFactory = function (formStructure) {
+  root.DynamicAssetForm = function (formStructure) {
     var me = this;
     var _assetTypeConfiguration;
     var AvailableForms = function(){
@@ -699,10 +698,9 @@
             fieldValues = existingProperty.values;
         }
         var dynamicField = _.find(dynamicFormFields, function (availableFieldType) { return availableFieldType.name === field.type; });
-        //TODO I think this is possible otherwise we can have a factory function on the dynamic field configurations
         var fieldType = new dynamicField.fieldType(_assetTypeConfiguration, field, isDisabled);
         var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
-        //TODO We can add the new instance of the field here
+
         forms.addField(fieldType, sideCode);
 
         fieldGroupElement.append(fieldElement);
@@ -910,6 +908,7 @@
         })).length;
       };
 
+      //When both are deleted
       if(_.isEmpty(forms.getAllFields()))
         return false;
 
