@@ -9,6 +9,8 @@ import org.joda.time.DateTime
 case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
+case class FeedbackBody(feedbackType: Option[String], headline: Option[String], freeText: Option[String], kIdentifier: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
+
 trait Feedback {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -22,9 +24,18 @@ trait Feedback {
   def smtpHost: String
   def smtpPort: String
 
-  def insertApplicationFeedback(username: String, body: Option[String]): Long = {
+  def insertApplicationFeedback(username: String, body: FeedbackBody): Long = {
+    val bodyToSave = s"""
+    Palautteen tyyppi: ${body.feedbackType.getOrElse("-")}
+    Palautteen otsikko: ${body.headline.getOrElse("-")}
+    Vapaa tekstikenttä palautteelle: ${body.freeText.getOrElse("-")}
+    K-tunnus: ${body.kIdentifier.getOrElse("-")}
+    Nimi : ${body.name.getOrElse("-")}
+    Sähköposti : ${body.email.getOrElse("-")}
+    Puhelinnumero ${body.phoneNumber.getOrElse("-")}"""
+
     withDynSession {
-      dao.insertFeedback(to, username, body, subject, status = false)
+      dao.insertFeedback(to, username, bodyToSave, subject, status = false)
     }
   }
 

@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackInfo, FeedbackService}
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackBody, FeedbackInfo, FeedbackService}
 import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, LinkProperties, RoadLinkService, VerificationService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -756,10 +756,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   post("/feedback"){
-    val body = (parsedBody \ "body").extractOpt[String]
+    val body = extractFeedbackBody(parsedBody \ "body")
     val user = userProvider.getCurrentUser()
     applicationFeedback.insertApplicationFeedback(user.username, body)
   }
+
+    private def extractFeedbackBody(value: JValue): FeedbackBody = {
+      value.extractOpt[FeedbackBody].map { x =>
+        FeedbackBody(x.feedbackType, x.headline, x.freeText, x.kIdentifier, x.name, x.email, x.phoneNumber)
+      }.get
+    }
+
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()
