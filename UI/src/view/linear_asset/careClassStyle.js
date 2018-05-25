@@ -13,16 +13,35 @@
       return _.first(_.find(asset.value.properties, function(a) { return a.publicId === publicId; }).values).value;
     };
 
+    var emptyGreenCare = function(asset){
+      return !_.isUndefined(asset.value)&& _.isEmpty(_.find(asset.value.properties, function(a) { return a.publicId === 'hoitoluokat_viherhoitoluokka'; }).values);
+  };
+
     var emptyValues = function(asset, publicId) {
-      return _.isEmpty(_.find(asset.value.properties, function(a) { return a.publicId === publicId; }).values);
+      return !_.isUndefined(asset.id) && _.isEmpty(_.find(asset.value.properties, function(a) { return a.publicId === publicId; }).values);
     };
 
+    this.getNewFeatureProperties = function(linearAssets){
+      var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
+        var hasAsset = !_.isUndefined(linearAsset.id);
+        var noGreenCare = emptyGreenCare(linearAsset);
+        var type =  me.isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
+        return _.merge({}, linearAsset, { hasAsset: hasAsset }, type, {noGreenCare: noGreenCare});
+      });
+      var offsetBySideCode = function(linearAsset) {
+        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+      };
+      var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
+      return _.sortBy(linearAssetsWithAdjustments, function(asset) {
+        return asset.expired ? -1 : 1;
+      });
+    };
 
     me.renderFeatures = function(linearAssets) {
       var groupDottedLines = groupDottedAndSolid(linearAssets);
       var dottedLines = groupDottedLines[true];
 
-      return  me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.renderOverlays(dottedLines))/*.concat(me.renderExpired(solidLines))*/;
+      return  me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.renderOverlays(dottedLines));
     };
 
     var groupDottedAndSolid = function(linearAssets) {
@@ -38,7 +57,7 @@
     };
 
     var winterCareClassRules = [
-      new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "hoitoluokat_talvihoitoluokka")){return findValue(asset, "hoitoluokat_talvihoitoluokka"); }}).is(0).use({stroke: {color: '#880015'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "hoitoluokat_talvihoitoluokka")){return findValue(asset, "hoitoluokat_talvihoitoluokka"); }}).is(1).use({stroke: {color: '#f64343'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "hoitoluokat_talvihoitoluokka")){return findValue(asset, "hoitoluokat_talvihoitoluokka"); }}).is(2).use({stroke: {color: '#ff982c'}}),
@@ -58,7 +77,8 @@
     ];
 
     var greenCareClassRules = [
-      new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where('noGreenCare').is(true).use({ stroke : { color: '#ff55dd'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "hoitoluokat_viherhoitoluokka")){return findValue(asset, "hoitoluokat_viherhoitoluokka"); }}).is(1).use({stroke: {color: '#008000'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "hoitoluokat_viherhoitoluokka")){return findValue(asset, "hoitoluokat_viherhoitoluokka"); }}).is(2).use({stroke: {color: '#4ec643'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "hoitoluokat_viherhoitoluokka")){return findValue(asset, "hoitoluokat_viherhoitoluokka"); }}).is(3).use({stroke: {color: '#ffe82d'}}),
@@ -78,6 +98,16 @@
       new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 14}, pointRadius: 22}),
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 14}, pointRadius: 22})
     ];
+    //
+    // var careClassImageRules = [
+    //   new StyleRule().where('zoomLevel').is(9).and(function(asset){return emptyGreenCare(asset);}).is(true).use({ icon: {scale: 0.8}}),
+    //   new StyleRule().where('zoomLevel').is(10).and(function(asset){return emptyGreenCare(asset);}).is(true).use({ icon: {scale: 1}}),
+    //   new StyleRule().where('zoomLevel').is(11).and(function(asset){return emptyGreenCare(asset);}).is(true).use({ icon: {scale: 1.3}}),
+    //   new StyleRule().where('zoomLevel').is(12).and(function(asset){return emptyGreenCare(asset);}).is(true).use({ icon: {scale: 1.6}}),
+    //   new StyleRule().where('zoomLevel').is(13).and(function(asset){return emptyGreenCare(asset);}).is(true).use({ icon: {scale: 1.8}}),
+    //   new StyleRule().where('zoomLevel').is(14).and(function(asset){return emptyGreenCare(asset);}).is(true).use({ icon: {scale: 2}}),
+    //   new StyleRule().where('zoomLevel').is(15).and(function(asset){return emptyGreenCare(asset);}).is(true).use({ icon: {scale: 2.2}})
+    // ];
 
     var overlayStyleRules = [
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(9).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
@@ -93,6 +123,7 @@
     me.greenCareStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.greenCareStyle.addRules(greenCareClassRules);
     me.greenCareStyle.addRules(careClassSizeRules);
+    // me.greenCareStyle.addRules(careClassImageRules);
 
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(winterCareClassRules);

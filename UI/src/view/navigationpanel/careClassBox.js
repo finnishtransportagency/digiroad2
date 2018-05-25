@@ -18,6 +18,11 @@
       '<div class="fat-label"> Kevyen liikenteen väylät </div>' +
       '</div>';
 
+      var specialAreasLabel =
+      '<div class="legend-entry">' +
+      '<div class="fat-label"> Kevyen liikenteen väylät </div>' +
+      '</div>';
+
       var winterCareValues= [
         [0, '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'],
         [1, '(Is) Normaalisti aina paljaana'],
@@ -45,7 +50,11 @@
         [17, '(N2) Valta- ja kantatiet sekä vilkkaat seututiet'],
         [18, '(N3) Muut tiet'],
         [19, '(T1) Puistomainen taajamassa'],
-        [20, '(T2) Luonnonmukainen taajamassa'],
+        [20, '(T2) Luonnonmukainen taajamassa']
+
+      ];
+
+      var specialAreaValues = [
         [21, '(E1) Puistomainen erityisalue'],
         [22, '(E2) Luonnonmukainen erityisalue'],
         [23, '(Y) Ympäristötekijä']
@@ -65,12 +74,19 @@
             '</div>';
       }).join('') + winterWalkwayLegend + '</div>';
 
+      var specialAreaLegend = specialAreasLabel + '<div class="green-care-legend">' + _.map(specialAreaValues, function(specialAreaValue) {
+        return '<div class="legend-entry">' +
+            '<div class="label">' + specialAreaValue[1] + '</div>' +
+            '<div class="symbol linear care-class-' + specialAreaValue[0] + '" />' +
+            '</div>';
+      }).join('') + '</div>';
+
       var greenCareLegend = '<div class="green-care-legend">' + _.map(greenCareValues, function(greenCareValue) {
         return '<div class="legend-entry green-care-legend">' +
             '<div class="label">' + greenCareValue[1] + '</div>' +
             '<div class="symbol linear care-class-' + greenCareValue[0] + '" />' +
             '</div>';
-      }).join('') + '</div>';
+      }).join('') + specialAreaLegend + '</div>';
 
       return '<div class="panel-section panel-legend '+ me.legendName() + '-legend">' + winterCareLegend + greenCareLegend + '</div>';
     };

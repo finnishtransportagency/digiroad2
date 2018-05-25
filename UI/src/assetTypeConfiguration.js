@@ -525,18 +525,18 @@
         form: new AssetFormFactory({
           fields : [
             {
-              label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka", defaultValue: "0",
+              label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka", defaultValue: "10",
               values: [
-                {id: 0, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'},
-                {id: 1, label: '(Is) Normaalisti aina paljaana'},
-                {id: 2, label: '(I) Normaalisti paljaana'},
-                {id: 3, label: '(Ib) Osan talvea lumipintaisena'},
-                {id: 4, label: '(TIb) Ib-luokka taajamassa'},
-                {id: 5, label: '(II) Pääosin lumipintainen'},
-                {id: 6, label: '(III) Hiekoitus vain pahimmissa tilanteissa'},
-                {id: 7, label: '(K1) Hyvin hoidettu kevyen liikenteen väylä'},
-                {id: 8, label: '(K2) Merkitykseltään vähäisempi kevyen liikenteen väylä'},
-                {id: 9, label: '(ei talvih.) Kevyen liikenteen väylällä ei talvihoitoa'},
+                {hidden: true, id: 0, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'},
+                {hidden: true, id: 1, label: '(Is) Normaalisti aina paljaana'},
+                {hidden: true, id: 2, label: '(I) Normaalisti paljaana'},
+                {hidden: true, id: 3, label: '(Ib) Osan talvea lumipintaisena'},
+                {hidden: true, id: 4, label: '(TIb) Ib-luokka taajamassa'},
+                {hidden: true, id: 5, label: '(II) Pääosin lumipintainen'},
+                {hidden: true, id: 6, label: '(III) Hiekoitus vain pahimmissa tilanteissa'},
+                {hidden: true, id: 7, label: '(K1) Hyvin hoidettu kevyen liikenteen väylä'},
+                {hidden: true, id: 8, label: '(K2) Merkitykseltään vähäisempi kevyen liikenteen väylä'},
+                {hidden: true, id: 9, label: '(ei talvih.) Kevyen liikenteen väylällä ei talvihoitoa'},
                 {id: 10, label: 'Pääkadut ja vilkkaat väylät'},
                 {id: 20, label: 'Kokoojakadut'},
                 {id: 30, label: 'Tonttikadut'},
@@ -546,7 +546,7 @@
               ]
             },
             {
-              label: 'Viherhoitoluokka', type: 'hidden_read_only_number', publicId: "hoitoluokat_viherhoitoluokka", hiddenEdit: true,
+              label: 'Viherhoitoluokka', type: 'hidden_read_only_number', publicId: "hoitoluokat_viherhoitoluokka",
               values: [
                 {id: 1, label: '(N1) 2-ajorataiset tiet'},
                 {id: 2, label: '(N2) Valta- ja kantatiet sekä vilkkaat seututiet'},
