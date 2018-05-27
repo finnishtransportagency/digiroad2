@@ -211,7 +211,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     s"[[$daySpec]*[(h${validityPeriod.startHour}m${validityPeriod.startMinute}){h${validityPeriod.preciseDuration()._1}m${validityPeriod.preciseDuration()._2}}]]"
   }
 
-  def valueToApi(value: Option[Value], typeId: Int) = {
+  def valueToApi(value: Option[Value]) = {
     value match {
       case Some(Prohibitions(x)) => x.map { prohibitionValue =>
         val exceptions = prohibitionValue.exceptions.toList match {
@@ -223,11 +223,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           case _ => Map("validityPeriods" -> prohibitionValue.validityPeriods.map(toTimeDomain))
         }
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
-      }
-      case Some(MultiValue(x)) if MassTransitLane.typeId == typeId => x.properties.map { massTransitLaneValue =>
-
-        Map("validityPeriods" -> massTransitLaneValue.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).map(ValidityPeriodValue.fromMap).map {
-          a=> toTimeDomain(a)})
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
       case Some(MultiValue(x)) => x.properties.flatMap { multiTypeProperty =>
@@ -260,7 +255,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       Map("id" -> asset.id,
         "points" -> asset.geometry,
         geometryWKTForLinearAssets(asset.geometry),
-        "value" -> valueToApi(asset.value, typeId),
+        "value" -> valueToApi(asset.value),
         "side_code" -> asset.sideCode.value,
         "linkId" -> asset.linkId,
         "startMeasure" -> asset.startMeasure,

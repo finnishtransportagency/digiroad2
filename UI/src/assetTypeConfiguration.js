@@ -359,6 +359,11 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1, required: true}
+          ]
+        })
       },
       {
         typeId: assetType.winterSpeedLimit,
