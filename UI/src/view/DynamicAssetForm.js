@@ -29,12 +29,12 @@
       return me.createPropertyValue([{ value: fieldSettings.defaultValue}]);
     };
 
-    me.deletePropertyValue = function(){
+    me.emptyPropertyValue = function(){
       return me.createPropertyValue([]);
     };
 
     me.isValid = function(){
-      return !fieldSettings.required || fieldSettings.required && me.hasValue();
+      return !me.isRequired() || me.isRequired() && me.hasValue();
     };
 
     me.compare = function(propertyValueA, propertyValueB){
@@ -73,7 +73,7 @@
 
     me.setSelectedValue = function(setValue, getValue){
 
-      var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.deletePropertyValue());
+      var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
       var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
       var value = properties.concat(currentPropertyValue);
@@ -411,7 +411,7 @@
         $(me.element).prop('checked', ~~(value === 0));
       };
 
-      if(!isDisabled && me.hasDefaultValue()) {
+      if(!isDisabled && (me.hasDefaultValue() || me.isRequired())) {
         me.setValue(me.getValue());
         me.setSelectedValue(setValue, getValue);
       }
@@ -625,20 +625,19 @@
 
       this.addField = function(field, sideCode){
         if(!formFields['sidecode_'+sideCode])
-            formFields['sidecode_'+sideCode] = { isDisabled: false, fields : [] };
-        formFields['sidecode_'+sideCode].fields.push(field);
+            formFields['sidecode_'+sideCode] = [];
+        formFields['sidecode_'+sideCode].push(field);
       };
 
       this.getFields = function(sideCode){
           if(!formFields['sidecode_'+sideCode])
-            throw Error("The form of the sidecode " + sideCode + " doesn't exist");
-          var form = formFields['sidecode_'+sideCode];
-          return form ? form.fields : undefined;
+            Error("The form of the sidecode " + sideCode + " doesn't exist");
+          return formFields['sidecode_'+sideCode];
       };
 
       this.getAllFields = function(){
         return _.flatten(_.map(formFields, function(form) {
-          return form.fields;
+          return form;
         }));
       };
 
@@ -646,7 +645,7 @@
         if(!formFields['sidecode_'+sideCode])
           throw Error("The form of the sidecode " + sideCode + " doesn't exist");
 
-        formFields['sidecode_'+sideCode] = { isDisabled: false, fields : [] };
+        formFields['sidecode_'+sideCode] = [];
       };
     };
 
@@ -699,9 +698,8 @@
         }
         var dynamicField = _.find(dynamicFormFields, function (availableFieldType) { return availableFieldType.name === field.type; });
         var fieldType = new dynamicField.fieldType(_assetTypeConfiguration, field, isDisabled);
-        var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
-
         forms.addField(fieldType, sideCode);
+        var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
 
         fieldGroupElement.append(fieldElement);
 
@@ -797,13 +795,13 @@
         forms.removeFields(sideCode);
         if(disabled){
           removeValueFn();
-          _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
-        }
-        else{
+        }else{
           setValueFn({ properties: [] });
         }
-
+        // _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
         body.find('.form-editable-' + sideCodeClass).find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+
+        eventbus.trigger(events('valueChanged'));
       });
 
       formGroup.append(toggleElement);
@@ -902,17 +900,11 @@
     }
 
     me.isSplitOrSeparatedAllowed = function(){
-      var numberFields = function(sideCode) {
-        return _.flatten(_.map(forms.getFields(sideCode) , function(property) {
-          return property.getPropertyValue().value;
-        })).length;
-      };
-
       //When both are deleted
       if(_.isEmpty(forms.getAllFields()))
         return false;
 
-      if (numberFields('a') !== numberFields('b'))
+      if(forms.getFields('a').length !== forms.getFields('b').length)
         return true;
 
       return _.some(forms.getFields('a'), function(fieldA){
@@ -922,9 +914,11 @@
           return propertyValueA.publicId === fieldB.getPropertyValue().publicId;
         }), function(property) {return property.getPropertyValue();} ));
 
+        var fieldB = _.find(forms.getFields('b'), function(field) { return field.publicId === propertyValueA.publicId; } );
+        // if(!fieldB)
+        //   return true;
 
-        if(!fieldA.compare(propertyValueA, propertyValueB))
-          return true;
+        return !fieldA.compare(propertyValueA, propertyValueB);
       });
     };
 
@@ -934,17 +928,22 @@
         });
     };
 
-    var SaveButton = function(assetTypeConfiguration, formStructure) {
+
+    function events() {
+      return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+    }
+
+    var SaveButton = function(assetTypeConfiguration) {
 
       var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
         assetTypeConfiguration.selectedLinearAsset.save();
       });
 
       var updateStatus = function(element) {
-        if(!assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-          element.prop('disabled', !(me.isSaveable() && assetTypeConfiguration.selectedLinearAsset.isDirty()));
-        } else
+        if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
           element.prop('disabled', !(me.isSaveable() && me.isSplitOrSeparatedAllowed()));
+        } else
+          element.prop('disabled', !(me.isSaveable() && assetTypeConfiguration.selectedLinearAsset.isDirty()));
       };
 
       updateStatus(element);
@@ -957,9 +956,9 @@
         element: element
       };
 
-      function events() {
-        return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-      }
+      // function events() {
+      //   return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+      // }
 
     };
 
@@ -974,9 +973,9 @@
       });
 
 
-      function events() {
-        return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-      }
+      // function events() {
+      //   return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+      // }
 
       return {
         element: element
@@ -1001,9 +1000,9 @@
         updateStatus();
       });
 
-      function events() {
-        return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-      }
+      // function events() {
+      //   return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+      // }
 
       return {
         element: element

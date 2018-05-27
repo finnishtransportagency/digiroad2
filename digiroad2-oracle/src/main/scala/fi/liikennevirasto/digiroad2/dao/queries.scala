@@ -170,18 +170,8 @@ object Queries {
     """
   }
 
-//  def existsValidityPeriodProperty =
-//    "select id from date_property_value where asset_id = ? and property_id = ?"
-
-//  def updateValidityPeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
-//    sqlu"""
-//      update validity_period_property_value
-//      set period_week_day = ${validityPeriodValue.days}, type = ${validityPeriodValue.periodType},
-//          start_hour = ${validityPeriodValue.startHour}, end_hour =  ${validityPeriodValue.endHour},
-//          start_minute =  ${validityPeriodValue.startMinute}, end_minute = ${validityPeriodValue.startMinute}
-//      where asset_id = $assetId and property_id = $propertyId
-//      """
-//  }
+  def existsValidityPeriodProperty =
+    "select id from validity_period_property_value where asset_id = ? and property_id = ?"
 
   def deleteValidityPeriodProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from validity_period_property_value where asset_id = $assetId and property_id = $propertyId"
