@@ -17,15 +17,17 @@ class TierekisteriHeightLimitAssetClient(trEndPoint: String, trEnable: Boolean, 
   private val trRoadSide = "PUOLI"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriHeightLimitData] = {
-    val heightValue = convertToInt(getFieldValue(data, trHeight)).get
+    convertToInt(getFieldValue(data, trHeight)).map{
+      heightValue =>
 
-    //Mandatory field
-    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
-    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val roadSide = convertToInt(getMandatoryFieldValue(data, trRoadSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+        //Mandatory field
+        val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+        val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+        val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+        val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+        val roadSide = convertToInt(getMandatoryFieldValue(data, trRoadSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
-    Some(TierekisteriHeightLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, heightValue))
+        TierekisteriHeightLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, heightValue)
+    }
   }
 }

@@ -49,7 +49,7 @@ sealed trait LinkType
 object LinkType {
   val values = Set(Motorway, MultipleCarriageway, SingleCarriageway, Freeway, Roundabout, SlipRoad,
                    RestArea, CycleOrPedestrianPath, PedestrianZone, ServiceOrEmergencyRoad, EnclosedTrafficArea,
-                   TractorRoad, MotorwayServiceAccess, CableFerry, UnknownLinkType)
+                   TractorRoad, MotorwayServiceAccess, CableFerry, SpecialTransportWithoutGate, SpecialTransportWithGate, UnknownLinkType)
 
   def apply(value: Int): LinkType = {
     values.find(_.value == value).getOrElse(UnknownLinkType)
@@ -68,6 +68,8 @@ case object ServiceOrEmergencyRoad extends LinkType { def value = 10 }
 case object EnclosedTrafficArea extends LinkType { def value = 11 }
 case object TractorRoad extends LinkType { def value = 12 }
 case object MotorwayServiceAccess extends LinkType { def value = 13 }
+case object SpecialTransportWithoutGate extends LinkType { def value = 14 }
+case object SpecialTransportWithGate extends LinkType { def value = 15 }
 case object CableFerry extends LinkType { def value = 21 }
 case object UnknownLinkType extends LinkType { def value = 99 }
 
@@ -89,6 +91,30 @@ case object State extends AdministrativeClass { def value = 1 }
 case object Municipality extends AdministrativeClass { def value = 2 }
 case object Private extends AdministrativeClass { def value = 3 }
 case object Unknown extends AdministrativeClass { def value = 99 }
+
+
+
+sealed trait InformationSource {
+  def value: Int
+}
+
+object InformationSource{
+  val values = Set(RoadRegistry, MunicipalityMaintenainer, MmlNls, UnknownSource)
+
+  def apply(value: Int): InformationSource = {
+    values.find(_.value == value).getOrElse(UnknownSource)
+  }
+}
+
+//1 = FTA/ Road registry (Liikennevirasto / Tierekisteri)
+case object RoadRegistry extends InformationSource { def value = 1 }
+//2 = Maintainer (municipality maintainer)
+case object MunicipalityMaintenainer extends InformationSource { def value = 2 }
+//3 = MML/NLS (Maanmittauslaitos)
+case object MmlNls extends InformationSource { def value = 3 }
+
+case object UnknownSource extends InformationSource { def value = 99 }
+
 
 object FunctionalClass {
   val Unknown: Int = 99
@@ -115,6 +141,15 @@ object TrafficDirection {
     values.find(_.toString == stringValue).getOrElse(UnknownDirection)
   }
 
+  def toSideCode(trafficDirection: TrafficDirection): SideCode = {
+    trafficDirection match {
+      case TowardsDigitizing => SideCode.TowardsDigitizing
+      case AgainstDigitizing => SideCode.AgainstDigitizing
+      case BothDirections => SideCode.BothDirections
+      case UnknownDirection => SideCode.Unknown
+    }
+  }
+
   case object BothDirections extends TrafficDirection { def value = 2 }
   case object AgainstDigitizing extends TrafficDirection { def value = 3 }
   case object TowardsDigitizing extends TrafficDirection { def value = 4 }
@@ -138,6 +173,15 @@ object SideCode {
       case TowardsDigitizing => AgainstDigitizing
       case AgainstDigitizing => TowardsDigitizing
       case _ => sideCode
+    }
+  }
+
+  def toTrafficDirection(sideCode: SideCode): TrafficDirection = {
+    sideCode match {
+      case TowardsDigitizing => TrafficDirection.TowardsDigitizing
+      case AgainstDigitizing => TrafficDirection.AgainstDigitizing
+      case BothDirections => TrafficDirection.BothDirections
+      case Unknown => TrafficDirection.UnknownDirection
     }
   }
 

@@ -170,6 +170,13 @@ class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
   }
 }
 
+class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) extends Actor {
+  def receive = {
+    case x: Seq[T] => prohibitionProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _ => println("prohibitionSaveProjected: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -241,6 +248,9 @@ object Digiroad2Context {
 
   val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
+
+  val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
+  eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
   lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
@@ -314,6 +324,10 @@ object Digiroad2Context {
 
   lazy val verificationService: VerificationService = {
     new VerificationService(eventbus, roadLinkService)
+  }
+
+  lazy val municipalityService: MunicipalityService = {
+    new MunicipalityService(eventbus, roadLinkService)
   }
 
   lazy val multiValueLinearAssetService: MultiValueLinearAssetService = {

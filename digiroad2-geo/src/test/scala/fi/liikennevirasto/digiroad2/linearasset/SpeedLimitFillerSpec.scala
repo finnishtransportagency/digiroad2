@@ -35,8 +35,8 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets))
     filledTopology should have size 2
     filledTopology.map(_.id) should not contain (1)
-    changeSet.droppedAssetIds should have size 1
-    changeSet.droppedAssetIds.head should be (1)
+    changeSet.expiredAssetIds should have size 1
+    changeSet.expiredAssetIds.head should be (1)
   }
 
   test("Don't drop speedlimit segments less than 2 meters on a road link with length less that 2 meters"){
@@ -59,7 +59,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val speedLimits = Map(2l -> Seq(
       SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 2.15, 2.35, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
-    changeSet.droppedAssetIds should be(Set(1))
+    changeSet.expiredAssetIds should be(Set(1))
   }
 
   test("adjust speed limit to cover whole link when its the only speed limit to refer to the link") {
@@ -120,7 +120,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
         SpeedLimit(2, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)), Seq(Point(0.04, 0.0), Point(100.0, 0.0)), 0.04, 100.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
-    changeSet.droppedAssetIds should be(Set(1))
+    changeSet.expiredAssetIds should be(Set(1))
   }
 
   test("do not drop short speed limit if it fills the road length") {
@@ -192,7 +192,7 @@ test("should not drop adjusted short speed limit") {
     filledTopology.map(_.modifiedBy) should be (Seq(Some("random guy"))) // latest modification should show
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, 1, 0.0, 1.0)))
     changeSet.adjustedSideCodes should be(List())
-    changeSet.droppedAssetIds should be(Set(1, 2))
+    changeSet.expiredAssetIds should be(Set(1, 2))
   }
 
   test("create unknown speed limit on empty segments") {
@@ -222,11 +222,12 @@ test("should not drop adjusted short speed limit") {
     )
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
-      Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+      Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+      ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
     output.length should be(3)
-    output.head.trafficDirection should be (TrafficDirection.BothDirections)
-    output.head.startMeasure should be(0.0)
-    output.head.endMeasure should be(3.0)
+    output.head._1.trafficDirection should be (TrafficDirection.BothDirections)
+    output.head._1.startMeasure should be(0.0)
+    output.head._1.endMeasure should be(3.0)
   }
 
   test("project speed limits to new geometry, case 2 - different speeds to different directions") {
@@ -250,26 +251,28 @@ test("should not drop adjusted short speed limit") {
 
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
-    output.head.sideCode should be (SideCode.TowardsDigitizing)
-    output.last.sideCode should be (SideCode.AgainstDigitizing)
-    output.head.startMeasure should be(0.0)
-    output.head.endMeasure should be(3.0)
-    output.last.startMeasure should be(0.0)
-    output.last.endMeasure should be(3.0)
-    output.foreach(_.value should be (Some(NumericValue(40))))
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
+    output.head._1.sideCode should be (SideCode.TowardsDigitizing)
+    output.last._1.sideCode should be (SideCode.AgainstDigitizing)
+    output.head._1.startMeasure should be(0.0)
+    output.head._1.endMeasure should be(3.0)
+    output.last._1.startMeasure should be(0.0)
+    output.last._1.endMeasure should be(3.0)
+    output.foreach( out => out._1.value should be (Some(NumericValue(40))))
 
     val output2 = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.last, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty)) }
     output2.length should be(3)
-    output2.head.sideCode should be (SideCode.AgainstDigitizing)
-    output2.last.sideCode should be (SideCode.TowardsDigitizing)
-    output2.head.startMeasure should be(0.0)
-    output2.head.endMeasure should be(3.0)
-    output2.last.startMeasure should be(0.0)
-    output2.last.endMeasure should be(3.0)
-    output2.foreach(_.value should be (Some(NumericValue(50))))
+    output2.head._1.sideCode should be (SideCode.AgainstDigitizing)
+    output2.last._1.sideCode should be (SideCode.TowardsDigitizing)
+    output2.head._1.startMeasure should be(0.0)
+    output2.head._1.endMeasure should be(3.0)
+    output2.last._1.startMeasure should be(0.0)
+    output2.last._1.endMeasure should be(3.0)
+    output2.foreach(out => out._1.value should be (Some(NumericValue(50))))
   }
 
   test("project speed limits to new geometry, case 3 - speed changes in the middle of the roadlink") {
@@ -294,7 +297,8 @@ test("should not drop adjusted short speed limit") {
     val output = changes flatMap { change =>
       speedLimit.map(
       SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.foreach(_.sideCode should be (SideCode.BothDirections))
     output.head.startMeasure should be(0.0)
@@ -328,7 +332,8 @@ test("should not drop adjusted short speed limit") {
     val output = changes flatMap { change =>
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.foreach(_.sideCode should be (SideCode.BothDirections))
     output.length should be (4)
@@ -367,7 +372,8 @@ test("should not drop adjusted short speed limit") {
     val output = changes flatMap { change =>
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.filter(_.linkId == 1).count(_.value.contains(NumericValue(30))) should be (1)
     output.filter(_.linkId == 1).count(_.value.contains(NumericValue(40))) should be (1)
@@ -402,7 +408,8 @@ test("should not drop adjusted short speed limit") {
     val output = changes flatMap { change =>
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Set.empty  ))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
   }
 
   test("Should repair speed limit data on overlaps and invalid data") {
@@ -450,7 +457,7 @@ test("should not drop adjusted short speed limit") {
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
 
-    changeSet.droppedAssetIds should have size 4
+    changeSet.expiredAssetIds should have size 4
     filledTopology.count(_.id != 0) should be (6)
     filledTopology.forall(_.value.nonEmpty) should be (true)
 
@@ -521,7 +528,7 @@ test("should not drop adjusted short speed limit") {
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
-    changeSet.droppedAssetIds should be (Set(3))
+    changeSet.expiredAssetIds should be (Set(3))
     filledTopology.length should be (2)
     val oldLink0 = filledTopology.find(_.startMeasure==0.0).get
     oldLink0.endMeasure should be (10.0)
@@ -562,7 +569,7 @@ test("should not drop adjusted short speed limit") {
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
-    changeSet.droppedAssetIds should have size (2)
+    changeSet.expiredAssetIds should have size (2)
     changeSet.adjustedSideCodes should have size (2)
   }
 

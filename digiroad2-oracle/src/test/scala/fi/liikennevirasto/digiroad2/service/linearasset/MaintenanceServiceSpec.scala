@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
@@ -11,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.geotools.geometry.jts.GeometryBuilder
+import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -28,6 +30,9 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388562361l))).thenReturn(Seq(RoadLink(388562361l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set.empty[Long])).thenReturn(Seq())
 
   val roadLinkWithLinkSource = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
@@ -48,7 +53,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
   when(mockMaintenanceDao.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, Seq(1)))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, maintenanceRoadAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, maintenanceRoadAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val maintenanceDao = new OracleMaintenanceDao(mockVVHClient, mockRoadLinkService)
@@ -74,6 +79,19 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def maintenanceDAO: OracleMaintenanceDao = maintenanceDao
+    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override def assetDao: OracleAssetDao = mockAssetDao
+  }
+
+
+  object MaintenanceServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def eventBus: DigiroadEventBus = mockEventBus
+    override def vvhClient: VVHClient = mockVVHClient
+    override def polygonTools: PolygonTools = mockPolygonTools
+    override def maintenanceDAO: OracleMaintenanceDao = mockMaintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
   }
@@ -249,5 +267,87 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
       }
     }
 
+  }
+
+  test("Get only maintenance assets that have kayttooikeus = 9 "){
+    val propKayttooikeus = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propHuoltovastuu = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(propKayttooikeus, propHuoltovastuu, propTiehoitokunta)
+
+    val propKayttooikeus1 = Properties("huoltotie_kayttooikeus", "single_choice", "9")
+    val propHuoltovastuu1 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta1 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq1 :Seq[Properties] = List(propKayttooikeus1, propHuoltovastuu1, propTiehoitokunta1)
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    val maintenanceRoad1 = MaintenanceRoad(propertiesSeq1)
+
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None),
+                                                NewLinearAsset(388562361l, 0, 20, maintenanceRoad1, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+      newAssets.length should be(2)
+
+      val assets = maintenanceDao.fetchPotentialServiceRoads()
+      assets.size should be(1)
+      assets.foreach {
+        asset => asset.value.get.asInstanceOf[MaintenanceRoad].properties.find(_.publicId == "huoltotie_kayttooikeus").get.value should be ("9")
+      }
+    }
+  }
+
+  test("Get only maintenance assets that doesn' have kayttooikeus = 9 "){
+    val propKayttooikeus = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propHuoltovastuu = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(propKayttooikeus, propHuoltovastuu, propTiehoitokunta)
+
+    val propKayttooikeus1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propHuoltovastuu1 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta1 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq1 :Seq[Properties] = List(propKayttooikeus1, propHuoltovastuu1, propTiehoitokunta1)
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    val maintenanceRoad1 = MaintenanceRoad(propertiesSeq1)
+
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None),
+          NewLinearAsset(388562361l, 0, 20, maintenanceRoad1, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+      newAssets.length should be(2)
+
+      val assets = maintenanceDao.fetchPotentialServiceRoads()
+      assets.size should be (0)
+    }
+  }
+
+  test("test get by zoom level method"){
+    val propKayttooikeus = Properties("huoltotie_kayttooikeus", "single_choice", "9")
+    val propHuoltovastuu = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propTiehoitokunta = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(propKayttooikeus, propHuoltovastuu, propTiehoitokunta)
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+
+    runWithRollback {
+      when(mockMaintenanceDao.fetchPotentialServiceRoads()).thenReturn(Seq(
+        PersistedLinearAsset(0, 388562361l,1, Some(maintenanceRoad), 0.0, 20.0, Some("testuser"), None, None, None, false, 290, 0, None, NormalLinkInterface, None, None, None)
+      ))
+
+      val assets = MaintenanceServiceWithDao.getByZoomLevel
+      assets.size should be (1)
+    }
+  }
+
+  test("should not return assets when get by zoom level called"){
+    runWithRollback {
+      when(mockMaintenanceDao.fetchPotentialServiceRoads()).thenReturn(Seq())
+
+      val assets = MaintenanceServiceWithDao.getByZoomLevel
+      assets.size should be (0)
+    }
   }
 }

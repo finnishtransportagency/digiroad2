@@ -19,7 +19,7 @@ namespace :deploy do
 
   task :prepare_release do
     on roles(:all) do |host|
-      execute "tmux kill-server || true"
+      execute "tmux kill-session -t 'waiting for your commands' || true"
       execute "mkdir -p #{release_path}/tmp"
       execute "cd #{release_path} && npm install && export TMPDIR=#{release_path}/tmp && yarn install && grunt deploy --target=#{fetch(:grunt_target)}"
       execute "cd #{deploy_path} && mkdir #{release_path}/digiroad2-oracle/lib && cp oracle/* #{release_path}/digiroad2-oracle/lib/."
@@ -30,6 +30,7 @@ namespace :deploy do
       execute "cd #{deploy_path} && cp keys.properties #{release_path}/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp keys.properties #{release_path}/digiroad2-oracle/src/test/resources/."
       execute "cd #{release_path} && cp revision.properties #{release_path}/conf/#{fetch(:stage)}/. || echo 'SKIP: No revision information available'"
+      execute "cd #{release_path} && ln -s /data1/logs/digiroad2 logs"
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} assembly"
       execute "cd #{release_path} && rsync -a dist/ src/main/webapp/"
       execute "cd #{release_path} && rsync -a dist-viite/ src/main/webapp/viite/"
@@ -37,7 +38,8 @@ namespace :deploy do
       execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' viite-UI/ src/main/webapp/viite/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/viite/"
-      execute "killall -q java; exit 0"
+      execute "cd #{release_path} && chmod 700 stop.sh"
+      execute "cd #{release_path} && ./stop.sh"
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DatabaseMigration'"
     end
   end

@@ -7,13 +7,16 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 sealed trait FloatingReason {
   def value: Int
@@ -100,9 +103,7 @@ trait PointAssetOperations {
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
 
-      val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
-        user.isAuthorizedToRead(persistedAsset.municipalityCode)
-      }.map { (persistedAsset: PersistedAsset) =>
+      val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.map { (persistedAsset: PersistedAsset) =>
         val (floating, assetFloatingReason) = isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
         adjustment(roadLinks, changeInfo, persistedAsset, floating, assetFloatingReason)  match {
           case Some(adjustment) =>
@@ -254,6 +255,24 @@ trait PointAssetOperations {
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
       fetchPointAssets(withFilter(filter))
+  }
+
+  def getPersistedAssetsByLinkId(linkId: Long): Seq[PersistedAsset] = {
+    withDynSession {
+      getPersistedAssetsByLinkIdWithoutTransaction(linkId)
+    }
+  }
+
+  def getPersistedAssetsByLinkIdWithoutTransaction(linkId: Long): Seq[PersistedAsset] = {
+    val filter = s"where a.asset_type_id = $typeId and lp.link_Id = $linkId"
+    fetchPointAssets(withFilter(filter))
+  }
+
+  def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[Long]): Seq[PersistedAsset] = {
+    MassQuery.withIds(linkIds) { idTableName =>
+      val filter = s"join $idTableName i on i.id = lp.link_id where a.asset_type_id = $typeId"
+      fetchPointAssets(withFilter(filter))
+    }
   }
 
   def expire(id: Long, username: String): Long = {

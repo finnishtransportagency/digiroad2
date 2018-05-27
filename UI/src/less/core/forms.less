@@ -122,6 +122,11 @@ input[type="checkbox"]:focus {
   margin-bottom: @input-margin;
 }
 
+.form-list {
+  display: inline-flex;
+  margin-bottom: @input-margin;
+}
+
 // Checkboxes and radios
 //
 // Indent the labels to position radios/checkboxes as hanging controls.
@@ -331,6 +336,230 @@ input[type="checkbox"] {
     padding-bottom: (@line-height-modifier + 1);
     line-height: @line-height-modifier * 3;
   }
+  .control-label-list{
+    padding-top: 19px;
+  }
+
+  &#newuser {
+
+    #username{
+      width: 29%;
+      margin-right: 23%;
+    }
+
+    #name{
+      width: 43%;
+      margin-right: 10%;
+    }
+
+
+    .control-label.labelBoxLeft{
+      width: 99px;
+      padding-left: 0;
+      font-size: 11px;
+      margin-top: 0;
+      font-weight: bold;
+      text-transform: uppercase;
+
+
+      &.Ely{
+        width:81px;
+      }
+
+      &.Areas{
+        width:157px;
+      }
+    }
+
+    #right_municipalities, #left_municipalities, #right_elys, #left_elys{
+      width: 151px;
+    }
+
+    .control-label.labelBoxRight {
+      width: 107px;
+      padding-left: 0;
+      font-size: 11px;
+      margin-top: 0;
+      font-weight: bold;
+      text-transform: uppercase;
+
+      &.Ely{
+        width:88px;
+      }
+
+      &.Areas{
+        width:164px;
+      }
+    }
+
+    #labelCheckboxMunicipality{
+      width: 42%;
+      font-size: 12px;
+      line-height: 15px;
+      padding-top: 0;
+      padding-left: 0;
+    }
+
+    #municipalitiesCheckbox {
+      width: 6%;
+      margin-right: 18px;
+    }
+
+    #municipalities_search {
+      width: 151px;
+      margin-top: 0;
+      max-height: 72px;
+    }
+
+    #municipalities_search_rightSelected {
+      width: 24px;
+    }
+
+    #municipalities_search_leftSelected {
+      width: 24px;
+    }
+
+    #municipalities_search_to {
+      width: 151px;
+      margin-top: 0;
+      max-height: 72px;
+    }
+
+    #elysCheckbox {
+      width: 6%;
+      margin-right: 18px;
+    }
+
+    #labelCheckboxEly{
+      font-size: 12px;
+      line-height: 15px;
+      padding-top: 0;
+      padding-left: 0;
+      width: 37%;
+    }
+
+    #labelCheckboxOperator{
+      width: 34%;
+      font-size: 12px;
+      line-height: 15px;
+      padding-top: 0;
+      padding-left: 0;
+    }
+
+    #labelCheckboxArea{
+      width: 61%;
+      font-size: 12px;
+      line-height: 15px;
+      padding-top: 0;
+      padding-left: 0;
+    }
+
+    #elys_search {
+      width: 151px;
+      margin-top: 0;
+      max-height: 72px;
+    }
+
+    #elys_search_rightSelected {
+      width: 24px;
+    }
+
+    #elys_search_leftSelected {
+      width: 24px;
+    }
+
+    #elys_search_to {
+      width: 151px;
+      margin-top: 0;
+      max-height: 72px;
+    }
+
+    #operatorCheckbox {
+      width: 6%;
+      margin-right: 18px;
+    }
+
+    #areasCheckbox {
+      width: 6%;
+      margin-right: 18px;
+    }
+
+    #multiselect {
+      width: 151px;
+      margin-top: 0;
+      max-height: 72px;
+    }
+
+    #multiselect_rightSelected {
+      width: 24px;
+    }
+
+    #multiselect_leftSelected {
+      width: 24px;
+    }
+
+    #multiselect_to {
+      width: 151px;
+      margin-top: 0;
+      max-height: 72px;
+    }
+
+
+    .form-control {
+      width: 29%;
+      margin-right: 23%;
+    }
+
+    .form-group.municipalities {
+      clear: both;
+      border-bottom: none;
+      display: none
+    }
+
+    .row {
+      min-width: 360px;
+    }
+
+    .col-xs-5 {
+      max-width: 151px;
+      display: inline-block;
+    }
+
+    .col-xs-2 {
+      max-width: 24px;
+      display: inline-block;
+    }
+
+    .form-group.elys {
+      clear: both;
+      border-bottom: none;
+      display: none
+    }
+
+    .form-group.maintenanceAreas {
+      clear: both;
+      border-bottom: none;
+      display: none
+    }
+
+    .save.btn.btn-primary {
+      float: none;
+    }
+
+    .cancel.btn.btn-secondary {
+      float: none;
+    }
+
+    .form-group.maintenanceAreas{
+      display: none;
+    }
+    .form-group.elys{
+      display: none;
+    }
+    .form-group.maintenanceAreas{
+      display: none;
+    }
+  }
 }
 
 // Inverted colors
@@ -340,6 +569,9 @@ input[type="checkbox"] {
 .form-dark {
   label {
     color: @gray-lighter;
+  }
+  .label-list{
+    margin-right: 10px;
   }
 
   .form-control {

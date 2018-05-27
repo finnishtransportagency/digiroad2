@@ -39,7 +39,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mVLinearAssetDao: MultiValueLinearAssetDao = new MultiValueLinearAssetDao
@@ -172,7 +172,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, Some(propertyData2), Some(propertyData3), "unittest", (i) => Unit)
+      val createdId = ServiceWithDao.separate(assetId, Some(propertyData2), Some(propertyData3), "unittest", (i, a) => Unit)
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId(1))).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
 
@@ -206,7 +206,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, None, Some(propertyData3), "unittest", (i) => Unit).filter(_ != assetId).head
+      val createdId = ServiceWithDao.separate(assetId, None, Some(propertyData3), "unittest", (i, a) => Unit).filter(_ != assetId).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
@@ -241,7 +241,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(propertyData2), None, "unittest", (i) => Unit)
+      val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(propertyData2), None, "unittest", (i, a) => Unit)
       newAssetIdAfterUpdate.size should be(1)
 
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(newAssetIdAfterUpdate.head)).head
@@ -273,7 +273,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val ids = ServiceWithDao.split(assetId, 2.0, Some(propertyData2), Some(propertyData3), "unittest", (i) => Unit)
+      val ids = ServiceWithDao.split(assetId, 2.0, Some(propertyData2), Some(propertyData3), "unittest", (i, a) => Unit)
 
       val createdId = ids(1)
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
@@ -296,7 +296,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Separation should call municipalityValidation") {
-    def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
+    def failingMunicipalityValidation(code: Int, adminClass: AdministrativeClass): Unit = { throw new IllegalArgumentException }
     runWithRollback {
       val (propId1, propId2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
 
