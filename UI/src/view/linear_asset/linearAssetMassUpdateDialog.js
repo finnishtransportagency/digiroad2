@@ -108,7 +108,6 @@
       selectedMulti.setValue =  _setValue;
       selectedMulti.removeValue = removeValue;
       container.find('.form-elements-container').html(formElements.renderForm(selectedMulti).find('.editable'));
-      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), assetTypeConfiguration, '', selectedMulti);
     };
 
 
