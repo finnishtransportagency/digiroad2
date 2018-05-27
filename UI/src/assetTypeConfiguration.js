@@ -251,7 +251,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
-        form: new AssetFormFactory( {
+        form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg' }
           ]
@@ -358,10 +358,10 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
         form: new DynamicAssetForm({
           fields: [
-            {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1, required: true}
+            {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1}
           ]
         })
       },

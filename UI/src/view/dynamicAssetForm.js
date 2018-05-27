@@ -470,7 +470,7 @@
 
         return '' +
           '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
-          '  <button class="delete btn-delete">x</button>' +
+          '  <button class="delete btn-delete"' + me.disabled() + '>x</button>' +
           '  <label class="control-label daysf">' +
           dayLabels[period.days] +
           '  </label>' +
@@ -487,7 +487,7 @@
       function hourElement(selectedHour, type) {
         var className = type + '-hour';
         return '' +
-          '<select class="form-control sub-control select ' + className + '">' +
+          '<select class="form-control sub-control select ' + className + '"' + me.disabled()+ '>' +
           hourOptions(selectedHour, type) +
           '</select>';
       }
@@ -495,7 +495,7 @@
       function minutesElement(selectedMinute, type) {
         var className = type + '-minute';
         return '' +
-          '<select class="form-control sub-control select ' + className + '">' +
+          '<select class="form-control sub-control select ' + className + '"' + me.disabled()+ '>' +
           minutesOptions(selectedMinute) +
           '</select>';
       }
@@ -795,10 +795,11 @@
         forms.removeFields(sideCode);
         if(disabled){
           removeValueFn();
+          _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
         }else{
           setValueFn({ properties: [] });
         }
-        // _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
+
         body.find('.form-editable-' + sideCodeClass).find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
 
         eventbus.trigger(events('valueChanged'));
@@ -828,9 +829,9 @@
     function createBodyElement(selectedAsset) {
       var info = {
         modifiedBy :  selectedAsset.getModifiedBy() || '-',
-        modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' : '-',
+        modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + selectedAsset.getModifiedDateTime(): '-',
         createdBy : selectedAsset.getCreatedBy() || '-',
-        createdDate : selectedAsset.getCreatedDateTime() ? ' ' : '',
+        createdDate : selectedAsset.getCreatedDateTime() ? ' ' + selectedAsset.getCreatedDateTime(): '',
         verifiedBy : selectedAsset.getVerifiedBy(),
         verifiedDateTime : selectedAsset.getVerifiedDateTime()
       };
@@ -985,13 +986,13 @@
     var VerificationButton = function(assetTypeConfiguration) {
       var visible = (assetTypeConfiguration.isVerifiable && !_.isNull(assetTypeConfiguration.selectedLinearAsset.getId()) && assetTypeConfiguration.selectedLinearAsset.count() === 1);
 
-      var element = visible ? $('<button />').prop('disabled', isSaveable()).addClass('verify btn btn-primary').text('Merkitse tarkistetuksi').click(function() {
+      var element = visible ? $('<button />').prop('disabled', me.isSaveable()).addClass('verify btn btn-primary').text('Merkitse tarkistetuksi').click(function() {
         assetTypeConfiguration.selectedLinearAsset.verify();
       }) : '';
 
       var updateStatus = function() {
         if(!_.isEmpty(element))
-          element.prop('disabled', isSaveable());
+          element.prop('disabled', me.isSaveable());
       };
 
       updateStatus();
