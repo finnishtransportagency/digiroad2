@@ -12,12 +12,13 @@ window.FeedbackPopup = function (message, options) {
   options = _.merge(defaultOptions, options);
 
   var confirmDiv =
-      '<div class="modal-overlay confirm-modal">' +
-          '<div class="modal-dialog">' +
-              '<div class="content">' + message + '</div>' +
-              '<form class="form form-horizontal" role="form" onsubmit="return saveFormData()">' +
-                  '<div class="form-group">' +
-                      '<label class="control-label">Palautteen tyyppi</label>' +
+        '<div class="modal-overlay confirm-modal" id="feedback">' +
+            '<div class="modal-dialog">' +
+                '<div class="content">' + message + '<a class="header-link sulje"">Sulje</a>' + '</div>' +
+                '<form class="form form-horizontal" role="form"">' +
+                '<label class="control-label" id="title">Anna palautetta OTH-sovelluksesta</label>'+
+                '<div class="form-group">' +
+                    '<label class="control-label">Palautteen tyyppi</label>' +
 
                     '<select name="feedbackType" class="form-control">'+
                       '<option value="bug">Bugi</option>'+
@@ -29,7 +30,7 @@ window.FeedbackPopup = function (message, options) {
                     '<input type="text" name="headline" class="form-control">' +
 
                     '<label class="control-label">Palaute</label>' +
-                    '<input type="text" name="freeText" class="form-control">' +
+                    '<textarea name="freeText" id="freetext" class="form-control"></textarea>'+
 
 
                     '<label class="control-label">K-tunnus</label>' +
@@ -45,30 +46,28 @@ window.FeedbackPopup = function (message, options) {
 
 
                     '<label class="control-label">Puhelinnumero</label>' +
-                    '<input type="text" name="phoneNumber" class="form-control">' +
+                    '<input type="text" name="phoneNumber" id="phoneNumber" class="form-control">' +
 
-               '</div>' +
-              '</form>' +
-              '<div class="actions">' +
-                  '<button class = "btn btn-primary yes">' + options.saveButton + '</button>' +
-                  '<button class = "btn btn-secondary no">' + options.cancelButton + '</button>' +
-              '</div>' +
-          '</div>' +
-    '</div>';
+                '</div>' +
+                '</form>' +
+                '<div class="actions">' +
+                    '<button class = "btn btn-primary yes">' + options.saveButton + '</button>' +
+                     '<button class = "btn btn-secondary no">' + options.cancelButton + '</button>' +
+                 '</div>' +
+             '</div>' +
+        '</div>';
 
 
   var renderConfirmDialog = function() {
     jQuery(options.container).append(confirmDiv);
-    var modal = $('.modal-dialog');
   };
 
   var bindEvents = function() {
-    jQuery('.confirm-modal .no').on('click', function() {
+    jQuery('.confirm-modal .no, .confirm-modal .sulje').on('click', function() {
       purge();
       options.closeCallback();
     });
     jQuery('.confirm-modal .yes').on('click', function() {
-      // purge();
       options.successCallback();
 
       $.ajax({
