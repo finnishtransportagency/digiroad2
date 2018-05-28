@@ -506,11 +506,11 @@ root.LinearAssetLayer  = function(params) {
                  feature.getProperties().startMeasure === asset.startMeasure &&
                  feature.getProperties().endMeasure === asset.endMeasure; });
       });
-      var features = style.renderFeatures(selectedFeatures);
-      if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
 
-      selectToolControl.addSelectionFeatures(features);
+      if(assetLabel)
+          selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
+
+      selectToolControl.addSelectionFeatures(selectedFeatures);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
         drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
