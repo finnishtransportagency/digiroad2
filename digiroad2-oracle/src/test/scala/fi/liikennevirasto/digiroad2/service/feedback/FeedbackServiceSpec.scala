@@ -15,9 +15,10 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Create new feedback") {
     runWithRollback {
-      val id = service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body..."))
+      var feedbackbody = FeedbackBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+
+      val id = service.insertApplicationFeedback("feedback_createdBy", feedbackbody)
       val feedbacks = service.getFeedbacksByIds(Set(id)).head
-      feedbacks.body should be (Some("Feedback body..."))
       feedbacks.createdBy should be (Some("feedback_createdBy"))
       feedbacks.id should be (id)
     }
@@ -26,10 +27,14 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Get all not sent feedbacks") {
     runWithRollback {
+      var feedbackbody = FeedbackBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody1 = FeedbackBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody2 = FeedbackBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+
       val (id, id1, id2) =(
-        service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body...")),
-        service.insertApplicationFeedback("feedback_createdBy1", Some("Feedback body 1...")),
-        service.insertApplicationFeedback("feedback_createdBy2", Some("Feedback body 2...")))
+        service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
+        service.insertApplicationFeedback("feedback_createdBy1", feedbackbody1),
+        service.insertApplicationFeedback("feedback_createdBy2", feedbackbody2))
 
       service.updateApplicationFeedbackStatus(id2)
 
@@ -43,10 +48,14 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Get all feedbacks") {
     runWithRollback {
+      var feedbackbody = FeedbackBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody1 = FeedbackBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody2 = FeedbackBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+
       val (id, id1, id2) =(
-        service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body...")),
-        service.insertApplicationFeedback("feedback_createdBy1", Some("Feedback body 1...")),
-        service.insertApplicationFeedback("feedback_createdBy2", Some("Feedback body 2...")))
+        service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
+        service.insertApplicationFeedback("feedback_createdBy1", feedbackbody1),
+        service.insertApplicationFeedback("feedback_createdBy2", feedbackbody2))
 
       val feedbacks = service.getAllFeedbacks
       feedbacks.length should be (3)
@@ -60,10 +69,14 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Update feedback status") {
     runWithRollback {
+      var feedbackbody = FeedbackBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody1 = FeedbackBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody2 = FeedbackBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+
       val (id, id1, id2) =(
-        service.insertApplicationFeedback("feedback_createdBy", Some("Feedback body...")),
-        service.insertApplicationFeedback("feedback_createdBy1", Some("Feedback body 1...")),
-        service.insertApplicationFeedback("feedback_createdBy2", Some("Feedback body 2...")))
+        service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
+        service.insertApplicationFeedback("feedback_createdBy1", feedbackbody1),
+        service.insertApplicationFeedback("feedback_createdBy2", feedbackbody2))
 
       service.updateApplicationFeedbackStatus(id1)
       service.updateApplicationFeedbackStatus(id2)
