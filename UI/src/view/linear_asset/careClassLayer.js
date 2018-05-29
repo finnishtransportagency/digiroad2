@@ -30,6 +30,10 @@
       });
     };
 
+    var offsetBySideCode = function (linearAsset) {
+      return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+    };
+
     var lineFeatures = function(linearAssets) {
       return _.map(linearAssets, function(linearAsset) {
         var points = _.map(linearAsset.points, function(point) {

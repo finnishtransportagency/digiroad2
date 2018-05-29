@@ -514,11 +514,11 @@
         title: 'Hoitoluokat',
         newTitle: 'Uusi hoitoluokka',
         className: 'careClass',
-        isSeparable: true,
+        isSeparable: false,
         unit: '',
         allowComplementaryLinks: true,
         editControlLabels: {
-          title: 'Hoitoluokka',
+          title: 'Luokka',
           enabled: 'Hoitoluokka',
           disabled: 'Ei hoitoluokkaa'
         },

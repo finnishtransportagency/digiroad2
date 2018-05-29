@@ -465,8 +465,8 @@ root.LinearAssetLayer  = function(params) {
     vectorSource.clear();
     indicatorLayer.getSource().clear();
     var linearAssets = _.flatten(linearAssetChains);
-      me.decorateSelection();
-      me.drawLinearAssets(linearAssets);
+      me.decorateSelection(selectToolControl);
+      me.drawLinearAssets(linearAssets, vectorSource);
   };
 
   this.drawLinearAssets = function(linearAssets) {
@@ -481,7 +481,7 @@ root.LinearAssetLayer  = function(params) {
     return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
   };
 
-  this.decorateSelection = function (selectToolControl) {
+  this.decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
