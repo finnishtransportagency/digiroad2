@@ -199,7 +199,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       case 2 => "(t1){d1}"
       case _ => "(t2){d5}"
     }
-    s"[[$daySpec]*[(h${validityPeriod.startHour}){h${ValidityPeriodValue.duration(validityPeriod.startHour, validityPeriod.startMinute, validityPeriod.endHour, validityPeriod.endHour)}}]]"
+    s"[[$daySpec]*[(h${validityPeriod.startHour}){h${ValidityPeriodValue.duration(validityPeriod.startHour, validityPeriod.startMinute, validityPeriod.endHour, validityPeriod.endMinute)}}]]"
   }
 
   def toTimeDomainWithMinutes(validityPeriod: ValidityPeriod): String = {

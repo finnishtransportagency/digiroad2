@@ -194,7 +194,6 @@
 
     me.hasValidValue = function() {
       var value = me.element.find('input').val();
-      // return /^\d+$/.test(value) ? _.isInteger(Number(value)) : false;
       return /^\d+$/.test(value) ? Number(value) === parseInt(value, 10) : false;
     };
 
@@ -518,6 +517,7 @@
 
       var template = _.template('' +
         '<div class="validity-period-group">' +
+        '<label>Voimassaoloaika (lisäkilvessä):</label>' +
         ' <ul>' +
         '   <%= existingValidityPeriodElements %>' +
         newValidityPeriodElement() +
@@ -585,6 +585,8 @@
     };
 
     me.viewModeRender = function (field, currentValue) {
+      var validityPeriodLabel = _.isEmpty(currentValue) ? '' : '<label>Voimassaoloaika (lisäkilvessä):</label>';
+
       var validityPeriodTable = _.map(currentValue, function(value) {
         var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
         var period = value.value;
@@ -593,12 +595,11 @@
       }).join('');
 
       return $('' +
-        '<div class="form-group">' +
-        '<p>' +
+        '<div class="form-group read-only">' +
         '<ul class="form-control-static validity-period-group">' +
+        validityPeriodLabel +
         validityPeriodTable +
         '</ul>' +
-        '</p>' +
         '</div>' );
     };
   };
@@ -914,10 +915,6 @@
         var propertyValueB = _.head(_.map(_.filter(forms.getFields('b'), function (fieldB) {
           return propertyValueA.publicId === fieldB.getPropertyValue().publicId;
         }), function(property) {return property.getPropertyValue();} ));
-
-        var fieldB = _.find(forms.getFields('b'), function(field) { return field.publicId === propertyValueA.publicId; } );
-        // if(!fieldB)
-        //   return true;
 
         return !fieldA.compare(propertyValueA, propertyValueB);
       });

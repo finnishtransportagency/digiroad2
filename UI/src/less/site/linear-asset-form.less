@@ -236,24 +236,32 @@ form.maintenanceRoad-b {
     margin-top: 7px;
   }
   .form-group.editable {
-    margin-left: 10px;
+    margin-left: -8px;
   }
   .choice-group {
     width: 200px;
     margin-top: 6px;
   }
-
+  .form-group.read-only {
+    margin-top: -15px;
+    margin-left: 3px;
+  }
   .validity-period-group{
-    margin-left: 70px;
+    margin-left: 89px;
     margin-top: 6px;
+
+    label {
+      text-transform: none;
+      font-weight: normal;
+      .form-dark& {
+        color: @gray-light;
+      }
+    }
   }
 
   .existing-validity-period {
-    width: 255px;
-    margin-left: -5px;
-
     select {
-      width: 39px !important;
+      width: 45px !important;
     }
     label {
       width: 40px !important;
