@@ -163,6 +163,10 @@
     }
   }
 }
+.legend-container {
+  overflow: auto;
+  max-height: 470px;
+}
 
 .road-link-legend {
   .legend-entry {
@@ -412,9 +416,16 @@
 
 .care-class-legend {
 
+  max-height: 470px;
+  overflow: auto;
+
   .green-care-legend {
     display: none;
-  };
+  }
+
+  .missing-value-legend {
+    margin-top: 20px;
+  }
 
   .legend-entry {
     @labelWidth: 25px;
@@ -457,7 +468,9 @@
     .care-class-21 {  .linear-asset-legend-entry(@care-class-21, @linear-asset-node-8); }
     .care-class-22 {  .linear-asset-legend-entry(@care-class-22, @linear-asset-node-2); }
     .care-class-23 {  .linear-asset-legend-entry(@care-class-23, @linear-asset-node-4); }
-
+    .care-class-24 {  .linear-asset-legend-entry(@care-class-24, @care-class-24); }
+    .care-class-25 { .linear-asset-legend-entry(@linear-asset-8, @linear-asset-8); }
+    .care-class-26 { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-6); }
   }
   .check-box-container{
     input {

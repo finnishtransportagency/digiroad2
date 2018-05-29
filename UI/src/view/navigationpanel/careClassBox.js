@@ -14,26 +14,32 @@
     this.labeling = function () {
 
       var walkwayLabel =
-      '<div class="legend-entry">' +
-      '<div class="fat-label"> Kevyen liikenteen väylät </div>' +
-      '</div>';
+        '<div class="legend-entry">' +
+        '<div class="fat-label"> Kevyen liikenteen väylät </div>' +
+        '</div>';
 
       var specialAreasLabel =
-      '<div class="legend-entry">' +
-      '<div class="fat-label"> Kevyen liikenteen väylät </div>' +
-      '</div>';
+        '<div class="legend-entry">' +
+        '<div class="fat-label"> Erityisalueet </div>' +
+        '</div>';
+
+      var suburbanAreasLabel =
+        '<div class="legend-entry">' +
+        '<div class="fat-label"> Taajamien hoitoluokat </div>' +
+        '</div>';
 
       var winterCareValues= [
         [0, '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'],
         [1, '(Is) Normaalisti aina paljaana'],
         [2, '(I) Normaalisti paljaana'],
-        [3, '(Ib) Osan talvea lumipintaisena'],
-        [4, '(TIb) Ib-luokka taajamassa'],
+        [3, '(Ib) Pääosin suolattava, ajoittain hieman liukas'],
+        [4, '(Ic) Pääosin hiekoitettava, ohut lumipolanne sallittu'],
         [5, '(II) Pääosin lumipintainen'],
-        [6, '(III) Hiekoitus vain pahimmissa tilanteissa'],
-        [7, '(K1) Hyvin hoidettu kevyen liikenteen väylä'],
-        [8, '(K2) Merkitykseltään vähäisempi kevyen liikenteen väylä'],
-        [9, 'Kevyen liikenteen väylällä ei talvihoitoa'],
+        [6, '(III) Pääosin lumipintainen, pisin toimenpideaika'],
+        [24, '(L) Kevyen liikenteen laatukäytävät'],
+        [7, '(K1) Melko vilkkaat kevyen liikenteen väylät'],
+        [8, '(K2) Kevyen liikenteen väylien perus talvihoitotaso'],
+        [9, 'Kevyen liikenteen väylät, joilla ei talvihoitoa'],
         [10, 'Pääkadut ja vilkkaat väylät'],
         [11, 'Kokoojakadut'],
         [12, 'Tonttikadut']
@@ -54,11 +60,42 @@
 
       ];
 
+      var suburbanAreaValues = [
+        [20, '(T1) Puistomainen taajamassa'],
+        [21, '(T2) Luonnonmukainen taajamassa']
+      ];
+
       var specialAreaValues = [
         [21, '(E1) Puistomainen erityisalue'],
         [22, '(E2) Luonnonmukainen erityisalue'],
         [23, '(Y) Ympäristötekijä']
       ];
+
+      var badWinterCareValues = [
+        [25, 'Vain viherhoitoluokka'],
+        [26, 'Ei hoitoluokkaa']
+      ];
+
+      var badGreenCareValues = [
+        [25, 'Vain talvihoitoluokka'],
+        [26, 'Ei hoitoluokkaa']
+      ];
+
+
+
+      var missingGreenCareLegend = '<div class="green-care-legend missing-value-legend">' + _.map(badGreenCareValues, function(value) {
+        return '<div class="legend-entry">' +
+          '<div class="label">' + value[1] + '</div>' +
+          '<div class="symbol linear care-class-' + value[0] + '" />' +
+          '</div>';
+      }).join('') + '</div>';
+
+      var missingWinterCareLegend = '<div class="winter-care-legend missing-value-legend">' + _.map(badWinterCareValues, function(value) {
+        return '<div class="legend-entry">' +
+          '<div class="label">' + value[1] + '</div>' +
+          '<div class="symbol linear care-class-' + value[0] + '" />' +
+          '</div>';
+      }).join('') + '</div>';
 
       var winterWalkwayLegend = walkwayLabel + '<div class="winter-care-legend">' + _.map(winterWalkwayValues, function(winterWalkwayValue) {
         return '<div class="legend-entry">' +
@@ -72,7 +109,7 @@
             '<div class="label">' + winterCareValue[1] + '</div>' +
             '<div class="symbol linear care-class-' + winterCareValue[0] + '" />' +
             '</div>';
-      }).join('') + winterWalkwayLegend + '</div>';
+      }).join('') + winterWalkwayLegend + missingWinterCareLegend + '</div>';
 
       var specialAreaLegend = specialAreasLabel + '<div class="green-care-legend">' + _.map(specialAreaValues, function(specialAreaValue) {
         return '<div class="legend-entry">' +
@@ -81,12 +118,19 @@
             '</div>';
       }).join('') + '</div>';
 
+      var suburbanAreaLegend = suburbanAreasLabel + '<div class="green-care-legend">' + _.map(suburbanAreaValues, function(suburbanAreaValue) {
+          return '<div class="legend-entry">' +
+              '<div class="label">' + suburbanAreaValue[1] + '</div>' +
+              '<div class="symbol linear care-class-' + suburbanAreaValue[0] + '" />' +
+              '</div>';
+      }).join('') + '</div>';
+
       var greenCareLegend = '<div class="green-care-legend">' + _.map(greenCareValues, function(greenCareValue) {
         return '<div class="legend-entry green-care-legend">' +
-            '<div class="label">' + greenCareValue[1] + '</div>' +
-            '<div class="symbol linear care-class-' + greenCareValue[0] + '" />' +
-            '</div>';
-      }).join('') + specialAreaLegend + '</div>';
+          '<div class="label">' + greenCareValue[1] + '</div>' +
+          '<div class="symbol linear care-class-' + greenCareValue[0] + '" />' +
+          '</div>';
+      }).join('') + suburbanAreaLegend + specialAreaLegend + missingGreenCareLegend + '</div>';
 
       return '<div class="panel-section panel-legend '+ me.legendName() + '-legend">' + winterCareLegend + greenCareLegend + '</div>';
     };

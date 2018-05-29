@@ -333,7 +333,7 @@ root.LinearAssetLayer  = function(params) {
   };
   
   var linearAssetSelected = function(){
-      decorateSelection();
+      me.decorateSelection(selectToolControl);
   };
 
   var handleLinearAssetSaved = function() {
@@ -346,7 +346,7 @@ root.LinearAssetLayer  = function(params) {
     selectToolControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-    decorateSelection();
+    me.decorateSelection(selectToolControl);
   };
 
   var refreshReadOnlyLayer = function () {
@@ -398,7 +398,7 @@ root.LinearAssetLayer  = function(params) {
     unHighLightReadOnlyLayer();
   };
 
-  var drawIndicators = function(links) {
+  this.drawIndicators = function(links) {
     var features = [];
 
     var markerContainer = function(link, position) {
@@ -465,11 +465,11 @@ root.LinearAssetLayer  = function(params) {
     vectorSource.clear();
     indicatorLayer.getSource().clear();
     var linearAssets = _.flatten(linearAssetChains);
-      decorateSelection();
-      drawLinearAssets(linearAssets);
+      me.decorateSelection();
+      me.drawLinearAssets(linearAssets);
   };
 
-  var drawLinearAssets = function(linearAssets) {
+  this.drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
     readOnlyLayer.showLayer();
     if(assetLabel) {
@@ -481,7 +481,7 @@ root.LinearAssetLayer  = function(params) {
     return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
   };
 
-  var decorateSelection = function () {
+  this.decorateSelection = function (selectToolControl) {
     if (selectedLinearAsset.exists()) {
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
@@ -489,7 +489,7 @@ root.LinearAssetLayer  = function(params) {
       selectToolControl.addSelectionFeatures(features);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
-        drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
+        me.drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
       }
     }
   };
@@ -554,6 +554,8 @@ root.LinearAssetLayer  = function(params) {
     if(applicationModel.getSelectedLayer() == layerName)
       me.refreshView();
   };
+
+  this.addPoints = function(){};
 
   return {
     vectorLayer: vectorLayer,
