@@ -5,6 +5,7 @@
     var roadCollection = new RoadCollection(backend);
     var verificationCollection = new AssetsVerificationCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend, verificationCollection);
+    var feedbackCollection = new FeedbackModel(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
@@ -14,6 +15,9 @@
     var assetConfiguration = new AssetTypeConfiguration();
     var enabledExperimentalAssets = isExperimental ? assetConfiguration.experimentalAssetsConfig : [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
+    var authorizationPolicy = new AuthorizationPolicy();
+    new FeedbackTool(authorizationPolicy, feedbackCollection);
+
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec) ;
       var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);

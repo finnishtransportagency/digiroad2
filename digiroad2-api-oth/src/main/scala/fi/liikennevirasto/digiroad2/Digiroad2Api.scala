@@ -208,10 +208,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/user/roles") {
+    val user = userProvider.getCurrentUser()
     Map(
-      "roles" -> userProvider.getCurrentUser().configuration.roles,
-      "municipalities" -> userProvider.getCurrentUser().configuration.authorizedMunicipalities,
-      "areas" -> userProvider.getCurrentUser().configuration.authorizedAreas)
+      "username" -> user.username,
+      "roles" -> user.configuration.roles,
+      "municipalities" -> user.configuration.authorizedMunicipalities,
+      "areas" -> user.configuration.authorizedAreas)
   }
 
   get("/massTransitStops/:nationalId") {
@@ -761,11 +763,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     applicationFeedback.insertApplicationFeedback(user.username, body)
   }
 
-    private def extractFeedbackBody(value: JValue): FeedbackBody = {
-      value.extractOpt[FeedbackBody].map { x =>
-        FeedbackBody(x.feedbackType, x.headline, x.freeText, x.kIdentifier, x.name, x.email, x.phoneNumber)
-      }.get
-    }
+  private def extractFeedbackBody(value: JValue): FeedbackBody = {
+    value.extractOpt[FeedbackBody].map { x => FeedbackBody(x.feedbackType, x.headline, x.freeText, x.name, x.email, x.phoneNumber)}.get
+  }
 
 
   get("/linearassets/massLimitation") {

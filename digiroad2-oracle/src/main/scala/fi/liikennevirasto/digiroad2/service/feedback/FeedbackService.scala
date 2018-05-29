@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
-case class FeedbackBody(feedbackType: Option[String], headline: Option[String], freeText: Option[String], kIdentifier: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
+case class FeedbackBody(feedbackType: Option[String], headline: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
 
 trait Feedback {
 
@@ -24,18 +24,22 @@ trait Feedback {
   def smtpHost: String
   def smtpPort: String
 
-  def insertApplicationFeedback(username: String, body: FeedbackBody): Long = {
-    val bodyToSave = s"""
-    Palautteen tyyppi: ${body.feedbackType.getOrElse("-")}
-    Palautteen otsikko: ${body.headline.getOrElse("-")}
-    Vapaa tekstikenttä palautteelle: ${body.freeText.getOrElse("-")}
-    K-tunnus: ${body.kIdentifier.getOrElse("-")}
-    Nimi : ${body.name.getOrElse("-")}
-    Sähköposti : ${body.email.getOrElse("-")}
-    Puhelinnumero ${body.phoneNumber.getOrElse("-")}"""
+  def stringifyBody(username: String, body: FeedbackBody) : String = {
+    s"""<br>
+    <b>Palautteen tyyppi: </b> ${body.feedbackType.getOrElse("-")} <br>
+    <b>Palautteen otsikko: </b> ${body.headline.getOrElse("-")} <br>
+    <b>K-tunnus: </b> $username <br>
+    <b>Nimi: </b> ${body.name.getOrElse("-")} <br>
+    <b>Sähköposti: </b>${body.email.getOrElse("-")} <br>
+    <b>Puhelinnumero: </b>${body.phoneNumber.getOrElse("-")} <br>
+    <b>Vapaa tekstikenttä palautteelle: </b>${body.freeText.getOrElse("-")}
+   """
+  }
 
+  def insertApplicationFeedback(username: String, body: FeedbackBody): Long = {
+    val message = stringifyBody(username, body)
     withDynSession {
-      dao.insertFeedback(to, username, bodyToSave, subject, status = false)
+      dao.insertFeedback(to, username, message, subject, status = false)
     }
   }
 

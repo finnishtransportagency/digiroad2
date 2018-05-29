@@ -27,9 +27,10 @@ class EmailOperations() {
 
   private def createMessage(email: Email): Message = {
     val message = initEmail(email.smtpHost, email.smtpPort)
-    message.setSubject(email.subject)
-    message.setText(email.body)
     message.setFrom(new InternetAddress(email.from))
+    message.setSubject(email.subject)
+    message.setHeader("Content-Type", "text/html")
+    message.setContent(email.body, "text/html")
     setRecipients(message, email)
   }
 
