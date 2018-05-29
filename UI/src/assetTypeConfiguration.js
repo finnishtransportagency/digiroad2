@@ -2,6 +2,8 @@
   root.AssetTypeConfiguration = function () {
 
     var assetType = {
+      massTransitStop: 10,
+      speedLimits: 20,
       totalWeightLimit: 30,
       trailerTruckWeightLimit: 40,
       axleWeightLimit: 50,
@@ -36,7 +38,8 @@
       trAxleWeightLimits: 340,
       trBogieWeightLimits: 350,
       trHeightLimits: 360,
-      trWidthLimits: 370
+      trWidthLimits: 370,
+      manoeuvre: 380
     };
 
     var assetGroups = {
@@ -758,11 +761,11 @@
 
     var assetTypeInfo = [
       {
-        typeId: 10,
+        typeId: assetType.massTransitStop,
         title: 'Joukkoliikenteen pysäkki'
       },
       {
-        typeId: 20,
+        typeId: assetType.speedLimits,
         title: 'Nopeusrajoitus'
       },
       {
@@ -886,7 +889,7 @@
         title: 'TR suurin sallittu leveys'
       },
       {
-        typeId: 380,
+        typeId: assetType.manoeuvre,
         title: 'Kääntymisrajoitus'
       }
     ];
