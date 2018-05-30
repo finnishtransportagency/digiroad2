@@ -564,7 +564,8 @@
         isVerifiable: false,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         layer: CareClassLayer,
-        style: new CareClassStyle()
+        style: new CareClassStyle(),
+        collection: CareClassCollection
       }
     ];
 

@@ -223,6 +223,9 @@ root.LinearAssetLayer  = function(params) {
           return asset && !(asset.geometry instanceof ol.geom.Point) && authorizationPolicy.formEditModeAccess(asset);
       });
 
+      if(_.isEmpty(linearAssets))
+        return;
+
       selectedLinearAsset.openMultiple(linearAssets);
 
       var features = style.renderFeatures(selectedLinearAsset.get());
