@@ -68,6 +68,8 @@
     });
   }
 
+  $('#information-content').append( '<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>' );
+
   function template(selectedLinearAsset, formElements, newTitle, title, isVerifiable) {
     var modifiedBy = selectedLinearAsset.getModifiedBy() || '-';
     var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';

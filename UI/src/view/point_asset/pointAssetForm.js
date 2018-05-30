@@ -538,6 +538,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     $('#information-content').append('' +
       '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
       '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
+      '<a id="feedback-data" class="feedback-data-link" >Anna palautetta kohteesta</a>' +
       '</div>');
   }
 

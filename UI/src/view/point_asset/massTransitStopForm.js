@@ -792,6 +792,7 @@
           $('#information-content').append('' +
             '<div class="form form-horizontal">' +
             '<a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a>' +
+            '<a id="feedback-data" class="feedback-data-link" >Anna palautetta kohteesta</a>' +
             '</div>');
         }
       };
