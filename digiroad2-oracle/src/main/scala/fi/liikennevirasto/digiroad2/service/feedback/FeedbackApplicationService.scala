@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
-case class FeedbackBody(feedbackType: Option[String], headline: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
+case class FeedbackApplicationBody(feedbackType: Option[String], headline: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
 
 trait Feedback {
 
@@ -23,25 +23,10 @@ trait Feedback {
   def body: String
   def smtpHost: String
   def smtpPort: String
+  type FeedbackBody
 
-  def stringifyBody(username: String, body: FeedbackBody) : String = {
-    s"""<br>
-    <b>Palautteen tyyppi: </b> ${body.feedbackType.getOrElse("-")} <br>
-    <b>Palautteen otsikko: </b> ${body.headline.getOrElse("-")} <br>
-    <b>K-tunnus: </b> $username <br>
-    <b>Nimi: </b> ${body.name.getOrElse("-")} <br>
-    <b>Sähköposti: </b>${body.email.getOrElse("-")} <br>
-    <b>Puhelinnumero: </b>${body.phoneNumber.getOrElse("-")} <br>
-    <b>Vapaa tekstikenttä palautteelle: </b>${body.freeText.getOrElse("-")}
-   """
-  }
-
-  def insertApplicationFeedback(username: String, body: FeedbackBody): Long = {
-    val message = stringifyBody(username, body)
-    withDynSession {
-      dao.insertFeedback(to, username, message, subject, status = false)
-    }
-  }
+  def stringifyBody(username: String, body: FeedbackBody) : String
+  def insertApplicationFeedback(username: String, body: FeedbackBody): Long
 
   def updateApplicationFeedbackStatus(id: Long) : Long = {
     withDynSession {
@@ -83,16 +68,36 @@ trait Feedback {
   }
 }
 
-class FeedbackService extends Feedback {
+class FeedbackApplicationService extends Feedback {
 
   def dao: FeedbackDao = new FeedbackDao
   def emailOperations = new EmailOperations
+  type FeedbackBody = FeedbackApplicationBody
 
   override def to: String = "operaattori@digiroad.fi"
-  override def from: String =  "OTH Application Feedback"
+  override def from: String = "OTH Application Feedback"
   override def subject: String = "Palaute työkalusta"
   override def body: String = ""
   override def smtpHost: String = "smtp.mailtrap.io"
   override def smtpPort: String = "2525"
 
+  override def stringifyBody(username: String, body: FeedbackBody): String = {
+    s"""<br>
+    <b>Palautteen tyyppi: </b> ${body.feedbackType.getOrElse("-")} <br>
+    <b>Palautteen otsikko: </b> ${body.headline.getOrElse("-")} <br>
+    <b>K-tunnus: </b> $username <br>
+    <b>Nimi: </b> ${body.name.getOrElse("-")} <br>
+    <b>Sähköposti: </b>${body.email.getOrElse("-")} <br>
+    <b>Puhelinnumero: </b>${body.phoneNumber.getOrElse("-")} <br>
+    <b>Vapaa tekstikenttä palautteelle: </b>${body.freeText.getOrElse("-")}
+   """
+  }
+
+  override def insertApplicationFeedback(username: String, body: FeedbackBody): Long = {
+    val message = stringifyBody(username, body)
+    withDynSession {
+      dao.insertFeedback(to, username, message, subject, status = false)
+    }
+  }
 }
+

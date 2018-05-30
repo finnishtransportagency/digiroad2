@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimi
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service._
-import fi.liikennevirasto.digiroad2.service.feedback.FeedbackService
+import fi.liikennevirasto.digiroad2.service.feedback.FeedbackApplicationService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -201,7 +201,7 @@ object Digiroad2Context {
     }
   }
 
-  system.scheduler.schedule(FiniteDuration(5, TimeUnit.MINUTES), FiniteDuration(10, TimeUnit.MINUTES)) {
+  system.scheduler.schedule(FiniteDuration(1, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
      applicationFeedback.sendFeedbacks()
      System.out.println("System.scheduler executes for feedback feature")
   }
@@ -444,7 +444,7 @@ object Digiroad2Context {
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
-  lazy val applicationFeedback : FeedbackService = new FeedbackService()
+  lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {

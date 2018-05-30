@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackBody, FeedbackInfo, FeedbackService}
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationBody, FeedbackApplicationService}
 import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, LinkProperties, RoadLinkService, VerificationService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -67,7 +67,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetService: AssetService = Digiroad2Context.assetService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
                    val multiValueLinearAssetService: MultiValueLinearAssetService = Digiroad2Context.multiValueLinearAssetService,
-                   val applicationFeedback: FeedbackService = Digiroad2Context.applicationFeedback )
+                   val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback )
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -763,8 +763,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     applicationFeedback.insertApplicationFeedback(user.username, body)
   }
 
-  private def extractFeedbackBody(value: JValue): FeedbackBody = {
-    value.extractOpt[FeedbackBody].map { x => FeedbackBody(x.feedbackType, x.headline, x.freeText, x.name, x.email, x.phoneNumber)}.get
+  private def extractFeedbackBody(value: JValue): FeedbackApplicationBody = {
+    value.extractOpt[FeedbackApplicationBody].map { x => FeedbackApplicationBody(x.feedbackType, x.headline, x.freeText, x.name, x.email, x.phoneNumber)}.get
   }
 
 

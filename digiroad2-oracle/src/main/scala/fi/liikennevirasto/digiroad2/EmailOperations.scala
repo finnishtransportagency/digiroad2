@@ -9,7 +9,6 @@ case class Email( to: String, from: String, cc: Option[String], bcc: Option[Stri
 
 class EmailOperations() {
 
-  //TODO: verify if host and port should be in a configurable file, as username and password
   private val auth = new EmailAuthPropertyReader
   private def isNumeric(str:String): Boolean = str.matches("[-+]?\\d+(\\.\\d+)?")
 

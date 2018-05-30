@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.service.feedback
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
 
-class FeedbackServiceSpec extends FunSuite with Matchers {
+class FeedbackApplicationServiceSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  val service = new FeedbackService(){
+  val service = new FeedbackApplicationService(){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -15,7 +15,7 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Create new feedback") {
     runWithRollback {
-      var feedbackbody = FeedbackBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody = FeedbackApplicationBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
 
       val id = service.insertApplicationFeedback("feedback_createdBy", feedbackbody)
       val feedbacks = service.getFeedbacksByIds(Set(id)).head
@@ -27,9 +27,9 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Get all not sent feedbacks") {
     runWithRollback {
-      var feedbackbody = FeedbackBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
-      var feedbackbody1 = FeedbackBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
-      var feedbackbody2 = FeedbackBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody = FeedbackApplicationBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody1 = FeedbackApplicationBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody2 = FeedbackApplicationBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
 
       val (id, id1, id2) =(
         service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
@@ -48,9 +48,9 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Get all feedbacks") {
     runWithRollback {
-      var feedbackbody = FeedbackBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
-      var feedbackbody1 = FeedbackBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
-      var feedbackbody2 = FeedbackBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody = FeedbackApplicationBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody1 = FeedbackApplicationBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody2 = FeedbackApplicationBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
 
       val (id, id1, id2) =(
         service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
@@ -69,9 +69,9 @@ class FeedbackServiceSpec extends FunSuite with Matchers {
 
   test("Update feedback status") {
     runWithRollback {
-      var feedbackbody = FeedbackBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
-      var feedbackbody1 = FeedbackBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
-      var feedbackbody2 = FeedbackBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody = FeedbackApplicationBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody1 = FeedbackApplicationBody(Some("Kehitysehdotus"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
+      var feedbackbody2 = FeedbackApplicationBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
 
       val (id, id1, id2) =(
         service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
