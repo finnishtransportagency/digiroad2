@@ -111,7 +111,7 @@
         formElements.singleValueElement(selectedLinearAsset.getValue(), "b", selectedLinearAsset.getId());
       var valueElements = selectedLinearAsset.isSplitOrSeparated() ?
         separateValueElement :
-        formElements.singleValueElement(selectedLinearAsset.getValue(), undefined, selectedLinearAsset.getId());
+        formElements.singleValueElement(selectedLinearAsset.getValue(), "", selectedLinearAsset.getId());
       return '' +
         '<div class="form-elements-container">' +
         valueElements +
