@@ -23,7 +23,7 @@
     if(!_.isUndefined(val)){
       var values = val.replace(/[ \t\f\v]/g,'').split(/[\n,]+/);
       return _.every(values, function(value){
-        return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/) && value.toString().length < 4;
+        return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/);
       });
     }
   }
