@@ -171,8 +171,8 @@
     };
   };
 
-  var ReadOnlyFields = function(){
-    DynamicField.call(this);
+  var ReadOnlyFields = function(assetTypeConfiguration, field, isDisabled){
+    DynamicField.call(this, field, isDisabled);
     var me = this;
 
     me.editModeRender = function (fieldValue) {
@@ -569,7 +569,6 @@
       });
 
       me.element.on('change', '.new-validity-period select', function(event) {
-        disabled = "";
         $(event.target).closest('.validity-period-group ul').append(newValidityPeriodElement());
         $(event.target).parent().parent().replaceWith(validityPeriodElement({
           days: $(event.target).val(),
@@ -953,11 +952,6 @@
       return {
         element: element
       };
-
-      // function events() {
-      //   return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-      // }
-
     };
 
     var CancelButton = function(assetTypeConfiguration) {
@@ -969,11 +963,6 @@
       eventbus.on(events('valueChanged'), function() {
         var cancel = $('.cancel').prop('disabled', false);
       });
-
-
-      // function events() {
-      //   return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-      // }
 
       return {
         element: element
@@ -997,10 +986,6 @@
       eventbus.on(events('valueChanged'), function() {
         updateStatus();
       });
-
-      // function events() {
-      //   return _.map(arguments, function(argument) { return assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-      // }
 
       return {
         element: element

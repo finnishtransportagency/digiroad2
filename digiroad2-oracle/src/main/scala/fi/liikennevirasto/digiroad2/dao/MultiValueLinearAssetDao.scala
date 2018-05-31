@@ -234,7 +234,6 @@ class MultiValueLinearAssetDao {
         }
 
       case TimePeriod =>
-        //This type doesn't allow update
         if(validityPeriodPropertyValueExist(assetId: Long, propertyId: Long)) {
           deleteValidityPeriodProperty(assetId, propertyId).execute
         }

@@ -256,7 +256,6 @@ object ValidityPeriodValue {
       "endHour" -> value.endHour,
       "startMinute" -> value.startMinute,
       "endMinute" -> value.endMinute
-//      "periodType" -> value.periodType
     )
   }
 
