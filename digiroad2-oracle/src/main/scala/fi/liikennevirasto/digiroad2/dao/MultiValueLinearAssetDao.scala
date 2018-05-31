@@ -240,12 +240,8 @@ class MultiValueLinearAssetDao {
 
         if (propertyValues.nonEmpty) {
           propertyValues.distinct.foreach { propertyValue =>
-            propertyValue.value match {
-              case None =>
-              case _ =>
                 var validityPeriodValue = propertyValue.value.asInstanceOf[Map[String, Any]]
                 insertValidityPeriodProperty(assetId, propertyId, ValidityPeriodValue.fromMap(validityPeriodValue)).execute
-              }
             }
           }
 
