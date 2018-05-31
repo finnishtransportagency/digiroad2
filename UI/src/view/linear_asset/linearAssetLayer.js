@@ -228,7 +228,8 @@ root.LinearAssetLayer  = function(params) {
     style: function(feature){ return feature.setStyle(me.getLayerStyle(feature)); },
     onInteractionEnd: onInteractionEnd,
     onSelect: onSelect,
-    onMultipleSelect: onMultipleSelect
+    onMultipleSelect: onMultipleSelect,
+    onClose: onCloseForm
   });
 
   var showDialog = function (linearAssets) {
@@ -306,6 +307,10 @@ root.LinearAssetLayer  = function(params) {
     }
   };
 
+  function onCloseForm()  {
+    eventbus.trigger('closeForm');
+  }
+
   var bindEvents = function(eventListener) {
     var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
     var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
@@ -320,6 +325,7 @@ root.LinearAssetLayer  = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
+    eventListener.listenTo(eventbus, multiElementEvent('valueChanged'), linearAssetChanged);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
     eventListener.listenTo(eventbus, 'layer:linearAsset', refreshReadOnlyLayer);
   };
@@ -355,8 +361,6 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var handleLinearAssetChanged = function(eventListener, selectedLinearAsset) {
-    //Disable interaction so the user can not click on another feature after made changes
-    selectToolControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
     decorateSelection();
@@ -483,7 +487,7 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var drawLinearAssets = function(linearAssets) {
-    vectorSource.addFeatures(style.renderFeatures(linearAssets));
+    vectorSource.addFeatures(style.renderFeatures(_.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){  return selectedAsset.linkId == asset.linkId; }) ; })));
     readOnlyLayer.showLayer();
     if(assetLabel) {
       vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep( _.omit(linearAssets, 'geometry')), offsetBySideCode), me.uiState.zoomLevel));
@@ -497,19 +501,13 @@ root.LinearAssetLayer  = function(params) {
   var decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
 
-      var vectorSourceFeatures = vectorSource.getFeatures();
       var linearAssets = selectedLinearAsset.get();
-
-      var selectedFeatures = _.map(linearAssets, function(asset) {
-        return _.find(vectorSourceFeatures, function(feature) {
-          return feature.getProperties().linkId === asset.linkId &&
-                 feature.getProperties().startMeasure === asset.startMeasure &&
-                 feature.getProperties().endMeasure === asset.endMeasure; });
-      });
+      var selectedFeatures = style.renderFeatures(linearAssets);
 
       if(assetLabel)
           selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
 
+      vectorSource.addFeatures(selectedFeatures);
       selectToolControl.addSelectionFeatures(selectedFeatures);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {

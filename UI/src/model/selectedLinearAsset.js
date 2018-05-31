@@ -272,6 +272,12 @@
       }
     };
 
+    this.setMultiValue = function(value) {
+        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
+        selection = collection.replaceSegments(selection, newGroup);
+        eventbus.trigger(multiElementEvent('valueChanged'), self);
+    };
+
     function isValueDifferent(selection){
       if(selection.length == 1) return true;
 
@@ -321,6 +327,10 @@
 
     this.removeValue = function() {
       self.setValue(undefined);
+    };
+
+    this.removeMultiValue = function() {
+      self.setMultiValue(undefined);
     };
 
     this.removeAValue = function() {
