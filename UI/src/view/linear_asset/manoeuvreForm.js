@@ -482,10 +482,12 @@
           }
         };
         toggleMode(validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || applicationModel.isReadOnly());
+        setFeedbackLink(true);
       });
 
       eventbus.on('manoeuvres:unselected', function() {
         rootElement.empty();
+        setFeedbackLink(false);
       });
 
       eventbus.on('manoeuvres:saved', function() {
@@ -541,6 +543,21 @@
       rootElement.on('click', '.manoeuvres button.cancel', function() {
         selectedManoeuvreSource.cancel();
       });
+
+      var setFeedbackLink = function(enable) {
+          var infoContent = $('#information-content');
+          if (enable && !infoContent.find('#feedback-data').length)
+              infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
+          else {
+              if(!enable)
+                  infoContent.find('#feedback-data').remove();
+
+          }
+
+          $('#feedback-data').on('click', function(){
+              FeedbackDataView.initialize(selectedManoeuvreSource);
+          });
+      };
     };
 
     bindEvents();

@@ -17,12 +17,28 @@
         eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function () {
             if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
                 renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData, authorizationPolicy);
+                setFeedbackLink(true);
             }
         });
 
         eventbus.on(layerName + ':unselected', function() {
             rootElement.empty();
+            setFeedbackLink(false);
         });
+
+        var setFeedbackLink = function(enable) {
+            var infoContent = $('#information-content');
+            if (enable && !infoContent.find('#feedback-data').length)
+                infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
+            else {
+                if(!enable)
+                    infoContent.find('#feedback-data').remove();
+
+            }
+            $('#feedback-data').on('click', function(){
+                FeedbackDataView.initialize(selectedAsset);
+            });
+        };
     }
 
     function renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData, authorizationPolicy) {

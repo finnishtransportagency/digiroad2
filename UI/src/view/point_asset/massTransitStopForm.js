@@ -783,6 +783,7 @@
 
       var closeAsset = function() {
         $("#feature-attributes").html('');
+        setFeedbackLink(false);
         dateutil.removeDatePickersFromDom();
       };
 
@@ -810,6 +811,7 @@
 
       eventbus.on('asset:modified', function(){
         renderAssetForm();
+        setFeedbackLink(true);
       });
 
       eventbus.on('layer:selected application:initialized', function() {
@@ -872,6 +874,22 @@
       eventbus.on('terminalBusStop:selected', function(value) {
         isTerminalBusStop = value;
       });
+
+      var setFeedbackLink = function(enable) {
+          var infoContent = $('#information-content');
+          if (enable && !infoContent.find('#feedback-data').length)
+              infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
+          else {
+              if(!enable)
+                  infoContent.find('#feedback-data').remove();
+
+          }
+
+          $('#feedback-data').on('click', function(){
+              FeedbackDataView.initialize(selectedMassTransitStopModel);
+          });
+      };
+
       backend.getEnumeratedPropertyValues();
     }
   };

@@ -30,9 +30,12 @@
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
       toggleMode( validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || applicationModel.isReadOnly());
+      setFeedbackLink(true);
+
     });
     eventbus.on(events('unselect'), function() {
       rootElement.empty();
+      setFeedbackLink(false);
     });
     eventbus.on('application:readOnly', function(readOnly){
       if(layerName ===  applicationModel.getSelectedLayer()) {
@@ -53,6 +56,21 @@
       rootElement.find('.read-only-title').toggle(readOnly);
       rootElement.find('.edit-mode-title').toggle(!readOnly);
     }
+
+    var setFeedbackLink = function(enable) {
+        var infoContent = $('#information-content');
+        if (enable && !infoContent.find('#feedback-data').length)
+            infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
+        else {
+            if(!enable)
+                infoContent.find('#feedback-data').remove();
+
+        }
+
+        $('#feedback-data').on('click', function(){
+            FeedbackDataView.initialize(selectedLinearAsset);
+        });
+    };
 
     function events() {
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
