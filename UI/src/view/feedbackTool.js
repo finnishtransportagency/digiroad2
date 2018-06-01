@@ -16,7 +16,10 @@
                addSpinner();
                collection.send( $(".form-horizontal").serializeArray());
                },
-           cancelCallback: function(){  $(':input').val(''); },
+           cancelCallback: function(){
+               $(':input').val('');
+               setSaveButtonState();
+           },
            closeCallback: function() { purge(); }
        };
 
@@ -38,7 +41,21 @@
            $('.spinner-overlay').remove();
        };
 
+       var allSet = function() {
+           return $('.confirm-modal :input').not(':button').filter(function() {
+               return _.isEmpty($(this).val());
+           }).length === 0;
+       };
+
+       var setSaveButtonState = function(){
+           if(allSet())
+               $('.confirm-modal .save').prop('disabled', false);
+           else
+               $('.confirm-modal .save').prop('disabled', true);
+       };
+
        var bindEvents = function() {
+
            $('.confirm-modal .cancel').on('click', function() {
                options.cancelCallback();
            });
@@ -49,10 +66,19 @@
                options.closeCallback();
            });
 
+           $(':input, #freetext').on('keyup',function(){
+               setSaveButtonState();
+           });
+
+           $('#feedbackType').change(function(){
+               setSaveButtonState();
+           });
+
            eventbus.on("feedback:send", function() {
                removeSpinner();
                new GenericConfirmPopup("Kiitos palautteesta", {type: 'alert'});
            });
+
            eventbus.on("feedback:failed",function() {
                removeSpinner();
                new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
@@ -68,7 +94,7 @@
                         '<label class="control-label" id="title">Anna palautetta OTH-sovelluksesta</label>'+
                         '<div class="form-group">' +
                             '<label class="control-label">Palautteen tyyppi</label>' +
-                            '<select name="feedbackType" class="form-control">'+
+                            '<select name="feedbackType"  id="feedbackType" class="form-control">'+
                                 '<option value="" selected disabled hidden>-</option>' +
                                 '<option value="Bugi">Bugi</option>'+
                                 '<option value="Kehitysehdotus">Kehitysehdotus </option>'+
@@ -96,7 +122,7 @@
                         '</div>' +
                     '</form>' +
                     '<div class="actions">' +
-                       '<button class = "btn btn-primary save">' + options.saveButton + '</button>' +
+                       '<button class = "btn btn-primary save" disabled>' + options.saveButton + '</button>' +
                        '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
                     '</div>' +
                 '</div>' +
