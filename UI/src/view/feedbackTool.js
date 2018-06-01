@@ -41,17 +41,8 @@
            $('.spinner-overlay').remove();
        };
 
-       var allSet = function() {
-           return $('.confirm-modal :input').not(':button').filter(function() {
-               return _.isEmpty($(this).val());
-           }).length === 0;
-       };
-
        var setSaveButtonState = function(){
-           if(allSet())
-               $('.confirm-modal .save').prop('disabled', false);
-           else
-               $('.confirm-modal .save').prop('disabled', true);
+           $('.confirm-modal .save').prop('disabled', _.isEmpty($('.confirm-modal #feedbackType').val()));
        };
 
        var bindEvents = function() {
@@ -64,10 +55,6 @@
            });
            $(' .confirm-modal .sulje').on('click', function() {
                options.closeCallback();
-           });
-
-           $(':input, #freetext').on('keyup',function(){
-               setSaveButtonState();
            });
 
            $('#feedbackType').change(function(){
