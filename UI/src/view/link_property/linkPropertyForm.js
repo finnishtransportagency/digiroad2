@@ -163,8 +163,8 @@
       if(notRendered) {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
-              '<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>' +
-            '</div>');
+            '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
+          '</div>');
       }
     };
 
