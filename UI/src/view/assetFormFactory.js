@@ -801,7 +801,6 @@
       $('#information-content').append('' +
         '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
         '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">' + textName + '</a>' +
-        '<a id="feedback-data" class="feedback-data-link" >Anna palautetta kohteesta</a>' +
         '</div>');
     };
   };
