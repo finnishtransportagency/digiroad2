@@ -51,7 +51,7 @@
         var filteredGroups = _.map(linearAssetGroups, function(group){
           return _.reject(group, function(asset){
             return asset.administrativeClass === 3;
-          })
+          });
         });
         var partitionedLinearAssetGroups = _.groupBy(filteredGroups, function (linearAssetGroup) {
           return _.some(linearAssetGroup, function (linearAsset) {
@@ -70,5 +70,5 @@
       });
     };
 
-  }
+  };
 })(this);
