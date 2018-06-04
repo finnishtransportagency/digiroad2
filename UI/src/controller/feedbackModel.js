@@ -1,99 +1,36 @@
-(function(root) {
-    root.FeedbackModel = function(backend) {
+(function (root) {
+    root.FeedbackModel = function() {
+        var me = this;
+        var backend;
+
+        this.initialize = function (feedbackBackend) {
+            backend = feedbackBackend;
+        };
 
         this.send = function (data) {
-            var success = function(){
+            var success = function () {
                 eventbus.trigger("feedback:send");
             };
 
-            var failure = function(){
+            var failure = function () {
                 eventbus.trigger("feedback:failed");
             };
             backend.sendFeedback(convertFromToJSON(data), success, failure);
         };
 
-        this.get = function(){
+
+        this.get = function (model) {
             //returnar objecto com info necessaria ao form
             return model.get();
         };
 
-        var convertFromToJSON = function(form){
+        var convertFromToJSON = function (form) {
             var json = {};
-            jQuery.each(form, function(){
+            jQuery.each(form, function () {
                 json[this.name] = this.value || '';
             });
-            return JSON.stringify({body : json});
+            return JSON.stringify({body: json});
+
         };
-
     };
-
 })(this);
-
-
-// (function(root) {
-//     root.FeedbackModel = function() {
-//
-//         var send = function(backend, data){
-//             var success = function(){
-//                 eventbus.trigger("feedback:send");
-//             };
-//
-//             var failure = function(){
-//                 eventbus.trigger("feedback:failed");
-//             };
-//             backend.sendFeedback(convertFromToJSON(data), success, failure);
-//         };
-//
-//         var get = function(model){
-//             //returnar objecto com info necessaria ao form
-//             return model.get();
-//         };
-//
-//         var convertFromToJSON = function(form){
-//             var json = {};
-//             jQuery.each(form, function(){
-//                 json[this.name] = this.value || '';
-//             });
-//             return JSON.stringify({body : json});
-//         };
-//
-//     };
-//
-//     return{
-//         send: send,
-//         get: get
-//     };
-//
-// })(this);
-
-//
-//
-// (function(feedbackModel) {
-//
-//     feedbackModel.send = function(backend, data){
-//         var success = function(){
-//             eventbus.trigger("feedback:send");
-//         };
-//
-//         var failure = function(){
-//             eventbus.trigger("feedback:failed");
-//         };
-//         backend.sendFeedback(convertFromToJSON(data), success, failure);
-//     };
-//
-//
-//     feedbackModel.get = function(model){
-//         //returnar objecto com info necessaria ao form
-//         return model.get();
-//     };
-//
-//     var convertFromToJSON = function(form){
-//         var json = {};
-//         jQuery.each(form, function(){
-//             json[this.name] = this.value || '';
-//         });
-//         return JSON.stringify({body : json});
-//
-//     };
-//
-// })(window.feedbackModel = window.feedbackModel || {});

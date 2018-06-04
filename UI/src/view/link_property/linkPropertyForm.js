@@ -1,5 +1,6 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
+    var layer;
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
 
@@ -273,8 +274,9 @@
         selectedLinkProperty.cancel();
       });
 
-      eventbus.on('layer:selected', function(layer) {
-        if(layer === 'linkProperty') {
+      eventbus.on('layer:selected', function(layerName) {
+        layer = layerName;
+        if(layerName === 'linkProperty') {
           renderLinkToIncompleteLinks();
         }
         else {
@@ -292,7 +294,7 @@
           }
 
           $('#feedback-data').on('click', function(){
-              FeedbackDataView.initialize(selectedLinkProperty);
+              new FeedbackDataView().initialize(selectedLinkProperty, layer);
           });
       };
     };
