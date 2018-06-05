@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures, MultiValueLinearAssetService}
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
@@ -317,6 +317,8 @@ trait TierekisteriAssetImporterOperations {
 trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporterOperations{
 
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
+
+  lazy val multiValuelinearAssetService: MultiValueLinearAssetService = new MultiValueLinearAssetService(roadLinkService, eventbus)
 
   protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
 
