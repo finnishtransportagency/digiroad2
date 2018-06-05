@@ -1,5 +1,6 @@
 (function(root) {
   root.CareClassCollection = function(backend, verificationCollection, spec) {
+    LinearAssetsCollection.call(this, backend, verificationCollection, spec);
     var typeId = spec.typeId;
     var multiElementEventCategory = spec.multiElementEventCategory;
     var hasMunicipalityValidation = spec.hasMunicipalityValidation;

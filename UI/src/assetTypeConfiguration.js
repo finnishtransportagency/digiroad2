@@ -518,7 +518,7 @@
         unit: '',
         allowComplementaryLinks: true,
         editControlLabels: {
-          title: 'Luokka',
+          title: 'Hoitoluokka',
           enabled: 'Hoitoluokka',
           disabled: 'Ei hoitoluokkaa'
         },

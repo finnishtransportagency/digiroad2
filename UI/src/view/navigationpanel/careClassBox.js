@@ -54,15 +54,12 @@
       var greenCareValues = [
         [16, '(N1) 2-ajorataiset tiet'],
         [17, '(N2) Valta- ja kantatiet sekä vilkkaat seututiet'],
-        [18, '(N3) Muut tiet'],
-        [19, '(T1) Puistomainen taajamassa'],
-        [20, '(T2) Luonnonmukainen taajamassa']
-
+        [18, '(N3) Muut tiet']
       ];
 
       var suburbanAreaValues = [
-        [20, '(T1) Puistomainen taajamassa'],
-        [21, '(T2) Luonnonmukainen taajamassa']
+        [19, '(T1) Puistomainen taajamassa'],
+        [20, '(T2) Luonnonmukainen taajamassa']
       ];
 
       var specialAreaValues = [
