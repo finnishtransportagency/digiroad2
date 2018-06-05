@@ -210,7 +210,7 @@
       me.element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" '+ me.required +' class="form-control"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ me.disabled() + '>' +
+        '   <input type="text" name="' + field.publicId + '" '+ me.required() +' class="form-control"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ me.disabled() + '>' +
         unit +
         '</div>');
 
@@ -359,9 +359,9 @@
         '<label class="control-label">' + field.label + '</label>' +
         '</div>');
 
-      var inputLabel = $('<input type="text" ' + me.disabled() + ' ' +  me.required() + '/>').addClass('form-control')
+      var inputLabel = $('<input type="text" ' + me.disabled() + '/>').addClass('form-control')
                                                 .attr('id', field.publicId)
-                                                .attr('required', me.required)
+                                                .attr('required', me.required())
                                                 .attr('placeholder',"pp.kk.vvvv")
                                                 .attr('fieldType', fieldValue.type)
                                                 .attr('value', value )

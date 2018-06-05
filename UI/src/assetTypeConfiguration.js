@@ -36,7 +36,8 @@
       trAxleWeightLimits: 340,
       trBogieWeightLimits: 350,
       trHeightLimits: 360,
-      trWidthLimits: 370
+      trWidthLimits: 370,
+      carryingCapacity: 400
     };
 
     var assetGroups = {
@@ -534,6 +535,39 @@
         isVerifiable: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
+      },
+      {
+        typeId: assetType.carryingCapacity,
+        singleElementEventCategory: 'carryingCapacity',
+        multiElementEventCategory: 'carryingCapacity',
+        layerName: 'carryingCapacity',
+        title: 'Kantavuus',
+        newTitle: 'Uusi Kantavuus',
+        className: 'carrying-capacity',
+        unit: '',
+        isSeparable: false,
+        allowComplementaryLinks: false,
+        editControlLabels: {
+          title: 'Kantavuus',
+          enabled: 'Kantavuus',
+          disabled: 'Ei Kantavuutta'
+        },
+        label: new LinearAssetLabel(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        isVerifiable: false,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "KEVÄTKANTAVUUS", type: 'integer', publicId: "integer_publicID", unit: "MN/m<sup>2</sup>", weight: 1},
+            {label: "ROUTIVUUSKERROIN", type: 'single_choice', publicId: "single_choice_publicID",
+                values: [{id: 1, label: "40 Erittäin routiva"},
+                         {id: 2, label: "50 Väliarvo 50...60"},
+                         {id: 3, label: "60 Routiva"},
+                         {id: 4, label: "70 Väliarvo 60...80"},
+                         {id: 5, label: "80 Routimaton"},
+                         {id: 99, label: 'Ei tietoa'}], weight: 2, defaultValue: "99"},
+            {label: "MITTAUSPÄIVÄ", type: 'date', publicId: "date_publicID", weight: 3}
+          ]
+        })
       }
     ];
 
