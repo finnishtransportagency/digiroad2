@@ -1,8 +1,9 @@
 (function (root) {
-  root.LinkPropertyForm = function(selectedLinkProperty) {
+  root.LinkPropertyForm = function(selectedLinkProperty, feedbackCollection) {
     var layer;
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+    new FeedbackDataTool(feedbackCollection, selectedLinkProperty, 'linkProperty', authorizationPolicy);
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -255,14 +256,12 @@
           selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
         });
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || applicationModel.isReadOnly());
-        setFeedbackLink(true);
       });
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
       });
       eventbus.on('linkProperties:unselected', function() {
         rootElement.empty();
-        setFeedbackLink(false);
       });
       eventbus.on('application:readOnly', function(readOnly){
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || readOnly);
@@ -283,20 +282,6 @@
           $('#incomplete-links-link').parent().remove();
         }
       });
-
-      var setFeedbackLink = function(enable) {
-          var infoContent = $('#information-content');
-          if (enable && !infoContent.find('#feedback-data').length)
-              infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
-          else {
-              if(!enable)
-                  infoContent.find('#feedback-data').remove();
-          }
-
-          $('#feedback-data').on('click', function(){
-              new FeedbackDataView().initialize(selectedLinkProperty, layer);
-          });
-      };
     };
 
     bindEvents();

@@ -555,15 +555,28 @@
       });
     };
 
-    this.sendFeedback = function (data, successCallback, errorCallback) {
+    this.sendFeedbackApplication = function (data, successCallback, errorCallback) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/feedback",
+        url: "api/feedbackApplication",
         data: data,
         dataType: "json",
         success: successCallback,
         error: errorCallback
+        });
+    };
+
+    this.sendFeedbackData = function (data, successCallback, errorCallback) {
+        $.ajax({
+            contentType: "application/json",
+            type: "POST",
+            // url: "api/feedbackData",
+            url: "api/feedbackApplication",
+            data: data,
+            dataType: "json",
+            success: successCallback,
+            error: errorCallback
         });
     };
 

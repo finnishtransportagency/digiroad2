@@ -1,9 +1,9 @@
 (function (root) {
-root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
+root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition);
+  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection);
 
   function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
@@ -13,7 +13,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var layerName = pointAsset.layerName;
     var localizedTexts = pointAsset.formLabels;
     var authorizationPolicy = pointAsset.authorizationPolicy;
-
+    new FeedbackDataTool(feedbackCollection, selectedAsset, layerName, authorizationPolicy);
 
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
       if(event.assetType == typeId)
@@ -46,7 +46,6 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
           rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
           rootElement.find('button#cancel-button').prop('disabled', false);
         }
-        setFeedbackLink(true);
       }
     });
 
@@ -57,7 +56,6 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
       rootElement.empty();
-      setFeedbackLink(false);
     });
 
     eventbus.on('layer:selected', function(layer) {
@@ -67,21 +65,6 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
         $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
       }
     });
-
-    var setFeedbackLink = function(enable) {
-        var infoContent = $('#information-content');
-        if (enable && !infoContent.find('#feedback-data').length)
-            infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
-        else {
-            if(!enable)
-                infoContent.find('#feedback-data').remove();
-
-        }
-
-        $('#feedback-data').on('click', function(){
-            FeedbackDataView.initialize(selectedAsset);
-        });
-    };
   }
 
   function renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {

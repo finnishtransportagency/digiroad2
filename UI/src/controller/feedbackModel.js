@@ -1,13 +1,10 @@
 (function (root) {
-    root.FeedbackModel = function() {
+    root.FeedbackModel = function(feedbackBackend) {
         var me = this;
-        var backend;
+        var backend = feedbackBackend;
 
-        this.initialize = function (feedbackBackend) {
-            backend = feedbackBackend;
-        };
 
-        this.send = function (data) {
+        this.sendFeedbackApplication = function (data) {
             var success = function () {
                 eventbus.trigger("feedback:send");
             };
@@ -15,7 +12,19 @@
             var failure = function () {
                 eventbus.trigger("feedback:failed");
             };
-            backend.sendFeedback(convertFromToJSON(data), success, failure);
+            backend.sendFeedbackApplication(convertFromToJSON(data), success, failure);
+        };
+
+
+        this.sendFeedbackData = function (data) {
+            var success = function () {
+                eventbus.trigger("feedback:send");
+            };
+
+            var failure = function () {
+                eventbus.trigger("feedback:failed");
+            };
+            backend.sendFeedbackData(convertFromToJSON(data), success, failure);
         };
 
 

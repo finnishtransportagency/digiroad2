@@ -97,7 +97,8 @@
     }
   };
 
-  var bindEvents = function(selectedSpeedLimit) {
+  var bindEvents = function(selectedSpeedLimit, feedbackCollection) {
+    new FeedbackDataTool(feedbackCollection, selectedSpeedLimit, 'speedLimit', authorizationPolicy);
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -125,11 +126,9 @@
       rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedSpeedLimit.save(); });
       rootElement.find('.form-controls.speed-limit button.cancel').on('click', function() { selectedSpeedLimit.cancel(); });
       toggleMode(validateAdministrativeClass(selectedSpeedLimit) || applicationModel.isReadOnly());
-      setFeedbackLink(true);
     });
     eventbus.on('speedLimit:unselect', function() {
       rootElement.empty();
-      setFeedbackLink(false);
     });
     eventbus.on('application:readOnly', function(readOnly){
       toggleMode(validateAdministrativeClass(selectedSpeedLimit) || readOnly);
@@ -147,22 +146,6 @@
         $('#work-list-link-errors').parent().remove();
       }
     });
-
-    var setFeedbackLink = function(enable) {
-        var infoContent = $('#information-content');
-        if (enable && !infoContent.find('#feedback-data').length)
-            infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
-        else {
-            if(!enable)
-                infoContent.find('#feedback-data').remove();
-
-        }
-
-
-        $('#feedback-data').on('click', function(){
-            FeedbackDataView.initialize(selectedSpeedLimit);
-        });
-    };
   };
 
   function validateAdministrativeClass(selectedSpeedLimit){
@@ -173,8 +156,8 @@
   }
 
   root.SpeedLimitForm = {
-    initialize: function(selectedSpeedLimit) {
-      bindEvents(selectedSpeedLimit);
+    initialize: function(selectedSpeedLimit, feedbackCollection) {
+      bindEvents(selectedSpeedLimit, feedbackCollection);
     }
   };
 })(this);

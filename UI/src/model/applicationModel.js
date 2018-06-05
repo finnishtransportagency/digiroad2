@@ -8,6 +8,19 @@
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var readOnly = true;
+    var appState = 'normal';
+
+    var setApplicationkState = function(newState){
+      if (appState !== newState) {
+          appState = newState;
+          eventbus.trigger('application:state', newState);
+      }
+    };
+
+    var isFeedbackState = function() {
+       return appState === applicationState.Feedback;
+    };
+
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
         readOnly = newState;
@@ -72,6 +85,9 @@
       isDirty: function() {
         return isDirty();
       },
+      isFeedbackState: function(){
+        return isFeedbackState();
+      },
       canZoomOut: function() {
         return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
       },
@@ -91,6 +107,10 @@
       },
       getWithRoadAddress: function() {
         return withRoadAddress;
+      },
+      setApplicationkState: setApplicationkState,
+      getApplicationState: function(){
+        return appState;
       }
     };
   };

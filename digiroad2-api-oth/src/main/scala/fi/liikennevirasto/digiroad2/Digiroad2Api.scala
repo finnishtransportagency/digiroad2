@@ -757,7 +757,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
 
-  post("/feedback"){
+  post("/feedbackApplication"){
     val body = extractFeedbackBody(parsedBody \ "body")
     val user = userProvider.getCurrentUser()
     applicationFeedback.insertApplicationFeedback(user.username, body)

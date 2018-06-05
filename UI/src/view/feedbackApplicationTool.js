@@ -1,5 +1,5 @@
 (function (root) {
-   root.FeedbackTool = function (authorizationPolicy, collection) {
+   root.FeedbackApplicationTool = function (authorizationPolicy, collection) {
 
        var initialize = function(){
            purge();
@@ -14,7 +14,7 @@
            cancelButton: 'Peruuta',
            saveCallback: function(){
                addSpinner();
-               collection.send( $(".form-horizontal").serializeArray());
+               collection.sendFeedbackApplication( $(".form-horizontal").serializeArray());
                },
            cancelCallback: function(){  $(':input').val(''); },
            closeCallback: function() { purge(); }
