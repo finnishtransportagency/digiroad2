@@ -196,11 +196,10 @@
     this.cancel = function() {
       if (self.isSplit() || self.isSeparated()) {
         cancelCreation();
-        self.close();
       } else {
         cancelExisting();
-        self.close();
       }
+      self.close()
     };
 
     this.verify = function() {
@@ -333,7 +332,7 @@
     };
 
     this.removeMultiValue = function() {
-      self.setMultiValue(undefined);
+      self.setMultiValue();
     };
 
     this.removeAValue = function() {
