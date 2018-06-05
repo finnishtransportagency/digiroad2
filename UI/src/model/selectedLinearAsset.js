@@ -199,7 +199,7 @@
       } else {
         cancelExisting();
       }
-      self.close()
+      self.close();
     };
 
     this.verify = function() {
