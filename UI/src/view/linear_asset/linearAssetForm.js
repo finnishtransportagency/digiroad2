@@ -34,6 +34,11 @@
     eventbus.on(events('unselect'), function() {
       rootElement.empty();
     });
+
+    eventbus.on('closeForm', function() {
+      rootElement.empty();
+    });
+
     eventbus.on('application:readOnly', function(readOnly){
       if(layerName ===  applicationModel.getSelectedLayer()) {
         toggleMode(validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || readOnly);

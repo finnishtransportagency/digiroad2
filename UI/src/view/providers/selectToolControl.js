@@ -12,6 +12,7 @@
             onDragStart: function(){},
             onInteractionEnd: function(){},
             onSelect: function() {},
+            onClose: function() {},
             onMultipleSelect: function() {},
             style: function(){},
             enableSelect: function(){ return true; },
@@ -102,11 +103,9 @@
         selectInteraction.on('select',  function(evt){
             if(evt.selected.length > 0 && settings.enableSelect(evt)){
               unhighlightLayer();
-              map.removeInteraction(multiSelectInteraction);
             }
             else {
               highlightLayer();
-              map.addInteraction(multiSelectInteraction);
             }
             settings.onSelect(evt);
         });
@@ -114,15 +113,16 @@
         multiSelectInteraction.on('select', function (evt) {
             if (evt.selected.length > 0 && settings.enableSelect(evt)) {
                 multiSelectInitialized = true;
+                settings.onClose();
                 unhighlightLayer();
-                map.removeInteraction(selectInteraction);
             }
             settings.onMultipleSelect(evt);
         });
 
         $(window).keyup(function (evt) {
           if (!ol.events.condition.platformModifierKeyOnly(evt) && multiSelectInitialized && enabled) {
-            var properties = _.map(multiSelectInteraction.getFeatures().getArray(), function(feature) { return feature.getProperties(); });
+            var properties = _.map(multiSelectInteraction.getFeatures().getArray(), function(feature) { return feature.getProperties(); }).concat(_.map(selectInteraction.getFeatures().getArray(), function(feature) { return feature.getProperties(); }));
+
             clear();
             multiSelectInitialized = false;
             map.addInteraction(selectInteraction);
