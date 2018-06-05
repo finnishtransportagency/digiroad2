@@ -96,6 +96,7 @@
       };
       var backendOperation = _.isUndefined(value) ? backend.deleteLinearAssets : backend.createLinearAssets;
       backendOperation(payload, function() {
+        dirty = false;
         eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
         eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
@@ -195,8 +196,10 @@
     this.cancel = function() {
       if (self.isSplit() || self.isSeparated()) {
         cancelCreation();
+        self.close();
       } else {
         cancelExisting();
+        self.close();
       }
     };
 

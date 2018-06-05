@@ -348,6 +348,7 @@ root.LinearAssetLayer  = function(params) {
 
   var linearAssetUnSelected = function () {
     selectToolControl.clear();
+    changeTool(application.getSelectedTool());
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
   
@@ -361,6 +362,8 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var handleLinearAssetChanged = function(eventListener, selectedLinearAsset) {
+    //Disable interaction so the user can not click on another feature after made changes
+    selectToolControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
     decorateSelection();
@@ -487,7 +490,9 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var drawLinearAssets = function(linearAssets) {
-    vectorSource.addFeatures(style.renderFeatures(_.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){  return selectedAsset.linkId == asset.linkId; }) ; })));
+    vectorSource.addFeatures(style.renderFeatures(_.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
+      return selectedAsset.linkId === asset.linkId && selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
+    })));
     readOnlyLayer.showLayer();
     if(assetLabel) {
       vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep( _.omit(linearAssets, 'geometry')), offsetBySideCode), me.uiState.zoomLevel));
