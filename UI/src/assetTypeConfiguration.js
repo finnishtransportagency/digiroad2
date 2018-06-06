@@ -557,18 +557,18 @@
         isVerifiable: false,
         form: new DynamicAssetForm({
           fields: [
-            {label: "KEVÄTKANTAVUUS", type: 'integer', publicId: "integer_publicID", unit: "MN/m<sup>2</sup>", weight: 1},
-            {label: "ROUTIVUUSKERROIN", type: 'single_choice', publicId: "single_choice_publicID",
-                values: [{id: 1, label: "40 Erittäin routiva"},
-                         {id: 2, label: "50 Väliarvo 50...60"},
-                         {id: 3, label: "60 Routiva"},
-                         {id: 4, label: "70 Väliarvo 60...80"},
-                         {id: 5, label: "80 Routimaton"},
-                         {id: 99, label: 'Ei tietoa'}], weight: 2, defaultValue: "99"},
-            {label: "MITTAUSPÄIVÄ", type: 'date', publicId: "date_publicID", weight: 3}
+            {label: "Kevätkantavuus", type: 'integer', publicId: "kevatkantavuus", unit: "MN/m<sup>2</sup>", weight: 1},
+            {label: "Routivuuskerroin", type: 'single_choice', publicId: "routivuuskerroin",
+                values: [{id: 40, label: "40 Erittäin routiva"},
+                         {id: 50, label: "50 Väliarvo 50...60"},
+                         {id: 60, label: "60 Routiva"},
+                         {id: 70, label: "70 Väliarvo 60...80"},
+                         {id: 80, label: "80 Routimaton"},
+                         {id: 999, label: 'Ei tietoa'}], weight: 2, defaultValue: "999"},
+            {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
           ]
         })
-      }
+       }
     ];
 
     var experimentalLinearAssetSpecs = [
