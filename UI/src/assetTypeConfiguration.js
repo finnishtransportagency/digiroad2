@@ -36,7 +36,8 @@
       trAxleWeightLimits: 340,
       trBogieWeightLimits: 350,
       trHeightLimits: 360,
-      trWidthLimits: 370
+      trWidthLimits: 370,
+      carryingCapacity: 400
     };
 
     var assetGroups = {
@@ -251,7 +252,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
-        form: new AssetFormFactory( {
+        form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg' }
           ]
@@ -358,7 +359,12 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1}
+          ]
+        })
       },
       {
         typeId: assetType.winterSpeedLimit,
@@ -529,7 +535,41 @@
         isVerifiable: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
-      }
+      },
+      {
+        typeId: assetType.carryingCapacity,
+        singleElementEventCategory: 'carryingCapacity',
+        multiElementEventCategory: 'carryingCapacity',
+        layerName: 'carryingCapacity',
+        title: 'Kantavuus',
+        newTitle: 'Uusi Kantavuus',
+        className: 'carrying-capacity',
+        unit: '',
+        isSeparable: false,
+        allowComplementaryLinks: false,
+        editControlLabels: {
+          title: 'Kantavuus',
+          enabled: 'Kantavuus',
+          disabled: 'Ei Kantavuutta'
+        },
+        style: new CarryingCapacityStyle(),
+        layer : CarryingCapacityLayer,
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        isVerifiable: false,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "Kevätkantavuus", type: 'integer', publicId: "kevatkantavuus", unit: "MN/m<sup>2</sup>", weight: 1},
+            {label: "Routivuuskerroin", type: 'single_choice', publicId: "routivuuskerroin",
+                values: [{id: 40, label: "40 Erittäin routiva"},
+                         {id: 50, label: "50 Väliarvo 50...60"},
+                         {id: 60, label: "60 Routiva"},
+                         {id: 70, label: "70 Väliarvo 60...80"},
+                         {id: 80, label: "80 Routimaton"},
+                         {id: 999, label: 'Ei tietoa'}], weight: 2, defaultValue: "999"},
+            {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
+          ]
+        })
+       }
     ];
 
     var experimentalLinearAssetSpecs = [

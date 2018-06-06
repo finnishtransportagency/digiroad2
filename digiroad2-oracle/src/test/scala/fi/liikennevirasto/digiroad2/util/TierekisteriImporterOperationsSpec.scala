@@ -1,13 +1,15 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.text.SimpleDateFormat
+
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress, MultiValueLinearAssetDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleSpeedLimitDao, OracleLinearAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
+import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
+import fi.liikennevirasto.digiroad2.linearasset.{MultiValue, NumericValue, TextualValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import org.joda.time.DateTime
@@ -36,6 +38,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
   val mockTREuropeanRoadClient: TierekisteriEuropeanRoadAssetClient = MockitoSugar.mock[TierekisteriEuropeanRoadAssetClient]
   val mockTRSpeedLimitAssetClient: TierekisteriSpeedLimitAssetClient = MockitoSugar.mock[TierekisteriSpeedLimitAssetClient]
+  val mockTRCarryingCapacityClient: TierekisteriCarryingCapacityAssetClient = MockitoSugar.mock[TierekisteriCarryingCapacityAssetClient]
 
   lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
     new RoadWidthTierekisteriImporter()
@@ -180,6 +183,16 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriSpeedLimitAssetClient = mockTRSpeedLimitAssetClient
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
+  class TestCarryingCapacityOperations extends CarryingCapacityTierekisteriImporter {
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override val tierekisteriClient: TierekisteriCarryingCapacityAssetClient = mockTRCarryingCapacityClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
@@ -1279,6 +1292,119 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       }
       assets.sortBy(_.linkId).map(_.linkId) should be (Seq(5001, 5001, 5002))
       assets.sortBy(_.linkId).sortBy(_.startMeasure).map(_.value) should be (Seq(Some(NumericValue(80)), Some(NumericValue(120)), Some(NumericValue(120))))
+    }
+  }
+
+  test("import assets (carryingCapacity) from TR to OTH"){
+    TestTransactions.runWithRollback() {
+
+      val testCarryingCapacity = new TestCarryingCapacityOperations
+      val roadNumber = 4L
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val startAddressMValue = 0L
+      val endAddressMValue = 250L
+      val springCapacity = Some("508")
+      val factorValue = TRFrostHeavingFactorType.MiddleValue60to80.value
+      val measurementDate = Some(new SimpleDateFormat("dd/MM/yyyy").parse("04/06/2018"))
+
+      val tr = TierekisteriCarryingCapacityData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, springCapacity, factorValue, measurementDate)
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+
+      when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
+      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockTRCarryingCapacityClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
+      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
+
+      testCarryingCapacity.importAssets()
+      val asset = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(testCarryingCapacity.typeId, Seq(5001))
+      asset.length should be(1)
+
+      asset.head.linkId should be (5001)
+      asset.head.value.head match {
+        case MultiValue(multiTypeProps) =>
+          multiTypeProps.properties.map(prop =>
+            prop.propertyType match {
+              case "single_choice" =>
+                prop.values.head.value should be (factorValue.toString())
+              case "integer" =>
+                prop.values.head.value should be (springCapacity.get)
+              case "date" =>
+                val formatedDate = new SimpleDateFormat("dd/MM/yyyy").parse(prop.values.head.value.toString.replace(".", "/"))
+                formatedDate should be (measurementDate.get)
+              case _ => None
+            }
+          )
+        case _ => None
+      }
+    }
+  }
+
+  test("update assets (carryingCapacity) from TR to OTH"){
+    TestTransactions.runWithRollback() {
+
+      val testCarryingCapacity = new TestCarryingCapacityOperations
+
+      val roadNumber = 4L
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val startAddressMValue = 0L
+      val endAddressMValue = 250L
+      val springCapacity = Some("508")
+      val factorValue = TRFrostHeavingFactorType.MiddleValue60to80.value
+      val measurementDate = Some(new SimpleDateFormat("dd/MM/yyyy").parse("04/06/2018"))
+
+      val springCapacityHist = Some("271")
+      val factorValueHist = TRFrostHeavingFactorType.NoFrostHeaving.value
+      val measurementDateHist = Some(new SimpleDateFormat("dd/MM/yyyy").parse("01/06/2018"))
+
+      val tr = TierekisteriCarryingCapacityData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, springCapacity, factorValue, measurementDate)
+      val trHist = TierekisteriCarryingCapacityData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, springCapacityHist, factorValueHist, measurementDateHist)
+
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+
+      when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
+      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockTRCarryingCapacityClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockTRCarryingCapacityClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
+      when(mockTRCarryingCapacityClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
+
+      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
+      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
+
+      testCarryingCapacity.importAssets()
+      val assetI = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(testCarryingCapacity.typeId, Seq(5001)).head
+
+      testCarryingCapacity.updateAssets(DateTime.now())
+      val assetU = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(testCarryingCapacity.typeId, Seq(5001)).filterNot(a => a.id == assetI.id).head
+
+      assetU.linkId should be (5001)
+      assetU.value.head match {
+        case MultiValue(multiTypeProps) =>
+          multiTypeProps.properties.map(prop =>
+            prop.propertyType match {
+              case "single_choice" =>
+                prop.values.head.value should be (factorValueHist.toString())
+              case "integer" =>
+                prop.values.head.value should be (springCapacityHist.get)
+              case "date" =>
+                val formatedDate = new SimpleDateFormat("dd/MM/yyyy").parse(prop.values.head.value.toString.replace(".", "/"))
+                formatedDate should be (measurementDateHist.get)
+              case _ => None
+            }
+          )
+        case _ => None
+      }
     }
   }
 }

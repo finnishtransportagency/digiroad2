@@ -11,6 +11,8 @@
       exitNumbers: function() { return true; },
       maintenanceRoad: function() { return true; },
       roadDamagedByThaw: function() { return true; },
+      massTransitLanes: function() { return true; },
+      carryingCapacity: function() { return true; },
       default: function(val) {
         if(_.isUndefined(val)) { return true; }
         else if(val > 0) { return true; }
