@@ -18,7 +18,7 @@ INSERT INTO LOCALIZED_STRING  (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
 
 --Create New Properties for New Asset
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 400, 'text', 0, 'db_migration_v170', 'kevatkantavuus', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Kevatkantavuus'));
+    VALUES (primary_key_seq.nextval, 400, 'integer', 0, 'db_migration_v170', 'kevatkantavuus', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Kevatkantavuus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
     VALUES (primary_key_seq.nextval, 400, 'single_choice', 0, 'db_migration_v170', 'routivuuskerroin', (select id from LOCALIZED_STRING where VALUE_FI = 'Routivuuskerroin'));
