@@ -61,11 +61,11 @@
       if (this.value === 'spring-carrying-capacity') {
           $('.frost-heaving-factor-legend').hide();
           $('.spring-carrying-capacity-legend').show();
-          eventbus.trigger(me.className() +':spring-carrying-capacity', true);
+          eventbus.trigger(assetConfig.singleElementEventCategory+':spring-carrying-capacity', true);
         } else {
           $('.frost-heaving-factor-legend').show();
           $('.spring-carrying-capacity-legend').hide();
-          eventbus.trigger(me.className() + ':spring-carrying-capacity', false);
+          eventbus.trigger(assetConfig.singleElementEventCategory + ':spring-carrying-capacity', false);
         }
     };
 
