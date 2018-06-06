@@ -3,22 +3,14 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset.{CarryingCapacity, SideCode}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriCarryingCapacityAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.Queries.{insertDateProperty, insertSingleChoiceProperty, insertTextProperty}
+import fi.liikennevirasto.digiroad2.dao.Queries.{insertDateProperty, insertNumberProperty, insertSingleChoiceProperty}
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
-
-
-
-
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
 class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -37,7 +29,7 @@ class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImport
     val assetId = multiValuelinearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value, measures, "batch_process_" + assetName,
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-    insertTextProperty(assetId, Queries.getPropertyIdByPublicId("kevatkantavuus"), trAssetData.springCapacity.getOrElse("")).execute
+    insertNumberProperty(assetId, Queries.getPropertyIdByPublicId("kevatkantavuus"),  trAssetData.springCapacity.getOrElse("").toDouble).execute
     insertSingleChoiceProperty(assetId, Queries.getPropertyIdByPublicId("routivuuskerroin"), trAssetData.factorValue).execute
     trAssetData.measurementDate match {
       case Some(mDate) =>
