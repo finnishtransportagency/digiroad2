@@ -8,7 +8,8 @@
     };
 
     var findValue = function(asset, publicId) {
-      return _.first(_.find(asset.value.properties, function(a) { return a.publicId === publicId; }).values).value;
+      var someValue =_.find(asset.value.properties, function(a) { return a.publicId === publicId; });
+      return someValue ? _.first(someValue.values).value : ''
     };
 
     this.renderOverlays = function(linearAssets) {
@@ -34,11 +35,11 @@
     var frostHeavingFactorRules = [
       new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(40).use({stroke: {color: '#0011bb'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(50).use({stroke: {color: '#11bb00'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(60).use({stroke: {color: '#11bb00'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(70).use({stroke: {color: '#11bb00'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(50).use({stroke: {color: '#00ccdd'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(60).use({stroke: {color: '#c559ff'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(70).use({stroke: {color: '#ff55dd'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(80).use({stroke: {color: '#11bb00'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(999).use({stroke: {color: '#ff0000'}})
+      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(999).use({stroke: {color: '#000000'}})
     ];
 
     var carryingCapacityFeatureSizeRules = [
@@ -51,24 +52,12 @@
       new StyleRule().where('zoomLevel').isIn([14,15]).use({stroke: {width: 14}})
     ];
 
-    // var overlayStyleRules = [
-    //   new StyleRule().where('type').is('overlay').and('zoomLevel').is(9).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
-    //   new StyleRule().where('type').is('overlay').and('zoomLevel').is(10).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 3,  lineDash: [1,10] }}),
-    //   new StyleRule().where('type').is('overlay').and('zoomLevel').is(11).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 5,  lineDash: [1,15] }}),
-    //   new StyleRule().where('type').is('overlay').and('zoomLevel').is(12).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 8,  lineDash: [1,22] }}),
-    //   new StyleRule().where('type').is('overlay').and('zoomLevel').is(13).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 8,  lineDash: [1,22] }}),
-    //   new StyleRule().where('type').is('overlay').and('zoomLevel').is(14).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 12, lineDash: [1,28] }}),
-    //   new StyleRule().where('type').is('overlay').and('zoomLevel').is(15).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 12, lineDash: [1,28] }})
-    // ];
-
     me.frostHeavingFactorStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.frostHeavingFactorStyle.addRules(frostHeavingFactorRules);
     me.frostHeavingFactorStyle.addRules(carryingCapacityFeatureSizeRules);
-    // me.frostHeavingFactorStyle.addRules(overlayStyleRules);
 
     me.springCarryingCapacityStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.springCarryingCapacityStyle.addRules(springCarryingCapacityRules);
     me.springCarryingCapacityStyle.addRules(carryingCapacityFeatureSizeRules);
-
   };
 })(this);

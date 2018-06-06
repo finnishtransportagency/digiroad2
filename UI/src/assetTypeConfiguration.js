@@ -552,7 +552,6 @@
           enabled: 'Kantavuus',
           disabled: 'Ei Kantavuutta'
         },
-        label: new LinearAssetLabel(),
         style: new CarryingCapacityStyle(),
         layer : CarryingCapacityLayer,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
