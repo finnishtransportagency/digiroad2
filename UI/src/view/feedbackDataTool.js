@@ -1,14 +1,26 @@
 (function (root) {
-    root.FeedbackDataTool = function (feedbackCollection, model, layerName, authorizationPolicy, eventCategory) {
+    root.FeedbackDataTool = function () {
         var me = this;
-        me.model = model;
-        me.collection = feedbackCollection;
+        me.model = null;
+        me.collection= null;
+        me.layerName = '';
+        me.authorizationPolicy = null;
+        me.eventCategory = null;
+
+        this.initialize = function(feedbackCollection, model, layerName, authorizationPolicy, eventCategory){
+            me.model = model;
+            me.collection = feedbackCollection;
+            me.layerName = layerName;
+            me.authorizationPolicy = authorizationPolicy;
+            me.eventCategory = eventCategory;
+            applicationListeners();
+        };
 
         function events() {
-            return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
+            return _.map(arguments, function(argument) { return me.eventCategory + ':' + argument; }).join(' ');
         }
 
-        this.renderFeedbackLink = function (enable) {
+        var renderFeedbackLink = function (enable) {
             var infoContent = $('#information-content');
             if (enable && !infoContent.find('#feedback-data').length)
                 infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
@@ -17,24 +29,26 @@
             }
 
             $('#feedback-data').on('click', function(){
-               me.open();
+               open();
             });
         };
 
-        this.open = function(){
-            renderDialog(getData(), layerName);
-            bindEvents();
-            applicationModel.setApplicationkState(applicationState.Feedback);
+        var open = function(){
+            if(applicationModel.getSelectedLayer() === me.layerName) {
+                renderDialog(getData(), me.layerName);
+                bindEvents();
+                applicationModel.setApplicationkState(applicationState.Feedback);
+            }
         };
 
-        var closeFeedback = function(){
+        this.closeFeedback = function(){
             purge();
-            me.renderFeedbackLink(false);
+            renderFeedbackLink(false);
             applicationModel.setApplicationkState(applicationState.Normal);
         };
 
-        var initFeedback = function(){
-            me.renderFeedbackLink(true);
+        this.initFeedback = function(){
+            renderFeedbackLink(true);
         };
 
         var applicationListeners = function(){
@@ -47,32 +61,34 @@
                 new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
             });
 
-            eventbus.on('linkProperties:unselected', closeFeedback);
+            $('#feedback-data').on('click', function(){
+                me.open();
+            });
 
-            eventbus.on('linkProperties:selected linkProperties:cancelled', initFeedback);
+            eventbus.on('linkProperties:unselected', me.closeFeedback);
 
-            eventbus.on(events('selected', 'cancelled'), initFeedback);
+            eventbus.on('linkProperties:selected linkProperties:cancelled', me.initFeedback);
 
-            eventbus.on(events('unselect'), closeFeedback);
+            eventbus.on(events('selected', 'cancelled'), me.initFeedback);
 
-            eventbus.on('manoeuvres:selected manoeuvres:cancelled',initFeedback);
+            eventbus.on(events('unselect'), me.closeFeedback);
 
-            eventbus.on('manoeuvres:unselected', closeFeedback);
+            eventbus.on('manoeuvres:selected manoeuvres:cancelled',me.initFeedback);
 
-            eventbus.on('speedLimit:unselect', closeFeedback);
+            eventbus.on('manoeuvres:unselected', me.closeFeedback);
 
-            eventbus.on('speedLimit:selected speedLimit:cancelled',initFeedback);
+            eventbus.on('speedLimit:unselect', me.closeFeedback);
 
-            eventbus.on(layerName + ':unselected', closeFeedback);
+            eventbus.on('speedLimit:selected speedLimit:cancelled',me.initFeedback);
 
-            eventbus.on(layerName + ':selected ' + layerName + ':cancelled' ,initFeedback);
+            eventbus.on(me.layerName + ':unselected', me.closeFeedback);
 
-            eventbus.on('asset:modified', initFeedback);
+            eventbus.on(me.layerName + ':selected ' + me.layerName + ':cancelled' ,me.initFeedback);
 
-            eventbus.on('asset:closed',initFeedback);
+            eventbus.on('asset:modified', me.initFeedback);
+
+            eventbus.on('asset:closed', me.closeFeedback);
         };
-
-        applicationListeners();
 
         var bindEvents = function () {
             $('.feedback-modal .cancel').on('click', function() {
@@ -108,7 +124,7 @@
         };
 
         var getData = function(){
-           return model.get();
+            return me.collection.get(me.model);
         };
 
         var setDropdownValue = function(layer, dialog){
@@ -116,17 +132,6 @@
                dialog.find('#feedbackDataType').val('Geometriapalaute');
            else
                dialog.find('#feedbackDataType').val('Aineistopalaute');
-        };
-
-        var getLinkIds = function (selectedAsset) {
-           return _.map(selectedAsset, function(selected){ return selected.linkId; }).join(',');
-        };
-
-        var getAssetId = function(selectedAsset, layer){
-            if(layer === 'linkProperty')
-                return '123456';
-            else
-                return _.map(selectedAsset, function(selected){ return selected.id; }).join(',');
         };
 
         var userEditableFields = function(){
@@ -178,9 +183,9 @@
                     '</div>');
 
            setDropdownValue(layer, dialog);
-           dialog.find("#kidentifier").append(authorizationPolicy.username);
-           dialog.find("#linkId").append(getLinkIds(selectedAsset));
-           dialog.find("#assetId").append(getAssetId(selectedAsset, layer));
+           dialog.find("#kidentifier").append(me.authorizationPolicy.username);
+           dialog.find("#linkId").append(selectedAsset.linkId);
+           dialog.find("#assetId").append(selectedAsset.assetId);
            dialog.find("#feedbackForm").append(userEditableFields());
            return dialog;
         };

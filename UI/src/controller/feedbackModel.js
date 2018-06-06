@@ -29,8 +29,17 @@
 
 
         this.get = function (model) {
-            //returnar objecto com info necessaria ao form
-            return model.get();
+            var selected = model.get();
+            if(_.isArray(selected))
+                return {
+                    linkId: _.map(selected, function (selectedAsset) { return selectedAsset.linkId;}).filter(Boolean).join(", "),
+                    assetId: _.map(selected, function (selectedAsset) { return selectedAsset.id; }).filter(Boolean).join(", ")
+                };
+            else
+                return {
+                    linkId: selected.linkId ? selected.linkId: _.map(selected.assets, function(asset) { return asset.linkId; }).filter(Boolean).join(", "),
+                    assetId: selected.id ? selected.id : _.map(selected.assets, function(asset) { return asset.id; }).filter(Boolean).join(", ")
+            };
         };
 
         var convertFromToJSON = function (form) {

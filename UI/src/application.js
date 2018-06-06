@@ -114,8 +114,8 @@
     );
 
     RoadAddressInfoDataInitializer.initialize(isExperimental);
-    MassTransitStopForm.initialize(backend, feedbackCollection);
-    SpeedLimitForm.initialize(selectedSpeedLimit, feedbackCollection);
+    MassTransitStopForm.initialize(backend, new FeedbackModel(backend));
+    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend));
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
@@ -126,15 +126,15 @@
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, feedbackCollection);
+        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets);
       });
     });
   };
 
-  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, feedbackCollection) {
+  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, feedbackCollection);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
@@ -259,16 +259,16 @@
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
-    new LinkPropertyForm(models.selectedLinkProperty, feedbackCollection);
-    new ManoeuvreForm(models.selectedManoeuvreSource);
+    new LinkPropertyForm(models.selectedLinkProperty, new FeedbackModel(backend));
+    new ManoeuvreForm(models.selectedManoeuvreSource, new FeedbackModel(backend));
     _.forEach(linearAssets, function(linearAsset) {
       if(linearAsset.form)
-        linearAsset.form.initialize(linearAsset, feedbackCollection);
+        linearAsset.form.initialize(linearAsset, new FeedbackModel(backend));
       else
         LinearAssetForm.initialize(
             linearAsset,
             AssetFormElementsFactory.construct(linearAsset),
-            feedbackCollection
+            new FeedbackModel(backend)
         );
     });
 
@@ -279,14 +279,14 @@
        applicationModel,
        backend,
        pointAsset.saveCondition || function() {return true;},
-       feedbackCollection);
+        new FeedbackModel(backend));
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
       GroupedPointAssetForm.initialize(
         pointAsset,
         roadCollection,
-        feedbackCollection
+          new FeedbackModel(backend)
        );
     });
 

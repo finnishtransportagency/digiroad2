@@ -98,7 +98,8 @@
   };
 
   var bindEvents = function(selectedSpeedLimit, feedbackCollection) {
-    new FeedbackDataTool(feedbackCollection, selectedSpeedLimit, 'speedLimit', authorizationPolicy);
+    new FeedbackDataTool().initialize(feedbackCollection, selectedSpeedLimit, 'speedLimit', authorizationPolicy);
+
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);

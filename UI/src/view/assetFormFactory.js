@@ -488,9 +488,10 @@
     var me = this;
     var _assetTypeConfiguration;
 
-    me.initialize = function(assetTypeConfiguration){
+    me.initialize = function(assetTypeConfiguration, feedbackModel){
       var rootElement = $('#feature-attributes');
       _assetTypeConfiguration = assetTypeConfiguration;
+      new FeedbackDataTool().initialize(feedbackModel, assetTypeConfiguration.selectedLinearAsset, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
       eventbus.on(events('selected', 'cancelled'), function () {
         rootElement.html(me.renderForm(assetTypeConfiguration.selectedLinearAsset));

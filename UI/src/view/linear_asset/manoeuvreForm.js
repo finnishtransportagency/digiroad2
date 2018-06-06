@@ -1,7 +1,8 @@
 (function (root) {
-  root.ManoeuvreForm = function(selectedManoeuvreSource) {
+  root.ManoeuvreForm = function(selectedManoeuvreSource, feedbackCollection) {
 
     var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
+    new FeedbackDataTool().initialize(feedbackCollection, selectedManoeuvreSource, 'manoeuvre', authorizationPolicy);
 
     /*
     * HTML Templates

@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  function bindEvents(linearAsset, formElements, feedbackCollection) {
+  function bindEvents(linearAsset, formElements, feedbackModel) {
 
     var selectedLinearAsset = linearAsset.selectedLinearAsset,
       eventCategory = linearAsset.singleElementEventCategory,
@@ -12,7 +12,7 @@
       authorizationPolicy = linearAsset.authorizationPolicy,
       layerName = linearAsset.layerName,
       isVerifiable = linearAsset.isVerifiable;
-      new FeedbackDataTool(feedbackCollection, selectedLinearAsset, linearAsset.layerName, authorizationPolicy, eventCategory);
+      new FeedbackDataTool().initialize(feedbackModel, selectedLinearAsset, linearAsset.layerName, authorizationPolicy, eventCategory);
 
     var rootElement = $('#feature-attributes');
 

@@ -12,7 +12,7 @@
             propertiesData = pointAsset.propertyData,
             authorizationPolicy = pointAsset.authorizationPolicy;
 
-        new FeedbackDataTool(feedbackCollection, selectedAsset, layerName, authorizationPolicy);
+        new FeedbackDataTool().initialize(feedbackCollection, selectedAsset, layerName, authorizationPolicy);
 
         var rootElement = $('#feature-attributes');
 

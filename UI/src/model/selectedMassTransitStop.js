@@ -379,9 +379,19 @@
       return getPropertyValue({ propertyData: getProperties() }, 'viimeinen_voimassaolopaiva');
     };
 
-    var get = function(key) {
+    var getByProperty = function(key) {
       if (exists()) {
         return currentAsset.payload[key];
+      }
+    };
+
+    var get = function() {
+      if (exists()) {
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var linkId = nearestLine.linkId;
+          if (!currentAsset.linkId)
+              currentAsset.linkId = linkId;
+          return currentAsset;
       }
     };
 
@@ -502,11 +512,12 @@
       exists: exists,
       change: change,
       changeByExternalId: changeByNationalId,
+      get: get,
       getId: getId,
       getName: getName,
       getDirection: getDirection,
       getFloatingReason: getFloatingReason,
-      get: get,
+      getByProperty: getByProperty,
       getProperties: getProperties,
       switchDirection: switchDirection,
       move: move,
