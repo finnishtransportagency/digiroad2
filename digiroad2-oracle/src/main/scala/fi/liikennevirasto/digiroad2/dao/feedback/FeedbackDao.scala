@@ -16,7 +16,7 @@ class FeedbackDao {
     val feedbackFilter = if (status) " status = 1 " else " status = 0 "
     val query =
       s"""
-        select id, receiver, createdBy, createdAt, subject, body, status, statusDate
+        select id, receiver, created_by, created_date, subject, body, status, status_date
         from feedback
         where $feedbackFilter
         """
@@ -41,7 +41,7 @@ class FeedbackDao {
 
   def getAllFeedbacks(): Seq[FeedbackInfo] = {
     val query =  s"""
-            select id, receiver, createdBy, createdAt, subject, body, status, statusDate
+            select id, receiver, created_by, created_date, subject, body, status, status_date
             from feedback
             """
       StaticQuery.queryNA[FeedbackInfo](query).iterator.toSeq
@@ -51,7 +51,7 @@ class FeedbackDao {
   def getFeedbackByIds(ids: Set[Long]): Seq[FeedbackInfo] = {
       val idsToQuery = ids.mkString(",")
       val query =  s"""
-            select f.id, f.receiver, f.createdBy, f.createdAt, f.subject, f.body, f.status, f.statusDate
+            select f.id, f.receiver, f.created_by, f.created_date, f.subject, f.body, f.status, f.status_date
             from feedback f
             where f.id in ($idsToQuery)"""
       StaticQuery.queryNA[FeedbackInfo](query).iterator.toSeq
@@ -61,7 +61,7 @@ class FeedbackDao {
   def insertFeedback(receiver: String, createdBy: String, body: String, subject: String, status: Boolean): Long = {
    val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
       sqlu"""
-          insert into feedback (id, receiver, createdBy, createdAt, subject, body, status, statusDate)
+          insert into feedback (id, receiver, created_by, created_date, subject, body, status, status_date)
           values ($id, ${receiver}, ${createdBy}, sysdate, ${subject},
                 ${body},${status}, sysdate)""".execute
     id
@@ -69,7 +69,7 @@ class FeedbackDao {
 
   def updateFeedback(id: Long): Long = {
     sqlu"""
-          update feedback set status = 1, statusDate = sysdate where id = ${id} """.execute
+          update feedback set status = 1, status_date = sysdate where id = ${id} """.execute
     id
   }
 }

@@ -12,7 +12,6 @@ class EmailAuthPropertyReader {
 
   def getUsername: String = {
     val loadedKeyString = properties.getProperty("email.username")
-    println("u = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing email username")
     loadedKeyString
