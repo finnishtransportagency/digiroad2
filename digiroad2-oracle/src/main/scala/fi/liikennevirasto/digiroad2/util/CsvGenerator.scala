@@ -81,7 +81,6 @@ class CsvGenerator(vvhServiceHost: String) {
       110 -> "paved_roads",
       120 -> "road_widths",
       130 -> "roads_affected_by_thawing",
-      150 -> "congestion_tendency",
       170 -> "traffic_volumes",
       140 -> "number_of_lanes",
       180 -> "speed_limits_during_winter",
