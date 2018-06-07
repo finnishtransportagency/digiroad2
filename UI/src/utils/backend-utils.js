@@ -571,8 +571,7 @@
         $.ajax({
             contentType: "application/json",
             type: "POST",
-            // url: "api/feedbackData",
-            url: "api/feedbackApplication",
+            url: "api/feedbackData",
             data: data,
             dataType: "json",
             success: successCallback,

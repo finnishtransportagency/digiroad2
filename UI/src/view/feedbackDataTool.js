@@ -54,6 +54,7 @@
             eventbus.on("feedback:send", function() {
                 removeSpinner();
                 new GenericConfirmPopup("Kiitos palautteesta", {type: 'alert'});
+                me.closeFeedback();
             });
             eventbus.on("feedback:failed",function() {
                 removeSpinner();
@@ -121,6 +122,7 @@
             $('.feedback-modal').remove();
         };
 
+
         var renderDialog = function(selectedAsset, layer) {
             var dialog = createFeedbackForm(selectedAsset, layer);
             $('.container').append(dialog);
@@ -153,7 +155,7 @@
         var createFeedbackForm = function(selectedAsset, layer) {
 
 
-           var  dialog =  $('<div class="modal-overlay feedback-modal" id="feedbackData">' +
+           var  dialog =  $('<div class="feedback-modal" id="feedbackData">' +
                         '<div class="modal-dialog">' +
                             '<div class="content">Anna palautetta kohteesta<a class="header-link sulje"">X</a>' + '</div>' +
                             '<form class="form form-horizontal" role="form"">' +

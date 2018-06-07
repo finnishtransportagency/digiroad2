@@ -10,6 +10,7 @@ case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[St
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
 case class FeedbackApplicationBody(feedbackType: Option[String], headline: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
+case class FeedbackDataBody(linkId: Option[String], assetId: Option[String], assetName: Option[String], feedbackDataType: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
 
 trait Feedback {
 
@@ -26,7 +27,13 @@ trait Feedback {
   type FeedbackBody
 
   def stringifyBody(username: String, body: FeedbackBody) : String
-  def insertApplicationFeedback(username: String, body: FeedbackBody): Long
+
+  def insertFeedback(username: String, body: FeedbackBody): Long = {
+    val message = stringifyBody(username, body)
+    withDynSession {
+      dao.insertFeedback(to, username, message, subject, status = false)
+    }
+  }
 
   def updateApplicationFeedbackStatus(id: Long) : Long = {
     withDynSession {
@@ -92,12 +99,33 @@ class FeedbackApplicationService extends Feedback {
     <b>Vapaa tekstikenttä palautteelle: </b>${body.freeText.getOrElse("-")}
    """
   }
-
-  override def insertApplicationFeedback(username: String, body: FeedbackBody): Long = {
-    val message = stringifyBody(username, body)
-    withDynSession {
-      dao.insertFeedback(to, username, message, subject, status = false)
-    }
-  }
 }
 
+
+class FeedbackDataService extends Feedback {
+
+  def dao: FeedbackDao = new FeedbackDao
+  def emailOperations = new EmailOperations
+  type FeedbackBody = FeedbackDataBody
+
+  override def to: String = "operaattori@digiroad.fi"
+  override def from: String = "OTH Data Feedback"
+  override def subject: String = "Palaute työkalusta"
+  override def body: String = ""
+  override def smtpHost: String = "smtp.mailtrap.io"
+  override def smtpPort: String = "2525"
+
+  override def stringifyBody(username: String, body: FeedbackBody): String = {
+    s"""<br>
+    <b>Linkin id: </b> ${body.linkId.getOrElse("-")} <br>
+    <b>Kohteen id: </b> ${body.assetId.getOrElse("-")} <br>
+    <b>Tietolaji: </b> ${body.assetName.getOrElse("-")} <br>
+    <b>Palautteen tyyppi: </b> ${body.feedbackDataType.getOrElse("-")} <br>
+    <b>K-tunnus: </b> $username <br>
+    <b>Nimi: </b> ${body.name.getOrElse("-")} <br>
+    <b>Sähköposti: </b>${body.email.getOrElse("-")} <br>
+    <b>Puhelinnumero: </b>${body.phoneNumber.getOrElse("-")} <br>
+    <b>Palautteelle: </b>${body.freeText.getOrElse("-")}
+   """
+  }
+}
