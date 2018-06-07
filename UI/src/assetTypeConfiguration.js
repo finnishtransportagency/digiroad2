@@ -880,6 +880,15 @@
           {
               typeId: assetType.manoeuvre,
               title: 'Kääntymisrajoitus'
+          },
+
+          {
+              typeId: assetType.trSpeedLimits,
+              title: 'Tierekisteri nopeusrajoitus'
+          },
+          {
+              typeId: assetType.trWeightLimits,
+              title: 'TR painorajoitukset'
           }
       ];
 

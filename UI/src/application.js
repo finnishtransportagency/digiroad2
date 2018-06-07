@@ -114,8 +114,8 @@
     );
 
     RoadAddressInfoDataInitializer.initialize(isExperimental);
-    MassTransitStopForm.initialize(backend, new FeedbackModel(backend, assetConfiguration));
-    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration));
+    MassTransitStopForm.initialize(backend, new FeedbackModel(backend, assetConfiguration, selectedMassTransitStopModel));
+    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration, selectedSpeedLimit));
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
@@ -259,16 +259,16 @@
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
-    new LinkPropertyForm(models.selectedLinkProperty, new FeedbackModel(backend, assetConfiguration));
-    new ManoeuvreForm(models.selectedManoeuvreSource, new FeedbackModel(backend, assetConfiguration));
+    new LinkPropertyForm(models.selectedLinkProperty, new FeedbackModel(backend, assetConfiguration, models.selectedLinkProperty));
+    new ManoeuvreForm(models.selectedManoeuvreSource, new FeedbackModel(backend, assetConfiguration, models.selectedManoeuvreSource));
     _.forEach(linearAssets, function(linearAsset) {
       if(linearAsset.form)
-        linearAsset.form.initialize(linearAsset, new FeedbackModel(backend, assetConfiguration));
+        linearAsset.form.initialize(linearAsset, new FeedbackModel(backend, assetConfiguration, linearAsset.selectedLinearAsset));
       else
         LinearAssetForm.initialize(
             linearAsset,
             AssetFormElementsFactory.construct(linearAsset),
-            new FeedbackModel(backend, assetConfiguration)
+            new FeedbackModel(backend, assetConfiguration, linearAsset.selectedLinearAsset)
         );
     });
 
@@ -279,14 +279,14 @@
        applicationModel,
        backend,
        pointAsset.saveCondition || function() {return true;},
-        new FeedbackModel(backend, assetConfiguration));
+        new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset));
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
       GroupedPointAssetForm.initialize(
         pointAsset,
         roadCollection,
-          new FeedbackModel(backend, assetConfiguration)
+          new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset)
        );
     });
 

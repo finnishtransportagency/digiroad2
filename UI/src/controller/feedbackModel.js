@@ -1,8 +1,9 @@
 (function (root) {
-    root.FeedbackModel = function(feedbackBackend, assetConfiguration) {
+    root.FeedbackModel = function(feedbackBackend, assetConfiguration, model) {
         var me = this;
-        var backend = feedbackBackend;
-        var assetConfig = assetConfiguration;
+        me.backend = feedbackBackend;
+        me.assetConfig = assetConfiguration;
+        me.model = model;
 
         this.sendFeedbackApplication = function (data) {
             var success = function () {
@@ -12,7 +13,7 @@
             var failure = function () {
                 eventbus.trigger("feedback:failed");
             };
-            backend.sendFeedbackApplication(convertFromToJSON(data), success, failure);
+            me.backend.sendFeedbackApplication(convertFromToJSON(data), success, failure);
         };
 
 
@@ -24,14 +25,14 @@
             var failure = function () {
                 eventbus.trigger("feedback:failed");
             };
-            backend.sendFeedbackData(convertFromToJSON(data), success, failure);
+            me.backend.sendFeedbackData(convertFromToJSON(data), success, failure);
         };
 
 
-        this.get = function (model) {
+        this.get = function () {
             var title = getTitle();
 
-            var selected = model.get();
+            var selected = me.model.get();
             if(_.isArray(selected))
                 return {
                     title: title,
@@ -48,8 +49,8 @@
 
 
         var getTitle = function () {
-            var assetTypes = assetConfig.assetTypes;
-            var assetInfo = assetConfig.assetTypeInfo;
+            var assetTypes = me.assetConfig.assetTypes;
+            var assetInfo = me.assetConfig.assetTypeInfo;
             var typeId = assetTypes[applicationModel.getSelectedLayer()];
 
             return typeId ? _.find(assetInfo, function(conf) {return conf.typeId === typeId; }).title : 'Tielinkki';

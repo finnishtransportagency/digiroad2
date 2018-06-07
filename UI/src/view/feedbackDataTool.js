@@ -1,14 +1,12 @@
 (function (root) {
     root.FeedbackDataTool = function () {
         var me = this;
-        me.model = null;
         me.collection= null;
         me.layerName = '';
         me.authorizationPolicy = null;
         me.eventCategory = null;
 
-        this.initialize = function(feedbackCollection, model, layerName, authorizationPolicy, eventCategory){
-            me.model = model;
+        this.initialize = function(feedbackCollection, layerName, authorizationPolicy, eventCategory){
             me.collection = feedbackCollection;
             me.layerName = layerName;
             me.authorizationPolicy = authorizationPolicy;
@@ -129,7 +127,7 @@
         };
 
         var getData = function(){
-            return me.collection.get(me.model);
+            return me.collection.get();
         };
 
         var setDropdownValue = function(layer, dialog){
