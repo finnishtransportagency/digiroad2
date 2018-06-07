@@ -223,7 +223,7 @@ window.SpeedLimitLayer = function(params) {
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedAsset));
   };
 
-  var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
+  var selectToolControl = new SelectToolControl(application, vectorLayer, map, false, {
     style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
     onInteractionEnd: onInteractionEnd,
     onSelect: OnSelect,

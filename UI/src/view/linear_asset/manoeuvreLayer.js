@@ -134,7 +134,7 @@
       selectedManoeuvreSource.setTargetRoadLink(null);
     };
 
-    var selectControl = new SelectToolControl(application, roadLayer.layer, map, {
+    var selectControl = new SelectToolControl(application, roadLayer.layer, map, false, {
         style : function(feature){
             return manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: zoomlevels.getViewZoom(map)});
         },

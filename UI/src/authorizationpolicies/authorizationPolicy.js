@@ -20,7 +20,7 @@
     };
 
     this.isMunicipalityMaintainer = function(){
-      return _.isEmpty(me.userRoles);
+      return _.isEmpty(me.userRoles) || me.isOnlyUser('premium');
     };
 
     this.isElyMaintainer = function(){

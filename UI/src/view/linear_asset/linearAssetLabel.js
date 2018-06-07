@@ -288,7 +288,7 @@
         var IMAGE_LABEL_ADJUSTMENT = 43;
 
         this.getStyle = function (values) {
-            var value = values.properties[0].values[0] ? values.properties[0].values[0].value :'' ;
+            var value = values.properties[0] ? values.properties[0].values[0].value : '' ;
             return createMultiStyles(value);
         };
 

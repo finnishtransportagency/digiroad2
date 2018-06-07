@@ -1259,7 +1259,8 @@ object DataFixture {
               oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
           }
           else{
-            if((asset.createdBy.contains("dr1_conversion") || asset.createdBy.contains("vvh_generated"))&& asset.modifiedBy.isEmpty) {
+            if(( (asset.createdBy.contains("dr1_conversion") || asset.createdBy.contains("vvh_generated"))&& asset.modifiedBy.isEmpty)  ||
+                (asset.createdBy.contains("dr1_conversion") && asset.modifiedBy.contains("vvh_generated"))) {
               if(!asset.informationSource.contains(MunicipalityMaintenainer)) {
                 if (roadWithMTKClass.exists(_.linkId == asset.linkId)) {
                   println(s"Asset with ${asset.id} created by dr1_conversion or vvh_generated and with valid MTKCLASS")

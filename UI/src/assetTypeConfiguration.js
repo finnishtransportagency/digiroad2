@@ -69,7 +69,8 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.trailerTruckWeightLimit,
@@ -92,7 +93,8 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.axleWeightLimit,
@@ -115,7 +117,8 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.bogieWeightLimit,
@@ -138,7 +141,8 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.heightLimit,
@@ -160,6 +164,7 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
@@ -182,6 +187,7 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
@@ -205,6 +211,7 @@
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
         hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
@@ -225,7 +232,8 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.damagedByThaw,
@@ -246,11 +254,12 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
-        form: new AssetFormFactory( {
+        form: new DynamicAssetForm ( {
           fields : [
-            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1 }
+            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg' }
           ]
         }),
+        isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true
       },
       {
@@ -273,7 +282,8 @@
         label: new LinearAssetLabel(),
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.congestionTendency,
@@ -311,6 +321,7 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true
       },
       {
@@ -353,7 +364,13 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isMultipleLinkSelectionAllowed: true,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1}
+          ]
+        })
       },
       {
         typeId: assetType.winterSpeedLimit,
@@ -375,6 +392,7 @@
         possibleValues: [100, 80, 70, 60],
         style : new WinterSpeedLimitStyle(),
         isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
@@ -393,6 +411,7 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
+        isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true
       },
@@ -412,6 +431,7 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
+        isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true
       },
@@ -433,7 +453,8 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
-        isVerifiable: false
+        isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.exitNumbers,
@@ -453,7 +474,8 @@
         },
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.maintenanceRoad,
@@ -498,7 +520,8 @@
         isVerifiable: true,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
-        authorizationPolicy: new ServiceRoadAuthorizationPolicy()
+        authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.numberOfLanes,
@@ -519,6 +542,7 @@
         label: new LinearAssetLabel(),
         isVerifiable: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true
       }
     ];
