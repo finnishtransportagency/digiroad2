@@ -243,7 +243,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case DamagedByThaw.typeId | MassTransitLane.typeId | CarryingCapacity.typeId =>  multiValueLinearAssetService
+        case DamagedByThaw.typeId =>  multiValueLinearAssetService
         case _ => linearAssetService
       }
     }
@@ -266,29 +266,69 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def massTransitLanesToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
-    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+  def defaultMultiValueLinearAssetsMap(linearAsset: PieceWiseLinearAsset): Map[String, Any] = {
+    Map("id" -> linearAsset.id,
+      "points" -> linearAsset.geometry,
+      geometryWKTForLinearAssets(linearAsset.geometry),
+      "value" -> 1, //check if could be forced
+      "side_code" -> linearAsset.sideCode.value,
+      "linkId" -> linearAsset.linkId,
+      "startMeasure" -> linearAsset.startMeasure,
+      "endMeasure" -> linearAsset.endMeasure,
+      latestModificationTime(linearAsset.createdDateTime, linearAsset.modifiedDateTime),
+      lastModifiedBy(linearAsset.createdBy, linearAsset.modifiedBy),
+      "linkSource" -> linearAsset.linkSource.value
+    )
+  }
 
-    val massTransitLanes: Seq[PieceWiseLinearAsset] = multiValueLinearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+  protected def getMultiValueLinearAssetByMunicipality(typeId: Int, municipalityNumber: Int): Seq[PieceWiseLinearAsset] = {
+    def isUnknown(asset: PieceWiseLinearAsset) = asset.id == 0
+    multiValueLinearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+  }
+
+  def massTransitLanesToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val massTransitLanes = getMultiValueLinearAssetByMunicipality(typeId, municipalityNumber)
 
     massTransitLanes.map { massTransitLane =>
-      Map("id" -> massTransitLane.id,
-        "points" -> massTransitLane.geometry,
-        geometryWKTForLinearAssets(massTransitLane.geometry),
-        "value" -> 1, //check if could be forced
-        "side_code" -> massTransitLane.sideCode.value,
-        "linkId" -> massTransitLane.linkId,
-        "startMeasure" -> massTransitLane.startMeasure,
-        "endMeasure" -> massTransitLane.endMeasure,
-        latestModificationTime(massTransitLane.createdDateTime, massTransitLane.modifiedDateTime),
-        lastModifiedBy(massTransitLane.createdBy, massTransitLane.modifiedBy),
-        "linkSource" -> massTransitLane.linkSource.value,
-        "validityPeriods" -> (massTransitLane.value match {
+      val dynamicMultiValueLinearAssetsMap =
+        Map("validityPeriods" -> (massTransitLane.value match {
           case Some(MultiValue(x)) => x.properties.flatMap(_.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).map(ValidityPeriodValue.fromMap).map {
-            a=> toTimeDomain(a)})
+            a => toTimeDomain(a)
+          })
           case _ => None
-        })
-      )
+        }))
+
+      defaultMultiValueLinearAssetsMap(massTransitLane) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  def carryingCapacitiesToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val carryingCapacities = getMultiValueLinearAssetByMunicipality(typeId, municipalityNumber)
+
+    carryingCapacities.map { carryingCapacity =>
+      val dynamicMultiValueLinearAssetsMap = carryingCapacity.value match {
+        case Some(MultiValue(x)) =>
+          x.properties.flatMap { multiTypeProperty =>
+            multiTypeProperty.publicId match {
+              case "routivuuskerroin" =>
+                multiTypeProperty.values.map { v =>
+                  "frostHeavingFactor" -> v.value
+                }
+              case "kevatkantavuus" =>
+                multiTypeProperty.values.map { v =>
+                  "springCarryingCapacity" -> v.value
+                }
+              case "mittauspaiva" =>
+                multiTypeProperty.values.map { v =>
+                  "dateOfMeasurement" -> v.value
+                }
+              case _ => None
+            }
+          }
+        case _ => Map()
+      }
+
+      defaultMultiValueLinearAssetsMap(carryingCapacity) ++ dynamicMultiValueLinearAssetsMap
     }
   }
 
@@ -596,6 +636,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
+        case "carrying_capacity" => carryingCapacitiesToApi(400, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
