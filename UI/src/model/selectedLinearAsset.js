@@ -79,6 +79,8 @@
     };
 
     this.closeMultiple = function() {
+      eventbus.trigger(singleElementEvent('unselect'), self);
+      collection.setSelection(null);
       selection = [];
     };
 
@@ -97,6 +99,7 @@
       var backendOperation = _.isUndefined(value) ? backend.deleteLinearAssets : backend.createLinearAssets;
       backendOperation(payload, function() {
         dirty = false;
+        self.closeMultiple();
         eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
         eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
@@ -150,7 +153,7 @@
     };
 
     this.isSplit = function() {
-      return !isSeparated && selection[0].id === null;
+      return !isSeparated && !_.isEmpty(selection[0]) && selection[0].id === null;
     };
 
     this.isSeparated = function() {

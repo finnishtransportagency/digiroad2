@@ -348,7 +348,8 @@ root.LinearAssetLayer  = function(params) {
 
   var linearAssetUnSelected = function () {
     selectToolControl.clear();
-    changeTool(application.getSelectedTool());
+    if (application.getSelectedTool() !== 'Cut')
+      changeTool(application.getSelectedTool());
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
   
