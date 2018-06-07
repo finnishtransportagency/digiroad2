@@ -30,12 +30,28 @@
       show: function() {}
     });
 
+    var verificationIcon = function() {
+      return '<div id="right-panel"><img src="images/check-icon.png" title="Kuntakäyttäjän todentama"/></div>';
+    };
+
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function() {
         if (authorizationPolicy.editModeAccess())
           elements.expanded.append(editModeToggle.element);
       });
+      $(elements.expanded).find('.panel-header').css('display', 'flex');
+      $(elements.expanded).find('.panel-header').append(verificationIcon());
+
+      eventbus.on('verificationInfo:fetched', function(visible) {
+        var img = elements.expanded.find('#right-panel');
+        if (visible)
+          img.css('display','inline');
+        else
+          img.css('display','none');
+      });
     };
+
+
 
     bindExternalEventHandlers();
 
