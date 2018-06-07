@@ -63,9 +63,9 @@ class VerificationDao {
                 END) AS counting
                 FROM municipality m
                 JOIN asset_type atype ON atype.verifiable = 1
-                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
+                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id
                 LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID
-                WHERE mv.id = $Id
+                WHERE mv.id = $Id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
                 GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
                       atype.GEOMETRY_TYPE ) tableResult""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, Option[Int])].firstOption
@@ -94,9 +94,9 @@ class VerificationDao {
                 END) AS counting
                 FROM municipality m
                 JOIN asset_type atype ON atype.verifiable = 1 and atype.id = $assetTypeCode
-                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
+                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id
                 LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID
-                WHERE  m.id = $municipalityCode and mv.valid_to is null or mv.valid_to > sysdate
+                WHERE  m.id = $municipalityCode and (mv.valid_to is null or mv.valid_to > sysdate) AND mv.asset_type_id = atype.id
                 GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
