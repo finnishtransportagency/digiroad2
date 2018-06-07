@@ -17,12 +17,11 @@
 
     this.labeling = function () {
       var frostHeavingFactorValues = [
-        [0, '40 Erittäin routiva'],
-        [1, '50 Väliarvo 50...60'],
-        [2, '60 Routiva'],
-        [3, '70 Väliarvo 60...80'],
-        [4, '80 Routimaton'],
-        [5, 'Ei tietoa']
+        [1, '40 Erittäin routiva'],
+        [2, '50 Väliarvo 50...60'],
+        [3, '60 Routiva'],
+        [4, '70 Väliarvo 60...80'],
+        [5, '80 Routimaton']
       ];
 
       var springCarryingCapacityValues = [
@@ -34,6 +33,8 @@
         [15, '2050 -  MN/m<sup>2</sup>']
       ];
 
+      var withoutValue = [[0, 'Ei tietoa']];
+
       var legend = function(legendName, values) {
         return'<div class="' + legendName + '-legend">' + _.map(values, function(value) {
           return '<div class="legend-entry">' +
@@ -44,8 +45,8 @@
       };
 
       return '<div class="panel-section panel-legend '+ me.legendName() + '-legend">' +
-        legend('frost-heaving-factor', frostHeavingFactorValues) +
-        legend('spring-carrying-capacity', springCarryingCapacityValues) + '</div>';
+        legend('frost-heaving-factor', frostHeavingFactorValues.concat(withoutValue)) +
+        legend('spring-carrying-capacity', springCarryingCapacityValues.concat(withoutValue)) + '</div>';
     };
 
       this.renderTemplate = function () {
