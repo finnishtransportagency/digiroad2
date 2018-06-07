@@ -6,15 +6,15 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{MultiTypeProperty, MultiTypePropertyValue}
-import fi.liikennevirasto.digiroad2.linearasset.{MultiAssetValue, MultiValue}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, MultiTypeProperty, MultiTypePropertyValue, ValidityPeriodValue}
+import fi.liikennevirasto.digiroad2.linearasset.{MultiAssetValue, MultiValue, NumericValue, PersistedLinearAsset}
 
 class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+  val dao = new MultiValueLinearAssetDao
 
   test("fetch asset containing several properties") {
-    val dao = new MultiValueLinearAssetDao
     val linkId = 1l
 
     runWithRollback {
@@ -84,4 +84,7 @@ class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
       assetValues.find(_.publicId == "test_data_number").get.values should be (Seq(MultiTypePropertyValue(numberValue1.toString()), MultiTypePropertyValue(numberValue2.toString())))
     }
   }
+
+
+
 }
