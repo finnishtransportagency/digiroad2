@@ -8,8 +8,8 @@
     };
 
     var findValue = function(asset, publicId) {
-      var someValue =_.find(asset.value.properties, function(a) { return a.publicId === publicId; });
-      return someValue ? _.first(someValue.values).value : ''
+      var someValue = _.first(_.find(_.find(asset.value.properties, function(a) { return a.publicId === publicId; }), function(someVal) { return !_.isUndefined(someVal.values);}));
+    return _.isEmpty(someValue) || _.isUndefined(someValue)? "defaultColor" :  someValue.value;
     };
 
     this.renderOverlays = function(linearAssets) {
@@ -24,6 +24,7 @@
 
     var springCarryingCapacityRules = [
       new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).is("defaultColor").use({stroke: {color: '#000000'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isBetween([0, 162]).use({stroke: {color: '#ac0019'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isBetween([162, 287]).use({stroke: {color: '#ff0000'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isBetween([287, 434]).use({stroke: {color: '#ff982c'}}),
