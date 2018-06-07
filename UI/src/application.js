@@ -16,7 +16,7 @@
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
     var authorizationPolicy = new AuthorizationPolicy();
 
-    var feedbackCollection = new FeedbackModel(backend);
+    var feedbackCollection = new FeedbackModel(backend, assetConfiguration);
     new FeedbackApplicationTool(authorizationPolicy, feedbackCollection);
 
 
@@ -114,8 +114,8 @@
     );
 
     RoadAddressInfoDataInitializer.initialize(isExperimental);
-    MassTransitStopForm.initialize(backend, new FeedbackModel(backend));
-    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend));
+    MassTransitStopForm.initialize(backend, new FeedbackModel(backend, assetConfiguration));
+    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration));
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
@@ -126,15 +126,15 @@
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets);
+        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration);
       });
     });
   };
 
-  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets) {
+  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
@@ -240,7 +240,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, feedbackCollection) {
+  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration) {
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -259,16 +259,16 @@
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
-    new LinkPropertyForm(models.selectedLinkProperty, new FeedbackModel(backend));
-    new ManoeuvreForm(models.selectedManoeuvreSource, new FeedbackModel(backend));
+    new LinkPropertyForm(models.selectedLinkProperty, new FeedbackModel(backend, assetConfiguration));
+    new ManoeuvreForm(models.selectedManoeuvreSource, new FeedbackModel(backend, assetConfiguration));
     _.forEach(linearAssets, function(linearAsset) {
       if(linearAsset.form)
-        linearAsset.form.initialize(linearAsset, new FeedbackModel(backend));
+        linearAsset.form.initialize(linearAsset, new FeedbackModel(backend, assetConfiguration));
       else
         LinearAssetForm.initialize(
             linearAsset,
             AssetFormElementsFactory.construct(linearAsset),
-            new FeedbackModel(backend)
+            new FeedbackModel(backend, assetConfiguration)
         );
     });
 
@@ -279,14 +279,14 @@
        applicationModel,
        backend,
        pointAsset.saveCondition || function() {return true;},
-        new FeedbackModel(backend));
+        new FeedbackModel(backend, assetConfiguration));
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
       GroupedPointAssetForm.initialize(
         pointAsset,
         roadCollection,
-          new FeedbackModel(backend)
+          new FeedbackModel(backend, assetConfiguration)
        );
     });
 

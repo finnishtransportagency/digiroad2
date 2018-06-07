@@ -35,8 +35,9 @@
 
         var open = function(){
             if(applicationModel.getSelectedLayer() === me.layerName) {
-                renderDialog(getData(), me.layerName);
-                bindEvents();
+                var selectedData = getData();
+                renderDialog(selectedData, me.layerName);
+                bindEvents(selectedData);
                 applicationModel.setApplicationkState(applicationState.Feedback);
             }
         };
@@ -59,10 +60,6 @@
             eventbus.on("feedback:failed",function() {
                 removeSpinner();
                 new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
-            });
-
-            $('#feedback-data').on('click', function(){
-                me.open();
             });
 
             eventbus.on('linkProperties:unselected', me.closeFeedback);
@@ -90,15 +87,23 @@
             eventbus.on('asset:closed', me.closeFeedback);
         };
 
-        var bindEvents = function () {
+        var bindEvents = function (selectedData) {
             $('.feedback-modal .cancel').on('click', function() {
                 $('.feedback-modal :input').val('');
+                setDropdownValue( me.layerName,  $('.feedback-modal'));
             });
+
             $('.feedback-modal .save').on('click', function() {
                 addSpinner();
                 applicationModel.setApplicationkState('normal');
-                collection.sendFeedbackData( $(".form-horizontal").serializeArray());
+                var values = $(".form-horizontal").serializeArray();
+                values.push(
+                        {name: 'linkId',    value: selectedData.linkId},
+                        {name: 'assetId',   value : selectedData.assetId },
+                        {name: 'assetName', value : selectedData.title});
+                me.collection.sendFeedbackData(values);
             });
+
             $(' .feedback-modal .sulje').on('click', function() {
                 applicationModel.setApplicationkState('normal');
                 purge();
@@ -157,10 +162,13 @@
                             '<div class="form-group" id="feedbackForm">' +
 
                                 '<label class="control-label">Linkin id</label>' +
-                                '<label id="linkId"></label>'+
+                                '<label id="linkId" ></label>'+
 
                                 '<label class="control-label">Kohteen id</label>' +
-                                '<label id="assetId"></label>'+
+                                '<label id="assetId" ></label>'+
+
+                                '<label class="control-label">Tietolaji</label>' +
+                                '<label id="assetName"></label>'+
 
                                 '<label class="control-label" id="feedbackType">Palautteen tyyppi</label>' +
                                 '<select name="feedbackDataType" id ="feedbackDataType" class="form-control">'+
@@ -186,6 +194,7 @@
            dialog.find("#kidentifier").append(me.authorizationPolicy.username);
            dialog.find("#linkId").append(selectedAsset.linkId);
            dialog.find("#assetId").append(selectedAsset.assetId);
+           dialog.find("#assetName").append(selectedAsset.title);
            dialog.find("#feedbackForm").append(userEditableFields());
            return dialog;
         };
