@@ -254,9 +254,6 @@
         return me.element.find(":selected").val();
       };
 
-      if (!isDisabled && me.hasDefaultValue())
-        me.setSelectedValue(setValue, getValue);
-
       me.element.find('select').on('change', function(){
         me.setSelectedValue(setValue, getValue);
       });
@@ -919,9 +916,17 @@
       });
     };
 
-    me.isSaveable = function(sideCode){
-        return _.every(forms.getAllFields(), function(field){
-          return field.isValid();
+    me.isSaveable = function(){
+        var otherSaveCondition = function () {
+            if (_.isUndefined(_assetTypeConfiguration.saveCondition)) {
+                return true;
+            } else {
+                return _assetTypeConfiguration.saveCondition(forms.getAllFields());
+            }
+        };
+
+        return _.every(forms.getAllFields(), function (field) {
+            return field.isValid() && otherSaveCondition();
         });
     };
 
