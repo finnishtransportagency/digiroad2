@@ -199,10 +199,10 @@ root.LinearAssetLayer  = function(params) {
   var verifyClickEvent = function(properties, evt){
     var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
     selectedLinearAsset.open(properties, singleLinkSelect);
-    highlightMultipleLinearAssetFeatures();
+    me.highlightMultipleLinearAssetFeatures(selectToolControl);
   };
 
-  var highlightMultipleLinearAssetFeatures = function() {
+  this.highlightMultipleLinearAssetFeatures = function() {
     var selectedAssets = selectedLinearAsset.get();
     var features = style.renderFeatures(selectedAssets);
     if(assetLabel)

@@ -43,7 +43,7 @@
         var noWinterCare = !_.isUndefined(linearAsset.id) && !valueExists(linearAsset, winterCareClass);
         var properties = _.merge(_.cloneDeep(linearAsset), {noGreenCare: noGreenCare}, {noWinterCare: noWinterCare});
         var feature = new ol.Feature(new ol.geom.LineString(points));
-        feature.setProperties(properties);
+        feature.setProperties(_.omit(properties, 'geometry'));
         return feature;
       });
     };
@@ -71,10 +71,10 @@
       });
     };
 
-    var dashedOverlay = function(linearAssets) {
+    var dashedOverlayFeatures = function(linearAssets) {
       var solidLines = lineFeatures(linearAssets);
-      var dottedOverlay = lineFeatures(_.map(linearAssets, function(limit) { return _.merge({}, limit, { overlay: true}); }));
-      return solidLines.concat(dottedOverlay);
+      var dashedOverlay = lineFeatures(_.map(linearAssets, function(asset) { return _.merge({}, asset, { overlay: true}); }));
+      return solidLines.concat(dashedOverlay);
     };
 
     this.drawLinearAssets = function(linearAssets, vectorSource) {
@@ -84,8 +84,19 @@
       var solid = dashedAndSolid[false];
       vectorSource.addFeatures(style.renderFeatures(existingAssets[false]));
       vectorSource.addFeatures(me.addUnknown(linearAssets));
-      vectorSource.addFeatures(dashedOverlay(dashed));
+      vectorSource.addFeatures(dashedOverlayFeatures(dashed));
       vectorSource.addFeatures(lineFeatures(solid));
+    };
+
+    this.highlightMultipleLinearAssetFeatures = function(selectToolControl) {
+        var assets = selectedLinearAsset.get();
+        var existingAssets = _.groupBy(assets, function (asset) {return !_.isUndefined(asset.value);});
+        var dashedAndSolid = groupDashedAndSolid(existingAssets[true]);
+        var dashed = dashedOverlayFeatures(dashedAndSolid[true]);
+        var solid = lineFeatures(dashedAndSolid[false]);
+        var noAsset = style.renderFeatures(existingAssets[false]);
+        var selectedFeatures = _.flatten(_.reject([dashed, solid, noAsset], function (selectedAssets) {return _.isEmpty(selectedAssets);}));
+        selectToolControl.addSelectionFeatures(selectedFeatures);
     };
 
     this.decorateSelection = function (selectToolControl) {
@@ -93,11 +104,10 @@
         var assets = selectedLinearAsset.get();
         var existingAssets = _.groupBy(assets, function(asset){return !_.isUndefined(asset.value);});
         var dashedAndSolid = groupDashedAndSolid(existingAssets[true]);
-        var dashed = dashedOverlay(dashedAndSolid[true]);
+        var dashed = dashedOverlayFeatures(dashedAndSolid[true]);
         var solid = lineFeatures(dashedAndSolid[false]);
         var selectedFeatures = _.flatten(_.reject([dashed, solid], function(selectedAssets){return _.isEmpty(selectedAssets);}));
         selectToolControl.addSelectionFeatures(selectedFeatures);
-
         if (selectedLinearAsset.isSplitOrSeparated()) {
           me.drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
         }

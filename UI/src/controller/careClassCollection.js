@@ -13,6 +13,10 @@
       return multiElementEventCategory + ':' + eventName;
     };
 
+    this.setSelection = function(sel) {
+      selection = sel;
+    };
+
     var maintainSelectedLinearAssetChain = function (collection) {
       if (!selection) return collection;
 
