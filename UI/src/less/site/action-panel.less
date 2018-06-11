@@ -42,8 +42,6 @@
 
   .panel-section {
     padding: 10px;
-    border-bottom: 1px solid @gray-light-2;
-    color: @gray-darker;
 
     &:last-child {
       border-bottom: none;
@@ -66,6 +64,8 @@
 }
 
 .select-layer {
+  flex: none;
+
   .panel-header {
     &:hover {
       background-color: @gray-darker;
@@ -74,6 +74,8 @@
 }
 
 .search-box {
+  flex: none;
+
   .panel-header {
     .location {
       border-style: solid;
@@ -165,7 +167,7 @@
 }
 .legend-container {
   overflow: auto;
-  max-height: 470px;
+  border-bottom: 1px solid #cbcbc9;
 }
 
 .road-link-legend {
@@ -415,10 +417,6 @@
 }
 
 .care-class-legend {
-
-  max-height: 470px;
-  overflow: auto;
-
   .green-care-legend {
     display: none;
   }

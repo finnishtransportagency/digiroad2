@@ -4,16 +4,14 @@
     var title = 'Tielinkki';
     var authorizationPolicy = new AuthorizationPolicy();
 
-    var roadLinkCheckBoxs = '<div class="panel-section">' +
+    var roadLinkCheckBoxs = '<div class="panel-section bottomCheckBox">' +
           '<div class="check-box-container">' +
-            '<input id="historyCheckbox" type="checkbox" /> <span>Näytä poistuneet tielinkit</span>' +
-          '</div>' +
-          '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
-          '</div>' +
-        '</div>';
+            '<div><input id="historyCheckbox" type="checkbox" /><span>Näytä poistuneet tielinkit</span></div>' +
+            '<div><input id="complementaryCheckbox" type="checkbox" /><span>Näytä täydentävä geometria</span></div>' +
+        '</div>' +
+  '</div>';
 
-    var roadLinkComplementaryCheckBox = '<div class="panel-section">' +
+    var roadLinkComplementaryCheckBox = '<div class="panel-section bottomCheckBox">' +
           '<div class="check-box-container">' +
             '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
           '</div>' +
@@ -22,7 +20,7 @@
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
-        '<div class="panel-section panel-legend road-link-legend">' +
+        '<div class="panel-section road-link-legend">' +
           '<div class="radio">' +
             '<label><input type="radio" name="dataset" value="functional-class" checked>Toiminnallinen luokka</input></label>' +
           '</div>' +
@@ -182,7 +180,7 @@
 
         var allCheckBoxs = datasetAllCheckboxs[datasetName];
         if (allCheckBoxs) {
-          legendContainer.append(allCheckBoxs);
+          elements.expanded.find('.panel-section.bottomCheckBox').replaceWith(allCheckBoxs);
           if (complementaryCheckboxChecked) {
             legendContainer.find('#complementaryCheckbox').prop('checked', true);
           } else {
@@ -237,7 +235,7 @@
     var initialLegendContainer = elements.expanded.find('.legend-container');
     initialLegendContainer.append(functionalClassLegend);
     initialLegendContainer.append(constructionTypeLegend);
-    initialLegendContainer.append(roadLinkCheckBoxs);
+    elements.expanded.append(roadLinkCheckBoxs);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
     bindEventHandlers(elements.expanded);

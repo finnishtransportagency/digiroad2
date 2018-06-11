@@ -79,7 +79,6 @@
       ];
 
 
-
       var missingGreenCareLegend = '<div class="green-care-legend missing-value-legend">' + _.map(badGreenCareValues, function(value) {
         return '<div class="legend-entry">' +
           '<div class="label">' + value[1] + '</div>' +
@@ -165,7 +164,7 @@
 
     this.checkboxPanel = function () {
       return assetConfig.allowComplementaryLinks ? [
-        '   <div class="panel-section panel-legend '+ me.legendName() + '-legend">' +
+        '   <div class="panel-section">' +
         '     <div class="check-box-container">' +
         '       <input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
         '     </div>' +
