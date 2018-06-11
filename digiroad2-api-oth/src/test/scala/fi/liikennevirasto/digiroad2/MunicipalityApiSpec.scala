@@ -288,7 +288,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1000), false)).thenReturn(newRoadLinks)
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(1000), false)).thenReturn(newRoadLinks)
 
-    deleteWithUserAuth("/235/" + assetURLName + "/1", getAuthorizationHeader("kalpa", "kalpa")) {
+    deleteWithUserAuth("/" + assetURLName + "/1", getAuthorizationHeader("kalpa", "kalpa")) {
       withClue("assetName " + assetURLName) {
         status should equal(422)
       }
