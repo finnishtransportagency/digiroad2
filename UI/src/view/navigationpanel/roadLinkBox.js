@@ -4,14 +4,14 @@
     var title = 'Tielinkki';
     var authorizationPolicy = new AuthorizationPolicy();
 
-    var roadLinkCheckBoxs = '<div class="panel-section bottomCheckBox">' +
+    var roadLinkCheckBoxs = '<div class="panel-section checkbox-box">' +
           '<div class="check-box-container">' +
             '<div><input id="historyCheckbox" type="checkbox" /><span>Näytä poistuneet tielinkit</span></div>' +
             '<div><input id="complementaryCheckbox" type="checkbox" /><span>Näytä täydentävä geometria</span></div>' +
         '</div>' +
   '</div>';
 
-    var roadLinkComplementaryCheckBox = '<div class="panel-section bottomCheckBox">' +
+    var roadLinkComplementaryCheckBox = '<div class="panel-section checkbox-box">' +
           '<div class="check-box-container">' +
             '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
           '</div>' +
@@ -180,7 +180,7 @@
 
         var allCheckBoxs = datasetAllCheckboxs[datasetName];
         if (allCheckBoxs) {
-          elements.expanded.find('.panel-section.bottomCheckBox').replaceWith(allCheckBoxs);
+          elements.expanded.find('.panel-section.checkbox-box').replaceWith(allCheckBoxs);
           if (complementaryCheckboxChecked) {
             legendContainer.find('#complementaryCheckbox').prop('checked', true);
           } else {
