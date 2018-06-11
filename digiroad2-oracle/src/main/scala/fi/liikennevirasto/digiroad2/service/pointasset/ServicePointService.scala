@@ -2,8 +2,15 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, OracleServicePointDao, ServicePoint}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery
+import slick.jdbc.StaticQuery.interpolation
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 class ServicePointService {
   val typeId: Int = 250
@@ -14,13 +21,13 @@ class ServicePointService {
     }
   }
 
-  def update(id: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, username: String) = {
+  def update(id: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     withDynTransaction {
       OracleServicePointDao.update(id, updatedAsset, municipalityCode, username)
     }
   }
 
-  def expire(id: Long, username: String) = {
+  def expire(id: Long, username: String): Long = {
     withDynTransaction {
       OracleServicePointDao.expire(id, username)
     }

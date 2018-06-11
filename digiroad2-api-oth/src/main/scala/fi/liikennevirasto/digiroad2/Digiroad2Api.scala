@@ -195,7 +195,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   delete("/massTransitStops/removal") {
     val user = userProvider.getCurrentUser()
     val assetId = (parsedBody \ "assetId").extractOpt[Int].get
-    massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.foreach{ a =>
+    massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
       a.linkId match {
         case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
         case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId)
@@ -906,7 +906,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         .map(a => (roadLinkService.fetchVVHRoadlinks(Set(a._1)).headOption, a._2))
 
       existingLinksAndMeasures.foreach { asset =>
-        if (user.isAuthorizedToWriteInArea(maintenanceRoadService.getAssetArea(asset._1, asset._2), asset._1.get.administrativeClass))
+        if (!user.isAuthorizedToWriteInArea(maintenanceRoadService.getAssetArea(asset._1, asset._2), asset._1.get.administrativeClass))
           halt(Unauthorized("User not authorized"))
       }
 
@@ -1284,7 +1284,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
 
-    manoeuvreIds.foreach { manoeuvreId =>
+    manoeuvreIds.map { manoeuvreId =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
       validateMunicipalityAccessByLinkId(user, sourceRoadLinkId)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
@@ -1297,7 +1297,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .extractOrElse[Map[String, ManoeuvreUpdates]](halt(BadRequest("Malformed body on put manoeuvres request")))
       .map { case (id, updates) => (id.toLong, updates) }
 
-    manoeuvreUpdates.foreach { case (id, updates) =>
+    manoeuvreUpdates.map { case (id, updates) =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
       validateMunicipalityAccessByLinkId(user, sourceRoadLinkId)
       manoeuvreService.updateManoeuvre(user.username, id, updates, None)
@@ -1506,7 +1506,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   delete("/servicePoints/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    servicePointService.getPersistedAssetsByIds(Set(id)).headOption.foreach { a =>
+    servicePointService.getPersistedAssetsByIds(Set(id)).headOption.map { a =>
       (a.lon, a.lat) match {
         case (lon, lat) =>
           roadLinkService.getClosestRoadlinkFromVVH(user, Point(lon, lat)) match {

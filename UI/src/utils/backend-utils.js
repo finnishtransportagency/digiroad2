@@ -466,7 +466,7 @@
         data: JSON.stringify({typeId:typeIds}),
         dataType: "json",
         success: function(){
-          eventbus.trigger('municipality:verified');
+          eventbus.trigger('municipality:verified', municipalityCode);
         },
         error: function(){
           eventbus.trigger('municipality:verificationFailed');
@@ -483,7 +483,7 @@
         data: JSON.stringify({typeId:typeIds}),
         dataType: "json",
         success: function(){
-          eventbus.trigger('municipality:verified');
+          eventbus.trigger('municipality:verified', municipalityCode);
         },
         error: function(){
           eventbus.trigger('municipality:verificationFailed');
@@ -634,7 +634,7 @@
             deferred = $.Deferred();
             _.debounce(doRequest, 200).apply(undefined, arguments);
             return deferred;
-        }
+        };
     }
 
     this.withVerificationInfo = function(){

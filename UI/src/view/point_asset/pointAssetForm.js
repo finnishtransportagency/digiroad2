@@ -1,9 +1,9 @@
 (function (root) {
-root.PointAssetForm = function(pointAsset, editConstrains, roadCollection, applicationModel, backend, saveCondition) {
+root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(pointAsset, editConstrains, roadCollection, applicationModel, backend, saveCondition);
+  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition);
 
   function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');

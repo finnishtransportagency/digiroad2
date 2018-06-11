@@ -204,17 +204,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
     }
 
-    asset.map { value =>
-      validateMeasures(Set(value.mValue), value.linkId)
-      roadLinkService.getRoadLinkAndComplementaryFromVVH(value.linkId) match {
-        case Some(link) => service.toIncomingAsset(value, link).map {
-          pointAsset =>
-            service.update(assetId, pointAsset, link.geometry, link.municipalityCode, user.username, link.linkSource)
-        }
-        case None => halt(NotFound(s"Roadlink with ${value.linkId} does not exist"))
-      }
-    }
-    getPointAssetById(typeId, assetId)
+    val pointAsset = asset.getOrElse(throw new NoSuchElementException(""))
+    validateMeasures(Set(pointAsset.mValue), pointAsset.linkId)
+    val link = roadLinkService.getRoadLinkAndComplementaryFromVVH(pointAsset.linkId).getOrElse(throw new NoSuchElementException(s"Roadlink with ${pointAsset.linkId} does not exist"))
+    val incomingAsset = service.toIncomingAsset(pointAsset, link)
+    val updatedAsset = service.update(assetId, incomingAsset.get, link.geometry, link.municipalityCode, user.username, link.linkSource)
+    getPointAssetById(typeId, updatedAsset)
   }
 
   def updateSpeedLimitAsset(assetId: Long, parsedBody: JValue, linkId: Long): (SpeedLimit, RoadLink) = {
@@ -595,7 +590,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Missing asset properties values"))
 
     properties.foreach { prop =>
-      validateNameInProperty(assetTypeId, prop)
 
       assetTypeId match {
         case LitRoad.typeId => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
@@ -882,14 +876,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  delete("/:municipalityCode/:assetType/:assetId"){
-
-    if(!params.contains("municipalityCode"))
-      halt(BadRequest("Missing municipality code."))
-
-    val municipalityCode = params("municipalityCode").toInt
-    if(assetService.getMunicipalityById(municipalityCode).isEmpty)
-      halt(NotFound("Municipality code not found."))
+  delete("/:assetType/:assetId"){
 
     val assetTypeId = getAssetTypeId(params("assetType"))
     val assetId = params("assetId").toLong
@@ -902,7 +889,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case "linear" if assetTypeId == Manoeuvres.typeId =>
         val (asset, roadLinks) = getManoeuvreAndRoadLinks(Seq(assetId)).headOption.getOrElse(halt(NotFound("Asset not found")))
         linkIdValidation(roadLinks.map(_.linkId).toSet)
-        linearAssetService.expireAsset(assetTypeId, assetId, user.username, expired = true).getOrElse("")
+        manoeuvreService.deleteManoeuvre(user.username, assetId)
       case "linear" =>
         val (asset, roadLink) = getLinearAssetsAndRoadLinks(assetTypeId, Set(assetId)).headOption.getOrElse(halt(NotFound("Asset not found")))
         linkIdValidation(Set(roadLink.linkId))

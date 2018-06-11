@@ -37,7 +37,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
         throw new IllegalStateException("Asset type not allowed")
 
-      assetTypeIds.foreach { typeId =>
+      assetTypeIds.map { typeId =>
         dao.expireAssetTypeVerification(municipalityCode, typeId, userName)
         dao.insertAssetTypeVerification(municipalityCode, typeId, userName)
       }
@@ -71,7 +71,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
 
   def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
     withDynTransaction{
-      assetTypeIds.foreach { assetType =>
+      assetTypeIds.map { assetType =>
         dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
       }
     }

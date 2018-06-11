@@ -8,7 +8,7 @@
     var speedLimitList;
     var municipalityId;
     var municipalityName;
-
+    var authorizationPolicy = new AuthorizationPolicy();
 
     this.bindEvents = function () {
       eventbus.on('municipalities:select', function(listP) {
@@ -71,6 +71,9 @@
           return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item, index) : idLink(item, index)));
         });
       };
+      var tableBodyRows = function (values) {
+        return $('<tbody>').append(tableContentRows(values));
+      };
       var idLink = function(id, index) {
         var link = '#' + layerName + '/' + id  ;
         return $('<a class="work-list-item"/>').attr('href', link + '/municipality/' +municipalityId +'/'+ index).attr('id', index).html(link);
@@ -90,7 +93,7 @@
         var countString = count ? ' (' + count + ' kpl)' : '';
         return $('<table/>').addClass('table')
           .append(tableHeaderRow(values + countString))
-          .append(tableContentRows(ids));
+          .append(tableBodyRows(ids));
       };
 
       return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
@@ -166,7 +169,7 @@
         var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
         element.html($('<div class="municipality-list">').append(unknownLimits));
 
-        if (_.includes(me.roles, 'operator') || _.includes(me.roles, 'premium'))
+        if (authorizationPolicy.workListAccess())
           searchbox.insertBefore('#tableData');
 
         $('#searchBox').on('keyup', function (event) {
