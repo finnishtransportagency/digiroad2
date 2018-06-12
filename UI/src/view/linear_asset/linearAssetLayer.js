@@ -558,8 +558,6 @@ root.LinearAssetLayer  = function(params) {
       me.refreshView();
   };
 
-  this.addPoints = function(){};
-
   return {
     vectorLayer: vectorLayer,
     show: me.showLayer,
