@@ -3,9 +3,12 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriAssetDataClient, TierekisteriGreenCareClassAssetClient, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, DynamicLinearAssetService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
+import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -139,15 +142,15 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
       }
       val assetId = service.dao.createLinearAsset(typeId, roadAddressInfo.head._1.linkId, false, SideCode.BothDirections.value, segment, "batch_process_" + assetName,
         vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadAddressInfo.head._1.linkSource.value))
-      dao.updateAssetProperties(assetId, trAssets)
+      trAssets.foreach{asset => insertSingleChoiceProperty(assetId, Queries.getPropertyIdByPublicId(asset._2), asset._1).execute}
       println(s"Created OTH $assetName assets for ${roadAddressInfo.head._1.linkId} from TR data with assetId $assetId")
     }
   }
 
-  def getAssetValue(trAsset: TierekisteriAssetData): DynamicProperty = {
+  def getAssetValue(trAsset: TierekisteriAssetData): (Int, String) = {
     if(trAsset.isInstanceOf[TierekisteriWinterCareClassAssetData])
-      trAsset.asInstanceOf[TierekisteriWinterCareClassAssetData].assetValue
+      (trAsset.asInstanceOf[TierekisteriWinterCareClassAssetData].assetValue, trAsset.asInstanceOf[TierekisteriWinterCareClassAssetData].publicId)
     else
-      trAsset.asInstanceOf[TierekisteriGreenCareClassAssetData].assetValue
+      (trAsset.asInstanceOf[TierekisteriGreenCareClassAssetData].assetValue, trAsset.asInstanceOf[TierekisteriGreenCareClassAssetData].publicId)
   }
 }

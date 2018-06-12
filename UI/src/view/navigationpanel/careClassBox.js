@@ -78,58 +78,26 @@
         [26, 'Ei hoitoluokkaa']
       ];
 
+      var missing = 'missing-value-legend';
+      var green = 'green-care';
+      var winter = 'winter-care';
 
-      var missingGreenCareLegend = '<div class="green-care-legend missing-value-legend">' + _.map(badGreenCareValues, function(value) {
-        return '<div class="legend-entry">' +
-          '<div class="label">' + value[1] + '</div>' +
-          '<div class="symbol linear care-class-' + value[0] + '" />' +
-          '</div>';
-      }).join('') + '</div>';
+      var winterCareLegend = careLegend('', winter, winterCareValues) + careLegend(walkwayLabel, winter, winterWalkwayValues) + careLegend('', winter, badWinterCareValues, missing);
+      var greenCareLegend = careLegend('', green, greenCareValues) + careLegend(suburbanAreasLabel, green, suburbanAreaValues) + careLegend(specialAreasLabel, green, specialAreaValues) + careLegend('', green, badGreenCareValues, missing);
 
-      var missingWinterCareLegend = '<div class="winter-care-legend missing-value-legend">' + _.map(badWinterCareValues, function(value) {
-        return '<div class="legend-entry">' +
-          '<div class="label">' + value[1] + '</div>' +
-          '<div class="symbol linear care-class-' + value[0] + '" />' +
-          '</div>';
-      }).join('') + '</div>';
-
-      var winterWalkwayLegend = walkwayLabel + '<div class="winter-care-legend">' + _.map(winterWalkwayValues, function(winterWalkwayValue) {
-        return '<div class="legend-entry">' +
-            '<div class="label">' + winterWalkwayValue[1] + '</div>' +
-            '<div class="symbol linear care-class-' + winterWalkwayValue[0] + '" />' +
-            '</div>';
-      }).join('') + '</div>';
-
-      var winterCareLegend = '<div class="winter-care-legend">' + _.map(winterCareValues, function(winterCareValue) {
-        return '<div class="legend-entry">' +
-            '<div class="label">' + winterCareValue[1] + '</div>' +
-            '<div class="symbol linear care-class-' + winterCareValue[0] + '" />' +
-            '</div>';
-      }).join('') + winterWalkwayLegend + missingWinterCareLegend + '</div>';
-
-      var specialAreaLegend = specialAreasLabel + '<div class="green-care-legend">' + _.map(specialAreaValues, function(specialAreaValue) {
-        return '<div class="legend-entry">' +
-            '<div class="label">' + specialAreaValue[1] + '</div>' +
-            '<div class="symbol linear care-class-' + specialAreaValue[0] + '" />' +
-            '</div>';
-      }).join('') + '</div>';
-
-      var suburbanAreaLegend = suburbanAreasLabel + '<div class="green-care-legend">' + _.map(suburbanAreaValues, function(suburbanAreaValue) {
-          return '<div class="legend-entry">' +
-              '<div class="label">' + suburbanAreaValue[1] + '</div>' +
-              '<div class="symbol linear care-class-' + suburbanAreaValue[0] + '" />' +
-              '</div>';
-      }).join('') + '</div>';
-
-      var greenCareLegend = '<div class="green-care-legend">' + _.map(greenCareValues, function(greenCareValue) {
-        return '<div class="legend-entry green-care-legend">' +
-          '<div class="label">' + greenCareValue[1] + '</div>' +
-          '<div class="symbol linear care-class-' + greenCareValue[0] + '" />' +
-          '</div>';
-      }).join('') + suburbanAreaLegend + specialAreaLegend + missingGreenCareLegend + '</div>';
-
-      return '<div class="panel-section panel-legend '+ me.legendName() + '-legend">' + winterCareLegend + greenCareLegend + '</div>';
+      return '<div class="panel-section panel-legend '+ me.legendName() + '-legend">' + greenCareLegend + winterCareLegend + '</div>';
     };
+
+    var careLegend = function(label, className, values, additionalClass) {
+      var _additionalClass = additionalClass ? additionalClass : '';
+      return '<div class="' + className + '-legend ' + _additionalClass + '">' + label + _.map(values, function(value) {
+        return '<div class="legend-entry">' +
+          '<div class="label">' + value[1] + '</div>' +
+          '<div class="symbol linear care-class-' + value[0] + '" />' +
+          '</div>';
+      }).join('') + '</div>';
+    };
+
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;
