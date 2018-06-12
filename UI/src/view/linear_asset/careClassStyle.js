@@ -83,13 +83,13 @@
     ];
 
     var overlayStyleRules = [
-        new StyleRule().where('overlay').is(true).and('zoomLevel').is(9).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
-        new StyleRule().where('overlay').is(true).and('zoomLevel').is(10).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 3,  lineDash: [1,10] }}),
-        new StyleRule().where('overlay').is(true).and('zoomLevel').is(11).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 5,  lineDash: [1,15] }}),
-        new StyleRule().where('overlay').is(true).and('zoomLevel').is(12).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 8,  lineDash: [1,22] }}),
-        new StyleRule().where('overlay').is(true).and('zoomLevel').is(13).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 8,  lineDash: [1,22] }}),
-        new StyleRule().where('overlay').is(true).and('zoomLevel').is(14).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 12, lineDash: [1,28] }}),
-        new StyleRule().where('overlay').is(true).and('zoomLevel').is(15).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 12, lineDash: [1,28] }})
+      new StyleRule().where('type').is('overlay').and('zoomLevel').is(9).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').is(10).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 3,  lineDash: [1,10] }}),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').is(11).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 5,  lineDash: [1,15] }}),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').is(12).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 8,  lineDash: [1,22] }}),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').is(13).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 8,  lineDash: [1,22] }}),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').is(14).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 12, lineDash: [1,28] }}),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').is(15).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 12, lineDash: [1,28] }})
     ];
 
     this.getNewFeatureProperties = function(linearAssets){
@@ -98,9 +98,11 @@
         var type =  me.isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
         return _.merge({}, linearAsset, { hasAsset: hasAsset }, type);
       });
+
       var offsetBySideCode = function(linearAsset) {
         return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
       };
+
       var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
       return _.sortBy(linearAssetsWithAdjustments, function(asset) {
         return asset.expired ? -1 : 1;
@@ -117,6 +119,5 @@
     me.greenCareStyle.addRules(greenCareClassRules);
     me.greenCareStyle.addRules(careClassSizeRules);
     me.greenCareStyle.addRules(greenCareClassImageSizeRules);
-
   };
 })(this);

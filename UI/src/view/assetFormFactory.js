@@ -243,10 +243,6 @@
       var value = _.first(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '-';
 
-      // var defaultValue = field.defaultValue;
-      // if(defaultValue && !value)
-      //   _value = defaultValue;
-
       var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
       var printValue = _.isUndefined(someValue) ? _value : someValue.label;
 

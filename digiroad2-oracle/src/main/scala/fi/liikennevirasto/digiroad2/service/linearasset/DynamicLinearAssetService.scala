@@ -95,7 +95,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
         val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
-//        validateRequiredProperties(typeId, props)
+        validateRequiredProperties(typeId, props)
         dynamicLinearAssetDao.updateAssetProperties(id, props)
       case _ => None
     }
