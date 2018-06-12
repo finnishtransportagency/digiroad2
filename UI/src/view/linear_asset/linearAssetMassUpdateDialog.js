@@ -32,7 +32,6 @@
     function setValue(value) {
       if (validator(value)) {
         currentValue = value;
-        selectedLinearAsset.removeMultiValue();
         selectedLinearAsset.setMultiValue(currentValue);
         $('button.save').prop('disabled', '');
       } else {

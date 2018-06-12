@@ -218,7 +218,7 @@ root.LinearAssetLayer  = function(params) {
     var selectedAssets = selectedLinearAsset.get();
     var features = style.renderFeatures(selectedAssets);
     if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), offsetBySideCode), me.uiState.zoomLevel));
     selectToolControl.addSelectionFeatures(features);
     readOnlyLayer.hideLayer();
     unHighLightReadOnlyLayer();
@@ -241,7 +241,7 @@ root.LinearAssetLayer  = function(params) {
 
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), offsetBySideCode), me.uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
      LinearAssetMassUpdateDialog.show({
@@ -496,7 +496,7 @@ root.LinearAssetLayer  = function(params) {
     })));
     readOnlyLayer.showLayer();
     if(assetLabel) {
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep( _.omit(linearAssets, 'geometry')), offsetBySideCode), me.uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(linearAssets, 'geometry'), offsetBySideCode), me.uiState.zoomLevel));
     }
   };
 
@@ -511,7 +511,7 @@ root.LinearAssetLayer  = function(params) {
       var selectedFeatures = style.renderFeatures(linearAssets);
 
       if(assetLabel)
-          selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
+          selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), offsetBySideCode), me.uiState.zoomLevel));
 
       vectorSource.addFeatures(selectedFeatures);
       selectToolControl.addSelectionFeatures(selectedFeatures);
