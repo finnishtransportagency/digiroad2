@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.service.feedback
 import fi.liikennevirasto.digiroad2.{Email, EmailOperations}
 import fi.liikennevirasto.digiroad2.dao.feedback.FeedbackDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.EmailAuthPropertyReader
 import javax.mail.MessagingException
 import org.joda.time.DateTime
 
@@ -80,13 +81,14 @@ class FeedbackApplicationService extends Feedback {
   def dao: FeedbackDao = new FeedbackDao
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackApplicationBody
+  private val emailConfig = new EmailAuthPropertyReader
 
-  override def to: String = "operaattori@digiroad.fi"
+  override def to: String = emailConfig.getEmailConfig("to")
   override def from: String = "OTH Application Feedback"
   override def subject: String = "Palaute työkalusta"
   override def body: String = ""
-  override def smtpHost: String = "smtp.mailtrap.io"
-  override def smtpPort: String = "2525"
+  override def smtpHost: String = emailConfig.getEmailConfig("smtpHost")
+  override def smtpPort: String = emailConfig.getEmailConfig("smtpPort")
 
   override def stringifyBody(username: String, body: FeedbackBody): String = {
     s"""<br>
@@ -107,13 +109,14 @@ class FeedbackDataService extends Feedback {
   def dao: FeedbackDao = new FeedbackDao
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackDataBody
+  private val emailConfig = new EmailAuthPropertyReader
 
-  override def to: String = "operaattori@digiroad.fi"
+  override def to: String = emailConfig.getEmailConfig("to")
   override def from: String = "OTH Data Feedback"
   override def subject: String = "Palaute työkalusta"
   override def body: String = ""
-  override def smtpHost: String = "smtp.mailtrap.io"
-  override def smtpPort: String = "2525"
+  override def smtpHost: String = emailConfig.getEmailConfig("smtpHost")
+  override def smtpPort: String = emailConfig.getEmailConfig("smtpPort")
 
   override def stringifyBody(username: String, body: FeedbackBody): String = {
     s"""<br>

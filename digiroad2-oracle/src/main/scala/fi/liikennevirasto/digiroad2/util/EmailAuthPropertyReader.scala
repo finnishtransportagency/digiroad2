@@ -24,4 +24,12 @@ class EmailAuthPropertyReader {
       throw new IllegalArgumentException("Missing email Password")
     loadedKeyString
   }
+
+  def getEmailConfig: Map[String, String] = {
+    Map (
+      "to" ->  properties.getProperty("email.to"),
+      "smtpHost" -> properties.getProperty("email.smtpHost"),
+      "smtpPort" -> properties.getProperty("email.smtpPort")
+    )
+  }
 }
