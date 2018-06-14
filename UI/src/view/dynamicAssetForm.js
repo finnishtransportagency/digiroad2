@@ -889,12 +889,12 @@
     }
 
     function checkEditConstrains(selectedAsset){
-      var editConstrains = _assetTypeConfiguration.editConstrains || function() { return false; };
+      var auth = _assetTypeConfiguration.authorizationPolicy || function() { return false; };
 
       var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
-        return editConstrains(asset);
+        return auth.formEditModeAccess(asset);
       });
-      return !_.isEmpty(selectedAssets);
+      return _.isEmpty(selectedAssets);
     }
 
     me.isSplitOrSeparatedAllowed = function(){

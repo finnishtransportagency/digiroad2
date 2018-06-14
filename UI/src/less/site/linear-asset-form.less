@@ -29,10 +29,28 @@
       width: 110px;
     }
 
+    .form-control.carrying-capacity{
+      float: right;
+    }
+
+    .form-control#carrying-capacity{
+      float: right;
+    }
+
+    .form-control#mittauspaiva{
+      float: right;
+    }
+
     .input-group-addon {
       float: left;
       width: 15px;
       height: 15px;
+    }
+
+    .input-group-addon.carrying-capacity {
+      width: auto;
+      position: absolute;
+      right: 15px;
     }
   }
   .input-group-addon.traffic-volume-a,
@@ -126,6 +144,7 @@
   .control-label {
     width: 65px;
     margin-top: 7px;
+    display: inline-table;
   }
   .form-group.editable {
     margin-left: 10px;
@@ -196,10 +215,10 @@ form.maintenanceRoad-b {
   }
 
   input[type=checkbox] {
-       margin-top: 13px !important;
-       box-shadow: none;
-       margin-left: -77px;
-   }
+    margin-top: 13px !important;
+    box-shadow: none;
+    margin-left: -77px;
+  }
 }
 
 .asset-factory.form {
