@@ -54,8 +54,10 @@
             eventbus.on("feedback:send", function() {
                 removeSpinner();
                 new GenericConfirmPopup("Kiitos palautteesta", {type: 'alert'});
-                me.closeFeedback();
+                purge();
+                applicationModel.setApplicationkState(applicationState.Normal);
             });
+
             eventbus.on("feedback:failed",function() {
                 removeSpinner();
                 new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
@@ -97,9 +99,10 @@
                 applicationModel.setApplicationkState('normal');
                 var values = $(".form-horizontal").serializeArray();
                 values.push(
-                        {name: 'linkId',    value: selectedData.linkId},
+                        {name: 'linkId',    value:  selectedData.linkId},
                         {name: 'assetId',   value : selectedData.assetId },
-                        {name: 'assetName', value : selectedData.title});
+                        {name: 'assetName', value : selectedData.title},
+                        {name: 'typeId',    value : selectedData.typeId});
                 me.collection.sendFeedbackData(values);
             });
 
@@ -192,8 +195,8 @@
 
            setDropdownValue(layer, dialog);
            dialog.find("#kidentifier").append(me.authorizationPolicy.username);
-           dialog.find("#linkId").append(selectedAsset.linkId);
-           dialog.find("#assetId").append(selectedAsset.assetId);
+           dialog.find("#linkId").append(selectedAsset.linkId.join(', '));
+           dialog.find("#assetId").append(selectedAsset.assetId.join(', '));
            dialog.find("#assetName").append(selectedAsset.title);
            dialog.find("#feedbackForm").append(userEditableFields());
            return dialog;

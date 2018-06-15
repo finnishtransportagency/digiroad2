@@ -13,13 +13,13 @@
       widthLimit: 90,
       litRoad: 100,
       pavedRoad: 110,
-      width: 120,
-      damagedByThaw: 130,
+      roadWidth: 120,
+      roadDamagedByThaw: 130,
       numberOfLanes: 140,
       congestionTendency: 150,
-      massTransitLane: 160,
+      massTransitLanes: 160,
       trafficVolume: 170,
-      winterSpeedLimit: 180,
+      winterSpeedLimits: 180,
       prohibition: 190,
       pedestrianCrossings: 200,
       hazardousMaterialTransportProhibition: 210,
@@ -228,7 +228,7 @@
         hasMunicipalityValidation: true
       },
       {
-        typeId: assetType.damagedByThaw,
+        typeId: assetType.roadDamagedByThaw,
         defaultValue: 1,
         singleElementEventCategory: 'roadDamagedByThaw',
         multiElementEventCategory: 'roadsDamagedByThaw',
@@ -253,7 +253,7 @@
         })
       },
       {
-        typeId: assetType.width,
+        typeId: assetType.roadWidth,
         singleElementEventCategory: 'roadWidth',
         multiElementEventCategory: 'roadWidth',
         layerName: 'roadWidth',
@@ -333,7 +333,7 @@
         isVerifiable: true
       },
       {
-        typeId: assetType.massTransitLane,
+        typeId: assetType.massTransitLanes,
         defaultValue: 1,
         singleElementEventCategory: 'massTransitLane',
         multiElementEventCategory: 'massTransitLanes',
@@ -352,7 +352,7 @@
         isVerifiable: true
       },
       {
-        typeId: assetType.winterSpeedLimit,
+        typeId: assetType.winterSpeedLimits,
         singleElementEventCategory: 'winterSpeedLimit',
         multiElementEventCategory: 'winterSpeedLimits',
         layerName: 'winterSpeedLimits',
@@ -790,11 +790,11 @@
               title: 'Valaistus'
           },
           {
-              typeId: assetType.damagedByThaw,
+              typeId: assetType.roadDamagedByThaw,
               title: 'Kelirikko'
           },
           {
-              typeId: assetType.width,
+              typeId: assetType.roadWidth,
               title: 'Leveys'
           },
           {
@@ -810,11 +810,11 @@
               title: 'Liikennemäärä'
           },
           {
-              typeId: assetType.massTransitLane,
+              typeId: assetType.massTransitLanes,
               title: 'Joukkoliikennekaista'
           },
           {
-              typeId: assetType.winterSpeedLimit,
+              typeId: assetType.winterSpeedLimits,
               title: 'Talvinopeusrajoitus'
           },
           {

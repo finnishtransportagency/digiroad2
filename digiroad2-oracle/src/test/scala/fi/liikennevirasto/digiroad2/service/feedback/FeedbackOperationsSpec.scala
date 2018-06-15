@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.feedback
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
 
-class FeedbackApplicationServiceSpec extends FunSuite with Matchers {
+class FeedbackOperationsSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 

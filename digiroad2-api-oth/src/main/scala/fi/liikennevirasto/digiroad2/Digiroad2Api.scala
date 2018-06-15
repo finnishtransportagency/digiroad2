@@ -758,7 +758,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
 
-  private def sendFeedback(service: Feedback)(implicit m: Manifest[service.FeedbackBody]): Long= {
+  private def sendFeedback(service: FeedbackOperations)(implicit m: Manifest[service.FeedbackBody]): Long= {
     val body = (parsedBody \ "body").extract[service.FeedbackBody]
     val user = userProvider.getCurrentUser()
     service.insertFeedback(user.username, body)

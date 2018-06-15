@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimi
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service._
-import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackOperations, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._

@@ -7,7 +7,7 @@
       mapView.setZoom(zoom);
     };
 
-  function fetchLinearAssetEvent (asset, result) {
+    function fetchLinearAssetEvent (asset, result) {
     eventbus.once(asset.multiElementEventCategory + ':fetched', function() {
       var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
       if (linearAsset) {
@@ -107,14 +107,25 @@
         'obstacles/:id': 'obstacles',
         'railwayCrossings/:id': 'railwayCrossings',
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
+        'servicePoints/:id': 'servicePoints',
         'trafficSigns/:id': 'trafficSigns',
+        'trHeightLimits/:id': 'trHeightLimits',
+        'trWidthLimits/:id' : 'trWidthLimits',
+        'trWeightLimits/:id'  : 'trWeightLimits',
         'maintenanceRoad/:id': 'maintenanceRoad',
         'litRoad/:id': 'litRoad',
+        'roadDamagedByThaw/:id' : 'roadDamagedByThaw',
         'roadWidth/:id': 'roadWidth',
+        'pavedRoad/:id': 'pavedRoad',
+        'trafficVolume/:id': 'trafficVolume',
         'numberOfLanes/:id': 'numberOfLanes',
         'massTransitLanes/:id': 'massTransitLanes',
+        'winterSpeedLimits/:id': 'winterSpeedLimits',
+        'trSpeedLimits/:id': 'trSpeedLimits',
         'prohibition/:id': 'prohibition',
         'hazardousMaterialTransportProhibition/:id': 'hazardousMaterialTransportProhibition',
+        'europeanRoads/:id' : 'europeanRoads',
+        'exitNumbers/:id': 'exitNumbers',
         'totalWeightLimit/:id': 'totalWeightLimit',
         'trailerTruckWeightLimit/:id': 'trailerTruckWeightLimit',
         'axleWeightLimit/:id': 'axleWeightLimit',
@@ -248,6 +259,38 @@
         });
       },
 
+      // servicePoints: function (id) {
+      //     applicationModel.selectLayer('servicePoints');
+      //     backend.getPointAssetById(id, 'servicePoints').then(function (result) {
+      //         mapCenterAndZoom(result.lon, result.lat, 12);
+      //         models.selectedDirectionalTrafficSign.open(result);
+      //     });
+      // },
+
+      trHeightLimits : function (id) {
+          applicationModel.selectLayer('trHeightLimits');
+          backend.getPointAssetById(id, 'trHeightLimits').then(function (result) {
+              mapCenterAndZoom(result.lon, result.lat, 12);
+              models.selectedDirectionalTrafficSign.open(result);
+          });
+      },
+
+      trWidthLimits:  function (id) {
+          applicationModel.selectLayer('trWidthLimits');
+          backend.getPointAssetById(id, 'trWidthLimits').then(function (result) {
+              mapCenterAndZoom(result.lon, result.lat, 12);
+              models.selectedDirectionalTrafficSign.open(result);
+          });
+      },
+
+      // trWeightLimits: function (id) {
+      //   applicationModel.selectLayer('trWeightLimits');
+      //   backend.getPointAssetById(id, 'groupedPointAssets').then(function (result) {
+      //       mapCenterAndZoom(result.lon, result.lat, 12);
+      //       models.selectedDirectionalTrafficSign.open(result);
+      //   });
+      // },
+
       speedLimitWorkList: function () {
         eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
       },
@@ -323,8 +366,20 @@
         linearCentering('litRoad', id);
       },
 
+      roadDamagedByThaw:   function (id) {
+        linearCentering('roadDamagedByThaw', id);
+      },
+
       roadWidth: function (id) {
         linearCentering('roadWidth', id);
+      },
+
+      pavedRoad:  function (id) {
+        linearCentering('pavedRoad', id);
+      },
+
+      trafficVolume: function (id) {
+          linearCentering('trafficVolume', id);
       },
 
       numberOfLanes: function (id) {
@@ -335,12 +390,28 @@
         linearCentering('massTransitLanes', id);
       },
 
+      winterSpeedLimits: function (id) {
+        linearCentering('winterSpeedLimits', id);
+      },
+
+      trSpeedLimits:  function (id) {
+        linearCentering('trSpeedLimits', id);
+      },
+
       prohibition: function (id) {
         linearCentering('prohibition', id);
       },
 
       hazardousMaterialTransportProhibition: function (id) {
         linearCentering('hazardousMaterialTransportProhibition', id);
+      },
+
+      europeanRoads: function (id) {
+        linearCentering('europeanRoads', id);
+      },
+
+      exitNumbers: function (id) {
+        linearCentering('exitNumbers', id);
       },
 
       totalWeightLimit: function (id) {

@@ -30,30 +30,37 @@
 
 
         this.get = function () {
-            var title = getTitle();
-
+            var assetInfo = getAssetInfo();
             var selected = me.model.get();
-            if(_.isArray(selected))
-                return {
-                    title: title,
-                    linkId: _.map(selected, function (selectedAsset) { return selectedAsset.linkId;}).filter(Boolean).join(", "),
-                    assetId: _.map(selected, function (selectedAsset) { return selectedAsset.id; }).filter(Boolean).join(", ")
-                };
-            else
-                return {
-                    title: title,
-                    linkId: selected.linkId ? selected.linkId: _.map(selected.assets, function(asset) { return asset.linkId; }).filter(Boolean).join(", "),
-                    assetId: selected.id ? selected.id : _.map(selected.assets, function(asset) { return asset.id; }).filter(Boolean).join(", ")
+            var linkId;
+            var assetId;
+
+            if(_.isArray(selected)){
+                linkId = _.map(selected, function (selectedAsset) { return selectedAsset.linkId;}).filter(Boolean);
+                assetId=  _.map(selected, function (selectedAsset) { return selectedAsset.id; }).filter(Boolean);
+            }
+            else {
+                linkId = selected.linkId ? [selected.linkId]: _.map(selected.assets, function(asset) { return asset.linkId; }).filter(Boolean);
+                assetId = selected.id ? [selected.id]: _.map(selected.assets, function(asset) { return asset.id; }).filter(Boolean);
+            }
+
+            return {
+                title: assetInfo.title,
+                linkId: linkId,
+                assetId: assetId,
+                typeId: assetInfo.typeId
             };
         };
 
 
-        var getTitle = function () {
+        var getAssetInfo = function () {
             var assetTypes = me.assetConfig.assetTypes;
             var assetInfo = me.assetConfig.assetTypeInfo;
             var typeId = assetTypes[applicationModel.getSelectedLayer()];
 
-            return typeId ? _.find(assetInfo, function(conf) {return conf.typeId === typeId; }).title : 'Tielinkki';
+            return { typeId : typeId,
+                     title : typeId ? _.find(assetInfo, function(conf) {return conf.typeId === typeId; }).title : 'Tielinkki'  };
+
         };
 
         var convertFromToJSON = function (form) {

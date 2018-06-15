@@ -434,7 +434,7 @@
     var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
     var speedLimitBox = new SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
-    var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
+    var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimits}));
     var serviceRoadBox = new ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
     var trSpeedLimitBox = isExperimental ? [new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}))] : [];
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
@@ -444,9 +444,9 @@
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
           .concat(getLinearAsset(assetType.pavedRoad))
-          .concat(getLinearAsset(assetType.width))
+          .concat(getLinearAsset(assetType.roadWidth))
           .concat(getLinearAsset(assetType.numberOfLanes))
-          .concat(getLinearAsset(assetType.massTransitLane))
+          .concat(getLinearAsset(assetType.massTransitLanes))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers)),
       [speedLimitBox]
@@ -461,7 +461,7 @@
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
           .concat(getLinearAsset(assetType.congestionTendency))
-          .concat(getLinearAsset(assetType.damagedByThaw)),
+          .concat(getLinearAsset(assetType.roadDamagedByThaw)),
       [manoeuvreBox]
         .concat(getLinearAsset(assetType.prohibition))
         .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
