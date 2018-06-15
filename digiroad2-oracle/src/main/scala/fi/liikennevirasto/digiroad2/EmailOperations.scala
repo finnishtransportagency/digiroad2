@@ -1,15 +1,17 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import fi.liikennevirasto.digiroad2.util.EmailAuthPropertyReader
+
+import fi.liikennevirasto.digiroad2.util.{EmailAuthPropertyReader, SmtpPropertyReader}
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 
-case class Email( to: String, from: String, cc: Option[String], bcc: Option[String], subject: String, body: String, smtpHost: String, smtpPort: String)
+case class Email( to: String, from: String, cc: Option[String], bcc: Option[String], subject: String, body: String)
 
 class EmailOperations() {
 
   private val auth = new EmailAuthPropertyReader
+  private val smtpProp = new SmtpPropertyReader
   private def isNumeric(str:String): Boolean = str.matches("[-+]?\\d+(\\.\\d+)?")
 
   private def initEmail(smtpHost: String, smtpPort: String): MimeMessage = {
@@ -25,7 +27,7 @@ class EmailOperations() {
   }
 
   private def createMessage(email: Email): Message = {
-    val message = initEmail(email.smtpHost, email.smtpPort)
+    val message = initEmail(smtpProp.getHost, smtpProp.getPort)
     message.setFrom(new InternetAddress(email.from))
     message.setSubject(email.subject)
     message.setHeader("Content-Type", "text/html")
@@ -34,7 +36,7 @@ class EmailOperations() {
   }
 
   private def setRecipients(message: MimeMessage, email: Email): MimeMessage ={
-    message.setRecipients(Message.RecipientType.TO, email.to)
+    message.setRecipients(Message.RecipientType.TO, smtpProp.getDestination)
     email.cc match {
       case Some(cc)  => message.setRecipients(Message.RecipientType.CC, cc)
       case _ => None

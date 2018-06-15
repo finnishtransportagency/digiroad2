@@ -12,19 +12,29 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 class FeedbackDao {
 
 
-  def getApplicationFeedbackByStatus(status: Boolean): Seq[FeedbackInfo] = {
-    val feedbackFilter = if (status) " status = 1 " else " status = 0 "
-    val query =
-      s"""
-        select id, receiver, created_by, created_date, subject, body, status, status_date
-        from feedback
-        where $feedbackFilter
-        """
-    StaticQuery.queryNA[FeedbackInfo](query).iterator.toSeq
-
+  def getFeedback(queryFilter: String => String): Seq[FeedbackInfo] ={
+    val query =  s"""
+            select id, receiver, created_by, created_date, subject, body, status, status_date
+            from feedback
+            """
+    StaticQuery.queryNA[FeedbackInfo](queryFilter(query)).iterator.toSeq
   }
 
-  implicit val getFeedback = new GetResult[FeedbackInfo] {
+  def byAll()(query: String):  String = {
+    query
+  }
+
+  def byStatus(status: Boolean)(query: String): String = {
+    val feedbackFilter = if (status) " status = 1 " else " status = 0 "
+    query + s"where $feedbackFilter"
+  }
+
+  def byId(ids: Set[Long])(query: String): String = {
+    val idsToQuery = ids.mkString(",")
+    query + s"where id in ($idsToQuery)"
+  }
+
+  implicit val feedback = new GetResult[FeedbackInfo] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val receiver = r.nextStringOption()
@@ -38,25 +48,6 @@ class FeedbackDao {
       FeedbackInfo(id, receiver, createdBy, createdAt, body, subject, status, statusDate)
     }
   }
-
-  def getAllFeedbacks(): Seq[FeedbackInfo] = {
-    val query =  s"""
-            select id, receiver, created_by, created_date, subject, body, status, status_date
-            from feedback
-            """
-      StaticQuery.queryNA[FeedbackInfo](query).iterator.toSeq
-  }
-
-
-  def getFeedbackByIds(ids: Set[Long]): Seq[FeedbackInfo] = {
-      val idsToQuery = ids.mkString(",")
-      val query =  s"""
-            select f.id, f.receiver, f.created_by, f.created_date, f.subject, f.body, f.status, f.status_date
-            from feedback f
-            where f.id in ($idsToQuery)"""
-      StaticQuery.queryNA[FeedbackInfo](query).iterator.toSeq
-  }
-
 
   def insertFeedback(receiver: String, createdBy: String, body: String, subject: String, status: Boolean): Long = {
    val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first

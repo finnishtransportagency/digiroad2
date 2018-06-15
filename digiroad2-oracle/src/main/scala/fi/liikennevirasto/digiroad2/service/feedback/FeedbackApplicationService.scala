@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.service.feedback
 import fi.liikennevirasto.digiroad2.{Email, EmailOperations}
 import fi.liikennevirasto.digiroad2.dao.feedback.FeedbackDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
 import javax.mail.MessagingException
 import org.joda.time.DateTime
 
@@ -13,16 +14,15 @@ case class FeedbackApplicationBody(feedbackType: Option[String], headline: Optio
 
 trait Feedback {
 
+  private val smtpProp = new SmtpPropertyReader
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def dao: FeedbackDao
   def emailOperations: EmailOperations
-  def to: String
+  def to: String = smtpProp.getDestination
   def from: String
   def subject: String
   def body: String
-  def smtpHost: String
-  def smtpPort: String
   type FeedbackBody
 
   def stringifyBody(username: String, body: FeedbackBody) : String
@@ -39,19 +39,19 @@ trait Feedback {
 
   def getFeedbackByStatus(status: Boolean = false): Seq[FeedbackInfo] = {
     withDynSession {
-      dao.getApplicationFeedbackByStatus(status)
+      dao.getFeedback(dao.byStatus(status))
     }
   }
 
   def getAllFeedbacks: Seq[FeedbackInfo] = {
     withDynSession {
-      dao.getAllFeedbacks()
+      dao.getFeedback(dao.byAll())
     }
   }
 
   def getFeedbacksByIds(ids: Set[Long]): Seq[FeedbackInfo] = {
     withDynSession {
-      dao.getFeedbackByIds(ids)
+      dao.getFeedback(dao.byId(ids))
     }
   }
 
@@ -59,7 +59,7 @@ trait Feedback {
     getNotSentFeedbacks.foreach{
       feedback =>
         try {
-          emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), feedback.createdBy.getOrElse(from), None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body), smtpHost, smtpPort))
+          emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), feedback.createdBy.getOrElse(from), None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))
           updateApplicationFeedbackStatus(feedback.id)
         }catch {
           case messagingException: MessagingException=> println( s"Error on email sending: ${messagingException.toString}" )
@@ -74,12 +74,9 @@ class FeedbackApplicationService extends Feedback {
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackApplicationBody
 
-  override def to: String = "operaattori@digiroad.fi"
   override def from: String = "OTH Application Feedback"
   override def subject: String = "Palaute työkalusta"
   override def body: String = ""
-  override def smtpHost: String = "smtp.mailtrap.io"
-  override def smtpPort: String = "2525"
 
   override def stringifyBody(username: String, body: FeedbackBody): String = {
     s"""<br>

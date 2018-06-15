@@ -9,7 +9,6 @@ class EmailAuthPropertyReaderSpec extends FunSuite with Matchers {
     val username = reader.getUsername
     val password = reader.getPassword
 
-    //TODO: Change when we have username and password
     username should be("emailUsername")
     password should be("emailPassword")
   }
