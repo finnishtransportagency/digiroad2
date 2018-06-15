@@ -16,7 +16,6 @@
       width: 120,
       damagedByThaw: 130,
       numberOfLanes: 140,
-      congestionTendency: 150,
       massTransitLane: 160,
       trafficVolume: 170,
       winterSpeedLimit: 180,
@@ -284,24 +283,6 @@
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true
-      },
-      {
-        typeId: assetType.congestionTendency,
-        defaultValue: 1,
-        singleElementEventCategory: 'congestionTendency',
-        multiElementEventCategory: 'congestionTendencies',
-        layerName: 'congestionTendency',
-        title: 'Ruuhkaantumisherkkyys',
-        newTitle: 'Uusi ruuhkautumisherkkä tie',
-        className: 'congestion-tendency',
-        isSeparable: false,
-        allowComplementaryLinks: false,
-        editControlLabels: {
-          title: 'Herkkyys',
-          enabled: 'Ruuhkaantumisherkkä',
-          disabled: 'Ei ruuhkaantumisherkkä'
-        },
-        isVerifiable: false
       },
       {
         typeId: assetType.pavedRoad,

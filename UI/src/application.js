@@ -457,7 +457,6 @@
           .concat([trafficSignBox])
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
-          .concat(getLinearAsset(assetType.congestionTendency))
           .concat(getLinearAsset(assetType.damagedByThaw)),
       [manoeuvreBox]
         .concat(getLinearAsset(assetType.prohibition))
