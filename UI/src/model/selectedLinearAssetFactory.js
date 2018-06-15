@@ -7,8 +7,8 @@
     var validators = {
       prohibition: function() { return true; },
       hazardousMaterialTransportProhibition: function() { return true; },
-      europeanRoads: function() { return true; },
-      exitNumbers: function() { return true; },
+      europeanRoads: euroAndExitValidator,
+      exitNumbers: euroAndExitValidator,
       maintenanceRoad: function() { return true; },
       roadDamagedByThaw: function() { return true; },
       massTransitLanes: function() { return true; },
@@ -18,6 +18,15 @@
       }
     };
     return validators[layerName] || validators.default;
+  }
+
+  function euroAndExitValidator(val) {
+    if(!_.isUndefined(val)){
+      var values = val.replace(/[ \t\f\v]/g,'').split(/[\n,]+/);
+      return _.every(values, function(value){
+        return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/);
+      });
+    }
   }
 
   function construct(backend, collection, asset) {

@@ -816,6 +816,8 @@ trait LinearAssetOperations {
       municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
     }
   }
+
+  def validateAssetValue(value: Option[Value]): Unit = {}
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
@@ -831,4 +833,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
+}
+
+class AssetValueException(value: String) extends RuntimeException {override def getMessage: String = value
 }

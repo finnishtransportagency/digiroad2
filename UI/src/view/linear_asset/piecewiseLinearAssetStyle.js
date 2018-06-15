@@ -4,8 +4,8 @@
     var me = this;
 
     var expirationRules = [
-      new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
-      new StyleRule().where('expired').is(false).use({ stroke : { color: '#ff0000'}})
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where('hasAsset').is(true).use({ stroke : { color: '#ff0000'}})
     ];
 
     var zoomLevelRules = [
