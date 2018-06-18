@@ -136,11 +136,13 @@
       setupProjections();
       var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
+      var selectedServicePoint = getSelectedPointAsset(pointAssets, 'servicePoints');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
       var selectedRailwayCrossing =  getSelectedPointAsset(pointAssets, 'railwayCrossings');
       var selectedDirectionalTrafficSign = getSelectedPointAsset(pointAssets, 'directionalTrafficSigns');
       var selectedTrafficSign = getSelectedPointAsset(pointAssets, 'trafficSigns');
+     // var selectedGroupPointAsset = getSelectedGroupAsset(groupedPointAssets, 'trWeightLimits');
       var selectedMaintenanceRoad = getSelectedLinearAsset(linearAssets, 'maintenanceRoad');
       new URLRouter(map, backend, _.merge({}, models,
           { selectedPedestrianCrossing: selectedPedestrianCrossing },
@@ -148,8 +150,10 @@
           { selectedObstacle: selectedObstacle },
           { selectedRailwayCrossing: selectedRailwayCrossing },
           { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign },
+          { selectedServicePoint: selectedServicePoint },
           { selectedTrafficSign: selectedTrafficSign},
           { selectedMaintenanceRoad: selectedMaintenanceRoad},
+         // { selectedGroupPointAsset: selectedGroupPointAsset},
           { linearAssets: linearAssets}
     ));
       eventbus.trigger('application:initialized');
@@ -418,6 +422,10 @@
 
   function getSelectedLinearAsset(linearAssets, layerName) {
     return _(linearAssets).find({ layerName: layerName }).selectedLinearAsset;
+  }
+
+  function getSelectedGroupAsset(groupedPointAssets, layerName) {
+    return _(groupedPointAssets).find({ layerName: layerName }).selectedPointAsset;
   }
 
   function groupAssets(assetConfiguration,

@@ -257,7 +257,7 @@ sealed trait AssetTypeInfo {
 }
 //TODO change the type to be optional since manoeuvre are stored in a separated table and geometry type can be a type and the label can be a toString override
 object AssetTypeInfo {
-  val values =  Set(SpeedLimitAsset,TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
+  val values =  Set(MassTransitStopAsset, SpeedLimitAsset,TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
                     HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw,
                     NumberOfLanes, CongestionTendency, MassTransitLane, TrafficVolume, WinterSpeedLimit,
                     Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
@@ -272,7 +272,8 @@ object AssetTypeInfo {
     values.find(_.toString == stringValue).getOrElse(UnknownAssetTypeId)
   }
 }
-case object SpeedLimitAsset extends AssetTypeInfo { val typeId = 20; def geometryType = "linear"; val label = "SpeedLimit"; val layerName = "speedLimit"}
+case object MassTransitStopAsset extends AssetTypeInfo { val typeId = 10; def geometryType = "point"; val label = "MassTransitStop"; val layerName = "massTransitStops"}
+case object SpeedLimitAsset extends AssetTypeInfo { val typeId = 20; def geometryType = "linear"; val label = "SpeedLimit"; val layerName = "speedLimits"}
 case object TotalWeightLimit extends AssetTypeInfo { val typeId = 30; def geometryType = "linear"; val label = "TotalWeightLimit" ; val layerName = "totalWeightLimit"}
 case object TrailerTruckWeightLimit extends AssetTypeInfo { val typeId = 40; def geometryType = "linear"; val label = "TrailerTruckWeightLimit"; val layerName = "trailerTruckWeightLimit" }
 case object AxleWeightLimit extends AssetTypeInfo { val typeId = 50; def geometryType = "linear"; val label = "AxleWeightLimit"; val layerName = "axleWeightLimit" }

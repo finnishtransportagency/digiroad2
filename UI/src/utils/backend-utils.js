@@ -364,6 +364,10 @@
       $.get('api/massTransitStops/' + nationalId, callback);
     };
 
+    this.getMassTransitStopById = function(id, callback) {
+      $.get('api/massTransitStop/' + id, callback);
+    };
+
     this.getUserRoles = function () {
       $.get('api/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);

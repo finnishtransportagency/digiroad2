@@ -355,6 +355,21 @@
       }
     };
 
+    var changeById = function(id) {
+      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.id !== id && !assetHasBeenModified;
+      if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
+        if (exists()) { close(); }
+        backend.getMassTransitStopById(id, function (asset, statusMessage, errorObject) {
+          if (errorObject !== undefined) {
+              if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
+                  eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
+              }
+          }
+          eventbus.trigger('asset:fetched', asset);
+        });
+      }
+    };
+
     var getId = function() {
       return currentAsset.id;
     };
@@ -512,6 +527,7 @@
       exists: exists,
       change: change,
       changeByExternalId: changeByNationalId,
+      changeById:changeById,
       get: get,
       getId: getId,
       getName: getName,

@@ -26,8 +26,8 @@ trait FeedbackOperations {
   def from: String
   def subject: String
   def body: String
-  def smtpHost = getProperty("digiroad2.feedbackSmtpHost")
-  def smtpPort= getProperty("digiroad2.feedbackSmtpPort")
+  private def smtpHost = getProperty("digiroad2.feedbackSmtpHost")
+  private def smtpPort= getProperty("digiroad2.feedbackSmtpPort")
   type FeedbackBody
 
   lazy val dr2properties: Properties = {
@@ -85,7 +85,7 @@ trait FeedbackOperations {
     getNotSentFeedbacks.foreach{
       feedback =>
         try {
-          emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), feedback.createdBy.getOrElse(from), None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body), smtpHost, smtpPort))
+          emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), feedback.createdBy.getOrElse(from), None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))
           updateApplicationFeedbackStatus(feedback.id)
         }catch {
           case messagingException: MessagingException=> println( s"Error on email sending: ${messagingException.toString}" )

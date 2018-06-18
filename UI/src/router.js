@@ -97,11 +97,13 @@
 
       routes: {
         'massTransitStop/:id': 'massTransitStop',
+        'massTransitStops/:id': 'massTransitStopById',
         'asset/:id': 'massTransitStop',
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'speedLimit/:linkId(/municipality/:municipalityId/:position)': 'speedLimit',
         'speedLimitErrors/:id': 'speedLimitErrors',
+        'speedLimits/:id': 'speedLimitsById',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
         'obstacles/:id': 'obstacles',
@@ -160,6 +162,16 @@
         });
       },
 
+      massTransitStopById: function (id) {
+        applicationModel.selectLayer('massTransitStop');
+        backend.getMassTransitStopById(id, function (massTransitStop) {
+          eventbus.once('massTransitStops:available', function () {
+            models.selectedMassTransitStopModel.changeById(id);
+          });
+          mapCenterAndZoom(massTransitStop.lon, massTransitStop.lat, 12);
+        });
+     },
+
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
@@ -211,6 +223,10 @@
         });
       },
 
+      speedLimitsById: function (id) {
+         speedLimitCentering('speedLimit', id);
+      },
+
       pedestrianCrossings: function (id) {
         applicationModel.selectLayer('pedestrianCrossings');
         backend.getPointAssetById(id, 'pedestrianCrossings').then(function (result) {
@@ -259,13 +275,13 @@
         });
       },
 
-      // servicePoints: function (id) {
-      //     applicationModel.selectLayer('servicePoints');
-      //     backend.getPointAssetById(id, 'servicePoints').then(function (result) {
-      //         mapCenterAndZoom(result.lon, result.lat, 12);
-      //         models.selectedDirectionalTrafficSign.open(result);
-      //     });
-      // },
+      servicePoints: function (id) {
+        applicationModel.selectLayer('servicePoints');
+        backend.getPointAssetById(id, 'servicePoints').then(function (result) {
+          mapCenterAndZoom(result.lon, result.lat, 12);
+          models.selectedServicePoint.open(result);
+        });
+      },
 
       trHeightLimits : function (id) {
           applicationModel.selectLayer('trHeightLimits');
@@ -286,8 +302,8 @@
       // trWeightLimits: function (id) {
       //   applicationModel.selectLayer('trWeightLimits');
       //   backend.getPointAssetById(id, 'groupedPointAssets').then(function (result) {
-      //       mapCenterAndZoom(result.lon, result.lat, 12);
-      //       models.selectedDirectionalTrafficSign.open(result);
+      //       mapCenterAndZoom(result[0].lon, result[0].lat, 12);
+      //       models.selectedGroupPointAsset.open(result);
       //   });
       // },
 

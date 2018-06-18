@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientExcept
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
-import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
+import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.feedback._
 import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, LinkProperties, RoadLinkService, VerificationService}
@@ -238,6 +238,31 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found")))
     } else {
       massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
+    }
+  }
+
+
+  get("/massTransitStop/:id") {
+    val id = params("id").toLong
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByIdWithTRWarnings(id)
+    val massTransitStop = massTransitStopReturned._1.map { stop =>
+      Map("id" -> stop.id,
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "validityDirection" -> stop.validityDirection,
+        "bearing" -> stop.bearing,
+        "validityPeriod" -> stop.validityPeriod,
+        "floating" -> stop.floating,
+        "propertyData" -> stop.propertyData,
+        "municipalityCode" -> massTransitStopReturned._3)
+    }
+
+    if (massTransitStopReturned._2) {
+      TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found")))
+    } else {
+      massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found"))
     }
   }
 
@@ -1380,7 +1405,21 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/trWidthLimits")(getPointAssets(widthLimitService))
   get("/trWidthLimits/:id")(getPointAssetById(widthLimitService))
 
+  get("/servicePoints")(getServicePoints)
+  get("/servicePoints/:id")(getServicePointsById)
+
   get("/groupedPointAssets")(getGroupedPointAssets)
+//  get("/groupedPointAssets/:id")(getGroupedPointAssetsById)
+
+
+  private def getServicePoints: Set[ServicePoint] = {
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    servicePointService.get(bbox)
+  }
+
+  private def getServicePointsById: ServicePoint ={
+    servicePointService.getById(params("id").toLong)
+  }
 
   private def getGroupedPointAssets: Seq[MassLimitationPointAsset] = {
     val user = userProvider.getCurrentUser()
@@ -1389,6 +1428,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBoundingBox(bbox)
     pointMassLimitationService.getByBoundingBox(user,bbox)
   }
+
+//  private def getGroupedPointAssetsById: Seq[MassLimitationPointAsset] = {
+//    pointMassLimitationService.getById(params("id").toLong)
+//  }
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
@@ -1500,10 +1543,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/servicePoints") {
-    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
-    servicePointService.get(bbox)
-  }
 
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()
