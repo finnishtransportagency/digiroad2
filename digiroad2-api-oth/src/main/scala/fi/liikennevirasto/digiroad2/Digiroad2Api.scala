@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationBody, FeedbackApplicationService}
 import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, LinkProperties, RoadLinkService, VerificationService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -66,10 +67,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetService: AssetService = Digiroad2Context.assetService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
-                   val multiValueLinearAssetService: MultiValueLinearAssetService = Digiroad2Context.multiValueLinearAssetService)
-
-
-extends ScalatraServlet
+                   val multiValueLinearAssetService: MultiValueLinearAssetService = Digiroad2Context.multiValueLinearAssetService,
+                   val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback)
+  extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
@@ -209,10 +209,12 @@ extends ScalatraServlet
   }
 
   get("/user/roles") {
+    val user = userProvider.getCurrentUser()
     Map(
-      "roles" -> userProvider.getCurrentUser().configuration.roles,
-      "municipalities" -> userProvider.getCurrentUser().configuration.authorizedMunicipalities,
-      "areas" -> userProvider.getCurrentUser().configuration.authorizedAreas)
+      "username" -> user.username,
+      "roles" -> user.configuration.roles,
+      "municipalities" -> user.configuration.authorizedMunicipalities,
+      "areas" -> user.configuration.authorizedAreas)
   }
 
   get("/massTransitStops/:nationalId") {
@@ -239,10 +241,10 @@ extends ScalatraServlet
     }
   }
 
-/**
+  /**
   * Returns empty result as Json message, not as page not found
-*/
-    get("/massTransitStopsSafe/:nationalId") {
+  */
+  get("/massTransitStopsSafe/:nationalId") {
       val nationalId = params("nationalId").toLong
       val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
       massTransitStopReturned._1 match {
@@ -756,6 +758,17 @@ extends ScalatraServlet
 
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
+
+  post("/feedback"){
+    val body = extractFeedbackBody(parsedBody \ "body")
+    val user = userProvider.getCurrentUser()
+    applicationFeedback.insertApplicationFeedback(user.username, body)
+  }
+
+  private def extractFeedbackBody(value: JValue): FeedbackApplicationBody = {
+    value.extractOpt[FeedbackApplicationBody].map { x => FeedbackApplicationBody(x.feedbackType, x.headline, x.freeText, x.name, x.email, x.phoneNumber)}.get
+  }
+
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()

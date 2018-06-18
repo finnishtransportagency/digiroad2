@@ -555,6 +555,18 @@
       });
     };
 
+    this.sendFeedback = function (data, successCallback, errorCallback) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/feedback",
+        data: data,
+        dataType: "json",
+        success: successCallback,
+        error: errorCallback
+        });
+    };
+
     this.getGeocode = function(address) {
       return $.post("vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
     };
