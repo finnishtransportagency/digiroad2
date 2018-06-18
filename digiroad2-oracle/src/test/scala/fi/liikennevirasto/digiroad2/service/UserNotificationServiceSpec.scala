@@ -46,12 +46,10 @@ class UserNotificationServiceSpec extends FunSuite with Matchers {
         "pretium consequat sem. Nunc eget sem non purus tempus vehicula at a arcu. Integer condimentum, ligula sed vehicula aliquam, est " +
         "eros molestie lorem, ut aliquet risus velit a ligula.</p>"
 
-      val id1 = sql"""select notification_seq.nextval from dual""".as[Long].first
       sqlu"""insert into notification (id, heading, content)
-      values ( $id1, $header1,  $content1)""".execute
-      val id2 = sql"""select notification_seq.nextval from dual""".as[Long].first
+      values ( notification_seq.nextval, $header1,  $content1)""".execute
       sqlu"""insert into notification (id, created_date, heading, content)
-      values ( $id2, (sysdate - interval '1' month ), $header2,  $content2)""".execute
+      values ( notification_seq.nextval, (sysdate - interval '1' month ), $header2,  $content2)""".execute
 
       val userNotificationInfo = ServiceWithDao.getAllUserNotifications
       userNotificationInfo should have size 2

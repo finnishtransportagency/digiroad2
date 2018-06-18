@@ -370,6 +370,10 @@
       });
     };
 
+    this.getUserNotificationInfo = function () {
+      return $.getJSON('api/userNotification');
+    };
+
     this.getStartupParametersWithCallback = function(callback) {
       var url = 'api/startupParameters';
       $.getJSON(url, callback);

@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -22,6 +25,7 @@ import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
@@ -153,13 +157,23 @@ extends ScalatraServlet
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId)
 
-  get("/userNotification"){
-//    val user = userProvider.getCurrentUser()
+  get("/userNotification") {
+    val user = userProvider.getCurrentUser()
+
+    val updatedUser = user.copy(configuration = user.configuration.copy(lastNotificationDate = Some(LocalDate.now.toString)))
+    userProvider.updateUserConfiguration(updatedUser)
+
     userNotificationService.getAllUserNotifications.map { notification =>
+
       Map("id" -> notification.id,
-        "createDate" -> notification.createdDate,
+        "createdDate" -> notification.createdDate.toString(DatePropertyFormat),
         "heading" -> notification.heading,
-        "content" -> notification.content)
+        "content" -> notification.content,
+        "unRead" -> (user.configuration.lastNotificationDate match {
+          case Some(dateValue) if dateValue.compareTo(notification.createdDate.toString("dd-MM-yyyy")) < 0 => true
+          case _ => false
+        })
+      )
     }
   }
 

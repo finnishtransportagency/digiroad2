@@ -65,6 +65,55 @@
   background: rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), 0.6);
 }
 
+.modal-overlay.confirm-modal {
+
+  .notification {
+    width: 1170px;
+    margin-left: -5%;
+
+    nav {
+      float: left;
+      width: 20%;
+      background-color: #f1f1f1;
+      padding: 20px;
+      margin: 2% 2% 2% 2%;
+      border: 1px solid black;
+    }
+
+    nav ul {
+      list-style-type: none;
+      padding: 0;
+
+      li {
+        margin-bottom: 15px;
+      }
+    }
+
+    section:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+
+    article {
+      float: left;
+      padding: 20px;
+      width: 67%;
+      background-color: #f1f1f1;
+      margin-top: 2%;
+      border: 1px solid black;
+    }
+
+    @media (max-width: 600px) {
+      nav, article {
+        width: 100%;
+        height: auto;
+      }
+    }
+
+  }
+}
+
 //** Asset visibility info modal on zoom changes
 
 .digiroad2 {
