@@ -44,8 +44,8 @@ class VerificationServiceSpec extends FunSuite with Matchers {
            values ($id+3, 235, 60, sysdate, 'testuser')""".execute
 
       val verificationInfo = ServiceWithDao.getAssetTypesByMunicipality(235)
-      verificationInfo should have size 13
-      verificationInfo.filter(_.municipalityCode == 235) should have size 13
+      verificationInfo should have size 25
+      verificationInfo.filter(_.municipalityCode == 235) should have size 25
       verificationInfo.filter(_.verifiedBy.isDefined) should have size 4
       verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (true)
       verificationInfo.find(_.assetTypeCode == 40).map(_.verified).head should be (true)
@@ -64,6 +64,22 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       newVerification.head.verifiedBy should equal (Some("testuser"))
     }
   }
+  test("get point asset verification and check if it has count"){
+    runWithRollback {
+      ServiceWithDao.setAssetTypeVerification(235, Set(10), "testuser")
+      val newVerification = ServiceWithDao.getAssetVerification(235, 10)
+      newVerification.head.counter should not be None
+    }
+  }
+
+  test("get linear asset verification and check if doesn't have count "){
+    runWithRollback {
+      ServiceWithDao.setAssetTypeVerification(235, Set(120), "testuser")
+      val newVerification = ServiceWithDao.getAssetVerification(235, 120)
+      newVerification.head.counter should be (None)
+    }
+  }
+
 
   test("remove asset type verification") {
     runWithRollback {
@@ -98,7 +114,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   test("not update with wrong asset type") {
     runWithRollback {
       val thrown = intercept[IllegalStateException] {
-        ServiceWithDao.verifyAssetType(235, Set(110), "testuser")
+        ServiceWithDao.verifyAssetType(235, Set(150), "testuser")
       }
       thrown.getMessage should be("Asset type not allowed")
     }
@@ -107,7 +123,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   test("not insert with wrong asset type") {
     runWithRollback {
       val thrown = intercept[IllegalStateException] {
-        ServiceWithDao.setAssetTypeVerification(235, Set(110), "testuser")
+        ServiceWithDao.setAssetTypeVerification(235, Set(150), "testuser")
       }
       thrown.getMessage should be("Asset type not allowed")
     }

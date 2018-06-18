@@ -46,6 +46,22 @@
      return collection.getById(id);
     };
 
+    this.addSelection = function(linearAssets){
+      var partitioned = _.groupBy(linearAssets, isUnknown);
+      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      selection = selection.concat(existingLinearAssets.concat(unknownLinearAssets));
+    };
+
+    this.removeSelection = function(linearAssets){
+      selection = _.filter(selection, function(asset){
+        if(isUnknown(asset))
+          return !_.some(linearAssets, function(iasset){ return iasset.generatedId === asset.generatedId;});
+
+        return !_.some(linearAssets, function(iasset){ return iasset.id === asset.id;});
+      });
+    };
+
     this.openMultiple = function(linearAssets) {
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
@@ -63,6 +79,8 @@
     };
 
     this.closeMultiple = function() {
+      eventbus.trigger(singleElementEvent('unselect'), self);
+      collection.setSelection(null);
       selection = [];
     };
 
@@ -80,6 +98,8 @@
       };
       var backendOperation = _.isUndefined(value) ? backend.deleteLinearAssets : backend.createLinearAssets;
       backendOperation(payload, function() {
+        dirty = false;
+        self.closeMultiple();
         eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
         eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
@@ -133,7 +153,7 @@
     };
 
     this.isSplit = function() {
-      return !isSeparated && selection[0].id === null;
+      return !isSeparated && !_.isEmpty(selection[0]) && selection[0].id === null;
     };
 
     this.isSeparated = function() {
@@ -182,6 +202,7 @@
       } else {
         cancelExisting();
       }
+      self.close();
     };
 
     this.verify = function() {
@@ -201,12 +222,21 @@
       return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
     };
 
+    var getPropertyB = function(propertyName) {
+      return _.has(selection[1], propertyName) ? selection[1][propertyName] : null;
+    };
+
     this.getId = function() {
       return getProperty('id');
     };
 
     this.getValue = function() {
       var value = getProperty('value');
+      return _.isNull(value) ? undefined : value;
+    };
+
+    this.getBValue = function() {
+      var value = getPropertyB('value');
       return _.isNull(value) ? undefined : value;
     };
 
@@ -254,6 +284,12 @@
         dirty = true;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
+    };
+
+    this.setMultiValue = function(value) {
+        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
+        selection = collection.replaceSegments(selection, newGroup);
+        eventbus.trigger(multiElementEvent('valueChanged'), self);
     };
 
     function isValueDifferent(selection){
@@ -307,6 +343,10 @@
       self.setValue(undefined);
     };
 
+    this.removeMultiValue = function() {
+      self.setMultiValue();
+    };
+
     this.removeAValue = function() {
       self.setAValue(undefined);
     };
@@ -317,6 +357,11 @@
 
     this.isDirty = function() {
       return dirty;
+    };
+
+    this.setDirty = function(dirtyValue) {
+      dirty = dirtyValue;
+      eventbus.trigger(singleElementEvent('valueChanged'), self);
     };
 
     this.isSelected = function(linearAsset) {
@@ -359,53 +404,6 @@
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
 
-    this.requiredPropertiesMissing = function (formStructure) {
-
-      var requiredFields = _.filter(formStructure.fields, function(form) { return form.required; });
-
-      var assets = this.isSplitOrSeparated() ? _.filter(selection, function(asset){ return asset.value; }) : selection;
-
-      return !_.every(assets, function(asset){
-
-        return _.every(requiredFields, function(field){
-          if(!asset.value || _.isEmpty(asset.value))
-            return false;
-
-          var property  = _.find(asset.value.properties, function(p){ return p.publicId === field.publicId;});
-
-          if(!property)
-            return false;
-
-          if(_.isEmpty(property.values))
-            return false;
-
-          return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
-        });
-      });
-    };
-
-    this.isSplitOrSeparatedEqual = function(){
-      if(!this.isSplitOrSeparated()) return false;
-
-      if (_.filter(selection, function(p){return p.value;}).length <= 1)
-        return false;
-
-      return _.every(selection[0].value.properties, function(property){
-          var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
-          if(!iProperty)
-            return false;
-
-          return _.isEqual(property.values, iProperty.values);
-      });
-    };
-
-    this.hasValidValues = function () {
-       return isValid;
-    };
-
-    this.setValidValues = function (valid) {
-      isValid = valid;
-    };
 
   };
 })(this);

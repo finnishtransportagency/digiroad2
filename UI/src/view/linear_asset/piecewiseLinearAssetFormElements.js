@@ -38,16 +38,16 @@
     }
 
     function sideCodeMarker(sideCode) {
-      if (_.isUndefined(sideCode)) {
+      if (_.isEmpty(sideCode)) {
         return '';
       } else {
         return '<span class="marker">' + sideCode + '</span>';
       }
     }
 
-    function singleValueEditElement(currentValue, sideCode, input) {
-      var withoutValue = _.isUndefined(currentValue) ? 'checked' : '';
-      var withValue = _.isUndefined(currentValue) ? '' : 'checked';
+    function singleValueEditElement(currentValue, sideCode, input, id) {
+      var withoutValue = _.isNull(id) ? 'checked' : '';
+      var withValue = _.isNull(id) ? '' : 'checked';
       return '' +
         sideCodeMarker(sideCode) +
         '<div class="edit-control-group choice-group">' +
@@ -134,7 +134,7 @@
       return propertyValue ? propertyValue.title : value;
     }
 
-    function singleValueElement(measureInput, valueString, currentValue, sideCode) {
+    function singleValueElement(measureInput, valueString, currentValue, sideCode, id) {
       if(Array.isArray(currentValue)){
           return '' +
               '<div class="form-group editable form-editable-'+ className +'">' +
@@ -142,7 +142,7 @@
               ' <div class="form-control-static ' + className + '" style="display:none;">' +
                 obtainFormControl(className, valueString, currentValue, possibleValues)  +
               ' </div>' +
-                singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
+                singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, id), id) +
              '</div>';
 
       }else {
@@ -150,7 +150,7 @@
               '<div class="form-group editable form-editable-'+ className +'">' +
               '  <label class="control-label">' + editControlLabels.title + '</label>' +
               '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
-              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
+              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, id), id) +
               '</div>';
       }
     }
@@ -212,9 +212,9 @@
       return currentValue || '';
     }
 
-    function measureInput(currentValue, className) {
+    function measureInput(currentValue, className, possibleValues, id) {
       var value = currentValue ? currentValue : '';
-      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
+      var disabled = _.isNull(id) ? 'disabled' : '';
       return '' +
         '<div class="input-unit-combination input-group">' +
         '  <textarea class="form-control large-input ' + className + '" ' +

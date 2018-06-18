@@ -192,6 +192,16 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     s"[[$daySpec]*[(h${validityPeriod.startHour}){h${validityPeriod.duration()}}]]"
   }
 
+  def toTimeDomain(validityPeriod: ValidityPeriodValue): String = {
+    //Weekday: 0 ; Saturday: 1, ; Sunday: 2
+    val daySpec = validityPeriod.days match {
+      case 1 => "(t7){d1}"
+      case 2 => "(t1){d1}"
+      case _ => "(t2){d5}"
+    }
+    s"[[$daySpec]*[(h${validityPeriod.startHour}){h${ValidityPeriodValue.duration(validityPeriod.startHour, validityPeriod.startMinute, validityPeriod.endHour, validityPeriod.endMinute)}}]]"
+  }
+
   def toTimeDomainWithMinutes(validityPeriod: ValidityPeriod): String = {
     val daySpec = validityPeriod.days match {
       case Saturday => "(t7){d1}"
@@ -233,7 +243,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case DamagedByThaw.typeId => multiValueLinearAssetService
+        case DamagedByThaw.typeId | MassTransitLane.typeId =>  multiValueLinearAssetService
         case _ => linearAssetService
       }
     }
@@ -252,6 +262,32 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
         lastModifiedBy(asset.createdBy, asset.modifiedBy),
         "linkSource" -> asset.linkSource.value
+      )
+    }
+  }
+
+  def massTransitLanesToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
+    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+
+    val massTransitLanes: Seq[PieceWiseLinearAsset] = multiValueLinearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+
+    massTransitLanes.map { massTransitLane =>
+      Map("id" -> massTransitLane.id,
+        "points" -> massTransitLane.geometry,
+        geometryWKTForLinearAssets(massTransitLane.geometry),
+        "value" -> 1, //check if could be forced
+        "side_code" -> massTransitLane.sideCode.value,
+        "linkId" -> massTransitLane.linkId,
+        "startMeasure" -> massTransitLane.startMeasure,
+        "endMeasure" -> massTransitLane.endMeasure,
+        latestModificationTime(massTransitLane.createdDateTime, massTransitLane.modifiedDateTime),
+        lastModifiedBy(massTransitLane.createdBy, massTransitLane.modifiedBy),
+        "linkSource" -> massTransitLane.linkSource.value,
+        "validityPeriods" -> (massTransitLane.value match {
+          case Some(MultiValue(x)) => x.properties.flatMap(_.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).map(ValidityPeriodValue.fromMap).map {
+            a=> toTimeDomain(a)})
+          case _ => None
+        })
       )
     }
   }
@@ -540,14 +576,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
         case "hazardous_material_transport_prohibitions" => linearAssetsToApi(210, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
-        case "mass_transit_lanes" => linearAssetsToApi(160, municipalityNumber)
+        case "mass_transit_lanes" => massTransitLanesToApi(160, municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
         case "widths" => roadWidthToApi(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
         case "paved_roads" => linearAssetsToApi(110, municipalityNumber)
         case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(170, municipalityNumber)
-        case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
         case "european_roads" => linearAssetsToApi(260, municipalityNumber)
         case "exit_numbers" => linearAssetsToApi(270, municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkOTHService.withRoadAddress(roadLinkOTHService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))

@@ -26,20 +26,20 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(ids)
+      enrichPersistedLinearAssetProperties(multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(ids))
     }
   }
 
   override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(typeId, linkIds)
+      enrichPersistedLinearAssetProperties(multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(typeId, linkIds))
     }
   }
   override protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
-        multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds)
+        enrichPersistedLinearAssetProperties(multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds))
       }.filterNot(_.expired)
     existingAssets
   }
@@ -49,7 +49,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     val oldAsset =
       valueToUpdate match {
         case MultiValue(multiTypeProps) =>
-          multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(assetId)).head
+          enrichPersistedLinearAssetProperties(multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(assetId))).head
         case _ => return None
       }
 
@@ -58,7 +58,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
     //Create New Asset
     val newAssetIdCreated = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
+      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, fromUpdate = true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
 
     Some(newAssetIdCreated)
   }
@@ -95,7 +95,7 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
         val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
         val defaultValues = multiValueLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
-//        validateRequiredProperties(typeId, props)
+        validateRequiredProperties(typeId, props)
         multiValueLinearAssetDao.updateAssetProperties(id, props)
       case _ => None
     }
@@ -130,8 +130,8 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
-      val linearAsset = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
-      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linearAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val linearAsset = enrichPersistedLinearAssetProperties(multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id))).head
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linearAsset.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
@@ -149,10 +149,9 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
     }
   }
 
-
   override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
-      val existing = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id)).head
+      val existing = enrichPersistedLinearAssetProperties(multiValueLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(id))).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
@@ -179,5 +178,30 @@ class MultiValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBu
 
     if (missingProperties.nonEmpty)
       throw new MissingMandatoryPropertyException(missingProperties)
+  }
+
+  def enrichPersistedLinearAssetProperties(persistedLinearAsset: Seq[PersistedLinearAsset]) : Seq[PersistedLinearAsset] = {
+
+    val assetIds = persistedLinearAsset.map(_.id)
+
+    if (assetIds.nonEmpty) {
+      val properties = multiValueLinearAssetDao.getValidityPeriodPropertyValue(assetIds.toSet, persistedLinearAsset.head.typeId)
+      persistedLinearAsset.groupBy(_.id).flatMap {
+        case (id, assets) =>
+          properties.get(id) match {
+            case Some(props) => assets.map(a => a.copy(value = a.value match {
+              case Some(value) =>
+                val multiValue = value.asInstanceOf[MultiValue]
+                //If exist at least one property to enrich with value all null properties value could be filter out
+                Some(multiValue.copy(value = MultiAssetValue(multiValue.value.properties.filter(_.values.nonEmpty ) ++ props)))
+              case _ =>
+                Some(MultiValue(MultiAssetValue(props)))
+            }))
+            case _ => assets
+          }
+      }.toSeq
+    } else {
+      Seq.empty[PersistedLinearAsset]
+    }
   }
 }

@@ -81,7 +81,6 @@
     var date = fromDateString(dateElement.val());
 
     var dateCallback = function () {
-      datePickers.date.setDate(datePickers.date.getDate());
       dateElement.trigger('datechange');
     };
 
