@@ -88,9 +88,7 @@ window.UserNotificationPopup = function(models) {
          if (item.unRead)
            $('#' + item.id.toString()).addClass('bold');
        });
-
      });
-
   };
 
    this.createNotificationPopUp  = function(notifications) {

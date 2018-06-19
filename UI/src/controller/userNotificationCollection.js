@@ -7,9 +7,9 @@
       backend.getUserNotificationInfo().then(
         function (result) {
           notifications = result;
-            var sortedNotifications = _.sortByOrder(result, function (notification) {
-            return notification.createdDate;
-          }, 'asc');
+            var sortedNotifications = _.sortBy(result, function (notification) {
+            return new Date(notification.createdDate);
+          });
 
           if (_.some(result, function (item) { return item.unRead; }))
             eventbus.trigger('userNotification:fetched', sortedNotifications) ;
@@ -18,9 +18,9 @@
 
 
     this.fetchAll = function() {
-      return _.sortByOrder(notifications, function (notification) {
-        return notification.createdDate;
-      }, 'asc');
+      return _.sortBy(notifications, function (notification) {
+        return new Date(notification.createdDate);
+      });
     };
 
     this.setNotificationToRead = function(id) {

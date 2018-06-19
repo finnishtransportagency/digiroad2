@@ -203,7 +203,8 @@ object DataFixture {
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
       "insert_project_link_data.sql",
-      "kauniainen_maximum_x7_restrictions.sql"
+      "kauniainen_maximum_x7_restrictions.sql",
+      "user_notification_examples.sql"
     ))
   }
 

@@ -24,7 +24,7 @@ class UserNotificationDao {
     sql"""
        SELECT id, created_date, heading, content
        FROM notification
-       ORDER BY created_date
+       ORDER BY created_date DESC
       """.as[UserNotification].list
   }
 }

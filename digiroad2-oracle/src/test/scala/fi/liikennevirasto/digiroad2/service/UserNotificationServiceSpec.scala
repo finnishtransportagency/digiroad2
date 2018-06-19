@@ -26,19 +26,15 @@ class UserNotificationServiceSpec extends FunSuite with Matchers {
 
   test("get user notifications info"){
     runWithRollback {
-      val header1 = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit. - 1 -"
-      val content1 = "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi in porttitor orci, vel consectetur ante. " +
-        "Etiam nec mauris vel urna facilisis pretium. Nulla pulvinar pharetra finibus. Aenean eget molestie nibh. Nunc vitae nibh " +
-        "eget leo ultricies iaculis vel sed ligula. Morbi id sagittis nunc. Phasellus gravida, lacus quis maximus venenatis, nibh " +
-        "odio viverra nisi, ac vehicula dui lorem iaculis augue. Nulla at lacus lacus.</p>" +
-        "<p>Nulla tortor dui, eleifend et varius vitae, faucibus eget felis. Cras blandit volutpat posuere. Donec imperdiet tortor " +
-        "rutrum pellentesque luctus. Etiam leo tortor, congue in sodales at, cursus eget eros. Vivamus semper sodales lacus nec " +
-        "tristique. Cras eget ultricies felis. Morbi porttitor blandit metus ac pellentesque. Vivamus a dolor posuere, viverra elit " +
-        "a, bibendum urna. Aenean nec interdum nisi, sodales gravida nibh. Pellentesque pulvinar odio sit amet quam fermentum, at " +
-        "tempor massa sodales. Sed elementum nunc a nisl tincidunt suscipit. Morbi at turpis enim.</p>"
+      val headerFirst = "Regione expetenda vituperatoribus mei no. Ei nam summo iusto, timeam."
+      val contentFirst = "<p>Te velit mazim usu! Augue fierent ut vix, eu ius meis minim consequuntur. Tibique gubergren mnesarchum id sea? Cu aperiam maiestatis " +
+      "posidonium eam, posse libris dignissim nec an, sea summo erroribus ocurreret ex? Eripuit referrentur consectetuer usu in, pri id affert " +
+      "petentium accusamus!<//p><p>Duo no essent malorum theophrastus. Eos magna atqui an, duo congue putent tritani ea. At iudicabit torquatos " +
+      "est, ad duis solum suscipit mei! Epicuri accumsan vituperata in vix! Ut dicat offendit mea, novum consul vidisse sit at! Et est pertinax " +
+      "dissentiet, usu case delectus ex, ut animal tamquam usu. Graeco scriptorem cum ea.<//p>"
 
-      val header2 = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit. - 2 -"
-      val content2 = "<p>Sed facilisis lacus nec scelerisque tempus. Quisque bibendum pulvinar accumsan. Pellentesque habitant morbi " +
+      val headerLast = "'Pri te mediocrem adipiscing, est ea lobortis quaestio electram. Mea in dissentias reformidans signiferumque, no eam melius tincidunt. At nam."
+      val contentLast = "<p>Sed facilisis lacus nec scelerisque tempus. Quisque bibendum pulvinar accumsan. Pellentesque habitant morbi " +
         "tristique senectus et netus et malesuada fames ac turpis egestas. Praesent scelerisque egestas felis id tristique. Curabitur " +
         "bibendum faucibus est. Quisque ut pellentesque neque, a gravida purus. Duis eget condimentum eros. In bibendum mattis est " +
         "eu volutpat. Nam dignissim vestibulum nulla, ac commodo urna pulvinar vitae. Mauris eget augue suscipit, tempor tortor nec, " +
@@ -46,18 +42,12 @@ class UserNotificationServiceSpec extends FunSuite with Matchers {
         "pretium consequat sem. Nunc eget sem non purus tempus vehicula at a arcu. Integer condimentum, ligula sed vehicula aliquam, est " +
         "eros molestie lorem, ut aliquet risus velit a ligula.</p>"
 
-      sqlu"""insert into notification (id, heading, content)
-      values ( notification_seq.nextval, $header1,  $content1)""".execute
-      sqlu"""insert into notification (id, created_date, heading, content)
-      values ( notification_seq.nextval, (sysdate - interval '1' month ), $header2,  $content2)""".execute
-
       val userNotificationInfo = ServiceWithDao.getAllUserNotifications
-      userNotificationInfo should have size 2
-      userNotificationInfo.head.heading equals header2
-      userNotificationInfo.head.content equals  content2
-      userNotificationInfo.last.heading equals  header1
-      userNotificationInfo.last.content equals  content1
-
+      userNotificationInfo should have size 3
+      userNotificationInfo.head.heading equals headerFirst
+      userNotificationInfo.head.content equals headerFirst
+      userNotificationInfo.last.heading equals headerLast
+      userNotificationInfo.last.content equals contentLast
     }
   }
 }
