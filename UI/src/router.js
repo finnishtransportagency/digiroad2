@@ -135,6 +135,7 @@
         'heightLimit/:id': 'heightLimit',
         'lengthLimit/:id': 'lengthLimit',
         'widthLimit/:id': 'widthLimit',
+        'manoeuvres/:id': 'manoeuvres',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/speedLimit/state' : 'speedLimitStateWorkList',
         'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
@@ -227,6 +228,23 @@
          speedLimitCentering('speedLimit', id);
       },
 
+      // manoeuvres: function(id){
+      //   applicationModel.selectLayer('manoeuvre');
+      //   backend.getManoeuvreById(id, function (manoeuvre) {
+      //       backend.getRoadLinkByLinkId(manoeuvre.elements[1].sourceLinkId, function (response) {
+      //           if (response.success) {
+      //               mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+      //               eventbus.once('manoeuvres:fetched', function () {
+      //                   models.selectedManoeuvreSource.open(response.id);
+      //                   eventbus.once('manoeuvres:selected', function () {
+      //                       models.selectedManoeuvreSource.cancel();
+      //                   });
+      //               });
+      //           }
+      //       });
+      //   });
+      // },
+
       pedestrianCrossings: function (id) {
         applicationModel.selectLayer('pedestrianCrossings');
         backend.getPointAssetById(id, 'pedestrianCrossings').then(function (result) {
@@ -299,13 +317,13 @@
           });
       },
 
-      // trWeightLimits: function (id) {
-      //   applicationModel.selectLayer('trWeightLimits');
-      //   backend.getPointAssetById(id, 'groupedPointAssets').then(function (result) {
-      //       mapCenterAndZoom(result[0].lon, result[0].lat, 12);
-      //       models.selectedGroupPointAsset.open(result);
-      //   });
-      // },
+      trWeightLimits: function (id) {
+        applicationModel.selectLayer('trWeightLimits');
+        backend.getPointAssetById(id, 'groupedPointAssets').then(function (result) {
+            mapCenterAndZoom(result[0].lon, result[0].lat, 12);
+            models.selectedGroupPointAsset.open(result[0]);
+        });
+      },
 
       speedLimitWorkList: function () {
         eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());

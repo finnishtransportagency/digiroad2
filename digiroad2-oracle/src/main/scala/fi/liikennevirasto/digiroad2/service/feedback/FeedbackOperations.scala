@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.feedback
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.AssetTypeInfo
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.{Email, EmailOperations}
 import fi.liikennevirasto.digiroad2.dao.feedback.FeedbackDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -134,22 +134,28 @@ class FeedbackDataService extends FeedbackOperations {
   def directLink: String = getProperty("digiroad2.feedbackAssetsEndPoint")
 
   override def stringifyBody(username: String, body: FeedbackBody): String = {
+    val ids = body.assetId.getOrElse(Seq.empty[Long]).mkString(",")
+    val linkIds = body.linkId.getOrElse(Seq.empty[Long]).mkString(",")
+
+
     val url = body.typeId match {
-      case Some(id) =>
-        {body.assetId.flatMap(_.headOption)} match {
+
+      case Some(id) if id == TrTrailerTruckWeightLimit.typeId || TrBogieWeightLimit.typeId  == id || TrAxleWeightLimit.typeId == id || TrWeightLimit.typeId == id =>
+        s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$ids>#${AssetTypeInfo.apply(id).layerName}/$ids</a>"""
+
+      case Some(id) => {body.assetId.flatMap(_.headOption)} match {
           case Some(assetId) => s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$assetId>#${AssetTypeInfo.apply(id).layerName}/$assetId</a>"""
           case _ => ""
-        }
-      case _ =>
-        body.linkId.flatMap(_.headOption) match {
+      }
+      case _ => body.linkId.flatMap(_.headOption) match {
           case Some(linkId) => s"""<a href=$directLink#linkProperty/$linkId>linkProperty/$linkId</a>"""
           case _ => ""
-        }
+      }
     }
 
     s"""<br>
-    <b>Linkin id: </b> ${body.linkId.getOrElse(Seq.empty[Long]).mkString(",")} <br>
-    <b>Kohteen id: </b> ${body.assetId.getOrElse(Seq.empty[Long]).mkString(",")} <br>
+    <b>Linkin id: </b> $linkIds <br>
+    <b>Kohteen id: </b> $ids <br>
     <b>Tietolaji: </b> ${body.assetName.getOrElse("-")} <br>
     <b>Palautteen tyyppi: </b> ${body.feedbackDataType.getOrElse("-")} <br>
     <b>K-tunnus: </b> $username <br>

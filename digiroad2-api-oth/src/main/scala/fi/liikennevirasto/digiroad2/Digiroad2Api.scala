@@ -1297,6 +1297,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+//  get("/manoeuvres/:id") {
+//    manoeuvreService.find(params("id").toLong)
+//  }
+
   post("/manoeuvres") {
     val user = userProvider.getCurrentUser()
     val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[NewManoeuvre]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
@@ -1409,7 +1413,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/servicePoints/:id")(getServicePointsById)
 
   get("/groupedPointAssets")(getGroupedPointAssets)
-//  get("/groupedPointAssets/:id")(getGroupedPointAssetsById)
+  get("/groupedPointAssets/:id")(getGroupedPointAssetsById)
 
 
   private def getServicePoints: Set[ServicePoint] = {
@@ -1429,9 +1433,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     pointMassLimitationService.getByBoundingBox(user,bbox)
   }
 
-//  private def getGroupedPointAssetsById: Seq[MassLimitationPointAsset] = {
-//    pointMassLimitationService.getById(params("id").toLong)
-//  }
+  private def getGroupedPointAssetsById: Seq[MassLimitationPointAsset] = {
+    pointMassLimitationService.getByIds(params("id").split(",").map(_.toLong))
+  }
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
