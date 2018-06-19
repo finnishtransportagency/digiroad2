@@ -4,7 +4,7 @@ VALUES (notification_seq.nextval, 'Regione expetenda vituperatoribus mei no. Ei 
 'posidonium eam, posse libris dignissim nec an, sea summo erroribus ocurreret ex? Eripuit referrentur consectetuer usu in, pri id affert ' ||
 'petentium accusamus!<//p><p>Duo no essent malorum theophrastus. Eos magna atqui an, duo congue putent tritani ea. At iudicabit torquatos ' ||
 'est, ad duis solum suscipit mei! Epicuri accumsan vituperata in vix! Ut dicat offendit mea, novum consul vidisse sit at! Et est pertinax ' ||
-'dissentiet, usu case delectus ex, ut animal tamquam usu. Graeco scriptorem cum ea.<//p>')
+'dissentiet, usu case delectus ex, ut animal tamquam usu. Graeco scriptorem cum ea.<//p>');
 
 
 INSERT INTO NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
@@ -15,7 +15,7 @@ VALUES ( notification_seq.nextval, (sysdate - interval '1' month ),
 'expetenda interesset has cu. Nam in dicunt sapientem reformidans, vide cotidieque vix no? Cum nulla populo noluisse ea, oratio causae in per. ' ||
 'Suas aliquam ea nec, vis ex admodum torquatos conclusionemque.<//p><p>Ne pri tollit voluptaria consetetur, nam id illum doctus. Fabellas ' ||
 'expetenda reprimique his at. Sea facilis indoctum eu. Rebum labore discere eam cu. Cum cu accusam contentiones? Meis epicurei ut qui, usu ' ||
-'insolens liberavisse id.<//p>')
+'insolens liberavisse id.<//p>');
 
 INSERT INTO NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
 VALUES ( notification_seq.nextval, (sysdate - interval '1' day ),
@@ -30,4 +30,4 @@ VALUES ( notification_seq.nextval, (sysdate - interval '1' day ),
 'Eum aperiam fuisset ne? No errem libris sea, quo ne sonet tamquam dolorem? Ut animal atomorum sapientem nec? Duis falli duo ei, vel ne splendide maiestatis! ' ||
 '<//p><p>Nam ex quaeque commune aliquando, augue accommodare te quo? Semper similique qui id, vim eu aliquam salutandi efficiantur, audire abhorreant ' ||
 'dissentiet ne usu! Alterum facilis te mea, mel cu singulis intellegat. Falli euripidis ex quo, eu choro possim facilisi eam.<//p><p>Ne primis tamquam ' ||
-'invidunt per! Nonumes adolescens eam et. No liber comprehensam nec, et his justo nihil munere.<//p>'
+'invidunt per! Nonumes adolescens eam et. No liber comprehensam nec, et his justo nihil munere.<//p>');
