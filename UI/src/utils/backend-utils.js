@@ -52,6 +52,12 @@
       };
     });
 
+    this.getManoeuvreById = createCallbackRequestor(function(id) {
+        return {
+            url: 'api/manoeuvres/' + id
+        };
+    });
+
     this.updateManoeuvreDetails = function(details, success, failure) {
       $.ajax({
         contentType: "application/json",

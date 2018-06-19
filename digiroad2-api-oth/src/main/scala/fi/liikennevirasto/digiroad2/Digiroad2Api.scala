@@ -1297,9 +1297,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-//  get("/manoeuvres/:id") {
-//    manoeuvreService.find(params("id").toLong)
-//  }
+  get("/manoeuvres/:id") {
+    manoeuvreService.find(params("id").toLong)
+  }
 
   post("/manoeuvres") {
     val user = userProvider.getCurrentUser()

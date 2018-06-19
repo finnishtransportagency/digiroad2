@@ -395,6 +395,15 @@
       indicatorLayer.setZIndex(1000);
     };
 
+    function applySelection(roadLink) {
+      if (selectedManoeuvreSource.exists()) {
+        var feature = _.filter(roadLayer.layer.getSource().getFeatures(), function(feature) { return roadLink.linkId === feature.getProperties().linkId; });
+        if (feature) {
+          selectControl.addSelectionFeatures(feature);
+        }
+      }
+    }
+
     /**
      * Sets up manoeuvre visualization when manoeuvre source road link is selected.
      * Fetches adjacent links. Visualizes source link and its one way sign. Fetches first target links of manoeuvres starting from source link.
@@ -403,6 +412,7 @@
      * @param roadLink
      */
     var handleManoeuvreSourceLinkSelected = function(roadLink) {
+      applySelection(roadLink);
       indicatorLayer.getSource().clear();
       var aLinks = adjacentLinks(roadLink);
       var tLinks = nonAdjacentTargetLinks(roadLink);

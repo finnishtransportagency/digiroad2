@@ -228,22 +228,19 @@
          speedLimitCentering('speedLimit', id);
       },
 
-      // manoeuvres: function(id){
-      //   applicationModel.selectLayer('manoeuvre');
-      //   backend.getManoeuvreById(id, function (manoeuvre) {
-      //       backend.getRoadLinkByLinkId(manoeuvre.elements[1].sourceLinkId, function (response) {
-      //           if (response.success) {
-      //               mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
-      //               eventbus.once('manoeuvres:fetched', function () {
-      //                   models.selectedManoeuvreSource.open(response.id);
-      //                   eventbus.once('manoeuvres:selected', function () {
-      //                       models.selectedManoeuvreSource.cancel();
-      //                   });
-      //               });
-      //           }
-      //       });
-      //   });
-      // },
+      manoeuvres: function(id){
+        applicationModel.selectLayer('manoeuvre');
+        backend.getManoeuvreById(id, function (manoeuvre) {
+            backend.getRoadLinkByLinkId(manoeuvre.elements[1].sourceLinkId, function (response) {
+                if (response.success) {
+                    mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+                    eventbus.once('manoeuvres:fetched', function () {
+                        models.selectedManoeuvreSource.open(response.id);
+                    });
+                }
+            });
+        });
+      },
 
       pedestrianCrossings: function (id) {
         applicationModel.selectLayer('pedestrianCrossings');

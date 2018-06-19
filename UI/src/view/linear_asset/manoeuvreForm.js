@@ -171,6 +171,9 @@
 
       // Listen to road link selection on map
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
+        if(!_.isEmpty(roadLink.manoeuvres))
+          eventbus.trigger('manoeuvres:selectedAvailable');
+
         roadLink.modifiedBy = roadLink.modifiedBy || '-';
         roadLink.modifiedAt = roadLink.modifiedAt || '';
         rootElement.html(_.template(templateWithHeaderAndFooter)(roadLink));

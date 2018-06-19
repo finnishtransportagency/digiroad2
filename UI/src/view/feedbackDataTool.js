@@ -71,7 +71,7 @@
 
             eventbus.on(events('unselect'), me.closeFeedback);
 
-            eventbus.on('manoeuvres:selected manoeuvres:cancelled',me.initFeedback);
+            eventbus.on('manoeuvres:selectedAvailable',me.initFeedback);
 
             eventbus.on('manoeuvres:unselected', me.closeFeedback);
 
