@@ -82,7 +82,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
-      val speedLimits = provider.split(200097, 100, 50, 60, "test", (_, _) => Unit)
+      val speedLimits = provider.split(200097, 100, 50, 60, "test", (_, _) => Unit).sortBy(_.id)
 
       val existing = speedLimits(0)
       val created = speedLimits(1)
