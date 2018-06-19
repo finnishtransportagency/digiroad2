@@ -4,7 +4,6 @@ window.UserNotificationPopup = function(models) {
 
   this.initialize = function() {
     eventbus.on('userNotification:fetched', function(result) {
-
         renderDialog(result);
     });
 
@@ -22,16 +21,19 @@ window.UserNotificationPopup = function(models) {
 
   var leftList = function(notifications, selectedItem) {
     return  _.map(notifications, function(item) {
-      var bold = item.unRead ? 'bold' : '';
-      var selected = _.isEqual(selectedItem, item.id) ? 'seleted' : '';
+      var classInfo = _.isEqual(selectedItem, item.id) ? 'selected' : item.unRead ? 'bold' : '';
 
       return '' +
-      '<li id=' + item.id + ' class="' + bold + selected +'">' +
+      '<li id=' + item.id + ' class="' + classInfo +'">' +
         '<div>' + item.createdDate + '</div>' +
         '<div>' + item.heading + '</div>' +
       '</li>';
       }).join(' ');
   };
+
+  $('#userNotification').on('click', function() {
+      renderDialog(models.fetchAll());
+  });
 
   var contentText = function(notifications, selectedItem) {
 
@@ -52,7 +54,8 @@ window.UserNotificationPopup = function(models) {
       return notification.unRead;
     });
 
-    var defaultSelectedItem = someSelectedItem ? someSelectedItem : _.first(notifications).id;
+    var defaultSelectedItem = someSelectedItem ? someSelectedItem.id : _.first(notifications).id;
+    models.setNotificationToRead(defaultSelectedItem.toString());
 
     return '' +
       '<section>' +
@@ -75,7 +78,17 @@ window.UserNotificationPopup = function(models) {
      });
 
      $('.leftListIds li').click(function() {
-        $('article').html(contentText(notifications, this.id));
+        var allNotification = models.fetchAll();
+        models.setNotificationToRead(this.id);
+        $(".leftListIds>li").removeClass("selected").removeClass("bold");
+        $('article').html(contentText(allNotification, this.id));
+
+       $('#' + this.id.toString()).addClass('selected');
+       _.forEach(allNotification, function(item) {
+         if (item.unRead)
+           $('#' + item.id.toString()).addClass('bold');
+       });
+
      });
 
   };

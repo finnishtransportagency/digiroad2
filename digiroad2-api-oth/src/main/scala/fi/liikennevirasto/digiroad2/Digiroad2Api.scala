@@ -170,8 +170,8 @@ extends ScalatraServlet
         "heading" -> notification.heading,
         "content" -> notification.content,
         "unRead" -> (user.configuration.lastNotificationDate match {
-          case Some(dateValue) if dateValue.compareTo(notification.createdDate.toString("dd-MM-yyyy")) < 0 => true
-          case _ => false
+          case Some(dateValue) if dateValue.compareTo(notification.createdDate.toString("dd-MM-yyyy")) > 0 => false
+          case _ => true
         })
       )
     }

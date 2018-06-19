@@ -67,22 +67,35 @@
 
 .modal-overlay.confirm-modal {
 
+  .selected {
+    font-weight: bold;
+    font-size: 13px;
+  }
+
+  .bold {
+    font-weight: bold;
+  }
+
   .notification {
-    width: 1170px;
+    width: 35vw;
     margin-left: -5%;
+    max-height: 80vh;
 
     nav {
       float: left;
       width: 20%;
-      background-color: #f1f1f1;
-      padding: 20px;
-      margin: 2% 2% 2% 2%;
+      padding: 10px;
+      margin: 2% 2% 0 2%;
       border: 1px solid black;
+      color: @blue-light;
+      display: flex;
+      height: 47vh;
     }
 
     nav ul {
       list-style-type: none;
       padding: 0;
+      overflow-y: auto;
 
       li {
         margin-bottom: 15px;
@@ -97,20 +110,15 @@
 
     article {
       float: left;
-      padding: 20px;
+      padding: 10px;
       width: 67%;
       background-color: #f1f1f1;
       margin-top: 2%;
       border: 1px solid black;
+      flex: auto;
+      height: 47vh;
+      overflow-y: auto;
     }
-
-    @media (max-width: 600px) {
-      nav, article {
-        width: 100%;
-        height: auto;
-      }
-    }
-
   }
 }
 
