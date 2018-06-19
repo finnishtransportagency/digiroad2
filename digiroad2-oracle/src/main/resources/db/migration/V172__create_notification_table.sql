@@ -2,7 +2,7 @@ create table notification
 (
   id number primary key,
   created_date DATE default sysdate,
-  heading varchar2(128),
+  heading varchar2(256),
   content varchar2(4000)
 );
 

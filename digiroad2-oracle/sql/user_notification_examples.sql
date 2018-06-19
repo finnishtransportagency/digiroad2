@@ -21,7 +21,7 @@ INSERT INTO NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
 VALUES ( notification_seq.nextval, (sysdate - interval '1' day ),
 'Eum solum fuisset at, amet verear ut mea! Ea eam noster oblique, mel id illum praesent, audire probatus splendide id est. Qui augue sensibus ' ||
 'deterruisset cu, ea dissentiunt complectitur usu.',
-'Pri te mediocrem adipiscing, est ea lobortis quaestio electram. Mea in dissentias reformidans signiferumque, no eam melius tincidunt. At nam.',
+'Pri te mediocrem adipiscing, est ea lobortis quaestio electram. Mea in dissentias reformidans signiferumque, no eam melius tincidunt. At nam.' ||
 '<p>Noster postulant mel no, et mel novum timeam admodum. An his case soleat, qui at facer senserit! Vel elitr dicant facilisi ne? Homero recteque ' ||
 'efficiantur an sea, fugit postea voluptaria est ut. Nominavi invidunt inimicus ius cu, est quas doctus evertitur in, cu brute cetero dissentias sea. ' ||
 '<//p><p>Ad eos velit semper inciderint, solum nusquam patrioque mel ex. Sit eu ubique equidem, vis in choro virtute postulant. Eu sit tale doctus ' ||

@@ -32,7 +32,9 @@ window.UserNotificationPopup = function(models) {
   };
 
   $('#userNotification').on('click', function() {
-      renderDialog(models.fetchAll());
+    var notification =  models.fetchAll();
+    if (!_.isEmpty(notification))
+      renderDialog(notification);
   });
 
   var contentText = function(notifications, selectedItem) {
