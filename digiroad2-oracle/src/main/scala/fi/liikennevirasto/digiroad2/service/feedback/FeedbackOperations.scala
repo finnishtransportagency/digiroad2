@@ -143,6 +143,9 @@ class FeedbackDataService extends FeedbackOperations {
       case Some(id) if id == TrTrailerTruckWeightLimit.typeId || TrBogieWeightLimit.typeId  == id || TrAxleWeightLimit.typeId == id || TrWeightLimit.typeId == id =>
         s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$ids>#${AssetTypeInfo.apply(id).layerName}/$ids</a>"""
 
+      case Some(id) if id == Manoeuvres.typeId=>
+        s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$linkIds>#${AssetTypeInfo.apply(id).layerName}/$linkIds</a>"""
+
       case Some(id) => {body.assetId.flatMap(_.headOption)} match {
           case Some(assetId) => s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$assetId>#${AssetTypeInfo.apply(id).layerName}/$assetId</a>"""
           case _ => ""

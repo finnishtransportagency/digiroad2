@@ -228,10 +228,9 @@
          speedLimitCentering('speedLimit', id);
       },
 
-      manoeuvres: function(id){
+      manoeuvres: function(linkId){
         applicationModel.selectLayer('manoeuvre');
-        backend.getManoeuvreById(id, function (manoeuvre) {
-            backend.getRoadLinkByLinkId(manoeuvre.elements[1].sourceLinkId, function (response) {
+            backend.getRoadLinkByLinkId(linkId, function (response) {
                 if (response.success) {
                     mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
                     eventbus.once('manoeuvres:fetched', function () {
@@ -239,7 +238,6 @@
                     });
                 }
             });
-        });
       },
 
       pedestrianCrossings: function (id) {
