@@ -1585,7 +1585,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/dashBoardInfo/assetLatestModifications") {
     val municipalityId = params("municipalityCode").toInt
-    val modifiedAssetTypes = verificationService.getAssetLatestModificationsByMunicipality()
+    val modifiedAssetTypes = verificationService.getAssetLatestModifications()
     modifiedAssetTypes.groupBy(_.assetTypeName)
       .mapValues(
         _.map(assetType =>

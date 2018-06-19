@@ -319,6 +319,7 @@ object AssetTypeInfo {
     values.find(_.toString == stringValue).getOrElse(UnknownAssetTypeId)
   }
 }
+case object MassTransitStopAsset extends AssetTypeInfo { val typeId = 10; def geometryType = "point"; val label = "MassTransitStop" }
 case object SpeedLimitAsset extends AssetTypeInfo { val typeId = 20; def geometryType = "linear"; val label = "SpeedLimit" }
 case object TotalWeightLimit extends AssetTypeInfo { val typeId = 30; def geometryType = "linear"; val label = "TotalWeightLimit" }
 case object TrailerTruckWeightLimit extends AssetTypeInfo { val typeId = 40; def geometryType = "linear"; val label = "TrailerTruckWeightLimit" }
@@ -347,7 +348,7 @@ case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryTy
 case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label =  ""}
 case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = "" }
 case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""}
-case object Manoeuvres extends AssetTypeInfo { val typeId = 999; def geometryType = "linear"; val label = "Manoeuvre" }
+case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryType = "linear"; val label = "Manoeuvre" }
 case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit" }
 case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""}
 case object TrWidthLimit extends  AssetTypeInfo {val typeId = 370; def geometryType = "point"; val label = "TrWidthLimit"}
