@@ -134,20 +134,21 @@ class VerificationDao {
   def getModifiedAssetTypes() = {
     val modifiedAssetTypes =
       sql"""
-           SELECT
-           	A.ASSET_TYPE_ID,
-           	ATYPE.NAME,
-           	A.MODIFIED_BY,
-           	A.MODIFIED_DATE
-           FROM
-           	ASSET A,
-           	ASSET_TYPE ATYPE
-           WHERE
-           	A.ASSET_TYPE_ID = ATYPE.ID
-           	AND A.MODIFIED_DATE IS NOT NULL
-           	AND ROWNUM < 5
-           ORDER BY
-           	A.MODIFIED_DATE DESC""".as[(Int, String, Option[String], Option[DateTime])].list
+           SELECT * FROM (
+           		SELECT
+                      	A.ASSET_TYPE_ID,
+                      	ATYPE.NAME,
+                      	A.MODIFIED_BY,
+                      	A.MODIFIED_DATE
+                      FROM
+                      	ASSET A,
+                      	ASSET_TYPE ATYPE
+                      WHERE
+                      	A.ASSET_TYPE_ID = ATYPE.ID
+                      	AND A.MODIFIED_DATE IS NOT NULL
+                      ORDER BY
+                      	A.MODIFIED_DATE DESC)
+           WHERE ROWNUM <= 4""".as[(Int, String, Option[String], Option[DateTime])].list
 
     modifiedAssetTypes.map { case (assetTypeCode, assetTypeName, modifiedBy, modifiedDate) =>
       LatestModificationInfo(assetTypeCode, assetTypeName, modifiedBy, modifiedDate)

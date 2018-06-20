@@ -128,4 +128,57 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       thrown.getMessage should be("Asset type not allowed")
     }
   }
+
+  test("get critical asset types info"){
+    runWithRollback {
+      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id, 235, 10, (sysdate - interval '1' year), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+1, 235, 20, (sysdate - interval '23' month), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+2, 235, 30, (sysdate - interval '2' year), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+3, 235, 190, sysdate, 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+4, 235, 380, (sysdate - interval '20' month), 'testuser')""".execute
+
+      val verificationInfo = ServiceWithDao.getCriticalAssetTypesByMunicipality(235)
+      verificationInfo should have size 5
+      verificationInfo.filter(_.municipalityCode == 235) should have size 5
+      verificationInfo.filter(_.verifiedBy.isDefined) should have size 5
+      verificationInfo.find(_.assetTypeCode == 10).map(_.verified).head should be (true)
+      verificationInfo.find(_.assetTypeCode == 20).map(_.verified).head should be (true)
+      verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (false)
+      verificationInfo.find(_.assetTypeCode == 190).map(_.verified).head should be (true)
+      verificationInfo.find(_.assetTypeCode == 380).map(_.verified).head should be (true)
+      verificationInfo.filter(info => Set(10,20,30,190,380).contains(info.assetTypeCode)).map(_.verifiedBy) should have size 5
+      verificationInfo.filter(info => Set(10,20,30,190,380).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
+    }
+  }
+
+  test("get assets Latests Modifications"){
+    runWithRollback {
+      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+            values ($id, 100, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+            values ($id+1, 30, TO_TIMESTAMP('2016-02-19 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+            values ($id+2, 50, TO_TIMESTAMP('2016-02-21 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+            values ($id+3, 70, TO_TIMESTAMP('2016-02-21 15:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+            values ($id+4, 70, TO_TIMESTAMP('2016-02-21 15:33:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+            values ($id+5, 90, TO_TIMESTAMP('2016-02-23 15:33:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
+
+
+      val latestModificationInfo = ServiceWithDao.getAssetLatestModifications()
+      latestModificationInfo should have size 4
+      latestModificationInfo.head.assetTypeCode should be (90)
+      latestModificationInfo.last.assetTypeCode should be (50)
+    }
+  }
 }
