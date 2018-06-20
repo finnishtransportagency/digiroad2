@@ -218,6 +218,14 @@ root.LinearAssetLayer  = function(params) {
     onSelect: onSelect
   });
 
+  this.getSelectToolControl = function() {
+    return selectToolControl;
+  };
+
+  this.getVectorSource = function() {
+    return vectorSource;
+  };
+
   var showDialog = function (linearAssets) {
       linearAssets = _.filter(linearAssets, function(asset){
           return asset && !(asset.geometry instanceof ol.geom.Point) && authorizationPolicy.formEditModeAccess(asset);

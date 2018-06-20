@@ -9,6 +9,8 @@
     var winterCareClass = 'hoitoluokat_talvihoitoluokka';
     var overlayAssets = [20, 30, 40, 50, 60, 70];
     var winterStyle = true;
+    var selectToolControl = me.getSelectToolControl();
+    var vectorSource = me.getVectorSource();
 
     var valueExists = function(asset, publicId) {
       return !_.isUndefined(asset.value) && !emptyValues(asset, publicId);
@@ -74,17 +76,17 @@
       return lineFeatures(style.getNewFeatureProperties(linearAssets)).concat(me.renderOverlays(linearAssets)).concat(pointFeatures(linearAssets));
     };
 
-    this.drawLinearAssets = function(linearAssets, vectorSource) {
+    this.drawLinearAssets = function(linearAssets) {
       vectorSource.addFeatures(me.renderFeatures(linearAssets));
     };
 
-    this.highlightMultipleLinearAssetFeatures = function(selectToolControl) {
+    this.highlightMultipleLinearAssetFeatures = function() {
       var selectedAssets = selectedLinearAsset.get();
       var features = me.renderFeatures(selectedAssets);
       selectToolControl.addSelectionFeatures(features);
     };
 
-    this.decorateSelection = function (selectToolControl) {
+    this.decorateSelection = function () {
       if (selectedLinearAsset.exists()) {
         var features = me.renderFeatures(selectedLinearAsset.get());
         selectToolControl.addSelectionFeatures(features);
