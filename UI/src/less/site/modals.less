@@ -77,19 +77,19 @@
   }
 
   .notification {
-    width: 35vw;
-    margin-left: -5%;
-    max-height: 80vh;
+    width: 750px;
+    margin: auto;
+    max-height: 576px;;
 
     nav {
       float: left;
       width: 24%;
-      padding: 10px;
-      margin: 2% 2% 0 2%;
+      padding-left: 10px;
+      margin: 10px 10px 0 12px;
       border: 1px solid black;
       color: @blue-light;
       display: flex;
-      height: 47vh;
+      height: 476px;
     }
 
     nav ul {
@@ -97,9 +97,13 @@
       padding: 0;
       overflow-y: auto;
       padding-right: 12px;
+      margin: 0;
 
       li {
         margin-bottom: 15px;
+      }
+      li:first-child {
+        margin-top: 15px;
       }
     }
 
@@ -112,12 +116,12 @@
     article {
       float: left;
       padding: 10px;
-      width: 63%;
+      width: 67%;
       background-color: #f1f1f1;
-      margin-top: 2%;
+      margin-top: 10px;
       border: 1px solid black;
       flex: auto;
-      height: 47vh;
+      height: 456px;
       overflow-y: auto;
     }
   }
