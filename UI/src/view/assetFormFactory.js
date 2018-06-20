@@ -221,10 +221,6 @@
       var value = _.head(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
 
-      // var defaultValue = field.defaultValue;
-      // if(defaultValue && !value)
-      //   _value = defaultValue;
-
       var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
       var printValue = _.isUndefined(someValue) ? _value : someValue.label;
 

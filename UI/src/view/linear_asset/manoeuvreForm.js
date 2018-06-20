@@ -319,7 +319,7 @@
         rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvreToEliminate = manoeuvreData($(event.delegateTarget));
-          if (eventTarget.prop('checked') === true) {
+          if (eventTarget.prop('checked')) {
             selectedManoeuvreSource.removeManoeuvre(manoeuvreToEliminate);
             rootElement.find('.manoeuvre-details input[class!="checkbox-remove"], .manoeuvre-details select, .manoeuvre-details button').attr('disabled', true);
           } else {
