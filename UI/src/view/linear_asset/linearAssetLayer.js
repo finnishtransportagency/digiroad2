@@ -199,7 +199,7 @@ root.LinearAssetLayer  = function(params) {
   var verifyClickEvent = function(properties, evt){
     var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
     selectedLinearAsset.open(properties, singleLinkSelect);
-    me.highlightMultipleLinearAssetFeatures(selectToolControl);
+    me.highlightMultipleLinearAssetFeatures();
   };
 
   this.highlightMultipleLinearAssetFeatures = function() {
@@ -344,7 +344,7 @@ root.LinearAssetLayer  = function(params) {
   };
   
   var linearAssetSelected = function(){
-      me.decorateSelection(selectToolControl);
+      me.decorateSelection();
   };
 
   var handleLinearAssetSaved = function() {
@@ -357,7 +357,7 @@ root.LinearAssetLayer  = function(params) {
     selectToolControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-    me.decorateSelection(selectToolControl);
+    me.decorateSelection();
   };
 
   var refreshReadOnlyLayer = function () {
@@ -476,7 +476,7 @@ root.LinearAssetLayer  = function(params) {
     vectorSource.clear();
     indicatorLayer.getSource().clear();
     var linearAssets = _.flatten(linearAssetChains);
-      me.decorateSelection(selectToolControl);
+      me.decorateSelection();
       me.drawLinearAssets(linearAssets, vectorSource);
   };
 
