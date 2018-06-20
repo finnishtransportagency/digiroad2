@@ -1309,13 +1309,15 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val longEndAddressMValue = 500L
       val middleStartAddressMValue = 100L
       val middleEndAddressMValue = 300L
-      val greenAssetValue = DynamicProperty("hoitoluokat_viherhoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(DynamicPropertyValue(4)))
-      val winterAssetValue = DynamicProperty("hoitoluokat_talvihoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(DynamicPropertyValue(1)))
-      val middleWinterAssetValue = DynamicProperty("hoitoluokat_talvihoitoluokka", PropertyTypes.SingleChoice, required = false, Seq(DynamicPropertyValue(5)))
+      val greenAssetValue = 4
+      val greenAssetPublicId = "hoitoluokat_viherhoitoluokka"
+      val winterAssetPublicId = "hoitoluokat_talvihoitoluokka"
+      val winterAssetValue = 1
+      val middleWinterAssetValue = 5
 
-      val winterAsset = TierekisteriWinterCareClassAssetData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, shortStartAddressMValue, shortEndAddressMValue, winterAssetValue)
-      val middleWinterAsset = TierekisteriWinterCareClassAssetData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, middleStartAddressMValue, middleEndAddressMValue, middleWinterAssetValue)
-      val greenAsset = TierekisteriGreenCareClassAssetData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, longStartAddressMValue, longEndAddressMValue, greenAssetValue)
+      val winterAsset = TierekisteriWinterCareClassAssetData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, shortStartAddressMValue, shortEndAddressMValue, winterAssetValue, winterAssetPublicId)
+      val middleWinterAsset = TierekisteriWinterCareClassAssetData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, middleStartAddressMValue, middleEndAddressMValue, middleWinterAssetValue, winterAssetPublicId)
+      val greenAsset = TierekisteriGreenCareClassAssetData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, longStartAddressMValue, longEndAddressMValue, greenAssetValue, greenAssetPublicId)
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, longStartAddressMValue, longEndAddressMValue, None, None, 1L, 5002, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5002, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
