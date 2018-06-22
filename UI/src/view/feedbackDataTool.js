@@ -24,9 +24,10 @@
 
         var renderFeedbackLink = function (enable) {
             var infoContent = $('#information-content');
-            if (enable && allowFeedBack() )
-                infoContent.html('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
-            else {
+            if (enable && allowFeedBack() ) {
+              if (!infoContent.find('#feedback-data').length)
+                infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
+            }else {
                 infoContent.find('#feedback-data').remove();
             }
 
@@ -91,6 +92,8 @@
             eventbus.on('asset:modified', me.initFeedback);
 
             eventbus.on('asset:closed', me.closeFeedback);
+
+            eventbus.on('closeFeedBackData', me.closeFeedback);
         };
 
         var bindEvents = function (selectedData) {

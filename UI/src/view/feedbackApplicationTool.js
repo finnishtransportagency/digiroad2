@@ -2,6 +2,7 @@
    root.FeedbackApplicationTool = function (authorizationPolicy, collection) {
 
        var initialize = function(){
+            eventbus.trigger('closeFeedBackData');
            purge();
            renderConfirmDialog();
            $('#kidentifier').text(authorizationPolicy.username);
