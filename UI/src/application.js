@@ -65,8 +65,6 @@
       manoeuvresCollection: manoeuvresCollection
     };
 
-    //var feedbackDataTool = new FeedbackDataTool(feedbackCollection, selectedLinkProperty);
-
     bindEvents(enabledLinearAssetSpecs, assetConfiguration.pointAssetsConfig);
     window.massTransitStopsCollection = new MassTransitStopsCollection(backend);
     window.selectedMassTransitStopModel = selectedMassTransitStopModel;

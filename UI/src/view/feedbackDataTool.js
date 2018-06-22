@@ -18,11 +18,15 @@
             return _.map(arguments, function(argument) { return me.eventCategory + ':' + argument; }).join(' ');
         }
 
+        var allowFeedBack = function () {
+          return _.contains(['manoeuvre', 'linkProperty'], me.layerName) || applicationModel.getSelectedTool() === 'Select' && !_.isEmpty(me.collection.get().assetId);
+        };
+
         var renderFeedbackLink = function (enable) {
             var infoContent = $('#information-content');
-            if (enable && !infoContent.find('#feedback-data').length)
-                infoContent.append('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
-            else if(!enable) {
+            if (enable && allowFeedBack() )
+                infoContent.html('<a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a>');
+            else {
                 infoContent.find('#feedback-data').remove();
             }
 
@@ -47,7 +51,8 @@
         };
 
         this.initFeedback = function(){
-            renderFeedbackLink(true);
+            if (applicationModel.getSelectedLayer() === me.layerName)
+                renderFeedbackLink(true);
         };
 
         var applicationListeners = function(){
@@ -95,15 +100,20 @@
             });
 
             $('.feedback-modal .save').on('click', function() {
-                addSpinner();
                 applicationModel.setApplicationkState('normal');
-                var values = $(".form-horizontal").serializeArray();
+                var formElements = $(this).closest('.modal-dialog').find('.form-horizontal');
+                var values = formElements.serializeArray();
                 values.push(
                         {name: 'linkId',    value:  selectedData.linkId},
                         {name: 'assetId',   value : selectedData.assetId },
                         {name: 'assetName', value : selectedData.title},
-                        {name: 'typeId',    value : selectedData.typeId});
+                        {name: 'typeId',    value : selectedData.typeId},
+                        {name: 'freeText',  value: $('#freetext').html()});
+
+              if (formElements.valid()) {
+                addSpinner();
                 me.collection.sendFeedbackData(values);
+              }
             });
 
             $(' .feedback-modal .sulje').on('click', function() {
@@ -144,46 +154,59 @@
 
         var userEditableFields = function(){
             return $(
-                     '<label class="control-label">Nimi</label>' +
-                     '<input type="text" name="name" class="form-control">' +
-
-                     '<label class="control-label">Sähköposti</label>' +
-                     '<input type="text" name="email" class="form-control">' +
-
-                     '<label class="control-label">Puhelinnumero</label>' +
-                     '<input type="text" name="phoneNumber" id="phoneNumber" class="form-control">');
-
+              '<div class="form-element">' +
+                '<label class="control-label">Nimi</label>' +
+                '<input type="text" name="name" class="form-control">' +
+              '</div>' +
+              '<div class="form-element">' +
+                '<label class="control-label">Sähköposti</label>' +
+                '<input type="email" name="email" class="form-control">' +
+              '</div>' +
+              '<div class="form-element">' +
+                '<label class="control-label">Puhelinnumero</label>' +
+                '<input type="tel" name="phoneNumber" id="phoneNumber" class="form-control">' +
+              '</div>');
         };
 
         var createFeedbackForm = function(selectedAsset, layer) {
 
-
            var  dialog =  $('<div class="feedback-modal" id="feedbackData">' +
                         '<div class="modal-dialog">' +
                             '<div class="content">Anna palautetta kohteesta<a class="header-link sulje"">X</a>' + '</div>' +
-                            '<form class="form form-horizontal" role="form"">' +
+                            '<form class="form form-horizontal" role="form">' +
                             '<div class="form-group" id="feedbackForm">' +
+                                '<div class="form-element">' +
+                                    '<label class="control-label">Linkin id</label>' +
+                                    '<span id="linkId" ></span>'+
+                                '</div>' +
 
-                                '<label class="control-label">Linkin id</label>' +
-                                '<label id="linkId" ></label>'+
+                                '<div class="form-element">' +
+                                    '<label class="control-label">Kohteen id</label>' +
+                                    '<span id="assetId" ></span>'+
+                                '</div>' +
 
-                                '<label class="control-label">Kohteen id</label>' +
-                                '<label id="assetId" ></label>'+
+                                '<div class="form-element">' +
+                                    '<label class="control-label">Tietolaji</label>' +
+                                    '<span id="assetName"></span>'+
+                                '</div>' +
 
-                                '<label class="control-label">Tietolaji</label>' +
-                                '<label id="assetName"></label>'+
+                                '<div class="form-element">' +
+                                    '<label class="control-label" id="feedbackType">Palautteen tyyppi</label>' +
+                                    '<select  name="feedbackDataType" id ="feedbackDataType" class="form-control">'+
+                                        '<option value="Geometriapalaute">Geometriapalaute </option>'+
+                                        '<option value="Aineistopalaute">Aineistopalaute</option>'+
+                                    '</select>' +
+                                '</div>' +
 
-                                '<label class="control-label" id="feedbackType">Palautteen tyyppi</label>' +
-                                '<select name="feedbackDataType" id ="feedbackDataType" class="form-control">'+
-                                    '<option value="Geometriapalaute">Geometriapalaute </option>'+
-                                    '<option value="Aineistopalaute">Aineistopalaute</option>'+
-                                '</select>' +
+                                '<div class="form-element">' +
+                                    '<label class="control-label">Palaute</label>' +
+                                    '<div contenteditable="true" id="freetext" class="form-control"></div>'+
+                                '</div>' +
 
-                                '<label class="control-label">Palaute</label>' +
-                                '<textarea name="freeText" id="freetext" class="form-control"></textarea>'+
-
-                                '<label class="control-label">K-tunnus</label>' +
-                                '<label id="kidentifier"></label>'+
+                                '<div class="form-element">' +
+                                    '<label class="control-label">K-tunnus</label>' +
+                                    '<span id="kidentifier"></span>'+
+                                '</div>' +
                             '</div>' +
                             '</form>' +
                             '<div class="actions">' +
