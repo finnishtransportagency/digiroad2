@@ -27,6 +27,12 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
+  def getCriticalAssetVerification(municipalityCode: Int, assetTypeIds: Seq[Int]): Seq[VerificationInfo] = {
+    withDynSession {
+      dao.getCriticalAssetVerification(municipalityCode, assetTypeIds)
+    }
+  }
+
   def getAssetVerificationById(id: Long, assetTypeId: Int): Option[VerificationInfo] = {
     withDynSession {
       dao.getAssetVerificationById(id)
@@ -88,9 +94,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
         Manoeuvres.typeId
       )
 
-    criticalAssetTypes.flatMap { id =>
-      getAssetVerification(municipalityCode, id)
-    }.toList
+      getCriticalAssetVerification(municipalityCode, criticalAssetTypes).toList
   }
 
   def getAssetLatestModifications(): List[LatestModificationInfo] = {

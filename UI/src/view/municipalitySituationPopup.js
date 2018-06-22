@@ -50,7 +50,7 @@ window.MunicipalitySituationPopup = function (models) {
 
         var verificationTableContentRows = function (values) {
             renameAssets(values);
-            values = _.first(sortAssets(values));
+            values = sortAssets(values);
             return "<tbody>" +
                 _.map(values, function (asset) {
                     return '' +

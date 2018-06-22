@@ -1571,15 +1571,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/dashBoardInfo/:municipalityCode/criticalAssetTypes") {
     val municipalityId = params("municipalityCode").toInt
     val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalityId)
-    verifiedAssetTypes.groupBy(_.municipalityName)
-      .mapValues(
-        _.map(assetType =>
-          Map(
-            "typeId" -> assetType.assetTypeCode,
-            "assetName" -> assetType.assetTypeName,
-            "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-            "verified_by" -> assetType.verifiedBy.getOrElse("")
-          )))
+
+    verifiedAssetTypes.map(assetType =>
+      Map(
+        "typeId" -> assetType.assetTypeCode,
+        "assetName" -> assetType.assetTypeName,
+        "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+        "verified_by" -> assetType.verifiedBy.getOrElse("")
+      ))
   }
 
 
