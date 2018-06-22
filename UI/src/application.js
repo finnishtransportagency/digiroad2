@@ -16,6 +16,7 @@
     var enabledExperimentalAssets = isExperimental ? assetConfiguration.experimentalAssetsConfig : [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
     var authorizationPolicy = new AuthorizationPolicy();
+    var municipalitySituationCollection = new MunicipalitySituationCollection(backend);
     new FeedbackTool(authorizationPolicy, feedbackCollection);
 
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
@@ -60,7 +61,8 @@
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
-      manoeuvresCollection: manoeuvresCollection
+      manoeuvresCollection: manoeuvresCollection,
+      municipalitySituationCollection: municipalitySituationCollection
     };
 
     bindEvents(enabledLinearAssetSpecs, assetConfiguration.pointAssetsConfig);
@@ -117,6 +119,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
+    new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
 
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
@@ -183,7 +186,7 @@
     });
 
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched municipality:verified ' + fetchedEventNames, function() {
+    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched verificationInfoCriticalAssets:fetched municipality:verified ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 
