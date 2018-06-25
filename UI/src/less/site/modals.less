@@ -151,10 +151,15 @@
     width: 100%;
   }
 
-  .error {
-    margin-left: 123px;
-    color: red;
+  .form-element {
+    > #phoneNumber-error,
+    > #email-error {
+      margin-left: 123px;
+    }
+
+    .error { color: red;}
   }
+
   .control-label{
     width: 110px;
     margin-right: 10px;
