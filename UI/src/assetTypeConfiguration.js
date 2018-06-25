@@ -543,7 +543,7 @@
                 enabled: 'Hoitoluokka',
                 disabled: 'Ei hoitoluokkaa'
             },
-            form: new AssetFormFactory({
+            form: new DynamicAssetForm({
                     fields : [
                         {
                             label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka", defaultValue: "20",
