@@ -559,11 +559,7 @@
         {name: 'text', field: new TextualField(assetTypeConfiguration)},
         {name: 'checkbox', field: new CheckboxField(assetTypeConfiguration)},
         {name: 'read_only_number', field: new ReadOnlyFields(assetTypeConfiguration)},
-        {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)},
-        {name: 'hidden_read_only_number', field: new HiddenReadOnlyFields(assetTypeConfiguration)},
-
-
-
+        {name: 'read_only_text', field: new ReadOnlyFields(assetTypeConfiguration)}
       ];
 
       var fieldGroupElement = $('<div class = "input-unit-combination" >');
@@ -585,7 +581,7 @@
 
     me.renderForm = function (selectedAsset) {
       var assetTypeConfiguration = _assetTypeConfiguration;
-      var isReadOnly =  validateAdministrativeClass(selectedAsset, assetTypeConfiguration.authorizationPolicy) || applicationModel.isReadOnly();
+      var isReadOnly =  validateAdministrativeClass(selectedAsset, assetTypeConfiguration.editConstrains) || applicationModel.isReadOnly();
       var asset = selectedAsset.get();
 
       var created = createBody(selectedAsset);
@@ -773,14 +769,15 @@
         else {
           values = [];
           if(type === 'checkbox' && !$element.prop('checked')) {}
-          else if(!_.isEmpty($element.val())) values.push({ value : $element.val() });
+          else values.push({ value : $element.val() });
 
-          value.properties.push({
-            publicId: $element.attr('name'),
-            propertyType:  $element.attr('fieldType'),
-            required : $element.attr('required'),
-            values: values
-          });
+          if(required || !_.isEmpty(values))
+            value.properties.push({
+              publicId: $element.attr('name'),
+              propertyType:  $element.attr('fieldType'),
+              required : $element.attr('required'),
+              values: values
+            });
         }
       });
       return value;
@@ -800,9 +797,11 @@
       return sideCode ? _assetTypeConfiguration.className + '-' + sideCode : _assetTypeConfiguration.className;
     }
 
-    function validateAdministrativeClass(selectedLinearAsset, authorizationPolicy){
+    function validateAdministrativeClass(selectedLinearAsset, editConstrains){
+      editConstrains = editConstrains || function() { return false; };
+
       var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
-        return !authorizationPolicy.formEditModeAccess(selected);
+        return editConstrains(selected);
       });
       return !_.isEmpty(selectedAssets);
     }

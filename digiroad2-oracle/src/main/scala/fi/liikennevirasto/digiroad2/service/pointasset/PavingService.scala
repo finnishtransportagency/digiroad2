@@ -102,7 +102,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
           if (assets.isEmpty)
             Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0,
               GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false,
-              LinearAssetTypes.PavingAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None))
+              LinearAssetTypes.PavingAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, None))
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
               (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
@@ -167,7 +167,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
     }
   }
 
-  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
+  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -191,7 +191,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
 
   override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                          createdByFromUpdate: Option[String] = Some(""),
-                                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None): Long = {
+                                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate)
     value match {
@@ -202,7 +202,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
     id
   }
 
-  override protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int]): Option[Long] = {
+  override protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int], informationSource: Option[Int] = None): Option[Long] = {
     //Get Old Asset
     val oldAsset =
     valueToUpdate match {

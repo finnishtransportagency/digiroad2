@@ -12,6 +12,12 @@ class MunicipalityDao {
     """.as[Int].list
   }
 
+  def getMunicipalitiesInfo: Seq[(Int, String)] = {
+    sql"""
+      select id, name_fi from municipality
+    """.as[(Int, String)].list
+  }
+
   def getMunicipalityNameByCode(id: Int): String = {
     sql"""
       select name_fi from municipality where id = $id""".as[String].first

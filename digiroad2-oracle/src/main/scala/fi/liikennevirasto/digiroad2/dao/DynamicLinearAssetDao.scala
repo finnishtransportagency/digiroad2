@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -16,7 +16,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: DynamicPropertyRow,
                            startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                            modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean, typeId: Int,
-                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime])
+                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int])
 
 class DynamicLinearAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
@@ -35,7 +35,7 @@ class DynamicLinearAssetDao {
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
-               pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date
+               pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -45,7 +45,7 @@ class DynamicLinearAssetDao {
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
-          left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and (p.property_type = 'date')
+          left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
@@ -57,7 +57,7 @@ class DynamicLinearAssetDao {
 
       id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
         createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  vvhTimeStamp = row.vvhTimeStamp,
-        geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate)
+        geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate, informationSource = row.informationSource.map(info => InformationSource.apply(info)))
     }.values.toSeq
   }
 
@@ -74,7 +74,7 @@ class DynamicLinearAssetDao {
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
-               pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date
+               pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -84,7 +84,7 @@ class DynamicLinearAssetDao {
                       left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
                       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
-                      left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and (p.property_type = 'date')
+                      left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.floating = 0 """.as[DynamicAssetRow].list
     }
@@ -94,23 +94,9 @@ class DynamicLinearAssetDao {
 
       id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
         createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId, vvhTimeStamp = row.vvhTimeStamp,
-        geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate)
+        geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate, row.informationSource.map(info => InformationSource.apply(info)))
     }.values.toSeq
   }
-
-  //TODO never used, check if is suppose to use it
-//  private def queryToPersistedLinearAssets(query: String): Seq[PersistedLinearAsset] = {
-//    val rows = Q.queryNA[DynamicAssetRow](query).iterator.toSeq
-//
-//    rows.groupBy(_.id).map { case (id, assetRows) =>
-//      val row = assetRows.head
-//      val value: DynamicAssetValue = DynamicAssetValue(assetRowToProperty(assetRows))
-//
-//      id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
-//        createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  vvhTimeStamp = row.vvhTimeStamp,
-//        geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate)
-//    }.values.toSeq
-//  }
 
   def assetRowToProperty(assetRows: Iterable[DynamicAssetRow]): Seq[DynamicProperty] = {
     assetRows.groupBy(_.value.publicId).map { case (key, rows) =>
@@ -153,18 +139,16 @@ class DynamicLinearAssetDao {
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean
       val typeId = r.nextInt()
-
-
       val vvhTimeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val informationSource = r.nextIntOption()
 
-      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate)
+      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
     }
   }
-
 
   def propertyDefaultValues(assetTypeId: Long): List[DynamicProperty] = {
     implicit val getDefaultValue = new GetResult[DynamicProperty] {
@@ -239,16 +223,27 @@ class DynamicLinearAssetDao {
         }
 
       case Date =>
-        val formatter = ISODateTimeFormat.dateOptionalTimeParser()
-
+        val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
         if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteDateProperty(assetId, propertyId).execute
         } else if (datePropertyValueDoesNotExist(assetId, propertyId)) {
-          insertDateProperty(assetId, propertyId, formatter.parseDateTime(propertyValues.head.value.toString)).execute
+          insertDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.value.toString)).execute
         } else {
-          updateDateProperty(assetId, propertyId, formatter.parseDateTime(propertyValues.head.value.toString)).execute
+          updateDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.value.toString)).execute
         }
+
+      case TimePeriod =>
+        if(validityPeriodPropertyValueExist(assetId: Long, propertyId: Long)) {
+          deleteValidityPeriodProperty(assetId, propertyId).execute
+        }
+
+        if (propertyValues.nonEmpty) {
+          propertyValues.distinct.foreach { propertyValue =>
+                var validityPeriodValue = propertyValue.value.asInstanceOf[Map[String, Any]]
+                insertValidityPeriodProperty(assetId, propertyId, ValidityPeriodValue.fromMap(validityPeriodValue)).execute
+            }
+          }
 
       case ReadOnly | ReadOnlyNumber | ReadOnlyText =>
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
@@ -263,6 +258,10 @@ class DynamicLinearAssetDao {
 
   private def datePropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
     Q.query[(Long, Long), Long](existsDateProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def validityPeriodPropertyValueExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsValidityPeriodProperty).apply((assetId, propertyId)).firstOption.nonEmpty
   }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
@@ -327,5 +326,45 @@ class DynamicLinearAssetDao {
     requiredProperties
   }
 
+
+  def getValidityPeriodPropertyValue(ids: Set[Long], typeId: Int) : Map[Long, Seq[MultiTypeProperty]] = {
+    val assets = MassQuery.withIds (ids) {
+      idTableName =>
+        sql"""
+          select vpp.asset_id, p.public_id, p.property_type, p.required, vpp.period_week_day, vpp.start_hour, vpp.end_hour, vpp.start_minute, vpp.end_minute, vpp.type
+          from validity_period_property_value vpp
+          join property p on p.asset_type_id = $typeId and p.property_type = 'time_period'
+          join #$idTableName i on i.id = vpp.asset_id
+          where vpp.property_id = p.id
+        """.as[ValidityPeriodRow].list
+    }
+    assets.groupBy(_.assetId).mapValues{ assetGroup =>
+      assetGroup.groupBy(_.publicId).map { case (_, values) =>
+        val row = values.head
+        MultiTypeProperty(row.publicId, row.propertyType, row.required, values.map(_.value))
+      }.toSeq
+    }
+  }
+
+  case  class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: MultiTypePropertyValue )
+
+  implicit val getValidityPeriodRow = new GetResult[ValidityPeriodRow] {
+    def apply(r: PositionedResult) = {
+      val assetId = r.nextLong
+      val publicId = r.nextString
+      val propertyType = r.nextString
+      val required = r.nextBoolean
+      val value =
+        Map("days" -> r.nextInt,
+          "startHour" -> r.nextInt,
+          "endHour" -> r.nextInt,
+          "startMinute" -> r.nextInt,
+          "endMinute" -> r.nextInt,
+          "periodType" -> r.nextIntOption
+      )
+
+      ValidityPeriodRow(assetId, publicId, propertyType, required, MultiTypePropertyValue(value))
+    }
+  }
 }
 

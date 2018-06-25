@@ -84,6 +84,6 @@ object LinearAssetUtils {
       endMeasure = persisted.endMeasure, endpoints = Set(), modifiedBy = persisted.modifiedBy, modifiedDateTime = persisted.modifiedDateTime,
       createdBy = persisted.createdBy, createdDateTime = persisted.createdDateTime, typeId = persisted.typeId,
       trafficDirection = TrafficDirection.UnknownDirection, vvhTimeStamp = persisted.vvhTimeStamp, geomModifiedDate = persisted.geomModifiedDate,
-      linkSource = persisted.linkSource, administrativeClass = Unknown, verifiedBy = persisted.verifiedBy, verifiedDate = persisted.verifiedDate)
+      linkSource = persisted.linkSource, administrativeClass = Unknown, verifiedBy = persisted.verifiedBy, verifiedDate = persisted.verifiedDate, informationSource = persisted.informationSource)
   }
 }

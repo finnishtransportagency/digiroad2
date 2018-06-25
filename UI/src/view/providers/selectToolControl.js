@@ -1,18 +1,22 @@
 (function(root) {
-    root.SelectToolControl = function(application, layer, map, options) {
+    root.SelectToolControl = function(application, layer, map, isMultipleLinkSelectionAllowed, options) {
 
         var mapDoubleClickEventKey;
         var enabled = false;
         var initialized = false;
         var isPolygonActive = false;
         var isRectangleActive = false;
+        var multiSelectInitialized = false;
 
         var settings = _.extend({
             onDragStart: function(){},
             onInteractionEnd: function(){},
             onSelect: function() {},
+            onClose: function() {},
+            onMultipleSelect: function() {},
             style: function(){},
             enableSelect: function(){ return true; },
+            enableBoxSelect: function(){ return false; },
             backgroundOpacity: 0.15,
             draggable : true,
             filterGeometry : function(feature){
@@ -22,7 +26,7 @@
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
-            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event); }
+            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) && settings.enableBoxSelect(); }
         });
 
         var drawInteraction = new ol.interaction.Draw({
@@ -41,7 +45,7 @@
         var selectInteraction = new ol.interaction.Select({
             layers: [layer],
             condition: function(events){
-                return !isPolygonActive && !isRectangleActive && enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
+                return !isPolygonActive && !isRectangleActive && enabled && !ol.events.condition.platformModifierKeyOnly(events) && (ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
             style: settings.style,
             filter : settings.filterGeometry
@@ -54,6 +58,20 @@
             var extent = dragBoxInteraction.getGeometry().getExtent();
             interactionEnd(extent);
         });
+
+        var multiSelectInteraction = new ol.interaction.Select({
+            layers: [layer],
+            condition: function (events) {
+                return enabled && ol.events.condition.click(events) && isMultipleLinkSelectionAllowed && ol.events.condition.platformModifierKeyOnly(events) && !application.isReadOnly();
+            },
+            toggleCondition: function (events) {
+                return true;
+            },
+            style: settings.style,
+            filter : settings.filterGeometry
+        });
+
+        multiSelectInteraction.set('name', layer.get('name'));
 
         function interactionEnd(extent) {
             var selectedFeatures = [];
@@ -83,20 +101,41 @@
         });
 
         selectInteraction.on('select',  function(evt){
-            if(evt.selected.length > 0 && settings.enableSelect(evt))
-                unhighlightLayer();
-            else
-                highlightLayer();
-
+            if(evt.selected.length > 0 && settings.enableSelect(evt)){
+              unhighlightLayer();
+            }
+            else {
+              highlightLayer();
+            }
             settings.onSelect(evt);
         });
 
+        multiSelectInteraction.on('select', function (evt) {
+            if (evt.selected.length > 0 && settings.enableSelect(evt)) {
+                multiSelectInitialized = true;
+                settings.onClose();
+                unhighlightLayer();
+            }
+            settings.onMultipleSelect(evt);
+        });
+
+        $(window).keyup(function (evt) {
+          if (!ol.events.condition.platformModifierKeyOnly(evt) && multiSelectInitialized && enabled) {
+            var properties = _.map(multiSelectInteraction.getFeatures().getArray(), function(feature) { return feature.getProperties(); }).concat(_.map(selectInteraction.getFeatures().getArray(), function(feature) { return feature.getProperties(); }));
+
+            clear();
+            multiSelectInitialized = false;
+            map.addInteraction(selectInteraction);
+            settings.onInteractionEnd(properties);
+          }
+        });
+
         var toggleDragBox = function() {
-          if (!application.isReadOnly() && enabled && settings.draggable) {
+          if (!application.isReadOnly() && enabled && settings.draggable && settings.enableBoxSelect()) {
             destroyDragBoxInteraction();
             map.addInteraction(dragBoxInteraction);
           } else {
-            if ((!settings.draggable && enabled) || application.isReadOnly())
+            if ((!settings.draggable && enabled) || application.isReadOnly() || !settings.enableBoxSelect())
               destroyDragBoxInteraction();
           }
         };
@@ -130,6 +169,7 @@
 
             if(!initialized){
                 map.addInteraction(selectInteraction);
+                map.addInteraction(multiSelectInteraction);
                 initialized = true;
             }
             mapDoubleClickEventKey = map.on('dblclick', function () {
@@ -177,13 +217,19 @@
 
         var clear = function(){
             selectInteraction.getFeatures().clear();
+            multiSelectInteraction.getFeatures().clear();
             highlightLayer();
         };
 
         var removeFeatures = function (match) {
-            _.each(selectInteraction.getFeatures().getArray(), function(feature){
-                if(match(feature)) {
+            var selectInteractionFeatures = selectInteraction.getFeatures().getArray();
+            var multiSelectInteractionFeatures = multiSelectInteraction.getFeatures().getArray();
+            var featuresToRemove = selectInteractionFeatures.concat(multiSelectInteractionFeatures);
+
+            _.each(featuresToRemove, function (feature) {
+                if (match(feature)) {
                     selectInteraction.getFeatures().remove(feature);
+                    multiSelectInteraction.getFeatures().remove(feature);
                 }
             });
         };
@@ -195,6 +241,9 @@
 
         var addNewFeature = function (features, highlightLayer) {
             _.each(features, function(feature){
+              if(multiSelectInitialized)
+                multiSelectInteraction.getFeatures().push(feature);
+              else
                 selectInteraction.getFeatures().push(feature);
             });
 
