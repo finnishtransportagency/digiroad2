@@ -631,100 +631,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Check the correct return of a ViiteRoadLink By Municipality") {
-    val municipalityId = 235
-    val linkId = 2l
-    val roadLink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
-
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    val service = new TestService(mockVVHClient)
-
-    OracleDatabase.withDynTransaction {
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
-
-      val viiteRoadLinks = service.getViiteRoadLinksFromVVHByMunicipality(municipalityId)
-
-      viiteRoadLinks.length > 0 should be (true)
-      viiteRoadLinks.head.isInstanceOf[RoadLink] should be (true)
-      viiteRoadLinks.head.linkId should be(linkId)
-      viiteRoadLinks.head.municipalityCode should be (municipalityId)
-    }
-  }
-
-  test("Verify if there are roadlinks from the complimentary geometry") {
-    val municipalityId = 235
-    val linkId = 2l
-    val roadLink: VVHRoadlink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-    val service = new TestService(mockVVHClient)
-
-    OracleDatabase.withDynTransaction {
-      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink)))
-
-      val roadLinksList = service.getComplementaryRoadLinksFromVVH(boundingBox, Set.empty)
-
-      roadLinksList.length > 0 should be(true)
-      roadLinksList.head.isInstanceOf[RoadLink] should be(true)
-      roadLinksList.head.linkId should be(linkId)
-      roadLinksList.head.municipalityCode should be(municipalityId)
-    }
-  }
-
-  test("Full municipality request includes both complementary and ordinary geometries") {
-    val municipalityId = 235
-    val linkId = Seq(1l, 2l)
-    val roadLinks = linkId.map(id =>
-      new VVHRoadlink(id, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
-    )
-    val linkIdComp = Seq(3l, 4l)
-    val roadLinksComp = linkIdComp.map(id =>
-      new VVHRoadlink(id, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SUBTYPE" -> BigInt(3)))
-    )
-
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-    val service = new TestService(mockVVHClient)
-
-    OracleDatabase.withDynTransaction {
-      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHComplementaryClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
-      when(mockVVHRoadLinkClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinks))
-
-      val roadLinksList = service.getViiteCurrentAndComplementaryRoadLinksFromVVH(235, Seq())
-
-      roadLinksList should have length (4)
-      roadLinksList.filter(_.attributes.contains("SUBTYPE")) should have length(2)
-    }
-  }
-
-  test("Verify the returning of the correct VVHHistoryRoadLink"){
-    val municipalityId = 235
-    val linkId = 1234
-    val firstRoadLink = new VVHHistoryRoadLink(linkId, municipalityId, Seq.empty, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, 0, 100, attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SUBTYPE" -> BigInt(3)))
-    val secondRoadLink = new VVHHistoryRoadLink(linkId, municipalityId, Seq.empty, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, 0, 1000, attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SUBTYPE" -> BigInt(3)))
-
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHHistoryClient = MockitoSugar.mock[VVHHistoryClient]
-    val service = new TestService(mockVVHClient)
-
-    OracleDatabase.withDynTransaction {
-      when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
-      when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIdsF(any[Set[Long]])).thenReturn(Future(Seq(firstRoadLink, secondRoadLink)))
-      val serviceResult = service.getViiteRoadLinksHistoryFromVVH(Set[Long](linkId))
-      serviceResult.length should be (1)
-      serviceResult.head.linkId should be (linkId)
-      serviceResult.head.endDate should be (1000)
-    }
-  }
-
   test("Only road links with construction type 'in use' should be saved to incomplete_link table (not 'under construction' or 'planned')") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -909,28 +815,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       changedVVHRoadlinks.head.value should be(attributes.get("ROADNAME_SE").get.toString)
       changedVVHRoadlinks.head.createdAt should be(Some(DateTime.parse("2015-10-29T15:34:02.000Z")))
       changedVVHRoadlinks.head.changeType should be("Modify")
-    }
-  }
-
-  test("verify the output of change info") {
-    val oldLinkId = 1l
-    val newLinkId = 2l
-    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000)
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
-    val service = new TestService(mockVVHClient)
-    OracleDatabase.withDynTransaction {
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
-      val returnedChangeInfo = service.getChangeInfoFromVVH(boundingBox, Set())
-
-      returnedChangeInfo.size should be (1)
-      returnedChangeInfo.head.oldId.get should be(oldLinkId)
-      returnedChangeInfo.head.newId.get should be(newLinkId)
-      returnedChangeInfo.head.mmlId should be(123l)
     }
   }
 
