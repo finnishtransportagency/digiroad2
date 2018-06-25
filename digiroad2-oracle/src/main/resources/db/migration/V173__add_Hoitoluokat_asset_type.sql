@@ -1,5 +1,5 @@
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
-VALUES (380, 'Hoitoluokat', 'linear', 'db_migration_v165');
+VALUES (390, 'Hoitoluokat', 'linear', 'db_migration_v165');
 
 -- Talvihoitoluokka
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)

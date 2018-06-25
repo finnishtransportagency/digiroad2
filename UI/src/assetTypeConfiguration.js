@@ -38,8 +38,8 @@
       trBogieWeightLimits: 350,
       trHeightLimits: 360,
       trWidthLimits: 370,
-      careClass: 380,
-      manoeuvre: 390
+      manoeuvre: 380,
+      careClass: 390
     };
 
     var assetGroups = {
