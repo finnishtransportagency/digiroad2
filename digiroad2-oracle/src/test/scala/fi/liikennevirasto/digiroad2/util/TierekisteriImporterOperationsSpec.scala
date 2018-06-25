@@ -345,7 +345,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   test("calculate measures, towards digitizing"){
-    TestTransactions.runWithRollback() {570
+    TestTransactions.runWithRollback() {
 
       val testLitRoad = new TestLitRoadOperations
       val roadNumber = 4L
@@ -1267,7 +1267,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val roadNumber = 1
       val roadPart = 1
 
-      val ra = Seq(ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, 0, 170, None, None, 1L, 5001,0, 170.3, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None),
+      val ra = Seq(ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 0, 170, None, None, 5001,0, 170.3, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None),
       ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 170, 175, None, None, 5002, 0, 5.8, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None))
 
       val vvhRoadLink = Seq(VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
@@ -1280,7 +1280,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(ra)
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLink)
       when(mockRoadLinkService.getAllLinkType(any[Seq[Long]])).thenReturn(mappedLinkType)
-      testTRSpeedLimit.generateOneSideSpeedLimitsTest(roadNumber, RoadSide.Right, trAsset, Seq())
+      testTRSpeedLimit.generateOneSideSpeedLimitsTest(roadNumber, RoadSide.Right, trAsset, Seq(), Seq())
 
       val assets = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001, 5002), LinearAssetTypes.numericValuePropertyId)
 
