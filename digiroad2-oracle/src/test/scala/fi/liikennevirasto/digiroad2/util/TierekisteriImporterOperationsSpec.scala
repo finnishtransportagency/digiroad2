@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoad
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
-import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkOTHService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import org.joda.time.DateTime
 import org.mockito.Matchers.any
@@ -20,6 +20,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
   val mockRoadAddressDAO: RoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressesService]
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockTRClient: TierekisteriLightingAssetClient = MockitoSugar.mock[TierekisteriLightingAssetClient]
   val mockTRTrafficSignsLimitClient: TierekisteriTrafficSignAssetClient = MockitoSugar.mock[TierekisteriTrafficSignAssetClient]
@@ -67,16 +68,13 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override type TierekisteriClientType = TierekisteriAssetDataClient
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriLightingAssetClient = mockTRClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
 
     //Creating this new methods because is protected visibility on the trait
     def getRoadAddressSectionsTest(trAsset: TierekisteriAssetData): Seq[(AddressSection, TierekisteriAssetData)] = super.getRoadAddressSections(trAsset)
-    def getAllViiteRoadAddressTest(section: AddressSection) = super.getAllViiteRoadAddress(section)
-    def getAllViiteRoadAddressTest(roadNumber: Long, roadPart: Long) = super.getAllViiteRoadAddress(roadNumber, roadPart)
-    def getAllViiteRoadAddressTest(roadNumber: Long, tracks: Seq[Track]) = super.getAllViiteRoadAddress(roadNumber: Long, tracks: Seq[Track])
     def expireAssetsTest(linkIds: Seq[Long]): Unit = super.expireAssets(linkIds)
     def calculateStartLrmByAddressTest(startAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateStartLrmByAddress(startAddress, section)
     def calculateEndLrmByAddressTest(endAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateEndLrmByAddress(endAddress, section)
@@ -85,7 +83,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def getAllTierekisteriAddressSectionsTest(roadNumber: Long, roadPart: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
     def getAllTierekisteriHistoryAddressSectionTest(roadNumber: Long, lastExecution: DateTime) = super.getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime)
 
-    override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit = {
+    override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress]): Unit = {
 
     }
   }
@@ -93,7 +91,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   class TestSpeedLimitsTierekisteriImporter extends StateSpeedLimitTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override val tierekisteriClient = mockTRTrafficSignsLimitSpeedLimitClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -112,14 +110,14 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
                                         addressSection: AddressSection, roadAddress: ViiteRoadAddress,
                                         roadSide: RoadSide): Option[TrAssetInfo] = super.createUrbanTrafficSign(roadLink, trUrbanAreaAssets, addressSection, roadAddress, roadSide)
 
-    def generateOneSideSpeedLimitsTest(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
-    = super.generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData])
+    def generateOneSideSpeedLimitsTest(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData], existingRoadAddresses: Seq[ViiteRoadAddress])
+    = super.generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets, trUrbanAreaAssets, existingRoadAddresses)
   }
 
   class TestLitRoadOperations extends LitRoadTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriLightingAssetClient = mockTRClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -129,7 +127,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   class TestPavedRoadOperations extends PavedRoadTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriPavedRoadAssetClient = mockTRPavedRoadClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -148,7 +146,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriMassTransitLaneAssetClient = mockMassTransitLaneClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -160,7 +158,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   class TestDamageByThawOperations extends DamagedByThawTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriDamagedByThawAssetClient = mockTRDamageByThawClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -170,7 +168,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   class TestEuropeanRoadOperations extends EuropeanRoadTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriEuropeanRoadAssetClient = mockTREuropeanRoadClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -180,7 +178,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   class TestSpeedLimitAssetOperations extends SpeedLimitTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriSpeedLimitAssetClient = mockTRSpeedLimitAssetClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -190,7 +188,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   class TestCareClassOperations extends CareClassTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val greenCareTierekisteriClient: TierekisteriGreenCareClassAssetClient = mockGreenCareClassAssetClient
     override lazy val winterCareTierekisteriClient: TierekisteriWinterCareClassAssetClient = mockWinterCareClassAssetClient
@@ -239,7 +237,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 100
     val startMValue = 0
     val endMValue = 10
-    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
     val addressSection = AddressSection(1, 1, Track.Combined, 50, Some(100))
     val resultStartMValue = tierekisteriAssetImporterOperations.calculateStartLrmByAddressTest(roadAddress, addressSection)
     val resultEndMValue = tierekisteriAssetImporterOperations.calculateEndLrmByAddressTest(roadAddress, addressSection)
@@ -253,7 +251,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 100
     val startMValue = 0
     val endMValue = 10
-    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
     val addressSection = AddressSection(1, 1, Track.Combined, 50, Some(100))
     val resultStartMValue = tierekisteriAssetImporterOperations.calculateStartLrmByAddressTest(roadAddress, addressSection)
     val resultEndMValue = tierekisteriAssetImporterOperations.calculateEndLrmByAddressTest(roadAddress, addressSection)
@@ -267,7 +265,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 200
     val startMValue = 0
     val endMValue = 10
-    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
     val addressSection = AddressSection(1, 1, Track.Combined, 50, Some(150))
     val resultStartMValue = tierekisteriAssetImporterOperations.calculateStartLrmByAddressTest(roadAddress, addressSection)
     val resultEndMValue = tierekisteriAssetImporterOperations.calculateEndLrmByAddressTest(roadAddress, addressSection)
@@ -281,7 +279,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 200
     val startMValue = 0
     val endMValue = 10
-    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
     val addressSection = AddressSection(1, 1, Track.Combined, 150, Some(250))
     val resultStartMValue = tierekisteriAssetImporterOperations.calculateStartLrmByAddressTest(roadAddress, addressSection)
     val resultEndMValue = tierekisteriAssetImporterOperations.calculateEndLrmByAddressTest(roadAddress, addressSection)
@@ -295,7 +293,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 200
     val startMValue = 0
     val endMValue = 10
-    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
     val addressSection = AddressSection(1, 1, Track.Combined, 50, Some(150))
     val resultStartMValue = tierekisteriAssetImporterOperations.calculateStartLrmByAddressTest(roadAddress, addressSection)
     val resultEndMValue = tierekisteriAssetImporterOperations.calculateEndLrmByAddressTest(roadAddress, addressSection)
@@ -309,7 +307,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 200
     val startMValue = 0
     val endMValue = 10
-    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
     val addressSection = AddressSection(1, 1, Track.Combined, 150, Some(250))
     val resultStartMValue = tierekisteriAssetImporterOperations.calculateStartLrmByAddressTest(roadAddress, addressSection)
     val resultEndMValue = tierekisteriAssetImporterOperations.calculateEndLrmByAddressTest(roadAddress, addressSection)
@@ -323,7 +321,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 200
     val startMValue = 0
     val endMValue = 10
-    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
     val addressSection = AddressSection(1, 1, Track.Combined, 50, Some(250))
     val resultStartMValue = tierekisteriAssetImporterOperations.calculateStartLrmByAddressTest(roadAddress, addressSection)
     val resultEndMValue = tierekisteriAssetImporterOperations.calculateEndLrmByAddressTest(roadAddress, addressSection)
@@ -337,7 +335,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 200
     val startMValue = 0
     val endMValue = 10
-    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, 100, 1, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
     val addressSection = AddressSection(1, 1, Track.Combined, 50, Some(250))
     val resultStartMValue = tierekisteriAssetImporterOperations.calculateStartLrmByAddressTest(roadAddress, addressSection)
     val resultEndMValue = tierekisteriAssetImporterOperations.calculateEndLrmByAddressTest(roadAddress, addressSection)
@@ -363,7 +361,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val endSection = 350
 
       val tr = TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection)
-      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
@@ -408,8 +406,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startSection = 0
       val endSection = 1000
 
-      val raS1 = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startMValueSection1, endMValueSection1, None, None, 1L, 5001, starAddressSection1, endAddressSection1, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
-      val raS2 = ViiteRoadAddress(1L, roadNumber, endRoadPartNumber, Track.RightSide, 5, startMValueSection2, endMValueSection2, None, None, 1L, 5001, starAddressSection2, endAddressSection2, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val raS1 = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startMValueSection1, endMValueSection1, None, None, 5001, starAddressSection1, endAddressSection1, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val raS2 = ViiteRoadAddress(1L, roadNumber, endRoadPartNumber, Track.RightSide, startMValueSection2, endMValueSection2, None, None, 5001, starAddressSection2, endAddressSection2, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
       val tr = TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection)
       val vvhRoadLink = VVHRoadlink(5001, 235, List(Point(0.0, 0.0), Point(0.0, 1000.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
@@ -445,7 +443,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
        val endAddressMValue = 250L
 
        val tr = TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue)
-       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
        val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
@@ -487,7 +485,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val tr = TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection)
       val trHist = TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSectionHist, endSectionHist)
 
-      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
@@ -526,7 +524,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val trLaneType = TRLaneArrangementType.apply(5)
 
       val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, trLaneType)
-      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
