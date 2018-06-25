@@ -327,7 +327,7 @@ class DynamicLinearAssetDao {
   }
 
 
-  def getValidityPeriodPropertyValue(ids: Set[Long], typeId: Int) : Map[Long, Seq[MultiTypeProperty]] = {
+  def getValidityPeriodPropertyValue(ids: Set[Long], typeId: Int) : Map[Long, Seq[DynamicProperty]] = {
     val assets = MassQuery.withIds (ids) {
       idTableName =>
         sql"""
@@ -341,12 +341,12 @@ class DynamicLinearAssetDao {
     assets.groupBy(_.assetId).mapValues{ assetGroup =>
       assetGroup.groupBy(_.publicId).map { case (_, values) =>
         val row = values.head
-        MultiTypeProperty(row.publicId, row.propertyType, row.required, values.map(_.value))
+        DynamicProperty(row.publicId, row.propertyType, row.required, values.map(_.value))
       }.toSeq
     }
   }
 
-  case  class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: MultiTypePropertyValue )
+  case  class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: DynamicPropertyValue )
 
   implicit val getValidityPeriodRow = new GetResult[ValidityPeriodRow] {
     def apply(r: PositionedResult) = {
@@ -363,7 +363,7 @@ class DynamicLinearAssetDao {
           "periodType" -> r.nextIntOption
       )
 
-      ValidityPeriodRow(assetId, publicId, propertyType, required, MultiTypePropertyValue(value))
+      ValidityPeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
     }
   }
 }

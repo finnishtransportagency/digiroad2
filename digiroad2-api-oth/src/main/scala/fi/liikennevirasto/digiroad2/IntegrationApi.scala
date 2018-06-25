@@ -225,8 +225,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
-      case Some(MultiValue(x)) => x.properties.flatMap { multiTypeProperty =>
-        multiTypeProperty.values.flatMap { v =>
+      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty =>
+        dynamicTypeProperty.values.flatMap { v =>
           Map("weightLimitation" -> v.value)
         }
       }
@@ -269,7 +269,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   def massTransitLanesToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
 
-    val massTransitLanes: Seq[PieceWiseLinearAsset] = multiValueLinearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+    val massTransitLanes: Seq[PieceWiseLinearAsset] = dynamicLinearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
 
     massTransitLanes.map { massTransitLane =>
       Map("id" -> massTransitLane.id,
@@ -284,7 +284,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         lastModifiedBy(massTransitLane.createdBy, massTransitLane.modifiedBy),
         "linkSource" -> massTransitLane.linkSource.value,
         "validityPeriods" -> (massTransitLane.value match {
-          case Some(MultiValue(x)) => x.properties.flatMap(_.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).map(ValidityPeriodValue.fromMap).map {
+          case Some(DynamicValue(x)) => x.properties.flatMap(_.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).map(ValidityPeriodValue.fromMap).map {
             a=> toTimeDomain(a)})
           case _ => None
         })

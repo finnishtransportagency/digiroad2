@@ -67,7 +67,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetService: AssetService = Digiroad2Context.assetService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
-                   val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback)
+                   val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
                    val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService)
   extends ScalatraServlet
     with JacksonJsonSupport

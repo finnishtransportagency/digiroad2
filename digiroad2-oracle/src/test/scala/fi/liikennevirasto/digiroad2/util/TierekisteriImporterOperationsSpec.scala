@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress, MultiValueLinearAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
@@ -30,7 +30,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val speedLimitDao = new OracleSpeedLimitDao(mockVVHClient, mockRoadLinkService)
   val oracleAssetDao = new OracleAssetDao
-  val multiValueLinearAssetDao = new MultiValueLinearAssetDao
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
   val mockMassTransitLaneClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
@@ -792,7 +791,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testDamageByThaw.importAssets()
-      val asset = multiValueLinearAssetDao.fetchMultiValueLinearAssetsByLinkIds(testDamageByThaw.typeId, Seq(5001))
+      val asset = dynamicDao.fetchDynamicLinearAssetsByLinkIds(testDamageByThaw.typeId, Seq(5001))
       asset.length should be(1)
     }
   }
