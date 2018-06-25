@@ -315,7 +315,7 @@ object Digiroad2Context {
   }
 
   lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(eventbus, roadLinkOTHService)
+    new RoadAddressesService()
   }
 
   lazy val assetService: AssetService = {

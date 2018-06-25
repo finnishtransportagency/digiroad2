@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, SpeedLimit}
-import fi.liikennevirasto.digiroad2.service.{ChangedRoadAddress, ChangedVVHRoadlink}
+import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
@@ -35,7 +35,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkOTHService.getChanged(since, until))
-      case "road_numbers"                => roadNumberToGeoJson(since, roadAddressesService.getChanged(since, until))
+//      case "road_numbers"                => roadNumberToGeoJson(since, roadAddressesService.getChanged(since, until))
     }
   }
 
@@ -186,53 +186,6 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 "modifiedAt" -> link.modifiedAt,
                 "createdAt" -> createdAt.map(DateTimePropertyFormat.print(_)),
                 "changeType" -> changeType
-              )
-          )
-        }
-    )
-
-  private def roadNumberToGeoJson(since: DateTime, changedRoadAddress: Seq[ChangedRoadAddress]) =
-    Map(
-      "type" -> "FeatureCollection",
-      "features" ->
-        changedRoadAddress.map { case ChangedRoadAddress(road, link) =>
-          Map(
-            "type" -> "Feature",
-            "id" -> road.id,
-            "geometry" -> Map(
-              "type" -> "LineString",
-              "coordinates" -> road.geom.map(p => Seq(p.x, p.y, p.z))
-            ),
-            "properties" ->
-              Map(
-                "value" -> road.roadNumber,
-                "link" -> Map(
-                  "type" -> "Feature",
-                  "id" -> link.linkId,
-                  "geometry" -> Map(
-                    "type" -> "LineString",
-                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
-                  ),
-                  "properties" -> Map(
-                    "functionalClass" -> link.functionalClass,
-                    "type" -> link.linkType.value,
-                    "length" -> link.length
-                  )
-                ),
-                "sideCode" -> (link.trafficDirection match {
-                  case TrafficDirection.AgainstDigitizing =>
-                    SideCode.AgainstDigitizing.value
-                  case TrafficDirection.TowardsDigitizing =>
-                    SideCode.TowardsDigitizing.value
-                  case _ =>
-                    road.sideCode.value
-                }),
-                "startMeasure" -> road.startMValue,
-                "endMeasure" -> road.endMValue,
-                "createdBy" -> road.createdBy,
-                "modifiedAt" -> road.modifiedDate.map(DateTimePropertyFormat.print(_)),
-                "createdAt" -> road.createdDate.map(DateTimePropertyFormat.print(_)),
-                "changeType" -> extractChangeType(since, road.expired, road.createdDate)
               )
           )
         }
