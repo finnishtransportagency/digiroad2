@@ -612,8 +612,8 @@
       return $.get('api/massTransitStops/passenger/' + passengerID);
     };
 
-    this.getCriticalAssetTypesVerificationInfoByMunicipality = function(municipalityCode) {
-       return $.getJSON('api/dashBoardInfo/' + municipalityCode + '/criticalAssetTypes' );
+    this.getDashBoardInfoByMunicipality = function(municipalityCode) {
+       return $.getJSON('api/dashBoardInfo/' + municipalityCode);
     };
 
     function createCallbackRequestor(getParameters) {

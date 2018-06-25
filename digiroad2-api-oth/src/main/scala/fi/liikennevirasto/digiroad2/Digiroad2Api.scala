@@ -1568,31 +1568,31 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     transformation(values)
   }
 
-  get("/dashBoardInfo/:municipalityCode/criticalAssetTypes") {
+  get("/dashBoardInfo/:municipalityCode") {
     val municipalityId = params("municipalityCode").toInt
     val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalityId)
-
-    verifiedAssetTypes.map(assetType =>
-      Map(
-        "typeId" -> assetType.assetTypeCode,
-        "assetName" -> assetType.assetTypeName,
-        "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-        "verified_by" -> assetType.verifiedBy.getOrElse("")
-      ))
-  }
-
-
-  get("/dashBoardInfo/assetLatestModifications") {
-    val municipalityId = params("municipalityCode").toInt
     val modifiedAssetTypes = verificationService.getAssetLatestModifications()
-    modifiedAssetTypes.groupBy(_.assetTypeName)
-      .mapValues(
-        _.map(assetType =>
-          Map(
-            "typeId" -> assetType.assetTypeCode,
-            "assetName" -> assetType.assetTypeName,
-            "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-            "modified_by" -> assetType.modifiedBy.getOrElse("")
-          )))
+
+
+    val verifiedMap =
+      verifiedAssetTypes.map(assetType =>
+        Map(
+          "typeId" -> assetType.assetTypeCode,
+          "assetName" -> assetType.assetTypeName,
+          "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "verified_by" -> assetType.verifiedBy.getOrElse("")
+        ))
+
+    val modifiedMap =
+      modifiedAssetTypes.map(assetType =>
+        Map(
+          "typeId" -> assetType.assetTypeCode,
+          "assetName" -> assetType.assetTypeName,
+          "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "modified_by" -> assetType.modifiedBy.getOrElse("")
+        ))
+
+    (verifiedMap, modifiedMap)
   }
+
 }

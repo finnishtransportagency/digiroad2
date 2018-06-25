@@ -1,10 +1,10 @@
 (function (root) {
     root.MunicipalitySituationCollection = function (backend) {
 
-        this.fetchVerificationInfoCriticalAssets = function (municipalityId) {
-            backend.getCriticalAssetTypesVerificationInfoByMunicipality(municipalityId).then(
+        this.fetchDashBoardInfo = function (municipalityId) {
+            backend.getDashBoardInfoByMunicipality(municipalityId).then(
                 function (results) {
-                    eventbus.trigger('verificationInfoCriticalAssets:fetched', results);
+                    eventbus.trigger('dashBoardInfoAssets:fetched', results);
                 });
         };
     };

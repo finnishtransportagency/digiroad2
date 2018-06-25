@@ -1,26 +1,34 @@
-window.MunicipalitySituationPopup = function (models) {
+window.MunicipalitySituationPopup = function (models, authorizationPolicy) {
     var me = this;
     var assetConfig = new AssetTypeConfiguration();
+    var municipalityId = _.first(authorizationPolicy.municipalities);
 
     this.initialize = function () {
-        eventbus.on('verificationInfoCriticalAssets:fetched', function (result) {
-            renderDialog(result);
+        eventbus.on('dashBoardInfoAssets:fetched', function (results) {
+            var verifyInfos = results._1;
+            var modifyInfos = results._2;
+            renderDialog(verifyInfos, modifyInfos);
         });
 
-        models.fetchVerificationInfoCriticalAssets(20);
+        if (authorizationPolicy.isMunicipalityMaintainer())
+            models.fetchDashBoardInfo(municipalityId);
     };
 
     var options = {
         message: 'Tietolajien päivitystilanne: Huittinen',
         saveButton: 'Siirry tietolajien kuntasivulle',
         cancelButton: 'Sulje',
-        saveCallback: function(){},
-        cancelCallback: function(){},
+        saveCallback: function(){ showMunicipalityWorkingList(); },
+        cancelCallback: function() { purge(); },
         closeCallback: function() { purge(); }
     };
 
     var purge = function() {
         $('.confirm-modal').remove();
+    };
+
+    var showMunicipalityWorkingList = function() {
+        window.open('#work-list/municipality');
     };
 
     var renameAssets = function (values) {
@@ -73,8 +81,37 @@ window.MunicipalitySituationPopup = function (models) {
         return '<div id="dashBoardVerificationInfo">' + tableForGroupingValues(verificationsInfo) + '</div>';
     };
 
-    var renderDialog = function(verificationsInfo) {
-        $('#work-list').append(me.createMunicipalitySituationPopUp(verificationsInfo)).show();
+    this.createLatestsAssetModificationsInfoForm = function (modificationsInfo) {
+        var latestModificationTableHeaderRow = function () {
+            return '<thead><th id="verifier">K-TUNNUS</th> <th id="date">PVM</th> <th id="name">TIETOLAJI</th></thead>';
+        };
+
+        var latestModificationTableContentRows = function (values) {
+            renameAssets(values);
+            return "<tbody>" +
+                _.map(values, function (asset) {
+                    return '' +
+                        "<tr>" +
+                        "<td headers='verifier'>" + asset.modified_by + "</td>" +
+                        "<td headers='date'>" + asset.modified_date + "</td>" +
+                        "<td headers='name'>" + asset.assetName + "</td>" +
+                        "</tr>";
+                }).join("</tbody>");
+        };
+
+        var tableForGroupingLatestModificationValues = function (values) {
+            return '' +
+                '<table>' +
+                latestModificationTableHeaderRow() +
+                latestModificationTableContentRows(values) +
+                '</table>';
+        };
+
+        return '<div id="dashBoardAssetsModificationsInfo">' + tableForGroupingLatestModificationValues(modificationsInfo) + '</div>';
+    };
+
+    var renderDialog = function(verificationsInfo, modificationsInfo) {
+        $('#work-list').append(me.createMunicipalitySituationPopUp(verificationsInfo, modificationsInfo)).show();
 
         $('.confirm-modal .cancel').on('click', function() {
             options.cancelCallback();
@@ -88,15 +125,17 @@ window.MunicipalitySituationPopup = function (models) {
         });
     };
 
-    this.createMunicipalitySituationPopUp = function (verificationsInfo) {
+    this.createMunicipalitySituationPopUp = function (verificationsInfo, modificationsInfo) {
         return '' +
             '<div class="modal-overlay confirm-modal" id="municipalitySituation">' +
                 '<div class="modal-dialog municipalitySituation">' +
                     '<div class="content">' + options.message + '<a class="header-link sulje"">Sulje</a>' + '</div>' +
+                        '<label class="control-label" id="title">Viimeisimmät päivitykset</label>' +
+                         me.createLatestsAssetModificationsInfoForm(modificationsInfo) +
                         '<label class="control-label" id="title">Tarkistetut tietolajit</label>' +
                          me.createCriticalAssetsVerificationInfoForm(verificationsInfo) +
                     '<div class="actions">' +
-                        '<button class = "btn btn-primary save" disabled>' + options.saveButton + '</button>' +
+                        '<button class = "btn btn-primary save">' + options.saveButton + '</button>' +
                         '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
                     '</div>' +
                 '</div>' +
