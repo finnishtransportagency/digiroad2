@@ -125,7 +125,7 @@
       var isTerminalBusStop = false;
       var roadAddressInfoLabel;
       var authorizationPolicy = new MassTransitStopAuthorizationPolicy();
-      new FeedbackDataTool().initialize(feedbackCollection, 'massTransitStop', authorizationPolicy);
+      new FeedbackDataTool(feedbackCollection, 'massTransitStop', authorizationPolicy);
 
       var MStopDeletebutton = function(readOnly) {
 

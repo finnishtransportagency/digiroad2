@@ -140,6 +140,8 @@
       var selectedRailwayCrossing =  getSelectedPointAsset(pointAssets, 'railwayCrossings');
       var selectedDirectionalTrafficSign = getSelectedPointAsset(pointAssets, 'directionalTrafficSigns');
       var selectedTrafficSign = getSelectedPointAsset(pointAssets, 'trafficSigns');
+      var selectedTrHeightLimits = getSelectedPointAsset(pointAssets, 'trHeightLimits');
+      var selectedTrWidthLimits = getSelectedPointAsset(pointAssets, 'trWidthLimits');
       var selectedGroupPointAsset = getSelectedGroupAsset(groupedPointAssets, 'trWeightLimits');
       var selectedMaintenanceRoad = getSelectedLinearAsset(linearAssets, 'maintenanceRoad');
       new URLRouter(map, backend, _.merge({}, models,
@@ -152,6 +154,8 @@
           { selectedTrafficSign: selectedTrafficSign},
           { selectedMaintenanceRoad: selectedMaintenanceRoad},
           { selectedGroupPointAsset: selectedGroupPointAsset},
+          { selectedGroupPointAsset: selectedTrHeightLimits},
+          { selectedGroupPointAsset: selectedTrWidthLimits},
           { linearAssets: linearAssets}
     ));
       eventbus.trigger('application:initialized');

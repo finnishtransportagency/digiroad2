@@ -75,6 +75,14 @@
         }
       });
     };
+    
+    var pointAssetCentering = function (layerName, id,  model) {
+        applicationModel.selectLayer(layerName);
+        backend.getPointAssetById(id, layerName).then(function (result) {
+            mapCenterAndZoom(result.lon, result.lat, 12);
+            model.open(result);
+        });
+    };
 
     var Router = Backbone.Router.extend({
       initialize: function () {
@@ -241,75 +249,39 @@
       },
 
       pedestrianCrossings: function (id) {
-        applicationModel.selectLayer('pedestrianCrossings');
-        backend.getPointAssetById(id, 'pedestrianCrossings').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedPedestrianCrossing.open(result);
-        });
+        pointAssetCentering('pedestrianCrossings', id,  models.selectedPedestrianCrossing);
       },
 
       trafficLights: function (id) {
-        applicationModel.selectLayer('trafficLights');
-        backend.getPointAssetById(id, 'trafficLights').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedTrafficLight.open(result);
-        });
+        pointAssetCentering('trafficLights', id,  models.selectedTrafficLight);
       },
 
       trafficSigns: function (id) {
-        applicationModel.selectLayer('trafficSigns');
-        backend.getPointAssetById(id, 'trafficSigns').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedTrafficSign.open(result);
-        });
+        pointAssetCentering('trafficSigns', id,  models.selectedTrafficSign);
       },
 
       obstacles: function (id) {
-        applicationModel.selectLayer('obstacles');
-        backend.getPointAssetById(id, 'obstacles').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedObstacle.open(result);
-        });
+        pointAssetCentering('obstacles', id,  models.selectedObstacle);
       },
 
       railwayCrossings: function (id) {
-        applicationModel.selectLayer('railwayCrossings');
-        backend.getPointAssetById(id, 'railwayCrossings').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedRailwayCrossing.open(result);
-        });
+        pointAssetCentering('railwayCrossings', id,  models.selectedRailwayCrossing);
       },
 
       directionalTrafficSigns: function (id) {
-        applicationModel.selectLayer('directionalTrafficSigns');
-        backend.getPointAssetById(id, 'directionalTrafficSigns').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedDirectionalTrafficSign.open(result);
-        });
+        pointAssetCentering('directionalTrafficSigns', id,  models.selectedDirectionalTrafficSign);
       },
 
       servicePoints: function (id) {
-        applicationModel.selectLayer('servicePoints');
-        backend.getPointAssetById(id, 'servicePoints').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedServicePoint.open(result);
-        });
+        pointAssetCentering('servicePoints', id,  models.selectedServicePoint);
       },
 
       trHeightLimits : function (id) {
-          applicationModel.selectLayer('trHeightLimits');
-          backend.getPointAssetById(id, 'trHeightLimits').then(function (result) {
-              mapCenterAndZoom(result.lon, result.lat, 12);
-              models.selectedDirectionalTrafficSign.open(result);
-          });
+        pointAssetCentering('trHeightLimits', id,  models.selectedTrHeightLimits);
       },
 
       trWidthLimits:  function (id) {
-          applicationModel.selectLayer('trWidthLimits');
-          backend.getPointAssetById(id, 'trWidthLimits').then(function (result) {
-              mapCenterAndZoom(result.lon, result.lat, 12);
-              models.selectedDirectionalTrafficSign.open(result);
-          });
+        pointAssetCentering('trWidthLimits', id,  models.selectedTrWidthLimits);
       },
 
       trWeightLimits: function (id) {

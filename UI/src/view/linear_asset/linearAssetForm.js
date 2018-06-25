@@ -12,7 +12,7 @@
       authorizationPolicy = linearAsset.authorizationPolicy,
       layerName = linearAsset.layerName,
       isVerifiable = linearAsset.isVerifiable;
-      new FeedbackDataTool().initialize(feedbackModel, linearAsset.layerName, authorizationPolicy, eventCategory);
+      new FeedbackDataTool(feedbackModel, linearAsset.layerName, authorizationPolicy, eventCategory);
 
     var rootElement = $('#feature-attributes');
 

@@ -1,18 +1,10 @@
 (function (root) {
-    root.FeedbackDataTool = function () {
+    root.FeedbackDataTool = function (feedbackCollection, layerName, authorizationPolicy, eventCategory) {
         var me = this;
-        me.collection= null;
-        me.layerName = '';
-        me.authorizationPolicy = null;
-        me.eventCategory = null;
-
-        this.initialize = function(feedbackCollection, layerName, authorizationPolicy, eventCategory){
-            me.collection = feedbackCollection;
-            me.layerName = layerName;
-            me.authorizationPolicy = authorizationPolicy;
-            me.eventCategory = eventCategory;
-            applicationListeners();
-        };
+        me.collection = feedbackCollection;
+        me.layerName = layerName;
+        me.authorizationPolicy = authorizationPolicy;
+        me.eventCategory = eventCategory;
 
         function events() {
             return _.map(arguments, function(argument) { return me.eventCategory + ':' + argument; }).join(' ');
@@ -227,5 +219,7 @@
            dialog.find("#feedbackForm").append(userEditableFields());
            return dialog;
         };
+
+        applicationListeners();
     };
 })(this);

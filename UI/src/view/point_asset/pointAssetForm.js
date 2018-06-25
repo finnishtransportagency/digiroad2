@@ -13,7 +13,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var layerName = pointAsset.layerName;
     var localizedTexts = pointAsset.formLabels;
     var authorizationPolicy = pointAsset.authorizationPolicy;
-    new FeedbackDataTool().initialize(feedbackCollection, layerName, authorizationPolicy);
+    new FeedbackDataTool(feedbackCollection, layerName, authorizationPolicy);
 
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
       if(event.assetType == typeId)

@@ -2,7 +2,7 @@
   root.ManoeuvreForm = function(selectedManoeuvreSource, feedbackCollection) {
 
     var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
-    new FeedbackDataTool().initialize(feedbackCollection, 'manoeuvre', authorizationPolicy);
+    new FeedbackDataTool(feedbackCollection, 'manoeuvre', authorizationPolicy);
 
     /*
     * HTML Templates

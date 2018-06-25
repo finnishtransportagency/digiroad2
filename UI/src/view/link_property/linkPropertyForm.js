@@ -3,7 +3,7 @@
     var layer;
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
-    new FeedbackDataTool().initialize(feedbackCollection, 'linkProperty', authorizationPolicy);
+    new FeedbackDataTool(feedbackCollection, 'linkProperty', authorizationPolicy);
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
