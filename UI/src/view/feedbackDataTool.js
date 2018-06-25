@@ -147,7 +147,7 @@
                dialog.find('#feedbackDataType').val('Aineistopalaute');
         };
 
-        var userEditableFields = function(){
+        var userInformationEditableFields = function(){
             return $(
               '<div class="form-element">' +
                 '<label class="control-label">Nimi</label>' +
@@ -163,60 +163,64 @@
               '</div>');
         };
 
+        me.message = function(){
+            return 'Anna palautetta kohteesta';
+        };
+
+        me.formContent = function (selectedAsset) {
+          return '<div class="form-element">' +
+                    '<label class="control-label">Linkin id</label>' +
+                    '<span id="linkId" >'+ selectedAsset.linkId.join(', ') +'</span>'+
+                  '</div>' +
+                  '<div class="form-element">' +
+                     '<label class="control-label">Kohteen id</label>' +
+                     '<span id="assetId" >'+ selectedAsset.assetId.join(', ')+'</span>'+
+                  '</div>' +
+                  '<div class="form-element">' +
+                     '<label class="control-label">Tietolaji</label>' +
+                     '<span id="assetName">'+selectedAsset.title+'</span>'+
+                  '</div>' +
+                  '<div class="form-element">' +
+                     '<label class="control-label" id="feedbackType">Palautteen tyyppi</label>' +
+                     '<select  name="feedbackDataType" id ="feedbackDataType" class="form-control">'+
+                        '<option value="Geometriapalaute">Geometriapalaute </option>'+
+                        '<option value="Aineistopalaute">Aineistopalaute</option>'+
+                     '</select>' +
+                  '</div>' +
+                  '<div class="form-element">' +
+                     '<label class="control-label">Palaute</label>' +
+                     '<div contenteditable="true" id="freetext" class="form-control"></div>'+
+                  '</div>' +
+                  '<div class="form-element">' +
+                      '<label class="control-label">K-tunnus</label>' +
+                      '<span id="kidentifier">'+me.authorizationPolicy.username+'</span>'+
+                  '</div>'
+        };
+
+        me.buttons = function () {
+            return '<button class = "btn btn-primary save">Lähetä</button>' +
+            '<button class = "btn btn-secondary cancel">Peruuta</button>'
+        };
+
+
         var createFeedbackForm = function(selectedAsset, layer) {
 
            var  dialog =  $('<div class="feedback-modal" id="feedbackData">' +
                         '<div class="modal-dialog">' +
-                            '<div class="content">Anna palautetta kohteesta<a class="header-link sulje"">X</a>' + '</div>' +
+                            '<div class="content">' + me.message() + '<a class="header-link sulje"">X</a>' + '</div>' +
                             '<form class="form form-horizontal" role="form">' +
                             '<div class="form-group" id="feedbackForm">' +
-                                '<div class="form-element">' +
-                                    '<label class="control-label">Linkin id</label>' +
-                                    '<span id="linkId" ></span>'+
-                                '</div>' +
-
-                                '<div class="form-element">' +
-                                    '<label class="control-label">Kohteen id</label>' +
-                                    '<span id="assetId" ></span>'+
-                                '</div>' +
-
-                                '<div class="form-element">' +
-                                    '<label class="control-label">Tietolaji</label>' +
-                                    '<span id="assetName"></span>'+
-                                '</div>' +
-
-                                '<div class="form-element">' +
-                                    '<label class="control-label" id="feedbackType">Palautteen tyyppi</label>' +
-                                    '<select  name="feedbackDataType" id ="feedbackDataType" class="form-control">'+
-                                        '<option value="Geometriapalaute">Geometriapalaute </option>'+
-                                        '<option value="Aineistopalaute">Aineistopalaute</option>'+
-                                    '</select>' +
-                                '</div>' +
-
-                                '<div class="form-element">' +
-                                    '<label class="control-label">Palaute</label>' +
-                                    '<div contenteditable="true" id="freetext" class="form-control"></div>'+
-                                '</div>' +
-
-                                '<div class="form-element">' +
-                                    '<label class="control-label">K-tunnus</label>' +
-                                    '<span id="kidentifier"></span>'+
-                                '</div>' +
+                                me.formContent(selectedAsset) +
                             '</div>' +
                             '</form>' +
                             '<div class="actions">' +
-                                '<button class = "btn btn-primary save">Lähetä</button>' +
-                                '<button class = "btn btn-secondary cancel">Peruuta</button>' +
+                                me.buttons() +
                             '</div>' +
                         '</div>' +
                     '</div>');
 
            setDropdownValue(layer, dialog);
-           dialog.find("#kidentifier").append(me.authorizationPolicy.username);
-           dialog.find("#linkId").append(selectedAsset.linkId.join(', '));
-           dialog.find("#assetId").append(selectedAsset.assetId.join(', '));
-           dialog.find("#assetName").append(selectedAsset.title);
-           dialog.find("#feedbackForm").append(userEditableFields());
+           dialog.find("#feedbackForm").append(userInformationEditableFields());
            return dialog;
         };
 
