@@ -7,7 +7,8 @@ import fi.liikennevirasto.digiroad2.asset.SideCode._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.NumericalLimitFiller.{expireOverlappedRecursively, toSegment}
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 
@@ -111,6 +112,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   private val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
+  private val counterPublicId = "counter"
+  private val batchProcessName = "batch_process_trafficSigns"
+  private val groupingDistance = 2
 
   private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions)
 
@@ -152,7 +156,23 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds)
-    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    val result = super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt == TrafficSignType.PedestrianCrossing.value)
+
+    sortCrossings(pc, Seq()) ++ others
+  }
+
+  def sortCrossings(sorted: Seq[PersistedAsset], result: Seq[PersistedAsset]): Seq[PersistedAsset] = {
+    val centerSignOpt = sorted.headOption
+    if(centerSignOpt.nonEmpty) {
+      val centerSign = centerSignOpt.get
+      val (inProximity, outsiders) = sorted.tail.partition(sign => centerSign.linkId == sign.linkId && centerSign.validityDirection == sign.validityDirection && GeometryUtils.withinTolerance(Seq(Point(centerSign.lon, centerSign.lat)), Seq(Point(sign.lon, sign.lat)), tolerance = groupingDistance))
+      val counterProp = Property(0, counterPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue((1 + inProximity.size).toString, Some(counterPublicId))))
+      val withCounter = centerSign.copy(propertyData = centerSign.propertyData ++ Seq(counterProp))
+      sortCrossings(outsiders, result ++ Seq(withCounter))
+    } else {
+      result
+    }
   }
 
   private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
