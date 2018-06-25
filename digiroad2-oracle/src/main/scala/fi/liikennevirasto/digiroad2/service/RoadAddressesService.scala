@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 //TODO add parameters after merge of DROTH-1276
+//TODO this name can change to RoadAddressService
 class RoadAddressesService {
 
   val logger = LoggerFactory.getLogger(getClass)
