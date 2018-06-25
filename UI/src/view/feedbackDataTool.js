@@ -188,12 +188,12 @@
         '<div class="form-element">' +
         '<label class="control-label">K-tunnus</label>' +
         '<span id="kidentifier">'+me.authorizationPolicy.username+'</span>'+
-        '</div>'
+        '</div>';
     };
 
     me.buttons = function () {
       return '<button class = "btn btn-primary save">Lähetä</button>' +
-        '<button class = "btn btn-secondary cancel">Peruuta</button>'
+        '<button class = "btn btn-secondary cancel">Peruuta</button>';
     };
 
     var createFeedbackForm = function(selectedAsset, layer) {
