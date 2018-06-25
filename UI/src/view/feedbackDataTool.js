@@ -61,31 +61,17 @@
                 new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
             });
 
-            eventbus.on('linkProperties:unselected', me.closeFeedback);
+            eventbus.on('linkProperties:unselected manoeuvres:unselected speedLimit:unselect asset:closed closeFeedBackData', me.closeFeedback);
 
-            eventbus.on('linkProperties:selected linkProperties:cancelled', me.initFeedback);
+            eventbus.on('linkProperties:selected linkProperties:cancelled manoeuvres:selectedAvailable speedLimit:selected speedLimit:cancelled asset:modified', me.initFeedback);
 
             eventbus.on(events('selected', 'cancelled'), me.initFeedback);
 
             eventbus.on(events('unselect'), me.closeFeedback);
 
-            eventbus.on('manoeuvres:selectedAvailable',me.initFeedback);
-
-            eventbus.on('manoeuvres:unselected', me.closeFeedback);
-
-            eventbus.on('speedLimit:unselect', me.closeFeedback);
-
-            eventbus.on('speedLimit:selected speedLimit:cancelled',me.initFeedback);
-
             eventbus.on(me.layerName + ':unselected', me.closeFeedback);
 
             eventbus.on(me.layerName + ':selected ' + me.layerName + ':cancelled' ,me.initFeedback);
-
-            eventbus.on('asset:modified', me.initFeedback);
-
-            eventbus.on('asset:closed', me.closeFeedback);
-
-            eventbus.on('closeFeedBackData', me.closeFeedback);
         };
 
         var bindEvents = function (selectedData) {
