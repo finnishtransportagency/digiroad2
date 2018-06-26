@@ -10,7 +10,7 @@ class TierekisteriPedestrianCrossingAssetClient(trEndPoint: String, trEnable: Bo
   override def tierekisteriRestApiEndPoint: String = trEndPoint
   override def tierekisteriEnabled: Boolean = trEnable
   override def client: CloseableHttpClient = httpClient
-  override type TierekisteriType = TierekisteriPedestrianCrossingAssetData
+  type TierekisteriType = TierekisteriPedestrianCrossingAssetData
 
   override val trAssetType = "tl310"
 

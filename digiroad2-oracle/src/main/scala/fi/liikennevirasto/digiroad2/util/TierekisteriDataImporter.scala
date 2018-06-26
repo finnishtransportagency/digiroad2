@@ -66,6 +66,10 @@ object TierekisteriDataImporter {
     new TrafficSignTierekisteriImporter()
   }
 
+  lazy val pedestrianCrossingTierekisteriImporter: PedestrianCrossingTierekisteriImporter = {
+    new PedestrianCrossingTierekisteriImporter()
+  }
+
   lazy val pavedRoadImporterOperations: PavedRoadTierekisteriImporter = {
     new PavedRoadTierekisteriImporter()
   }
@@ -211,7 +215,8 @@ object TierekisteriDataImporter {
     "bogieWeightLimit" -> bogieWeightLimitTierekisteriImporter,
     "heightLimit" -> heightLimitTierekisteriImporter,
     "widthLimit" -> widthLimitTierekisteriImporter,
-    "careClass" -> careClassTierekisteriImporter
+    "careClass" -> careClassTierekisteriImporter,
+    "pedestrianCrossing" -> pedestrianCrossingTierekisteriImporter
   )
 
   private def importAssets(tierekisteriAssetImporter: TierekisteriImporterOperations): Unit = {
