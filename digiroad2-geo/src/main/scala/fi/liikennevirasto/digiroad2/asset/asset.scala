@@ -4,6 +4,8 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
+import scala.util.Try
+
 sealed trait LinkGeomSource{
   def value: Int
 }
@@ -89,6 +91,30 @@ case object State extends AdministrativeClass { def value = 1 }
 case object Municipality extends AdministrativeClass { def value = 2 }
 case object Private extends AdministrativeClass { def value = 3 }
 case object Unknown extends AdministrativeClass { def value = 99 }
+
+
+
+sealed trait InformationSource {
+  def value: Int
+}
+
+object InformationSource{
+  val values = Set(RoadRegistry, MunicipalityMaintenainer, MmlNls, UnknownSource)
+
+  def apply(value: Int): InformationSource = {
+    values.find(_.value == value).getOrElse(UnknownSource)
+  }
+}
+
+//1 = FTA/ Road registry (Liikennevirasto / Tierekisteri)
+case object RoadRegistry extends InformationSource { def value = 1 }
+//2 = Maintainer (municipality maintainer)
+case object MunicipalityMaintenainer extends InformationSource { def value = 2 }
+//3 = MML/NLS (Maanmittauslaitos)
+case object MmlNls extends InformationSource { def value = 3 }
+
+case object UnknownSource extends InformationSource { def value = 99 }
+
 
 object FunctionalClass {
   val Unknown: Int = 99
@@ -197,8 +223,53 @@ case class DynamicProperty(publicId: String, propertyType: String, required: Boo
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
 case class DynamicPropertyValue(value: Any)
+case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
+
+object ValidityPeriodValue {
+  def fromMap(map: Map[String, Any]): ValidityPeriodValue = {
+    ValidityPeriodValue(
+        getPropertyValuesByPublicId("days", map),
+        getPropertyValuesByPublicId("startHour", map),
+        getPropertyValuesByPublicId("endHour", map),
+        getPropertyValuesByPublicId("startMinute", map),
+        getPropertyValuesByPublicId("endMinute", map),
+        getOptionalPropertyValuesByPublicId("periodType", map))
+  }
+
+  def getPropertyValuesByPublicId(property: String, mapValue: Map[String, Any]): Int = {
+    Try(mapValue(property).asInstanceOf[BigInt].toInt).getOrElse(mapValue(property).asInstanceOf[Int])
+  }
+
+  def getOptionalPropertyValuesByPublicId(property: String, mapValue: Map[String, Any]): Option[Int] = {
+    mapValue.get(property) match {
+      case Some(value) => Try(value.asInstanceOf[Option[BigInt]].map(_.toInt)).getOrElse(value.asInstanceOf[Option[Int]])
+      case _ => None
+    }
+  }
+
+  def toMap(value: ValidityPeriodValue):  Map[String, Any] = {
+    Map(
+      "days" -> value.days,
+      "startHour" -> value.startHour,
+      "endHour" -> value.endHour,
+      "startMinute" -> value.startMinute,
+      "endMinute" -> value.endMinute
+    )
+  }
+
+  def duration(startHour: Int, startMinute: Int, endHour: Int, endMinute: Int ): Int = {
+    val startHourAndMinutes: Double = (startMinute / 60.0) + startHour
+    val endHourAndMinutes: Double = (endMinute / 60.0) + endHour
+
+    if (endHourAndMinutes > startHourAndMinutes) {
+      Math.ceil(endHourAndMinutes - startHourAndMinutes).toInt
+    } else {
+      Math.ceil(24 - startHourAndMinutes + endHourAndMinutes).toInt
+    }
+  }
+}
 
 object PropertyTypes {
   val SingleChoice = "single_choice"
@@ -212,6 +283,7 @@ object PropertyTypes {
   val CheckBox = "checkbox"
   val Number = "number"
   val IntegerProp = "integer"
+  val TimePeriod = "time_period"
 }
 
 object MassTransitStopValidityPeriod {
@@ -234,7 +306,7 @@ sealed trait AssetTypeInfo {
 object AssetTypeInfo {
   val values =  Set(SpeedLimitAsset,TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
                     HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw,
-                    NumberOfLanes, CongestionTendency, MassTransitLane, TrafficVolume, WinterSpeedLimit,
+                    NumberOfLanes, MassTransitLane, TrafficVolume, WinterSpeedLimit,
                     Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
                     TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, UnknownAssetTypeId)
@@ -260,7 +332,6 @@ case object PavedRoad extends AssetTypeInfo { val typeId = 110; def geometryType
 case object RoadWidth extends AssetTypeInfo { val typeId = 120; def geometryType = "linear"; val label =  "RoadWidth"}
 case object DamagedByThaw extends AssetTypeInfo { val typeId = 130; def geometryType = "linear"; val label = "DamagedByThaw" }
 case object NumberOfLanes extends AssetTypeInfo { val typeId = 140; def geometryType = "linear"; val label = "NumberOfLanes" }
-case object CongestionTendency extends AssetTypeInfo { val typeId = 150; def geometryType = "linear"; val label = "CongestionTendency"  }
 case object MassTransitLane extends AssetTypeInfo { val typeId = 160; def geometryType = "linear"; val label = "MassTransitLane"  }
 case object TrafficVolume extends AssetTypeInfo { val typeId = 170; def geometryType = "linear"; val label = "TrafficVolume" }
 case object WinterSpeedLimit extends AssetTypeInfo { val typeId = 180; def geometryType = "linear"; val label = "WinterSpeedLimit"  }
@@ -276,7 +347,7 @@ case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryTy
 case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label =  ""}
 case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = "" }
 case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""}
-case object Manoeuvres extends AssetTypeInfo { val typeId = 999; def geometryType = "linear"; val label = "Manoeuvre" }
+case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryType = "linear"; val label = "Manoeuvre" }
 case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit" }
 case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""}
 case object TrWidthLimit extends  AssetTypeInfo {val typeId = 370; def geometryType = "point"; val label = "TrWidthLimit"}
@@ -285,4 +356,4 @@ case object TrTrailerTruckWeightLimit extends  AssetTypeInfo {val typeId = 330; 
 case object TrBogieWeightLimit extends  AssetTypeInfo {val typeId = 350; def geometryType = "point"; val label = "TrBogieWeightLimit"}
 case object TrAxleWeightLimit extends  AssetTypeInfo {val typeId = 340; def geometryType = "point"; val label = "TrAxleWeightLimit"}
 case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometryType = "point"; val label = "TrWeightLimit"}
-case object CareClass extends  AssetTypeInfo {val typeId = 380; def geometryType = "linear"; val label = "CareClass"}
+case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType = "linear"; val label = "CareClass"}

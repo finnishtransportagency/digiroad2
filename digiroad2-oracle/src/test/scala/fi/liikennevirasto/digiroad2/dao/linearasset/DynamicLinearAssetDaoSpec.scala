@@ -6,8 +6,8 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, DynamicPropertyValue}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue}
+import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, DynamicPropertyValue, ValidityPeriodValue, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, PersistedLinearAsset}
 
 class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
 
@@ -84,4 +84,7 @@ class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
       assetValues.find(_.publicId == "test_data_number").get.values should be (Seq(DynamicPropertyValue(numberValue1.toString()), DynamicPropertyValue(numberValue2.toString())))
     }
   }
+
+
+
 }

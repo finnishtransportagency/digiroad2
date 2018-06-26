@@ -14,6 +14,7 @@ root.LinearAssetLayer  = function(params) {
       massLimitation = params.massLimitation,
       hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
       trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer,
+      isMultipleLinkSelectionAllowed = params.isMultipleLinkSelectionAllowed,
       authorizationPolicy = params.authorizationPolicy;
 
   Layer.call(this, layerName, roadLayer);
@@ -196,6 +197,17 @@ root.LinearAssetLayer  = function(params) {
     }
   };
 
+  var onMultipleSelect = function(evt) {
+    if(evt.selected.length !== 0) {
+      selectedLinearAsset.addSelection(_.map(evt.selected, function(feature){ return feature.getProperties();}));
+    }
+    else{
+      if (selectedLinearAsset.exists()) {
+        selectedLinearAsset.removeSelection(_.map(evt.deselected, function(feature){ return feature.getProperties();}));
+      }
+    }
+  };
+
   var verifyClickEvent = function(properties, evt){
     var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
     selectedLinearAsset.open(properties, singleLinkSelect);
@@ -206,16 +218,18 @@ root.LinearAssetLayer  = function(params) {
     var selectedAssets = selectedLinearAsset.get();
     var features = style.renderFeatures(selectedAssets);
     if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), offsetBySideCode), me.uiState.zoomLevel));
     selectToolControl.addSelectionFeatures(features);
     readOnlyLayer.hideLayer();
     unHighLightReadOnlyLayer();
   };
 
-  var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
+  var selectToolControl = new SelectToolControl(application, vectorLayer, map, isMultipleLinkSelectionAllowed, {
     style: function(feature){ return feature.setStyle(me.getLayerStyle(feature)); },
     onInteractionEnd: onInteractionEnd,
-    onSelect: onSelect
+    onSelect: onSelect,
+    onMultipleSelect: onMultipleSelect,
+    onClose: onCloseForm
   });
 
   this.getSelectToolControl = function() {
@@ -238,7 +252,7 @@ root.LinearAssetLayer  = function(params) {
 
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), offsetBySideCode), me.uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
      LinearAssetMassUpdateDialog.show({
@@ -304,6 +318,10 @@ root.LinearAssetLayer  = function(params) {
     }
   };
 
+  function onCloseForm()  {
+    eventbus.trigger('closeForm');
+  }
+
   var bindEvents = function(eventListener) {
     var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
     var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
@@ -318,6 +336,7 @@ root.LinearAssetLayer  = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
+    eventListener.listenTo(eventbus, multiElementEvent('valueChanged'), linearAssetChanged);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
     eventListener.listenTo(eventbus, 'layer:linearAsset', refreshReadOnlyLayer);
   };
@@ -340,6 +359,8 @@ root.LinearAssetLayer  = function(params) {
 
   var linearAssetUnSelected = function () {
     selectToolControl.clear();
+    if (application.getSelectedTool() !== 'Cut')
+      changeTool(application.getSelectedTool());
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
   
@@ -481,10 +502,12 @@ root.LinearAssetLayer  = function(params) {
   };
 
   this.drawLinearAssets = function(linearAssets) {
-    vectorSource.addFeatures(style.renderFeatures(linearAssets));
+    vectorSource.addFeatures(style.renderFeatures(_.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
+      return selectedAsset.linkId === asset.linkId && selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
+    })));
     readOnlyLayer.showLayer();
     if(assetLabel) {
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), me.uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(linearAssets, 'geometry'), offsetBySideCode), me.uiState.zoomLevel));
     }
   };
 
@@ -494,16 +517,22 @@ root.LinearAssetLayer  = function(params) {
 
   this.decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
-      var features = style.renderFeatures(selectedLinearAsset.get());
+
+      var linearAssets = selectedLinearAsset.get();
+      var selectedFeatures = style.renderFeatures(linearAssets);
+
       if(assetLabel)
-          features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), me.uiState.zoomLevel));
-      selectToolControl.addSelectionFeatures(features);
+          selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), offsetBySideCode), me.uiState.zoomLevel));
+
+      vectorSource.addFeatures(selectedFeatures);
+      selectToolControl.addSelectionFeatures(selectedFeatures);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
         me.drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
       }
     }
   };
+
   var reset = function() {
     linearAssetCutter.deactivate();
   };

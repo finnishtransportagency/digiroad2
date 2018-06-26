@@ -237,10 +237,45 @@ form.maintenanceRoad-b {
     margin-top: 7px;
   }
   .form-group.editable {
-    margin-left: 10px;
+    margin-left: -8px;
   }
   .choice-group {
     width: 200px;
     margin-top: 6px;
   }
+  .form-group.read-only {
+    margin-top: -15px;
+    margin-left: 3px;
+  }
+  .validity-period-group{
+    margin-left: 89px;
+    margin-top: 6px;
+
+    label {
+      text-transform: none;
+      font-weight: normal;
+      .form-dark& {
+        color: @gray-light;
+      }
+    }
+  }
+
+  .existing-validity-period {
+    select {
+      width: 45px !important;
+    }
+    label {
+      width: 40px !important;
+    }
+    .delete {
+      margin-top: 6px;
+    }
+  }
+
+  .new-validity-period {
+    select {
+      width: 250px !important;
+    }
+  }
+
 }

@@ -10,6 +10,8 @@
     var municipalityId;
     var municipalityName;
     var authorizationPolicy = new AuthorizationPolicy();
+    var assetConfig = new AssetTypeConfiguration();
+
 
     this.initialize = function(mapBackend){
       backend = mapBackend;
@@ -23,6 +25,8 @@
         municipalityList = listP;
         me.generateWorkList(listP);
       });
+
+      eventbus.on('municipality:verified', me.reloadForm);
     };
 
     this.municipalityTable = function (municipalities, filter) {
@@ -62,8 +66,6 @@
       });
     };
 
-    eventbus.on('municipality:verified', me.reloadForm);
-
     var unknownLimitsTable = function (workListItems, municipalityName, municipalityId) {
       var selected = [];
       var municipalityHeader = function (municipalityName) {
@@ -71,20 +73,64 @@
       };
 
       var tableHeaderRow = function () {
-        return '<tr> <th></th> <th id="name">TIETOLAJI</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr>';
+        return '<tr> <th></th> <th id="name">TIETOLAJI</th>  <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr>';
       };
 
       var tableContentRows = function (values) {
         var rows = "";
+        renameAssets(values);
+        values = sortAssets(values);
         _.forEach(values, function (asset) {
           rows += (asset.verified || _.isEmpty(asset.verified_by)) ? upToDateAsset(asset) : oldAsset(asset);
         });
         return rows;
       };
 
+
+      var renameAssets = function (values) {
+        _.forEach(values, function (asset) {
+          asset.assetName = _.find(assetConfig.assetTypeInfo, function(config){ return config.typeId ===  asset.typeId; }).title ;
+        });
+      };
+
+      var sortAssets = function (values) {
+        var assetOrdering = [
+          'Nopeusrajoitus',
+          'Joukkoliikenteen pysäkki',
+          'Kääntymisrajoitus',
+          'Ajoneuvokohtaiset rajoitukset',
+          'VAK-rajoitus',
+          'Liikennemerkit',
+          'Suurin sallittu massa',
+          'Yhdistelmän suurin sallittu massa',
+          'Suurin sallittu akselimassa',
+          'Suurin sallittu telimassa',
+          'Suurin sallittu korkeus',
+          'Suurin sallittu pituus',
+          'Suurin sallittu leveys',
+          'Esterakennelma',
+          'Päällyste',
+          'Leveys',
+          'Kaistojen lukumäärä',
+          'Joukkoliikennekaista',
+          'Rautatien tasoristeys',
+          'Liikennevalo',
+          'Opastustaulu',
+          'Palvelupiste',
+          'Kelirikko',
+          'Suojatie',
+          'Valaistus'
+        ];
+
+        return _.sortBy(values, function(property) {
+          return _.indexOf(assetOrdering, property.assetName);
+        });
+      };
+
       var upToDateAsset = function (asset) {
         return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
           "<td headers='name'>" + asset.assetName + "</td>" +
+          "<td headers='count'>" + (asset.counter ? asset.counter : '' ) + "</td>" +
           "<td headers='date'>" + asset.verified_date + "</td>" +
           "<td headers='verifier'>" + asset.verified_by + "</td></tr>";
       };
@@ -92,6 +138,7 @@
       var oldAsset = function (asset) {
         return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
           "<td headers='name'>" + asset.assetName + "    <img src='images/oldAsset.png' title='Tarkistus Vanhentumassa'" + "</td>" +
+          "<td style='color:red' headers='count'>" + (asset.counter ? asset.counter : '' )  + "</td>" +
           "<td style='color:red' headers='date'>" + asset.verified_date + "</td>" +
           "<td style='color:red' headers='verifier'>" + asset.verified_by + "</td></tr>";
       };
