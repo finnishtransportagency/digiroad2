@@ -349,16 +349,16 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
         SimpleProperty("trafficSigns_info", List(PropertyValue("Pedestrian crossing for test purpose"))))
 
-      val id = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), testUser.username, roadLink)
-      val id1 = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), batchProcessName, roadLink)
-      val id2 = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 2, None), batchProcessName, roadLink)
-      val id3 = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 3, None), batchProcessName, roadLink)
-      val id4 = service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), testUser.username, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 2, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 3, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 19.0, 388553075, properties, 1, None), batchProcessName, roadLink)
 
-      val id6 = service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 1, None), batchProcessName, adjacentRoadLink)
-      val id7 = service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 2, None), batchProcessName, adjacentRoadLink)
-      val id8 = service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 3, None), batchProcessName, adjacentRoadLink)
-      val id9 = service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 1, None), batchProcessName, adjacentRoadLink)
+      service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 1, None), batchProcessName, adjacentRoadLink)
+      service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 2, None), batchProcessName, adjacentRoadLink)
+      service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 3, None), batchProcessName, adjacentRoadLink)
+      service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 1, None), batchProcessName, adjacentRoadLink)
 
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(0.0, 0.0), Point(0.0, 40.0)))
       val pedestrianCrossings = result.filter(_.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt == TrafficSignType.PedestrianCrossing.value)
