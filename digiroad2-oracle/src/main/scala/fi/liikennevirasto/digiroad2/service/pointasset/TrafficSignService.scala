@@ -112,6 +112,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
   private val counterPublicId = "counter"
+  private val counterDisplayValue = "Merkkien määrä"
   private val batchProcessName = "batch_process_trafficSigns"
   private val groupingDistance = 2
 
@@ -166,7 +167,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     if(centerSignOpt.nonEmpty) {
       val centerSign = centerSignOpt.get
       val (inProximity, outsiders) = sorted.tail.partition(sign => centerSign.linkId == sign.linkId && centerSign.validityDirection == sign.validityDirection && GeometryUtils.withinTolerance(Seq(Point(centerSign.lon, centerSign.lat)), Seq(Point(sign.lon, sign.lat)), tolerance = groupingDistance))
-      val counterProp = Property(0, counterPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue((1 + inProximity.size).toString, Some(counterPublicId))))
+      val counterProp = Property(0, counterPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue((1 + inProximity.size).toString, Some(counterDisplayValue))))
       val withCounter = centerSign.copy(propertyData = centerSign.propertyData ++ Seq(counterProp))
       sortCrossings(outsiders, result ++ Seq(withCounter))
     } else {
