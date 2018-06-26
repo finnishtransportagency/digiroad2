@@ -17,11 +17,14 @@
     };
 
     var findValue = function(asset, publicId) {
-      return _.first(_.find(asset.value.properties, function(a) { return a.publicId === publicId; }).values).value;
+      var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
+      if(properties)
+        return _.first(properties.values).value;
     };
 
     var emptyValues = function(asset, publicId) {
-      return !_.isUndefined(asset.id) && _.isEmpty(_.find(asset.value.properties, function(a) { return a.publicId === publicId; }).values);
+        var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
+        return properties ?  !_.isUndefined(asset.id) && _.isEmpty(properties.values): !_.isUndefined(asset.id) ;
     };
 
     var offsetBySideCode = function (linearAsset) {

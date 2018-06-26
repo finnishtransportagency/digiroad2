@@ -97,7 +97,7 @@
         '   <input type="text" fieldType = "' + field.type + '" '+ me.required() +' name="' + field.publicId + '" class="form-control ' + className + '" ' + me.disabled()  + ' value="' + _value + '" >' +
         '</div>');
 
-      if (me.hasDefaultValue())
+      if (!isDisabled && me.hasDefaultValue() && !value)
         me.setSelectedValue(setValue, getValue);
 
       me.element.find('input[type=text]').on('keyup', function(){
@@ -122,13 +122,12 @@
         '   <textarea fieldType = "' + field.type + '" '+ me.required() +' name="' + field.publicId + '" class="form-control ' + className + ' ' + me.disabled() + '" >' + _value  + '</textarea>' +
         '</div>');
 
+      if (!isDisabled && me.hasDefaultValue() && !value)
+        me.setSelectedValue(setValue, getValue);
 
-        if (!isDisabled &&me.hasDefaultValue())
-          me.setSelectedValue(setValue, getValue);
-
-        me.element.find('textarea').on('keyup', function () {
-          me.setSelectedValue(setValue, getValue);
-        });
+      me.element.find('textarea').on('keyup', function () {
+        me.setSelectedValue(setValue, getValue);
+      });
 
       return me.element;
     };
@@ -160,12 +159,12 @@
           unit +
           '</div>');
 
-      if(!isDisabled && me.hasDefaultValue())
-          me.setSelectedValue(setValue, getValue);
+      if (!isDisabled && me.hasDefaultValue() && !value)
+        me.setSelectedValue(setValue, getValue);
 
-        me.element.find('input').on('keyup', function () {
-          me.setSelectedValue(setValue, getValue);
-        });
+      me.element.find('input').on('keyup', function () {
+        me.setSelectedValue(setValue, getValue);
+      });
 
       return me.element;
     };
@@ -214,12 +213,10 @@
         unit +
         '</div>');
 
-
-      if (!isDisabled && me.hasDefaultValue())
+      if (!isDisabled && me.hasDefaultValue() && !value)
         me.setSelectedValue(setValue, getValue);
 
-
-        me.element.find('input[type=text]').on('keyup', function () {
+      me.element.find('input[type=text]').on('keyup', function () {
           me.setSelectedValue(setValue, getValue);
         });
 
@@ -254,7 +251,7 @@
         return me.element.find(":selected").val();
       };
 
-      if (!isDisabled && me.hasDefaultValue())
+      if (!isDisabled && me.hasDefaultValue() && !value)
         me.setSelectedValue(setValue, getValue);
 
       me.element.find('select').on('change', function(){
@@ -306,7 +303,7 @@
 
       me.element =  $(template({divCheckBox: divCheckBox}));
 
-      if (!isDisabled && me.hasDefaultValue())
+      if (!isDisabled && me.hasDefaultValue() && !value)
         me.setSelectedValue(setValue, getValue);
 
       me.getValue = function() {
@@ -373,7 +370,7 @@
         me.setSelectedValue(setValue, getValue);
       }, 500));
 
-      if (!isDisabled && me.hasDefaultValue())
+      if (!isDisabled && me.hasDefaultValue() && !value)
         me.setSelectedValue(setValue, getValue);
 
       me.element.append(inputLabel);
@@ -410,7 +407,7 @@
         $(me.element).prop('checked', ~~(value === 0));
       };
 
-      if(!isDisabled && (me.hasDefaultValue() || me.isRequired())) {
+      if(!isDisabled && (me.hasDefaultValue() || me.isRequired()) && !value) {
         me.setValue(me.getValue());
         me.setSelectedValue(setValue, getValue);
       }
@@ -602,6 +599,26 @@
         '</div>' );
     };
   };
+  //hides field when in edit mode, show in view mode
+  var HiddenReadOnlyFields = function(assetTypeConfiguration){
+      DynamicField.call(this, assetTypeConfiguration);
+      var me = this;
+
+      me.viewModeRender = function (field, currentValue) {
+          var value = _.first(currentValue, function(values) { return values.value ; });
+          var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
+
+          var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
+          var printValue = _.isUndefined(someValue) ? _value : someValue.label;
+
+          return $('' +
+              '<div class="form-group">' +
+              '   <label class="control-label">' + field.label + '</label>' +
+              '   <p class="form-control-static">' + printValue + '</p>' +
+              '</div>'
+          );
+      };
+  };
 
   root.dynamicFormFields = [
       {name: 'long_text', fieldType: TextualLongField},
@@ -614,7 +631,8 @@
       {name: 'checkbox', fieldType: CheckboxField},
       {name: 'read_only_number', fieldType: ReadOnlyFields},
       {name: 'read_only_text', fieldType: ReadOnlyFields},
-      {name: 'time_period', fieldType: TimePeriodField}
+      {name: 'time_period', fieldType: TimePeriodField},
+      {name: 'hidden_read_only_number', fieldType: HiddenReadOnlyFields}
   ];
 
   root.DynamicAssetForm = function (formStructure) {
@@ -792,7 +810,6 @@
         var input = inputElement.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
         input.attr('disabled', disabled);
 
-        forms.removeFields(sideCode);
         if(disabled){
           removeValueFn();
           _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
@@ -925,7 +942,6 @@
         });
     };
 
-
     function events() {
       return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
     }
@@ -961,7 +977,7 @@
       });
 
       eventbus.on(events('valueChanged'), function() {
-        var cancel = $('.cancel').prop('disabled', false);
+        $('.cancel').prop('disabled', false);
       });
 
       return {
