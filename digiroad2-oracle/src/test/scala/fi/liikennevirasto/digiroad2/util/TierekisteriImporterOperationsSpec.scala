@@ -19,7 +19,6 @@ import org.scalatest.{FunSuite, Matchers}
 class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
-  val mockRoadAddressDAO: RoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressesService]
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockTRClient: TierekisteriLightingAssetClient = MockitoSugar.mock[TierekisteriLightingAssetClient]
@@ -365,10 +364,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -413,10 +411,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, List(Point(0.0, 0.0), Point(0.0, 1000.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(raS1)).thenReturn(Seq(raS2))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(raS1, raS2))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -447,10 +444,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
        val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -463,6 +459,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
      }
    }
 
+  //val mockRoadAddressDAO: RoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
   test("update assets (litRoad) from TR to OTH"){
     TestTransactions.runWithRollback() {
 
@@ -489,13 +486,11 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
       when(mockTRClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
       when(mockTRClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
-
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
@@ -528,10 +523,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockMassTransitLaneClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -571,13 +565,12 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockMassTransitLaneClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
       when(mockMassTransitLaneClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
       when(mockMassTransitLaneClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
 
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
@@ -609,10 +602,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRPavedRoadClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -651,13 +643,11 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRPavedRoadClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
       when(mockTRPavedRoadClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
       when(mockTRPavedRoadClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
-
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
@@ -780,10 +770,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRDamageByThawClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -810,10 +799,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTREuropeanRoadClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -848,13 +836,12 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTREuropeanRoadClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
       when(mockTREuropeanRoadClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
       when(mockTREuropeanRoadClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
 
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
@@ -1025,10 +1012,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRSpeedLimitAssetClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -1067,13 +1053,12 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       when(mockAssetDao.expireAssetByTypeAndLinkId(any[Long], any[Seq[Long]])).thenCallRealMethod()
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq(235))
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRSpeedLimitAssetClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
       when(mockTRSpeedLimitAssetClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))  /*needed for update*/
       when(mockTRSpeedLimitAssetClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
 
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockRoadLinkService.getVVHRoadLinksF(any[Int])).thenReturn(Seq(vvhRoadLink))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -1267,7 +1252,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val roadNumber = 1
       val roadPart = 1
 
-      val ra = Seq(ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 0, 170, None, None, 5001,0, 170.3, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None),
+      val ras = Seq(ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 0, 170, None, None, 5001,0, 170.3, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None),
       ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 170, 175, None, None, 5002, 0, 5.8, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None))
 
       val vvhRoadLink = Seq(VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
@@ -1277,7 +1262,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val trAsset =  Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, startMValue, startMValue, RoadSide.Right, TRTrafficSignType.TelematicSpeedLimit,""))
       val mappedLinkType: Map[Long, Seq[(Long, LinkType)]] = Map((5001L, Seq((5001L, Motorway))))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(ra)
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(ras)
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLink)
       when(mockRoadLinkService.getAllLinkType(any[Seq[Long]])).thenReturn(mappedLinkType)
       testTRSpeedLimit.generateOneSideSpeedLimitsTest(roadNumber, RoadSide.Right, trAsset, Seq(), Seq())
@@ -1320,11 +1305,10 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5002, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockGreenCareClassAssetClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(greenAsset))
       when(mockWinterCareClassAssetClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(winterAsset, middleWinterAsset))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
