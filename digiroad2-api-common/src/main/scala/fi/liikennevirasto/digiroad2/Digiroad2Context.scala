@@ -25,6 +25,7 @@ import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite._
 import org.apache.http.impl.client.HttpClientBuilder
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -179,6 +180,8 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
 }
 
 object Digiroad2Context {
+  val logger = LoggerFactory.getLogger(getClass)
+
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
     val props = new Properties()
@@ -193,17 +196,14 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
-    try {
-      projectService.updateProjectsWaitingResponseFromTR()
-    } catch {
-      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
-    }
-  }
 
-  system.scheduler.schedule(FiniteDuration(1, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
-     applicationFeedback.sendFeedbacks()
-     System.out.println("System.scheduler executes for feedback feature")
+  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
+    try {
+      logger.info("Send feedback scheduler started.")
+      applicationFeedback.sendFeedbacks()
+    } catch {
+      case ex: Exception => logger.error(s"Exception at send feedback: ${ex.getMessage}")
+    }
   }
 
   val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")

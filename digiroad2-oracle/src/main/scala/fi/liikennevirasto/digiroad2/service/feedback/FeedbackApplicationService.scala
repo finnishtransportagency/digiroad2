@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
 import javax.mail.MessagingException
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
@@ -14,6 +15,7 @@ case class FeedbackApplicationBody(feedbackType: Option[String], headline: Optio
 
 trait Feedback {
 
+  val logger = LoggerFactory.getLogger(getClass)
   private val smtpProp = new SmtpPropertyReader
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -62,7 +64,7 @@ trait Feedback {
           emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), feedback.createdBy.getOrElse(from), None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))
           updateApplicationFeedbackStatus(feedback.id)
         }catch {
-          case messagingException: MessagingException=> println( s"Error on email sending: ${messagingException.toString}" )
+          case messagingException: MessagingException=> logger.error(s"Error on email sending: ${messagingException.toString}" )
         }
     }
   }
