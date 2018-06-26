@@ -18,17 +18,13 @@ window.MunicipalitySituationPopup = function (models, authorizationPolicy) {
         message: 'Tietolajien päivitystilanne: Huittinen',
         saveButton: 'Siirry tietolajien kuntasivulle',
         cancelButton: 'Sulje',
-        saveCallback: function(){ showMunicipalityWorkingList(); },
+        saveCallback: function(){},
         cancelCallback: function() { purge(); },
         closeCallback: function() { purge(); }
     };
 
     var purge = function() {
         $('.confirm-modal').remove();
-    };
-
-    var showMunicipalityWorkingList = function() {
-        window.open('#work-list/municipality');
     };
 
     var renameAssets = function (values) {
@@ -135,7 +131,7 @@ window.MunicipalitySituationPopup = function (models, authorizationPolicy) {
                         '<label class="control-label" id="title">Tarkistetut tietolajit</label>' +
                          me.createCriticalAssetsVerificationInfoForm(verificationsInfo) +
                     '<div class="actions">' +
-                        '<button class = "btn btn-primary save">' + options.saveButton + '</button>' +
+                        '<button class = "btn btn-primary save" onclick="window.location.href=\'#work-list/municipality\'">' + options.saveButton + '</button>' +
                         '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
                     '</div>' +
                 '</div>' +
