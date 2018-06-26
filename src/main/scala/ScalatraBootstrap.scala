@@ -9,7 +9,8 @@ import javax.servlet.ServletContext
 class
 ScalatraBootstrap extends LifeCycle {
   override def init(context: ServletContext) {
-    context.mount(new Digiroad2Api(Digiroad2Context.roadLinkOTHService,
+    context.mount(new Digiroad2Api(Digiroad2Context.roadLinkService,
+      Digiroad2Context.roadAddressesService,
       Digiroad2Context.speedLimitService,
       Digiroad2Context.obstacleService,
       Digiroad2Context.railwayCrossingService,
@@ -32,7 +33,7 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService), "/api/integration/*")
     context.mount(new ChangeApi(), "/api/changes/*")
     context.mount(new MunicipalityApi(Digiroad2Context.onOffLinearAssetService,
-      Digiroad2Context.roadLinkOTHService,
+      Digiroad2Context.roadLinkService,
       Digiroad2Context.linearAssetService,
       Digiroad2Context.speedLimitService,
       Digiroad2Context.pavingService,
@@ -44,7 +45,7 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.railwayCrossingService,
       Digiroad2Context.trafficLightService
     ), "/api/municipality/*")
-    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkOTHService ), "/api/livi/*")
+    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService ), "/api/livi/*")
     if (!Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
       // Mount for manual testing purposes but do not use them
       context.mount(new TierekisteriTestApi, "/api/tierekisteri/*")
