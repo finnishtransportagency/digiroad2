@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -230,6 +231,10 @@ object Digiroad2Context {
     new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
+  lazy val viiteClient: SearchViiteClient = {
+    new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+  }
+
   lazy val linearAssetDao: OracleLinearAssetDao = {
     new OracleLinearAssetDao(vvhClient, roadLinkService)
   }
@@ -245,7 +250,7 @@ object Digiroad2Context {
   }
 
   lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService()
+    new RoadAddressesService(viiteClient)
   }
 
   lazy val assetService: AssetService = {

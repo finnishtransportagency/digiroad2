@@ -18,19 +18,9 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 //TODO add parameters after merge of DROTH-1276
 //TODO this name can change to RoadAddressService
-class RoadAddressesService {
+class RoadAddressesService(viiteClient: SearchViiteClient ) {
 
   val logger = LoggerFactory.getLogger(getClass)
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
-  lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
-  }
 
   /**
     * Return all the current existing road numbers
@@ -197,12 +187,6 @@ class RoadAddressesService {
     roadAddresses.groupBy(ra => (ra.linkId, ra.roadNumber, ra.roadPartNumber)).mapValues(ras => (ras.minBy(_.startAddrMValue),ras.maxBy(_.endAddrMValue))).map{
       case (key, (startRoadAddress, endRoadAddress)) => startRoadAddress.copy(endAddrMValue = endRoadAddress.endAddrMValue)
     }.toSeq
-  }
-
-  @deprecated
-  def getRoadAddressPropertiesByLinkId(assetCoordinates: Point, linkId: Long, roadLink: RoadLinkLike, oldProperties: Seq[Property]): Seq[Property] = {
-    //TODO this method is deleted at DROTH-1276
-    throw new NotImplementedException
   }
 
 }
