@@ -258,12 +258,6 @@ object DataFixture {
     println()
   }
 
-  @Deprecated
-  def importRoadAddresses(): Unit = {
-    println("\nDeprecated! Use \nsbt \"project digiroad2-viite\" \"test:run-main fi.liikennevirasto.viite.util.DataFixture import_road_addresses\"\n instead")
-    println()
-  }
-
   def generateDroppedAssetsCsv(): Unit = {
     println("\nGenerating list of linear assets outside geometry")
     println(DateTime.now())
@@ -1401,8 +1395,6 @@ object DataFixture {
         importVVHRoadLinksByMunicipalities()
       case Some("set_transitStops_floating_reason") =>
         transisStopAssetsFloatingReason()
-      case Some ("import_road_addresses") =>
-        importRoadAddresses()
       case Some ("verify_roadLink_administrative_class_changed") =>
         verifyRoadLinkAdministrativeClassChanged()
       case Some("check_TR_bus_stops_without_OTH_LiviId") =>
