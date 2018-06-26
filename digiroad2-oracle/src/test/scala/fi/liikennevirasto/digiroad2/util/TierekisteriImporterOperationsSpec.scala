@@ -459,7 +459,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
      }
    }
 
-  //val mockRoadAddressDAO: RoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
   test("update assets (litRoad) from TR to OTH"){
     TestTransactions.runWithRollback() {
 
