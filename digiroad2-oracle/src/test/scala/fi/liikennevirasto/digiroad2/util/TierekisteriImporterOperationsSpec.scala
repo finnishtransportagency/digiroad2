@@ -1264,7 +1264,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(ras)
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLink)
       when(mockRoadLinkService.getAllLinkType(any[Seq[Long]])).thenReturn(mappedLinkType)
-      testTRSpeedLimit.generateOneSideSpeedLimitsTest(roadNumber, RoadSide.Right, trAsset, Seq(), Seq())
+      testTRSpeedLimit.generateOneSideSpeedLimitsTest(roadNumber, RoadSide.Right, trAsset, Seq(), ras)
 
       val assets = linearAssetDao.fetchLinearAssetsByLinkIds(310, Seq(5001, 5002), LinearAssetTypes.numericValuePropertyId)
 
