@@ -10,7 +10,8 @@ case class Configuration(
                         municipalityNumber: Option[Int]  = None,
                         authorizedMunicipalities: Set[Int] = Set(),
                         authorizedAreas: Set[Int] = Set(),
-                        roles: Set[String] = Set()
+                        roles: Set[String] = Set(),
+                        lastLoginDate: Option[String] = None
                         )
 case class User(id: Long, username: String, configuration: Configuration, name: Option[String] = None) {
   def hasWriteAccess() = !isViewer()

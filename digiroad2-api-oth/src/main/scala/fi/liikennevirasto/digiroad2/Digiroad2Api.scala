@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
+import java.time.LocalDate
+
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -1569,30 +1571,39 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/dashBoardInfo/:municipalityCode") {
-    val municipalityId = params("municipalityCode").toInt
-    val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalityId)
-    val modifiedAssetTypes = verificationService.getAssetLatestModifications()
+    val user = userProvider.getCurrentUser()
 
+    user.configuration.lastLoginDate match {
+      case Some(lastLoginDate) if lastLoginDate.compareTo(LocalDate.now().toString()) == 0 =>
+        None
+      case _ =>
+        val municipalityId = params("municipalityCode").toInt
+        val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalityId)
+        val modifiedAssetTypes = verificationService.getAssetLatestModifications()
 
-    val verifiedMap =
-      verifiedAssetTypes.map(assetType =>
-        Map(
-          "typeId" -> assetType.assetTypeCode,
-          "assetName" -> assetType.assetTypeName,
-          "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-          "verified_by" -> assetType.verifiedBy.getOrElse("")
-        ))
+        val updateUserLastLoginDate = user.copy(configuration = user.configuration.copy(lastLoginDate = Some(LocalDate.now().toString())))
+        userProvider.updateUserConfiguration(updateUserLastLoginDate)
 
-    val modifiedMap =
-      modifiedAssetTypes.map(assetType =>
-        Map(
-          "typeId" -> assetType.assetTypeCode,
-          "assetName" -> assetType.assetTypeName,
-          "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-          "modified_by" -> assetType.modifiedBy.getOrElse("")
-        ))
+        val verifiedMap =
+          verifiedAssetTypes.map(assetType =>
+            Map(
+              "typeId" -> assetType.assetTypeCode,
+              "assetName" -> assetType.assetTypeName,
+              "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+              "verified_by" -> assetType.verifiedBy.getOrElse("")
+            ))
 
-    (verifiedMap, modifiedMap)
+        val modifiedMap =
+          modifiedAssetTypes.map(assetType =>
+            Map(
+              "typeId" -> assetType.assetTypeCode,
+              "assetName" -> assetType.assetTypeName,
+              "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+              "modified_by" -> assetType.modifiedBy.getOrElse("")
+            ))
+
+        (verifiedMap, modifiedMap)
+    }
   }
 
 }
