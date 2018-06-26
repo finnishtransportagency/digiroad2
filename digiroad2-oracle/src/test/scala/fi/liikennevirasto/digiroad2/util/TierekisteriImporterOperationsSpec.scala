@@ -490,6 +490,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockTRClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
       when(mockTRClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumberAndParts(any[Long], any[Seq[Long]])).thenReturn(Seq(ra))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
@@ -570,6 +571,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockMassTransitLaneClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
 
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumberAndParts(any[Long], any[Seq[Long]])).thenReturn(Seq(ra))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
@@ -647,6 +649,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockTRPavedRoadClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
       when(mockTRPavedRoadClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumberAndParts(any[Long], any[Seq[Long]])).thenReturn(Seq(ra))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
@@ -841,6 +844,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockTREuropeanRoadClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
 
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumberAndParts(any[Long], any[Seq[Long]])).thenReturn(Seq(ra))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
@@ -1058,6 +1062,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockTRSpeedLimitAssetClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
 
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumberAndParts(any[Long], any[Seq[Long]])).thenReturn(Seq(ra))
       when(mockRoadLinkService.getVVHRoadLinksF(any[Int])).thenReturn(Seq(vvhRoadLink))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
