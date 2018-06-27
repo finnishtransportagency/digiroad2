@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MunicipalityInfo, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util._
@@ -25,7 +25,8 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
 class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  val geometryTransform = new GeometryTransform
+  val mockRoadAddressesService = MockitoSugar.mock[RoadAddressesService]
+  val geometryTransform = new GeometryTransform(mockRoadAddressesService)
   val boundingBoxWithKauniainenAssets = BoundingRectangle(Point(374000,6677000), Point(374800,6677600))
   val userWithKauniainenAuthorization = User(
     id = 1,
@@ -1208,7 +1209,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("getByMunicipality gets Tierekisteri Equipment") {
-    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, mockEventBus, new GeometryTransform)
+    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, mockEventBus, mockGeometryTransform)
     val combinations: List[(Existence, String)] = List(Existence.No, Existence.Yes, Existence.Unknown).zip(List("1", "2", "99"))
     combinations.foreach { case (e, v) =>
       reset(mockTierekisteriClient, mockRoadLinkService)

@@ -16,10 +16,11 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -46,12 +47,19 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
+
+  lazy val viiteClient: SearchViiteClient = {
+    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+  }
+
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   }
+
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(roadLinkService)
   }
+
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
     new TierekisteriMassTransitStopClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -85,19 +93,24 @@ object DataFixture {
     new SpeedLimitValidator(trafficSignService)
   }
 
+  lazy val roadAddressService: RoadAddressesService = {
+    new RoadAddressesService(viiteClient)
+  }
+
   lazy val massTransitStopService: MassTransitStopService = {
-    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
+      override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
+    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService, roadAddressService)
   }
 
   lazy val geometryTransform: GeometryTransform = {
-    new GeometryTransform()
+    new GeometryTransform(roadAddressService)
   }
 
   lazy val geometryVKMTransform: VKMGeometryTransform = {
@@ -110,10 +123,6 @@ object DataFixture {
 
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
     new InaccurateAssetDAO()
-  }
-
-  lazy val roadAddressDao : RoadAddressDAO = {
-    new RoadAddressDAO()
   }
 
   lazy val tierekisteriLightingAsset : TierekisteriLightingAssetClient = {

@@ -20,7 +20,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.JsonSerializer
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, JsonSerializer}
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import org.apache.http.impl.client.HttpClientBuilder
 
@@ -277,14 +277,15 @@ object Digiroad2Context {
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
+      override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new ProductionMassTransitStopService(eventbus, roadLinkService)
+    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressesService)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {

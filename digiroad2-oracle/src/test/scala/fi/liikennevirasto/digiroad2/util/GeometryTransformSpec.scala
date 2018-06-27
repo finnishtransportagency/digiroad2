@@ -5,13 +5,17 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.service.RoadAddressesService
+import org.mockito.Matchers.any
+import org.mockito.Mockito.when
+import org.scalatest.mock.MockitoSugar
 import slick.jdbc.StaticQuery.interpolation
 
 
 class GeometryTransformSpec extends FunSuite with Matchers {
-
-  val transform = new GeometryTransform()
+  val mockRoadAddressesService = MockitoSugar.mock[RoadAddressesService]
+  val transform = new GeometryTransform(mockRoadAddressesService)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -21,6 +25,10 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val sideCode = 1
 
     runWithRollback {
+
+      val ra = Some(ViiteRoadAddress(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+
+      when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(ra)
 //      val id = Sequences.nextViitePrimaryKeySeqValue
 //      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 //      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
