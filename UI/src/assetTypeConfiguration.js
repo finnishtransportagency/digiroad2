@@ -256,7 +256,7 @@
         label: new RoadDamagedByThawLabel(),
         form: new DynamicAssetForm ( {
           fields : [
-            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg', defaultValue: "100" }
+            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg'}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,

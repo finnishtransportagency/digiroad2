@@ -7,11 +7,9 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, TextualValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkOTHService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
-import fi.liikennevirasto.digiroad2.service.pointasset.PedestrianCrossingService
 import org.joda.time.DateTime
 import org.mockito.Matchers.any
 import org.mockito.Mockito._
@@ -37,20 +35,10 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
   val mockTREuropeanRoadClient: TierekisteriEuropeanRoadAssetClient = MockitoSugar.mock[TierekisteriEuropeanRoadAssetClient]
   val mockTRSpeedLimitAssetClient: TierekisteriSpeedLimitAssetClient = MockitoSugar.mock[TierekisteriSpeedLimitAssetClient]
-  val mockPedestrianCrossingClient: TierekisteriPedestrianCrossingAssetClient = MockitoSugar.mock[TierekisteriPedestrianCrossingAssetClient]
+  val mockTierekisteriAssetDataClient: TierekisteriAssetDataClient = MockitoSugar.mock[TierekisteriAssetDataClient]
   val dynamicDao = new DynamicLinearAssetDao
   val mockGreenCareClassAssetClient: TierekisteriGreenCareClassAssetClient = MockitoSugar.mock[TierekisteriGreenCareClassAssetClient]
   val mockWinterCareClassAssetClient: TierekisteriWinterCareClassAssetClient = MockitoSugar.mock[TierekisteriWinterCareClassAssetClient]
-
-
-
-
-  val pedestrianCrossingService = new PedestrianCrossingService(mockRoadLinkService) {
-    override def withDynTransaction[T](f: => T): T = f
-    override def withDynSession[T](f: => T): T = f
-  }
-
-
 
   lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
     new RoadWidthTierekisteriImporter()
@@ -212,16 +200,70 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
 
-  class TestPedestrianCrossingOperations extends PedestrianCrossingTierekisteriImporter {
+  case class TierekisteriAssetDataTest (roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, startAddressMValue: Long,
+                                        endAddressMValue: Long, track: Track) extends TierekisteriAssetData
+
+  class TestPointAssetTierekisteriImporterOperations extends PointAssetTierekisteriImporterOperations {
+//    override lazy val assetDao: OracleAssetDao = mockAssetDao
+//    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
+//    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+//    override val tierekisteriClient: TierekisteriTrafficSignAssetClient = mockTRTrafficSignsLimitClient
+//    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
+//    override lazy val vvhClient: VVHClient = mockVVHClient
+//    override def withDynTransaction[T](f: => T): T = f
+
+    override def typeId: Int = 999
+    override def withDynSession[T](f: => T): T = f
+    override def withDynTransaction[T](f: => T): T = f
+    override def assetName: String = "assetTest"
+    override type TierekisteriClientType = TierekisteriAssetDataClient
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
-    override val tierekisteriClient: TierekisteriPedestrianCrossingAssetClient = mockPedestrianCrossingClient
+    override val tierekisteriClient: TierekisteriAssetDataClient = mockTierekisteriAssetDataClient
     override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
-    override def withDynTransaction[T](f: => T): T = f
+
+    var createObject: Seq[(ViiteRoadAddress, VVHRoadlink, Double, TierekisteriAssetData)] = Seq()
+
+    override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+      createObject = List.concat(createObject , Seq((roadAddress, vvhRoadlink, mValue, trAssetData)))
+    }
+
+    def getCreatedValues: Seq[(ViiteRoadAddress, VVHRoadlink, Double, TierekisteriAssetData)] = {
+      createObject
+    }
+
+    def createAssetTest(section: AddressSection, trAssetData: TierekisteriAssetData) = super.createAsset(section: AddressSection, trAssetData: TierekisteriAssetData)
+
   }
 
+  test("test createPoint main method") {
+    val pointImporterOperations = new TestPointAssetTierekisteriImporterOperations()
+
+    val roadNumber: Int = 4
+    val startRoadPartNumber: Int = 203
+    val startAddressMValue: Int = 3184
+    val endAddressMValue: Int = 3400
+    val track: Track = Track.RightSide
+
+    val trAssetData = TierekisteriAssetDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, startAddressMValue, startAddressMValue, Track.RightSide)
+    val section = AddressSection(roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, Some(endAddressMValue))
+    val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+    val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+
+    when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+    when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
+
+    pointImporterOperations.createAssetTest(section, trAssetData.asInstanceOf[pointImporterOperations.TierekisteriAssetData])
+
+    pointImporterOperations.getCreatedValues.foreach { case (viiteRoadAddress, roadLink, mValue, tierekisteriAssetData ) =>
+      viiteRoadAddress should be (ra)
+      roadLink should be (vvhRoadLink)
+      mValue should be (1)
+      tierekisteriAssetData should be (trAssetData)
+    }
+  }
 
   test("assets splited are split properly") {
     val trl = TierekisteriLightingData(4L, 203L, 208L, Track.RightSide, 3184L, 6584L)
@@ -1361,33 +1403,4 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assets.size should be (5)
     }
   }
-
-  test("import assets (pedestrian crossing) from TR to OTH"){
-    TestTransactions.runWithRollback() {
-
-      val testPedestrianCrossing = new TestPedestrianCrossingOperations
-      val roadNumber = 4L
-      val startRoadPartNumber = 200L
-      val startAddressMValue = 0L
-
-      val tr = TierekisteriPedestrianCrossingAssetData(roadNumber, startRoadPartNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, startAddressMValue)
-      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, startAddressMValue, None, None, 1L, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
-      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-
-      when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
-      when(mockPedestrianCrossingClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
-
-      testPedestrianCrossing.importAssets()
-      val asset = pedestrianCrossingService.getPersistedAssetsByLinkId(vvhRoadLink.linkId).head
-
-      asset.linkId should be (5001)
-    }
-  }
-
 }
