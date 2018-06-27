@@ -6,7 +6,6 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d, dao}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.dao.RoadAddressDAO
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}

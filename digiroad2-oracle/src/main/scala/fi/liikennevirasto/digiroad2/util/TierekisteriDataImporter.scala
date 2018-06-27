@@ -6,11 +6,12 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, TrafficVolume}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficVolumeAssetClient
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, RoadAddressDAO}
+import fi.liikennevirasto.digiroad2.dao.OracleAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -48,10 +49,6 @@ object TierekisteriDataImporter {
 
   lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
     new OracleLinearAssetDao(vvhClient, roadLinkService)
-  }
-
-  lazy val roadAddressDao : RoadAddressDAO = {
-    new RoadAddressDAO()
   }
 
   lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
@@ -138,6 +135,14 @@ object TierekisteriDataImporter {
       HttpClientBuilder.create().build())
   }
 
+  lazy val viiteClient: SearchViiteClient = {
+    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+  }
+
+  lazy val roadAddressService: RoadAddressesService = {
+    new RoadAddressesService(viiteClient)
+  }
+
   //TODO migrate this import asset to TierekisteriImporterOperations
   def importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient) = {
     val trafficVolumeId = TrafficVolume.typeId
@@ -148,9 +153,7 @@ object TierekisteriDataImporter {
     println("\nTraffic Volume data Expired")
 
     println("\nFetch Road Numbers From Viite")
-    val roadNumbers = OracleDatabase.withDynSession {
-      roadAddressDao.getRoadNumbers()
-    }
+    val roadNumbers = roadAddressService.getAllRoadNumbers()
     println("\nEnd of Fetch ")
 
     println("roadNumbers: ")
@@ -165,11 +168,21 @@ object TierekisteriDataImporter {
 
         val r = trTrafficVolume.groupBy(trTrafficVolume => (trTrafficVolume.roadNumber, trTrafficVolume.startRoadPartNumber, trTrafficVolume.startAddressMValue, trTrafficVolume.endAddressMValue)).map(_._2.head)
 
+        val allRoadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
+
         r.foreach { tr =>
           OracleDatabase.withDynTransaction {
 
             println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + tr.roadNumber + " " + tr.startRoadPartNumber + " " + tr.startAddressMValue + " " + tr.endAddressMValue)
-            val roadAddresses = roadAddressDao.getRoadAddressesFiltered(tr.roadNumber, tr.startRoadPartNumber, tr.startAddressMValue, tr.endAddressMValue)
+            //This was a direct migration from the where clause on the previous RoadAddressDAO query
+            val roadAddresses = allRoadAddresses.filter(ra =>
+              (
+                (ra.startAddrMValue >= tr.startAddressMValue && ra.endAddrMValue <= tr.endAddressMValue) ||
+                (tr.startAddressMValue >= ra.startAddrMValue && tr.startAddressMValue < ra.endAddrMValue) ||
+                (tr.endAddressMValue > ra.startAddrMValue && tr.endAddressMValue <= ra.endAddrMValue)
+              ) &&
+              ra.roadNumber == roadNumber && ra.roadPartNumber == tr.startRoadPartNumber && ra.floating == false
+            )
 
             val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
             val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks)
