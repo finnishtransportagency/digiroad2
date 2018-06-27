@@ -336,7 +336,7 @@ case object MassTransitLane extends AssetTypeInfo { val typeId = 160; def geomet
 case object TrafficVolume extends AssetTypeInfo { val typeId = 170; def geometryType = "linear"; val label = "TrafficVolume" }
 case object WinterSpeedLimit extends AssetTypeInfo { val typeId = 180; def geometryType = "linear"; val label = "WinterSpeedLimit"  }
 case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = "" }
-case object PedestrianCrossings extends AssetTypeInfo { val typeId = 200; def geometryType = "point"; val label = "" }
+case object PedestrianCrossings extends AssetTypeInfo { val typeId = 200; def geometryType = "point"; val label = "PedestrianCrossings" }
 case object HazmatTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = "" }
 case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = "" }
 case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = "" }
