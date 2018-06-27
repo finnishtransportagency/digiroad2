@@ -831,6 +831,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test ("Convert PersistedMassTransitStop into TierekisteriMassTransitStop") {
     val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
     runWithRollback {
+
+      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+
+      when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 //      val (lrm, raId) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextViitePrimaryKeySeqValue)
 //      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
 //    values ($lrm,null,1,109,298.694,null,1021227,0,to_timestamp('17.02.17 12:21:39','RR.MM.DD HH24:MI:SS'))""".execute
