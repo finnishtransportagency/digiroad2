@@ -57,15 +57,16 @@ trait Feedback {
     }
   }
 
-  def sendFeedbacks(): Unit = {
+ def sendFeedbacks(): Unit = {
     getNotSentFeedbacks.foreach{
-      feedback =>
-        try {
-          emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), feedback.createdBy.getOrElse(from), None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))
-          updateApplicationFeedbackStatus(feedback.id)
-        }catch {
-          case messagingException: MessagingException=> logger.error(s"Error on email sending: ${messagingException.toString}" )
+      feedback => {
+        if (emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), from, None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))) {
+          val id = updateApplicationFeedbackStatus(feedback.id)
+          logger.info(s"Sent feedback with id $id")
+        } else {
+          logger.error(s"Something happened when sending the email")
         }
+      }
     }
   }
 }
@@ -76,7 +77,7 @@ class FeedbackApplicationService extends Feedback {
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackApplicationBody
 
-  override def from: String = "OTH Application Feedback"
+  override def from: String = "oth-feedback@no-reply.com"
   override def subject: String = "Palaute työkalusta"
   override def body: String = ""
 
