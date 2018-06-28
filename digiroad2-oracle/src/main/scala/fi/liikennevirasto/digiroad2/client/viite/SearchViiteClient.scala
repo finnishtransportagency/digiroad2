@@ -18,8 +18,8 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
   override protected def serviceName: String = vvhRestApiEndPoint + "search/"
 
   def fetchAllRoadNumbers(): Seq[Long] = {
-    get[Seq[Long]](serviceName + "road_numbers") match {
-      case Left(roadNumbers) => roadNumbers
+    get[Seq[BigInt]](serviceName + "road_numbers") match {
+      case Left(roadNumbers) => roadNumbers.map(_.longValue())
       case Right(error) => throw new ViiteClientException(error.toString)
     }
   }
