@@ -370,7 +370,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
             or
             (a.created_date > $sinceDate and a.created_date <= $untilDate)
           )
-          and (TO_CHAR(a.created_date, 'YYYY-MM-dd') != TO_CHAR(a.valid_to, 'YYYY-MM-dd') or a.valid_to is null)
           and a.floating = 0"""
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
