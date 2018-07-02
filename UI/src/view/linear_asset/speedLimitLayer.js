@@ -289,8 +289,15 @@ window.SpeedLimitLayer = function(params) {
       selectToolControl.deactivate();
       speedLimitCutter.activate();
     } else if (tool === 'Select') {
-      speedLimitCutter.deactivate();
-      selectToolControl.activate();
+        speedLimitCutter.deactivate();
+        selectToolControl.deactivateDraw();
+        selectToolControl.activate();
+    } else if (tool === 'Rectangle'){
+        speedLimitCutter.deactivate();
+        selectToolControl.activeRectangle();
+    } else if (tool === 'Polygon'){
+        speedLimitCutter.deactivate();
+        selectToolControl.activePolygon();
     }
   };
 
