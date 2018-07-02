@@ -31,6 +31,8 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
 
         OraclePedestrianCrossingDao.create(pedestrianCrossing, mValue, s"batch_process_$assetName", vvhRoadlink.municipalityCode,
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+
+        println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $typeId")
     }
   }
 }
