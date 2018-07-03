@@ -4,9 +4,11 @@ window.MunicipalitySituationPopup = function (models) {
 
     this.initialize = function () {
         eventbus.on('dashBoardInfoAssets:fetched', function (results) {
-            var verifyInfos = results._1;
-            var modifyInfos = results._2;
-            renderDialog(verifyInfos, modifyInfos);
+            if (!_.isEmpty(results)) {
+              var verifyInfos = results._1;
+              var modifyInfos = results._2;
+              renderDialog(verifyInfos, modifyInfos);
+            }
         });
 
         models.fetchDashBoardInfo();

@@ -120,9 +120,7 @@
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
 
-    eventbus.on('roles:fetched', function() {
-        new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
-    });
+    new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
 
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {

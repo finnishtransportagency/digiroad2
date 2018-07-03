@@ -1598,7 +1598,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           modifiedAssetTypes.map(assetType =>
             Map(
               "typeId" -> assetType.assetTypeCode,
-//              "assetName" -> assetType.assetTypeName,
               "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
               "modified_by" -> assetType.modifiedBy.getOrElse("")
             ))
