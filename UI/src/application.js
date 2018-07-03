@@ -121,7 +121,7 @@
     new SpeedLimitWorkList().initialize();
 
     eventbus.on('roles:fetched', function() {
-        new MunicipalitySituationPopup(models.municipalitySituationCollection, authorizationPolicy).initialize();
+        new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
     });
 
     backend.getStartupParametersWithCallback(function(startupParameters) {

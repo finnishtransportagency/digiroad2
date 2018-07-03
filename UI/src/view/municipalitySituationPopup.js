@@ -1,4 +1,4 @@
-window.MunicipalitySituationPopup = function (models, authorizationPolicy) {
+window.MunicipalitySituationPopup = function (models) {
     var me = this;
     var assetConfig = new AssetTypeConfiguration();
 
