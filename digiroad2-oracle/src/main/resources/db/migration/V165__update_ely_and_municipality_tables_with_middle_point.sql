@@ -9,6 +9,7 @@ values ('municipality', 'GEOMETRY', mdsys.sdo_dim_array(mdsys.sdo_dim_element('X
 );
 
 alter table municipality add geometry sdo_geometry;
+alter table municipality add zoom number(2);
 
 
 insert into ely (id, name_fi, name_sv, geometry, zoom) values (1,'Uusimaa','Nyland', MDSYS.SDO_GEOMETRY( 4401, 3067, NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1, 1, 1), MDSYS.SDO_ORDINATE_ARRAY(376234.111897691,6694507.48332496, 0, 0)), 3);
