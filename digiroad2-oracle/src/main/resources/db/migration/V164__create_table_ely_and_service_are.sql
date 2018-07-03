@@ -6,3 +6,12 @@ create table ely
   geometry sdo_geometry,
   zoom number(2)
 );
+
+
+
+create table service_area
+(
+  id number(3) primary key,
+  geometry sdo_geometry,
+  zoom number(2)
+);
