@@ -6,9 +6,9 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup.SpeedLimits
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -341,29 +341,40 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))
 
-     val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-     val adjacentRoadLink = RoadLink(388553074, Seq(Point(0.0, 20.0), Point(0.0, 40.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+     val linkId1 = 388553075
+     val linkId2 = 388553074
+     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+     val adjacentRoadLink = RoadLink(linkId2, Seq(Point(0.0, 20.0), Point(0.0, 40.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
      val properties = Set(
         SimpleProperty("trafficSigns_type", List(PropertyValue("7"))),
         SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
         SimpleProperty("trafficSigns_info", List(PropertyValue("Pedestrian crossing for test purpose"))))
 
-      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), testUser.username, roadLink)
-      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 1, None), batchProcessName, roadLink)
-      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 2, None), batchProcessName, roadLink)
-      service.create(IncomingTrafficSign(0.0, 20.0, 388553075, properties, 3, None), batchProcessName, roadLink)
-      service.create(IncomingTrafficSign(0.0, 19.0, 388553075, properties, 1, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, linkId1, properties, BothDirections.value, None), testUser.username, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, linkId1, properties, BothDirections.value, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, linkId1, properties, TowardsDigitizing.value, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 20.0, linkId1, properties, AgainstDigitizing.value, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 19.0, linkId1, properties, BothDirections.value, None), batchProcessName, roadLink)
+      service.create(IncomingTrafficSign(0.0, 16.9, linkId1, properties, BothDirections.value, None), batchProcessName, roadLink)
 
-      service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 1, None), batchProcessName, adjacentRoadLink)
-      service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 2, None), batchProcessName, adjacentRoadLink)
-      service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 3, None), batchProcessName, adjacentRoadLink)
-      service.create(IncomingTrafficSign(0.0, 21.0, 388553074, properties, 1, None), batchProcessName, adjacentRoadLink)
+      service.create(IncomingTrafficSign(0.0, 21.0, linkId2, properties, BothDirections.value, None), batchProcessName, adjacentRoadLink)
+      service.create(IncomingTrafficSign(0.0, 21.0, linkId2, properties, TowardsDigitizing.value, None), batchProcessName, adjacentRoadLink)
+      service.create(IncomingTrafficSign(0.0, 21.0, linkId2, properties, AgainstDigitizing.value, None), batchProcessName, adjacentRoadLink)
+      service.create(IncomingTrafficSign(0.0, 21.0, linkId2, properties, BothDirections.value, None), batchProcessName, adjacentRoadLink)
 
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(0.0, 0.0), Point(0.0, 40.0)))
-      val pedestrianCrossings = result.filter(_.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt == TrafficSignType.PedestrianCrossing.value)
 
-      pedestrianCrossings.size should be (7)
+      val assetsOnLinkId1_vd1 = result.toList.groupBy(_.linkId).find(_._1 == linkId1).map(_._2).getOrElse(Seq.empty[PersistedTrafficSign]).filter(asset => asset.validityDirection == 1)
+      val assetsOnLinkId2_vd1 = result.toList.groupBy(_.linkId).find(_._1 == linkId2).map(_._2).getOrElse(Seq.empty[PersistedTrafficSign]).filter(asset => asset.validityDirection == 1)
+      val assetsOnLinkId2_vd2 = result.toList.groupBy(_.linkId).find(_._1 == linkId2).map(_._2).getOrElse(Seq.empty[PersistedTrafficSign]).filter(asset => asset.validityDirection == 2)
+
+      val signGroupOnLinkId1 = assetsOnLinkId1_vd1.sortBy(_.lat).lift(1).head
+
+      signGroupOnLinkId1.propertyData.filter(_.id == 0).head.values.head.propertyValue.toInt should be (2)
+      assetsOnLinkId2_vd1.head.propertyData.filter(_.id == 0).head.values.head.propertyValue.toInt should be (2)
+      assetsOnLinkId2_vd2.head.propertyData.filter(_.id == 0).head.values.head.propertyValue.toInt should be (1)
     }
   }
 
