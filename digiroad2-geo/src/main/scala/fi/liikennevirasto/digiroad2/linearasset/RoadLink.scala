@@ -26,6 +26,8 @@ case class RoadLinkProperties(linkId: Long,
                               modifiedAt: Option[String],
                               modifiedBy: Option[String])
 
+case class TinnyRoadLink(linkId: Long)
+
 case class RoadLink(linkId: Long, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
                     functionalClass: Int, trafficDirection: TrafficDirection,

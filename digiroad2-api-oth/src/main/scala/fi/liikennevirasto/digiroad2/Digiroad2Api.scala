@@ -1570,18 +1570,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     transformation(values)
   }
 
-  get("/dashBoardInfo/:municipalityCode") {
+  get("/dashBoardInfo") {
     val user = userProvider.getCurrentUser()
+    val userConfiguration = user.configuration
 
-    user.configuration.lastLoginDate match {
-      case Some(lastLoginDate) if lastLoginDate.compareTo(LocalDate.now().toString()) == 0 =>
+    userConfiguration.lastLoginDate match {
+      case Some(lastLoginDate) if lastLoginDate.compareTo(LocalDate.now().toString) == 0  || !user.isMunicipalityMaintainer =>
         None
       case _ =>
-        val municipalityId = params("municipalityCode").toInt
-        val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalityId)
-        val modifiedAssetTypes = verificationService.getAssetLatestModifications()
+        val municipalitiesNumbers =  userConfiguration.authorizedMunicipalities ++ userConfiguration.municipalityNumber
+        val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalitiesNumbers.head)
+        val modifiedAssetTypes = verificationService.getAssetLatestModifications(municipalitiesNumbers)
 
-        val updateUserLastLoginDate = user.copy(configuration = user.configuration.copy(lastLoginDate = Some(LocalDate.now().toString())))
+        val updateUserLastLoginDate = user.copy(configuration = userConfiguration.copy(lastLoginDate = Some(LocalDate.now().toString)))
         userProvider.updateUserConfiguration(updateUserLastLoginDate)
 
         val verifiedMap =
@@ -1597,7 +1598,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           modifiedAssetTypes.map(assetType =>
             Map(
               "typeId" -> assetType.assetTypeCode,
-              "assetName" -> assetType.assetTypeName,
+//              "assetName" -> assetType.assetTypeName,
               "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
               "modified_by" -> assetType.modifiedBy.getOrElse("")
             ))

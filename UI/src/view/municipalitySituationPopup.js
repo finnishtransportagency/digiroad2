@@ -1,7 +1,6 @@
 window.MunicipalitySituationPopup = function (models, authorizationPolicy) {
     var me = this;
     var assetConfig = new AssetTypeConfiguration();
-    var municipalityId = _.first(authorizationPolicy.municipalities);
 
     this.initialize = function () {
         eventbus.on('dashBoardInfoAssets:fetched', function (results) {
@@ -10,8 +9,7 @@ window.MunicipalitySituationPopup = function (models, authorizationPolicy) {
             renderDialog(verifyInfos, modifyInfos);
         });
 
-        if (authorizationPolicy.isMunicipalityMaintainer())
-            models.fetchDashBoardInfo(municipalityId);
+        models.fetchDashBoardInfo();
     };
 
     var options = {

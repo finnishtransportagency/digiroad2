@@ -28,6 +28,7 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
     configuration.roles(Role.Operator)
   }
 
+  //Todo change to ELY Maintainer
   def isBusStopMaintainer(): Boolean = {
     configuration.roles(Role.BusStopMaintainer)
   }
@@ -57,11 +58,15 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
 }
 
 object Role {
+  // TODO note this role should be change in newuser.html too
   val Operator = "operator"
+  // TODO Could be deleted
   val Administrator = "administrator"
+  // TODO Rename to municipality Maintainer
   val Premium = "premium"
   val Viewer = "viewer"
   val ViiteUser = "viite"
+  //TODO change to ELY Maintainer and replace DBase
   val BusStopMaintainer = "busStopMaintainer"
   val ServiceRoadMaintainer = "serviceRoadMaintainer"
 }

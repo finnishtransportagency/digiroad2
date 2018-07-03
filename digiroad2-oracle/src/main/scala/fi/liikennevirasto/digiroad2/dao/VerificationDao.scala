@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.{LatestModificationInfo, VerificationInfo}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
@@ -108,36 +109,16 @@ class VerificationDao {
   }
 
   def getCriticalAssetVerification(municipalityId: Int, assetTypeCodes: Seq[Int]) = {
-    val likeAssetType = "'" + assetTypeCodes.mkString("', '") + "'"
-
-    val verifiedAssetTypes =
+    val criticalAssetTypes =
       sql"""
-       SELECT tableResult.id, tableResult.name_fi, tableResult.verified_by, tableResult.verified_date, tableResult.assetId, tableResult.assetName,
-              tableResult.verified, tableResult.counting
-         FROM
-         (SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
-                (CASE
-                    WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears
-                      THEN 1
-                      ELSE 0
-                END) AS verified,
-                atype.GEOMETRY_TYPE,
-                (CASE
-                    WHEN atype.GEOMETRY_TYPE = 'point'
-                      THEN count(a.id)
-                      ELSE NULL
-                END) AS counting
-                FROM municipality m
-                JOIN asset_type atype ON atype.verifiable = 1 AND atype.id IN ( #$likeAssetType )
-                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
-                LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID and a.municipality_code = m.id AND a.VALID_TO IS NULL
-                WHERE m.id = $municipalityId
-                GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
-                      (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
-                      atype.GEOMETRY_TYPE ) tableResult""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, Option[Int])].list
-
-    verifiedAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, verified, counter) =>
-      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate, verified, counter)
+          SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName
+          FROM municipality m
+          JOIN asset_type atype ON atype.verifiable = 1 AND atype.id IN  (#${assetTypeCodes.mkString(",")})
+          LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
+          LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID and a.municipality_code = m.id AND a.VALID_TO IS NULL
+          WHERE m.id = $municipalityId""".as[(Int, String, Option[String], Option[DateTime], Int, String)].list
+    criticalAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName) =>
+      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate)
     }
   }
 
@@ -165,27 +146,23 @@ class VerificationDao {
       """.as[(Int)].list
   }
 
-  def getModifiedAssetTypes() = {
-    val modifiedAssetTypes =
+  def getModifiedAssetTypes(linkIds : Set[Long]) : List[LatestModificationInfo] = {
+    val modifiedAssetTypes = MassQuery.withIds(linkIds) { idTableName =>
       sql"""
-           SELECT * FROM (
-           		SELECT
-                      	A.ASSET_TYPE_ID,
-                      	ATYPE.NAME,
-                      	A.MODIFIED_BY,
-                      	A.MODIFIED_DATE
-                      FROM
-                      	ASSET A,
-                      	ASSET_TYPE ATYPE
-                      WHERE
-                      	A.ASSET_TYPE_ID = ATYPE.ID
-                      	AND A.MODIFIED_DATE IS NOT NULL
-                      ORDER BY
-                      	A.MODIFIED_DATE DESC)
-           WHERE ROWNUM <= 4""".as[(Int, String, Option[String], Option[DateTime])].list
-
-    modifiedAssetTypes.map { case (assetTypeCode, assetTypeName, modifiedBy, modifiedDate) =>
-      LatestModificationInfo(assetTypeCode, assetTypeName, modifiedBy, modifiedDate)
+           select assetTypeId, modifiedBy, modifiedDate
+           from (
+              select  a.asset_type_id as assetTypeId, a.modified_by as modifiedBy, TO_DATE(TO_CHAR(a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss') as modifiedDate
+              from asset a
+              join asset_link al on a.id = al.asset_id
+              join lrm_position lrm on lrm.id = al.position_id
+              join #$idTableName i on i.id = lrm.link_id
+              where a.modified_date is not null
+              group by a.asset_type_id, a.modified_by,  TO_DATE(TO_CHAR(a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss')
+              order by max(a.modified_date) desc
+              ) where rownum <= 4""".as[(Int, Option[String], Option[DateTime])].list
+      }
+    modifiedAssetTypes.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
+      LatestModificationInfo(assetTypeCode,  modifiedBy, modifiedDate)
     }
   }
 }

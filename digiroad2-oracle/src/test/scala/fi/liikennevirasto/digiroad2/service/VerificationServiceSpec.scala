@@ -2,17 +2,17 @@ package fi.liikennevirasto.digiroad2.service
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.dao.VerificationDao
+import fi.liikennevirasto.digiroad2.dao.{Queries, VerificationDao}
+import fi.liikennevirasto.digiroad2.linearasset.TinnyRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
+import org.mockito.Mockito._
 
 class VerificationServiceSpec extends FunSuite with Matchers {
-
   val mockVerificationService = MockitoSugar.mock[VerificationService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -79,7 +79,6 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       newVerification.head.counter should be (None)
     }
   }
-
 
   test("remove asset type verification") {
     runWithRollback {
@@ -157,28 +156,69 @@ class VerificationServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("get assets Latests Modifications"){
-    runWithRollback {
-      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+  private def insertForTestLastModificationDate {
+    val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+    val lrmPositionsIds = Queries.fetchLrmPositionIds(6)
 
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
             values ($id, 100, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 1000, null, 0.000, 25.000)""".execute
+    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id,${lrmPositionsIds(0)})""".execute
+
+    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
             values ($id+1, 30, TO_TIMESTAMP('2016-02-19 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 2000, null, 0.000, 25.000)""".execute
+    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+1,${lrmPositionsIds(1)})""".execute
+
+    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
             values ($id+2, 50, TO_TIMESTAMP('2016-02-21 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(2)}, 3000, null, 0.000, 25.000)""".execute
+    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+2,${lrmPositionsIds(2)})""".execute
+
+    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
             values ($id+3, 70, TO_TIMESTAMP('2016-02-21 15:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(3)}, 4000, null, 0.000, 25.000)""".execute
+    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+3,${lrmPositionsIds(3)})""".execute
+
+    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
             values ($id+4, 70, TO_TIMESTAMP('2016-02-21 15:33:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
+    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(4)}, 5000, null, 0.000, 25.000)""".execute
+    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+4,${lrmPositionsIds(4)})""".execute
+
+    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
             values ($id+5, 90, TO_TIMESTAMP('2016-02-23 15:33:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
+    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(5)}, 6000, null, 0.000, 25.000)""".execute
+    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+5,${lrmPositionsIds(5)})""".execute
+  }
 
+  test("get assets Latests Modifications with one municipality") {
+    runWithRollback {
 
-      val latestModificationInfo = ServiceWithDao.getAssetLatestModifications()
+      val tinnyRoadLinkMunicipality235 = Seq( TinnyRoadLink(1000),  TinnyRoadLink(3000), TinnyRoadLink(5000))
+      when(mockRoadLinkService.getTinnyRoadLinkFromVVH(235)).thenReturn(tinnyRoadLinkMunicipality235)
+
+      insertForTestLastModificationDate
+
+      val latestModificationInfoMunicipality = ServiceWithDao.getAssetLatestModifications(Set(235))
+      latestModificationInfoMunicipality should have size 3
+      latestModificationInfoMunicipality.head.assetTypeCode should be(70)
+      latestModificationInfoMunicipality.last.assetTypeCode should be(100)
+    }
+  }
+
+  test("get assets Latests Modifications for Ely user with two municipalities"){
+    runWithRollback {
+      val tinnyRoadLinkMunicipality100 = Seq( TinnyRoadLink(2000), TinnyRoadLink(4000), TinnyRoadLink(6000))
+      val tinnyRoadLinkMunicipality235 = Seq( TinnyRoadLink(1000),  TinnyRoadLink(3000), TinnyRoadLink(5000))
+
+      when(mockRoadLinkService.getTinnyRoadLinkFromVVH(235)).thenReturn(tinnyRoadLinkMunicipality235)
+      when(mockRoadLinkService.getTinnyRoadLinkFromVVH(100)).thenReturn(tinnyRoadLinkMunicipality100)
+      insertForTestLastModificationDate
+
+      val latestModificationInfo = ServiceWithDao.getAssetLatestModifications(Set(100, 235))
       latestModificationInfo should have size 4
       latestModificationInfo.head.assetTypeCode should be (90)
-      latestModificationInfo.last.assetTypeCode should be (50)
+      latestModificationInfo.last.assetTypeCode should be (30)
     }
   }
 }

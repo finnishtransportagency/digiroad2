@@ -1,13 +1,15 @@
 package fi.liikennevirasto.digiroad2.service
 
+import java.util.Date
+
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.VerificationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean, counter: Option[Int])
-case class LatestModificationInfo(assetTypeCode: Int, assetTypeName: String, modifiedBy: Option[String], modifiedDate: Option[DateTime])
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean = false, counter: Option[Int] = None)
+case class LatestModificationInfo(assetTypeCode: Int, modifiedBy: Option[String], modifiedDate: Option[DateTime])
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
@@ -76,7 +78,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }.toSeq
   }
 
-  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) : Unit = {
     withDynTransaction{
       assetTypeIds.foreach { assetType =>
         dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
@@ -97,9 +99,13 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       getCriticalAssetVerification(municipalityCode, criticalAssetTypes).toList
   }
 
-  def getAssetLatestModifications(): List[LatestModificationInfo] = {
-    withDynSession {
-      dao.getModifiedAssetTypes()
+  def getAssetLatestModifications(municipalities: Set[Int]): List[LatestModificationInfo] = {
+    val tinnyRoadLink = municipalities.flatMap { municipality =>
+      roadLinkService.getTinnyRoadLinkFromVVH(municipality)
+    }
+
+    withDynTransaction {
+      dao.getModifiedAssetTypes(tinnyRoadLink.map(_.linkId))
     }
   }
 }

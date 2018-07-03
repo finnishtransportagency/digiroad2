@@ -612,8 +612,8 @@
       return $.get('api/massTransitStops/passenger/' + passengerID);
     };
 
-    this.getDashBoardInfoByMunicipality = function(municipalityCode) {
-       return $.getJSON('api/dashBoardInfo/' + municipalityCode);
+    this.getDashBoardInfoByMunicipality = function() {
+       return $.getJSON('api/dashBoardInfo');
     };
 
     function createCallbackRequestor(getParameters) {
