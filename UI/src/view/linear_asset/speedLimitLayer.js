@@ -252,20 +252,23 @@ window.SpeedLimitLayer = function(params) {
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
 
        SpeedLimitMassUpdateDialog.show({
-       count: selectedSpeedLimit.count(),
-       onCancel: cancelSelection,
-       onSave: function(newSpeedLimit) {
-         selectedSpeedLimit.saveMultiple(newSpeedLimit);
-         selectToolControl.clear();
-         selectedSpeedLimit.closeMultiple();
-       },
+         count: selectedSpeedLimit.count(),
+         onCancel: cancelSelection,
+         onSave: function(newSpeedLimit) {
+           selectedSpeedLimit.saveMultiple(newSpeedLimit);
+           selectToolControl.clear();
+           selectedSpeedLimit.closeMultiple();
+         },
          validator: selectedSpeedLimit.validator,
-         formElements: params.formElements
+         formElements: params.formElements,
+         setMassValue: function(value){
+           selectedSpeedLimit.setMassValue(value);
+         }
    });
   };
   function cancelSelection() {
     selectToolControl.clear();
-    selectedSpeedLimit.closeMultiple();
+    selectedSpeedLimit.deselectMultiple();
     collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
   }
 
@@ -318,7 +321,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
-    eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnselected);
+    eventListener.listenTo(eventbus, 'speedLimit:unselect speedLimit:massUpdateUnselected', handleSpeedLimitUnselected);
   };
 
   var offsetBySideCode = function (speedLimit) {
@@ -414,6 +417,7 @@ window.SpeedLimitLayer = function(params) {
 
   var handleSpeedLimitSaved = function() {
     collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
+    me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     applicationModel.setSelectedTool('Select');
   };
 
@@ -421,7 +425,6 @@ window.SpeedLimitLayer = function(params) {
     selectToolControl.deactivate();
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     me.eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-    var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
   };
 
@@ -434,6 +437,7 @@ window.SpeedLimitLayer = function(params) {
 
   var handleSpeedLimitUnselected = function () {
     selectToolControl.clear();
+    changeTool(application.getSelectedTool());
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
 
@@ -496,7 +500,6 @@ window.SpeedLimitLayer = function(params) {
   var redrawSpeedLimits = function(speedLimitChains) {
     vectorSource.clear();
     selectToolControl.clear();
-    selectToolControl.deactivate();
     indicatorLayer.getSource().clear();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectToolControl.activate();

@@ -6,25 +6,26 @@
   function init(options) {
     var count = options.count,
       onCancel = options.onCancel,
-      onSave = options.onSave;
+      onSave = options.onSave,
+      setMassValue = options.setMassValue;
 
     var SPEED_LIMITS = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
-    var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
-      var selected = value === 50 ? " selected" : "";
-      return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-    });
+    var defaultUnknownOptionTag = ['<option value="" style="display:none;"></option>'];
+    var speedLimitOptionTags = defaultUnknownOptionTag.concat(_.map(SPEED_LIMITS, function(value) {
+      return '<option value="' + value + '">' + value + '</option>';
+    }));
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
       '<div class="modal-dialog">' +
       '<div class="content">' +
-      'Olet valinnut <%- count %> nopeusrajoitusta' +
+      'Olet valinnut <%- count %> tielinkkiä' +
       '</div>' +
       '<div class="form-group editable">' +
-      '<label class="control-label">Rajoitus</label>' +
+      '<label class="control-label">Nopeusrajoitus</label>' +
       '<select class="form-control">' + speedLimitOptionTags.join('') + '</select>' +
       '</div>' +
       '<div class="actions">' +
-      '<button class="btn btn-primary save">Tallenna</button>' +
+      '<button class="btn btn-primary save" disabled="disabled">Tallenna</button>' +
       '<button class="btn btn-secondary close">Peruuta</button>' +
       '</div>' +
       '</div>' +
@@ -50,6 +51,13 @@
         purge();
 
         onSave(newSpeedLimit);
+      });
+
+      $('.mass-update-modal select').on('change', function () {
+        var value = $(this).val();
+        $('.save').attr('disabled', !value);
+        if(value)
+          setMassValue(parseInt(value));
       });
     };
 
