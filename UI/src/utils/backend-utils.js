@@ -759,6 +759,18 @@
       return self;
     };
 
+      this.updateUserConfigurationDefaultLocation = function (data, success, failure) {
+          $.ajax({
+              contentType: "application/json",
+              type: "PUT",
+              url: "api/userConfiguration/defaultLocation",
+              data: JSON.stringify(data),
+              dataType: "json",
+              success: success,
+              error: failure
+          });
+      };
+
     var mockBaconDefered = function(resultData){
        var then = function(callback){
         callback(resultData);

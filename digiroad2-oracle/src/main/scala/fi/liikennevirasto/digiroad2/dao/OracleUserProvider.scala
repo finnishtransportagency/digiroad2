@@ -40,6 +40,13 @@ class OracleUserProvider extends UserProvider {
     }
   }
 
+  def updateUserConfiguration(user: User): User = {
+    OracleDatabase.withDynSession {
+      sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name} where lower(username) = ${user.username.toLowerCase}""".execute
+      user
+    }
+  }
+
   def saveUser(user: User): User = {
     OracleDatabase.withDynSession {
       sqlu"""update service_user set configuration = ${write(user.configuration)} where lower(username) = ${user.username.toLowerCase}""".execute

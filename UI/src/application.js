@@ -246,7 +246,7 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
     new TrafficSignToggle(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
-    new DefaultLocationButton(map, mapPluginsContainer, new InstructionsPopup($('.digiroad2')));
+    new DefaultLocationButton(map, mapPluginsContainer, backend, new InstructionsPopup($('.digiroad2')));
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
     if (withTileMaps) { new TileMapCollection(map); }

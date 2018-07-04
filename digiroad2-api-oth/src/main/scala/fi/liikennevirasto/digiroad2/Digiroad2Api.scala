@@ -1529,4 +1529,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     transformation(values)
   }
+
+  put("/userConfiguration/defaultLocation") {
+    val user = userProvider.getCurrentUser()
+    val east = (parsedBody \ "lon").extractOpt[Long]
+    val north = (parsedBody \ "lat").extractOpt[Long]
+
+    val updatedUser = user.copy(configuration = user.configuration.copy(east = east, north = north))
+    userProvider.updateUserConfiguration(updatedUser)
+  }
 }

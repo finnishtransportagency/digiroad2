@@ -12,7 +12,7 @@ case class Configuration(
                         authorizedAreas: Set[Int] = Set(),
                         roles: Set[String] = Set()
                         )
-case class User(id: Long, username: String, configuration: Configuration) {
+case class User(id: Long, username: String, configuration: Configuration, name: Option[String] = None) {
   def hasWriteAccess() = !isViewer()
 
   def isViewer() = configuration.roles(Role.Viewer)
