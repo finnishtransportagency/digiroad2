@@ -225,11 +225,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
-      case Some(MultiValue(x)) => x.properties.flatMap { multiTypeProperty =>
-        multiTypeProperty.values.flatMap { v =>
-          Map("weightLimitation" -> v.value)
-        }
-      }
       case _ => value.map(_.toJson)
     }
   }
@@ -243,7 +238,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case DamagedByThaw.typeId =>  multiValueLinearAssetService
         case _ => linearAssetService
       }
     }
@@ -286,8 +280,24 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     multiValueLinearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
   }
 
-  def massTransitLanesToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
-    val massTransitLanes = getMultiValueLinearAssetByMunicipality(typeId, municipalityNumber)
+
+  def damagedByThawToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val damagedByThaws = getMultiValueLinearAssetByMunicipality(DamagedByThaw.typeId, municipalityNumber)
+
+    damagedByThaws.map { damagedByThaw =>
+      val dynamicMultiValueLinearAssetsMap =
+        Map("weightLimitation" -> (damagedByThaw.value match {
+          case Some(MultiValue(x)) => x.properties.flatMap ( multiTypeProperty =>
+            multiTypeProperty.values.map(_.value)).head
+          case _ => Map()
+        }))
+
+      defaultMultiValueLinearAssetsMap(damagedByThaw) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  def massTransitLanesToApi( municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val massTransitLanes = getMultiValueLinearAssetByMunicipality(MassTransitLane.typeId, municipalityNumber)
 
     massTransitLanes.map { massTransitLane =>
       val dynamicMultiValueLinearAssetsMap =
@@ -302,8 +312,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def carryingCapacitiesToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
-    val carryingCapacities = getMultiValueLinearAssetByMunicipality(typeId, municipalityNumber)
+  def carryingCapacitiesToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val carryingCapacities = getMultiValueLinearAssetByMunicipality(CarryingCapacity.typeId, municipalityNumber)
 
     carryingCapacities.map { carryingCapacity =>
       val dynamicMultiValueLinearAssetsMap = carryingCapacity.value match {
@@ -616,8 +626,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
         case "hazardous_material_transport_prohibitions" => linearAssetsToApi(210, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
-        case "mass_transit_lanes" => massTransitLanesToApi(160, municipalityNumber)
-        case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
+        case "mass_transit_lanes" => massTransitLanesToApi(municipalityNumber)
+        case "roads_affected_by_thawing" => damagedByThawToApi(municipalityNumber)
         case "widths" => roadWidthToApi(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
         case "paved_roads" => linearAssetsToApi(110, municipalityNumber)
         case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
@@ -636,7 +646,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
-        case "carrying_capacity" => carryingCapacitiesToApi(400, municipalityNumber)
+        case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

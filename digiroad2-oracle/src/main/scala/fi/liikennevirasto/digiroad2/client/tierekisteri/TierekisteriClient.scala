@@ -152,7 +152,7 @@ object TRFrostHeavingFactorType {
   case object FrostHeaving extends TRFrostHeavingFactorType { def value = 60; def pavedRoadType = "Frost Heaving";}
   case object MiddleValue60to80 extends TRFrostHeavingFactorType { def value = 70; def pavedRoadType = "Middle Value 60...80";}
   case object NoFrostHeaving extends TRFrostHeavingFactorType { def value = 80; def pavedRoadType = "No Frost Heaving";}
-  case object Unknown extends TRFrostHeavingFactorType { def value = 999;  def pavedRoadType = "Unknown";}
+  case object Unknown extends TRFrostHeavingFactorType { def value = 999;  def pavedRoadType = "No information";}
 }
 
 case class TierekisteriError(content: Map[String, Any], url: String)
