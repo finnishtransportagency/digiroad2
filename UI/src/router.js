@@ -408,5 +408,11 @@
     eventbus.on('layer:selected', function (layer) {
       router.navigate(layer);
     });
+
+    eventbus.on('roles:fetched', function(userInfo) {
+      if(_.includes(userInfo.roles, "serviceRoadMaintainer") && !_.includes(userInfo.roles, "busStopMaintainer"))
+          applicationModel.selectLayer('maintenanceRoad');
+    });
+
   };
 })(this);
