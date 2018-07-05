@@ -1,20 +1,20 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.dao.{MultiValueLinearAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, MultiTypeProperty, MultiTypePropertyValue, ValidityPeriodValue}
-import fi.liikennevirasto.digiroad2.linearasset.{MultiAssetValue, MultiValue, NumericValue, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, DynamicPropertyValue, ValidityPeriodValue, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, PersistedLinearAsset}
 
-class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
+class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
-  val dao = new MultiValueLinearAssetDao
 
   test("fetch asset containing several properties") {
+    val dao = new DynamicLinearAssetDao
     val linkId = 1l
 
     runWithRollback {
@@ -72,16 +72,16 @@ class MultiValueLinearAssetDaoSpec extends FunSuite with Matchers {
       sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by)
             VALUES ($propId7, $assetId, $propId6, $textValue, sysdate, $testUser)""".execute
 
-      val persistedAssets = dao.fetchMultiValueLinearAssetsByLinkIds(999, Seq(linkId))
+      val persistedAssets = dao.fetchDynamicLinearAssetsByLinkIds(999, Seq(linkId))
 
       persistedAssets.size should be(1)
       persistedAssets.head.linkId should be(linkId)
 
-      val assetValues = persistedAssets.head.value.get.asInstanceOf[MultiValue].value.properties
+      val assetValues = persistedAssets.head.value.get.asInstanceOf[DynamicValue].value.properties
       assetValues.find(_.publicId == "test_data_text").get.values.head.value should be (textValue)
-      assetValues.find(_.publicId == "test_multiple_choice").get.values should be (Seq(MultiTypePropertyValue(enumeratedValue2_value.toString()), MultiTypePropertyValue(enumeratedValue1_value.toString())))
+      assetValues.find(_.publicId == "test_multiple_choice").get.values should be (Seq(DynamicPropertyValue(enumeratedValue2_value.toString()), DynamicPropertyValue(enumeratedValue1_value.toString())))
       assetValues.find(_.publicId == "test_single_choice").get.values.head.value should be (enumeratedValue1_value.toString())
-      assetValues.find(_.publicId == "test_data_number").get.values should be (Seq(MultiTypePropertyValue(numberValue1.toString()), MultiTypePropertyValue(numberValue2.toString())))
+      assetValues.find(_.publicId == "test_data_number").get.values should be (Seq(DynamicPropertyValue(numberValue1.toString()), DynamicPropertyValue(numberValue2.toString())))
     }
   }
 

@@ -18,7 +18,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
+class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -42,42 +42,42 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
-  val mVLinearAssetDao: MultiValueLinearAssetDao = new MultiValueLinearAssetDao
+  val mVLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
-  val mockMultiValueLinearAssetDao = MockitoSugar.mock[MultiValueLinearAssetDao]
+  val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
 
-  val multiTypePropSeq = MultiAssetValue(
+  val multiTypePropSeq = DynamicAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!"))),
-      MultiTypeProperty("mittarajoitus", "number", required = false, Seq(MultiTypePropertyValue("1000")))
+      DynamicProperty("nimi_suomeksiTest", "text", required = false, Seq(DynamicPropertyValue("Dummy Text"))),
+      DynamicProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(DynamicPropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!"))),
+      DynamicProperty("mittarajoitus", "number", required = false, Seq(DynamicPropertyValue("1000")))
     ))
-  val multiTypePropSeq1 =MultiAssetValue(
+  val multiTypePropSeq1 =DynamicAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text One"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      DynamicProperty("nimi_suomeksiTest", "text", required = false, Seq(DynamicPropertyValue("Dummy Text One"))),
+      DynamicProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(DynamicPropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
-  val multiTypePropSeq2 =MultiAssetValue(
+  val multiTypePropSeq2 =DynamicAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text Two"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      DynamicProperty("nimi_suomeksiTest", "text", required = false, Seq(DynamicPropertyValue("Dummy Text Two"))),
+      DynamicProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(DynamicPropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
-  val multiTypePropSeq3 =MultiAssetValue(
+  val multiTypePropSeq3 =DynamicAssetValue(
     Seq(
-      MultiTypeProperty("nimi_suomeksiTest", "text", required = false, Seq(MultiTypePropertyValue("Dummy Text Five"))),
-      MultiTypeProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(MultiTypePropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+      DynamicProperty("nimi_suomeksiTest", "text", required = false, Seq(DynamicPropertyValue("Dummy Text Five"))),
+      DynamicProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(DynamicPropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
-  val multiTypePropSeq4 =MultiAssetValue(
+  val multiTypePropSeq4 =DynamicAssetValue(
     Seq(
-      MultiTypeProperty("mittarajoitus", "number", required = false, Seq(MultiTypePropertyValue("1000")))
+      DynamicProperty("mittarajoitus", "number", required = false, Seq(DynamicPropertyValue("1000")))
     ))
 
-  val propertyData = MultiValue(multiTypePropSeq)
-  val propertyData1 = MultiValue(multiTypePropSeq1)
-  val propertyData2 = MultiValue(multiTypePropSeq2)
-  val propertyData3 = MultiValue(multiTypePropSeq3)
-  val propertyData4 = MultiValue(multiTypePropSeq4)
+  val propertyData = DynamicValue(multiTypePropSeq)
+  val propertyData1 = DynamicValue(multiTypePropSeq1)
+  val propertyData2 = DynamicValue(multiTypePropSeq2)
+  val propertyData3 = DynamicValue(multiTypePropSeq3)
+  val propertyData4 = DynamicValue(multiTypePropSeq4)
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
@@ -88,12 +88,12 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
-    def multiValueLinearAssetDao: MultiValueLinearAssetDao = mockMultiValueLinearAssetDao
+    def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
 
-  object ServiceWithDao extends MultiValueLinearAssetService(mockRoadLinkService, mockEventBus) {
+  object ServiceWithDao extends DynamicLinearAssetService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OracleLinearAssetDao = linearAssetDao
@@ -102,7 +102,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
-    override def multiValueLinearAssetDao: MultiValueLinearAssetDao = mVLinearAssetDao
+    override def dynamicLinearAssetDao: DynamicLinearAssetDao = mVLinearAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -125,7 +125,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
-      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(newAssets.head)).head
+      val asset = mVLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
       asset.expired should be (false)
       mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360l), newTransaction = false).head.linkSource.value should be (1)
@@ -146,7 +146,7 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
-      val asset = mVLinearAssetDao.fetchMultiValueLinearAssetsByIds(Set(newAssets.head)).head
+      val asset = mVLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
       asset.expired should be (false)
       asset.verifiedBy.get should be ("testuser")
@@ -405,8 +405,8 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
   test("Create new linear asset with validity period property") {
     runWithRollback {
       val typeId = 160
-      val value = Seq(MultiTypePropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(0), "endHour" -> BigInt(0), "startMinute" -> BigInt(24), "endMinute" -> BigInt(0), "periodType" -> None)))
-      val propertyData  = MultiValue(MultiAssetValue(Seq(MultiTypeProperty("public_validity_period", "time_period", false, value))))
+      val value = Seq(DynamicPropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(0), "endHour" -> BigInt(0), "startMinute" -> BigInt(24), "endMinute" -> BigInt(0), "periodType" -> None)))
+      val propertyData  = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("public_validity_period", "time_period", false, value))))
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
       newAssets.length should be(1)
@@ -418,10 +418,10 @@ class MultiValueLinearAssetServiceSpec extends FunSuite with Matchers {
   test("Create new linear asset with validity periods property values") {
     runWithRollback {
       val typeId = 160
-      val value = Seq(MultiTypePropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(10), "endHour" -> BigInt(14), "startMinute" -> BigInt(0), "endMinute" -> BigInt(0), "periodType" -> None)),
-                      MultiTypePropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(16), "endHour" -> BigInt(20), "startMinute" -> BigInt(30), "endMinute" -> BigInt(30), "periodType" -> None)))
+      val value = Seq(DynamicPropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(10), "endHour" -> BigInt(14), "startMinute" -> BigInt(0), "endMinute" -> BigInt(0), "periodType" -> None)),
+                      DynamicPropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(16), "endHour" -> BigInt(20), "startMinute" -> BigInt(30), "endMinute" -> BigInt(30), "periodType" -> None)))
 
-      val propertyData  = MultiValue(MultiAssetValue(Seq(MultiTypeProperty("public_validity_period", "time_period", false, value))))
+      val propertyData  = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("public_validity_period", "time_period", false, value))))
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
       newAssets.length should be(1)

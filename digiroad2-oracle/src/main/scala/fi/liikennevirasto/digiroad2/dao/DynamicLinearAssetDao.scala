@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.linearasset.{MultiAssetValue, MultiValue, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
@@ -13,15 +13,15 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
-case class MultiValueAssetRow(id: Long, linkId: Long, sideCode: Int, value: MultiValuePropertyRow,
-                              startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
-                              modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean, typeId: Int,
-                              vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int])
+case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: DynamicPropertyRow,
+                           startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
+                           modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean, typeId: Int,
+                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int])
 
-class MultiValueLinearAssetDao {
+class DynamicLinearAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def fetchMultiValueLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
@@ -49,19 +49,19 @@ class MultiValueLinearAssetDao {
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
-          #$filterExpired""".as[MultiValueAssetRow].list
+          #$filterExpired""".as[DynamicAssetRow].list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
-      val value: MultiAssetValue = MultiAssetValue(assetRowToProperty(assetRows))
+      val value: DynamicAssetValue = DynamicAssetValue(assetRowToProperty(assetRows))
 
-      id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(MultiValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
+      id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
         createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  vvhTimeStamp = row.vvhTimeStamp,
         geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate, informationSource = row.informationSource.map(info => InformationSource.apply(info)))
     }.values.toSeq
   }
 
-  def fetchMultiValueLinearAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
+  def fetchDynamicLinearAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
     val assets = MassQuery.withIds(ids) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
@@ -86,28 +86,28 @@ class MultiValueLinearAssetDao {
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
                       left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          where a.floating = 0 """.as[MultiValueAssetRow].list
+          where a.floating = 0 """.as[DynamicAssetRow].list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
-      val value: MultiAssetValue = MultiAssetValue(assetRowToProperty(assetRows))
+      val value: DynamicAssetValue = DynamicAssetValue(assetRowToProperty(assetRows))
 
-      id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(MultiValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
+      id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
         createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId, vvhTimeStamp = row.vvhTimeStamp,
         geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate, row.informationSource.map(info => InformationSource.apply(info)))
     }.values.toSeq
   }
 
-  def assetRowToProperty(assetRows: Iterable[MultiValueAssetRow]): Seq[MultiTypeProperty] = {
+  def assetRowToProperty(assetRows: Iterable[DynamicAssetRow]): Seq[DynamicProperty] = {
     assetRows.groupBy(_.value.publicId).map { case (key, rows) =>
       val row = rows.head
-      MultiTypeProperty(
+      DynamicProperty(
         publicId = row.value.publicId,
         propertyType = row.value.propertyType,
         required = row.value.required,
         values = rows.flatMap(assetRow =>
           assetRow.value.propertyValue match {
-            case Some(value) => Some(MultiTypePropertyValue(value))
+            case Some(value) => Some(DynamicPropertyValue(value))
             case _ => None
           }
         ).toSeq
@@ -115,7 +115,7 @@ class MultiValueLinearAssetDao {
     }.toSeq
   }
 
-  implicit val getMultiValueAssetRow = new GetResult[MultiValueAssetRow] {
+  implicit val getDynamicAssetRow = new GetResult[DynamicAssetRow] {
     def apply(r: PositionedResult) = {
 
       val id = r.nextLong()
@@ -128,7 +128,7 @@ class MultiValueLinearAssetDao {
       val propertyType = r.nextString
       val propertyRequired = r.nextBoolean()
       val propertyValue = r.nextObjectOption()
-      val value = MultiValuePropertyRow(
+      val value = DynamicPropertyRow(
         publicId = propertyPublicId,
         propertyType = propertyType,
         required = propertyRequired,
@@ -146,30 +146,30 @@ class MultiValueLinearAssetDao {
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
 
-      MultiValueAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
+      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
     }
   }
 
-  def propertyDefaultValues(assetTypeId: Long): List[MultiTypeProperty] = {
-    implicit val getDefaultValue = new GetResult[MultiTypeProperty] {
+  def propertyDefaultValues(assetTypeId: Long): List[DynamicProperty] = {
+    implicit val getDefaultValue = new GetResult[DynamicProperty] {
       def apply(r: PositionedResult) = {
-        MultiTypeProperty(publicId = r.nextString, propertyType = r.nextString(), required = r.nextBoolean(), values = List(MultiTypePropertyValue(r.nextString)))
+        DynamicProperty(publicId = r.nextString, propertyType = r.nextString(), required = r.nextBoolean(), values = List(DynamicPropertyValue(r.nextString)))
       }
     }
     sql"""
       select p.public_id, p.property_type, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
-      where a.id = $assetTypeId and p.default_value is not null""".as[MultiTypeProperty].list
+      where a.id = $assetTypeId and p.default_value is not null""".as[DynamicProperty].list
   }
 
-  private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], MultiTypeProperty]): Boolean = {
+  private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], DynamicProperty]): Boolean = {
     propertyWithType match {
       case (SingleChoice, _, property) => property.values.nonEmpty
       case _ => true
     }
   }
 
-  private def propertyWithTypeAndId(property: MultiTypeProperty): Tuple3[String, Option[Long], MultiTypeProperty] = {
+  private def propertyWithTypeAndId(property: DynamicProperty): Tuple3[String, Option[Long], DynamicProperty] = {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     }
@@ -179,7 +179,7 @@ class MultiValueLinearAssetDao {
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[MultiTypeProperty]) {
+  def updateAssetProperties(assetId: Long, properties: Seq[DynamicProperty]) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
         updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
@@ -189,7 +189,7 @@ class MultiValueLinearAssetDao {
     }
   }
 
-  private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[MultiTypePropertyValue]) {
+  private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[DynamicPropertyValue]) {
     propertyType match {
       case Text | LongText =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
@@ -272,7 +272,7 @@ class MultiValueLinearAssetDao {
     Q.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
-  private def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyType: String, propertyValues: Seq[MultiTypePropertyValue]) {
+  private def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyType: String, propertyValues: Seq[DynamicPropertyValue]) {
     val property = AssetPropertyConfiguration.commonAssetProperties(propertyPublicId)
     propertyType match {
       case SingleChoice =>
@@ -299,7 +299,7 @@ class MultiValueLinearAssetDao {
     }
   }
 
-  private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[MultiTypePropertyValue], assetId: Long, propertyId: Long) {
+  private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[DynamicPropertyValue], assetId: Long, propertyId: Long) {
     val newValues = propertyValues.map(p => Integer.valueOf(p.value.toString).toLong)
     val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
     val currentValues = currentIdsAndValues.map(_._2)
@@ -327,7 +327,7 @@ class MultiValueLinearAssetDao {
   }
 
 
-  def getValidityPeriodPropertyValue(ids: Set[Long], typeId: Int) : Map[Long, Seq[MultiTypeProperty]] = {
+  def getValidityPeriodPropertyValue(ids: Set[Long], typeId: Int) : Map[Long, Seq[DynamicProperty]] = {
     val assets = MassQuery.withIds (ids) {
       idTableName =>
         sql"""
@@ -341,12 +341,12 @@ class MultiValueLinearAssetDao {
     assets.groupBy(_.assetId).mapValues{ assetGroup =>
       assetGroup.groupBy(_.publicId).map { case (_, values) =>
         val row = values.head
-        MultiTypeProperty(row.publicId, row.propertyType, row.required, values.map(_.value))
+        DynamicProperty(row.publicId, row.propertyType, row.required, values.map(_.value))
       }.toSeq
     }
   }
 
-  case  class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: MultiTypePropertyValue )
+  case  class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: DynamicPropertyValue )
 
   implicit val getValidityPeriodRow = new GetResult[ValidityPeriodRow] {
     def apply(r: PositionedResult) = {
@@ -363,7 +363,7 @@ class MultiValueLinearAssetDao {
           "periodType" -> r.nextIntOption
       )
 
-      ValidityPeriodRow(assetId, publicId, propertyType, required, MultiTypePropertyValue(value))
+      ValidityPeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
     }
   }
 }

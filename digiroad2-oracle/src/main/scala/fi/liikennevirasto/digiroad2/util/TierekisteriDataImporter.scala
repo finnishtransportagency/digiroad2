@@ -119,7 +119,11 @@ object TierekisteriDataImporter {
     new WidthLimitTierekisteriImporter()
   }
 
-  def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriAssetImporterOperations): Option[DateTime] = {
+  lazy val careClassTierekisteriImporter: CareClassTierekisteriImporter = {
+    new CareClassTierekisteriImporter()
+  }
+
+  def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
     OracleDatabase.withDynSession{
       val assetId = tierekisteriAssetImporter.getAssetTypeId
       val assetName = tierekisteriAssetImporter.getAssetName
@@ -190,7 +194,7 @@ object TierekisteriDataImporter {
     println("\nEnd of creation OTH traffic volume assets form TR data")
   }
 
-  val tierekisteriDataImporters = Map[String, TierekisteriAssetImporterOperations](
+  val tierekisteriDataImporters = Map[String, TierekisteriImporterOperations](
     "litRoad" -> litRoadImporterOperations,
     "roadWidth" -> roadWidthImporterOperations,
     "trafficSign" -> trafficSignTierekisteriImporter,
@@ -206,10 +210,11 @@ object TierekisteriDataImporter {
     "axleWeightLimit" -> axleWeightLimitTierekisteriImporter,
     "bogieWeightLimit" -> bogieWeightLimitTierekisteriImporter,
     "heightLimit" -> heightLimitTierekisteriImporter,
-    "widthLimit" -> widthLimitTierekisteriImporter
+    "widthLimit" -> widthLimitTierekisteriImporter,
+    "careClass" -> careClassTierekisteriImporter
   )
 
-  private def importAssets(tierekisteriAssetImporter: TierekisteriAssetImporterOperations): Unit = {
+  private def importAssets(tierekisteriAssetImporter: TierekisteriImporterOperations): Unit = {
     val assetType = tierekisteriAssetImporter.getAssetName
 
     println()
@@ -223,7 +228,7 @@ object TierekisteriDataImporter {
     println("\n")
   }
 
-  private def updateAssets(tierekisteriAssetImporter: TierekisteriAssetImporterOperations, lastExecutionDateOption: Option[DateTime] = None): Unit = {
+  private def updateAssets(tierekisteriAssetImporter: TierekisteriImporterOperations, lastExecutionDateOption: Option[DateTime] = None): Unit = {
     val assetType = tierekisteriAssetImporter.getAssetName
 
     println()
