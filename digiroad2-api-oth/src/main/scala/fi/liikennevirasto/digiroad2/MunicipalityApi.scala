@@ -589,6 +589,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Missing asset properties values"))
 
     properties.foreach { prop =>
+      validateNameInProperty(assetTypeId, prop)
 
       assetTypeId match {
         case LitRoad.typeId => extractPropertyValue(getAssetNameProp(assetTypeId).head, prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
