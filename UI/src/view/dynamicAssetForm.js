@@ -206,14 +206,14 @@
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
       var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
+      var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
       me.element =   $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" '+ me.required() +' class="form-control"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ me.disabled() + '>' +
+        '   <input type="text" name="' + field.publicId + '" '+ me.required() +' class="form-control' + unitClass + '"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ me.disabled() + '>' +
         unit +
         '</div>');
-
 
       if (!isDisabled && me.hasDefaultValue())
         me.setSelectedValue(setValue, getValue);
@@ -754,7 +754,7 @@
       var unit = _assetTypeConfiguration.unit ? asset.value ? asset.value + ' ' + _assetTypeConfiguration.unit : '-' : asset.value ? 'on' : 'ei ole';
 
       var formGroup = $('' +
-        '<div class="form-group editable form-editable-'+ sideCodeClass +'">' +
+        '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
         '  <label class="control-label">' + _assetTypeConfiguration.editControlLabels.title + '</label>' +
         '  <p class="form-control-static ' + _assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
         '</div>');
