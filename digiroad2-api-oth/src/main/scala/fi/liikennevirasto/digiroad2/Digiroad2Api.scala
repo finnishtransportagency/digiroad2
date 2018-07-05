@@ -6,15 +6,14 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, LinkProperties, RoadLinkService, VerificationService}
+import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop}
-import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
+import fi.liikennevirasto.digiroad2.user.{MapViewZoom, User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
@@ -149,12 +148,37 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId)
 
+  private def getMapViewStartParameters(mapView: Option[MapViewZoom]):(Option[Double], Option[Double], Option[Int]) = (mapView.map(_.geometry.x),mapView.map(_.geometry.y), mapView.map(_.zoom))
+
+
   get("/startupParameters") {
-    val (east, north, zoom) = {
-      val config = userProvider.getCurrentUser().configuration
-      (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
+
+    val defaultValues: (Option[Double], Option[Double], Option[Int]) = (Some(390000), Some(6900000), Some(2))
+    val user = userProvider.getCurrentUser()
+    val userPreferences = (user.configuration.east, user.configuration.north, user.configuration.zoom)
+
+    val (east, north, zoom) = userPreferences match {
+      case (Some(east), Some(north), Some(zoom)) => (Some(east.toDouble), Some(north.toDouble),Some(zoom.toInt))
+      case (_, _, _) =>
+        if(user.isMunicipalityMaintainer())
+          getStartUpParameters(defaultValues, user.configuration.authorizedMunicipalities, userProvider.getCenterViewMunicipality)
+        else {
+          if (user.isServiceRoadMaintainer())
+            getStartUpParameters(defaultValues, user.configuration.authorizedAreas, userProvider.getCenterViewArea)
+          else if (user.isBusStopMaintainer()) //case ely maintainer
+            getStartUpParameters(defaultValues, user.configuration.authorizedAreas, userProvider.getCenterViewEly)
+          else defaultValues
+        }
     }
+
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
+  }
+
+  private def getStartUpParameters(defaultValues: (Option[Double], Option[Double], Option[Int]), authorizedTo: Set[Int], getter: Int => Option[MapViewZoom]):(Option[Double], Option[Double], Option[Int])  = {
+    authorizedTo.headOption.map { id => getMapViewStartParameters(getter(id)) } match {
+      case Some(param) => param
+      case None => defaultValues
+    }
   }
 
   get("/masstransitstopgapiurl"){

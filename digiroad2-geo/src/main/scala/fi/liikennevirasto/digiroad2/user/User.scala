@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.user
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset._
 
@@ -12,6 +13,8 @@ case class Configuration(
                         authorizedAreas: Set[Int] = Set(),
                         roles: Set[String] = Set()
                         )
+case class MapViewZoom(geometry : Point, zoom: Int)
+
 case class User(id: Long, username: String, configuration: Configuration, name: Option[String] = None) {
   def hasWriteAccess() = !isViewer()
 
@@ -26,7 +29,7 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
   def isOperator(): Boolean = {
     configuration.roles(Role.Operator)
   }
-
+  //ely
   def isBusStopMaintainer(): Boolean = {
     configuration.roles(Role.BusStopMaintainer)
   }

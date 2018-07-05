@@ -1,4 +1,6 @@
-package fi.liikennevirasto.digiroad2.user;
+package fi.liikennevirasto.digiroad2.user
+
+import fi.liikennevirasto.digiroad2.Point
 
 
 class DummyUserProvider extends UserProvider {
@@ -17,5 +19,20 @@ class DummyUserProvider extends UserProvider {
     }
   }
   def saveUser(user: User): User = user
-  def updateUserConfiguration(user: User): User = user
+
+  def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom] = {
+    Some(MapViewZoom(Point(390000, 6900000), 5))
+  }
+
+  def getCenterViewArea(area: Int): Option[MapViewZoom] = {
+    Some(MapViewZoom(Point(390000, 6900000), 5))
+  }
+
+  def getCenterViewEly(ely: Int): Option[MapViewZoom] = {
+    Some(MapViewZoom(Point(390000, 6900000), 5))
+  }
+
+  def updateUserConfiguration(user: User): User = {
+    User(0, "username", Configuration())
+  }
 }
