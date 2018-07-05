@@ -319,7 +319,7 @@
        isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed
 
       };
-      acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
+      acc[asset.layerName] = asset.layer ? new asset.layer(parameters) : new LinearAssetLayer(parameters);
       return acc;
 
     }, {});

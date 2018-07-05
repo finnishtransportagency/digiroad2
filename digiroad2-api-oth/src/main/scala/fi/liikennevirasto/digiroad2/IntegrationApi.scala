@@ -264,7 +264,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     Map("id" -> linearAsset.id,
       "points" -> linearAsset.geometry,
       geometryWKTForLinearAssets(linearAsset.geometry),
-      "value" -> 1, //check if could be forced
       "side_code" -> linearAsset.sideCode.value,
       "linkId" -> linearAsset.linkId,
       "startMeasure" -> linearAsset.startMeasure,
