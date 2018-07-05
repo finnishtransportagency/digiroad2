@@ -112,11 +112,11 @@
 
     var limitValueButtons = function() {
       var separateValueElement =
-        formElements.singleValueElement(selectedLinearAsset.getValue(), "a", selectedLinearAsset.getId()) +
-        formElements.singleValueElement(selectedLinearAsset.getValue(), "b", selectedLinearAsset.getId());
+        formElements.singleValueElement(selectedLinearAsset.getValue(), "a") +
+        formElements.singleValueElement(selectedLinearAsset.getValue(), "b");
       var valueElements = selectedLinearAsset.isSplitOrSeparated() ?
         separateValueElement :
-        formElements.singleValueElement(selectedLinearAsset.getValue(), "", selectedLinearAsset.getId());
+        formElements.singleValueElement(selectedLinearAsset.getValue());
       return '' +
         '<div class="form-elements-container">' +
         valueElements +
