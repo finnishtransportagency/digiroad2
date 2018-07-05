@@ -15,9 +15,9 @@
 
     this.getNewFeatureProperties = function(linearAssets){
       var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
-        var expired = _.isUndefined(linearAsset.value);
+        var hasAsset = !_.isUndefined(linearAsset.value) || !_.isUndefined(linearAsset.id);
         var type =  me.isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
-        return _.merge({}, linearAsset, { expired: expired }, type);
+        return _.merge({}, linearAsset, { hasAsset: hasAsset }, type);
       });
       var offsetBySideCode = function(linearAsset) {
         return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, MaintenanceRoadAsset, PropertyTypes, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, PersistedLinearAsset, Properties, Value}
+import fi.liikennevirasto.digiroad2.asset.{InformationSource, LinkGeomSource, MaintenanceRoadAsset, PropertyTypes, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, NumericValue, PersistedLinearAsset, Properties, Value}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
@@ -21,7 +21,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   case class ServiceRoadRow(id: Long, linkId: Long, sideCode: Int, value: String, startMeasure: Double,
                          endMeasure: Double, publicId: String, propertyType: String, required:Boolean, createdBy: Option[String], createdDate: Option[DateTime],
                          modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean, assetTypeId: Int, vvhTimeStamp: Long,
-                         geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime])
+                         geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int])
 
   /**
     * Iterates a set of link ids with MaintenanceRoad asset type id and floating flag and returns linear assets. Used by MaintenanceService.getByRoadLinks
@@ -38,7 +38,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                 pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
                 a.modified_by, a.modified_date,
                 case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
-                a.verified_by, a.verified_date
+                a.verified_by, a.verified_date, a.information_source
            from asset a
                 join asset_link al on a.id = al.asset_id
                 join lrm_position pos on al.position_id = pos.id
@@ -53,7 +53,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                 pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
                 a.created_date, a.modified_by, a.modified_date,
                 case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
-                a.verified_by, a.verified_date
+                a.verified_by, a.verified_date, a.information_source
            from asset a
                join asset_link al on a.id = al.asset_id
                 join lrm_position pos on al.position_id = pos.id
@@ -63,14 +63,15 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                 join property p on p.id = e.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
           #$filter"""
-        .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Option[String], Option[DateTime])].list
+        .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime],
+            Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Option[String], Option[DateTime], Option[Int])].list
     }
 
     val groupedByAssetId = assets.groupBy(_._1)
     val groupedByMaintenanceRoadId = groupedByAssetId.mapValues(_.groupBy(_._2))
 
     groupedByMaintenanceRoadId.map { case (assetId, rowsByMaintenanceRoadId) =>
-      val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired, linkSource, verifiedBy, verifiedDate) = groupedByAssetId(assetId).head
+      val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired, linkSource, verifiedBy, verifiedDate, informationSource) = groupedByAssetId(assetId).head
       val maintenanceRoadValues = rowsByMaintenanceRoadId.keys.toSeq.sorted.map { maintenanceRoadId =>
         val rows = rowsByMaintenanceRoadId(maintenanceRoadId)
         val propertyValue = rows.head._4
@@ -78,7 +79,9 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         val propertyPublicId = rows.head._6
         Properties(propertyPublicId, propertyType, propertyValue)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy,
+                           createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate,
+                           LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
 
@@ -95,7 +98,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                 pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
                 a.modified_by, a.modified_date,
                 case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
-                a.verified_by, a.verified_date
+                a.verified_by, a.verified_date, a.information_source
            from asset a
                 join asset_link al on a.id = al.asset_id
                 join lrm_position pos on al.position_id = pos.id
@@ -110,7 +113,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                 pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
                 a.created_date, a.modified_by, a.modified_date,
                 case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
-                a.verified_by, a.verified_date
+                a.verified_by, a.verified_date, a.information_source
            from asset a
                join asset_link al on a.id = al.asset_id
                 join lrm_position pos on al.position_id = pos.id
@@ -120,14 +123,16 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                 join property p on p.id = e.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
             #$floatingFilter"""
-        .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Option[String], Option[DateTime])].list
+        .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime],
+            Option[String], Option[DateTime], Boolean, Int, Option[String], Option[DateTime], Option[Int])].list
     }
 
     val groupedByAssetId = assets.groupBy(_._1)
     val groupedByMaintenanceRoadId = groupedByAssetId.mapValues(_.groupBy(_._2))
 
     groupedByMaintenanceRoadId.map { case (assetId, rowsByMaintenanceRoadId) =>
-      val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired, linkSource, verifiedBy, verifiedDate) = groupedByAssetId(assetId).head
+      val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate,
+          expired, linkSource, verifiedBy, verifiedDate, informationSource) = groupedByAssetId(assetId).head
       val maintenanceRoadValues = rowsByMaintenanceRoadId.keys.toSeq.sorted.map { maintenanceRoadId =>
         val rows = rowsByMaintenanceRoadId(maintenanceRoadId)
         val propertyValue = rows.head._4
@@ -135,7 +140,9 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         val propertyPublicId = rows.head._6
         Properties(propertyPublicId, propertyType, propertyValue)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate,
+                          modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource),
+                          verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
 
@@ -156,7 +163,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                       pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
                       a.modified_by, a.modified_date,
                       case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
-                      a.verified_by, a.verified_date
+                      a.verified_by, a.verified_date, a.information_source
                    from asset a
                       join asset_link al on a.id = al.asset_id
                       join lrm_position pos on al.position_id = pos.id
@@ -169,7 +176,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                       pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
                       a.created_date, a.modified_by, a.modified_date,
                       case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source,
-                      a.verified_by, a.verified_date
+                      a.verified_by, a.verified_date, a.information_source
                    from asset a
                      join asset_link al on a.id = al.asset_id
                      join lrm_position pos on al.position_id = pos.id
@@ -186,7 +193,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
       PersistedLinearAsset(id, row.linkId, row.sideCode, Some(value), row.startMeasure, row.endMeasure, row.createdBy,
         row.createdDate, row.modifiedBy, row.modifiedDate, row.expired, row.assetTypeId, row.vvhTimeStamp,
-        row.geomModifiedDate, LinkGeomSource.apply(row.linkSource), row.verifiedBy, row.verifiedDate)
+        row.geomModifiedDate, LinkGeomSource.apply(row.linkSource), row.verifiedBy, row.verifiedDate, row.informationSource.map(info => InformationSource.apply(info)))
 
     }.toSeq
   }
@@ -215,8 +222,9 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val linkSource = r.nextInt()
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val informationSource = r.nextIntOption()
 
-      ServiceRoadRow(id, linkId, sideCode, value, startMeasure, endMeasure, publicId, propertyType, required, createdBy, createdDate, modifiedBy, modifiedDate, expired, MaintenanceRoadAsset.typeId, vvhTimeStamp,geomModifiedDate, linkSource, verifiedBy, verifiedDate)
+      ServiceRoadRow(id, linkId, sideCode, value, startMeasure, endMeasure, publicId, propertyType, required, createdBy, createdDate, modifiedBy, modifiedDate, expired, MaintenanceRoadAsset.typeId, vvhTimeStamp,geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
     }
   }
 

@@ -28,10 +28,11 @@
 </head>
 <body class="digiroad2">
 <header id="header">
-    <span class="logo">Digiroad</span>
-    <span class="notification" id="notification">
+  <span class="logo">Digiroad</span>
+  <span class="notification" id="notification">
   </span>
-  <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
+    <a class="header-link" id="startfeedback">Palaute työkalusta</a>
+    <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
     <a href="#work-list/municipality" class="header-link" title="Kuntasivun ohjeistus on vielä työn alla. Tarkempi ohjeistus lisätään käyttöohjeeseen viikolla 7.">Tietolajien kuntasivu</a>
 </header>
 <div class="container">
@@ -176,6 +177,7 @@
 <script type="text/javascript" src="src/model/selectedManoeuvreSource.js"></script>
 <script type="text/javascript" src="src/model/linkPropertiesModel.js"></script>
 <script type="text/javascript" src="src/controller/manoeuvresCollection.js"></script>
+<script type="text/javascript" src="src/controller/FeedbackModel.js"></script>
 <script type="text/javascript" src="src/model/locationSearch.js"></script>
 <script type="text/javascript" src="src/model/selectedLinearAssetFactory.js"></script>
 <script type="text/javascript" src="src/view/confirm.js"></script>
@@ -185,6 +187,7 @@
 <script type="text/javascript" src="src/view/point_asset/massTransitStopForm.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/speedLimitForm.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/linearAssetForm.js"></script>
+<script type="text/javascript" src="src/view/FeedbackTool.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/piecewiseLinearAssetFormElements.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/prohibitionFormElements.js"></script>
 <script type="text/javascript" src="src/view/link_property/linkPropertyForm.js"></script>
@@ -192,7 +195,7 @@
 <script type="text/javascript" src="src/view/point_asset/pointAssetForm.js"></script>
 <script type="text/javascript" src="src/view/point_asset/groupedPointAssetForm.js"></script>
 <script type="text/javascript" src="src/view/workListView.js"></script>
-<script type="text/javascript" src="src/view/assetFormFactory.js"></script>
+<script type="text/javascript" src="src/view/dynamicAssetForm.js"></script>
 <script type="text/javascript" src="src/application.js"></script>
 <script type="text/javascript" src="src/utils/script-loader.js"></script>
 <script type="text/javascript" src="src/assetgrouping/asset-grouping.js"></script>

@@ -64,7 +64,7 @@
      * Overrides the layer.js refreshView method
      */
     this.refreshView = function() {
-      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map), draw);
+      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map), draw, map.getView().getCenter());
     };
 
     /**
@@ -134,7 +134,7 @@
       selectedManoeuvreSource.setTargetRoadLink(null);
     };
 
-    var selectControl = new SelectToolControl(application, roadLayer.layer, map, {
+    var selectControl = new SelectToolControl(application, roadLayer.layer, map, false, {
         style : function(feature){
             return manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: zoomlevels.getViewZoom(map)});
         },
@@ -270,6 +270,7 @@
         var addedManoeuvre = manoeuvresCollection.getAddedManoeuvre();
 
         if(!application.isReadOnly()){
+
           if(!_.isEmpty(addedManoeuvre)) {
             if(!("adjacentLinks" in addedManoeuvre))
               addedManoeuvre.adjacentLinks = selectedManoeuvreSource.getAdjacents(addedManoeuvre.destLinkId);
