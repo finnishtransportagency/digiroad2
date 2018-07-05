@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
 import javax.mail.MessagingException
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
@@ -14,6 +15,7 @@ case class FeedbackApplicationBody(feedbackType: Option[String], headline: Optio
 
 trait Feedback {
 
+  val logger = LoggerFactory.getLogger(getClass)
   private val smtpProp = new SmtpPropertyReader
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -55,15 +57,16 @@ trait Feedback {
     }
   }
 
-  def sendFeedbacks(): Unit = {
+ def sendFeedbacks(): Unit = {
     getNotSentFeedbacks.foreach{
-      feedback =>
-        try {
-          emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), feedback.createdBy.getOrElse(from), None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))
-          updateApplicationFeedbackStatus(feedback.id)
-        }catch {
-          case messagingException: MessagingException=> println( s"Error on email sending: ${messagingException.toString}" )
+      feedback => {
+        if (emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), from, None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))) {
+          val id = updateApplicationFeedbackStatus(feedback.id)
+          logger.info(s"Sent feedback with id $id")
+        } else {
+          logger.error(s"Something happened when sending the email")
         }
+      }
     }
   }
 }
@@ -74,7 +77,7 @@ class FeedbackApplicationService extends Feedback {
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackApplicationBody
 
-  override def from: String = "OTH Application Feedback"
+  override def from: String = "oth-feedback@no-reply.com"
   override def subject: String = "Palaute työkalusta"
   override def body: String = ""
 

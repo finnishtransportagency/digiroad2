@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriAssetDataClient, TierekisteriGreenCareClassAssetClient, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty

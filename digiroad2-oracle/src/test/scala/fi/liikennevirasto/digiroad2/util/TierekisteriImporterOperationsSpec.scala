@@ -195,6 +195,17 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
   }
 
+  class TestCareClassOperations extends CareClassTierekisteriImporter {
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override lazy val roadLinkService: RoadLinkOTHService = mockRoadLinkService
+    override lazy val greenCareTierekisteriClient: TierekisteriGreenCareClassAssetClient = mockGreenCareClassAssetClient
+    override lazy val winterCareTierekisteriClient: TierekisteriWinterCareClassAssetClient = mockWinterCareClassAssetClient
+    override lazy val vvhClient: VVHClient = mockVVHClient
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
 
   test("assets splited are split properly") {
     val trl = TierekisteriLightingData(4L, 203L, 208L, Track.RightSide, 3184L, 6584L)

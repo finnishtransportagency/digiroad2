@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, SpeedLimit}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
@@ -137,11 +136,8 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {
       "Remove"
-    } else if (createdDateTime.exists(_.isAfter(since))) {
+    } else
       "Add"
-    } else {
-      "Modify"
-    }
   }
 
   private def vvhRoadLinkToGeoJson(changedRoadlinks: Seq[ChangedVVHRoadlink]) =
