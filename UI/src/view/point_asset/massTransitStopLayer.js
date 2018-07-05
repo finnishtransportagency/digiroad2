@@ -73,7 +73,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   }
 
-  var selectControl = new SelectToolControl(applicationModel, assetLayer, map, {
+  var selectControl = new SelectToolControl(applicationModel, assetLayer, map, false, {
     style : function (feature) {
       var properties = feature.getProperties();
       if(properties.massTransitStop)
@@ -672,6 +672,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   this.refreshView = function() {
     var extent = map.getView().calculateExtent(map.getSize());
+    var center = map.getView().getCenter();
 
     eventbus.once('roadLinks:fetched', function () {
       var roadLinks = roadCollection.getAll();
@@ -679,7 +680,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
     });
 
-    massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true });
+    massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true , center: center});
 
     if (massTransitStopsCollection.isComplementaryActive()) {
       roadCollection.fetchWithComplementary(extent);

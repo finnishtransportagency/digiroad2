@@ -650,7 +650,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             left join traffic_direction t on i.id = t.link_id
             left join functional_class f on i.id = f.link_id
             left join link_type l on i.id = l.link_id
-            left join administrative_class a on i.id = a.link_id where a.valid_to is null
+            left join administrative_class a on i.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > sysdate)
       """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String],

@@ -5,15 +5,19 @@
     var roadCollection = new RoadCollection(backend);
     var verificationCollection = new AssetsVerificationCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend, verificationCollection);
+    var feedbackCollection = new FeedbackModel(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
-    var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
+    var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection, verificationCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
     var assetConfiguration = new AssetTypeConfiguration();
     var enabledExperimentalAssets = isExperimental ? assetConfiguration.experimentalAssetsConfig : [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
+    var authorizationPolicy = new AuthorizationPolicy();
+    new FeedbackTool(authorizationPolicy, feedbackCollection);
+
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec) ;
       var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
@@ -60,7 +64,7 @@
     };
 
     bindEvents(enabledLinearAssetSpecs, assetConfiguration.pointAssetsConfig);
-    window.massTransitStopsCollection = new MassTransitStopsCollection(backend);
+    window.massTransitStopsCollection = new MassTransitStopsCollection(backend, verificationCollection);
     window.selectedMassTransitStopModel = selectedMassTransitStopModel;
     var selectedLinearAssetModels = _.map(linearAssets, "selectedLinearAsset");
     var selectedPointAssetModels = _.map(pointAssets, "selectedPointAsset");
@@ -229,6 +233,12 @@
       })
     });
     map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
+    map.addInteraction(new ol.interaction.DragPan({
+      condition: function (mapBrowserEvent) {
+        var originalEvent = mapBrowserEvent.originalEvent;
+        return (!originalEvent.altKey && !originalEvent.shiftKey);
+      }
+    }));
     return map;
   };
 
@@ -310,8 +320,10 @@
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
        trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
        massLimitation: asset.editControlLabels.massLimitations,
-       typeId: asset.typeId
-     };
+       typeId: asset.typeId,
+       isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed
+
+      };
       acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
       return acc;
 
@@ -450,7 +462,6 @@
           .concat([trafficSignBox])
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
-          .concat(getLinearAsset(assetType.congestionTendency))
           .concat(getLinearAsset(assetType.damagedByThaw)),
       [manoeuvreBox]
         .concat(getLinearAsset(assetType.prohibition))

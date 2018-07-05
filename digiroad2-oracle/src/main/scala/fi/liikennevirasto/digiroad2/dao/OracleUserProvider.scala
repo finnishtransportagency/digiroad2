@@ -19,7 +19,7 @@ class OracleUserProvider extends UserProvider {
   implicit val formats = Serialization.formats(NoTypeHints)
   implicit val getUser = new GetResult[User] {
     def apply(r: PositionedResult) = {
-     User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()))
+     User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()), r.nextStringOption())
     }
   }
   implicit val getUserArea = new GetResult[Point] {
@@ -38,11 +38,11 @@ class OracleUserProvider extends UserProvider {
     }
   }
 
-  def createUser(username: String, config: Configuration) = {
+  def createUser(username: String, config: Configuration, name: Option[String] = None) = {
     OracleDatabase.withDynSession {
       sqlu"""
-        insert into service_user (id, username, configuration)
-        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)})
+        insert into service_user (id, username, configuration, name, created_at)
+        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name, sysdate)
       """.execute
     }
   }
@@ -50,7 +50,7 @@ class OracleUserProvider extends UserProvider {
   def getUser(username: String): Option[User] = {
     if (username == null) return None
     OracleDatabase.withDynSession {
-      sql"""select id, username, configuration from service_user where lower(username) = ${username.toLowerCase}""".as[User].firstOption
+      sql"""select id, username, configuration, name from service_user where lower(username) = ${username.toLowerCase}""".as[User].firstOption
     }
   }
 
@@ -63,7 +63,7 @@ class OracleUserProvider extends UserProvider {
 
   def saveUser(user: User): User = {
     OracleDatabase.withDynSession {
-      sqlu"""update service_user set configuration = ${write(user.configuration)} where lower(username) = ${user.username.toLowerCase}""".execute
+      sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name}, modified_at = sysdate where lower(username) = ${user.username.toLowerCase}""".execute
       user
     }
   }

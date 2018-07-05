@@ -1,14 +1,12 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import java.sql.Connection
-
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
 import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
-import java.sql.{Timestamp, Connection}
 import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
 import scala.math.BigDecimal.RoundingMode
@@ -108,6 +106,7 @@ object Queries {
 
   def propertyIdByPublicId = "select id from property where public_id = ?"
   def getPropertyIdByPublicId(id: String) = sql"select id from property where public_id = $id".as[Long].first
+  def getPropertyMaxSize = "select max_value_length from property where public_id = ?"
 
   def propertyTypeByPropertyId = "SELECT property_type FROM property WHERE id = ?"
 
@@ -169,6 +168,20 @@ object Queries {
     sqlu"""
       insert into date_property_value(id, property_id, asset_id, date_time)
       values (primary_key_seq.nextval, $propertyId, $assetId, $dateTime)
+    """
+  }
+
+  def existsValidityPeriodProperty =
+    "select id from validity_period_property_value where asset_id = ? and property_id = ?"
+
+  def deleteValidityPeriodProperty(assetId: Long, propertyId: Long) =
+    sqlu"delete from validity_period_property_value where asset_id = $assetId and property_id = $propertyId"
+
+  def insertValidityPeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
+    sqlu"""
+      insert into validity_period_property_value(id, property_id, asset_id, type, period_week_day, start_hour, end_hour, start_minute, end_minute)
+      values (primary_key_seq.nextval, $propertyId, $assetId, ${validityPeriodValue.periodType}, ${validityPeriodValue.days}, ${validityPeriodValue.startHour},
+      ${validityPeriodValue.endHour}, ${validityPeriodValue.startMinute}, ${validityPeriodValue.endMinute})
     """
   }
 
