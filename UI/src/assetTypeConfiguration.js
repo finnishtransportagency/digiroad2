@@ -2,6 +2,8 @@
   root.AssetTypeConfiguration = function () {
 
     var assetType = {
+      massTransitStop: 10,
+      speedLimits: 20,
       totalWeightLimit: 30,
       trailerTruckWeightLimit: 40,
       axleWeightLimit: 50,
@@ -14,7 +16,6 @@
       width: 120,
       damagedByThaw: 130,
       numberOfLanes: 140,
-      congestionTendency: 150,
       massTransitLane: 160,
       trafficVolume: 170,
       winterSpeedLimit: 180,
@@ -37,6 +38,7 @@
       trBogieWeightLimits: 350,
       trHeightLimits: 360,
       trWidthLimits: 370,
+      manoeuvre: 380,
       carryingCapacity: 400
     };
 
@@ -257,7 +259,8 @@
             { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weigth: 1, unit: 'kg' }
           ]
         }),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.width,
@@ -283,24 +286,6 @@
         isMultipleLinkSelectionAllowed: true
       },
       {
-        typeId: assetType.congestionTendency,
-        defaultValue: 1,
-        singleElementEventCategory: 'congestionTendency',
-        multiElementEventCategory: 'congestionTendencies',
-        layerName: 'congestionTendency',
-        title: 'Ruuhkaantumisherkkyys',
-        newTitle: 'Uusi ruuhkautumisherkkä tie',
-        className: 'congestion-tendency',
-        isSeparable: false,
-        allowComplementaryLinks: false,
-        editControlLabels: {
-          title: 'Herkkyys',
-          enabled: 'Ruuhkaantumisherkkä',
-          disabled: 'Ei ruuhkaantumisherkkä'
-        },
-        isVerifiable: false
-      },
-      {
         typeId: assetType.pavedRoad,
         defaultValue: 1,
         singleElementEventCategory: 'pavedRoad',
@@ -318,7 +303,8 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.trafficVolume,
@@ -339,7 +325,8 @@
         },
         label: new LinearAssetLabel(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
-        isVerifiable: true
+        isVerifiable: true,
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.massTransitLane,
@@ -359,6 +346,7 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
+        hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         form: new DynamicAssetForm({
           fields: [
@@ -406,7 +394,8 @@
         },
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -425,7 +414,8 @@
         },
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.europeanRoads,
@@ -534,7 +524,8 @@
         label: new LinearAssetLabel(),
         isVerifiable: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.carryingCapacity,
@@ -627,7 +618,7 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
       },
       {
         typeId: assetType.obstacles,
@@ -645,7 +636,8 @@
           manyFloatingAssetsLabel: 'esterakennelmat',
           newAssetLabel: 'esterakennelma'
         },
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.railwayCrossings,
@@ -666,7 +658,8 @@
             var selected = selectedAsset .get();
           return selected.code ? selected.code !== '' : false;
         },
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.directionalTrafficSigns,
@@ -683,7 +676,8 @@
           manyFloatingAssetsLabel: 'opastustaulut',
           newAssetLabel: 'opastustaulu'
         },
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.servicePoints,
@@ -699,7 +693,8 @@
           manyFloatingAssetsLabel: 'palvelupisteet',
           newAssetLabel: 'palvelupiste'
         },
-        authorizationPolicy: new ServicePointAuthorizationPolicy()
+        authorizationPolicy: new ServicePointAuthorizationPolicy(),
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.trafficLights,
@@ -818,8 +813,144 @@
       }
     ];
 
+    var assetTypeInfo = [
+      {
+        typeId: assetType.massTransitStop,
+        title: 'Joukkoliikenteen pysäkki'
+      },
+      {
+        typeId: assetType.speedLimits,
+        title: 'Nopeusrajoitus'
+      },
+      {
+        typeId: assetType.totalWeightLimit,
+        title: 'Suurin sallittu massa'
+      },
+      {
+        typeId: assetType.trailerTruckWeightLimit,
+        title: 'Yhdistelmän suurin sallittu massa'
+      },
+      {
+        typeId: assetType.axleWeightLimit,
+        title: 'Suurin sallittu akselimassa'
+      },
+      {
+        typeId: assetType.bogieWeightLimit,
+        title: 'Suurin sallittu telimassa'
+      },
+      {
+        typeId: assetType.heightLimit,
+        title: 'Suurin sallittu korkeus'
+      },
+      {
+        typeId: assetType.lengthLimit,
+        title: 'Suurin sallittu pituus'
+      },
+      {
+        typeId: assetType.widthLimit,
+        title: 'Suurin sallittu leveys'
+      },
+      {
+        typeId: assetType.litRoad,
+        title: 'Valaistus'
+      },
+      {
+        typeId: assetType.damagedByThaw,
+        title: 'Kelirikko'
+      },
+      {
+        typeId: assetType.width,
+        title: 'Leveys'
+      },
+      {
+        typeId: assetType.congestionTendency,
+        title: 'Ruuhkaantumisherkkyys'
+      },
+      {
+        typeId: assetType.pavedRoad,
+        title: 'Päällyste'
+      },
+      {
+        typeId: assetType.trafficVolume,
+        title: 'Liikennemäärä'
+      },
+      {
+        typeId: assetType.massTransitLane,
+        title: 'Joukkoliikennekaista'
+      },
+      {
+        typeId: assetType.winterSpeedLimit,
+        title: 'Talvinopeusrajoitus'
+      },
+      {
+        typeId: assetType.prohibition,
+        title: 'Ajoneuvokohtaiset rajoitukset'
+      },
+      {
+        typeId: assetType.hazardousMaterialTransportProhibition,
+        title: 'VAK-rajoitus'
+      },
+      {
+        typeId: assetType.europeanRoads,
+        title: 'Eurooppatienumero'
+      },
+      {
+        typeId: assetType.exitNumbers,
+        title: 'Liittymänumero'
+      },
+      {
+        typeId: assetType.maintenanceRoad,
+        title: 'Rautateiden huoltotie'
+      },
+      {
+        typeId: assetType.numberOfLanes,
+        title: 'Kaistojen lukumäärä'
+      },
+      {
+        typeId: assetType.pedestrianCrossings,
+        title: 'Suojatie'
+      },
+      {
+        typeId: assetType.obstacles,
+        title: 'Esterakennelma'
+      },
+      {
+        typeId: assetType.railwayCrossings,
+        title: 'Rautatien tasoristeys'
+      },
+      {
+        typeId: assetType.directionalTrafficSigns,
+        title: 'Opastustaulu'
+      },
+      {
+        typeId: assetType.servicePoints,
+        title: 'Palvelupiste'
+      },
+      {
+        typeId: assetType.trafficLights,
+        title: 'Liikennevalo'
+      },
+      {
+        typeId: assetType.trafficSigns,
+        title: 'Liikennemerkit'
+      },
+      {
+        typeId: assetType.trHeightLimits,
+        title: 'TR suurin sallittu korkeus'
+      },
+      {
+        typeId: assetType.trWidthLimits,
+        title: 'TR suurin sallittu leveys'
+      },
+      {
+        typeId: assetType.manoeuvre,
+        title: 'Kääntymisrajoitus'
+      }
+    ];
+
     return {
       assetTypes : assetType,
+      assetTypeInfo: assetTypeInfo,
       linearAssetsConfig : linearAssetSpecs,
       experimentalAssetsConfig : experimentalLinearAssetSpecs,
       pointAssetsConfig : pointAssetSpecs,

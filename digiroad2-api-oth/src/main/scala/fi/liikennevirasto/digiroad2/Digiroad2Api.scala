@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationBody, FeedbackApplicationService}
 import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, LinkProperties, RoadLinkService, VerificationService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -66,10 +67,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetService: AssetService = Digiroad2Context.assetService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
-                   val multiValueLinearAssetService: MultiValueLinearAssetService = Digiroad2Context.multiValueLinearAssetService)
-
-
-extends ScalatraServlet
+                   val multiValueLinearAssetService: MultiValueLinearAssetService = Digiroad2Context.multiValueLinearAssetService,
+                   val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback)
+  extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
@@ -209,10 +209,12 @@ extends ScalatraServlet
   }
 
   get("/user/roles") {
+    val user = userProvider.getCurrentUser()
     Map(
-      "roles" -> userProvider.getCurrentUser().configuration.roles,
-      "municipalities" -> userProvider.getCurrentUser().configuration.authorizedMunicipalities,
-      "areas" -> userProvider.getCurrentUser().configuration.authorizedAreas)
+      "username" -> user.username,
+      "roles" -> user.configuration.roles,
+      "municipalities" -> user.configuration.authorizedMunicipalities,
+      "areas" -> user.configuration.authorizedAreas)
   }
 
   get("/massTransitStops/:nationalId") {
@@ -239,10 +241,10 @@ extends ScalatraServlet
     }
   }
 
-/**
+  /**
   * Returns empty result as Json message, not as page not found
-*/
-    get("/massTransitStopsSafe/:nationalId") {
+  */
+  get("/massTransitStopsSafe/:nationalId") {
       val nationalId = params("nationalId").toLong
       val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
       massTransitStopReturned._1 match {
@@ -645,6 +647,7 @@ extends ScalatraServlet
     case te: TierekisteriClientException => halt(TierekisteriInternalServerError("Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa"))
     case rae: RoadAddressException => halt(RoadAddressNotFound("Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui"))
     case masse: MassTransitStopException => halt(NotAcceptable("Invalid Mass Transit Stop direction"))
+    case valuee: AssetValueException => halt(NotAcceptable("Invalid asset value: " + valuee.getMessage))
     case e: Exception =>
       logger.error("API Error", e)
       NewRelic.noticeError(e)
@@ -755,6 +758,17 @@ extends ScalatraServlet
 
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
+
+  post("/feedback"){
+    val body = extractFeedbackBody(parsedBody \ "body")
+    val user = userProvider.getCurrentUser()
+    applicationFeedback.insertApplicationFeedback(user.username, body)
+  }
+
+  private def extractFeedbackBody(value: JValue): FeedbackApplicationBody = {
+    value.extractOpt[FeedbackApplicationBody].map { x => FeedbackApplicationBody(x.feedbackType, x.headline, x.freeText, x.name, x.email, x.phoneNumber)}.get
+  }
+
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()
@@ -893,8 +907,6 @@ extends ScalatraServlet
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService = getLinearAssetService(typeId)
-    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
@@ -903,6 +915,8 @@ extends ScalatraServlet
     val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
 
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
+    validateValues(valueOption, usedService)
+
     val updatedNumericalIds = if (valueOption.nonEmpty) {
       try {
         valueOption.map(usedService.update(existingAssetIds.toSeq, _, user.username)).getOrElse(Nil)
@@ -967,8 +981,6 @@ extends ScalatraServlet
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService =  getLinearAssetService(typeId)
-    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     usedService.split(params("id").toLong,
@@ -983,8 +995,6 @@ extends ScalatraServlet
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService =  getLinearAssetService(typeId)
-    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     usedService.separate(params("id").toLong,
@@ -1251,6 +1261,10 @@ extends ScalatraServlet
       halt(BadRequest("Modification restriction for this asset on state roads"))
   }
 
+  private def validateValues(value: Option[Value], service: LinearAssetOperations): Unit = {
+    service.validateAssetValue(value)
+  }
+
   get("/manoeuvres") {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
@@ -1420,7 +1434,8 @@ extends ScalatraServlet
           "assetName" -> assetType.assetTypeName,
           "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
           "verified_by"   -> assetType.verifiedBy.getOrElse(""),
-          "verified"   -> assetType.verified)))
+          "verified"   -> assetType.verified,
+          "counter" -> assetType.counter)))
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {
@@ -1441,8 +1456,6 @@ extends ScalatraServlet
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val includedMunicipalities = user.isOperator() match {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)

@@ -632,7 +632,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(170, municipalityNumber)
-        case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
         case "european_roads" => linearAssetsToApi(260, municipalityNumber)
         case "exit_numbers" => linearAssetsToApi(270, municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkOTHService.withRoadAddress(roadLinkOTHService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))

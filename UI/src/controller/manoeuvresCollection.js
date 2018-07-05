@@ -1,11 +1,12 @@
 (function(root) {
-  root.ManoeuvresCollection = function(backend, roadCollection) {
+  root.ManoeuvresCollection = function(backend, roadCollection, verificationCollection) {
     var manoeuvres = [];
     var addedManoeuvre = {};
     var removedManoeuvres = {};
     var updatedInfo = {};
     var roadlinkAdjacents = {};
     var dirty = false;
+    var manoeuvreAssetTypeId = 380;
 
     //----------------------------------
     // Public methods
@@ -18,7 +19,7 @@
      * @param zoom
      * @param callback
      */
-    var fetch = function(extent, zoom, callback) {
+    var fetch = function(extent, zoom, callback, center) {
       eventbus.once('roadLinks:fetched', function() {
         fetchManoeuvres(extent, function(ms) {
           manoeuvres = ms;
@@ -28,6 +29,7 @@
         });
       });
       roadCollection.fetch(extent);
+      verificationCollection.fetch(extent, center, manoeuvreAssetTypeId, true);
     };
 
     /**

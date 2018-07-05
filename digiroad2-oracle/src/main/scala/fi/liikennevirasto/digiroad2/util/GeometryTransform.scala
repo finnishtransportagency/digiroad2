@@ -110,7 +110,7 @@ class GeometryTransform {
     val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue)).headOption
 
     //If there is no roadAddress in VIITE try to find it in VKM
-    if(roadAddress.isEmpty)
+    if(roadAddress.isEmpty && road.isDefined)
       return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, SideCode.apply(assetSideCode), road)
 
     val roadSide = roadAddress match {
