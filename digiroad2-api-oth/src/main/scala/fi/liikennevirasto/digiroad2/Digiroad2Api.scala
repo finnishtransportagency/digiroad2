@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
@@ -155,7 +156,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
 
   get("/startupParameters") {
-
     val defaultValues: (Option[Double], Option[Double], Option[Int]) = (Some(390000), Some(6900000), Some(2))
     val user = userProvider.getCurrentUser()
     val userPreferences = (user.configuration.east, user.configuration.north, user.configuration.zoom)
@@ -169,12 +169,28 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           if (user.isServiceRoadMaintainer())
             getStartUpParameters(defaultValues, user.configuration.authorizedAreas, userProvider.getCenterViewArea)
           else if (user.isBusStopMaintainer()) //case ely maintainer
-            getStartUpParameters(defaultValues, user.configuration.authorizedAreas, userProvider.getCenterViewEly)
+            getStartUpParameters(defaultValues, getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), userProvider.getCenterViewEly)
           else defaultValues
         }
     }
-
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
+  }
+
+  private def getUserElysByMunicipalities(authorizedMunicipalities: Set[Int]): Set[Int] = {
+    val userMunicipalities = authorizedMunicipalities.toSeq
+
+    userProvider.getElysByMunicipalities(authorizedMunicipalities).sorted.find { ely =>
+        val municipalities = municipalityProvider.getMunicipalities(Set(ely))
+        municipalities.forall(userMunicipalities.contains)
+    }.toSet
+  }
+
+  def splitToInts(numbers: String) : Option[Seq[Int]] = {
+    val split = numbers.split(",").filterNot(_.trim.isEmpty)
+    split match {
+      case Array() => None
+      case _ => Some(split.map(_.trim.toInt).toSeq)
+    }
   }
 
   private def getStartUpParameters(defaultValues: (Option[Double], Option[Double], Option[Int]), authorizedTo: Set[Int], getter: Int => Option[MapViewZoom]):(Option[Double], Option[Double], Option[Int])  = {

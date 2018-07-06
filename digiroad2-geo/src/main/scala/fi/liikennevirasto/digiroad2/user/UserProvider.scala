@@ -20,10 +20,19 @@ trait UserProvider {
   }
 
   def createUser(username: String, config: Configuration, name: Option[String] = None)
+
   def getUser(username: String): Option[User]
+
   def saveUser(user: User): User
+
   def updateUserConfiguration(user: User): User
+
   def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom]
+
   def getCenterViewArea(area: Int): Option[MapViewZoom]
+
   def getCenterViewEly(ely: Int): Option[MapViewZoom]
+
+  def getElysByMunicipalities(municipalities: Set[Int]): Seq[Int]
+
 }

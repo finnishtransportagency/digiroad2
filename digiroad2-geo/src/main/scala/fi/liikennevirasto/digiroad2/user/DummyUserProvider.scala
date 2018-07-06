@@ -35,4 +35,7 @@ class DummyUserProvider extends UserProvider {
   def updateUserConfiguration(user: User): User = {
     User(0, "username", Configuration())
   }
+  def getElysByMunicipalities(municipalities: Set[Int]): Seq[Int] = {
+    Seq(941,170,683,614,698,417,320,751,261,766,60,65,583,742,148,732,498,736,76,318,890,758,240,851,438,241,35,295,43,845,976,771,478,854,273,47,62)
+  }
 }

@@ -100,4 +100,10 @@ class OracleUserProvider extends UserProvider {
     }
   }
 
+  def getElysByMunicipalities(municipalities: Set[Int]): Seq[Int] =  {
+    OracleDatabase.withDynSession {
+      sql"""select ELY_NRO from municipality  where id in (#${municipalities.mkString(",")} ) group by ELY_NRO""".as[Int].list
+    }
+  }
+
 }
