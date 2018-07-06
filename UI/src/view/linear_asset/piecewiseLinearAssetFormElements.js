@@ -27,6 +27,10 @@
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
+  function hasValue(value, id) {
+    return (_.isNull(id) && !_.isUndefined(value)) || (!_.isNull(id) && !_.isUndefined(value))|| (!_.isNull(id) && _.isUndefined(value));
+  }
+
   function formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem) {
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
@@ -46,8 +50,8 @@
     }
 
     function singleValueEditElement(currentValue, sideCode, input, id) {
-      var withoutValue = _.isNull(id) || _.isUndefined(currentValue) ? 'checked' : '';
-      var withValue = _.isNull(id) ||  _.isUndefined(currentValue) ? '' : 'checked';
+      var withoutValue = !hasValue(currentValue, id)  ? 'checked' : '';
+      var withValue = !hasValue(currentValue, id) ? '' : 'checked';
       return '' +
         sideCodeMarker(sideCode) +
         '<div class="edit-control-group choice-group">' +
@@ -214,7 +218,7 @@
 
     function measureInput(currentValue, className, possibleValues, id) {
       var value = currentValue ? currentValue : '';
-      var disabled = _.isNull(id) || _.isUndefined(currentValue) ? 'disabled' : '';
+      var disabled = !hasValue(currentValue, id) ? 'disabled' : '';
       return '' +
         '<div class="input-unit-combination input-group">' +
         '  <textarea class="form-control large-input ' + className + '" ' +

@@ -27,6 +27,7 @@
         return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/);
       });
     }
+    return true;
   }
 
   function construct(backend, collection, asset) {
