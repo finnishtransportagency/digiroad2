@@ -32,7 +32,7 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
     provider.updateUserConfiguration(updatedUser)
     val userInfo = provider.getUser(TestUserName).get
     userInfo.username should be(TestUserName.toLowerCase)
-    userInfo.configuration.east should be(Some(newNorth))
-    userInfo.configuration.north should be(Some(newEast))
+    userInfo.configuration.east should be(Some(newEast))
+    userInfo.configuration.north should be(Some(newNorth))
   }
 }

@@ -1,5 +1,5 @@
 (function (root) {
-    root.DefaultLocationButton = function (map, container, backend, instructionsPopup) {
+    root.DefaultLocationButton = function (map, container, backend) {
         var element =
             '<div class="default-location-btn-container">' +
             '<button class="btn btn-sm btn-tertiary" id="default-location-btn">Muuta oletussijainniksi</button>' +
@@ -15,7 +15,7 @@
 
         $('#default-location-btn').on('click', function () {
             backend.updateUserConfigurationDefaultLocation(actualLonLat, function () {
-                instructionsPopup.show('Oletussijainti tallennettu', 3000);
+                new GenericConfirmPopup("Oletussijainti tallennettu.", {type: 'alert'});
             }, function () {
                 alert('Tarkistus epäonnistui. Yritä hetken kuluttua uudestaan.');
             });
