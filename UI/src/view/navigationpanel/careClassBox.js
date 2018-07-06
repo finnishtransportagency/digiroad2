@@ -101,7 +101,7 @@
 
     this.renderTemplate = function () {
       this.expanded = me.elements().expanded;
-      $(me.expanded).find('input[type=radio][name=labelRadio]').change(event, function() {
+      $(me.expanded).find('input[type=radio][name=labelRadio]').change(function() {
         if(applicationModel.isDirty()){
           //if the asset is dirty reselect winterCare and trigger the confirm since switching to green care should be impossible
           $(me.expanded).find('input[type=radio][name=labelRadio][value=winterCare]').prop("checked", true);
