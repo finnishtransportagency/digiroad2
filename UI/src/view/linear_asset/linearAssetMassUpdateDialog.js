@@ -11,7 +11,7 @@
       formElements = options.formElements,
       selectedLinearAsset = options.selectedLinearAsset,
       assetTypeConfiguration = options.assetTypeConfiguration,
-      currentValue;
+      currentValue = [];
 
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
