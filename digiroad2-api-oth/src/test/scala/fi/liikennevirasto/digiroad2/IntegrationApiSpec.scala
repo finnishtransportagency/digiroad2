@@ -29,7 +29,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
     val credentials = username + ":" + password
     val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials + "="
+    val authorizationToken = "Basic " + encodedCredentials
     get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
   }
 

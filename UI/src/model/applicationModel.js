@@ -17,7 +17,7 @@
     };
     var roadTypeShown = true;
     var isDirty = function() {
-      return _.any(models, function(model) { return model.isDirty(); });
+      return _.some(models, function(model) { return model.isDirty(); });
     };
     var setZoomLevel = function(level) {
       zoom.level = level;

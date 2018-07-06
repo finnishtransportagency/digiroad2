@@ -17,7 +17,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 
 import scala.concurrent.Future
@@ -524,7 +524,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
-    resultObstacle should be === (floatingObstacle)
+    resultObstacle should === (floatingObstacle)
 
   }
 
@@ -623,7 +623,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
-    resultObstacle should be === (floatingObstacle)
+    resultObstacle should === (floatingObstacle)
 
   }
 
@@ -652,7 +652,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
-    resultObstacle should be === (floatingObstacle)
+    resultObstacle should === (floatingObstacle)
 
   }
 

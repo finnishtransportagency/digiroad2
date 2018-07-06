@@ -22,7 +22,7 @@
     };
 
     var selectedValidityPeriods = function(validityPeriods) {
-      return _.keys(_.pick(validityPeriods, function(selected) {
+      return _.keys(_.pickBy(validityPeriods, function(selected) {
         return selected;
       }));
     };

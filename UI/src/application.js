@@ -66,9 +66,9 @@
     bindEvents(enabledLinearAssetSpecs, assetConfiguration.pointAssetsConfig);
     window.massTransitStopsCollection = new MassTransitStopsCollection(backend, verificationCollection);
     window.selectedMassTransitStopModel = selectedMassTransitStopModel;
-    var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
-    var selectedPointAssetModels = _.pluck(pointAssets, "selectedPointAsset");
-    var selectedGroupedPointAssetModels = _.pluck(groupedPointAssets, "selectedPointAsset");
+    var selectedLinearAssetModels = _.map(linearAssets, "selectedLinearAsset");
+    var selectedPointAssetModels = _.map(pointAssets, "selectedPointAsset");
+    var selectedGroupedPointAssetModels = _.map(groupedPointAssets, "selectedPointAsset");
     window.applicationModel = new ApplicationModel([
       selectedMassTransitStopModel,
       selectedSpeedLimit,
@@ -170,8 +170,8 @@
   };
 
   var bindEvents = function(linearAssetSpecs, pointAssetSpecs, roadCollection) {
-    var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
-    var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
+    var singleElementEventNames = _.map(linearAssetSpecs, 'singleElementEventCategory');
+    var multiElementEventNames = _.map(linearAssetSpecs, 'multiElementEventCategory');
     var linearAssetSavingEvents = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
     var pointAssetSavingEvents = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saving'; }).join(' ');
     eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving manoeuvres:saving ' + linearAssetSavingEvents + ' ' + pointAssetSavingEvents, function() {
