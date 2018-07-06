@@ -25,7 +25,7 @@
           '<div class="label">' + value + '</div>' +
           '<div class="symbol linear limit-' + idx + '" />' +
           '</div>' : '';
-      }).join('');
+      }).join('') + '</div>';
     };
 
     this.checkboxPanel = function () {

@@ -76,41 +76,6 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(geoJar)
 
-  val Digiroad2ViiteName = "digiroad2-viite"
-  lazy val viiteJar = Project (
-    Digiroad2ViiteName,
-    file(Digiroad2ViiteName),
-    settings = Defaults.defaultSettings ++ Seq(
-      organization := Organization,
-      name := Digiroad2ViiteName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      parallelExecution in Test := false,
-      testOptions in Test ++= (
-        if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % "3.5.3",
-        "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
-        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion % "test",
-        "org.mockito" % "mockito-core" % "2.18.3" % "test",
-        "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
-        "commons-io" % "commons-io" % "2.6",
-        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
-        "org.apache.httpcomponents" % "httpclient" % "4.3.3"
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
-    )
-  ) dependsOn(geoJar, oracleJar % "compile->compile;test->test")
-
   val Digiroad2ApiName = "digiroad2-api-common"
   lazy val commonApiJar = Project (
     Digiroad2ApiName,
@@ -144,42 +109,7 @@ object Digiroad2Build extends Build {
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
     )
-  ) dependsOn(geoJar, oracleJar, viiteJar)
-
-  val Digiroad2ViiteApiName = "digiroad2-api-viite"
-  lazy val viiteApiJar = Project (
-    Digiroad2ViiteApiName,
-    file(Digiroad2ViiteApiName),
-    settings = Defaults.defaultSettings ++ Seq(
-      organization := Organization,
-      name := Digiroad2ViiteApiName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      //      parallelExecution in Test := false,
-      testOptions in Test ++= (
-        if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % "3.5.3",
-        "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
-        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.mockito" % "mockito-core" % "2.18.3" % "test",
-        "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
-        "commons-io" % "commons-io" % "2.6",
-        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
-        "org.apache.httpcomponents" % "httpclient" % "4.3.3"
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
-    )
-  ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar % "compile->compile;test->test")
+  ) dependsOn(geoJar, oracleJar)
 
   val Digiroad2OTHApiName = "digiroad2-api-oth"
   lazy val othApiJar = Project (
@@ -256,8 +186,8 @@ object Digiroad2Build extends Build {
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
     )
-  ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar, othApiJar) aggregate
-    (geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar, othApiJar)
+  ) dependsOn(geoJar, oracleJar, commonApiJar, othApiJar) aggregate
+    (geoJar, oracleJar, commonApiJar, othApiJar)
 
   lazy val gatling = project.in(file("digiroad2-gatling"))
     .enablePlugins(GatlingPlugin)
