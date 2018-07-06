@@ -266,6 +266,7 @@ root.LinearAssetLayer  = function(params) {
         if (linearAssets.length > 0) {
             selectedLinearAsset.close();
             showDialog(linearAssets);
+            onCloseForm();
         }
     }
   }

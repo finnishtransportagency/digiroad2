@@ -655,7 +655,7 @@
       var rootElement = $('#feature-attributes');
       _assetTypeConfiguration = assetTypeConfiguration;
 
-      eventbus.on(events('selected', 'cancelled'), function () {
+      eventbus.on(events('selected', 'cancelled', 'multiSelected'), function () {
         var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
         rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
 
