@@ -771,6 +771,16 @@
       return self;
     };
 
+    var mockBaconDefered = function(resultData){
+       var then = function(callback){
+        callback(resultData);
+        return {then: then};
+         };
+        return {
+       then : then
+      };
+      };
+
     this.updateUserConfigurationDefaultLocation = function (data, success, failure) {
       $.ajax({
         contentType: "application/json",
@@ -782,16 +792,5 @@
         error: failure
       });
     };
-
-    var mockBaconDefered = function(resultData){
-       var then = function(callback){
-        callback(resultData);
-        return {then: then};
-         };
-        return {
-       then : then
-      };
-      };
-
   };
 }(this));

@@ -6,7 +6,6 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d, dao}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.dao.RoadAddressDAO
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -16,6 +15,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
+import fi.liikennevirasto.digiroad2.service.RoadAddressesService
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -80,12 +80,8 @@ class RoadPartReservedException(response: String) extends RoadAddressException(r
   * A class to transform ETRS89-FI coordinates to road network addresses
   */
 
-class GeometryTransform {
+class GeometryTransform(roadAddressService: RoadAddressesService) {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
-
-  lazy val roadAddressDao : RoadAddressDAO = {
-    new RoadAddressDAO()
-  }
 
   lazy val vkmGeometryTransform: VKMGeometryTransform = {
     new VKMGeometryTransform()
@@ -107,7 +103,7 @@ class GeometryTransform {
       RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
     }
 
-    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue)).headOption
+    val roadAddress = roadAddressService.getByLrmPosition(linkId, mValue)
 
     //If there is no roadAddress in VIITE try to find it in VKM
     if(roadAddress.isEmpty && road.isDefined)

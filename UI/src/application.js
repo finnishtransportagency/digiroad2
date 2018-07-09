@@ -323,9 +323,8 @@
        massLimitation: asset.editControlLabels.massLimitations,
        typeId: asset.typeId,
        isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed
-
       };
-      acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
+      acc[asset.layerName] = asset.layer ? new asset.layer(parameters) : new LinearAssetLayer(parameters);
       return acc;
 
     }, {});
@@ -443,6 +442,7 @@
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
+    var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -463,7 +463,8 @@
           .concat([trafficSignBox])
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
-          .concat(getLinearAsset(assetType.damagedByThaw)),
+          .concat(getLinearAsset(assetType.damagedByThaw))
+          .concat([careClassBox]),
       [manoeuvreBox]
         .concat(getLinearAsset(assetType.prohibition))
         .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))

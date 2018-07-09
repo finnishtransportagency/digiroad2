@@ -69,7 +69,7 @@
 
     this.checkboxPanel = function () {
       return assetConfig.allowComplementaryLinks ? [
-          '<div class="panel-section panel-legend '+ me.legendName() + '-legend">' +
+          '<div class="panel-section">' +
           '<div class="check-box-container">' +
           '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
           '</div>' +
