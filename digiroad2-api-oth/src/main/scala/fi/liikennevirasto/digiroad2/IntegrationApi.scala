@@ -225,9 +225,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
-      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty =>
-        dynamicTypeProperty.values.map { v =>
-           v.value} }.headOption
+      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty => dynamicTypeProperty.values.map { v => v.value} }.headOption
       case _ => value.map(_.toJson)
     }
   }
