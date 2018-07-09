@@ -143,12 +143,12 @@
 }
 #map-plugins {
 	.coordinates {
-		position: absolute;
 		top: 0;
-		right: 310px;
-		font-size: 0px;
+		float: right;
+		font-size: 0;
 		color: @gray-darkest;
 		text-align: right;
+		padding-left: 10px;
 
 		.cbSpansWrapper {
 			display: inline-block;
@@ -199,7 +199,7 @@
 			display: inline-block;
 			vertical-align: middle;
 			height: @line-height-base * 2;
-			padding: (@line-height-modifier * 2) 0 0 (@line-height-modifier * 2);
+			padding: (@line-height-modifier * 2) (@line-height-modifier * 2) 0 (@line-height-modifier * 2);
 			border-left: 1px solid @gray-light-2;
 			.box-sizing(border-box);
 
@@ -217,9 +217,8 @@
 
 
 	.info-check-box-container {
-		position: absolute;
 		top: 0;
-		right: 10px;
+		float: right;
 		font-size: 0px;
 		color: @gray-darkest;
 		text-align: right;
@@ -228,7 +227,7 @@
 			display: inline-block;
 			vertical-align: middle;
 			height: @line-height-base * 2;
-			padding: (@line-height-modifier * 2) 0 0 (@line-height-modifier * 2);
+			padding: (@line-height-modifier * 2) (@line-height-modifier * 2) 0 (@line-height-modifier * 2);
 			border-left: 1px solid @gray-light-2;
 			.box-sizing(border-box);
 
@@ -244,9 +243,8 @@
 		}
 	}
 	.sign-toggle-container {
-		position: absolute;
 		top: 0;
-		right: 100px;
+		float: right;
 		font-size: 0px;
 		color: @gray-darkest;
 		text-align: right;
@@ -255,7 +253,7 @@
 			display: inline-block;
 			vertical-align: middle;
 			height: @line-height-base * 2;
-			padding: (@line-height-modifier * 2) 0 0 (@line-height-modifier * 2);
+			padding: (@line-height-modifier * 2) (@line-height-modifier * 2) 0 (@line-height-modifier * 2);
 			border-left: 1px solid @gray-light-2;
 			.box-sizing(border-box);
 
@@ -272,16 +270,15 @@
 	}
 
 	.municipality-container {
-		position: absolute;
 		top: 0;
-		right: 660px;
+		float: right;
 		color: @gray-darkest;
 		text-align: right;
 
 		.municipality-wrapper {
 			width: auto;
 			height: @line-height-base * 2;
-			padding: (@line-height-modifier * 2) 10px 0 (@line-height-modifier * 2);
+			padding: (@line-height-modifier * 2) (@line-height-modifier * 2) 0 (@line-height-modifier * 2);
 			border-left: 1px solid @gray-light-2;
 			border-right: 1px solid @gray-light-2;
 			.box-sizing(border-box);
@@ -289,12 +286,10 @@
 	}
 
 	.default-location-btn-container {
-		position: absolute;
-		top: 9px;
-		right: 688px;
-		font-size: 0px;
+		float: right;
 		color: @gray-darkest;
-		text-align: right;
+		height: @line-height-base * 2;
+		padding: (@line-height-modifier * 2) (@line-height-modifier * 2) 0 (@line-height-modifier * 2);
 	}
 
 }

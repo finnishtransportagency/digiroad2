@@ -253,11 +253,12 @@
     new ScaleBar(map, mapPluginsContainer);
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
-    new CoordinatesDisplay(map, mapPluginsContainer);
+    var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
     new TrafficSignToggle(map, mapPluginsContainer);
+    new CoordinatesDisplay(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
     new DefaultLocationButton(map, mapPluginsContainer, backend);
-    var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
+
 
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);

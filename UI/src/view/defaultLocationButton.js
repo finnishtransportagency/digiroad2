@@ -7,14 +7,14 @@
 
         container.append(element);
 
-        var actualLonLat = {lon: 0, lat: 0};
+        var actualLocationInfo = {lon: 0, lat: 0, zoom: 5};
         eventbus.on('map:moved', function (event) {
             if (!_.isUndefined(event.center))
-                actualLonLat = {lon: event.center[0], lat: event.center[1]};
+              actualLocationInfo = {lon: event.center[0], lat: event.center[1], zoom: zoomlevels.getViewZoom(map)};
         });
 
         $('#default-location-btn').on('click', function () {
-            backend.updateUserConfigurationDefaultLocation(actualLonLat, function () {
+            backend.updateUserConfigurationDefaultLocation(actualLocationInfo, function () {
                 new GenericConfirmPopup("Oletussijainti tallennettu.", {type: 'alert'});
             }, function () {
                 alert('Tarkistus epäonnistui. Yritä hetken kuluttua uudestaan.');
