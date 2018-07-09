@@ -156,7 +156,7 @@
       me.element = $('' +
           '<div class="form-group">' +
           '   <label class="control-label">' + field.label + '</label>' +
-          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required + ' class="form-control" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
+          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
           unit +
           '</div>');
 
@@ -655,7 +655,14 @@
       var rootElement = $('#feature-attributes');
       _assetTypeConfiguration = assetTypeConfiguration;
 
-      eventbus.on(events('selected', 'cancelled', 'multiSelected'), function () {
+      var updateStatusForMassButton = function(element) {
+        if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
+          element.prop('disabled', !(me.isSaveable() && me.isSplitOrSeparatedAllowed()));
+        } else
+          element.prop('disabled', !(me.isSaveable()));
+      };
+
+      eventbus.on(events('selected', 'cancelled'), function () {
         var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
         rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
 
@@ -679,6 +686,12 @@
           var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
           rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled ));
         }
+      });
+
+      eventbus.on("massDialog:rendered", function(buttonElement){
+        eventbus.on(events('valueChanged'), function() {
+          updateStatusForMassButton(buttonElement);
+        });
       });
 
       function events() {
@@ -787,10 +800,9 @@
         '</div>');
 
       toggleElement.find('.radio input').on('change', function(event) {
-        var inputElement = body.find('.form-editable-' + sideCodeClass);
         var disabled = $(this).val() === 'disabled';
-        var input = inputElement.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
-        input.attr('disabled', disabled);
+        var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+        input.prop('disabled', disabled);
 
         forms.removeFields(sideCode);
         if(disabled){
@@ -800,7 +812,7 @@
           setValueFn({ properties: [] });
         }
 
-        body.find('.form-editable-' + sideCodeClass).find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+        formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
 
         eventbus.trigger(events('valueChanged'));
       });

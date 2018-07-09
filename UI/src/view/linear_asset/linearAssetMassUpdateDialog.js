@@ -11,11 +11,11 @@
       formElements = options.formElements,
       selectedLinearAsset = options.selectedLinearAsset,
       assetTypeConfiguration = options.assetTypeConfiguration,
-      currentValue = {};
+      currentValue;
 
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
-        '<div class="modal-dialog form form-horizontal linear-asset">' +
+        '<div class="modal-dialog form form-horizontal form-editable linear-asset ">' +
           '<div class="content">' +
             'Olet valinnut <%- count %> tielinkkiä' +
           '</div>' +
@@ -42,7 +42,7 @@
     function _setValue(value){
       if (validator(value)) {
 
-        if(_.isEmpty(currentValue))
+        if(!currentValue)
           currentValue = value;
 
         else{
@@ -107,7 +107,8 @@
       var selectedMulti = _.clone(selectedLinearAsset);
       selectedMulti.setValue =  _setValue;
       selectedMulti.removeValue = removeValue;
-      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti).find('.editable'));
+      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti, true).find('.editable'));
+      eventbus.trigger('massDialog:rendered' , $('button.save'));
     };
 
 

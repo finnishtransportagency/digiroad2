@@ -111,7 +111,6 @@
       }
     };
 
-
     var limitValueButtons = function() {
       var separateValueElement =
         formElements.singleValueElement(selectedLinearAsset.getValue(), "a", selectedLinearAsset.getId()) +
