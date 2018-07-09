@@ -328,7 +328,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
-      ids.flatMap(dao.updateSpeedLimitValue(_, value, username, municipalityValidation))
+      def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]): Unit = {
+        vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
+      }
+
+      ids.foreach( id => validateMunicipalities(dao.getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id)))
+      ids.flatMap(dao.updateSpeedLimitValue(_, value, username))
     }
   }
 

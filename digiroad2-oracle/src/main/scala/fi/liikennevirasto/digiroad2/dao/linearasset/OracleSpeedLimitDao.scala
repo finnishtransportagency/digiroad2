@@ -431,7 +431,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Updates speed limit value. Used by SpeedLimitService.updateValues, SpeedLimitService.split and SpeedLimitService.separate.
     */
-  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
+  def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply("rajoitus").first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first
