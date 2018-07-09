@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.asset.{PavedRoad, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{PavedRoad, RoadRegistry, SideCode}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRPavedRoadType, TierekisteriPavedRoadAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
@@ -26,7 +26,7 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (trAssetData.pavementType != TRPavedRoadType.Unknown) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
-        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
+        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), informationSource = Some(RoadRegistry.value))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
