@@ -140,6 +140,23 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (enrichRoadLinksFromVVH(vvhRoadLinks), changeInfos)
   }
 
+  def getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality: Int, newTransaction: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    val fut = for{
+      changeInfos <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipality)
+      complementaryLinks <- vvhClient.complementaryData.fetchByMunicipalityF(municipality)
+      vvhRoadLinks <- vvhClient.roadLinkData.fetchByMunicipalityF(municipality)
+    } yield (changeInfos, complementaryLinks, vvhRoadLinks)
+
+    val (changeInfos, complementaryLinks, vvhRoadLinks)= Await.result(fut, Duration.Inf)
+    if (newTransaction)
+      withDynTransaction {
+        (enrichRoadLinksFromVVH(vvhRoadLinks ++ complementaryLinks, changeInfos), changeInfos)
+      }
+    else
+      (enrichRoadLinksFromVVH(vvhRoadLinks ++ complementaryLinks, changeInfos), changeInfos)
+  }
+
+
   /**
     * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
@@ -856,7 +873,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * - information transfer from old link to new link from change data
     * It also passes updated links and incomplete links to be saved to db by actor.
     *
-    * @param vvhRoadLinks
+    * @param allVvhRoadLinks
     * @param changes
     * @return Road links
     */

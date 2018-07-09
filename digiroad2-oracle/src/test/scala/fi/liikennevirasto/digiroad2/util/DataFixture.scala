@@ -1214,14 +1214,15 @@ object DataFixture {
     println("\n")
   }
 
-  def updateInformationSource(): Unit = {
 
-    def isKIdentifier(username: Option[String]): Boolean = {
-      username.exists(user => user.toLowerCase.startsWith("k")) ||
-        username.exists(user => user.toLowerCase.startsWith("lx")) ||
-        username.exists(user => user.toLowerCase.startsWith("a")) ||
-        username.exists(user => user.toLowerCase.startsWith("u"))
-    }
+  private def isKIdentifier(username: Option[String]): Boolean = {
+    username.exists(user => user.toLowerCase.startsWith("k")) ||
+      username.exists(user => user.toLowerCase.startsWith("lx")) ||
+      username.exists(user => user.toLowerCase.startsWith("a")) ||
+      username.exists(user => user.toLowerCase.startsWith("u"))
+  }
+
+  def updateInformationSource(): Unit = {
 
     println("\nUpdate Information Source for RoadWidth")
     println(DateTime.now())
@@ -1284,6 +1285,51 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+
+  def updatePavingInformationSource(): Unit = {
+
+    println("\nUpdate Information Source for Pavement")
+    println(DateTime.now())
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nWorking on... municipality -> " + municipality)
+      println("Fetching roadlinks")
+      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
+
+      OracleDatabase.withDynTransaction {
+
+        println("Fetching assets")
+        val existingAssets = oracleLinearAssetDao.fetchLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+
+        println(s"Number of existing assets: ${existingAssets.length}")
+        println(s"Start updating assets with Information Source")
+
+        existingAssets.foreach { asset =>
+          if (asset.createdBy.contains("batch_process_pavedRoad") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
+            oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, RoadRegistry)
+          } else {
+            if (isKIdentifier(asset.createdBy) || isKIdentifier(asset.modifiedBy)) {
+              oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MunicipalityMaintenainer)
+            } else {
+              if (asset.createdBy.contains("vvh_generated") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
+                oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MmlNls)
+              } else
+                println(s"Asset with ${asset.id} not updated with Information Source")
+            }
+          }
+        }
+      }
+    }
+    println("Complete at time: " + DateTime.now())
+  }
 
   def updateTrafficDirectionRoundabouts(): Unit = {
     println("\nStart Update roundadbouts traffic direction ")
