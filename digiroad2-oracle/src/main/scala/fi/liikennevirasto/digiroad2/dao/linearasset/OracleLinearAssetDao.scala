@@ -428,7 +428,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate)
 
          into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
-         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, SYSDATE, ${linkSource.value})
+         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp())}, SYSDATE, ${linkSource.value})
 
          into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId)

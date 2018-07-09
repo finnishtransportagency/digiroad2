@@ -387,7 +387,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
          values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate)
 
          into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
-         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, SYSDATE, ${linkSource.value})
+         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp())}, SYSDATE, ${linkSource.value})
 
          into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId)
@@ -409,10 +409,11 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
 
     updateExpiration(speedLimit.id, expired = true, username)
 
-    val existingId = createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(existingLinkMeasures._1, existingLinkMeasures._2),
-      speedLimit.sideCode, existingValue, Some(speedLimit.vvhTimeStamp), speedLimit.createdDate, Some(username), Some(DateTime.now()),  vvhRoadLink.linkSource).get
+    val existingId = createSpeedLimit(username, speedLimit.linkId, Measures(existingLinkMeasures._1, existingLinkMeasures._2),
+      speedLimit.sideCode, existingValue, Some(speedLimit.vvhTimeStamp), None, None, None, vvhRoadLink.linkSource).get
 
-    val createdId = createSpeedLimit(username, vvhRoadLink.linkId, Measures(createdLinkMeasures._1, createdLinkMeasures._2), speedLimit.sideCode, createdValue, Option(speedLimit.vvhTimeStamp), None, None, None, vvhRoadLink.linkSource).get
+    val createdId = createSpeedLimit(username, vvhRoadLink.linkId, Measures(createdLinkMeasures._1, createdLinkMeasures._2),
+      speedLimit.sideCode, createdValue, Option(speedLimit.vvhTimeStamp), None, None, None, vvhRoadLink.linkSource).get
     (existingId, createdId)
   }
 
@@ -430,7 +431,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Updates speed limit value. Used by SpeedLimitService.updateValues, SpeedLimitService.split and SpeedLimitService.separate.
     */
-  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
+  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply("rajoitus").first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first

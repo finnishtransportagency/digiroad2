@@ -328,7 +328,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
-      ids.flatMap(updateSpeedLimit(_, value, username, None, None, municipalityValidation))
+      ids.flatMap(dao.updateSpeedLimitValue(_, value, username, municipalityValidation))
     }
   }
 
