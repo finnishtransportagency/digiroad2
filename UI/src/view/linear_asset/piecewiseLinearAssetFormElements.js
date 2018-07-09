@@ -28,7 +28,8 @@
   }
 
   function hasValue(value, id) {
-    return (_.isNull(id) && !_.isUndefined(value)) || (!_.isNull(id) && !_.isUndefined(value))|| (!_.isNull(id) && _.isUndefined(value));
+    var nullOrUndefined = function(id){return _.isUndefined(id) || _.isNull(id);};
+    return (nullOrUndefined(id) && !_.isUndefined(value)) || (!nullOrUndefined(id) && !_.isUndefined(value)) || !nullOrUndefined(id);
   }
 
   function formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem) {
@@ -146,7 +147,7 @@
               ' <div class="form-control-static ' + className + '" style="display:none;">' +
                 obtainFormControl(className, valueString, currentValue, possibleValues)  +
               ' </div>' +
-            singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, id), id) +
+                singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, id), id) +
              '</div>';
 
       }else {
@@ -154,7 +155,7 @@
               '<div class="form-group editable form-editable-'+ className +'">' +
               '  <label class="control-label">' + editControlLabels.title + '</label>' +
               '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
-            singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, id), id) +
+                singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, id), id) +
               '</div>';
       }
     }
