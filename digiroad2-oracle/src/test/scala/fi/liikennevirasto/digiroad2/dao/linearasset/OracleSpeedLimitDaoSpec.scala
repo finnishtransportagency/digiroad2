@@ -73,15 +73,15 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
       val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
-      val (existingId, createdId) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
-      val existing = dao.getPersistedSpeedLimit(existingId).get
-      val created = dao.getPersistedSpeedLimit(createdId).get
+      val (createdId1, createdId2) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
+      val created1 = dao.getPersistedSpeedLimit(createdId1).get
+      val created2 = dao.getPersistedSpeedLimit(createdId2).get
 
-      assertSpeedLimitEndPointsOnLink(existingId, 388562360, 0, 100, dao)
-      assertSpeedLimitEndPointsOnLink(createdId, 388562360, 100, 136.788, dao)
+      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, dao)
+      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, dao)
 
-      existing.modifiedBy shouldBe Some("test")
-      created.createdBy shouldBe Some("test")
+      created1.modifiedBy shouldBe None
+      created2.createdBy shouldBe Some("test")
     }
   }
 
@@ -92,15 +92,15 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       val dao = daoWithRoadLinks(List(roadLink))
       val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
-      val (existingId, createdId) = dao.splitSpeedLimit(asset, roadLink, 50, 120, 60, "test")
-      val modified = dao.getPersistedSpeedLimit(existingId).get
-      val created = dao.getPersistedSpeedLimit(createdId).get
+      val (createdId1, createdId2) = dao.splitSpeedLimit(asset, roadLink, 50, 120, 60, "test")
+      val created1 = dao.getPersistedSpeedLimit(createdId1).get
+      val created2 = dao.getPersistedSpeedLimit(createdId2).get
 
-      assertSpeedLimitEndPointsOnLink(existingId, 388562360, 50, 136.788, dao)
-      assertSpeedLimitEndPointsOnLink(createdId, 388562360, 0, 50, dao)
+      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, dao)
+      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, dao)
 
-      modified.modifiedBy shouldBe Some("test")
-      created.createdBy shouldBe Some("test")
+      created1.modifiedBy shouldBe None
+      created2.createdBy shouldBe Some("test")
     }
   }
 
