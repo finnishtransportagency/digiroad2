@@ -14,7 +14,7 @@
     "grunt-contrib-uglify": "3.3.0",
     "grunt-contrib-watch": "1.0.1",
     "grunt-env": "~0.4.4",
-    "grunt-exec": "3.0.0",
+    "grunt-exec": "~0.4.6",
     "grunt-execute": "0.2.2",
     "grunt-mocha": "1.0.4",
     "grunt-preprocess": "5.1.0",
