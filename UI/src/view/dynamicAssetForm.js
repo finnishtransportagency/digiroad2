@@ -242,7 +242,7 @@
 
             var optionTags = _.map(field.values, function(value) {
                 var selected = value.id.toString() === selectedValue ? " selected" : "";
-                return '<option value="' + value.id + '"' + selected + '>' + value.label + '</option>';
+                return value.hidden ? '' : '<option value="' + value.id + '"' + selected + '>' + value.label + '</option>';
             }).join('');
 
             me.element = $(template({className: className, optionTags: optionTags, disabled: me.disabled(), name: field.publicId, fieldType: field.type, required: me.required()}));
