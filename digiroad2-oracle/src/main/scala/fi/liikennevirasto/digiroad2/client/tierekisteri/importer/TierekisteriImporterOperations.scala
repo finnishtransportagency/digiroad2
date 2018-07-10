@@ -337,7 +337,7 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
 
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
 
-  lazy val multiValuelinearAssetService: MultiValueLinearAssetService = new MultiValueLinearAssetService(roadLinkService, eventbus)
+//  lazy val multiValuelinearAssetService: MultiValueLinearAssetService = new MultiValueLinearAssetService(roadLinkService, eventbus)
 
   protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
 

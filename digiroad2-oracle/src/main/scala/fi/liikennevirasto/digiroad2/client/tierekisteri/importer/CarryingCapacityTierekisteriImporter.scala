@@ -4,15 +4,18 @@ import fi.liikennevirasto.digiroad2.asset.{CarryingCapacity, SideCode}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriCarryingCapacityAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.Queries.{insertDateProperty, insertNumberProperty, insertSingleChoiceProperty}
-import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.Measures
+import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 
 class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
+
+  lazy val service: DynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService, eventbus)
+  lazy val dao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
   override def typeId: Int = CarryingCapacity.typeId
   override def assetName = "carryingCapacity"
@@ -24,9 +27,8 @@ class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImport
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    val assetId = multiValuelinearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value, measures, "batch_process_" + assetName,
+    val assetId = service.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value, measures, "batch_process_" + assetName,
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
     insertNumberProperty(assetId, Queries.getPropertyIdByPublicId("kevatkantavuus"),  trAssetData.springCapacity.getOrElse("").toDouble).execute

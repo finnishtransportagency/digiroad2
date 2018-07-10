@@ -124,7 +124,7 @@ object TierekisteriDataImporter {
     new CarryingCapacityTierekisteriImporter()
   }
 
-  def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriAssetImporterOperations): Option[DateTime] = {
+  def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
     OracleDatabase.withDynSession{
       val assetId = tierekisteriAssetImporter.getAssetTypeId
       val assetName = tierekisteriAssetImporter.getAssetName
