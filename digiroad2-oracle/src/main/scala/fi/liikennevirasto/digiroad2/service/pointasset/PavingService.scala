@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
-import fi.liikennevirasto.digiroad2.asset.{SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.{MunicipalityMaintenainer, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -172,7 +172,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
       return ids
 
     ids.flatMap { id =>
-      updateValueByExpiration(id, value.asInstanceOf[NumericValue], LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
+      updateValueByExpiration(id, value.asInstanceOf[NumericValue], LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode, informationSource = informationSource)
     }
   }
 
@@ -181,7 +181,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
       val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
       newLinearAssets.flatMap{ newAsset =>
         if (newAsset.value.toJson == 1) {
-          Some(createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlinks.find(_.linkId == newAsset.linkId)))
+          Some(createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlinks.find(_.linkId == newAsset.linkId), informationSource = Some(MunicipalityMaintenainer.value)))
         } else {
           None
         }
@@ -193,7 +193,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
                                          createdByFromUpdate: Option[String] = Some(""),
                                          createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate)
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, informationSource = informationSource)
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -221,18 +221,27 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
         m =>
           if (m.endMeasure - m.startMeasure > 0.01)
             createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-              m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
+              m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())), informationSource = informationSource)
       }
       Some(0L)
     }else {
       Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-        measure, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now()))))
+        measure, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())), informationSource = informationSource))
     }
   }
 
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
+    }
+  }
+
+  /**
+    * Saves updated linear asset from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  override def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
+    withDynTransaction {
+      updateWithoutTransaction(ids, value, username, informationSource = Some(MunicipalityMaintenainer.value))
     }
   }
 }
