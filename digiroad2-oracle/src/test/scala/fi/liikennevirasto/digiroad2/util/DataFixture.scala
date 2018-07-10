@@ -1473,6 +1473,8 @@ object DataFixture {
         verifyInaccurateSpeedLimits()
       case Some("update_information_source_on_existing_assets") =>
         updateInformationSource()
+      case Some("update_information_source_on_paving_assets") =>
+        updatePavingInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>
         updateTrafficDirectionRoundabouts()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
@@ -1482,7 +1484,8 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts")
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
+        " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts | update_information_source_on_paving_assets")
     }
   }
 }
