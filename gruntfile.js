@@ -67,16 +67,14 @@ module.exports = function(grunt) {
             options: {
                 port: 9001,
                 base: ['dist', '.', 'UI'],
-                middleware: function (connect, opts) {
-                    var serveStatic = require('serve-static');
-                    var serveIndex = require('serve-index');
+                middleware: function(connect, opts) {
                     var config = [
                         // Serve static files.
-                        serveStatic(opts.base[0]),
-                        serveStatic(opts.base[1]),
-                        serveStatic(opts.base[2]),
+                        connect.static(opts.base[0]),
+                        connect.static(opts.base[1]),
+                        connect.static(opts.base[2]),
                         // Make empty directories browsable.
-                        serveIndex(opts.base[2])
+                        connect.directory(opts.base[2])
                     ];
                     var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
                     config.unshift(proxy);
