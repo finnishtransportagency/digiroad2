@@ -33,7 +33,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockAssetService = MockitoSugar.mock[AssetService]
   val mockSpeedLimitService = MockitoSugar.mock[SpeedLimitService]
-  val mockPavingService = MockitoSugar.mock[PavedRoadService]
+  val mockPavedRoadService = MockitoSugar.mock[PavedRoadService]
   val mockRoadWidthService = MockitoSugar.mock[RoadWidthService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
   val mockPedestrianCrossingService = MockitoSugar.mock[PedestrianCrossingService]
@@ -100,12 +100,12 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockRoadWidthService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
   when(mockRoadWidthService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
 
-  when(mockPavingService.getPersistedAssetsByIds(PavedRoad.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-  when(mockPavingService.getPersistedAssetsByIds(PavedRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-  when(mockPavingService.getByMunicipalityAndRoadLinks(PavedRoad.typeId, 235)).thenReturn(
+  when(mockPavedRoadService.getPersistedAssetsByIds(PavedRoad.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockPavedRoadService.getPersistedAssetsByIds(PavedRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockPavedRoadService.getByMunicipalityAndRoadLinks(PavedRoad.typeId, 235)).thenReturn(
     Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, PavedRoad.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
-  when(mockPavingService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
-  when(mockPavingService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
+  when(mockPavedRoadService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
+  when(mockPavedRoadService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
 
   when(mockOnOffLinearAssetService.getByMunicipalityAndRoadLinks(any[Int], any[Int])).thenReturn(
     Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
@@ -134,7 +134,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockManoeuvreService.createManoeuvre(any[String], any[NewManoeuvre])).thenReturn(10)
   when(mockManoeuvreService.find(any[Long])).thenReturn(Some(Manoeuvre(1, manoeuvreElement, Set.empty, Nil, None, None, "", DateTime.now(), "")))
 
-  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavingService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService)
+  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService)
   addServlet(municipalityApi, "/*")
 
   when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))

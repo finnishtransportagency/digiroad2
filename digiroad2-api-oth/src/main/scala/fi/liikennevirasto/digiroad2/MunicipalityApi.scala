@@ -23,7 +23,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val roadLinkService: RoadLinkService,
                       val linearAssetService: LinearAssetService,
                       val speedLimitService: SpeedLimitService,
-                      val pavingService: PavedRoadService,
+                      val pavedRoadService: PavedRoadService,
                       val roadWidthService: RoadWidthService,
                       val manoeuvreService: ManoeuvreService,
                       val assetService: AssetService,
@@ -74,7 +74,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
       case LitRoad.typeId | MassTransitLane.typeId  => onOffLinearAssetService
-      case PavedRoad.typeId => pavingService
+      case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
       case _ => linearAssetService
     }

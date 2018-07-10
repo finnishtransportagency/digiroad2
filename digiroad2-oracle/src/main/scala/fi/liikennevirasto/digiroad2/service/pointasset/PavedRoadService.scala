@@ -25,7 +25,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-  val PavingAssetTypeId = 110
+  val PavedRoadAssetTypeId = 110
 
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
@@ -33,7 +33,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
     val existingAssets =
       withDynTransaction {
-        dao.fetchLinearAssetsByLinkIds(PavingAssetTypeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        dao.fetchLinearAssetsByLinkIds(PavedRoadAssetTypeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
       }
 
     val timing = System.currentTimeMillis
@@ -41,19 +41,19 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
     val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-    val (expiredIds, newAndUpdatedPavingAssets) = getPavingAssetChanges(existingAssets, roadLinks, changes, typeId)
+    val (expiredIds, newAndUpdatedPavedRoadAssets) = getPavedRoadAssetChanges(existingAssets, roadLinks, changes, typeId)
 
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
       expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds,
-      adjustedMValues = newAndUpdatedPavingAssets.filter(_.id != 0).map( a => MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)),
+      adjustedMValues = newAndUpdatedPavedRoadAssets.filter(_.id != 0).map( a => MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)),
       adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
-    val combinedAssets = existingAssets.filterNot(a => expiredIds.contains(a.id) || newAndUpdatedPavingAssets.exists(_.id == a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
-    ) ++ newAndUpdatedPavingAssets
+    val combinedAssets = existingAssets.filterNot(a => expiredIds.contains(a.id) || newAndUpdatedPavedRoadAssets.exists(_.id == a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
+    ) ++ newAndUpdatedPavedRoadAssets
 
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks, combinedAssets, assetsOnChangedLinks, changes, initChangeSet)
 
-    val newAssets = newAndUpdatedPavingAssets.filterNot(a => projectedAssets.exists(f => f.linkId == a.linkId)) ++ projectedAssets
+    val newAssets = newAndUpdatedPavedRoadAssets.filterNot(a => projectedAssets.exists(f => f.linkId == a.linkId)) ++ projectedAssets
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
@@ -62,12 +62,12 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
     eventBus.publish("linearAssets:update", changeSet)
-    eventBus.publish("paving:saveProjectedPaving", newAssets.filter(_.id == 0L))
+    eventBus.publish("pavedRoad:saveProjectedPavedRoad", newAssets.filter(_.id == 0L))
 
     filledTopology
   }
 
-  def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
+  def getPavedRoadAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
                             changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
 
     //Group last vvhchanges by link id
@@ -102,7 +102,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           if (assets.isEmpty)
             Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0,
               GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false,
-              LinearAssetTypes.PavingAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
+              LinearAssetTypes.PavedRoadAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
               (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)

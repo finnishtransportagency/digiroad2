@@ -237,7 +237,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def getLinearAssetService(typeId: Int): LinearAssetOperations = {
       typeId match {
         case MaintenanceRoadAsset.typeId => maintenanceRoadService
-        case PavedRoad.typeId => pavingService
+        case PavedRoad.typeId => pavedRoadService
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
@@ -290,10 +290,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def roadWidthToApi(roadWidthAssets: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
+  def linearAssetsToApiWithInformationSource(assets: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
 
-    roadWidthAssets.filterNot(isUnknown).map { asset =>
+    assets.filterNot(isUnknown).map { asset =>
       Map("id" -> asset.id,
         "points" -> asset.geometry,
         geometryWKTForLinearAssets(asset.geometry),
@@ -576,8 +576,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
         case "mass_transit_lanes" => massTransitLanesToApi(160, municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
-        case "widths" => roadWidthToApi(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
-        case "paved_roads" => linearAssetsToApi(110, municipalityNumber)
+        case "widths" => linearAssetsToApiWithInformationSource(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
+        case "paved_roads" => linearAssetsToApiWithInformationSource(pavedRoadService.getByMunicipality(PavedRoad.typeId, municipalityNumber))
         case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(170, municipalityNumber)
