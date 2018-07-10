@@ -2,7 +2,7 @@
 define(['chai', 'testHelpers'], function(chai, testHelpers) {
   var expect = chai.expect;
   var speedLimitsData = SpeedLimitsTestData.generate(1);
-  var speedLimit = _.first(_.flatten(speedLimitsData));
+  var speedLimit = _.head(_.flatten(speedLimitsData));
 
   var assertSpeedLimitIsSelectedWithLimitValue = function(openLayersMap, speedLimitId, limitValue) {
     var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
@@ -39,7 +39,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator');
       });
       it('it displays speed limit modifier', function() {
-        var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.contains($(e).text(), 'Muokattu viimeksi'); });
+        var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.includes($(e).text(), 'Muokattu viimeksi'); });
         expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: modifier');
       });
 
@@ -167,7 +167,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         it('it updates the modified and created fields', function() {
           testHelpers.selectSpeedLimit(openLayersMap, speedLimitId, true);
           expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator 10.09.2014 13:36:57');
-          var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.contains($(e).text(), 'Muokattu viimeksi'); });
+          var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.includes($(e).text(), 'Muokattu viimeksi'); });
           expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
         });
       });

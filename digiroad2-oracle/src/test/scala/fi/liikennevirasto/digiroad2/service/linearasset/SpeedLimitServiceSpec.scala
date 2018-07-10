@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUt
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentCaptor
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -1353,15 +1353,15 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, 100)""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset1, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset1, $lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50 and PROPERTY_ID = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm2, 200)""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset2, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset2, $lrm2)""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50 and PROPERTY_ID = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm3, 300)""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset3, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset3, $lrm3)""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50 and PROPERTY_ID = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
@@ -1471,7 +1471,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       verify(eventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), List(), List(), Set(asset)))
       val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
-      verify(eventBus, times(1)).publish(org.mockito.Matchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
+      verify(eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
       verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
       apeedLimits.length should be(3)

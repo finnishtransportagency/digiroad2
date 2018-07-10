@@ -13,15 +13,4 @@ object Sequences {
     nextLrmPositionPrimaryKeyId.as[Long].first
   }
 
-  def nextViitePrimaryKeySeqValue = {
-    nextViitePrimaryKeyId.as[Long].first
-  }
-
-  def fetchViitePrimaryKeySeqValues(len: Int) = {
-    fetchViitePrimaryKeyId(len)
-  }
-
-  def nextCommonHistorySeqValue = {
-    nextCommonHistoryValue.as[Long].first
-  }
 }

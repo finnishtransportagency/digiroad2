@@ -11,7 +11,7 @@
 
     var assetControls = _.flatten(assetControlGroups);
 
-    var assetElementDiv = $('<div></div>');
+    var assetElementDiv = $('<div class="asset-type-container"></div>');
     assetControls.forEach(function(asset) {
       assetElementDiv.append(asset.element);
     });
@@ -21,7 +21,7 @@
       .map(function(asset) {
         return [asset.layerName, asset];
       })
-      .zipObject()
+      .fromPairs()
       .value();
 
     bindEvents();
