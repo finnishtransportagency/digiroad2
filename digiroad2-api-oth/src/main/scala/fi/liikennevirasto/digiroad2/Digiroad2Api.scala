@@ -51,7 +51,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val linearAssetService: LinearAssetService,
                    val linearMassLimitationService: LinearMassLimitationService = Digiroad2Context.linearMassLimitationService,
                    val maintenanceRoadService: MaintenanceService,
-                   val pavingService: PavingService,
+                   val pavingRoadService: PavedRoadService,
                    val roadWidthService: RoadWidthService,
                    val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
                    val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
@@ -1495,7 +1495,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
       case MaintenanceRoadAsset.typeId => maintenanceRoadService
-      case PavedRoad.typeId => pavingService
+      case PavedRoad.typeId => pavingRoadService
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService

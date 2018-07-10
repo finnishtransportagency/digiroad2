@@ -33,7 +33,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockAssetService = MockitoSugar.mock[AssetService]
   val mockSpeedLimitService = MockitoSugar.mock[SpeedLimitService]
-  val mockPavingService = MockitoSugar.mock[PavingService]
+  val mockPavingService = MockitoSugar.mock[PavedRoadService]
   val mockRoadWidthService = MockitoSugar.mock[RoadWidthService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
   val mockPedestrianCrossingService = MockitoSugar.mock[PedestrianCrossingService]

@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -19,7 +20,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-class PavingServiceSpec extends FunSuite with Matchers {
+class PavedRoadServiceSpec extends FunSuite with Matchers {
   val PavingAssetTypeId = 110
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -46,11 +47,12 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinkWithLinkSource, Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(roadLinkWithLinkSource.headOption)
 
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus"))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
-  object ServiceWithDao extends PavingService(mockRoadLinkService, mockEventBus) {
+  object ServiceWithDao extends PavedRoadService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OracleLinearAssetDao = linearAssetDao
@@ -70,7 +72,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
   private def createService() = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def vvhClient: VVHClient = mockVVHClient
     }
@@ -107,7 +109,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -144,7 +146,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   test("Should be created only 1 new paving asset when get 3 roadlink change information from vvh and only 1 roadlink have surfacetype equal 2") {
 
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -303,7 +305,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
   test("Should create new paving assets from vvh roadlinks infromation through the actor") {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new PavingService(mockRoadLinkService, mockEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -348,7 +350,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   test("If VVH does not supply a change Information then no new asset should be created.") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -383,7 +385,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -423,7 +425,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
   test("Should expire the assets if vvh gives change informations and the roadlink surface type is equal to 1") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
     val newLinkId = 5001
@@ -459,7 +461,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def vvhClient: VVHClient = mockVVHClient
     }
@@ -531,7 +533,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   test("should do anything when change information link id doesn't exists on vvh roadlinks"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -557,7 +559,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   test ("If neither OTH or VVH have existing assets and changeInfo then nothing should be created and returned") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
     val newLinkId = 5001
@@ -594,7 +596,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new PavingService(mockRoadLinkService, mockEventBus) {
+    val service = new PavedRoadService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -638,6 +640,57 @@ class PavingServiceSpec extends FunSuite with Matchers {
         proj.linkId should be (6000)
       }
       dynamicSession.rollback()
+    }
+  }
+
+  test("create pavedRoad and check if informationSource is Municipality Maintainer ") {
+    val service = createService()
+
+    val toInsert = Seq(NewLinearAsset(5001, 0, 20, NumericValue(1), 1, 0, None), NewLinearAsset(5002, 0, 20, NumericValue(1), 1, 0, None))
+    runWithRollback {
+      val assetsIds = ServiceWithDao.create(toInsert, PavedRoad.typeId, "test")
+      val assetsCreated = service.getPersistedAssetsByIds(PavingAssetTypeId, assetsIds.toSet)
+
+      assetsCreated.length should be(2)
+      assetsCreated.foreach { asset =>
+        asset.informationSource should be(Some(MunicipalityMaintenainer))
+      }
+    }
+  }
+
+  test("check if pavedRoad created because of changes has informationSource as MmlNls") {
+    val municipalityCode = 235
+    val roadLinks = createRoadLinks(municipalityCode)
+    val service = createService()
+
+    val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(1)), 0, 5, None, None, None, None, false, PavingAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    runWithRollback {
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (expiredIds, updated) = service.getPavingAssetChanges(assets, roadLinks, changeInfo, PavingAssetTypeId.toLong)
+      expiredIds.size should be(0)
+      updated.foreach { assetUpdated =>
+        assetUpdated.informationSource should be(Some(MmlNls))
+
+      }
+    }
+  }
+
+  test("update pavedRoad and check if informationSource is Municipality Maintainer "){
+
+    val service = createService()
+    val toInsert = Seq(NewLinearAsset(5001, 0, 20, NumericValue(1), BothDirections.value, 0, None), NewLinearAsset(5002, 0, 20, NumericValue(1), BothDirections.value, 0, None))
+    runWithRollback {
+      val assetsIds = ServiceWithDao.create(toInsert, PavingAssetTypeId, "test")
+      val updated = ServiceWithDao.update(assetsIds, NumericValue(0), "userTest")
+
+      val assetsUpdated = ServiceWithDao.getPersistedAssetsByIds(PavingAssetTypeId, updated.toSet)
+
+      assetsUpdated.length should be (2)
+      assetsUpdated.foreach{asset =>
+        asset.informationSource should be (Some(MunicipalityMaintenainer))
+        asset.modifiedBy should be (Some("userTest"))
+        asset.value should be (Some(NumericValue(0)))
+      }
     }
   }
 }

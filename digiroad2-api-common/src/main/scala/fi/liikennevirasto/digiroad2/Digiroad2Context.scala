@@ -106,7 +106,7 @@ class RoadWidthSaveProjected[T](roadWidthProvider: RoadWidthService) extends Act
   }
 }
 
-class PavingSaveProjected[T](pavingProvider: PavingService) extends Actor {
+class PavingSaveProjected[T](pavingProvider: PavedRoadService) extends Actor {
   def receive = {
     case x: Seq[T] => pavingProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
     case _             => println("pavingSaveProjected: Received unknown message")
@@ -299,8 +299,8 @@ object Digiroad2Context {
     new MaintenanceService(roadLinkService, eventbus)
   }
 
-  lazy val pavingService: PavingService = {
-    new PavingService(roadLinkService, eventbus)
+  lazy val pavingService: PavedRoadService = {
+    new PavedRoadService(roadLinkService, eventbus)
   }
 
   lazy val roadWidthService: RoadWidthService = {

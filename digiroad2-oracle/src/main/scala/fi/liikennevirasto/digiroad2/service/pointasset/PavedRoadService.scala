@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
-import fi.liikennevirasto.digiroad2.asset.{MunicipalityMaintenainer, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.{MmlNls, MunicipalityMaintenainer, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -14,7 +14,7 @@ import org.joda.time.DateTime
 
 import scala.slick.jdbc.{StaticQuery => Q}
 
-class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
+class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -102,12 +102,12 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
           if (assets.isEmpty)
             Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0,
               GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false,
-              LinearAssetTypes.PavingAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, None))
+              LinearAssetTypes.PavingAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
               (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
             ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=Some(NumericValue(1)),
-              startMeasure=0.0, endMeasure=roadlink.length))
+              startMeasure=0.0, endMeasure=roadlink.length, informationSource = Some(MmlNls)))
         else
           None
       case _ =>
@@ -138,7 +138,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
 
       toInsert.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-          Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
+          Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), informationSource = Some(MmlNls.value))
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -216,7 +216,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
     //Expire the old asset
     dao.updateExpiration(assetId, expired = true, username)
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
-    if (valueToUpdate.toJson == 0){
+    if (valueToUpdate.toJson == 0 && measures.nonEmpty){
       Seq(Measures(oldAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldAsset.endMeasure)).map {
         m =>
           if (m.endMeasure - m.startMeasure > 0.01)
