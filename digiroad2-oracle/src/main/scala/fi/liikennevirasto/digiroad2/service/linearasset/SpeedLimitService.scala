@@ -73,9 +73,27 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       dao.getPersistedSpeedLimitByIds(ids)
   }
 
+  def updateByExpiration(id: Long, expired: Boolean, username: String, newTransaction: Boolean = true):Option[Long] = {
+    if (newTransaction)
+      withDynTransaction {
+        dao.updateExpiration(id, expired, username)
+      }
+    else
+      dao.updateExpiration(id, expired, username)
+  }
+
 
   def getPersistedSpeedLimitById(id: Long, newTransaction: Boolean = true): Option[PersistedSpeedLimit] = {
     getPersistedSpeedLimitByIds(Set(id), newTransaction).headOption
+  }
+
+  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long, newTransaction: Boolean = true): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
+    if (newTransaction)
+      withDynTransaction {
+        dao.getLinksWithLengthFromVVH(assetTypeId, id)
+      }
+    else
+      dao.getLinksWithLengthFromVVH(assetTypeId, id)
   }
 
   /**
@@ -332,7 +350,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
       }
 
-      ids.foreach( id => validateMunicipalities(dao.getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id)))
+      ids.foreach( id => validateMunicipalities(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id, newTransaction = false)))
       ids.flatMap(dao.updateSpeedLimitValue(_, value, username))
     }
   }
@@ -357,7 +375,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
     }
 
-    validateMunicipalities(dao.getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id))
+    validateMunicipalities(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id, false))
 
     //Get all data from the speedLimit to update
     val speedLimit = dao.getPersistedSpeedLimit(id).filterNot(_.expired).getOrElse(throw new IllegalStateException("Asset no longer available"))
@@ -446,20 +464,25 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Saves speed limit values when speed limit is separated to two sides in UI. Used by Digiroad2Api /speedlimits/:speedLimitId/separate POST endpoint.
     */
   def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[SpeedLimit] = {
-    val speedLimit = withDynTransaction { dao.getPersistedSpeedLimit(id) }
+
+    val speedLimit = getPersistedSpeedLimitById(id)
       .map(toSpeedLimit)
       .map(isSeparableValidation)
       .get
 
-    val (idUpdated, newId) = withDynTransaction {
-      val idUpdated = updateSpeedLimit(id, valueTowardsDigitization, username, None, None, municipalityValidation).get
-      dao.updateSideCode(idUpdated, SideCode.TowardsDigitizing)
-      val newId = dao.createSpeedLimit(username, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization, None, linkSource = speedLimit.linkSource).get
-
-      (idUpdated, newId)
+    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]): Unit = {
+      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
     }
-    val assets = getSpeedLimitAssetsByIds(Set(idUpdated, newId))
-    Seq(assets.find(_.id == idUpdated).get, assets.find(_.id == newId).get)
+    validateMunicipalities(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id))
+
+    updateByExpiration(id, expired = true, username)
+
+    val(newId1, newId2) = withDynTransaction {
+      (dao.createSpeedLimit(username, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), SideCode.TowardsDigitizing, valueTowardsDigitization, None, linkSource = speedLimit.linkSource).get,
+       dao.createSpeedLimit(username, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization, None, linkSource = speedLimit.linkSource).get)
+    }
+    val assets = getSpeedLimitAssetsByIds(Set(newId1, newId2))
+    Seq(assets.find(_.id == newId1).get, assets.find(_.id == newId2).get)
   }
 
   def getByMunicpalityAndRoadLinks(municipality: Int): Seq[(SpeedLimit, RoadLink)] = {

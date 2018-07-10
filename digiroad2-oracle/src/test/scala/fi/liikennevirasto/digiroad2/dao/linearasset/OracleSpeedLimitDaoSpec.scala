@@ -104,16 +104,6 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     }
   }
 
-//  test("can update speedlimit value") {
-//    runWithRollback {
-//      val dao = daoWithRoadLinks(List(roadLink))
-//      dao.updateSpeedLimitValue(200097, 60, "test", _ => ())
-//      dao.getPersistedSpeedLimit(200097).get.value should equal(Some(60))
-//      dao.updateSpeedLimitValue(200097, 100, "test", _ => ())
-//      dao.getPersistedSpeedLimit(200097).get.value should equal(Some(100))
-//    }
-//  }
-
   test("filter out floating speed limits") {
     runWithRollback {
       val roadLinks = Seq(

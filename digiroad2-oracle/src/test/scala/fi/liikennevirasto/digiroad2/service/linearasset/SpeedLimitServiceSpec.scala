@@ -133,7 +133,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       updatedLimit.linkId should be (388562360)
       updatedLimit.sideCode should be (SideCode.TowardsDigitizing)
       updatedLimit.value should be (Some(NumericValue(50)))
-      updatedLimit.modifiedBy should be (Some("test"))
+      updatedLimit.createdBy should be (Some("test"))
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing)
