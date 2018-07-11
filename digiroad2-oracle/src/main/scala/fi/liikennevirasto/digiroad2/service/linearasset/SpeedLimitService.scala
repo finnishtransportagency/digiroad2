@@ -489,7 +489,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Saves speed limit values when speed limit is separated to two sides in UI. Used by Digiroad2Api /speedlimits/:speedLimitId/separate POST endpoint.
     */
   def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[SpeedLimit] = {
-    val speedLimit = getSpeedLimitById(id)
+    val speedLimit = getPersistedSpeedLimitById(id)
+      .map(toSpeedLimit)
       .map(isSeparableValidation)
       .get
 
