@@ -48,7 +48,7 @@
       }
 
       function sideCodeMarker(sideCode) {
-        if (_.isUndefined(sideCode)) {
+        if (_.isEmpty(sideCode)) {
           return '';
         } else {
           return '<span class="marker">' + sideCode + '</span>';
