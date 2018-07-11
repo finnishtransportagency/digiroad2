@@ -489,6 +489,19 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       None
     }
   }
+  /**
+    * Updates validity of asset in db.
+    */
+  def updateExpiration(id: Long) = {
+    val propertiesUpdated =
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+
+    if (propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
 
   /**
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.

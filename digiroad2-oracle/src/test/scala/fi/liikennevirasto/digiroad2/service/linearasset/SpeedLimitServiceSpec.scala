@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -51,6 +52,40 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
+  val vvhRoadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+
+  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleSpeedLimitDao = {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+      .thenReturn(roadLinks)
+
+    when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
+      .thenReturn(roadLinks)
+
+    roadLinks.foreach { roadLink =>
+      when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+    }
+
+    new OracleSpeedLimitDao(mockVVHClient, mockRoadLinkService)
+  }
+
+
+  private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
+    val geometry = vvhClient.roadLinkData.fetchByLinkId(linkId).get.geometry
+    GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
+  }
+
+  def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: OracleSpeedLimitDao) = {
+    val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure, dao.vvhClient).toList)
+    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(20, speedLimitId).find { link => link._1 == linkId }.get._3)
+    expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
+    expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
+  }
+
+
 
   test("create new speed limit") {
     runWithRollback {
@@ -66,17 +101,53 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-    test("Split should fail when user is not authorized for municipality") {
-      runWithRollback {
-        intercept[IllegalArgumentException] {
-          val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-          when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
+  test("Split should fail when user is not authorized for municipality") {
+    runWithRollback {
+      intercept[IllegalArgumentException] {
+        val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+        when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
 
-          val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
-          provider.split(asset.id, 100, 120, 60, "test", failingMunicipalityValidation)
-        }
+        val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
+        provider.split(asset.id, 100, 120, 60, "test", failingMunicipalityValidation)
       }
     }
+  }
+
+  test("splitting one link speed limit " +
+    "where split measure is after link middle point " +
+    "modifies end measure of existing speed limit " +
+    "and creates new speed limit for second split") {
+    runWithRollback {
+      val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
+      val (createdId1, createdId2) = provider.splitSpeedLimit(asset, vvhRoadLink, 100, 120, 60, "test")
+      val created1 = provider.getPersistedSpeedLimitById(createdId1).get
+      val created2 = provider.getPersistedSpeedLimitById(createdId2).get
+
+      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, daoWithRoadLinks(List(vvhRoadLink)))
+      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
+
+      created1.modifiedBy shouldBe None
+      created2.createdBy shouldBe Some("test")
+    }
+  }
+
+  test("splitting one link speed limit " +
+    "where split measure is before link middle point " +
+    "modifies start measure of existing speed limit " +
+    "and creates new speed limit for first split") {
+    runWithRollback {
+      val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
+      val (createdId1, createdId2) = provider.splitSpeedLimit(asset, vvhRoadLink, 50, 120, 60, "test")
+      val created1 = provider.getPersistedSpeedLimitById(createdId1).get
+      val created2 = provider.getPersistedSpeedLimitById(createdId2).get
+
+      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
+      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, daoWithRoadLinks(List(vvhRoadLink)))
+
+      created1.modifiedBy shouldBe None
+      created2.createdBy shouldBe Some("test")
+    }
+  }
 
   test("split existing speed limit") {
     runWithRollback {

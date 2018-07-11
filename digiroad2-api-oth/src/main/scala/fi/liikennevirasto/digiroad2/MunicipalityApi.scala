@@ -260,7 +260,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     newSpeedLimitAssets.foreach{
       newAsset => validateMeasuresOnAssets(Set(newAsset.startMeasure, newAsset.endMeasure), newAsset.linkId)
     }
-    val assetsIds = speedLimitService.create(newSpeedLimitAssets, assetTypeId, user.username, 0, (_, _) => Unit)
+    val assetsIds = speedLimitService.createMultiple(newSpeedLimitAssets, assetTypeId, user.username, 0, (_, _) => Unit)
     getSpeedLimitsAndRoadLinks(assetsIds.toSet)
   }
 
