@@ -59,6 +59,7 @@
             });
           }
         }
+        selectedLinearAsset.setMultiValue(currentValue);
 
         if(requiredPropertiesMissing())
           $('button.save').prop('disabled', '');
