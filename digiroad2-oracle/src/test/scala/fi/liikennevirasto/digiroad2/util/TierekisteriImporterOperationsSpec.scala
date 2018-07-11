@@ -597,7 +597,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startAddressMValue = 0L
       val endAddressMValue = 250L
 
-      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, TRPavedRoadType.Cobblestone, PavementClass.Stone)
+      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, PavementClass.Cobblestone)
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
@@ -636,8 +636,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val starSectionHist = 100
       val endSectionHist = 150
 
-      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRPavedRoadType.Cobblestone, PavementClass.Stone)
-      val trHist = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, starSectionHist, endSectionHist, TRPavedRoadType.Cobblestone, PavementClass.Stone)
+      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, PavementClass.Cobblestone)
+      val trHist = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, starSectionHist, endSectionHist, PavementClass.Cobblestone)
 
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
@@ -750,7 +750,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startSection = 50
       val endSection = 350
 
-      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRPavedRoadType.apply(30), PavementClass.Stone)
+      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, PavementClass.apply(30))
       testPavedRoad.filterTierekisteriAssetsTest(tr) should be (false)
     }
   }

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.CloseableHttpClient
 
 case class TierekisteriPavedRoadData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: TRPavedRoadType, pavementClass: PavementClass) extends TierekisteriAssetData
+                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementClass: PavementClass) extends TierekisteriAssetData
 
 class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
   override def tierekisteriRestApiEndPoint: String = trEndPoint
@@ -14,8 +14,7 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
   type TierekisteriType = TierekisteriPavedRoadData
 
   override val trAssetType = "tl137"
-  private val trPavementType = "PAALLUOK"
-  private val trPavementClass = "Päällysteluokka"
+  private val trPavementClass = "PAALLUOK"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriPavedRoadData] = {
     //Mandatory field
@@ -25,10 +24,9 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val pavementType = convertToInt(getMandatoryFieldValue(data, trPavementType)).get
-    val pavementClass = convertToInt(getMandatoryFieldValue(data, trPavementClass)).map(PavementClass.apply).getOrElse(PavementClass.Unknown)
+    val pavementClass = convertToInt(getMandatoryFieldValue(data, trPavementClass)).get
 
-    Some(TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRPavedRoadType.apply(pavementType), pavementClass))
+    Some(TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, PavementClass.apply(pavementClass)))
   }
 }
 
