@@ -59,12 +59,13 @@
             });
           }
         }
-        selectedLinearAsset.setMultiValue(currentValue);
 
         if(requiredPropertiesMissing())
           $('button.save').prop('disabled', '');
         else
           $('button.save').prop('disabled', 'disabled');
+
+        selectedLinearAsset.setMultiValue(currentValue);
       }
 
       else {
