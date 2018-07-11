@@ -191,6 +191,27 @@ object SideCode {
   case object Unknown extends SideCode { def value = 99 }
 }
 
+sealed trait PavementClass {
+  def value: Int
+}
+
+object PavementClass {
+  val values = Set[PavementClass](Concrete, Stone, HardAsphaltConcrete, SoftAsphaltConcrete, GravelSurface, GravelWearLayer, OtherCoatings, Unknown)
+
+  def apply(intValue: Int): PavementClass = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Concrete extends PavementClass { def value = 1 }
+  case object Stone extends PavementClass { def value = 2 }
+  case object HardAsphaltConcrete extends PavementClass { def value = 10 }
+  case object SoftAsphaltConcrete extends PavementClass { def value = 20 }
+  case object GravelSurface extends PavementClass { def value = 30 }
+  case object GravelWearLayer extends PavementClass { def value = 40 }
+  case object OtherCoatings extends PavementClass { def value = 50 }
+  case object Unknown extends PavementClass { def value = 99 }
+}
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]

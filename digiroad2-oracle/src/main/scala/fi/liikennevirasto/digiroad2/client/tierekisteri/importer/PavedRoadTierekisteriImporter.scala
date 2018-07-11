@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset.{PavedRoad, RoadRegistry, SideCode}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRPavedRoadType, TierekisteriPavedRoadAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -19,6 +20,8 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
+  val pavementClassPropertyId = "paallysteluokka"
+
   protected override def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
     tierekisteriAssetData.pavementType != TRPavedRoadType.Unknown
   }
@@ -29,6 +32,7 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), informationSource = Some(RoadRegistry.value))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
+      insertSingleChoiceProperty(assetId, Queries.getPropertyIdByPublicId(pavementClassPropertyId), trAssetData.pavementClass.value.toLong).execute
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }

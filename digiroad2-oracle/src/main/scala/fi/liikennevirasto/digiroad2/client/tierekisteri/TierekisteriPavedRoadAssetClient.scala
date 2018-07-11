@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri
 
+import fi.liikennevirasto.digiroad2.asset.PavementClass
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.CloseableHttpClient
 
 case class TierekisteriPavedRoadData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: TRPavedRoadType) extends TierekisteriAssetData
+                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: TRPavedRoadType, pavementClass: PavementClass) extends TierekisteriAssetData
 
 class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
   override def tierekisteriRestApiEndPoint: String = trEndPoint
@@ -14,6 +15,7 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
 
   override val trAssetType = "tl137"
   private val trPavementType = "PAALLUOK"
+  private val trPavementClass = "Päällysteluokka"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriPavedRoadData] = {
     //Mandatory field
@@ -24,8 +26,9 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val pavementType = convertToInt(getMandatoryFieldValue(data, trPavementType)).get
+    val pavementClass = convertToInt(getMandatoryFieldValue(data, trPavementClass)).map(PavementClass.apply).getOrElse(PavementClass.Unknown)
 
-    Some(TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRPavedRoadType.apply(pavementType)))
+    Some(TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRPavedRoadType.apply(pavementType), pavementClass))
   }
 }
 
