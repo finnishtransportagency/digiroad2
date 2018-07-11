@@ -286,7 +286,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val unpaved1 = createPavedRoad(1, newLinkId1, None, 11L)
     val unpaved2 = createPavedRoad(2, newLinkId2, None, 11L)
     val unpaved3 = createPavedRoad(3, newLinkId3, None, 11L)
-    val unpaved4 = createPavedRoad(1, newLinkId1, Some(NumericValue(1)), 11L)
+    val unpaved4 = createPavedRoad(4, newLinkId4, None, 11L)
     val paved1 = createPavedRoad(1, newLinkId1, Some(NumericValue(1)), 11L)
     val paved2 = createPavedRoad(2, newLinkId2, Some(NumericValue(1)), 11L)
     val paved3 = createPavedRoad(3, newLinkId3, Some(NumericValue(1)), 11L)
