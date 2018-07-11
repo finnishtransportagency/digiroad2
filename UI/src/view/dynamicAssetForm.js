@@ -152,12 +152,12 @@
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
 
-            me.element = $('' +
-                '<div class="form-group">' +
-                '   <label class="control-label">' + field.label + '</label>' +
-                '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required + ' class="form-control" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
-                unit +
-                '</div>');
+      me.element = $('' +
+          '<div class="form-group">' +
+          '   <label class="control-label">' + field.label + '</label>' +
+          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
+          unit +
+          '</div>');
 
             if (!isDisabled && me.hasDefaultValue() && !value)
                 me.setSelectedValue(setValue, getValue);
@@ -675,6 +675,13 @@
             var rootElement = $('#feature-attributes');
             _assetTypeConfiguration = assetTypeConfiguration;
 
+          var updateStatusForMassButton = function(element) {
+            if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
+              element.prop('disabled', !(me.isSaveable() && me.isSplitOrSeparatedAllowed()));
+            } else
+              element.prop('disabled', !(me.isSaveable()));
+          };
+
             eventbus.on(events('selected', 'cancelled'), function () {
                 var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
                 rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
@@ -701,8 +708,18 @@
                 }
             });
 
+             eventbus.on("massDialog:rendered", function(buttonElement){
+               eventbus.on(multiEvents('valueChanged'), function() {
+                 updateStatusForMassButton(buttonElement);
+               });
+             });
+
             function events() {
                 return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+            }
+
+            function multiEvents() {
+                return _.map(arguments, function(argument) { return _assetTypeConfiguration.multiElementEventCategory + ':' + argument; }).join(' ');
             }
         };
 
@@ -806,11 +823,10 @@
                 '  </div>' +
                 '</div>');
 
-            toggleElement.find('.radio input').on('change', function(event) {
-                var inputElement = body.find('.form-editable-' + sideCodeClass);
-                var disabled = $(this).val() === 'disabled';
-                var input = inputElement.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
-                input.attr('disabled', disabled);
+      toggleElement.find('.radio input').on('change', function(event) {
+        var disabled = $(this).val() === 'disabled';
+        var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+        input.prop('disabled', disabled);
 
                 if(disabled){
                     removeValueFn();
@@ -819,7 +835,7 @@
                     setValueFn({ properties: [] });
                 }
 
-                body.find('.form-editable-' + sideCodeClass).find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+        formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
 
                 eventbus.trigger(events('valueChanged'));
             });
@@ -927,16 +943,13 @@
             if(forms.getFields('a').length !== forms.getFields('b').length)
                 return true;
 
-            return _.some(forms.getFields('a'), function(fieldA){
-                var propertyValueA = fieldA.getPropertyValue();
+      return _.some(forms.getFields('a'), function(fieldA){
+        var propertyValueA = fieldA.getPropertyValue();
+        var fieldB = _.head(_.filter(forms.getFields('b'), function (fieldB) {return propertyValueA.publicId === fieldB.getPropertyValue().publicId;}));
 
-                var propertyValueB = _.head(_.map(_.filter(forms.getFields('b'), function (fieldB) {
-                    return propertyValueA.publicId === fieldB.getPropertyValue().publicId;
-                }), function(property) {return property.getPropertyValue();} ));
-
-                return !fieldA.compare(propertyValueA, propertyValueB);
-            });
-        };
+        return !fieldA.compare(propertyValueA, fieldB.getPropertyValue()) || !_.isEqual(fieldB.disabled(), fieldA.disabled());
+      });
+    };
 
     me.isSaveable = function(){
         var otherSaveCondition = function () {

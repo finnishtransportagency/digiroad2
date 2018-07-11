@@ -31,6 +31,7 @@
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
       toggleMode( validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || applicationModel.isReadOnly());
     });
+
     eventbus.on(events('unselect'), function() {
       rootElement.empty();
     });
