@@ -445,7 +445,7 @@
 
             var existingValidityPeriodElements =
                 _(_.map(fieldValue, function(values) { return values.value ; }))
-                    .sortByAll('days', 'startHour', 'startMinute', 'endHour', 'endMinute')
+                    .sortBy('days', 'startHour', 'startMinute', 'endHour', 'endMinute')
                     .map(validityPeriodElement)
                     .join('');
 
