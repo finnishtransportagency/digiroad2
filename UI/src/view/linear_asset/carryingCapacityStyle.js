@@ -8,14 +8,14 @@
     };
 
     var findValue = function(asset, publicId) {
-      var someValue = _.first(_.find(_.find(asset.value.properties, function(a) { return a.publicId === publicId; }), function(someVal) { return !_.isUndefined(someVal.values);}));
-    return _.isEmpty(someValue) || _.isUndefined(someValue)? "defaultColor" :  someValue.value;
+      var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
+      return (_.isEmpty(properties) || _.isUndefined(properties)) ? 'defaultColor' : _.isEmpty(properties.values) ? "defaultColor" : parseInt(_.first(properties.values).value);
     };
 
     this.renderOverlays = function(linearAssets) {
       return me.lineFeatures(_.map(linearAssets, function(linearAsset) {
-        var expired = _.isUndefined(linearAsset.value);
-        return _.merge({}, linearAsset, { type: 'overlay' }, { expired: expired }); }));
+        var hasAsset = !_.isUndefined(linearAsset.id);
+        return _.merge({}, linearAsset, { hasAsset: hasAsset }); }));
     };
 
     me.renderFeatures = function(linearAssets) {
@@ -23,7 +23,7 @@
     };
 
     var springCarryingCapacityRules = [
-      new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).is("defaultColor").use({stroke: {color: '#000000'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isBetween([0, 162]).use({stroke: {color: '#ac0019'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isBetween([162, 287]).use({stroke: {color: '#ff0000'}}),
@@ -34,7 +34,7 @@
     ];
 
     var frostHeavingFactorRules = [
-      new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(40).use({stroke: {color: '#0011bb'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(50).use({stroke: {color: '#00ccdd'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "routivuuskerroin"); }}).is(60).use({stroke: {color: '#c559ff'}}),

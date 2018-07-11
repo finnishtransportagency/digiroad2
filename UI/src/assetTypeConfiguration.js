@@ -592,7 +592,7 @@
       {
         typeId: assetType.carryingCapacity,
         singleElementEventCategory: 'carryingCapacity',
-        multiElementEventCategory: 'carryingCapacities',
+        multiElementEventCategory: 'carryingCapacity',
         layerName: 'carryingCapacity',
         title: 'Kantavuus',
         newTitle: 'Uusi Kantavuus',
