@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAs
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.joda.time.DateTime
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar

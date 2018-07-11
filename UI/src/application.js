@@ -66,9 +66,9 @@
     bindEvents(enabledLinearAssetSpecs, assetConfiguration.pointAssetsConfig);
     window.massTransitStopsCollection = new MassTransitStopsCollection(backend, verificationCollection);
     window.selectedMassTransitStopModel = selectedMassTransitStopModel;
-    var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
-    var selectedPointAssetModels = _.pluck(pointAssets, "selectedPointAsset");
-    var selectedGroupedPointAssetModels = _.pluck(groupedPointAssets, "selectedPointAsset");
+    var selectedLinearAssetModels = _.map(linearAssets, "selectedLinearAsset");
+    var selectedPointAssetModels = _.map(pointAssets, "selectedPointAsset");
+    var selectedGroupedPointAssetModels = _.map(groupedPointAssets, "selectedPointAsset");
     window.applicationModel = new ApplicationModel([
       selectedMassTransitStopModel,
       selectedSpeedLimit,
@@ -170,8 +170,8 @@
   };
 
   var bindEvents = function(linearAssetSpecs, pointAssetSpecs, roadCollection) {
-    var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
-    var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
+    var singleElementEventNames = _.map(linearAssetSpecs, 'singleElementEventCategory');
+    var multiElementEventNames = _.map(linearAssetSpecs, 'multiElementEventCategory');
     var linearAssetSavingEvents = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
     var pointAssetSavingEvents = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saving'; }).join(' ');
     eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving manoeuvres:saving ' + linearAssetSavingEvents + ' ' + pointAssetSavingEvents, function() {
@@ -321,9 +321,8 @@
        massLimitation: asset.editControlLabels.massLimitations,
        typeId: asset.typeId,
        isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed
-
       };
-      acc[asset.layerName] = asset.layer ? asset.layer.call(this, parameters) : new LinearAssetLayer(parameters);
+      acc[asset.layerName] = asset.layer ? new asset.layer(parameters) : new LinearAssetLayer(parameters);
       return acc;
 
     }, {});
@@ -441,6 +440,7 @@
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
+    var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -461,7 +461,8 @@
           .concat([trafficSignBox])
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
-          .concat(getLinearAsset(assetType.damagedByThaw)),
+          .concat(getLinearAsset(assetType.damagedByThaw))
+          .concat([careClassBox]),
       [manoeuvreBox]
         .concat(getLinearAsset(assetType.prohibition))
         .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))

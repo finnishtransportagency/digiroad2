@@ -48,7 +48,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
 
     it('takes the start measure into consideration on split measure', function() {
       expect(splitBackendCalls).to.have.length(1);
-      var backendCall = _.first(splitBackendCalls);
+      var backendCall = _.head(splitBackendCalls);
       expect(backendCall.id).to.equal(112);
       expect(backendCall.splitMeasure).to.be.closeTo(50.0, 0.5);
     });
@@ -90,9 +90,9 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
           existingLimitPoints = _.sortBy(existingLimitPoints, 'y');
           newLimitPoints = _.sortBy(newLimitPoints, 'y');
 
-          expect(_.first(existingLimitPoints).y).to.be.closeTo(40.0, 0.5);
+          expect(_.head(existingLimitPoints).y).to.be.closeTo(40.0, 0.5);
           expect(_.last(existingLimitPoints).y).to.be.equal(100.0);
-          expect(_.first(newLimitPoints).y).to.equal(0.0);
+          expect(_.head(newLimitPoints).y).to.equal(0.0);
           expect(_.last(newLimitPoints).y).to.closeTo(40, 0.5);
         });
 
@@ -108,7 +108,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
 
             it('relays split speed limit to backend', function() {
               expect(splitBackendCalls).to.have.length(1);
-              var backendCall = _.first(splitBackendCalls);
+              var backendCall = _.head(splitBackendCalls);
               expect(backendCall.id).to.equal(111);
               expect(backendCall.splitMeasure).to.be.closeTo(40.0, 0.5);
               expect(backendCall.createdLimit).to.equal(100);
