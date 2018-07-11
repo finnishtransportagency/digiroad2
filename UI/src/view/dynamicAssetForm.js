@@ -689,13 +689,17 @@
       });
 
       eventbus.on("massDialog:rendered", function(buttonElement){
-        eventbus.on(events('valueChanged'), function() {
+        eventbus.on(multiEvents('valueChanged'), function() {
           updateStatusForMassButton(buttonElement);
         });
       });
 
       function events() {
         return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+      }
+
+      function multiEvents() {
+        return _.map(arguments, function(argument) { return _assetTypeConfiguration.multiElementEventCategory + ':' + argument; }).join(' ');
       }
     };
 
@@ -922,12 +926,9 @@
 
       return _.some(forms.getFields('a'), function(fieldA){
         var propertyValueA = fieldA.getPropertyValue();
+        var fieldB = _.head(_.filter(forms.getFields('b'), function (fieldB) {return propertyValueA.publicId === fieldB.getPropertyValue().publicId;}));
 
-        var propertyValueB = _.head(_.map(_.filter(forms.getFields('b'), function (fieldB) {
-          return propertyValueA.publicId === fieldB.getPropertyValue().publicId;
-        }), function(property) {return property.getPropertyValue();} ));
-
-        return !fieldA.compare(propertyValueA, propertyValueB);
+        return !fieldA.compare(propertyValueA, fieldB.getPropertyValue()) || !_.isEqual(fieldB.disabled(), fieldA.disabled());
       });
     };
 

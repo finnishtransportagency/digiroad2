@@ -128,7 +128,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
     values.get match {
       case TextualValue(textValue) => textValue.split(",").forall(_.trim.matches(euroAndExitPattern)) match {
           case false => throw new AssetValueException(textValue)
-          case _ =>
+          case _ => None
         }
       case _ => throw new AssetValueException("incorrect asset type")
     }
