@@ -8,6 +8,8 @@ import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
 
 class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
