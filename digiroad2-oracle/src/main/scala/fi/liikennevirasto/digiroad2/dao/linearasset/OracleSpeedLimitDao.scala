@@ -400,22 +400,6 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     assetId
   }
 
-  /**
-    * Splits speed limit by given split measure. Updates old asset and creates new asset. Returns new asset id.
-    * Used by SpeedLimitService.split.
-    */
-  def splitSpeedLimit(speedLimit: PersistedSpeedLimit, vvhRoadLink: VVHRoadlink, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String): (Long, Long) = {
-    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (speedLimit.startMeasure, speedLimit.endMeasure))
-
-    updateExpiration(speedLimit.id, expired = true, username)
-
-    val existingId = createSpeedLimit(username, speedLimit.linkId, Measures(existingLinkMeasures._1, existingLinkMeasures._2),
-      speedLimit.sideCode, existingValue, Some(speedLimit.vvhTimeStamp), None, None, None, vvhRoadLink.linkSource).get
-
-    val createdId = createSpeedLimit(username, vvhRoadLink.linkId, Measures(createdLinkMeasures._1, createdLinkMeasures._2),
-      speedLimit.sideCode, createdValue, Option(speedLimit.vvhTimeStamp), None, None, None, vvhRoadLink.linkSource).get
-    (existingId, createdId)
-  }
 
   /**
     * Sets floating flag of linear assets true in db. Used in AssetDataImporter.splitSpeedLimits.

@@ -42,17 +42,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
-    val geometry = vvhClient.roadLinkData.fetchByLinkId(linkId).get.geometry
-    GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
-  }
 
-  def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: OracleSpeedLimitDao) = {
-    val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure, dao.vvhClient).toList)
-    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(20, speedLimitId).find { link => link._1 == linkId }.get._3)
-    expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
-    expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
-  }
 
   def passingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = {}
 
@@ -66,43 +56,43 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     result
   }
 
-  test("splitting one link speed limit " +
-    "where split measure is after link middle point " +
-    "modifies end measure of existing speed limit " +
-    "and creates new speed limit for second split", Tag("db")) {
-    runWithRollback {
-      val dao = daoWithRoadLinks(List(roadLink))
-      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
-      val (createdId1, createdId2) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
-      val created1 = dao.getPersistedSpeedLimit(createdId1).get
-      val created2 = dao.getPersistedSpeedLimit(createdId2).get
-
-      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, dao)
-      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, dao)
-
-      created1.modifiedBy shouldBe None
-      created2.createdBy shouldBe Some("test")
-    }
-  }
-
-  test("splitting one link speed limit " +
-    "where split measure is before link middle point " +
-    "modifies start measure of existing speed limit " +
-    "and creates new speed limit for first split", Tag("db")) {
-    runWithRollback {
-      val dao = daoWithRoadLinks(List(roadLink))
-      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
-      val (createdId1, createdId2) = dao.splitSpeedLimit(asset, roadLink, 50, 120, 60, "test")
-      val created1 = dao.getPersistedSpeedLimit(createdId1).get
-      val created2 = dao.getPersistedSpeedLimit(createdId2).get
-
-      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, dao)
-      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, dao)
-
-      created1.modifiedBy shouldBe None
-      created2.createdBy shouldBe Some("test")
-    }
-  }
+//  test("splitting one link speed limit " +
+//    "where split measure is after link middle point " +
+//    "modifies end measure of existing speed limit " +
+//    "and creates new speed limit for second split", Tag("db")) {
+//    runWithRollback {
+//      val dao = daoWithRoadLinks(List(roadLink))
+//      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
+//      val (createdId1, createdId2) = dao.splitSpeedLimit(asset, roadLink, 100, 120, 60, "test")
+//      val created1 = dao.getPersistedSpeedLimit(createdId1).get
+//      val created2 = dao.getPersistedSpeedLimit(createdId2).get
+//
+//      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, dao)
+//      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, dao)
+//
+//      created1.modifiedBy shouldBe None
+//      created2.createdBy shouldBe Some("test")
+//    }
+//  }
+//
+//  test("splitting one link speed limit " +
+//    "where split measure is before link middle point " +
+//    "modifies start measure of existing speed limit " +
+//    "and creates new speed limit for first split", Tag("db")) {
+//    runWithRollback {
+//      val dao = daoWithRoadLinks(List(roadLink))
+//      val asset = dao.getPersistedSpeedLimitByIds(Set(200097)).head
+//      val (createdId1, createdId2) = splitSpeedLimit(asset, roadLink, 50, 120, 60, "test")
+//      val created1 = dao.getPersistedSpeedLimit(createdId1).get
+//      val created2 = dao.getPersistedSpeedLimit(createdId2).get
+//
+//      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, dao)
+//      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, dao)
+//
+//      created1.modifiedBy shouldBe None
+//      created2.createdBy shouldBe Some("test")
+//    }
+//  }
 
   test("filter out floating speed limits") {
     runWithRollback {
