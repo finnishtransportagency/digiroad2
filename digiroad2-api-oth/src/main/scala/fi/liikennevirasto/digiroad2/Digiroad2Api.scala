@@ -165,7 +165,7 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
         "heading" -> notification.heading,
         "content" -> notification.content,
         "unRead" -> (user.configuration.lastNotificationDate match {
-          case Some(dateValue) if dateValue.compareTo(notification.createdDate.toString("yyyy-MM-dd")) > 0 => false
+          case Some(dateValue) if dateValue.compareTo(notification.createdDate.toString("yyyy-MM-dd")) >= 0 => false
           case _ => true
         })
       )
