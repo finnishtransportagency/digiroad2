@@ -1,5 +1,5 @@
-INSERT INTO NOTIFICATION (ID, HEADING, CONTENT)
-VALUES (notification_seq.nextval, 'Regione expetenda vituperatoribus mei no. Ei nam summo iusto, timeam.',
+INSERT INTO USER_NOTIFICATION (ID, HEADING, CONTENT)
+VALUES (user_notification_seq.nextval, 'Regione expetenda vituperatoribus mei no. Ei nam summo iusto, timeam.',
 '<p>Te velit mazim usu! Augue fierent ut vix, eu ius meis minim consequuntur. Tibique gubergren mnesarchum id sea? Cu aperiam maiestatis ' ||
 'posidonium eam, posse libris dignissim nec an, sea summo erroribus ocurreret ex? Eripuit referrentur consectetuer usu in, pri id affert ' ||
 'petentium accusamus!<//p><p>Duo no essent malorum theophrastus. Eos magna atqui an, duo congue putent tritani ea. At iudicabit torquatos ' ||
@@ -7,8 +7,8 @@ VALUES (notification_seq.nextval, 'Regione expetenda vituperatoribus mei no. Ei 
 'dissentiet, usu case delectus ex, ut animal tamquam usu. Graeco scriptorem cum ea.<//p>');
 
 
-INSERT INTO NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
-VALUES ( notification_seq.nextval, (sysdate - interval '1' month ),
+INSERT INTO USER_NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
+VALUES ( user_notification_seq.nextval, (sysdate - interval '1' month ),
 'Pri te mediocrem adipiscing, est ea lobortis quaestio electram. Mea in dissentias reformidans signiferumque, no eam melius tincidunt. At nam.',
 '<p>Mea facete efficiantur ei, vix an dicat interesset! Laudem consectetuer concludaturque has an? Ius at dicant libris vituperata. His ' ||
 'suavitate comprehensam ea? Ea diam nominati theophrastus vel, mea eleifend forensibus cu, consul delenit interpretaris vim no.<//p><p>Eirmod ' ||
@@ -17,8 +17,8 @@ VALUES ( notification_seq.nextval, (sysdate - interval '1' month ),
 'expetenda reprimique his at. Sea facilis indoctum eu. Rebum labore discere eam cu. Cum cu accusam contentiones? Meis epicurei ut qui, usu ' ||
 'insolens liberavisse id.<//p>');
 
-INSERT INTO NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
-VALUES ( notification_seq.nextval, (sysdate - interval '1' day ),
+INSERT INTO USER_NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
+VALUES ( user_notification_seq.nextval, (sysdate - interval '1' day ),
 'Eum solum fuisset at, amet verear ut mea! Ea eam noster oblique, mel id illum praesent, audire probatus splendide id est. Qui augue sensibus ' ||
 'deterruisset cu, ea dissentiunt complectitur usu.',
 'Pri te mediocrem adipiscing, est ea lobortis quaestio electram. Mea in dissentias reformidans signiferumque, no eam melius tincidunt. At nam.' ||

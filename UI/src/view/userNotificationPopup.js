@@ -4,7 +4,7 @@ window.UserNotificationPopup = function(models) {
 
   this.initialize = function() {
     eventbus.on('userNotification:fetched', function(result) {
-        renderDialog(result);
+      renderDialog(result);
     });
 
     models.fetchUnreadNotification();
@@ -14,8 +14,6 @@ window.UserNotificationPopup = function(models) {
     message: 'Tiedotteet',
     saveButton: '',
     cancelButton: 'Sulje',
-    saveCallback: function(){},
-    cancelCallback: function(){},
     closeCallback: function() { purge(); }
   };
 
@@ -24,11 +22,11 @@ window.UserNotificationPopup = function(models) {
       var classInfo = _.isEqual(selectedItem, item.id) ? 'selected' : item.unRead ? 'bold' : '';
 
       return '' +
-      '<li id=' + item.id + ' class="' + classInfo +'">' +
+        '<li id=' + item.id + ' class="' + classInfo +'">' +
         '<div>' + item.createdDate + '</div>' +
         '<div>' + item.heading + '</div>' +
-      '</li>';
-      }).join(' ');
+        '</li>';
+    }).join(' ');
   };
 
   $('#userNotification').on('click', function() {
@@ -43,12 +41,12 @@ window.UserNotificationPopup = function(models) {
       return notification.id.toString() === selectedItem.toString();
     });
 
-      return '' +
-        '<h3>' +
-          '<div>' + contentInfo.heading  + '</div>' +
-          '<div>' + contentInfo.createdDate + '</div>' +
-        '</h3>' +
-        '<div>' + contentInfo.content + '</div>';
+    return '' +
+      '<h3>' +
+      '<div>' + contentInfo.heading  + '</div>' +
+      '<div>' + contentInfo.createdDate + '</div>' +
+      '</h3>' +
+      '<div>' + contentInfo.content + '</div>';
   };
 
   this.createNotificationForm = function(notifications) {
@@ -61,52 +59,56 @@ window.UserNotificationPopup = function(models) {
 
     return '' +
       '<section>' +
-        '<nav>' +
-          '<ul class="leftListIds">' +
-            leftList(notifications, defaultSelectedItem) +
-          '<ul>' +
-        '</nav>' +
-        '<article>' +
-            contentText(notifications, defaultSelectedItem) +
-        '</article>' +
+      '<nav>' +
+      '<ul class="leftListIds">' +
+      leftList(notifications, defaultSelectedItem) +
+      '<ul>' +
+      '</nav>' +
+      '<article>' +
+      contentText(notifications, defaultSelectedItem) +
+      '</article>' +
       '</section>';
   };
 
-   var renderDialog = function(notifications) {
-     $('#work-list').append(me.createNotificationPopUp(notifications)).show();
+  var renderDialog = function(notifications) {
+    $('#work-list').append(me.createNotificationPopUp(notifications)).show();
 
-     $('.confirm-modal .cancel').on('click', function() {
-       options.closeCallback();
-     });
+    $('.confirm-modal .cancel').on('click', function() {
+      options.closeCallback();
+    });
 
-     $('.leftListIds li').click(function() {
-        var allNotification = models.fetchAll();
-        models.setNotificationToRead(this.id);
-        $(".leftListIds>li").removeClass("selected").removeClass("bold");
-        $('article').html(contentText(allNotification, this.id));
+    $('.leftListIds li').click(function() {
+      var allNotification = models.fetchAll();
+      models.setNotificationToRead(this.id);
+      $(".leftListIds>li").removeClass("selected").removeClass("bold");
+      $('article').html(contentText(allNotification, this.id));
 
-       $('#' + this.id.toString()).addClass('selected');
-       _.forEach(allNotification, function(item) {
-         if (item.unRead)
-           $('#' + item.id.toString()).addClass('bold');
-       });
-     });
+      $('#' + this.id.toString()).addClass('selected');
+      _.forEach(allNotification, function(item) {
+        if (item.unRead)
+          $('#' + item.id.toString()).addClass('bold');
+      });
+    });
   };
 
-   this.createNotificationPopUp  = function(notifications) {
-     return '' +
-     '<div class="modal-overlay confirm-modal" id="notification">' +
-     '<div class="modal-dialog notification">' +
-     '<div class="content">' + options.message + '</div>' +
-       me.createNotificationForm(notifications) +
-     '<div class="actions">' +
-     '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
-     '</div>' +
-     '</div>' +
-     '</div>';
-   };
+  this.createNotificationPopUp  = function(notifications) {
+    return '' +
+      '<div class="modal-overlay confirm-modal" id="notification">' +
+      '<div class="modal-dialog notification">' +
+      '<div class="content">' + options.message + '</div>' +
+      me.createNotificationForm(notifications) +
+      '<div class="actions">' +
+      me.button() +
+    '</div>' +
+    '</div>' +
+    '</div>';
+  };
 
-    var purge = function() {
-       $('.confirm-modal').remove();
-    };
+  this.button = function() {
+    return '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>';
+  };
+
+  var purge = function() {
+    $('.confirm-modal').remove();
+  };
 };

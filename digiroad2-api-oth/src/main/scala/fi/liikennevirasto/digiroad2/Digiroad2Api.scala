@@ -157,7 +157,7 @@ extends ScalatraServlet
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId)
 
-  get("/userNotification") {
+  post("/userNotification") {
     val user = userProvider.getCurrentUser()
 
     val updatedUser = user.copy(configuration = user.configuration.copy(lastNotificationDate = Some(LocalDate.now.toString)))

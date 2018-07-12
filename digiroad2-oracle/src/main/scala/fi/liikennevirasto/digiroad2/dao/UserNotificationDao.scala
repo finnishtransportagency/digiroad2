@@ -23,7 +23,7 @@ class UserNotificationDao {
   def getAllUserNotifications : Seq[UserNotification] = {
     sql"""
        SELECT id, created_date, heading, content
-       FROM notification
+       FROM user_notification
        ORDER BY created_date DESC
       """.as[UserNotification].list
   }

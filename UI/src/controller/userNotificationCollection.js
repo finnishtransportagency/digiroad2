@@ -4,7 +4,7 @@
     var notifications = [];
 
     this.fetchUnreadNotification = function() {
-      backend.getUserNotificationInfo().then(
+      backend.userNotificationInfo().then(
         function (result) {
           notifications = result;
             var sortedNotifications = _.sortBy(result, function (notification) {

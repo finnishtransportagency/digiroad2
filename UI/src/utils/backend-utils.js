@@ -370,10 +370,6 @@
       });
     };
 
-    this.getUserNotificationInfo = function () {
-      return $.getJSON('api/userNotification');
-    };
-
     this.getStartupParametersWithCallback = function(callback) {
       var url = 'api/startupParameters';
       $.getJSON(url, callback);
@@ -506,6 +502,8 @@
         url: 'api/verificationInfo?municipality=' + municipality + '&typeId=' + typeId
       };
     });
+
+    this.userNotificationInfo = $.post('api/userNotification', function() {});
 
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');

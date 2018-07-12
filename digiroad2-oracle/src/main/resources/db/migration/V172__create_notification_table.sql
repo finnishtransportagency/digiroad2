@@ -1,4 +1,4 @@
-create table notification
+create table user_notification
 (
   id number primary key,
   created_date DATE default sysdate,
@@ -7,7 +7,7 @@ create table notification
 );
 
 
-CREATE SEQUENCE notification_seq
+CREATE SEQUENCE user_notification_seq
  START WITH     1
  INCREMENT BY   1
  NOCACHE
