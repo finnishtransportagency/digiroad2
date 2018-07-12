@@ -80,7 +80,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: OracleSpeedLimitDao) = {
     val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure, dao.vvhClient).toList)
-    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(20, speedLimitId).find { link => link._1 == linkId }.get._3)
+    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(speedLimitId).find { link => link._1 == linkId }.get._3)
     expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
     expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }

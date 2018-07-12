@@ -46,6 +46,19 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     new SpeedLimitValidator(trafficSignService)
   }
 
+  def validateMunicipalities(id: Long,  municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): Unit = {
+    getLinksWithLengthFromVVH(id, newTransaction).foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
+  }
+
+  def getLinksWithLengthFromVVH(id: Long, newTransaction: Boolean = true): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
+    if (newTransaction)
+      withDynTransaction {
+        dao.getLinksWithLengthFromVVH(id)
+      }
+    else
+      dao.getLinksWithLengthFromVVH(id)
+  }
+
   //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 
   def getSpeedLimitAssetsByIds(ids: Set[Long], newTransaction: Boolean = true): Seq[SpeedLimit] = {
@@ -72,15 +85,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   def getPersistedSpeedLimitById(id: Long, newTransaction: Boolean = true): Option[PersistedSpeedLimit] = {
     getPersistedSpeedLimitByIds(Set(id), newTransaction).headOption
-  }
-
-  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long, newTransaction: Boolean = true): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
-    if (newTransaction)
-      withDynTransaction {
-        dao.getLinksWithLengthFromVVH(assetTypeId, id)
-      }
-    else
-      dao.getLinksWithLengthFromVVH(assetTypeId, id)
   }
 
   //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -353,11 +357,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
-      def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]): Unit = {
-        vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
-      }
-
-      ids.foreach( id => validateMunicipalities(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id, newTransaction = false)))
+      ids.foreach( id => validateMunicipalities(id, municipalityValidation, newTransaction = false))
       ids.flatMap(dao.updateSpeedLimitValue(_, value, username))
     }
   }
@@ -367,32 +367,22 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
 
   def update(id: Long, newLimits: Seq[NewLinearAsset], username: String): Seq[Long] = {
-      val oldSpeedLimit = getPersistedSpeedLimitById(id)
-      oldSpeedLimit match {
-        case Some(speedLimit) =>
-          val oldMeasures = Measures(speedLimit.startMeasure, speedLimit.endMeasure)
-          newLimits.flatMap (limit =>
-            limit.value match {
-              case NumericValue(intValue) =>
-                //Modifying the length of an existing object: Remove + Add
-                if ( (limit.startMeasure - oldMeasures.startMeasure > 0.01 || (limit.endMeasure - oldMeasures.endMeasure > 0.01 || oldMeasures.endMeasure - limit.endMeasure > 0.01) ) || SideCode(limit.sideCode) != speedLimit.sideCode )
-                  withDynTransaction { updateSpeedLimitWithExpiration(id, intValue, username, Some(Measures(limit.startMeasure, limit.endMeasure)), Some(limit.sideCode), (_, _) => Unit) }
+    val oldSpeedLimit = getPersistedSpeedLimitById(id).map(toSpeedLimit).get
 
-                else
-                  updateValues(Seq(id), intValue, username, (_, _) => Unit)
+    newLimits.flatMap (limit =>  limit.value match {
+      case NumericValue(intValue) =>
 
-              case _ => Seq.empty[Long]
-            })
-        case _ =>  Seq.empty[Long]
-    }
+        if ((limit.startMeasure - oldSpeedLimit.startMeasure > 0.01 || (limit.endMeasure - oldSpeedLimit.endMeasure > 0.01 || oldSpeedLimit.endMeasure - limit.endMeasure > 0.01)) || SideCode(limit.sideCode) != oldSpeedLimit.sideCode)
+          updateSpeedLimitWithExpiration(id, intValue, username, Some(Measures(limit.startMeasure, limit.endMeasure)), Some(limit.sideCode), (_, _) => Unit)
+        else
+          updateValues(Seq(id), intValue, username, (_, _) => Unit)
+      case _ => Seq.empty[Long]
+    })
   }
 
-  def updateSpeedLimitWithExpiration(id: Long, value: Int, username: String, measures: Option[Measures] = None, sideCode: Option[Int] = None, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
-    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]): Unit = {
-      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
-    }
 
-    validateMunicipalities(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id, false))
+  def updateSpeedLimitWithExpiration(id: Long, value: Int, username: String, measures: Option[Measures] = None, sideCode: Option[Int] = None, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
+    validateMunicipalities(id, municipalityValidation, newTransaction = false)
 
     //Get all data from the speedLimit to update
     val speedLimit = dao.getPersistedSpeedLimit(id).filterNot(_.expired).getOrElse(throw new IllegalStateException("Asset no longer available"))
@@ -504,10 +494,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       .map(isSeparableValidation)
       .get
 
-    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)]): Unit = {
-      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
-    }
-    validateMunicipalities(getLinksWithLengthFromVVH(SpeedLimitAsset.typeId, id))
+    validateMunicipalities(id, municipalityValidation)
 
     updateByExpiration(id, expired = true, username)
 

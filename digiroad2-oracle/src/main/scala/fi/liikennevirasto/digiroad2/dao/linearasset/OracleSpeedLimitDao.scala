@@ -219,7 +219,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     /**
     * Returns data for municipality validation. Used by OracleSpeedLimitDao.splitSpeedLimit.
     */
-  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
+  def getLinksWithLengthFromVVH(id: Long): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
+    val assetTypeId = SpeedLimitAsset.typeId
     val links = sql"""
       select pos.link_id, pos.start_measure, pos.end_measure
       from ASSET a
