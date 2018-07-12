@@ -199,7 +199,7 @@ sealed trait PavementClass {
   def typeDescription: String
 }
 object PavementClass {
-  val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt, GravelSurface, GravelWearLayer, OtherCoatings)
+  val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt, GravelSurface, GravelWearLayer, OtherCoatings, Unknown)
 
   def apply(value: Int): PavementClass = {
     values.find(_.value == value).getOrElse(Unknown)

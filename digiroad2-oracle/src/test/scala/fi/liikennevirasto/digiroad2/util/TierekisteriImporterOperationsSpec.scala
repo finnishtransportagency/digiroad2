@@ -750,7 +750,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startSection = 50
       val endSection = 350
 
-      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, PavementClass.apply(30))
+      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, PavementClass.apply(60))
       testPavedRoad.filterTierekisteriAssetsTest(tr) should be (false)
     }
   }
