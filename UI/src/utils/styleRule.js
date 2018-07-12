@@ -150,7 +150,7 @@
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "isLess".';
 
       expression.compare = function(propertyValue){
-        return value >= propertyValue && propertyValue > 0;
+        return value >= propertyValue;
       };
       return this;
     };
