@@ -7,6 +7,8 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddressException}
 
+import scala.util.Try
+
 class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService, val eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends AbstractBusStopStrategy {
 
   private val roadNumberPublicId = "tie"          // Tienumero
@@ -16,7 +18,13 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   private val sideCodePublicId = "puoli"
 
   def getRoadAddressPropertiesByLinkId(persistedStop: PersistedMassTransitStop, roadLink: RoadLinkLike, oldProperties: Seq[Property]): Seq[Property] = {
-    val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get)
+    val road =
+      roadLink.attributes.find(_._1 == "ROADNUMBER") match {
+        case Some((key, value)) => Try(value.toString.toInt).toOption
+        case _ => None
+      }
+
+    val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get, road = road)
 
     val newRoadAddressProperties =
       Seq(

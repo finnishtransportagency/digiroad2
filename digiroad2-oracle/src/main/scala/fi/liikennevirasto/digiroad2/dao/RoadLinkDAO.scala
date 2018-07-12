@@ -255,6 +255,10 @@ object RoadLinkDAO{
     def table: String = AdministrativeClass
     def column: String = AdministrativeClass
 
+    override def getExistingValue(linkId: Long): Option[Int]= {
+      sql"""select #$column from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[Int].firstOption
+    }
+
     def getValue(linkProperty: LinkProperties): Int ={
       linkProperty.administrativeClass.value
     }

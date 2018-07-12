@@ -141,8 +141,16 @@
           $(me.expanded).append(me.editModeToggle.element);
         }
       });
-
+      me.addVerificationIcon();
       eventbus.on('road-type:selected', toggleRoadType);
+
+      eventbus.on('verificationInfo:fetched', function(visible) {
+        var img = me.expanded.find('#right-panel');
+        if (visible)
+          img.css('display','inline');
+        else
+          img.css('display','none');
+      });
     };
 
     var toggleRoadType = function(bool) {

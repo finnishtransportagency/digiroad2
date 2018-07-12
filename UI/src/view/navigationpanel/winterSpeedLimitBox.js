@@ -14,7 +14,7 @@
           '<div class="label">' + speedLimit + '</div>' +
           '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
           '</div>';
-      }).join('');
+      }).join('') + '</div>';
     };
 
     this.predicate = function () {

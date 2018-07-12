@@ -4,8 +4,10 @@
     me.userRoles = [];
     me.municipalities = [];
     me.areas = [];
+    me.username = {};
 
     eventbus.on('roles:fetched', function(userInfo) {
+      me.username = userInfo.username;
       me.userRoles = userInfo.roles;
       me.municipalities = userInfo.municipalities;
       me.areas = userInfo.areas;
@@ -20,7 +22,7 @@
     };
 
     this.isMunicipalityMaintainer = function(){
-      return _.isEmpty(me.userRoles);
+      return _.isEmpty(me.userRoles) || me.isOnlyUser('premium');
     };
 
     this.isElyMaintainer = function(){

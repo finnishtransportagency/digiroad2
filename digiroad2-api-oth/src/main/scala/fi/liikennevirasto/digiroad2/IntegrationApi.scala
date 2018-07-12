@@ -23,7 +23,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
   def clearCache() = {
-    roadLinkOTHService.clearCache()
+    roadLinkService.clearCache()
   }
 
   before() {
@@ -192,6 +192,16 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     s"[[$daySpec]*[(h${validityPeriod.startHour}){h${validityPeriod.duration()}}]]"
   }
 
+  def toTimeDomain(validityPeriod: ValidityPeriodValue): String = {
+    //Weekday: 0 ; Saturday: 1, ; Sunday: 2
+    val daySpec = validityPeriod.days match {
+      case 1 => "(t7){d1}"
+      case 2 => "(t1){d1}"
+      case _ => "(t2){d5}"
+    }
+    s"[[$daySpec]*[(h${validityPeriod.startHour}){h${ValidityPeriodValue.duration(validityPeriod.startHour, validityPeriod.startMinute, validityPeriod.endHour, validityPeriod.endMinute)}}]]"
+  }
+
   def toTimeDomainWithMinutes(validityPeriod: ValidityPeriod): String = {
     val daySpec = validityPeriod.days match {
       case Saturday => "(t7){d1}"
@@ -215,6 +225,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
+      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty =>
+        dynamicTypeProperty.values.map { v =>
+           v.value} }.headOption
       case _ => value.map(_.toJson)
     }
   }
@@ -228,6 +241,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
+        case CareClass.typeId | DamagedByThaw.typeId | MassTransitLane.typeId  => dynamicLinearAssetService
         case _ => linearAssetService
       }
     }
@@ -246,6 +260,52 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
         lastModifiedBy(asset.createdBy, asset.modifiedBy),
         "linkSource" -> asset.linkSource.value
+      )
+    }
+  }
+
+  def massTransitLanesToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
+    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+
+    val massTransitLanes: Seq[PieceWiseLinearAsset] = dynamicLinearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+
+    massTransitLanes.map { massTransitLane =>
+      Map("id" -> massTransitLane.id,
+        "points" -> massTransitLane.geometry,
+        geometryWKTForLinearAssets(massTransitLane.geometry),
+        "value" -> 1, //check if could be forced
+        "side_code" -> massTransitLane.sideCode.value,
+        "linkId" -> massTransitLane.linkId,
+        "startMeasure" -> massTransitLane.startMeasure,
+        "endMeasure" -> massTransitLane.endMeasure,
+        latestModificationTime(massTransitLane.createdDateTime, massTransitLane.modifiedDateTime),
+        lastModifiedBy(massTransitLane.createdBy, massTransitLane.modifiedBy),
+        "linkSource" -> massTransitLane.linkSource.value,
+        "validityPeriods" -> (massTransitLane.value match {
+          case Some(DynamicValue(x)) => x.properties.flatMap(_.values.map(_.value).map(_.asInstanceOf[Map[String, Any]]).map(ValidityPeriodValue.fromMap).map {
+            a=> toTimeDomain(a)})
+          case _ => None
+        })
+      )
+    }
+  }
+
+  def roadWidthToApi(roadWidthAssets: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
+    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+
+    roadWidthAssets.filterNot(isUnknown).map { asset =>
+      Map("id" -> asset.id,
+        "points" -> asset.geometry,
+        geometryWKTForLinearAssets(asset.geometry),
+        "value" -> valueToApi(asset.value),
+        "side_code" -> asset.sideCode.value,
+        "linkId" -> asset.linkId,
+        "startMeasure" -> asset.startMeasure,
+        "endMeasure" -> asset.endMeasure,
+        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
+        lastModifiedBy(asset.createdBy, asset.modifiedBy),
+        "linkSource" -> asset.linkSource.value,
+        "informationSource" -> getInformationSource(asset.informationSource)
       )
     }
   }
@@ -298,6 +358,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .orElse(createdDateTime)
         .map(DateTimePropertyFormat.print)
         .getOrElse("")
+  }
+
+
+  def getInformationSource(informationSource: Option[InformationSource]): String = {
+    informationSource match{
+      case Some(info) => info.value.toString
+      case _ => ""
+    }
   }
 
   def lastModifiedBy(createdBy: Option[String], modifiedBy: Option[String]): (String, Boolean) = {
@@ -356,6 +424,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
+        "railwayCrossingId" -> railwayCrossing.code,
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
         "linkSource" -> railwayCrossing.linkSource.value)
@@ -505,26 +574,26 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
         case "hazardous_material_transport_prohibitions" => linearAssetsToApi(210, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
-        case "mass_transit_lanes" => linearAssetsToApi(160, municipalityNumber)
+        case "mass_transit_lanes" => massTransitLanesToApi(160, municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
-        case "widths" => linearAssetsToApi(120, municipalityNumber)
+        case "widths" => roadWidthToApi(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
         case "paved_roads" => linearAssetsToApi(110, municipalityNumber)
         case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(170, municipalityNumber)
-        case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
         case "european_roads" => linearAssetsToApi(260, municipalityNumber)
         case "exit_numbers" => linearAssetsToApi(270, municipalityNumber)
-        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkOTHService.withRoadAddress(roadLinkOTHService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
+        case "road_link_properties" => roadLinkPropertiesToApi(roadAddressesService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-        case "road_nodes" => roadNodesToApi(roadLinkOTHService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
+        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
         case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
         case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
         case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
+        case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

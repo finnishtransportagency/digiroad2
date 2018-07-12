@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 
-case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String]) extends IncomingPointAsset
-case class IncomingRailwayCrossingtAsset(linkId: Long, mValue: Long, safetyEquipment: Int, name: Option[String])  extends IncomePointAsset
+case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String], code: String) extends IncomingPointAsset
+case class IncomingRailwayCrossingtAsset(linkId: Long, mValue: Long, safetyEquipment: Int, name: Option[String], code: String)  extends IncomePointAsset
 
 class RailwayCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingRailwayCrossing
@@ -43,7 +43,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
-    val updated = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.safetyEquipment, persistedAsset.name)
+    val updated = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.safetyEquipment, persistedAsset.name, persistedAsset.code)
     updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode, "vvh_generated",
                              persistedAsset.linkSource, Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
@@ -57,7 +57,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.safetyEquipment, persistedStop.name,
+      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.safetyEquipment, persistedStop.name, persistedStop.code,
       persistedStop.createdBy, persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 
@@ -87,9 +87,11 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingRailwayCrossing] = {
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      point =>  IncomingRailwayCrossing(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingRailwayCrossingtAsset].safetyEquipment, asset.asInstanceOf[IncomingRailwayCrossingtAsset].name)
+      point =>  IncomingRailwayCrossing(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingRailwayCrossingtAsset].safetyEquipment, asset.asInstanceOf[IncomingRailwayCrossingtAsset].name, asset.asInstanceOf[IncomingRailwayCrossingtAsset].code)
     }
   }
+
+  def getCodeMaxSize : Long  =   withDynTransaction { OracleRailwayCrossingDao.getCodeMaxSize }
 }
 
 

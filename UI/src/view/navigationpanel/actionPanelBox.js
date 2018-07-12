@@ -115,6 +115,15 @@
                '   <div class="panel-section panel-legend '+ me.legendName() + '-legend">'].join('');
     };
 
+    this.verificationIcon = function() {
+      return '<div id="right-panel">' + me.checkIcon + '</div>';
+    };
+
+    this.addVerificationIcon = function(){
+      $(me.expanded).find('.panel-header').css('display', 'flex');
+      $(me.expanded).find('.panel-header').append(me.verificationIcon());
+    };
+
     this.bindExternalEventHandlers = function() {
 
       eventbus.on('roles:fetched', function() {
@@ -124,12 +133,9 @@
           $(me.expanded).append(me.editModeToggle.element);
         }
         if(me.municipalityVerified()){
-          $(me.expanded).find('.panel-header').css('display', 'flex');
-          $(me.expanded).find('.panel-header').append(verificationIcon);
+          me.addVerificationIcon();
         }
       });
-
-      var verificationIcon = '<div id="right-panel">' + me.checkIcon + '</div>';
 
       eventbus.on('verificationInfo:fetched', function(visible) {
         var img = me.expanded.find('#right-panel');

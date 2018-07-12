@@ -131,19 +131,37 @@
         var IMAGE_HEIGHT = 27;
         var IMAGE_ADJUSTMENT = 15;
 
+        this.renderFeatures = function(assets, zoomLevel, getPoint){
+          if(!me.isVisibleZoom(zoomLevel))
+            return [];
+
+          return _.chain(assets).
+          map(function(asset){
+            var assetId = me.getId(asset);
+            var assetValue = me.getValue(asset);
+            if(!_.isUndefined(assetValue) || !_.isUndefined(assetId)){
+              var style = me.getStyle(assetValue);
+              var feature = me.createFeature(getPoint(asset));
+              feature.setProperties(_.omit(asset, 'geometry'));
+              feature.setStyle(style);
+              return feature;
+            }
+          }).
+          filter(function(feature){ return feature !== undefined; })
+              .value();
+        };
+
         this.getStyle = function(value){
           return createMultiStyles(value);
         };
 
         var createMultiStyles = function(values){
-          var i = 0;
+          if(!values)
+            return warningSign;
           var splitValues = values.replace(/[ \t\f\v]/g,'').split(/[\n,]+/);
-          var styles = [];
-          _.forEach(splitValues, function(value){
-            i++;
-            styles.push(backgroundStyle(value, i), textStyle(value, i));
-          });
-          return styles;
+          return _.flatten(_.map(splitValues, function(value, i){
+            return [backgroundStyle(value, i+1), textStyle(value, i+1)];
+          }));
         };
 
         var backgroundStyle = function(value, i){
@@ -177,6 +195,17 @@
           });
         };
 
+        var warningSign = function(){
+          return new ol.style.Style({
+            image: new ol.style.Icon(({
+              anchor: [IMAGE_ADJUSTMENT+2, IMAGE_HEIGHT - IMAGE_ADJUSTMENT],
+              anchorXUnits: 'pixels',
+              anchorYUnits: 'pixels',
+              src: 'images/warningLabel.png'
+            }))
+          });
+        };
+
         var getTextValue = function(value) {
           if(!correctValues(value))
             return '';
@@ -185,14 +214,16 @@
 
         var correctValues = function(value){
           var valueLength = value.toString().length;
-          if(value){
-            return value.match(/^[0-9|Ee]/) && valueLength < 4;
-          }
-          return true;
+          if(value)
+            return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/) && (valueLength > 0 && valueLength < 4);
         };
 
         this.getValue = function(asset){
             return asset.value;
+        };
+
+        this.getId = function(asset){
+          return asset.id;
         };
 
     };
@@ -278,5 +309,92 @@
         }).value());
       };
     };
+
+    root.RoadDamagedByThawLabel = function () {
+        AssetLabel.call(this);
+        var me = this;
+        var IMAGE_SIGN_HEIGHT = 33;
+        var IMAGE_SIGN_ADJUSTMENT = 15;
+        var IMAGE_LABEL_HEIGHT = 58;
+        var IMAGE_LABEL_ADJUSTMENT = 43;
+
+        this.getStyle = function (values) {
+          var value = values.properties[0] && !_.isEmpty(values.properties[0].values) ? values.properties[0].values[0].value : '' ;
+          return createMultiStyles(value);
+        };
+
+        var createMultiStyles = function (value) {
+            var stylePositions = [1,2];
+            return _.flatten(_.map(stylePositions, function(position){
+                return [backgroundStyle(value, position), textStyle(value, position)];
+            }));
+        };
+
+        var backgroundStyle = function(value, pos){
+            var image = getImage(pos);
+            var anchor = pos > 1 ? [IMAGE_SIGN_ADJUSTMENT + 2, (pos * IMAGE_SIGN_HEIGHT) - IMAGE_SIGN_ADJUSTMENT] : [IMAGE_LABEL_ADJUSTMENT, IMAGE_LABEL_HEIGHT - IMAGE_LABEL_ADJUSTMENT];
+
+            if (!isValidValue(value) && (pos > 1))
+                image = 'images/warningLabel_red_yellow.png';
+
+            return new ol.style.Style({
+                image: new ol.style.Icon(({
+                    anchor: anchor,
+                    anchorXUnits: 'pixels',
+                    anchorYUnits: 'pixels',
+                    src: image
+                }))
+            });
+        };
+
+        var textStyle = function(value, pos) {
+            var textValue;
+            if (pos === 1) {
+                textValue = 'Kelirikko';
+            } else {
+                textValue = getTextValue(value);
+            }
+
+            return new ol.style.Style({
+                text: new ol.style.Text(({
+                    text: textValue,
+                    offsetX: 0,
+                    offsetY:(-pos*IMAGE_SIGN_HEIGHT)+IMAGE_SIGN_HEIGHT,
+                    textAlign: 'center',
+                    fill: new ol.style.Fill({
+                        color: '#000000'
+                    }),
+                    font: 'bold 14px sans-serif'
+                }))
+            });
+        };
+
+        var getTextValue = function (value) {
+            if (_.isUndefined(value) || !isValidValue(value))
+                return '';
+
+            return ''.concat(value/1000, 't');
+        };
+
+        var isValidValue = function (value) {
+            var valueLength = value.toString().length;
+            if (valueLength === 0 || value < 0)
+                return false;
+            return true;
+        };
+
+        this.getValue = function (asset) {
+            return asset.value;
+        };
+
+        var getImage = function (position) {
+            var images = {
+                1: 'images/linearLabel_largeText_yellow_red.png',
+                2: 'images/mass-limitations/totalWeightLimit.png'
+            };
+            return images[position];
+        };
+    };
+
 
 })(this);

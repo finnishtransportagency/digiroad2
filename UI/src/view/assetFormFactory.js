@@ -19,6 +19,7 @@
 
       if(!asset)
         asset = assetTypeConfiguration.selectedLinearAsset.get()[0];
+
       var value = _.cloneDeep(asset.value);
 
       if(!value || !value.properties)
@@ -151,6 +152,27 @@
     };
   };
 
+  //hides field when in edit mode, show in view mode
+  var HiddenReadOnlyFields = function(assetTypeConfiguration){
+    DynamicField.call(this, assetTypeConfiguration);
+    var me = this;
+
+    me.viewModeRender = function (field, currentValue) {
+      var value = _.head(currentValue, function(values) { return values.value ; });
+      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
+
+      var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
+      var printValue = _.isUndefined(someValue) ? _value : someValue.label;
+
+      return $('' +
+          '<div class="form-group">' +
+          '   <label class="control-label">' + field.label + '</label>' +
+          '   <p class="form-control-static">' + printValue + '</p>' +
+          '</div>'
+      );
+    };
+  };
+
   var IntegerField = function(assetTypeConfiguration){
     DynamicField.call(this, assetTypeConfiguration);
     var me = this;
@@ -205,7 +227,7 @@
 
       var optionTags = _.map(field.values, function(value) {
         var selected = value.id.toString() === selectedValue ? " selected" : "";
-        return '<option value="' + value.id + '"' + selected + '>' + value.label + '</option>';
+        return value.hidden ? '' : '<option value="' + value.id + '"' + selected + '>' + value.label + '</option>';
       }).join('');
 
       var element = $(template({className: className, optionTags: optionTags, disabled: disabled, name: field.publicId, fieldType: field.type, required: required}));
@@ -219,7 +241,7 @@
 
     me.viewModeRender = function (field, currentValue) {
       var value = _.head(currentValue, function(values) { return values.value ; });
-      var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
+      var _value = value ? value.value : '-';
 
       var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
       var printValue = _.isUndefined(someValue) ? _value : someValue.label;

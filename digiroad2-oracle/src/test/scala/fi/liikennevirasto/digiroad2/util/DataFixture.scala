@@ -16,10 +16,11 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -46,12 +47,19 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
-  lazy val roadLinkService: RoadLinkOTHService = {
-    new RoadLinkOTHService(vvhClient, eventbus, new DummySerializer)
+
+  lazy val viiteClient: SearchViiteClient = {
+    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
   }
+
+  lazy val roadLinkService: RoadLinkService = {
+    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  }
+
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(roadLinkService)
   }
+
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
     new TierekisteriMassTransitStopClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -68,6 +76,11 @@ object DataFixture {
   lazy val linearAssetService: LinearAssetService = {
     new LinearAssetService(roadLinkService, new DummyEventBus)
   }
+
+  lazy val roadWidthService: RoadWidthService = {
+    new RoadWidthService(roadLinkService, new DummyEventBus)
+  }
+
   lazy val speedLimitService: SpeedLimitService = {
     new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
   }
@@ -80,19 +93,24 @@ object DataFixture {
     new SpeedLimitValidator(trafficSignService)
   }
 
+  lazy val roadAddressService: RoadAddressesService = {
+    new RoadAddressesService(viiteClient)
+  }
+
   lazy val massTransitStopService: MassTransitStopService = {
-    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
+      override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
+    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService, roadAddressService)
   }
 
   lazy val geometryTransform: GeometryTransform = {
-    new GeometryTransform()
+    new GeometryTransform(roadAddressService)
   }
 
   lazy val geometryVKMTransform: VKMGeometryTransform = {
@@ -105,10 +123,6 @@ object DataFixture {
 
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
     new InaccurateAssetDAO()
-  }
-
-  lazy val roadAddressDao : RoadAddressDAO = {
-    new RoadAddressDAO()
   }
 
   lazy val tierekisteriLightingAsset : TierekisteriLightingAssetClient = {
@@ -190,14 +204,6 @@ object DataFixture {
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
       "kauniainen_traffic_signs.sql",
-//      "siilijarvi_functional_classes.sql",
-//      "siilijarvi_link_types.sql",
-//      "siilijarvi_traffic_directions.sql",
-//      "siilinjarvi_speed_limits.sql",
-//      "siilinjarvi_linear_assets.sql",
-      "insert_road_address_data.sql",
-      "insert_floating_road_addresses.sql",
-      "insert_project_link_data.sql",
       "kauniainen_maximum_x7_restrictions.sql"
     ))
   }
@@ -258,12 +264,6 @@ object DataFixture {
     println(s"\nCommencing hazmat prohibition import at time: ${DateTime.now()}")
     dataImporter.importHazmatProhibitions()
     println(s"Prohibition import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  @Deprecated
-  def importRoadAddresses(): Unit = {
-    println("\nDeprecated! Use \nsbt \"project digiroad2-viite\" \"test:run-main fi.liikennevirasto.viite.util.DataFixture import_road_addresses\"\n instead")
     println()
   }
 
@@ -356,7 +356,7 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val batchSize = 1000
     var obstaclesFound = true
     var lastIdUpdate : Long = 0
@@ -402,7 +402,7 @@ object DataFixture {
 
   def checkUnknownSpeedlimits(): Unit = {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
     val unknowns = speedLimitService.getUnknown(Set(), None)
     unknowns.foreach { case (_, mapped) =>
@@ -651,7 +651,7 @@ object DataFixture {
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val assetTypeId = 110
 
     lazy val linearAssetService: LinearAssetService = {
@@ -811,7 +811,7 @@ object DataFixture {
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
@@ -921,7 +921,7 @@ object DataFixture {
     println(DateTime.now())
 
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {
       new RoadWidthService(roadLinkService, new DummyEventBus)
@@ -988,7 +988,7 @@ object DataFixture {
             val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < minAllowedLength}
             pieces.flatMap { measures =>
               Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-                measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, Some("vvh_mtkclass_default"), None))
+                measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, Some("vvh_mtkclass_default"), None, None))
             }.filterNot(a =>
               assets.
               exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)
@@ -1214,6 +1214,77 @@ object DataFixture {
     println("\n")
   }
 
+  def updateInformationSource(): Unit = {
+
+    def isKIdentifier(username: Option[String]): Boolean = {
+      username.exists(user => user.toLowerCase.startsWith("k")) ||
+        username.exists(user => user.toLowerCase.startsWith("lx")) ||
+        username.exists(user => user.toLowerCase.startsWith("a")) ||
+        username.exists(user => user.toLowerCase.startsWith("u"))
+    }
+
+    println("\nUpdate Information Source for RoadWidth")
+    println(DateTime.now())
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+//    Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nWorking on... municipality -> " + municipality)
+      println("Fetching roadlinks")
+      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
+
+      OracleDatabase.withDynTransaction {
+
+        val roadWithMTKClass = roadLinks.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
+        println("Fetching assets")
+        val existingAssets = oracleLinearAssetDao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+
+        println(s"Number of existing assets: ${existingAssets.length}")
+        println(s"Start updating assets with Information Source")
+
+        existingAssets.foreach { asset =>
+          if(asset.createdBy.contains("vvh_mtkclass_default") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))){
+            if(!asset.informationSource.contains(MunicipalityMaintenainer))
+              oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
+          }
+          else{
+            if(( (asset.createdBy.contains("dr1_conversion") || asset.createdBy.contains("vvh_generated"))&& asset.modifiedBy.isEmpty)  ||
+                (asset.createdBy.contains("dr1_conversion") && asset.modifiedBy.contains("vvh_generated"))) {
+              if(!asset.informationSource.contains(MunicipalityMaintenainer)) {
+                if (roadWithMTKClass.exists(_.linkId == asset.linkId)) {
+                  println(s"Asset with ${asset.id} created by dr1_conversion or vvh_generated and with valid MTKCLASS")
+                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
+                } else
+                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
+              }
+            }
+            else {
+              if (asset.createdBy.contains("batch_process_roadWidth") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
+                if (!asset.informationSource.contains(MunicipalityMaintenainer))
+                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, RoadRegistry)
+              }
+              else{
+                if( isKIdentifier(asset.createdBy) || isKIdentifier(asset.modifiedBy) )
+                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
+
+                else
+                  println(s"Asset with ${asset.id} not updated with Information Source")
+              }
+            }
+          }
+        }
+      }
+    }
+    println("Complete at time: " + DateTime.now())
+  }
+
+
   def updateTrafficDirectionRoundabouts(): Unit = {
     println("\nStart Update roundadbouts traffic direction ")
     println(DateTime.now())
@@ -1333,8 +1404,6 @@ object DataFixture {
         importVVHRoadLinksByMunicipalities()
       case Some("set_transitStops_floating_reason") =>
         transisStopAssetsFloatingReason()
-      case Some ("import_road_addresses") =>
-        importRoadAddresses()
       case Some ("verify_roadLink_administrative_class_changed") =>
         verifyRoadLinkAdministrativeClassChanged()
       case Some("check_TR_bus_stops_without_OTH_LiviId") =>
@@ -1356,6 +1425,8 @@ object DataFixture {
         updateOTHBusStopWithTRInfo()
       case Some("verify_inaccurate_speed_limit_assets") =>
         verifyInaccurateSpeedLimits()
+      case Some("update_information_source_on_existing_assets") =>
+        updateInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>
         updateTrafficDirectionRoundabouts()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
@@ -1365,7 +1436,7 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | verify_inaccurate_speed_limit_assets | update_traffic_direction_on_roundabouts")
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts")
     }
   }
 }
