@@ -7,7 +7,6 @@
     var backend;
     var municipalityList;
     var showFormBtnVisible = true;
-    var municipalityId;
     var municipalityName;
     var authorizationPolicy = new AuthorizationPolicy();
     var assetConfig = new AssetTypeConfiguration();
@@ -54,12 +53,11 @@
           me.generateWorkList(municipalityList);
         })
       );
-      municipalityId = municipality.id;
       municipalityName = municipality.name;
-      me.reloadForm();
+      me.reloadForm(municipality.id);
     };
 
-    this.reloadForm = function(){
+    this.reloadForm = function(municipalityId){
       $('#formTable').remove();
       backend.getAssetTypesByMunicipality(municipalityId).then(function(assets){
         $('#work-list .work-list').append(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
@@ -73,17 +71,17 @@
       };
 
       var tableHeaderRow = function () {
-        return '<tr> <th></th> <th id="name">TIETOLAJI</th>  <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr>';
+        return '<thead><th id="name">TIETOLAJI</th> <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr></thead>';
       };
-
+      var tableBodyRows = function (values) {
+        return $('<tbody>').append(tableContentRows(values));
+      };
       var tableContentRows = function (values) {
-        var rows = "";
         renameAssets(values);
         values = sortAssets(values);
-        _.forEach(values, function (asset) {
-          rows += (asset.verified || _.isEmpty(asset.verified_by)) ? upToDateAsset(asset) : oldAsset(asset);
+        return _.map(values, function (asset) {
+          return (asset.verified || _.isEmpty(asset.verified_by)) ? upToDateAsset(asset).concat('') : oldAsset(asset).concat('');
         });
-        return rows;
       };
 
 
@@ -128,19 +126,24 @@
       };
 
       var upToDateAsset = function (asset) {
-        return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
-          "<td headers='name'>" + asset.assetName + "</td>" +
-          "<td headers='count'>" + (asset.counter ? asset.counter : '' ) + "</td>" +
-          "<td headers='date'>" + asset.verified_date + "</td>" +
-          "<td headers='verifier'>" + asset.verified_by + "</td></tr>";
+        return '' +
+          '<tr>' +
+          '<td><input type="checkbox" class="verificationCheckbox" value=' + asset.typeId + '></td>' +
+          '<td headers="name">' + asset.assetName + '</td>' +
+          '<td headers="count">' + (asset.counter ? asset.counter : '' ) + '</td>' +
+          '<td headers="date" >' + asset.verified_date + '</td>' +
+          '<td headers="verifier">' + asset.verified_by + '</td>' +
+          '</tr>';
       };
-
       var oldAsset = function (asset) {
-        return "<tr><td><input type='checkbox' class='verificationCheckbox' value='" + asset.typeId + "'></td>" +
-          "<td headers='name'>" + asset.assetName + "    <img src='images/oldAsset.png' title='Tarkistus Vanhentumassa'" + "</td>" +
-          "<td style='color:red' headers='count'>" + (asset.counter ? asset.counter : '' )  + "</td>" +
-          "<td style='color:red' headers='date'>" + asset.verified_date + "</td>" +
-          "<td style='color:red' headers='verifier'>" + asset.verified_by + "</td></tr>";
+        return '' +
+          '<tr>' +
+          '<td><input type="checkbox" class="verificationCheckbox" value=' + asset.typeId + '></td>' +
+          '<td headers="name">' + asset.assetName + '<img src="images/oldAsset.png" title="Tarkistus Vanhentumassa"' + '</td>' +
+          '<td style="color:red" headers="count">' + (asset.counter ? asset.counter : '' )  + '</td>' +
+          '<td style="color:red" headers="date">' + asset.verified_date + '</td>' +
+          '<td style="color:red" headers="verifier">' + asset.verified_by + '</td>' +
+          '</tr>'.join('');
       };
 
       var saveBtn = $('<button />').addClass('save btn btn-municipality').text('Merkitse tarkistetuksi').click(function () {
@@ -164,12 +167,12 @@
       });
 
       var tableForGroupingValues = function (values) {
-        return $('<table/>').addClass('table')
+        return $('<table>').addClass('table')
           .append(tableHeaderRow())
-          .append(tableContentRows(values));
+          .append(tableBodyRows(values));
       };
 
-      return $('<table id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems)).append(deleteBtn).append(saveBtn);
+      return $('<div id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems)).append(deleteBtn).append(saveBtn);
     };
 
     this.generateWorkList = function (listP) {
@@ -193,7 +196,7 @@
         var element = $('#work-list .work-list');
         if (limits.length == 1){
           showFormBtnVisible = false;
-          me.createVerificationForm(_.first(limits));
+          me.createVerificationForm(_.head(limits));
         }
         else {
           var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();

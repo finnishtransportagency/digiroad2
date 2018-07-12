@@ -44,6 +44,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
              set valid_to = sysdate, modified_date = sysdate, modified_by = $username
              where id = $id
           """.execute
+    id
   }
 
   def expireManoeuvre(id: Long) = {

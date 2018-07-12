@@ -122,4 +122,15 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       }
     }
   }
+
+  override def validateAssetValue(values: Option[Value]): Unit = {
+    val euroAndExitPattern = "^[0-9|Ee][0-9|Bb]{0,2}"
+    values.get match {
+      case TextualValue(textValue) => textValue.split(",").forall(_.trim.matches(euroAndExitPattern)) match {
+          case false => throw new AssetValueException(textValue)
+          case _ => None
+        }
+      case _ => throw new AssetValueException("incorrect asset type")
+    }
+  }
 }

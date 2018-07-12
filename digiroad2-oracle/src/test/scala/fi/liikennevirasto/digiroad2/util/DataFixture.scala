@@ -16,10 +16,11 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -46,12 +47,19 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
-  lazy val roadLinkService: RoadLinkOTHService = {
-    new RoadLinkOTHService(vvhClient, eventbus, new DummySerializer)
+
+  lazy val viiteClient: SearchViiteClient = {
+    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
   }
+
+  lazy val roadLinkService: RoadLinkService = {
+    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  }
+
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(roadLinkService)
   }
+
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
     new TierekisteriMassTransitStopClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -85,19 +93,24 @@ object DataFixture {
     new SpeedLimitValidator(trafficSignService)
   }
 
+  lazy val roadAddressService: RoadAddressesService = {
+    new RoadAddressesService(viiteClient)
+  }
+
   lazy val massTransitStopService: MassTransitStopService = {
-    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
+      override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
+    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService, roadAddressService)
   }
 
   lazy val geometryTransform: GeometryTransform = {
-    new GeometryTransform()
+    new GeometryTransform(roadAddressService)
   }
 
   lazy val geometryVKMTransform: VKMGeometryTransform = {
@@ -110,10 +123,6 @@ object DataFixture {
 
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
     new InaccurateAssetDAO()
-  }
-
-  lazy val roadAddressDao : RoadAddressDAO = {
-    new RoadAddressDAO()
   }
 
   lazy val tierekisteriLightingAsset : TierekisteriLightingAssetClient = {
@@ -195,14 +204,6 @@ object DataFixture {
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
       "kauniainen_traffic_signs.sql",
-//      "siilijarvi_functional_classes.sql",
-//      "siilijarvi_link_types.sql",
-//      "siilijarvi_traffic_directions.sql",
-//      "siilinjarvi_speed_limits.sql",
-//      "siilinjarvi_linear_assets.sql",
-      "insert_road_address_data.sql",
-      "insert_floating_road_addresses.sql",
-      "insert_project_link_data.sql",
       "kauniainen_maximum_x7_restrictions.sql",
       "user_notification_examples.sql"
     ))
@@ -264,12 +265,6 @@ object DataFixture {
     println(s"\nCommencing hazmat prohibition import at time: ${DateTime.now()}")
     dataImporter.importHazmatProhibitions()
     println(s"Prohibition import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  @Deprecated
-  def importRoadAddresses(): Unit = {
-    println("\nDeprecated! Use \nsbt \"project digiroad2-viite\" \"test:run-main fi.liikennevirasto.viite.util.DataFixture import_road_addresses\"\n instead")
     println()
   }
 
@@ -362,7 +357,7 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val batchSize = 1000
     var obstaclesFound = true
     var lastIdUpdate : Long = 0
@@ -408,7 +403,7 @@ object DataFixture {
 
   def checkUnknownSpeedlimits(): Unit = {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
     val unknowns = speedLimitService.getUnknown(Set(), None)
     unknowns.foreach { case (_, mapped) =>
@@ -657,7 +652,7 @@ object DataFixture {
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val assetTypeId = 110
 
     lazy val linearAssetService: LinearAssetService = {
@@ -817,7 +812,7 @@ object DataFixture {
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
@@ -927,7 +922,7 @@ object DataFixture {
     println(DateTime.now())
 
     val dao = new OracleLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {
       new RoadWidthService(roadLinkService, new DummyEventBus)
@@ -1232,7 +1227,7 @@ object DataFixture {
     println("\nUpdate Information Source for RoadWidth")
     println(DateTime.now())
 
-    val roadLinkService = new RoadLinkOTHService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
 //    Get All Municipalities
     val municipalities: Seq[Int] =
@@ -1410,8 +1405,6 @@ object DataFixture {
         importVVHRoadLinksByMunicipalities()
       case Some("set_transitStops_floating_reason") =>
         transisStopAssetsFloatingReason()
-      case Some ("import_road_addresses") =>
-        importRoadAddresses()
       case Some ("verify_roadLink_administrative_class_changed") =>
         verifyRoadLinkAdministrativeClassChanged()
       case Some("check_TR_bus_stops_without_OTH_LiviId") =>

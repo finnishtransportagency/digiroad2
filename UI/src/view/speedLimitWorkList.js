@@ -72,6 +72,9 @@
           return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item, index) : idLink(item, index)));
         });
       };
+      var tableBodyRows = function (values) {
+        return $('<tbody>').append(tableContentRows(values));
+      };
       var idLink = function(id, index) {
         var link = '#' + layerName + '/' + id  ;
         return $('<a class="work-list-item"/>').attr('href', link + '/municipality/' +municipalityId +'/'+ index).attr('id', index).html(link);
@@ -91,7 +94,7 @@
         var countString = count ? ' (' + count + ' kpl)' : '';
         return $('<table/>').addClass('table')
           .append(tableHeaderRow(values + countString))
-          .append(tableContentRows(ids));
+          .append(tableBodyRows(ids));
       };
 
       return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
@@ -139,7 +142,7 @@
         }
         else {
           if (limits.length === 1){
-            me.createVerificationForm(_.first(limits));
+            me.createVerificationForm(_.head(limits));
           }
         }
       });

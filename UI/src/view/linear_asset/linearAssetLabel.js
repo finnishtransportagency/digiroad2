@@ -131,19 +131,37 @@
         var IMAGE_HEIGHT = 27;
         var IMAGE_ADJUSTMENT = 15;
 
+        this.renderFeatures = function(assets, zoomLevel, getPoint){
+          if(!me.isVisibleZoom(zoomLevel))
+            return [];
+
+          return _.chain(assets).
+          map(function(asset){
+            var assetId = me.getId(asset);
+            var assetValue = me.getValue(asset);
+            if(!_.isUndefined(assetValue) || !_.isUndefined(assetId)){
+              var style = me.getStyle(assetValue);
+              var feature = me.createFeature(getPoint(asset));
+              feature.setProperties(_.omit(asset, 'geometry'));
+              feature.setStyle(style);
+              return feature;
+            }
+          }).
+          filter(function(feature){ return feature !== undefined; })
+              .value();
+        };
+
         this.getStyle = function(value){
           return createMultiStyles(value);
         };
 
         var createMultiStyles = function(values){
-          var i = 0;
+          if(!values)
+            return warningSign;
           var splitValues = values.replace(/[ \t\f\v]/g,'').split(/[\n,]+/);
-          var styles = [];
-          _.forEach(splitValues, function(value){
-            i++;
-            styles.push(backgroundStyle(value, i), textStyle(value, i));
-          });
-          return styles;
+          return _.flatten(_.map(splitValues, function(value, i){
+            return [backgroundStyle(value, i+1), textStyle(value, i+1)];
+          }));
         };
 
         var backgroundStyle = function(value, i){
@@ -177,6 +195,17 @@
           });
         };
 
+        var warningSign = function(){
+          return new ol.style.Style({
+            image: new ol.style.Icon(({
+              anchor: [IMAGE_ADJUSTMENT+2, IMAGE_HEIGHT - IMAGE_ADJUSTMENT],
+              anchorXUnits: 'pixels',
+              anchorYUnits: 'pixels',
+              src: 'images/warningLabel.png'
+            }))
+          });
+        };
+
         var getTextValue = function(value) {
           if(!correctValues(value))
             return '';
@@ -185,14 +214,16 @@
 
         var correctValues = function(value){
           var valueLength = value.toString().length;
-          if(value){
-            return value.match(/^[0-9|Ee]/) && valueLength < 4;
-          }
-          return true;
+          if(value)
+            return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/) && (valueLength > 0 && valueLength < 4);
         };
 
         this.getValue = function(asset){
             return asset.value;
+        };
+
+        this.getId = function(asset){
+          return asset.id;
         };
 
     };
@@ -288,8 +319,8 @@
         var IMAGE_LABEL_ADJUSTMENT = 43;
 
         this.getStyle = function (values) {
-            var value = values.properties[0] ? values.properties[0].values[0].value : '' ;
-            return createMultiStyles(value);
+          var value = values.properties[0] && !_.isEmpty(values.properties[0].values) ? values.properties[0].values[0].value : '' ;
+          return createMultiStyles(value);
         };
 
         var createMultiStyles = function (value) {

@@ -258,17 +258,6 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  def withRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] ={
-    val addressData = roadLinkService.getRoadAddressesByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)).toSet).map(a => (a.linkId, a)).toMap
-    pieceWiseLinearAssets.map(
-        _.map(pwa =>
-          if (addressData.contains(pwa.linkId))
-            pwa.copy(attributes = pwa.attributes ++ addressData(pwa.linkId).asAttributes)
-          else
-            pwa
-    ))
-  }
-
   /**
     * Uses VVH ChangeInfo API to map OTH linear asset information from old road links to new road links after geometry changes.
     */
@@ -816,6 +805,8 @@ trait LinearAssetOperations {
       municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
     }
   }
+
+  def validateAssetValue(value: Option[Value]): Unit = {}
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
@@ -831,4 +822,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
+}
+
+class AssetValueException(value: String) extends RuntimeException {override def getMessage: String = value
 }

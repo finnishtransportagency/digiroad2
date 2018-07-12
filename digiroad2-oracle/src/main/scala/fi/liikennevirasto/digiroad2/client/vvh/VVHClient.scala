@@ -757,8 +757,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath,
     12312 -> FeatureClass.WinterRoads,
-    12155 -> FeatureClass.SpecialTransportWithoutGate,
-    12156 -> FeatureClass.SpecialTransportWithGate
+    12153 -> FeatureClass.SpecialTransportWithoutGate,
+    12154 -> FeatureClass.SpecialTransportWithGate
   )
 
   protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(

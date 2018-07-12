@@ -50,13 +50,13 @@ case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
   override def toJson: Any = massLimitation
 }
 
-case class MultiAssetValue(properties: Seq[MultiTypeProperty])
-case class MultiValue(value: MultiAssetValue) extends Value{
+case class DynamicAssetValue(properties: Seq[DynamicProperty])
+case class DynamicValue(value: DynamicAssetValue) extends Value{
   override def toJson: Any = value
 
   override def equals(obj: scala.Any): Boolean = {
     obj match {
-      case asset: MultiValue =>
+      case asset: DynamicValue =>
         value.properties.size == asset.value.properties.size && (value.properties.groupBy(_.publicId), asset.value.properties.groupBy(_.publicId)).zipped.forall {
           case (asset1, asset2) => (asset1._2, asset2._2).zipped.forall {
             case (prop1, prop2) => prop1.propertyType == prop2.propertyType && prop1.values.forall(
