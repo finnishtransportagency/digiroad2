@@ -24,6 +24,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
+    //TODO: check update methods to see if the rule is correct on that service
     params("assetType") match {
       case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until))
       case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since, until))

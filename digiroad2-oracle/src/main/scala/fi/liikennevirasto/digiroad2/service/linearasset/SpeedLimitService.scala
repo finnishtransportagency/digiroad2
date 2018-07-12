@@ -372,7 +372,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     newLimits.flatMap (limit =>  limit.value match {
       case NumericValue(intValue) =>
 
-        if ((limit.startMeasure - oldSpeedLimit.startMeasure > 0.01 || (limit.endMeasure - oldSpeedLimit.endMeasure > 0.01 || oldSpeedLimit.endMeasure - limit.endMeasure > 0.01)) || SideCode(limit.sideCode) != oldSpeedLimit.sideCode)
+        if (((limit.startMeasure - oldSpeedLimit.startMeasure > 0.01  || oldSpeedLimit.startMeasure - limit.startMeasure > 0.01) || (limit.endMeasure - oldSpeedLimit.endMeasure > 0.01 || oldSpeedLimit.endMeasure - limit.endMeasure > 0.01)) || SideCode(limit.sideCode) != oldSpeedLimit.sideCode)
           updateSpeedLimitWithExpiration(id, intValue, username, Some(Measures(limit.startMeasure, limit.endMeasure)), Some(limit.sideCode), (_, _) => Unit)
         else
           updateValues(Seq(id), intValue, username, (_, _) => Unit)

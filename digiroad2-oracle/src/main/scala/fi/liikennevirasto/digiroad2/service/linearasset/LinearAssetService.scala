@@ -464,7 +464,7 @@ trait LinearAssetOperations {
     if (ids.nonEmpty)
       logger.info("Expiring ids " + ids.mkString(", "))
     withDynTransaction {
-      ids.foreach(dao.updateExpiration(_, expired = true, username))
+      ids.foreach(dao.updateExpiration(_))
       ids
     }
   }
@@ -637,21 +637,16 @@ trait LinearAssetOperations {
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).
-        getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
-      val newIdsToReturn = existingValue match {
-        case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username, None, None, Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)))
-      }
+      dao.updateExpiration(id)
 
-      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
-        Some(roadLink)))
-
-      newIdsToReturn ++ Seq(createdIdOption).flatten
+      val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink)))
+      val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink)))
+      Seq(existingId, createdId).flatten
     }
   }
 
@@ -709,13 +704,24 @@ trait LinearAssetOperations {
     }
   }
 
-  protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None): Seq[Long] = {
+  protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
     ids.flatMap { id =>
+      val oldLinearAssets = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
+      val newMeasures = measures.getOrElse(Measures(oldLinearAssets.startMeasure, oldLinearAssets.endMeasure))
+      val newSideCode = sideCode.getOrElse(oldLinearAssets.sideCode)
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(oldLinearAssets.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
       value match {
-        case NumericValue(intValue) =>  dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, username)
+        case NumericValue(intValue) =>
+          if (((newMeasures.startMeasure - oldLinearAssets.startMeasure > 0.01 || oldLinearAssets.startMeasure - newMeasures.startMeasure > 0.01) || (newMeasures.endMeasure - oldLinearAssets.endMeasure > 0.01 || oldLinearAssets.endMeasure - newMeasures.endMeasure > 0.01)) || newSideCode != oldLinearAssets.sideCode) {
+            dao.updateExpiration(id)
+            Some(createWithoutTransaction(oldLinearAssets.typeId, oldLinearAssets.linkId, NumericValue.apply(intValue), newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink)))
+          }
+          else
+            dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, username)
         case _ => Some(id)
       }
     }
