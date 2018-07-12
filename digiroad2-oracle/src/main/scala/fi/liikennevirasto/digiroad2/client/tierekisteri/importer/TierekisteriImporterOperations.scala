@@ -329,6 +329,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
         }
     }
   }
+
 }
 
 trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporterOperations{

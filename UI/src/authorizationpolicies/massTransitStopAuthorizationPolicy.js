@@ -46,7 +46,7 @@
       var owner = _.find(properties, function(property) {
         return property.publicId === "tietojen_yllapitaja"; });
 
-      var condition = typeof owner != 'undefined' && typeof owner.values != 'undefined' &&  !_.isEmpty(owner.values) && _.contains(_.map(owner.values, function (value) {
+      var condition = typeof owner != 'undefined' && typeof owner.values != 'undefined' &&  !_.isEmpty(owner.values) && _.includes(_.map(owner.values, function (value) {
             return value.propertyValue;
           }), "2");
 

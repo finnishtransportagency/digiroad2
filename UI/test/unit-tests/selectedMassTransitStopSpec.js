@@ -127,10 +127,12 @@ define(['chai', 'SelectedMassTransitStop'], function (chai) {
           required: true,
           values: [{
             propertyDisplayValue: 'Linja-autojen paikallisliikenne',
-            propertyValue: '2'
+            propertyValue: '2',
+            checked: undefined
           }, {
             propertyDisplayValue: 'Linja-autojen kaukoliikenne',
-            propertyValue: '3'
+            propertyValue: '3',
+            checked: undefined
           }
           ]
         });

@@ -34,7 +34,7 @@
     };
 
     var isCarTrafficRoad = function() {
-      return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21, 99], data.linkType);
+      return !_.isUndefined(data.linkType) && !_.includes([8, 9, 21, 99], data.linkType);
     };
 
     var cancel = function() {
@@ -91,7 +91,7 @@
           });
           roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
             return _.some(roadLinkGroup, function(roadLink) {
-              _.contains(selectedIds, roadLink.getId());
+              _.includes(selectedIds, roadLink.getId());
             });
           }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
@@ -110,7 +110,7 @@
         });
         roadLinkGroupsHistory = _.reject(fetchedRoadLinkModels, function(roadLinkGroupHistory) {
           return _.some(roadLinkGroupHistory, function(roadLink) {
-            _.contains(selectedIds, roadLink.getId());
+            _.includes(selectedIds, roadLink.getId());
           });
         }).concat(getSelectedRoadLinksHistory());
         eventbus.trigger('roadLinks:historyFetched');
@@ -129,7 +129,7 @@
         });
         roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
           return _.some(roadLinkGroup, function(roadLink) {
-            _.contains(selectedIds, roadLink.getId());
+            _.includes(selectedIds, roadLink.getId());
           });
         }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');

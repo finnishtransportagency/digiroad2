@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.joda.time.DateTime
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
@@ -271,8 +271,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
 
       verify(mockEventBus).publish(
-        org.mockito.Matchers.eq("linkProperties:changed"),
-        org.mockito.Matchers.eq(changeSet))
+        org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
+        org.mockito.ArgumentMatchers.eq(changeSet))
 
       dynamicSession.rollback()
     }
@@ -662,8 +662,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       // Pass only incomplete road links with construction type 'in use' to be saved with actor
       val changeSet = RoadLinkChangeSet(Seq(), List(IncompleteLink(1,91,Municipality), IncompleteLink(4,91,Municipality)))
       verify(mockEventBus).publish(
-        org.mockito.Matchers.eq("linkProperties:changed"),
-        org.mockito.Matchers.eq(changeSet))
+        org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
+        org.mockito.ArgumentMatchers.eq(changeSet))
 
       dynamicSession.rollback()
     }
@@ -707,8 +707,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       // Pass only incomplete road links with link source normal
       val changeSet = RoadLinkChangeSet(List(), List(IncompleteLink(5,91,Municipality)))
       verify(mockEventBus).publish(
-        org.mockito.Matchers.eq("linkProperties:changed"),
-        org.mockito.Matchers.eq(changeSet))
+        org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
+        org.mockito.ArgumentMatchers.eq(changeSet))
 
       dynamicSession.rollback()
     }

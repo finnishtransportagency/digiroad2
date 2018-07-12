@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.{ArgumentCaptor, Mockito}
 import org.scalatest.mock.MockitoSugar
@@ -638,7 +638,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val position = Some(Position(60.0, 0.0, 123l, None))
       service.updateExistingById(300002, position, Set.empty, "user", (_,_) => Unit)
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -672,7 +672,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.size should be(0)
 
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -698,7 +698,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.size should be(0)
 
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -729,7 +729,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
 
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -775,7 +775,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val capturedStop = captor.getValue
       capturedStop.liviId should be (liviId)
 
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 

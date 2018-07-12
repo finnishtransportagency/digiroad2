@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.mockito.ArgumentCaptor
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -330,7 +330,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
       service.getByBoundingBox(PavingAssetTypeId, boundingBox)
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
-      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("paving:saveProjectedPaving"), captor.capture())
+      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("paving:saveProjectedPaving"), captor.capture())
 
       val linearAssets = captor.getValue
 
@@ -630,7 +630,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
         .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
-      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("paving:saveProjectedPaving"), captor.capture())
+      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("paving:saveProjectedPaving"), captor.capture())
       val projectedAssets = captor.getValue
       projectedAssets.length should be(1)
       projectedAssets.foreach { proj =>

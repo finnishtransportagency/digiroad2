@@ -27,6 +27,11 @@
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
+  function hasValue(value, id) {
+    var nullOrUndefined = function(id){return _.isUndefined(id) || _.isNull(id);};
+    return (nullOrUndefined(id) && !_.isUndefined(value)) || (!nullOrUndefined(id) && !_.isUndefined(value)) || !nullOrUndefined(id);
+  }
+
   function formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem) {
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
@@ -46,8 +51,8 @@
     }
 
     function singleValueEditElement(currentValue, sideCode, input, id) {
-      var withoutValue = _.isNull(id) ? 'checked' : '';
-      var withValue = _.isNull(id) ? '' : 'checked';
+      var withoutValue = !hasValue(currentValue, id)  ? 'checked' : '';
+      var withValue = !hasValue(currentValue, id) ? '' : 'checked';
       return '' +
         sideCodeMarker(sideCode) +
         '<div class="edit-control-group choice-group">' +
@@ -150,7 +155,7 @@
               '<div class="form-group editable form-editable-'+ className +'">' +
               '  <label class="control-label">' + editControlLabels.title + '</label>' +
               '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
-              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, id), id) +
+                singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, id), id) +
               '</div>';
       }
     }
@@ -214,7 +219,7 @@
 
     function measureInput(currentValue, className, possibleValues, id) {
       var value = currentValue ? currentValue : '';
-      var disabled = _.isNull(id) ? 'disabled' : '';
+      var disabled = !hasValue(currentValue, id) ? 'disabled' : '';
       return '' +
         '<div class="input-unit-combination input-group">' +
         '  <textarea class="form-control large-input ' + className + '" ' +

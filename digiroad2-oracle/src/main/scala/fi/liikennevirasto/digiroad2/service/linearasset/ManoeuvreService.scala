@@ -217,7 +217,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  def deleteManoeuvre(s: String, id: Long) = {
+  def deleteManoeuvre(s: String, id: Long): Long = {
     withDynTransaction {
       dao.deleteManoeuvre(s, id)
     }

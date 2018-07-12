@@ -278,7 +278,7 @@
 
           var manoeuvreAdjacentLinks = _.isEmpty(addedManoeuvre) ?  adjacentLinks(manoeuvreSource) : addedManoeuvre.adjacentLinks;
 
-          markAdjacentFeatures(_.pluck(manoeuvreAdjacentLinks,'linkId'));
+          markAdjacentFeatures(_.map(manoeuvreAdjacentLinks,'linkId'));
           drawIndicators(manoeuvreAdjacentLinks);
         }
         redrawRoadLayer();
@@ -387,7 +387,7 @@
 
     var markAdjacentFeatures = function(adjacentLinkIds) {
       _.forEach(roadLayer.layer.getSource().getFeatures(), function(feature) {
-        feature.getProperties().adjacent = feature.getProperties().type === 'normal' && _.contains(adjacentLinkIds, feature.getProperties().linkId);
+        feature.getProperties().adjacent = feature.getProperties().type === 'normal' && _.includes(adjacentLinkIds, feature.getProperties().linkId);
       });
     };
 
@@ -406,8 +406,8 @@
       indicatorLayer.getSource().clear();
       var aLinks = adjacentLinks(roadLink);
       var tLinks = nonAdjacentTargetLinks(roadLink);
-      var adjacentLinkIds = _.pluck(aLinks, 'linkId');
-      var targetLinkIds = _.pluck(tLinks, 'linkId');
+      var adjacentLinkIds = _.map(aLinks, 'linkId');
+      var targetLinkIds = _.map(tLinks, 'linkId');
 
       if(application.isReadOnly()){
 
@@ -439,7 +439,7 @@
               .filter(function (adjacentLink) {
                 return adjacentLink.linkId;
               })
-              .pluck('linkId')
+              .map('linkId')
               .value();
 
           markAdjacentFeatures(targetMarkers);

@@ -73,8 +73,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
-    with RequestHeaderAuthentication
-    with GZipSupport {
+    with RequestHeaderAuthentication {
 
   val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
@@ -194,7 +193,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   delete("/massTransitStops/removal") {
     val user = userProvider.getCurrentUser()
     val assetId = (parsedBody \ "assetId").extractOpt[Int].get
-    massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.foreach{ a =>
+    massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
       a.linkId match {
         case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
         case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId)
@@ -622,17 +621,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   object TierekisteriInternalServerError {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(HttpStatus.SC_FAILED_DEPENDENCY, reason), body, headers)
+      ActionResult(HttpStatus.SC_FAILED_DEPENDENCY, body, headers)
   }
 
   object TierekisteriNotFoundWarning {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, reason), body, headers)
+      ActionResult(HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, body, headers)
   }
 
   object RoadAddressNotFound {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(HttpStatus.SC_PRECONDITION_FAILED, reason), body, headers)
+      ActionResult(HttpStatus.SC_PRECONDITION_FAILED, body, headers)
   }
 
   error {
@@ -1293,7 +1292,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
 
-    manoeuvreIds.foreach { manoeuvreId =>
+    manoeuvreIds.map { manoeuvreId =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
       validateMunicipalityAccessByLinkId(user, sourceRoadLinkId)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
@@ -1306,7 +1305,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .extractOrElse[Map[String, ManoeuvreUpdates]](halt(BadRequest("Malformed body on put manoeuvres request")))
       .map { case (id, updates) => (id.toLong, updates) }
 
-    manoeuvreUpdates.foreach { case (id, updates) =>
+    manoeuvreUpdates.map { case (id, updates) =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
       validateMunicipalityAccessByLinkId(user, sourceRoadLinkId)
       manoeuvreService.updateManoeuvre(user.username, id, updates, None)
@@ -1470,7 +1469,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     service.expire(id, user.username)
   }
 
-  private def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) {
+  private def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
@@ -1486,9 +1485,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
 
-    for (link <- roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId)) {
-     validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
-     service.create(asset, user.username, link)
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId).map{
+      link =>
+       validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
+       service.create(asset, user.username, link)
     }
   }
 
@@ -1538,7 +1538,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   delete("/servicePoints/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    servicePointService.getPersistedAssetsByIds(Set(id)).headOption.foreach { a =>
+    servicePointService.getPersistedAssetsByIds(Set(id)).headOption.map { a =>
       (a.lon, a.lat) match {
         case (lon, lat) =>
           roadLinkService.getClosestRoadlinkFromVVH(user, Point(lon, lat)) match {

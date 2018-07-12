@@ -48,7 +48,7 @@
       }
 
       function sideCodeMarker(sideCode) {
-        if (_.isUndefined(sideCode)) {
+        if (_.isEmpty(sideCode)) {
           return '';
         } else {
           return '<span class="marker">' + sideCode + '</span>';
@@ -82,7 +82,7 @@
 
           function createValidityPeriodElement() {
             var validityPeriodItems = _(prohibition.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+              .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(function (period) {
                 var dayName = dayLabels[period.days];
                 return '<li>' + dayName + ' ' + period.startHour + ':' + (period.startMinute<10 ? '0' + period.startMinute : period.startMinute) + ' – ' + period.endHour + ':' + (period.endMinute<10 ? '0' + period.endMinute : period.endMinute) + '</li>';
@@ -163,7 +163,7 @@
         function validityPeriodsElement() {
           var existingValidityPeriodElements =
             _(prohibition.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+              .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodElement)
               .join('');
 
@@ -284,7 +284,7 @@
       }
 
       function supportsExceptions(prohibitionType) {
-        return _.contains([2, 3, 23], prohibitionType);
+        return _.includes([2, 3, 23], prohibitionType);
       }
 
       function hasOrSupportsExceptions(prohibition) {

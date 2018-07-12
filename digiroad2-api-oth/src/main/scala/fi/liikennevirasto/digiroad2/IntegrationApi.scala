@@ -226,10 +226,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
       case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty =>
-        dynamicTypeProperty.values.flatMap { v =>
-          Map("weightLimitation" -> v.value)
-        }
-      }
+        dynamicTypeProperty.values.map { v =>
+           v.value} }.headOption
       case _ => value.map(_.toJson)
     }
   }
