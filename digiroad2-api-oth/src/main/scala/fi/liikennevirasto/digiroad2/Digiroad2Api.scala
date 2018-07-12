@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationBody, FeedbackApplicationService, FeedbackDataService}
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationBody, FeedbackApplicationService}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -69,8 +69,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
-                   val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
-                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
+                   val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -779,14 +778,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
 
-  private def sendFeedback(service: FeedbackOperations)(implicit m: Manifest[service.FeedbackBody]): Long= {
-    val body = (parsedBody \ "body").extract[service.FeedbackBody]
+  post("/feedback"){
+    val body = extractFeedbackBody(parsedBody \ "body")
     val user = userProvider.getCurrentUser()
-    service.insertFeedback(user.username, body)
+    applicationFeedback.insertFeedback(user.username, body)
   }
 
-  post("/feedbackApplication")(sendFeedback(applicationFeedback))
-  post("/feedbackData")(sendFeedback(dataFeedback))
+  private def extractFeedbackBody(value: JValue): FeedbackApplicationBody = {
+    value.extractOpt[FeedbackApplicationBody].map { x => FeedbackApplicationBody(x.feedbackType, x.headline, x.freeText, x.name, x.email, x.phoneNumber)}.get
+  }
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()
