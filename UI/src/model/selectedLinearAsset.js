@@ -26,7 +26,7 @@
     };
 
     this.separate = function() {
-      selection = collection.separateLinearAsset(_.first(selection));
+      selection = collection.separateLinearAsset(_.head(selection));
       isSeparated = true;
       dirty = true;
       eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
@@ -46,10 +46,26 @@
      return collection.getById(id);
     };
 
-    this.openMultiple = function(linearAssets) {
+    this.addSelection = function(linearAssets){
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
       var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      selection = selection.concat(existingLinearAssets.concat(unknownLinearAssets));
+    };
+
+    this.removeSelection = function(linearAssets){
+      selection = _.filter(selection, function(asset){
+        if(isUnknown(asset))
+          return !_.some(linearAssets, function(iasset){ return iasset.generatedId === asset.generatedId;});
+
+        return !_.some(linearAssets, function(iasset){ return iasset.id === asset.id;});
+      });
+    };
+
+    this.openMultiple = function(linearAssets) {
+      var partitioned = _.groupBy(linearAssets, isUnknown);
+      var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
       selection = existingLinearAssets.concat(unknownLinearAssets);
       eventbus.trigger(singleElementEvent('multiSelected'));
     };
@@ -63,6 +79,9 @@
     };
 
     this.closeMultiple = function() {
+      eventbus.trigger(singleElementEvent('unselect'), self);
+      dirty = false;
+      collection.setSelection(null);
       selection = [];
     };
 
@@ -74,12 +93,14 @@
 
       var payload = {
         newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value: value, expired: false }); }),
-        ids: _.pluck(knownLinearAssets, 'id'),
+        ids: _.map(knownLinearAssets, 'id'),
         value: value,
         typeId: typeId
       };
       var backendOperation = _.isUndefined(value) ? backend.deleteLinearAssets : backend.createLinearAssets;
       backendOperation(payload, function() {
+        dirty = false;
+        self.closeMultiple();
         eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
         eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
@@ -109,7 +130,7 @@
         if (self.isUnknown()) {
           return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
         } else {
-          return { ids: _.pluck(selection, 'id') };
+          return { ids: _.map(selection, 'id') };
         }
       };
       var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
@@ -133,7 +154,7 @@
     };
 
     this.isSplit = function() {
-      return !isSeparated && selection[0].id === null;
+      return !isSeparated && !_.isEmpty(selection[0]) && selection[0].id === null;
     };
 
     this.isSeparated = function() {
@@ -182,12 +203,13 @@
       } else {
         cancelExisting();
       }
+      self.close();
     };
 
     this.verify = function() {
       eventbus.trigger(singleElementEvent('saving'));
       var knownLinearAssets = _.reject(selection, isUnknown);
-      var payload = {ids: _.pluck(knownLinearAssets, 'id'), typeId: typeId};
+      var payload = {ids: _.map(knownLinearAssets, 'id'), typeId: typeId};
       collection.verifyLinearAssets(payload);
       dirty = false;
       self.close();
@@ -201,12 +223,21 @@
       return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
     };
 
+    var getPropertyB = function(propertyName) {
+      return _.has(selection[1], propertyName) ? selection[1][propertyName] : null;
+    };
+
     this.getId = function() {
       return getProperty('id');
     };
 
     this.getValue = function() {
       var value = getProperty('value');
+      return _.isNull(value) ? undefined : value;
+    };
+
+    this.getBValue = function() {
+      var value = getPropertyB('value');
       return _.isNull(value) ? undefined : value;
     };
 
@@ -256,6 +287,12 @@
       }
     };
 
+    this.setMultiValue = function(value) {
+        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
+        selection = collection.replaceSegments(selection, newGroup);
+        eventbus.trigger(multiElementEvent('valueChanged'), self);
+    };
+
     function isValueDifferent(selection){
       if(selection.length == 1) return true;
 
@@ -269,7 +306,7 @@
           else
             return zipper[0].value !== zipper[1].value;
       });
-      return _.contains(mapped, true);
+      return _.includes(mapped, true);
     }
 
     function getRequiredFields(properties){
@@ -307,6 +344,10 @@
       self.setValue(undefined);
     };
 
+    this.removeMultiValue = function() {
+      self.setMultiValue();
+    };
+
     this.removeAValue = function() {
       self.setAValue(undefined);
     };
@@ -317,6 +358,11 @@
 
     this.isDirty = function() {
       return dirty;
+    };
+
+    this.setDirty = function(dirtyValue) {
+      dirty = dirtyValue;
+      eventbus.trigger(singleElementEvent('valueChanged'), self);
     };
 
     this.isSelected = function(linearAsset) {
@@ -385,8 +431,6 @@
     };
 
     this.isSplitOrSeparatedEqual = function(){
-      if(!this.isSplitOrSeparated()) return false;
-
       if (_.filter(selection, function(p){return p.value;}).length <= 1)
         return false;
 
@@ -406,6 +450,5 @@
     this.setValidValues = function (valid) {
       isValid = valid;
     };
-
   };
 })(this);

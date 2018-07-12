@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -19,7 +19,8 @@ import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
-import org.mockito.Matchers._
+import org.mockito.AdditionalAnswers
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
@@ -125,7 +126,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  when(mockRoadLinkService.getRoadAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq())
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressesService]
+  when(mockRoadAddressService.roadLinkWithRoadAddress(any[Seq[RoadLink]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
+  when(mockRoadAddressService.linearAssetWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
+  when(mockRoadAddressService.speedLimitWithRoadAddress(any[Seq[Seq[SpeedLimit]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
 
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611071l)).thenReturn(Some(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(2l))
@@ -158,7 +162,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testProhibitionService = new ProhibitionService(mockRoadLinkService, new DummyEventBus)
   val testTextValueService = new TextValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
   
-  addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
+  addServlet(new Digiroad2Api(mockRoadLinkService, mockRoadAddressService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
     testPavingService, testRoadWidthService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
@@ -318,10 +322,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(200)
-      val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
+      val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      parsedBody.count(_.id.isEmpty) should be(1)
-      parsedBody.count(_.id.isDefined) should be(2)
+      parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
+      parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
     }
   }
 
@@ -340,10 +344,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get complementary numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(200)
-      val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
+      val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      parsedBody.count(_.id.isEmpty) should be(1)
-      parsedBody.count(_.id.isDefined) should be(2)
+      parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
+      parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
     }
   }
 
@@ -356,7 +360,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get mass Limitations Assets with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets/massLimitation?typeId=60&bbox=374037,6677013,374540,6677675&withRoadAddress=false") {
       status should equal(200)
-      val parsedBody = parse(body).extract[Seq[MassLinearAssetFromApi]]
+      val parsedBody = parse(body).extract[Seq[Seq[MassLinearAssetFromApi]]]
       parsedBody.size should be(1)
     }
   }

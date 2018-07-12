@@ -470,7 +470,7 @@
         data: JSON.stringify({typeId:typeIds}),
         dataType: "json",
         success: function(){
-          eventbus.trigger('municipality:verified');
+          eventbus.trigger('municipality:verified', municipalityCode);
         },
         error: function(){
           eventbus.trigger('municipality:verificationFailed');
@@ -487,7 +487,7 @@
         data: JSON.stringify({typeId:typeIds}),
         dataType: "json",
         success: function(){
-          eventbus.trigger('municipality:verified');
+          eventbus.trigger('municipality:verified', municipalityCode);
         },
         error: function(){
           eventbus.trigger('municipality:verificationFailed');
@@ -629,37 +629,45 @@
     };
 
     function createCallbackRequestor(getParameters) {
-      var requestor = latestResponseRequestor(getParameters);
-      return function(parameter, callback) {
-        requestor(parameter).then(callback);
-      };
+        var requestor = latestResponseRequestor(getParameters);
+        return function(parameter, callback) {
+            requestor(parameter).then(callback);
+        };
     }
 
     function createCallbackRequestorWithParameters(getParameters) {
-      var requestor = latestResponseRequestor(getParameters);
-      return function(parameter, callback) {
-        requestor(parameter).then(callback);
-      };
+        var requestor = latestResponseRequestor(getParameters);
+        return function(parameter, callback) {
+            requestor(parameter).then(callback);
+        };
     }
 
     function latestResponseRequestor(getParameters) {
-      var deferred;
-      var requests = new Bacon.Bus();
-      var responses = requests.debounce(200).flatMapLatest(function(params) {
-        return Bacon.$.ajax(params, true);
-      });
 
-      return function() {
-        if (deferred) { deferred.reject(); }
-        deferred = responses.toDeferred();
-        requests.push(getParameters.apply(undefined, arguments));
-        return deferred.promise();
-      };
+        var deferred;
+        var request;
+
+        function doRequest(){
+
+            if(request)
+                request.abort();
+
+            request = $.ajax(getParameters.apply(undefined, arguments)).done(function(result){
+                deferred.resolve(result);
+            });
+            return deferred;
+        }
+
+        return function(){
+            deferred = $.Deferred();
+            _.debounce(doRequest, 200).apply(undefined, arguments);
+            return deferred;
+        };
     }
 
     this.withVerificationInfo = function(){
       self.getVerificationInfo = function(){
-        return $.Deferred().resolve([]);
+        return mockBaconDefered({verified: false});
       };
       return self;
     };
@@ -727,7 +735,7 @@
 
     this.withSpeedLimitsData = function(speedLimitsData) {
       self.getSpeedLimits = function(boundingBox, withRoadAddress) {
-        return $.Deferred().resolve(speedLimitsData);
+        return mockBaconDefered(speedLimitsData);
       };
       return self;
     };
@@ -764,5 +772,30 @@
       };
       return self;
     };
+
+    this.withMunicipalityLocationData = function(municipalityLocationData){
+      self.getMunicipalityByBoundingBox = function(){
+        return mockBaconDefered(municipalityLocationData);
+      };
+      return self;
+    };
+
+    this.withMunicipalityCoordinateData = function(municipalityCoordinateData){
+      self.getMunicipalityFromCoordinates = function(x, y, callback){
+        return callback(municipalityCoordinateData);
+      };
+      return self;
+    };
+
+    var mockBaconDefered = function(resultData){
+       var then = function(callback){
+        callback(resultData);
+        return {then: then};
+         };
+        return {
+       then : then
+      };
+      };
+
   };
 }(this));

@@ -106,8 +106,8 @@ trait MassTransitStopService extends PointAssetOperations {
   val massTransitStopDao: MassTransitStopDao
   val municipalityDao: MunicipalityDao
   val roadLinkService: RoadLinkService
+  val geometryTransform: GeometryTransform
 
-  val geometryTransform = new GeometryTransform
   val tierekisteriClient: TierekisteriMassTransitStopClient
 
   override def typeId: Int = 10

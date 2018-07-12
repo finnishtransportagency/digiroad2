@@ -1,37 +1,36 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-
-import fi.liikennevirasto.digiroad2.util.{EmailAuthPropertyReader, SmtpPropertyReader}
+import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
+import org.slf4j.LoggerFactory
 
 case class Email( to: String, from: String, cc: Option[String], bcc: Option[String], subject: String, body: String)
 
 class EmailOperations() {
 
-  private val auth = new EmailAuthPropertyReader
   private val smtpProp = new SmtpPropertyReader
   private def isNumeric(str:String): Boolean = str.matches("[-+]?\\d+(\\.\\d+)?")
+  val logger = LoggerFactory.getLogger(getClass)
 
-  private def initEmail(smtpHost: String, smtpPort: String): MimeMessage = {
-    if( (smtpHost.isEmpty  || smtpPort.isEmpty) || !isNumeric(smtpPort) )
+  private def setEmailProperties(): Session = {
+    if( (smtpProp.getHost.isEmpty  || smtpProp.getPort.isEmpty) || !isNumeric(smtpProp.getPort) )
       throw new IllegalArgumentException
 
     val properties = new Properties()
-    properties.put("mail.smtp.host", smtpHost)
-    properties.put("mail.smtp.port", smtpPort)
+    properties.put("mail.smtp.host", smtpProp.getHost)
+    properties.put("mail.smtp.port", smtpProp.getPort)
 
-    val session = Session.getDefaultInstance(properties)
-    new MimeMessage(session)
+    Session.getDefaultInstance(properties)
   }
 
-  private def createMessage(email: Email): Message = {
-    val message = initEmail(smtpProp.getHost, smtpProp.getPort)
+  private def createMessage(email: Email, session: Session): Message = {
+    val message =  new MimeMessage(session)
     message.setFrom(new InternetAddress(email.from))
     message.setSubject(email.subject)
-    message.setHeader("Content-Type", "text/html")
-    message.setContent(email.body, "text/html")
+    message.setHeader("Content-Type", "text/html; charset=UTF-8")
+    message.setContent(email.body, "text/html; charset=UTF-8")
     setRecipients(message, email)
   }
 
@@ -49,8 +48,15 @@ class EmailOperations() {
     message
   }
 
-  def sendEmail(email: Email): Unit = {
-    val message = createMessage(email)
-    Transport.send(message, auth.getUsername, auth.getPassword)
+  def sendEmail(email: Email): Boolean = {
+    val message = createMessage(email, setEmailProperties())
+    try {
+      Transport.send(message)
+      true
+    }catch {
+      case ex: MessagingException =>
+        logger.error(s"Exception at send feedback: ${ex.getMessage}")
+        false
+    }
   }
 }

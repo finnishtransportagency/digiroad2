@@ -68,7 +68,7 @@
     };
 
     var pickProperties = function(properties, publicIds) {
-      return _.filter(properties, function(property) { return _.contains(publicIds, property.publicId); });
+      return _.filter(properties, function(property) { return _.includes(publicIds, property.publicId); });
     };
 
     var payloadWithProperties = function(payload, publicIds) {
@@ -78,7 +78,7 @@
 
       return _.merge(
         {},
-        _.pick(payload, function(value, key) { return key != 'properties'; }),
+        _.pickBy(payload, function(value, key) { return key != 'properties'; }),
         {
           properties: pickProperties(payload.properties, publicIds)
         });
@@ -143,7 +143,7 @@
     });
 
     eventbus.on('validityPeriod:changed', function(validityPeriods) {
-      if (currentAsset && (!_.contains(validityPeriods, currentAsset.validityPeriod) &&
+      if (currentAsset && (!_.includes(validityPeriods, currentAsset.validityPeriod) &&
         currentAsset.validityPeriod !== undefined)) {
         close();
       }
@@ -227,7 +227,7 @@
       return _.some(currentAsset.payload.properties, function(property) {
         return isRequiredProperty(property.publicId) && (
                 isChoicePropertyWithUnknownValue(property) ||
-                  _.all(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
+                  _.every(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
           );
       });
     };

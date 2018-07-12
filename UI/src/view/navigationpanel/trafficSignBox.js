@@ -8,7 +8,6 @@
         me.panel(),
         me.labeling(),
         me.checkboxPanel(),
-        me.bindExternalEventHandlers(),
         ' </div>',
         '</div>']
         .join(''))  };

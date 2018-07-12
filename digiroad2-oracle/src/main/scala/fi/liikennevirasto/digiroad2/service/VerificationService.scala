@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean)
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean, counter: Option[Int])
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
@@ -37,7 +37,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
         throw new IllegalStateException("Asset type not allowed")
 
-      assetTypeIds.foreach { typeId =>
+      assetTypeIds.map { typeId =>
         dao.expireAssetTypeVerification(municipalityCode, typeId, userName)
         dao.insertAssetTypeVerification(municipalityCode, typeId, userName)
       }
@@ -71,7 +71,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
 
   def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
     withDynTransaction{
-      assetTypeIds.foreach { assetType =>
+      assetTypeIds.map { assetType =>
         dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
       }
     }

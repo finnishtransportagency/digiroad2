@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -19,12 +20,10 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.JsonSerializer
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, JsonSerializer}
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
-import fi.liikennevirasto.viite.dao.MissingRoadAddress
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite._
 import org.apache.http.impl.client.HttpClientBuilder
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -136,41 +135,6 @@ class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
   }
 }
 
-class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
-  def receive = {
-    case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[MissingRoadAddress]])
-    case _                    => println("roadAddressUpdater: Received unknown message")
-  }
-}
-
-class RoadAddressMerger(roadAddressService: RoadAddressService) extends Actor {
-  def receive = {
-    case w: RoadAddressMerge => roadAddressService.mergeRoadAddress(w.asInstanceOf[RoadAddressMerge])
-    case _                    => println("roadAddressMerger: Received unknown message")
-  }
-}
-
-class RoadAddressAdjustment(roadAddressService: RoadAddressService) extends Actor {
-  def receive = {
-    case w: Seq[any] => roadAddressService.saveAdjustments(w.asInstanceOf[Seq[LRMValueAdjustment]])
-    case _                    => println("roadAddressUpdater: Received unknown message")
-  }
-}
-
-class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
-  def receive = {
-    case w: Set[any] => roadAddressService.checkRoadAddressFloating(w.asInstanceOf[Set[Long]])
-    case _                    => println("roadAddressUpdater: Received unknown message")
-  }
-}
-
-class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
-  def receive = {
-    case w: RoadCheckOptions =>  roadNetworkService.checkRoadAddressNetwork(w)
-    case _ => println("roadAddressChecker: Received unknown message")
-  }
-}
-
 class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) extends Actor {
   def receive = {
     case x: Seq[T] => prohibitionProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
@@ -179,6 +143,8 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
 }
 
 object Digiroad2Context {
+  val logger = LoggerFactory.getLogger(getClass)
+
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
     val props = new Properties()
@@ -193,17 +159,14 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
-    try {
-      projectService.updateProjectsWaitingResponseFromTR()
-    } catch {
-      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
-    }
-  }
 
-  system.scheduler.schedule(FiniteDuration(1, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
-     applicationFeedback.sendFeedbacks()
-     System.out.println("System.scheduler executes for feedback feature")
+  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
+    try {
+      logger.info("Send feedback scheduler started.")
+      applicationFeedback.sendFeedbacks()
+    } catch {
+      case ex: Exception => logger.error(s"Exception at send feedback: ${ex.getMessage}")
+    }
   }
 
   val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")
@@ -237,38 +200,11 @@ object Digiroad2Context {
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
 
-  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkOTHService), name = "linkPropertyUpdater")
+  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
-
-  val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
-  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")
-
-  val roadAddressMerger = system.actorOf(Props(classOf[RoadAddressMerger], roadAddressService), name = "roadAddressMerger")
-  eventbus.subscribe(roadAddressMerger, "roadAddress:mergeRoadAddress")
-
-  val roadAddressAdjustment = system.actorOf(Props(classOf[RoadAddressAdjustment], roadAddressService), name = "roadAddressAdjustment")
-  eventbus.subscribe(roadAddressAdjustment, "roadAddress:persistAdjustments")
-
-  val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
-  eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
-
-  val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
-  eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
-
-  lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
-  }
-
-  lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
-  }
-
-  lazy val roadNetworkService: RoadNetworkService = {
-    new RoadNetworkService
-  }
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -279,11 +215,11 @@ object Digiroad2Context {
   }
 
   lazy val linearMassLimitationService: LinearMassLimitationService = {
-    new LinearMassLimitationService(roadLinkOTHService, new MassLimitationDao)
+    new LinearMassLimitationService(roadLinkService, new MassLimitationDao)
   }
 
   lazy val speedLimitService: SpeedLimitService = {
-    new SpeedLimitService(eventbus, vvhClient, roadLinkOTHService)
+    new SpeedLimitService(eventbus, vvhClient, roadLinkService)
   }
 
   lazy val userProvider: UserProvider = {
@@ -302,8 +238,12 @@ object Digiroad2Context {
     new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
+  lazy val viiteClient: SearchViiteClient = {
+    new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+  }
+
   lazy val linearAssetDao: OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient, roadLinkOTHService)
+    new OracleLinearAssetDao(vvhClient, roadLinkService)
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
@@ -316,12 +256,8 @@ object Digiroad2Context {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
-  lazy val roadLinkOTHService: RoadLinkOTHService = {
-    new RoadLinkOTHService(vvhClient, eventbus, new JsonSerializer)
-  }
-
   lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(eventbus, roadLinkOTHService)
+    new RoadAddressesService(viiteClient)
   }
 
   lazy val assetService: AssetService = {
@@ -332,8 +268,12 @@ object Digiroad2Context {
     new VerificationService(eventbus, roadLinkService)
   }
 
-  lazy val multiValueLinearAssetService: MultiValueLinearAssetService = {
-    new MultiValueLinearAssetService(roadLinkService, eventbus)
+  lazy val municipalityService: MunicipalityService = {
+    new MunicipalityService(eventbus, roadLinkService)
+  }
+
+  lazy val dynamicLinearAssetService: DynamicLinearAssetService = {
+    new DynamicLinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val revision: String = {
@@ -344,38 +284,39 @@ object Digiroad2Context {
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
+      override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new ProductionMassTransitStopService(eventbus, roadLinkOTHService)
+    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressesService)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
-    new MaintenanceService(roadLinkOTHService, eventbus)
+    new MaintenanceService(roadLinkService, eventbus)
   }
 
   lazy val pavingService: PavingService = {
-    new PavingService(roadLinkOTHService, eventbus)
+    new PavingService(roadLinkService, eventbus)
   }
 
   lazy val roadWidthService: RoadWidthService = {
-    new RoadWidthService(roadLinkOTHService, eventbus)
+    new RoadWidthService(roadLinkService, eventbus)
   }
 
   lazy val linearAssetService: LinearAssetService = {
-    new LinearAssetService(roadLinkOTHService, eventbus)
+    new LinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val onOffLinearAssetService: OnOffLinearAssetService = {
-    new OnOffLinearAssetService(roadLinkOTHService, eventbus, linearAssetDao)
+    new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
   }
 
   lazy val prohibitionService: ProhibitionService = {
-    new ProhibitionService(roadLinkOTHService, eventbus)
+    new ProhibitionService(roadLinkService, eventbus)
   }
 
   lazy val textValueLinearAssetService: TextValueLinearAssetService = {
@@ -387,59 +328,59 @@ object Digiroad2Context {
   }
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = {
-    new PedestrianCrossingService(roadLinkOTHService)
+    new PedestrianCrossingService(roadLinkService)
   }
 
   lazy val trafficLightService: TrafficLightService = {
-    new TrafficLightService(roadLinkOTHService)
+    new TrafficLightService(roadLinkService)
   }
 
   lazy val obstacleService: ObstacleService = {
-    new ObstacleService(roadLinkOTHService)
+    new ObstacleService(roadLinkService)
   }
 
   lazy val railwayCrossingService: RailwayCrossingService = {
-    new RailwayCrossingService(roadLinkOTHService)
+    new RailwayCrossingService(roadLinkService)
   }
 
   lazy val directionalTrafficSignService: DirectionalTrafficSignService = {
-    new DirectionalTrafficSignService(roadLinkOTHService)
+    new DirectionalTrafficSignService(roadLinkService)
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkOTHService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider)
   }
 
   lazy val manoeuvreService = {
-    new ManoeuvreService(roadLinkOTHService)
+    new ManoeuvreService(roadLinkService)
   }
 
   lazy val weightLimitService: WeightLimitService = {
-    new TotalWeightLimitService(roadLinkOTHService)
+    new TotalWeightLimitService(roadLinkService)
   }
 
   lazy val axleWeightLimitService: AxleWeightLimitService = {
-    new AxleWeightLimitService(roadLinkOTHService)
+    new AxleWeightLimitService(roadLinkService)
   }
 
   lazy val bogieWeightLimitService: BogieWeightLimitService = {
-    new BogieWeightLimitService(roadLinkOTHService)
+    new BogieWeightLimitService(roadLinkService)
   }
 
   lazy val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = {
-    new TrailerTruckWeightLimitService(roadLinkOTHService)
+    new TrailerTruckWeightLimitService(roadLinkService)
   }
 
   lazy val heightLimitService: HeightLimitService = {
-    new HeightLimitService(roadLinkOTHService)
+    new HeightLimitService(roadLinkService)
   }
 
   lazy val widthLimitService: WidthLimitService = {
-    new WidthLimitService(roadLinkOTHService)
+    new WidthLimitService(roadLinkService)
   }
 
   lazy val pointMassLimitationService: PointMassLimitationService = {
-    new PointMassLimitationService(roadLinkOTHService, new OraclePointMassLimitationDao)
+    new PointMassLimitationService(roadLinkService, new OraclePointMassLimitationDao)
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()

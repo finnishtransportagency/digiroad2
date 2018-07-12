@@ -33,7 +33,7 @@
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
 
-    var selectControl = new SelectToolControl(application, vectorLayer, map, {
+    var selectControl = new SelectToolControl(application, vectorLayer, map, false,{
         style : function (feature) {
             return style.browsingStyleProvider.getStyle(feature);
         },
@@ -81,7 +81,7 @@
         dragControl.on('translating', dragHandler);
 
         function dragFreely(feature) {
-          if (selectedAsset.isSelected(feature.attributes)) {
+          if (selectedAsset.isSelected(feature.features.getArray()[0].getProperties())) {
             selectedAsset.set({lon: feature.coordinate[0], lat: feature.coordinate[1]});
           }
         }

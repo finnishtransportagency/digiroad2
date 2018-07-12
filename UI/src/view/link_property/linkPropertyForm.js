@@ -100,7 +100,7 @@
 
     var title = function() {
       if (selectedLinkProperty.count() == 1) {
-        return '<span>Linkin ID: ' + _.first(selectedLinkProperty.get()).linkId + '</span>';
+        return '<span>Linkin ID: ' + _.head(selectedLinkProperty.get()).linkId + '</span>';
       } else {
         return '<span>Ominaisuustiedot</span>';
       }

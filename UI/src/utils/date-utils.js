@@ -81,7 +81,6 @@
     var date = fromDateString(dateElement.val());
 
     var dateCallback = function () {
-      datePickers.date.setDate(datePickers.date.getDate());
       dateElement.trigger('datechange');
     };
 
@@ -118,7 +117,7 @@
   }
 
   dateutil.extractLatestModifications = function (elementsWithModificationTimestamps) {
-    var newest = _.max(elementsWithModificationTimestamps, function (s) {
+    var newest = _.maxBy(elementsWithModificationTimestamps, function (s) {
       return moment(s.modifiedAt, "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
     });
     return _.pick(newest, ['modifiedAt', 'modifiedBy']);

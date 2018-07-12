@@ -15,7 +15,7 @@
 
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
-        '<div class="modal-dialog form form-horizontal linear-asset">' +
+        '<div class="modal-dialog form form-horizontal form-editable linear-asset ">' +
           '<div class="content">' +
             'Olet valinnut <%- count %> tielinkkiä' +
           '</div>' +
@@ -32,6 +32,7 @@
     function setValue(value) {
       if (validator(value)) {
         currentValue = value;
+        selectedLinearAsset.setMultiValue(currentValue);
         $('button.save').prop('disabled', '');
       } else {
         $('button.save').prop('disabled', 'disabled');
@@ -63,6 +64,8 @@
           $('button.save').prop('disabled', '');
         else
           $('button.save').prop('disabled', 'disabled');
+
+        selectedLinearAsset.setMultiValue(currentValue);
       }
 
       else {
@@ -84,10 +87,9 @@
 
     }
 
-
-
     function removeValue() {
       currentValue = undefined;
+      selectedLinearAsset.removeMultiValue();
       $('button.save').prop('disabled', '');
     }
 
@@ -107,8 +109,8 @@
       var selectedMulti = _.clone(selectedLinearAsset);
       selectedMulti.setValue =  _setValue;
       selectedMulti.removeValue = removeValue;
-      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti).find('.editable'));
-      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), assetTypeConfiguration, '', selectedMulti);
+      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti, true).find('.editable'));
+      eventbus.trigger('massDialog:rendered' , $('button.save'));
     };
 
 

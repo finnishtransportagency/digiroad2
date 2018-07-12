@@ -65,6 +65,8 @@ define(['AssetsTestData',
       .withSpeedLimitUpdate(speedLimitsTestData)
       .withPassThroughAssetCreation()
       .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate())
+      .withMunicipalityLocationData({verified: true})
+      .withMunicipalityCoordinateData({kuntakoodi: 230})
       .withVerificationInfo();
   };
 
