@@ -31,9 +31,9 @@
     "moment": "2.22.1",
     "multiselect-two-sides": "2.5.0",
     "openlayers": "3.20.1",
-    "pikaday": "1.5.1",
+    "pikaday": "1.7.0",
     "proj4": "^2.4.4",
-    "requirejs": "2.3.2",
+    "requirejs": "2.3.5",
     "web-console-reporter": "1.0.0"
   },
   "engines": {
