@@ -27,7 +27,7 @@
           '<div class="label">' + speedLimit + '</div>' +
           '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
           '</div>';
-      }).join('') + '</div>';
+      }).join('');
     };
 
     this.checkboxPanel = function () {

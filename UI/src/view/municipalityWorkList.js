@@ -43,7 +43,7 @@
           me.createVerificationForm(municipality);
         });
       };
-      return $('<table id="tableData"/>').append(tableContentRows(municipalityValues));
+      return $('<table id="tableData"><tbody>').append(tableContentRows(municipalityValues)).append('</tbody></table>');
     };
 
     this.createVerificationForm = function(municipality) {
@@ -60,7 +60,7 @@
     this.reloadForm = function(municipalityId){
       $('#formTable').remove();
       backend.getAssetTypesByMunicipality(municipalityId).then(function(assets){
-        $('#work-list .work-list').append(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
+        $('#work-list .work-list').html(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
       });
     };
 
@@ -75,7 +75,7 @@
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th id="name">TIETOLAJI</th> <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr></thead>';
+        return '<thead><th></th> <th id="name">TIETOLAJI</th> <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
