@@ -472,25 +472,13 @@ trait LinearAssetOperations {
   /**
     * Saves updated linear asset from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
+  def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, username)
+      updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
     }
   }
 
-  def updateWithTimeStamp(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
-    withDynTransaction {
-      updateWithoutTransaction(ids, value, username, None, vvhTimeStamp, sideCode)
-    }
-  }
-
-  def updateWithNewMeasures(ids: Seq[Long], value: Value, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long] = None , sideCode: Option[Int] = None): Seq[Long] = {
-    withDynTransaction {
-      updateWithoutTransaction(ids, value, username, measures, vvhTimeStamp, sideCode)
-    }
-  }
-
-  def expireAsset(typeId: Int, id: Long, username: String, expired : Boolean) = {
+  def expireAsset(typeId: Int, id: Long, username: String, expired : Boolean): Option[Long] = {
     withDynTransaction {
       dao.updateExpiration(id, expired, username)
     }
@@ -657,7 +645,7 @@ trait LinearAssetOperations {
 
       val newIdsToReturn = existingValue match {
         case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username, Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)))
+        case Some(value) => updateWithoutTransaction(Seq(id), value, username, None, None, Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)))
       }
 
       val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
@@ -721,20 +709,14 @@ trait LinearAssetOperations {
     }
   }
 
-  protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Seq[Long] = {
+  protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
-    val assetTypeId = assetDao.getAssetTypeId(ids)
-    val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
-
     ids.flatMap { id =>
-      val typeId = assetTypeById(id)
       value match {
-        case NumericValue(intValue) =>
-          updateValueByExpiration(id, NumericValue(intValue), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
-        case _ =>
-          Some(id)
+        case NumericValue(intValue) =>  dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, username)
+        case _ => Some(id)
       }
     }
   }
