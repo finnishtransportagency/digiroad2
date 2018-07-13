@@ -3,18 +3,25 @@
     AssetStyle.call(this);
     var me = this;
 
-    var valueExists = function(asset) {
-      return !_.isUndefined(asset.value);
+    var valueExists = function(asset, publicId) {
+      return !_.isUndefined(asset.value) && !emptyValues(asset, publicId);
     };
 
     var findValue = function(asset, publicId) {
-      return _.find(asset.value, function(a) { return a.publicId === publicId; }).value;
+      var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
+      if(properties)
+        return _.first(properties.values).value;
+    };
+
+    var emptyValues = function(asset, publicId) {
+      var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
+      return properties ?  !_.isUndefined(asset.id) && _.isEmpty(properties.values): !_.isUndefined(asset.id) ;
     };
 
     this.renderOverlays = function(linearAssets) {
       return me.lineFeatures(_.map(linearAssets, function(linearAsset) {
-        var expired = _.isUndefined(linearAsset.value);
-        return _.merge({}, linearAsset, { type: 'overlay' }, { expired: expired }); }));
+        var hasAsset = !_.isUndefined(linearAsset.id);
+        return _.merge({}, linearAsset, { type: 'overlay' }, { hasAsset: hasAsset }); }));
     };
 
     me.renderFeatures = function(linearAssets) {
@@ -22,15 +29,15 @@
     };
 
     var pavedRoadStyleRules = [
-      new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "paallysteluokka"); }}).is(1).use({stroke: {color: '#c559ff'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "paallysteluokka"); }}).is(2).use({stroke: {color: '#ff55dd'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "paallysteluokka"); }}).is(10).use({stroke: {color: '#ff0000'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "paallysteluokka"); }}).is(20).use({stroke: {color: '#0011bb'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "paallysteluokka"); }}).is(30).use({stroke: {color: '#11bb00'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "paallysteluokka"); }}).is(40).use({stroke: {color: '#ffe82d'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "paallysteluokka"); }}).is(50).use({stroke: {color: '#a52a2a'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "paallysteluokka"); }}).is(99).use({stroke: {color: '#000000'}})
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(1).use({stroke: {color: '#c559ff'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(2).use({stroke: {color: '#ff55dd'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(10).use({stroke: {color: '#ff0000'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(20).use({stroke: {color: '#0011bb'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(30).use({stroke: {color: '#11bb00'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(40).use({stroke: {color: '#ffe82d'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(50).use({stroke: {color: '#a52a2a'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(99).use({stroke: {color: '#ffa500'}})
     ];
 
     var pavedRoadFeatureSizeRules = [
