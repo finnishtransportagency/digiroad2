@@ -6,15 +6,14 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationBody, FeedbackApplicationService}
+import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
@@ -69,7 +68,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
-                   val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService)
+                   val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
+                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -778,15 +778,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
 
-  post("/feedback"){
-    val body = extractFeedbackBody(parsedBody \ "body")
+  private def sendFeedback(service: Feedback)(implicit m: Manifest[service.FeedbackBody]): Long= {
+    val body = (parsedBody \ "body").extract[service.FeedbackBody]
     val user = userProvider.getCurrentUser()
-    applicationFeedback.insertFeedback(user.username, body)
+    service.insertFeedback(user.username, body)
   }
 
-  private def extractFeedbackBody(value: JValue): FeedbackApplicationBody = {
-    value.extractOpt[FeedbackApplicationBody].map { x => FeedbackApplicationBody(x.feedbackType, x.headline, x.freeText, x.name, x.email, x.phoneNumber)}.get
-  }
+  post("/feedbackApplication")(sendFeedback(applicationFeedback))
+  post("/feedbackData")(sendFeedback(dataFeedback))
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()

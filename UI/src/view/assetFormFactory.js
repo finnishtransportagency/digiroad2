@@ -4,7 +4,7 @@
     var me = this;
 
     me.viewModeRender = function (field, currentValue) {
-      var value = _.first(currentValue, function(values) { return values.value ; });
+      var value = _.head(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : (field.defaultValue ? field.defaultValue : '-');
 
       return $('' +
@@ -67,7 +67,7 @@
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
-      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var value = _.head(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
       var element = $('' +
@@ -91,7 +91,7 @@
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
-      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var value = _.head(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
       var element = $('' +
@@ -114,7 +114,7 @@
 
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
-      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var value = _.head(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
 
@@ -141,7 +141,7 @@
     var me = this;
 
     me.editModeRender = function (field, fieldValue) {
-      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var value = _.head(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : '-';
       return $('' +
         '<div class="form-group">' +
@@ -158,7 +158,7 @@
     var me = this;
 
     me.viewModeRender = function (field, currentValue) {
-      var value = _.first(currentValue, function(values) { return values.value ; });
+      var value = _.head(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
 
       var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
@@ -179,7 +179,7 @@
     var className = assetTypeConfiguration.className;
 
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
-      var value = _.first(fieldValue, function(values) { return values.value ; });
+      var value = _.head(fieldValue, function(values) { return values.value ; });
       var _value = value ? value.value : '';
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = _.isUndefined(field.required) ? '' : 'required';
@@ -213,7 +213,7 @@
     var className = assetTypeConfiguration.className;
 
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
-      fieldValue = _.first(fieldValue, function(curr) { return curr.value; });
+      fieldValue = _.head(fieldValue, function(curr) { return curr.value; });
       var template =  _.template(
         '<div class="form-group">' +
         '<label class="control-label">'+ field.label +'</label>' +
@@ -240,7 +240,7 @@
     };
 
     me.viewModeRender = function (field, currentValue) {
-      var value = _.first(currentValue, function(values) { return values.value ; });
+      var value = _.head(currentValue, function(values) { return values.value ; });
       var _value = value ? value.value : '-';
 
       var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
@@ -327,7 +327,7 @@
     var me = this;
 
     me.editModeRender = function (field, fieldValue, assetValue, sideCode, setValue, asset) {
-      var someValue = _.first(fieldValue, function(values) { return values.value ; });
+      var someValue = _.head(fieldValue, function(values) { return values.value ; });
       var disabled = _.isUndefined(assetValue) ? 'disabled' : '';
       var required = !_.isUndefined(field.required);
       var value = _.isEmpty(someValue) ? (field.defaultValue ? field.defaultValue : '') : someValue.value;
@@ -365,7 +365,7 @@
 
 
     me.viewModeRender = function (field, currentValue) {
-      var first = _.first(currentValue, function(values) { return values.value ; });
+      var first = _.head(currentValue, function(values) { return values.value ; });
 
       var value =  first ? first.value : '';
       return $('' +

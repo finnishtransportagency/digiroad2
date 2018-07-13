@@ -73,7 +73,6 @@
            });
        };
 
-
        var confirmDiv =
            '<div class="modal-overlay confirm-modal" id="feedback">' +
                 '<div class="modal-dialog">' +

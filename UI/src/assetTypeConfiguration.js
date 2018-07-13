@@ -18,7 +18,7 @@
       numberOfLanes: 140,
       massTransitLane: 160,
       trafficVolume: 170,
-      winterSpeedLimits: 180,
+      winterSpeedLimit: 180,
       prohibition: 190,
       pedestrianCrossings: 200,
       hazardousMaterialTransportProhibition: 210,
@@ -355,7 +355,7 @@
         })
       },
       {
-        typeId: assetType.winterSpeedLimits,
+        typeId: assetType.winterSpeedLimit,
         singleElementEventCategory: 'winterSpeedLimit',
         multiElementEventCategory: 'winterSpeedLimits',
         layerName: 'winterSpeedLimits',
