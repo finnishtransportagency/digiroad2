@@ -1356,6 +1356,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
       when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRCarryingCapacityClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
@@ -1409,7 +1410,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
       when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockRoadAddressService.getAllByRoadNumberAndParts(any[Long], any[Seq[Long]])).thenReturn(Seq(ra))
       when(mockTRCarryingCapacityClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
       when(mockTRCarryingCapacityClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
       when(mockTRCarryingCapacityClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
