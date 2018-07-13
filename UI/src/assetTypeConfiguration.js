@@ -303,6 +303,8 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
+        style: new PavedRoadStyle(),
+        layer : PavedRoadLayer,
         isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true
       },
