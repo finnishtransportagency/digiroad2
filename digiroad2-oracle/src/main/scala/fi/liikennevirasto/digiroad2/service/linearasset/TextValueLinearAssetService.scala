@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.{SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -114,11 +114,20 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
 
     ids.flatMap { id =>
       val typeId = assetTypeById(id)
+      val oldLinearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.getValuePropertyId(typeId)).head
+      val newMeasures = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
+      val newSideCode = sideCode.getOrElse(oldLinearAsset.sideCode)
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
       value match {
         case TextualValue(textValue) =>
-          updateValueByExpiration(id, TextualValue(textValue), LinearAssetTypes.getValuePropertyId(typeId), username, measures, vvhTimeStamp, sideCode)
-        case _ =>
-          Some(id)
+          if (((newMeasures.startMeasure - oldLinearAsset.startMeasure > 0.01 || oldLinearAsset.startMeasure - newMeasures.startMeasure > 0.01) || (newMeasures.endMeasure - oldLinearAsset.endMeasure > 0.01 || oldLinearAsset.endMeasure - newMeasures.endMeasure > 0.01)) || newSideCode != oldLinearAsset.sideCode) {
+            dao.updateExpiration(id)
+            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, TextualValue(textValue), newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink)))
+          }
+          else
+            dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(typeId), username)
+        case _ => Some(id)
       }
     }
   }
@@ -131,6 +140,28 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
           case false => throw new AssetValueException(textValue)
         }
       case _ => throw new AssetValueException("incorrect asset type")
+    }
+  }
+
+  /**
+    * Saves linear asset when linear asset is split to two parts in UI (scissors icon). Used by Digiroad2Api /linearassets/:id POST endpoint.
+    */
+  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+    withDynTransaction {
+      val assetTypeId = assetDao.getAssetTypeId(Seq(id))
+      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
+
+      val linearAsset = dao.fetchAssetsWithTextualValuesByIds(Set(id), LinearAssetTypes.getValuePropertyId(assetTypeById(id))).head
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
+
+      val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
+
+      dao.updateExpiration(id)
+
+      val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink)))
+      val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink)))
+      Seq(existingId, createdId).flatten
     }
   }
 }

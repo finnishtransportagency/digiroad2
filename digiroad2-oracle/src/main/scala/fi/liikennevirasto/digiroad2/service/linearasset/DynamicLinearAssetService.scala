@@ -69,18 +69,43 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
 
     val assetTypeId = assetDao.getAssetTypeId(ids)
     validateRequiredProperties(assetTypeId.head._2, value.asInstanceOf[DynamicValue].value.properties)
-
     val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
     ids.flatMap { id =>
       val typeId = assetTypeById(id)
+
+      val oldLinearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id)).head
+      val newMeasures = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
+      val newSideCode = sideCode.getOrElse(oldLinearAsset.sideCode)
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
+
       value match {
         case DynamicValue(multiTypeProps) =>
-          updateValueByExpiration(id, typeId, DynamicValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
+          if (((newMeasures.startMeasure - oldLinearAsset.startMeasure > 0.01 || oldLinearAsset.startMeasure - newMeasures.startMeasure > 0.01) || (newMeasures.endMeasure - oldLinearAsset.endMeasure > 0.01 || oldLinearAsset.endMeasure - newMeasures.endMeasure > 0.01)) || newSideCode != oldLinearAsset.sideCode) {
+            dao.updateExpiration(id)
+            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, DynamicValue(multiTypeProps), newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink)))
+          }
+          else
+            Some(updateValues(id, typeId, DynamicValue(multiTypeProps), username, Some(roadLink)))
         case _ =>
           Some(id)
       }
     }
+  }
+
+  private def updateValues(id: Long, typeId: Int, value: Value, username: String, roadLink: Option[RoadLinkLike]): Long ={
+    value match {
+      case DynamicValue(multiTypeProps) =>
+        val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
+        val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+        val props = properties ++ defaultValues.toSet
+        validateRequiredProperties(typeId, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateValue(id, username)
+      case _ => None
+    }
+    id
   }
 
   override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
