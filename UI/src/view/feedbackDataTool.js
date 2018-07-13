@@ -11,7 +11,7 @@
     }
 
     var allowFeedBack = function () {
-      return _.contains(['manoeuvre', 'linkProperty'], me.layerName) || applicationModel.getSelectedTool() === 'Select' && !_.isEmpty(me.collection.get().assetId);
+      return _.includes(['manoeuvre', 'linkProperty'], me.layerName) || applicationModel.getSelectedTool() === 'Select' && !_.isEmpty(me.collection.get().assetId);
     };
 
     var renderFeedbackLink = function (enable) {

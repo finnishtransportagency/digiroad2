@@ -355,7 +355,7 @@
         })
       },
       {
-        typeId: assetType.winterSpeedLimit,
+        typeId: assetType.winterSpeedLimits,
         singleElementEventCategory: 'winterSpeedLimit',
         multiElementEventCategory: 'winterSpeedLimits',
         layerName: 'winterSpeedLimits',
