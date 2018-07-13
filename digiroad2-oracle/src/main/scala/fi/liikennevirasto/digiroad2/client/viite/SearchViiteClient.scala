@@ -29,7 +29,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
   }
 
   def fetchAllBySection(roadNumber: Long, roadPartNumbers: Seq[Long], tracks: Seq[Track]) = {
-    post[Map[String, Any], List[Map[String, Any]]]("road_address/" + roadNumber, Map("roadParts" -> roadPartNumbers, "tracks" -> tracks), ra => new StringEntity(Serialization.write(ra), ContentType.APPLICATION_JSON)) match {
+    post[Map[String, Any], List[Map[String, Any]]](serviceName + "road_address/" + roadNumber, Map("roadParts" -> roadPartNumbers, "tracks" -> tracks), ra => new StringEntity(Serialization.write(ra), ContentType.APPLICATION_JSON)) match {
       case Left(roadAddresses) => roadAddresses.flatMap(mapFields)
       case Right(error) => throw new ViiteClientException(error.toString)
     }

@@ -441,10 +441,11 @@
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
+    var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
-          .concat(getLinearAsset(assetType.pavedRoad))
+          .concat(pavedRoadBox)
           .concat(getLinearAsset(assetType.width))
           .concat(getLinearAsset(assetType.numberOfLanes))
           .concat(getLinearAsset(assetType.massTransitLane))
