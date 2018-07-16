@@ -158,9 +158,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
       oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
+      oldLimit.sideCode should be (SideCode.BothDirections.value)
       oldLimit.expired should be (true)
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.modifiedBy should be (None)
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)

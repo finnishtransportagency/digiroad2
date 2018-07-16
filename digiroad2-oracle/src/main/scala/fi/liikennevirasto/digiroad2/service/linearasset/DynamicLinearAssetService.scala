@@ -174,7 +174,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
-      dao.updateExpiration(id, expired = true, username)
+      dao.updateExpiration(id)
 
       val(newId1, newId2) =
         (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))),
