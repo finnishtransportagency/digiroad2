@@ -158,6 +158,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
       !persistedLinearAsset.exists(_.value == assetToPersist.value)
     }
+
     toUpdate.foreach { linearAsset =>
       val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
       val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
@@ -165,11 +166,15 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       if (valueChanged(linearAsset, persistedLinearAsset)) {
         linearAsset.value match {
           case Some(DynamicValue(multiTypeProps)) =>
-            val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
-            val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(linearAsset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-            val props = properties ++ defaultValues.toSet
-            validateRequiredProperties(linearAsset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(id, props)
+            dynamicLinearAssetDao.updateAssetLastModified(id, LinearAssetTypes.VvhGenerated) match {
+              case Some(id) =>
+                val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
+                val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(linearAsset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+                val props = properties ++ defaultValues.toSet
+                validateRequiredProperties(linearAsset.typeId, props)
+                dynamicLinearAssetDao.updateAssetProperties(id, props)
+              case _ => None
+            }
           case _ => None
         }
       }
@@ -193,12 +198,8 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
     withDynTransaction {
       val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
-      newLinearAssets.flatMap{ newAsset =>
-        if (newAsset.value.toJson == 1) {
-          Some(createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlinks.find(_.linkId == newAsset.linkId), informationSource = Some(MunicipalityMaintenainer.value)))
-        } else {
-          None
-        }
+      newLinearAssets.flatMap { newAsset =>
+        Some(createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlinks.find(_.linkId == newAsset.linkId), informationSource = Some(MunicipalityMaintenainer.value)))
       }
     }
   }

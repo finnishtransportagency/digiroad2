@@ -31,6 +31,14 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
 
+  val multiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("50")))))
+  val multiTypePropSeq1 = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("40")))))
+  val multiTypePropSeq2 = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("10")))))
+
+  val propertyData = DynamicValue(multiTypePropSeq)
+  val propertyData1 = DynamicValue(multiTypePropSeq1)
+  val propertyData2 = DynamicValue(multiTypePropSeq2)
+
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -126,7 +134,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(newRoadLink))
     runWithRollback {
 
-      val newAssetId = service.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1), 1, 0, None)), PavedRoadAssetTypeId, "testuser")
+      val newAssetId = service.create(Seq(NewLinearAsset(newLinkId, 0, 20, propertyData, 1, 0, None)), PavedRoadAssetTypeId, "testuser")
       val newAsset = service.getPersistedAssetsByIds(PavedRoadAssetTypeId, newAssetId.toSet)
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
@@ -139,7 +147,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       existingAssets.length should be (1)
       existingAssetData.typeId should be (PavedRoadAssetTypeId)
       existingAssetData.vvhTimeStamp should be (0)
-      existingAssetData.value should be (Some(NumericValue(1)))
+      existingAssetData.value should be (Some(propertyData))
       existingAssetData.id should be (newAsset.head.id)
     }
   }
@@ -678,10 +686,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("update pavedRoad and check if informationSource is Municipality Maintainer "){
 
     val service = createService()
-    val toInsert = Seq(NewLinearAsset(5001, 0, 20, NumericValue(1), BothDirections.value, 0, None), NewLinearAsset(5002, 0, 20, NumericValue(1), BothDirections.value, 0, None))
+    val toInsert = Seq(NewLinearAsset(5001, 0, 20, propertyData1, BothDirections.value, 0, None), NewLinearAsset(5002, 0, 20, propertyData2, BothDirections.value, 0, None))
     runWithRollback {
       val assetsIds = ServiceWithDao.create(toInsert, PavedRoadAssetTypeId, "test")
-      val updated = ServiceWithDao.update(assetsIds, NumericValue(0), "userTest")
+      val updated = ServiceWithDao.update(assetsIds, propertyData, "userTest")
 
       val assetsUpdated = ServiceWithDao.getPersistedAssetsByIds(PavedRoadAssetTypeId, updated.toSet)
 
@@ -689,7 +697,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       assetsUpdated.foreach{asset =>
         asset.informationSource should be (Some(MunicipalityMaintenainer))
         asset.modifiedBy should be (Some("userTest"))
-        asset.value should be (Some(NumericValue(0)))
+        asset.value should be (Some(propertyData))
       }
     }
   }
