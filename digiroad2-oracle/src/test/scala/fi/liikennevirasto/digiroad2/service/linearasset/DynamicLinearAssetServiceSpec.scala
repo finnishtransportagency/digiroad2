@@ -179,7 +179,7 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
       oldLimit.value should be (Some(propertyData2))
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.modifiedBy should be (None)
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
@@ -282,7 +282,7 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.BothDirections.value)
       oldLimit.value should be (Some(propertyData2))
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.modifiedBy should be (None)
       oldLimit.startMeasure should be (2.0)
       oldLimit.endMeasure should be (10.0)
 

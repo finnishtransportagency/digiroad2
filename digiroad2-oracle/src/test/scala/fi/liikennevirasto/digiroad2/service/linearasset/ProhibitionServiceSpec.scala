@@ -189,7 +189,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       oldProhibition.linkId should be (388562360)
       oldProhibition.sideCode should be (SideCode.TowardsDigitizing.value)
       oldProhibition.value should be (Some(prohibitionA))
-      oldProhibition.modifiedBy should be (Some("unittest"))
+      oldProhibition.modifiedBy should be (None)
 
       createdProhibition.linkId should be (388562360)
       createdProhibition.sideCode should be (SideCode.AgainstDigitizing.value)
@@ -214,7 +214,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       oldProhibition.linkId should be (388562360)
       oldProhibition.sideCode should be (SideCode.BothDirections.value)
       oldProhibition.value should be (Some(prohibitionA))
-      oldProhibition.modifiedBy should be (Some("unittest"))
+      oldProhibition.modifiedBy should be (None)
       oldProhibition.startMeasure should be (0.0)
       oldProhibition.endMeasure should be (6.0)
 

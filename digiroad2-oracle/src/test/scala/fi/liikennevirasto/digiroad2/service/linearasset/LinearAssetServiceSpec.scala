@@ -136,7 +136,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
       oldLimit.value should be (Some(NumericValue(2)))
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.modifiedBy should be (None)
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
@@ -187,7 +187,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
       oldLimit.value should be (Some(NumericValue(2)))
       oldLimit.expired should be (false)
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.modifiedBy should be (None)
 
     }
   }
