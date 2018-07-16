@@ -213,7 +213,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     */
   override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, username, informationSource = Some(MunicipalityMaintenainer.value))
+      updateWithoutTransaction(ids, value, username, measures = measures, sideCode = sideCode, informationSource = Some(MunicipalityMaintenainer.value))
     }
   }
 }

@@ -164,4 +164,23 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       Seq(existingId, createdId).flatten
     }
   }
+
+  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+    withDynTransaction {
+      val assetTypeId = assetDao.getAssetTypeId(Seq(id))
+      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
+
+      val existing =  dao.fetchAssetsWithTextualValuesByIds(Set(id), LinearAssetTypes.getValuePropertyId(assetTypeById(id))).head
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
+
+      dao.updateExpiration(id, expired = true, username)
+
+      val(newId1, newId2) =
+        (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))),
+          valueAgainstDigitization.map( createWithoutTransaction(existing.typeId, existing.linkId, _,  SideCode.AgainstDigitizing.value,  Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))))
+
+      Seq(newId1, newId2).flatten
+    }
+  }
 }

@@ -160,17 +160,11 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
+      dao.updateExpiration(id)
 
-      val newIdsToReturn = existingValue match {
-        case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username, None, None, Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)))
-      }
-
-      val createdIdOption = createdValue.map(
-          createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
-        Some(roadLink)))
-
-      newIdsToReturn ++ Seq(createdIdOption).flatten
+      val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink)))
+      val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink)))
+      Seq(existingId, createdId).flatten
     }
   }
 
@@ -180,17 +174,13 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
-      val newExistingIdsToReturn = valueTowardsDigitization match {
-        case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
-      }
+      dao.updateExpiration(id, expired = true, username)
 
-      dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
+      val(newId1, newId2) =
+        (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))),
+         valueAgainstDigitization.map( createWithoutTransaction(existing.typeId, existing.linkId, _,  SideCode.AgainstDigitizing.value,  Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))))
 
-      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp,
-        Some(roadLink)))
-
-      newExistingIdsToReturn ++ created
+      Seq(newId1, newId2).flatten
     }
   }
 

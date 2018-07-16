@@ -690,17 +690,13 @@ trait LinearAssetOperations {
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
-      val newExistingIdsToReturn = valueTowardsDigitization match {
-        case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
-      }
+      dao.updateExpiration(id, expired = true, username)
 
-      dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
+      val(newId1, newId2) =
+        (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))),
+          valueAgainstDigitization.map( createWithoutTransaction(existing.typeId, existing.linkId, _,  SideCode.AgainstDigitizing.value,  Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))))
 
-      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp,
-        Some(roadLink)))
-
-      newExistingIdsToReturn ++ created
+      Seq(newId1, newId2).flatten
     }
   }
 
