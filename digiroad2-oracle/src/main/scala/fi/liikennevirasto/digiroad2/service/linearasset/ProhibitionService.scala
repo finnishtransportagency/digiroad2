@@ -160,10 +160,12 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         case prohibitions: Prohibitions =>
           if (((newMeasures.startMeasure - oldLinearAsset.startMeasure > 0.01 || oldLinearAsset.startMeasure - newMeasures.startMeasure > 0.01) || (newMeasures.endMeasure - oldLinearAsset.endMeasure > 0.01 || oldLinearAsset.endMeasure - newMeasures.endMeasure > 0.01)) || newSideCode != oldLinearAsset.sideCode) {
             dao.updateExpiration(id)
-            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, prohibitions, newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink)))
+            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, prohibitions, newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), verifiedBy =  getVerifiedBy(username, oldLinearAsset.typeId)))
           }
-          else
+          else {
+            dao.updateVerifiedInfo(Set(id), username)
             dao.updateProhibitionValue(id, prohibitions, username)
+          }
         case _ =>
           Some(id)
       }
