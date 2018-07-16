@@ -725,7 +725,7 @@
     };
 
     function _isReadOnly(selectedAsset){
-      return checkEditConstrains(selectedAsset) || applicationModel.isReadOnly();
+      return checkAuthorizationPolicy(selectedAsset) || applicationModel.isReadOnly();
     }
 
     me.renderForm = function (selectedAsset, isDisabled) {
@@ -907,13 +907,13 @@
       return sideCode ? _assetTypeConfiguration.className + '-' + sideCode : _assetTypeConfiguration.className;
     }
 
-    function checkEditConstrains(selectedAsset){
-      var editConstrains = _assetTypeConfiguration.editConstrains || function() { return false; };
+    function checkAuthorizationPolicy(selectedAsset){
+      var auth = _assetTypeConfiguration.authorizationPolicy || function() { return false; };
 
       var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
-        return editConstrains(asset);
+        return auth.formEditModeAccess(asset);
       });
-      return !_.isEmpty(selectedAssets);
+      return _.isEmpty(selectedAssets);
     }
 
     me.isSplitOrSeparatedAllowed = function(){
