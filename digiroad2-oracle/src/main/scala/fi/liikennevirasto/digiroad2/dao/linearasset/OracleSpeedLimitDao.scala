@@ -253,19 +253,19 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     (speedLimitLinks, topology)
   }
 
-  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime): Seq[PersistedSpeedLimit] = {
+  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withoutAdjust: Boolean): Seq[PersistedSpeedLimit] = {
+    val withoutAutoAdjustFilter = if(withoutAdjust) "and a.modified_by != 'vvh_generated'" else ""
+
     val speedLimits =  sql"""
-        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
+        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date,
+        pos.adjusted_timestamp, pos.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
          from asset a
          join asset_link al on a.id = al.asset_id
          join lrm_position pos on al.position_id = pos.id
          join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
          join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
          join enumerated_value e on s.enumerated_value_id = e.id
-         where
-         a.asset_type_id = 20
-         and (a.modified_by is null or a.modified_by != 'vvh_generated')
+         where a.asset_type_id = 20
          and floating = 0
          and (
            (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
@@ -274,6 +274,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            or
            (a.created_date > $sinceDate and a.created_date <= $untilDate)
          )
+         #$withoutAutoAdjustFilter
     """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Boolean, Int)].list
 
     speedLimits.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, expired, linkSource) =>

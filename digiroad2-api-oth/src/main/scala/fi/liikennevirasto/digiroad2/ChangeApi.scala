@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
@@ -24,16 +24,21 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
+    val withoutAdjust = params.get("withoutAdjust") match{
+      case Some(value)=> true
+      case _ => false
+    }
+
     //TODO: check update methods to see if the rule is correct on that service
     params("assetType") match {
-      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until))
-      case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since, until))
-      case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(40, since, until))
-      case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(50, since, until))
-      case "bogie_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(60, since, until))
-      case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(70, since, until))
-      case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
-      case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
+      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withoutAdjust))
+      case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(TotalWeightLimit.typeId , since, until, withoutAdjust))
+      case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withoutAdjust))
+      case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withoutAdjust))
+      case "bogie_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withoutAdjust))
+      case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(HeightLimit.typeId, since, until, withoutAdjust))
+      case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withoutAdjust))
+      case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withoutAdjust))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
     }
   }

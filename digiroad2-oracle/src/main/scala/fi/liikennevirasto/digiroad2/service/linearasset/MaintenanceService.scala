@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -224,6 +224,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                   expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                   adjustedMValues = Seq.empty[MValueAdjustment],
+                                  adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                                   adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val (newAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
@@ -264,14 +265,14 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   def getByZoomLevel :Seq[Seq[PieceWiseLinearAsset]] = {
     val linearAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil,Set.empty)))
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty)))
     LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
     val linearAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil,Set.empty)))
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty)))
     LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 

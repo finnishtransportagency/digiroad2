@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -239,6 +239,7 @@ trait LinearAssetOperations {
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                adjustedMValues = Seq.empty[MValueAdjustment],
+                               adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                                adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
@@ -354,6 +355,7 @@ trait LinearAssetOperations {
       case ChangeType.LengthenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
            ChangeType.ReplacedNewPart =>
         projectAssetsConditionally(change, linearAssets, testAssetOutdated, useOldId=false)
+      //TODO check if it is OK, this ChangeType.ReplacedNewPart never used
       case ChangeType.LengthenedNewPart | ChangeType.ReplacedNewPart =>
         projectAssetsConditionally(change, linearAssets, testAssetsContainSegment, useOldId=true)
       case _ =>
@@ -422,9 +424,9 @@ trait LinearAssetOperations {
     * @param until
     * @return Changed linear assets
     */
-  def getChanged(typeId: Int, since: DateTime, until: DateTime): Seq[ChangedLinearAsset] = {
+  def getChanged(typeId: Int, since: DateTime, until: DateTime, withoutAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dao.getLinearAssetsChangedSince(typeId, since, until)
+      dao.getLinearAssetsChangedSince(typeId, since, until, withoutAutoAdjust)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
@@ -668,6 +670,10 @@ trait LinearAssetOperations {
 
       changeSet.adjustedMValues.foreach { adjustment =>
         dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+      }
+
+      changeSet.adjustedVVHChanges.foreach { adjustment =>
+        dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
       }
 
       changeSet.adjustedSideCodes.foreach { adjustment =>

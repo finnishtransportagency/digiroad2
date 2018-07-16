@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, OracleLinearAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
@@ -40,6 +40,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       val initChangeSet: ChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                     expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
                                     adjustedMValues = Seq.empty[MValueAdjustment],
+                                    adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                                     adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
       val (projectedAssets, changedSetProjected) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,

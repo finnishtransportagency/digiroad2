@@ -1,13 +1,14 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
@@ -146,9 +147,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * @param untilDate
     * @return Changed speed limits
     */
-  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedSpeedLimit] = {
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, withoutAdjust: Boolean = false): Seq[ChangedSpeedLimit] = {
     val persistedSpeedLimits = withDynTransaction {
-      dao.getSpeedLimitsChangedSince(sinceDate, untilDate)
+      dao.getSpeedLimitsChangedSince(sinceDate, untilDate, withoutAdjust)
     }
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
@@ -228,6 +229,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                   expiredAssetIds = oldSpeedLimits.map(_.id).toSet,
                                   adjustedMValues = Seq.empty[MValueAdjustment],
+                                  adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                                   adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
 
