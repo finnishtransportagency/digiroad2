@@ -830,7 +830,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val assetToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
       when(mockAssetDao.getAssetTypeId(Seq(assetToUpdate.id))).thenReturn(Seq((assetToUpdate.id, totalWeightLimitAssetId)))
 
-      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "UnitTestsUser")
+      //updated by side code in order to create a new asset
+      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(4000), "UnitTestsUser", sideCode = Some(2))
       val assetUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
 
       //Linear assets that have been changed in OTH between given date values After Update
