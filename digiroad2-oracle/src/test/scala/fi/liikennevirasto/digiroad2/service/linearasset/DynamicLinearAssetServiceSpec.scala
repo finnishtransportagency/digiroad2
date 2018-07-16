@@ -250,7 +250,7 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
       oldLimit.value should be (Some(propertyData2))
       oldLimit.expired should be (false)
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.modifiedBy should be (None)
 
     }
   }

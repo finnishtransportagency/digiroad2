@@ -60,7 +60,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
       //Verify if the new data of the new asset is equal to old asset
       val assetUpdated = linearAssetDao.fetchAssetsWithTextualValuesByIds(newAssetIdCreatedWithUpdate.toSet, "liittymänumero").head
 
-      assetUpdated.id should not be (assetToUpdate.id)
+      assetUpdated.id should be (assetToUpdate.id)
       assetUpdated.linkId should be(assetToUpdate.linkId)
       assetUpdated.sideCode should be(assetToUpdate.sideCode)
       assetUpdated.value should be(Some(TextualValue("Value for Test")))
@@ -74,9 +74,9 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
       assetUpdated.typeId should be(assetToUpdate.typeId)
       assetUpdated.vvhTimeStamp should be(assetToUpdate.vvhTimeStamp)
 
-      //Verify if old asset is expired
+      //Verify if old asset is not expired, since the changes were made on value
       val assetExpired = linearAssetDao.fetchLinearAssetsByIds(Set(600068), "liittymänumero").head
-      assetExpired.expired should be(true)
+      assetExpired.expired should be(false)
     }
   }
 
