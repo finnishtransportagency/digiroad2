@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
-import fi.liikennevirasto.digiroad2.asset.{MmlNls, MunicipalityMaintenainer, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -242,6 +242,27 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     withDynTransaction {
       updateWithoutTransaction(ids, value, username, informationSource = Some(MunicipalityMaintenainer.value))
+    }
+  }
+
+  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+    withDynTransaction {
+      val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).
+        getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
+
+      val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
+
+      val newIdsToReturn = existingValue match {
+        case None => dao.updateExpiration(id, expired = true, username).toSeq
+        case Some(value) => updateWithoutTransaction(Seq(id), value, username, Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)), informationSource = Some(MunicipalityMaintenainer.value))
+      }
+
+      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
+        Some(roadLink), informationSource = Some(MunicipalityMaintenainer.value)))
+
+      newIdsToReturn ++ Seq(createdIdOption).flatten
     }
   }
 }
