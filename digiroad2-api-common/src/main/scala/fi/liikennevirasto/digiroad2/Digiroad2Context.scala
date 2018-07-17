@@ -312,7 +312,7 @@ object Digiroad2Context {
   }
 
   lazy val onOffLinearAssetService: OnOffLinearAssetService = {
-    new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
+    new OnOffLinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val prohibitionService: ProhibitionService = {
