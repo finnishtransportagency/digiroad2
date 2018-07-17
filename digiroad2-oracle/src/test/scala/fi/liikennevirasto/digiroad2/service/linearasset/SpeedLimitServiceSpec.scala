@@ -3,13 +3,13 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -126,7 +126,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, daoWithRoadLinks(List(vvhRoadLink)))
       assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
 
-      created1.modifiedBy shouldBe None
+      created1.modifiedBy shouldBe Some("test")
       created2.createdBy shouldBe Some("test")
     }
   }
@@ -144,7 +144,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
       assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, daoWithRoadLinks(List(vvhRoadLink)))
 
-      created1.modifiedBy shouldBe None
+      created1.modifiedBy shouldBe Some("test")
       created2.createdBy shouldBe Some("test")
     }
   }
