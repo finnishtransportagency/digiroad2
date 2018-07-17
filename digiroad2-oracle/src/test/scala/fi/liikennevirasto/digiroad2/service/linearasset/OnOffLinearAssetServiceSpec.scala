@@ -22,9 +22,9 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
+  val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
 
   val roadLinkWithLinkSource = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
