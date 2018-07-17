@@ -536,7 +536,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case LengthLimit.typeId => Seq("value")
       case WidthLimit.typeId => Seq("value")
       case RoadWidth.typeId => Seq("value")
-      case PavedRoad.typeId => Seq("hasPavement")
+      case PavedRoad.typeId => Seq("value")
       case NumberOfLanes.typeId => Seq("value")
       case MassTransitLane.typeId => Seq("hasLane")
       case RailwayCrossings.typeId  => Seq("safetyEquipment", "name", "railwayCrossingId")
@@ -564,14 +564,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Not allow " + notAllowed + " on this type of asset"))
   }
 
-  def extractPropertyValue(key: String, properties: Seq[AssetProperties], transformation: ( (String, Seq[String])=> Any)):  Any = {
+  def extractPropertyValue(key: String, properties: Seq[AssetProperties], transformation: (String, Seq[String]) => Any):  Any = {
     val values = properties.filter { property => property.name == key }.map(_.value)
     transformation(key, values)
   }
 
   def propertyValuesToString(key: String, values: Seq[String]): String = { values.mkString }
 
-  def extractProperty(key: String, properties: Seq[AssetProperties], transformation: ( (String, Seq[String])=> Any)):  Any = {
+  def extractProperty(key: String, properties: Seq[AssetProperties], transformation: (String, Seq[String]) => Any):  Any = {
     extractPropertyValue(key, properties, transformation)
   }
 
@@ -598,8 +598,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         }
 
         case PavedRoad.typeId => extractPropertyValue(getAssetNameProp(assetTypeId).head, prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
-          if (!Seq(0, 1).contains(value))
-            halt(BadRequest(s"The property values for the property with name hasPavement are not valid."))
+          if (!Seq(1, 2, 10, 20, 30, 40, 50).contains(value))
+            halt(BadRequest(s"The property values for the property with name paved road are not valid."))
         }
         case MassTransitLane.typeId => extractPropertyValue(getAssetNameProp(assetTypeId).head, prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
           if (!Seq(0, 1).contains(value))
@@ -622,7 +622,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             if (!Seq(1,2,3,4,5).contains(value))
               halt(BadRequest(s"The property values for the property with name safetyEquipment is not valid."))
           }
-
         case TrafficLights.typeId  => extractPropertyValue(getAssetNameProp(assetTypeId).head, prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
           if (!Seq(0,1).contains(value))
             halt(BadRequest(s"The property values for the property with name hasTrafficLight are not valid."))

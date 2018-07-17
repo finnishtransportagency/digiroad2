@@ -100,10 +100,10 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockRoadWidthService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
   when(mockRoadWidthService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
 
-  when(mockPavedRoadService.getPersistedAssetsByIds(PavedRoad.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-  when(mockPavedRoadService.getPersistedAssetsByIds(PavedRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockPavedRoadService.getPersistedAssetsByIds(PavedRoad.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue(1))))))), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockPavedRoadService.getPersistedAssetsByIds(PavedRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue(2))))))), 0, 10, None, None, None, None, false, PavedRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockPavedRoadService.getByMunicipalityAndRoadLinks(PavedRoad.typeId, 235)).thenReturn(
-    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, PavedRoad.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
+    Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue(1))))))), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, PavedRoad.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
   when(mockPavedRoadService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1L))
   when(mockPavedRoadService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3L))
 
@@ -197,8 +197,8 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       "road_width" -> """ "properties": [{"value": 100, "name": "value"}]""",
       "public_transport_lane" -> """ "properties": [{"value": 0, "name": "hasLane"}]""",
       "public_transport_lane" -> """ "properties": [{"value": 1, "name": "hasLane"}]""",
-      "pavement" -> """ "properties": [{"value": 0, "name": "hasPavement"}]""",
-      "pavement" -> """ "properties": [{"value": 1, "name": "hasPavement"}]"""
+      "pavement" -> """ "properties": [{"value": 0, "name": "value"}]""",
+      "pavement" -> """ "properties": [{"value": 1, "name": "value"}]"""
     )
 
   val pointAssetInfo =
