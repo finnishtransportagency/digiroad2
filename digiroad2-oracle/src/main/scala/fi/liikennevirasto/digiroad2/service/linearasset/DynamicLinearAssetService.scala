@@ -66,13 +66,14 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
-
+//TODO check if this code could be move to inside the updateValueByExpiration, we already have the typeId info from old
     val assetTypeId = assetDao.getAssetTypeId(ids)
     validateRequiredProperties(assetTypeId.head._2, value.asInstanceOf[DynamicValue].value.properties)
 
     val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
-
+//------
     ids.flatMap { id =>
+      //TODO remove this assetTypeById(id) and replace updateValueByExpiration(id, DynamicValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
       val typeId = assetTypeById(id)
       value match {
         case DynamicValue(multiTypeProps) =>
