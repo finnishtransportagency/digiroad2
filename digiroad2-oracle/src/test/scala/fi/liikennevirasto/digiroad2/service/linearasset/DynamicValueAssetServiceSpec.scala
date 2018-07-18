@@ -49,4 +49,14 @@ class DynamicValueAssetServiceSpec extends FunSuite with Matchers {
     val asset2 = DynamicValue(DynamicAssetValue(Seq(ratings, choice2)))
     asset1.equals(asset2) should be (true)
   }
+
+  test("comparison is done correctly regardless of order"){
+    val withValue = DynamicProperty("ratings", PropertyTypes.Number, required = false, Seq(DynamicPropertyValue(1000)))
+    val withoutValue = DynamicProperty("ratings", PropertyTypes.Number, required = false, Seq())
+    val assetWithValue = DynamicValue(DynamicAssetValue(Seq(withValue)))
+    val assetWithoutValue = DynamicValue(DynamicAssetValue(Seq(withoutValue)))
+
+    assetWithValue.equals(assetWithoutValue) should be (false)
+    assetWithoutValue.equals(assetWithValue) should be (false)
+  }
 }
