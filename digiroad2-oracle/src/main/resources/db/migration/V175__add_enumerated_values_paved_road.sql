@@ -6,6 +6,9 @@ INSERT INTO PROPERTY (ID,ASSET_TYPE_ID,PROPERTY_TYPE, CREATED_BY, NAME_LOCALIZED
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Päällystetty tie'),'single_choice', 'db_migration_v175', (SELECT ID FROM LOCALIZED_STRING WHERE VALUE_FI = 'Päällysteluokka' AND CREATED_BY='db_migration_v175'),'paallysteluokka');
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 0, 'Päällystemätön tie', ' ', 'db_migration_v175', (select id from property where public_ID = 'paallysteluokka'));
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 1, 'Betoni', ' ', 'db_migration_v175', (select id from property where public_ID = 'paallysteluokka'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)

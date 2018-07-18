@@ -13,6 +13,7 @@
 
     this.labeling = function () {
       var pavementClassValues = [
+        [0, 'Päällystemätön tie'],
         [1, 'Betoni'],
         [2, 'Kivi '],
         [10, 'Kovat asfalttibetonit'],

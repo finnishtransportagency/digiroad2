@@ -30,6 +30,7 @@
 
     var pavedRoadStyleRules = [
       new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(0).use({stroke: {color: '#ffa500'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(1).use({stroke: {color: '#c559ff'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(2).use({stroke: {color: '#ff55dd'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(10).use({stroke: {color: '#ff0000'}}),
