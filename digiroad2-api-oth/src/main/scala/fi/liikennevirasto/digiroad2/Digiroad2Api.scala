@@ -590,8 +590,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   put("/linkproperties") {
     val properties = parsedBody.extract[Seq[LinkProperties]]
     val user = userProvider.getCurrentUser()
-    def municipalityValidation(municipalityCode: Int, administrativeClass: AdministrativeClass) = validateUserAccess(user)(municipalityCode, administrativeClass)
+    def municipalityValidation(municipalityCode: Int, administrativeClass: AdministrativeClass) = validateRoadLinks(user)(municipalityCode, administrativeClass)
     properties.map { prop =>
+      if (prop.administrativeClass == State)
+        halt(BadRequest("The Value Inserted in Administrative Class is not allowed."))
       roadLinkService.updateLinkProperties(prop, Option(user.username), municipalityValidation).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
@@ -1253,6 +1255,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
     if (administrativeClass == State && StateRoadRestrictedAssets.contains(typeId))
       halt(BadRequest("Modification restriction for this asset on state roads"))
+  }
+
+  private def validateRoadLinks(user: User, typeId: Option[Int] = None)(municipality: Int, administrativeClass: AdministrativeClass) : Unit = {
+    if (administrativeClass == State || !user.isAuthorizedToWrite(municipality, administrativeClass))
+      halt(BadRequest("Modification restriction for this asset on state roads or user not authorized"))
   }
 
   private def validateValues(value: Option[Value], service: LinearAssetOperations): Unit = {
