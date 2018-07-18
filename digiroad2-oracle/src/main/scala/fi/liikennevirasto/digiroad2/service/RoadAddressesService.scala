@@ -96,7 +96,9 @@ class RoadAddressesService(viiteClient: SearchViiteClient ) {
     */
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     try {
-      val addressData = groupRoadAddress(getAllByLinkIds(roadLinks.map(_.linkId))).map(a => (a.linkId, a)).toMap
+      val roadAddressLinks = getAllByLinkIds(roadLinks.map(_.linkId))
+      val addressData = groupRoadAddress(roadAddressLinks).map(a => (a.linkId, a)).toMap
+      logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
       roadLinks.map(rl =>
         if (addressData.contains(rl.linkId))
           rl.copy(attributes = rl.attributes ++ roadAddressAttributes(addressData(rl.linkId)))
