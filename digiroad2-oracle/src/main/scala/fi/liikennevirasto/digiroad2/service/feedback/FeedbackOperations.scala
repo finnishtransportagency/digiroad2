@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
-case class FeedbackInfo(id: Long, receiver: Option[String], createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
+case class FeedbackInfo(id: Long, createdBy: Option[String], createdAt: Option[DateTime], body: Option[String],
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
 case class FeedbackApplicationBody(feedbackType: Option[String], headline: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
@@ -83,7 +83,7 @@ trait Feedback {
   def sendFeedbacks(): Unit = {
     getNotSentFeedbacks.foreach{
       feedback => {
-        if (emailOperations.sendEmail(Email(feedback.receiver.getOrElse(to), from, None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))) {
+        if (emailOperations.sendEmail(Email(to, from, None, None, feedback.subject.getOrElse(subject), feedback.body.getOrElse(body)))) {
           val id = updateApplicationFeedbackStatus(feedback.id)
           logger.info(s"Sent feedback with id $id")
         } else {

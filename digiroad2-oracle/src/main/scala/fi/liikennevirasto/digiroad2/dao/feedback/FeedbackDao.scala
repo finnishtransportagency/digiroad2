@@ -14,7 +14,7 @@ class FeedbackDao {
 
   def getFeedback(queryFilter: String => String): Seq[FeedbackInfo] ={
     val query =  s"""
-            select id, receiver, created_by, created_date, subject, body, status, status_date
+            select id, created_by, created_date, subject, body, status, status_date
             from feedback
             """
     StaticQuery.queryNA[FeedbackInfo](queryFilter(query)).iterator.toSeq
@@ -37,7 +37,6 @@ class FeedbackDao {
   implicit val feedback = new GetResult[FeedbackInfo] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val receiver = r.nextStringOption()
       val createdBy = r.nextStringOption()
       val createdAt = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val subject = r.nextStringOption()
@@ -45,15 +44,15 @@ class FeedbackDao {
       val status = r.nextBoolean()
       val statusDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      FeedbackInfo(id, receiver, createdBy, createdAt, body, subject, status, statusDate)
+      FeedbackInfo(id, createdBy, createdAt, body, subject, status, statusDate)
     }
   }
 
   def insertFeedback(receiver: String, createdBy: String, body: String, subject: String, status: Boolean): Long = {
    val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
       sqlu"""
-          insert into feedback (id, receiver, created_by, created_date, subject, body, status, status_date)
-          values ($id, ${receiver}, ${createdBy}, sysdate, ${subject},
+          insert into feedback (id, created_by, created_date, subject, body, status, status_date)
+          values ($id, ${createdBy}, sysdate, ${subject},
                 ${body},${status}, sysdate)""".execute
     id
   }
