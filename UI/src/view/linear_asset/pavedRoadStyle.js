@@ -37,7 +37,7 @@
       new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(30).use({stroke: {color: '#11bb00'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(40).use({stroke: {color: '#ffe82d'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(50).use({stroke: {color: '#a52a2a'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(99).use({stroke: {color: '#ffa500'}})
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(99).use({stroke: {color: '#000000'}})
     ];
 
     var pavedRoadFeatureSizeRules = [

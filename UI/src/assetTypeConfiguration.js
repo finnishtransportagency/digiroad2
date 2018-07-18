@@ -287,7 +287,6 @@
       },
       {
         typeId: assetType.pavedRoad,
-        defaultValue: 1,
         singleElementEventCategory: 'pavedRoad',
         multiElementEventCategory: 'pavedRoads',
         layerName: 'pavedRoad',
@@ -305,6 +304,24 @@
         isVerifiable: false,
         style: new PavedRoadStyle(),
         layer : PavedRoadLayer,
+        form: new DynamicAssetForm({
+            fields : [
+              {
+                label: 'Paallysteluokka', type: 'single_choice', publicId: "paallysteluokka", defaultValue: "99",
+                values: [
+                  {id: 99, label: 'Päällysteen tyyppi tuntematon'},
+                  {id: 1, label: 'Betoni'},
+                  {id: 2, label: 'Kivi'},
+                  {id: 10, label: 'Kovat asfalttibetonit'},
+                  {id: 20, label: 'Pehmeät asfalttibetonit'},
+                  {id: 30, label: 'Soratien pintaus'},
+                  {id: 40, label: 'Sorakulutuskerros'},
+                  {id: 50, label: 'Muut pinnoitteet'}
+                ]
+              }
+            ]
+          }
+        ),
         isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true
       },
