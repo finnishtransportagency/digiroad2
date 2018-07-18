@@ -609,7 +609,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("encode 7 maximum restrictions asset") {
-    val mapAsset = Seq(Map(
+    val mapAsset = Map(
       "id" -> 1,
       "properties" -> Seq(Map("value" -> Some(100), "name" -> "value")),
       "linkId" -> 2000,
@@ -620,7 +620,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       "createdAt" -> None,
       "geometryTimestamp" -> 0,
       "municipalityCode" -> 235
-    ))
+    )
 
     withClue("assetName TotalWeightLimit" ) {
       municipalityApi.linearAssetToApi(PersistedLinearAsset(1, 2000, SideCode.BothDirections.value, Some(NumericValue(100)), 0, 1, None, None, None, None, false, TotalWeightLimit.typeId , 0, None, linkSource = NormalLinkInterface, None, None, None), roadLink) should be (mapAsset)}
