@@ -49,7 +49,7 @@ trait Feedback {
   def insertFeedback(username: String, body: FeedbackBody): Long = {
     val message = stringifyBody(username, body)
     withDynSession {
-      dao.insertFeedback(to, username, message, subject, status = false)
+      dao.insertFeedback(username, message, subject, status = false)
     }
   }
 
