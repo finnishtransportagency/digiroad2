@@ -13,14 +13,14 @@
 
     this.labeling = function () {
       var pavementClassValues = [
-        [99, 'Päällysteen tyyppi tuntematon'],
         [1, 'Betoni'],
         [2, 'Kivi '],
         [10, 'Kovat asfalttibetonit'],
         [20, 'Pehmeät asfalttibetonit'],
         [30, 'Soratien pintaus'],
         [40, 'Sorakulutuskerros '],
-        [50, 'Muut pinnoitteet']
+        [50, 'Muut pinnoitteet'],
+        [99, 'Päällysteen tyyppi tuntematon']
       ];
 
       return _.map(pavementClassValues, function (pavementClassValue) {
