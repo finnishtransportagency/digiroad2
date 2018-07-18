@@ -22,11 +22,11 @@ import org.slf4j.LoggerFactory
 case class ChangedSpeedLimit(speedLimit: SpeedLimit, link: RoadLink)
 
 class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLinkService: RoadLinkService) {
-  def dao: OracleSpeedLimitDao = new OracleSpeedLimitDao(vvhClient, roadLinkService)
-  def inaccurateAssetDao: InaccurateAssetDAO = new InaccurateAssetDAO()
-  def assetDao: OracleAssetDao = new OracleAssetDao()
-  def logger = LoggerFactory.getLogger(getClass)
-  def polygonTools: PolygonTools = new PolygonTools
+  val dao: OracleSpeedLimitDao = new OracleSpeedLimitDao(vvhClient, roadLinkService)
+  val inaccurateAssetDao: InaccurateAssetDAO = new InaccurateAssetDAO()
+  val assetDao: OracleAssetDao = new OracleAssetDao()
+  val logger = LoggerFactory.getLogger(getClass)
+  val polygonTools: PolygonTools = new PolygonTools
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   lazy val dr2properties: Properties = {

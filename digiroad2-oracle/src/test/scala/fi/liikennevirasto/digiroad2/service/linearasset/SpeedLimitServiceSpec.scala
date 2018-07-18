@@ -20,7 +20,6 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 import scala.language.implicitConversions
 
@@ -126,6 +125,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, daoWithRoadLinks(List(vvhRoadLink)))
       assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
 
+      provider.getPersistedSpeedLimitByIds(Set(asset.id)).head.expired should be (true)
+
       created1.modifiedBy shouldBe Some("test")
       created2.createdBy shouldBe Some("test")
     }
@@ -143,9 +144,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
       assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, daoWithRoadLinks(List(vvhRoadLink)))
-      val asset1 = provider.getPersistedSpeedLimitByIds(Set(asset.id)).head
 
-      asset1.expired should be (true)
+      provider.getPersistedSpeedLimitByIds(Set(asset.id)).head.expired should be (true)
 
       created1.modifiedBy shouldBe Some("test")
       created2.createdBy shouldBe Some("test")
