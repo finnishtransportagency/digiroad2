@@ -1203,13 +1203,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case _ =>
     }
     if (!user.isAuthorizedToWrite(municipality, administrativeClass)) {
-      halt(Unauthorized("User not authorized"))
+      halt(BadRequest("User not authorized"))
     }
   }
 
   private def validateUserMunicipalityAccessByMunicipality(user: User)(municipality: Int) : Unit = {
     if (!user.isAuthorizedToWrite(municipality)) {
-      halt(Unauthorized("User not authorized"))
+      halt(BadRequest("User not authorized"))
     }
   }
 
@@ -1221,7 +1221,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def validateUserMunicipalityAccessByLinkId(user: User, linkId: Long): Unit = {
     val road = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
     if(!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
-      halt(Unauthorized("User not authorized"))
+      halt(BadRequest("User not authorized"))
   }
 
   private def validateUserRights(existingAssets: Seq[PersistedLinearAsset], newLinearAssets: Seq[NewLinearAsset], user: User, typeId: Int) : Unit = {
