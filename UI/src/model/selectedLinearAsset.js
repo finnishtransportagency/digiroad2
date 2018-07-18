@@ -80,6 +80,7 @@
 
     this.closeMultiple = function() {
       eventbus.trigger(singleElementEvent('unselect'), self);
+      dirty = false;
       collection.setSelection(null);
       selection = [];
     };
