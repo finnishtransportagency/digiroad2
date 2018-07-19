@@ -256,8 +256,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     (speedLimitLinks, topology)
   }
 
-  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withoutAdjust: Boolean): Seq[PersistedSpeedLimit] = {
-    val withoutAutoAdjustFilter = if(withoutAdjust) "and a.modified_by != 'vvh_generated'" else ""
+  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean): Seq[PersistedSpeedLimit] = {
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
 
     val speedLimits =  sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date,
@@ -277,7 +277,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            or
            (a.created_date > $sinceDate and a.created_date <= $untilDate)
          )
-         #$withoutAutoAdjustFilter
+         #$withAutoAdjustFilter
     """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Boolean, Int)].list
 
     speedLimits.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, expired, linkSource) =>

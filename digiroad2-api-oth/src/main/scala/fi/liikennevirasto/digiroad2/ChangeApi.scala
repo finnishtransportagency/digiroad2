@@ -24,21 +24,21 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
-    val withoutAdjust = params.get("withoutAdjust") match{
+    val withAdjust = params.get("withAdjust") match{
       case Some(value)=> true
       case _ => false
     }
 
     //TODO: check update methods to see if the rule is correct on that service
     params("assetType") match {
-      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withoutAdjust))
-      case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(TotalWeightLimit.typeId , since, until, withoutAdjust))
-      case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withoutAdjust))
-      case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withoutAdjust))
-      case "bogie_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withoutAdjust))
-      case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(HeightLimit.typeId, since, until, withoutAdjust))
-      case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withoutAdjust))
-      case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withoutAdjust))
+      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust))
+      case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(TotalWeightLimit.typeId , since, until, withAdjust))
+      case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withAdjust))
+      case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withAdjust))
+      case "bogie_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withAdjust))
+      case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(HeightLimit.typeId, since, until, withAdjust))
+      case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust))
+      case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
     }
   }
@@ -142,8 +142,11 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {
       "Remove"
-    } else
+    } else if (createdDateTime.exists(_.isAfter(since))) {
       "Add"
+    } else {
+      "Modify"
+    }
   }
 
   private def vvhRoadLinkToGeoJson(changedRoadlinks: Seq[ChangedVVHRoadlink]) =

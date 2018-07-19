@@ -145,11 +145,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     *
     * @param sinceDate
     * @param untilDate
+    * @param withAdjust
     * @return Changed speed limits
     */
-  def getChanged(sinceDate: DateTime, untilDate: DateTime, withoutAdjust: Boolean = false): Seq[ChangedSpeedLimit] = {
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean = false): Seq[ChangedSpeedLimit] = {
     val persistedSpeedLimits = withDynTransaction {
-      dao.getSpeedLimitsChangedSince(sinceDate, untilDate, withoutAdjust)
+      dao.getSpeedLimitsChangedSince(sinceDate, untilDate, withAdjust)
     }
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
