@@ -1,12 +1,16 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Saturday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import fi.liikennevirasto.digiroad2.util.TestTransactions
+import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -60,8 +64,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Filters out manoeuvres with non-adjacent source and destination links") {
     runWithRollback {
-      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124)))
-      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(233, 234)))
+      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124), None))
+      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(233, 234), None))
 
       val manoeuvres = manoeuvreService.getByMunicipality(235)
 
@@ -72,8 +76,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Filter manoeuvre by source road link in the specified municipality") {
     runWithRollback {
-      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124)))
-      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(1611420, 125)))
+      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124), None))
+      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(1611420, 125), None))
 
       val manoeuvres = manoeuvreService.getByMunicipality(235)
 
@@ -83,7 +87,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   def createManouvre: Manoeuvre = {
-    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, Seq(123, 124)))
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, Seq(123, 124), None))
 
     manoeuvreService.getByMunicipality(235)
       .find(_.id == manoeuvreId)
@@ -197,22 +201,22 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       var result: Boolean = false
 
       val roadLinksNoValid = Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235, Seq(Point(25, 0), Point(30, 0))))
-      val manoeuvreNoValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq)
+      val manoeuvreNoValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq, None)
       result = manoeuvreService.isValid(manoeuvreNoValid, roadLinksNoValid)
       result should be(false)
 
       val roadLinksValid = Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235))
-      val manoeuvreValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq)
+      val manoeuvreValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq, None)
       result = manoeuvreService.isValid(manoeuvreValid, roadLinksValid)
       result should be(true)
 
       val roadLinksValid2 = Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235), vvhRoadLink(125, 235), vvhRoadLink(126, 235))
-      val manoeuvreValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2)
+      val manoeuvreValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2, None)
       result = manoeuvreService.isValid(manoeuvreValid2, roadLinksValid2)
       result should be(true)
 
       val roadLinksNoValid2 = Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235, Seq(Point(25, 0), Point(30, 0))), vvhRoadLink(125, 235), vvhRoadLink(126, 235))
-      val manoeuvreNoValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2)
+      val manoeuvreNoValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2, None)
       result = manoeuvreService.isValid(manoeuvreNoValid2, roadLinksNoValid2)
       result should be(false)
     }
@@ -245,6 +249,30 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       manoeuvreUpdated.exceptions should be(exceptions)
       manoeuvreUpdated.validityPeriods should be(validityPeriod)
       manoeuvreUpdated.additionalInfo should be (additionalInfo)
+    }
+  }
+
+
+  test("create manoeuvre where traffic sign is not turn left and towards digitizing"){
+    runWithRollback{
+
+      val roadLink = RoadLink(1001, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink1 =  RoadLink(1002, Seq(Point(0.0, 0.0), Point(0.0, 500)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+      val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+
+      when(mockRoadLinkService.getAdjacent(any[Long], any[Option[Int]])).thenReturn(Seq(roadLink, roadLink1))
+      when(mockRoadLinkService.pickLeftMost(any[RoadLink], any[Seq[RoadLink]])).thenReturn(roadLink1)
+      val properties = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("10"))))
+      val trafficSign = PersistedTrafficSign(1, 1000, 0, 50, 5, false, 0, 235, properties, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+      val manoeuvre = manoeuvreService.createManoeuvreBasedOnTrafficSign(trafficSign, sourceRoadLink)
+      val xpto = manoeuvre
+
+
+      //java.sql.SQLIntegrityConstraintViolationException: ORA-02291: integrity constraint (DR2DEV1.FK_TRAFFIC_SIGN_ID) violated - parent key not found
+      //TODO Create persistedTrafficSign
+
     }
   }
 }

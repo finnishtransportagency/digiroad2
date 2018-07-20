@@ -1,16 +1,19 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType}
 import org.joda.time.DateTime
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime], modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String)
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
-case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long])
+case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
 object ElementTypes {
@@ -235,4 +238,38 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, roadLink: RoadLink) = {
+    val tsLinkId = trafficSign.linkId
+    val tsDirection = trafficSign.validityDirection
+
+    val adjacents = recursiveGetAdjacent(tsLinkId, Some(tsDirection))
+
+    getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
+      if (TrafficSignType(prop.propertyValue.toInt) == TrafficSignType.NoLeftTurn) {
+        val rl = roadLinkService.pickLeftMost(roadLink, adjacents)
+        createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, Seq(rl.linkId), Some(trafficSign.id)))
+      }
+      else if (TrafficSignType(prop.propertyValue.toInt) == TrafficSignType.NoRightTurn) {
+         val rl = roadLinkService.pickRightMost(roadLink, adjacents)
+        createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, Seq(rl.linkId), Some(trafficSign.id)))
+
+      }
+      else if (TrafficSignType(prop.propertyValue.toInt) == TrafficSignType.NoUTurn) {
+        val rl = Seq(roadLinkService.pickLeftMost(roadLink, adjacents), roadLinkService.pickLeftMost(roadLink, adjacents))
+        createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, rl.map(_.linkId), Some(trafficSign.id)))
+      }
+    }
+  }
+
+  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  }
+
+  private def recursiveGetAdjacent(linkId: Long, direction: Option[Int]): Seq[RoadLink] = {
+    val adjacents = roadLinkService.getAdjacent(linkId, direction)
+    if(adjacents.size == 1) {
+      adjacents ++ recursiveGetAdjacent(adjacents.head.linkId, direction)
+    }
+    adjacents
+  }
 }

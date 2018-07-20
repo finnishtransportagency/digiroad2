@@ -9,12 +9,11 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, SideCode, _}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
-import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{Track, VVHRoadLinkHistoryProcessor, VVHSerializer}
 import fi.liikennevirasto.digiroad2._
@@ -856,7 +855,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * - information transfer from old link to new link from change data
     * It also passes updated links and incomplete links to be saved to db by actor.
     *
-    * @param vvhRoadLinks
+    * @param allVvhRoadLinks
     * @param changes
     * @return Road links
     */
@@ -1025,17 +1024,34 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param roadlink The Roadlink
     * @return End points of the road link directions
     */
-  def getRoadLinkEndDirectionPoints(roadlink: RoadLink) : Seq[Point] = {
-    val endPoints = GeometryUtils.geometryEndpoints(roadlink.geometry)
-    roadlink.trafficDirection match {
-      case TrafficDirection.TowardsDigitizing =>
+  def getRoadLinkEndDirectionPoints(roadlink: RoadLink, direction: Option[Int] = None) : Seq[Point] = {
+    direction match {
+      case Some(direction) => getPointFromTrafficSignDirection(roadlink, direction)
+      case _ =>
+        val endPoints = GeometryUtils.geometryEndpoints(roadlink.geometry)
+        roadlink.trafficDirection match {
+          case TrafficDirection.TowardsDigitizing =>
+            Seq(endPoints._2)
+          case TrafficDirection.AgainstDigitizing =>
+            Seq(endPoints._1)
+          case _ =>
+            Seq(endPoints._1, endPoints._2)
+        }
+    }
+  }
+
+  def getPointFromTrafficSignDirection(roadLink: RoadLink, trafficSignDirection: Int) : Seq[Point] = {
+    val endPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
+    SideCode(trafficSignDirection) match {
+      case SideCode.TowardsDigitizing =>
         Seq(endPoints._2)
-      case TrafficDirection.AgainstDigitizing =>
+      case SideCode.AgainstDigitizing =>
         Seq(endPoints._1)
       case _ =>
         Seq(endPoints._1, endPoints._2)
     }
   }
+
 
   /**
     * Get the link start points depending on the road link directions
@@ -1058,10 +1074,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * Returns adjacent road links by link id. Used by Digiroad2Api /roadlinks/adjacent/:id GET endpoint and CsvGenerator.generateDroppedManoeuvres.
     */
-  def getAdjacent(linkId: Long): Seq[RoadLink] = {
+  def getAdjacent(linkId: Long, direction: Option[Int] = None): Seq[RoadLink] = {
     val sourceRoadLink = getRoadLinksByLinkIdsFromVVH(Set(linkId)).headOption
     val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
-    val sourceDirectionPoints = getRoadLinkEndDirectionPoints(sourceRoadLink.get)
+    val sourceDirectionPoints = getRoadLinkEndDirectionPoints(sourceRoadLink.get, direction)
     sourceLinkGeometryOption.map(sourceLinkGeometry => {
       val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
       val delta: Vector3d = Vector3d(0.1, 0.1, 0)
@@ -1082,6 +1098,43 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         })
     }).getOrElse(Nil)
   }
+
+  def pickRightMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
+    val cPoint =  getConnectionPoint(lastLink, candidates)
+    val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
+    val (_, hVector) = vectors.head
+    val (candidate, _) = vectors.maxBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+    candidate
+  }
+
+  def pickLeftMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
+    val cPoint =  getConnectionPoint(lastLink, candidates)
+    val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
+    val (_, hVector) = vectors.head
+    val (candidate, _) = vectors.minBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+    candidate
+  }
+
+  def pickForwardMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
+    val cPoint = getConnectionPoint(lastLink, candidates)
+    val candidateVectors = getGeometryFirstSegmentVectors(cPoint, candidates)
+    val (_, lastLinkVector) = getGeometryLastSegmentVector(cPoint, lastLink)
+    val (candidate, _) = candidateVectors.minBy{ case (_, vector) => Math.abs(lastLinkVector.angleXYWithNegativeValues(vector)) }
+    candidate
+  }
+
+  def getConnectionPoint(lastLink: RoadLink, projectLinks: Seq[RoadLink]) : Point =
+    GeometryUtils.connectionPoint(projectLinks.map(_.geometry) :+ lastLink.geometry).getOrElse(throw new Exception("Candidates should have at least one connection point"))
+
+  def getGeometryFirstSegmentVectors(connectionPoint: Point, projectLinks: Seq[RoadLink]) : Seq[(RoadLink, Vector3d)] =
+    projectLinks.map(pl => getGeometryFirstSegmentVector(connectionPoint, pl))
+
+  def getGeometryFirstSegmentVector(connectionPoint: Point, projectLink: RoadLink) : (RoadLink, Vector3d) =
+    (projectLink, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(projectLink.geometry.head, connectionPoint)) projectLink.geometry else projectLink.geometry.reverse))
+
+  def getGeometryLastSegmentVector(connectionPoint: Point, projectLink: RoadLink) : (RoadLink, Vector3d) =
+    (projectLink, GeometryUtils.lastSegmentDirection(if (GeometryUtils.areAdjacent(projectLink.geometry.last, connectionPoint)) projectLink.geometry else projectLink.geometry.reverse))
+
 
   private val cacheDirectory = {
     val properties = new Properties()

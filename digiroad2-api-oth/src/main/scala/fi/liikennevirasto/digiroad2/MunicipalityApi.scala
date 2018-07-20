@@ -279,7 +279,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             (manoeuvre.properties.find(_.name == "elements").map(_.value) match {
               case Some(value) => value.asInstanceOf[Seq[BigInt]].map(_.toLong)
               case _ => Seq() }) ++
-            Seq(manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).get)
+            Seq(manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).get),
+            None
           )
         )
       }

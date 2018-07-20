@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, _}
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHRoadlink, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
@@ -851,4 +851,46 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       dynamicSession.rollback()
     }
   }
+
+  test("Should return adjacents according to given direction as towards on a towards roadLink"){
+    OracleDatabase.withDynTransaction {
+      val sourceRoadLinkVVH = VVHRoadlink(445521, 91, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), Municipality, TowardsDigitizing, FeatureClass.AllOthers)
+
+      val vvhRoadLinks = Seq(VVHRoadlink(445518, 91, Seq(Point(386030.813, 6671026.151, 15.243000000002212), Point(386028.217, 6671112.363, 20.596000000005006)), Municipality, BothDirections, FeatureClass.AllOthers),
+        VVHRoadlink(445521, 91, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), Municipality, TowardsDigitizing, FeatureClass.AllOthers),
+        VVHRoadlink(445522, 91, Seq(Point(385935.666, 6671107.833, 19.85899999999674), Point(386028.217, 6671112.363, 20.596000000005006)), Municipality, BothDirections, FeatureClass.AllOthers),
+        VVHRoadlink(445520, 91, Seq(Point(386136.267, 6671029.985, 15.785000000003492), Point(386133.222, 6671115.993, 21.547000000005937)), Municipality, BothDirections, FeatureClass.AllOthers),
+        VVHRoadlink(445521, 91, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), Municipality, TowardsDigitizing, FeatureClass.AllOthers),
+        VVHRoadlink(445407, 91, Seq(Point(386133.222, 6671115.993, 21.547000000005937), Point(386126.902, 6671320.939, 19.69199999999546)), Municipality, TowardsDigitizing, FeatureClass.AllOthers))
+
+
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(BoundingRectangle(Point(386028.117,6671112.263,20.596000000005006),Point(386028.317,6671112.4629999995,20.596000000005006)), Set())).thenReturn(Future(vvhRoadLinks))
+      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(BoundingRectangle(Point(386133.12200000003,6671115.893,21.547000000005937),Point(386133.322,6671116.092999999,21.547000000005937)), Set())).thenReturn(Future(Seq()))
+      when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(sourceRoadLinkVVH))
+
+      val service = new RoadLinkTestService(mockVVHClient)
+      val adjacents = service.getAdjacent(445521, Some(2))
+
+      adjacents.size should be(2)
+      val linkIds = adjacents.map(_.linkId)
+
+      linkIds.max should be(445520)
+      linkIds.min should be(445407)
+    }
+  }
+
+  //Test the pick most righ
+  //Test the pick most left
+  //Test if adjacents are empty (if adjacents are empty it should log the information and not create the manoeuvre)
+  //Test if roadLink is both ways
+  //Test if roadlink is against
+  //If traffic sign is both direction should return an error
+
 }
