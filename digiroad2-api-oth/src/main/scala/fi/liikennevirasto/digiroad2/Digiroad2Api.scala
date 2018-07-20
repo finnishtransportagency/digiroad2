@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
+import java.security.InvalidParameterException
+
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -1276,14 +1278,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
 
       val linkIds = manoeuvres.flatMap(_.linkIds)
-      val roadlinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet)
+      val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet)
 
-      roadlinks.foreach{rl => validateUserMunicipalityAccessByMunicipality(user)(rl.municipalityCode)}
+      roadLinks.foreach{rl => validateUserMunicipalityAccessByMunicipality(user)(rl.municipalityCode)}
 
-      if(!manoeuvreService.isValid(manoeuvre, roadlinks))
-        halt(BadRequest("Invalid 'manouevre'"))
-
-      manoeuvreService.createManoeuvre(user.username, manoeuvre)
+      try {
+        manoeuvreService.createManoeuvre(user.username, manoeuvre, roadLinks)
+      } catch {
+        case err: InvalidParameterException => halt(BadRequest(err.getMessage))
+      }
     }
     Created(manoeuvreIds)
   }

@@ -60,8 +60,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Filters out manoeuvres with non-adjacent source and destination links") {
     runWithRollback {
-      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124)))
-      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(233, 234)))
+      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124)), Seq())
+      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(233, 234)),Seq())
 
       val manoeuvres = manoeuvreService.getByMunicipality(235)
 
@@ -72,8 +72,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Filter manoeuvre by source road link in the specified municipality") {
     runWithRollback {
-      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124)))
-      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(1611420, 125)))
+      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124)),Seq())
+      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(1611420, 125)),Seq())
 
       val manoeuvres = manoeuvreService.getByMunicipality(235)
 
@@ -83,7 +83,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   def createManouvre: Manoeuvre = {
-    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, Seq(123, 124)))
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, Seq(123, 124)),Seq())
 
     manoeuvreService.getByMunicipality(235)
       .find(_.id == manoeuvreId)
