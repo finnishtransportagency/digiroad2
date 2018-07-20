@@ -9,6 +9,7 @@
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
+    var userNotificationCollection = new UserNotificationCollection(backend);
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection, verificationCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
@@ -60,7 +61,8 @@
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
-      manoeuvresCollection: manoeuvresCollection
+      manoeuvresCollection: manoeuvresCollection,
+      userNotificationCollection: userNotificationCollection
     };
 
     bindEvents(enabledLinearAssetSpecs, assetConfiguration.pointAssetsConfig);
@@ -117,6 +119,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
+    new UserNotificationPopup(models.userNotificationCollection).initialize();
 
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
@@ -183,7 +186,7 @@
     });
 
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched municipality:verified ' + fetchedEventNames, function() {
+    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched userNotification:fetched municipality:verified ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 
@@ -256,6 +259,7 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
     new TrafficSignToggle(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
+
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
     if (withTileMaps) { new TileMapCollection(map); }

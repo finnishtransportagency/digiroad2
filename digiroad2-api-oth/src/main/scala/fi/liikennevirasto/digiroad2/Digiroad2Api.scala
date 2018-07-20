@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -23,6 +26,7 @@ import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
@@ -69,7 +73,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
-                   val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService)
+                   val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
+val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -146,6 +151,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
+
+  post("/userNotification") {
+    val user = userProvider.getCurrentUser()
+
+    val updatedUser = user.copy(configuration = user.configuration.copy(lastNotificationDate = Some(LocalDate.now.toString)))
+    userProvider.updateUserConfiguration(updatedUser)
+
+    userNotificationService.getAllUserNotifications.map { notification =>
+
+      Map("id" -> notification.id,
+        "createdDate" -> notification.createdDate.toString(DatePropertyFormat),
+        "heading" -> notification.heading,
+        "content" -> notification.content,
+        "unRead" -> (user.configuration.lastNotificationDate match {
+          case Some(dateValue) if dateValue.compareTo(notification.createdDate.toString("yyyy-MM-dd")) >= 0 => false
+          case _ => true
+        })
+      )
+    }
+  }
 
   get("/startupParameters") {
     val (east, north, zoom) = {

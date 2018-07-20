@@ -503,6 +503,10 @@
       };
     });
 
+    this.userNotificationInfo = function() {
+      return $.post('api/userNotification');
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({

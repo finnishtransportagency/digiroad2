@@ -276,6 +276,10 @@ object Digiroad2Context {
     new DynamicLinearAssetService(roadLinkService, eventbus)
   }
 
+  lazy val userNotificationService: UserNotificationService = {
+    new UserNotificationService()
+  }
+
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }
