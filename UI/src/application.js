@@ -396,11 +396,6 @@
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
 
-    // Show information modal in integration environment (remove when not needed any more)
-    if (Environment.name() === 'integration') {
-      showInformationModal('Huom!<br>Tämä sivu ei ole enää käytössä.<br>Digiroad-sovellus on siirtynyt osoitteeseen <a href="https://extranet.liikennevirasto.fi/digiroad/" style="color:#FFFFFF;text-decoration: underline">https://extranet.liikennevirasto.fi/digiroad/</a>');
-    }
-
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
     applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
