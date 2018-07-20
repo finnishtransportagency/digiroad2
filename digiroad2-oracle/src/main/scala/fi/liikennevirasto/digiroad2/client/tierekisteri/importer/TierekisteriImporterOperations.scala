@@ -7,8 +7,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriAssetDataClient}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
@@ -329,7 +329,6 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
         }
     }
   }
-
 }
 
 trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporterOperations{

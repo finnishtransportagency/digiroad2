@@ -205,16 +205,18 @@
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
+      var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
             me.element =   $('' +
                 '<div class="form-group">' +
                 '   <label class="control-label">' + field.label + '</label>' +
-                '   <input type="text" name="' + field.publicId + '" '+ me.required +' class="form-control"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ me.disabled() + '>' +
+                '   <input type="text" name="' + field.publicId + '" '+ me.required() +' class="form-control' + unitClass + '"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ me.disabled() + '>' +
                 unit +
                 '</div>');
 
-            if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+
+      if (!isDisabled && me.hasDefaultValue()&& !value)
+        me.setSelectedValue(setValue, getValue);
 
             me.element.find('input[type=text]').on('keyup', function () {
                 me.setSelectedValue(setValue, getValue);
@@ -356,9 +358,9 @@
                 '<label class="control-label">' + field.label + '</label>' +
                 '</div>');
 
-            var inputLabel = $('<input type="text" ' + me.disabled() + ' ' +  me.required() + '/>').addClass('form-control')
+            var inputLabel = $('<input type="text" ' + me.disabled() + '/>').addClass('form-control')
                 .attr('id', field.publicId)
-                .attr('required', me.required)
+                .attr('required', me.required())
                 .attr('placeholder',"pp.kk.vvvv")
                 .attr('fieldType', fieldValue.type)
                 .attr('value', value )
@@ -792,7 +794,7 @@
             var unit = _assetTypeConfiguration.unit ? asset.value ? asset.value + ' ' + _assetTypeConfiguration.unit : '-' : asset.value ? 'on' : 'ei ole';
 
             var formGroup = $('' +
-                '<div class="form-group editable form-editable-'+ sideCodeClass +'">' +
+                '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
                 '  <label class="control-label">' + _assetTypeConfiguration.editControlLabels.title + '</label>' +
                 '  <p class="form-control-static ' + _assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
                 '</div>');
@@ -928,9 +930,9 @@
             var auth = _assetTypeConfiguration.authorizationPolicy || function() { return false; };
 
             var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
-              return auth.formEditModeAccess(asset);
+                return auth.formEditModeAccess(asset);
             });
-          return _.isEmpty(selectedAssets);
+            return _.isEmpty(selectedAssets);
         }
 
         me.isSplitOrSeparatedAllowed = function(){
@@ -949,11 +951,18 @@
       });
     };
 
-        me.isSaveable = function(sideCode){
-            return _.every(forms.getAllFields(), function(field){
-                return field.isValid();
-            });
+    me.isSaveable = function(){
+        var otherSaveCondition = function () {
+            if (_.isUndefined(_assetTypeConfiguration.saveCondition)) {
+                return true;
+            } else {
+                return _assetTypeConfiguration.saveCondition(forms.getAllFields());
+            }
         };
+        return _.every(forms.getAllFields(), function(field){
+          return field.isValid();
+        })&& otherSaveCondition();
+    };
 
         function events() {
             return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');

@@ -10,7 +10,7 @@ import org.apache.commons.codec.binary.Base64
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats

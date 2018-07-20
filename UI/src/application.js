@@ -441,6 +441,7 @@
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
+    var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -461,6 +462,7 @@
           .concat([trafficSignBox])
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
+          .concat([carryingCapacityBox])
           .concat(getLinearAsset(assetType.damagedByThaw))
           .concat([careClassBox]),
       [manoeuvreBox]
