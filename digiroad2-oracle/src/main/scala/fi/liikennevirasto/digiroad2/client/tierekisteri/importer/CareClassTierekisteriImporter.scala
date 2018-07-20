@@ -132,7 +132,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
 
     val splitMeasures = roadAddressInfo.flatMap {
       case (_, measures, _) =>
-        Seq(measures.startMeasure, measures.endMeasure)
+        Seq(Math.round(measures.startMeasure * 100)/100, Math.round(measures.endMeasure * 100)/100)
     }.distinct.sorted
 
     val sectionMeasures = splitMeasures.zip(splitMeasures.tail).map(x => Measures(x._1, x._2))
