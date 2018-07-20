@@ -964,11 +964,4 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       mostLeft.linkId should be(445518)
     }
   }
-
-
-  //Test if adjacents are empty (if adjacents are empty it should log the information and not create the manoeuvre)
-  //Test if roadLink is both ways
-  //Test if roadlink is against
-  //If traffic sign is both direction should return an error
-
 }

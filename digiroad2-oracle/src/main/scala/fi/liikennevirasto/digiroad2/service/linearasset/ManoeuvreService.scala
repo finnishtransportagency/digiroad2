@@ -238,6 +238,9 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+
+  //TODO: If adjacents are empty (if adjacents are empty it should log the information and not create the manoeuvre)
+  //TODO: If traffic sign is both direction should return an error
   def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, roadLink: RoadLink) = {
     val tsLinkId = trafficSign.linkId
     val tsDirection = trafficSign.validityDirection
@@ -245,16 +248,15 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     val adjacents = recursiveGetAdjacent(tsLinkId, Some(tsDirection))
 
     getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
-      if (TrafficSignType(prop.propertyValue.toInt) == TrafficSignType.NoLeftTurn) {
-        val rl = roadLinkService.pickLeftMost(roadLink, adjacents)
-        createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, Seq(rl.linkId), Some(trafficSign.id)))
+      val tsType =  TrafficSignType(prop.propertyValue.toInt)
+      val rl = tsType match {
+        case TrafficSignType.NoLeftTurn => roadLinkService.pickLeftMost(roadLink, adjacents)
+        case TrafficSignType.NoRightTurn => roadLinkService.pickRightMost(roadLink, adjacents)
       }
-      else if (TrafficSignType(prop.propertyValue.toInt) == TrafficSignType.NoRightTurn) {
-         val rl = roadLinkService.pickRightMost(roadLink, adjacents)
-        createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, Seq(rl.linkId), Some(trafficSign.id)))
+      createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, Seq(rl.linkId), Some(trafficSign.id)))
 
-      }
-      else if (TrafficSignType(prop.propertyValue.toInt) == TrafficSignType.NoUTurn) {
+      //TODO: Special Case
+      if (tsType == TrafficSignType.NoUTurn) {
         val rl = Seq(roadLinkService.pickLeftMost(roadLink, adjacents), roadLinkService.pickLeftMost(roadLink, adjacents))
         createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, rl.map(_.linkId), Some(trafficSign.id)))
       }
