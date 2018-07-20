@@ -216,7 +216,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
     //Expire the old asset
     dao.updateExpiration(assetId, expired = true, username)
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
-    if (valueToUpdate.toJson == 0){
+    if (valueToUpdate.toJson == 0 && measures.nonEmpty){
       Seq(Measures(oldAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldAsset.endMeasure)).map {
         m =>
           if (m.endMeasure - m.startMeasure > 0.01)
