@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime], modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String)
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
@@ -23,6 +24,7 @@ object ElementTypes {
 }
 
 class ManoeuvreService(roadLinkService: RoadLinkService) {
+  val logger = LoggerFactory.getLogger(getClass)
 
   def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -244,22 +246,22 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, roadLink: RoadLink) = {
     val tsLinkId = trafficSign.linkId
     val tsDirection = trafficSign.validityDirection
+    if(SideCode(tsDirection) == SideCode.BothDirections)
+      logger.info("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections")
 
     val adjacents = recursiveGetAdjacent(tsLinkId, Some(tsDirection))
+    if(adjacents.isEmpty)
+      logger.info("No adjecents found for that link id, the manoeuvre will not be created")
 
     getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
       val tsType =  TrafficSignType(prop.propertyValue.toInt)
       val rl = tsType match {
-        case TrafficSignType.NoLeftTurn => roadLinkService.pickLeftMost(roadLink, adjacents)
-        case TrafficSignType.NoRightTurn => roadLinkService.pickRightMost(roadLink, adjacents)
+        case TrafficSignType.NoLeftTurn => Seq(roadLink, roadLinkService.pickLeftMost(roadLink, adjacents))
+        case TrafficSignType.NoRightTurn => Seq(roadLink, roadLinkService.pickRightMost(roadLink, adjacents))
+        case TrafficSignType.NoUTurn => Seq(roadLink, roadLinkService.pickLeftMost(roadLink, adjacents), roadLinkService.pickLeftMost(roadLink, adjacents))
+        case _ => Seq.empty[RoadLink]
       }
-      createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, Seq(rl.linkId), Some(trafficSign.id)))
-
-      //TODO: Special Case
-      if (tsType == TrafficSignType.NoUTurn) {
-        val rl = Seq(roadLinkService.pickLeftMost(roadLink, adjacents), roadLinkService.pickLeftMost(roadLink, adjacents))
-        createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, rl.map(_.linkId), Some(trafficSign.id)))
-      }
+      createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, rl.map(_.linkId), Some(trafficSign.id)))
     }
   }
 
