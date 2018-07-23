@@ -854,8 +854,30 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  def insertFunctionalClass() = {
+    sqlu""" INSERT INTO FUNCTIONAL_CLASS (ID, MML_ID, LINK_ID, FUNCTIONAL_CLASS, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388603125, 445521, 3, 'dr1_conversion')""".execute
+    sqlu""" INSERT INTO FUNCTIONAL_CLASS (ID, MML_ID, LINK_ID, FUNCTIONAL_CLASS, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388598949, 445518, 3, 'dr1_conversion')""".execute
+    sqlu""" INSERT INTO FUNCTIONAL_CLASS (ID, MML_ID, LINK_ID, FUNCTIONAL_CLASS, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388599639, 445522, 3, 'dr1_conversion')""".execute
+    sqlu""" INSERT INTO FUNCTIONAL_CLASS (ID, MML_ID, LINK_ID, FUNCTIONAL_CLASS, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388599669, 445520, 3, 'dr1_conversion')""".execute
+    sqlu""" INSERT INTO FUNCTIONAL_CLASS (ID, MML_ID, LINK_ID, FUNCTIONAL_CLASS, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388599681, 445407, 3, 'dr1_conversion')""".execute
+  }
+
+  def insertLinkType() = {
+    sqlu""" INSERT INTO LINK_TYPE (ID, MML_ID, LINK_ID, LINK_TYPE, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388603125, 445521, 3, 'dr1_conversion')""".execute
+    sqlu""" INSERT INTO LINK_TYPE (ID, MML_ID, LINK_ID, LINK_TYPE, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388598949, 445518, 3, 'dr1_conversion')""".execute
+    sqlu""" INSERT INTO LINK_TYPE (ID, MML_ID, LINK_ID, LINK_TYPE, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388599639, 445522, 3, 'dr1_conversion')""".execute
+    sqlu""" INSERT INTO LINK_TYPE (ID, MML_ID, LINK_ID, LINK_TYPE, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388599669, 445520, 3, 'dr1_conversion')""".execute
+    sqlu""" INSERT INTO LINK_TYPE (ID, MML_ID, LINK_ID, LINK_TYPE, MODIFIED_BY) VALUES (primary_key_seq.nextval, 388599681, 445407, 3, 'dr1_conversion')""".execute
+  }
+
+
   test("Should return adjacents according to given direction as towards on a towards roadLink"){
     OracleDatabase.withDynTransaction {
+
+      insertFunctionalClass()
+      insertLinkType()
+
+
       val sourceRoadLinkVVH = VVHRoadlink(445521, 91, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), Municipality, TowardsDigitizing, FeatureClass.AllOthers)
 
       val vvhRoadLinks = Seq(VVHRoadlink(445518, 91, Seq(Point(386030.813, 6671026.151, 15.243000000002212), Point(386028.217, 6671112.363, 20.596000000005006)), Municipality, BothDirections, FeatureClass.AllOthers),
