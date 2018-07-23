@@ -243,9 +243,13 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   //TODO: If adjacents are empty (if adjacents are empty it should log the information and not create the manoeuvre)
   //TODO: If traffic sign is both direction should return an error
-  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, roadLink: RoadLink) = {
+  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink) = {
     val tsLinkId = trafficSign.linkId
     val tsDirection = trafficSign.validityDirection
+
+    if(tsLinkId != sourceRoadLink.linkId)
+      logger.info("Wrong roadlink")
+
     if(SideCode(tsDirection) == SideCode.BothDirections)
       logger.info("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections")
 
@@ -256,9 +260,9 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
       val tsType =  TrafficSignType(prop.propertyValue.toInt)
       val rl = tsType match {
-        case TrafficSignType.NoLeftTurn => Seq(roadLink, roadLinkService.pickLeftMost(roadLink, adjacents))
-        case TrafficSignType.NoRightTurn => Seq(roadLink, roadLinkService.pickRightMost(roadLink, adjacents))
-        case TrafficSignType.NoUTurn => Seq(roadLink, roadLinkService.pickLeftMost(roadLink, adjacents), roadLinkService.pickLeftMost(roadLink, adjacents))
+        case TrafficSignType.NoLeftTurn => Seq(sourceRoadLink, roadLinkService.pickLeftMost(sourceRoadLink, adjacents))
+        case TrafficSignType.NoRightTurn => Seq(sourceRoadLink, roadLinkService.pickRightMost(sourceRoadLink, adjacents))
+        case TrafficSignType.NoUTurn => Seq(sourceRoadLink, roadLinkService.pickLeftMost(sourceRoadLink, adjacents), roadLinkService.pickLeftMost(sourceRoadLink, adjacents))
         case _ => Seq.empty[RoadLink]
       }
       createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, rl.map(_.linkId), Some(trafficSign.id)))
