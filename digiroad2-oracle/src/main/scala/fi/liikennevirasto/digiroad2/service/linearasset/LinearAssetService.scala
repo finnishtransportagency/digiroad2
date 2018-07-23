@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -239,6 +239,7 @@ trait LinearAssetOperations {
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                adjustedMValues = Seq.empty[MValueAdjustment],
+                               adjustedVVHChanges =  Seq.empty[VVHChangesAdjustment],
                                adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
@@ -685,6 +686,13 @@ trait LinearAssetOperations {
 
       changeSet.adjustedMValues.foreach { adjustment =>
         dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+      }
+
+      if (changeSet.adjustedVVHChanges.nonEmpty)
+        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+
+      changeSet.adjustedVVHChanges.foreach { adjustment =>
+        dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
       }
 
       changeSet.adjustedSideCodes.foreach { adjustment =>

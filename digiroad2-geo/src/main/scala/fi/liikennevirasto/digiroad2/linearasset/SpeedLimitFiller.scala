@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 
 object SpeedLimitFiller {
   private val MaxAllowedMValueError = 0.1
@@ -392,7 +392,7 @@ object SpeedLimitFiller {
       }
     }
     val (extended, newChangeSet) = extendToGeometry(speedLimits, roadLink, changeSet)
-    val (geometrySegments, geometryAdjustments) = fillBySideCode(extended, roadLink, ChangeSet(Set(), Nil, Nil, Set()))
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(extended, roadLink, ChangeSet(Set(), Nil, Nil, Nil, Set()))
     (geometrySegments.toSeq,
       newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ geometryAdjustments.adjustedMValues))
   }
@@ -465,6 +465,7 @@ object SpeedLimitFiller {
       case None => ChangeSet( droppedAssetIds = Set.empty[Long],
         expiredAssetIds = Set.empty[Long],
         adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges =  Seq.empty[VVHChangesAdjustment],
         adjustedSideCodes = Seq.empty[SideCodeAdjustment])
     }
 
@@ -541,7 +542,7 @@ object SpeedLimitFiller {
     val changeSet =
       if ((Math.abs(newStart - newEnd) > 0) && assetId != 0) {
         changedSet.copy(
-          adjustedMValues = changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)),
+          adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)),
           adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newSideCode))
         )
       }
