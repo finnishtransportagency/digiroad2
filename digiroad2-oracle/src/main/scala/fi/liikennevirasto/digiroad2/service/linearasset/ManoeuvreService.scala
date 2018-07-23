@@ -17,6 +17,8 @@ case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: L
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
+class ManoeuvreCreationException(response: String) extends RuntimeException(response)
+
 object ElementTypes {
   val FirstElement = 1
   val IntermediateElement = 2
@@ -240,31 +242,29 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-
-  //TODO: If adjacents are empty (if adjacents are empty it should log the information and not create the manoeuvre)
-  //TODO: If traffic sign is both direction should return an error
   def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink) = {
     val tsLinkId = trafficSign.linkId
     val tsDirection = trafficSign.validityDirection
 
-    if(tsLinkId != sourceRoadLink.linkId)
-      logger.info("Wrong roadlink")
+    if (tsLinkId != sourceRoadLink.linkId)
+      throw new ManoeuvreCreationException("Wrong roadlink")
 
-    if(SideCode(tsDirection) == SideCode.BothDirections)
-      logger.info("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections")
+    if (SideCode(tsDirection) == SideCode.BothDirections)
+      throw new ManoeuvreCreationException("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections")
 
     val adjacents = recursiveGetAdjacent(tsLinkId, Some(tsDirection))
-    if(adjacents.isEmpty)
-      logger.info("No adjecents found for that link id, the manoeuvre will not be created")
+    if (adjacents.isEmpty)
+      throw new ManoeuvreCreationException("No adjecents found for that link id, the manoeuvre will not be created")
 
     getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
-      val tsType =  TrafficSignType(prop.propertyValue.toInt)
+      val tsType = TrafficSignType(prop.propertyValue.toInt)
       val rl = tsType match {
         case TrafficSignType.NoLeftTurn => Seq(sourceRoadLink, roadLinkService.pickLeftMost(sourceRoadLink, adjacents))
         case TrafficSignType.NoRightTurn => Seq(sourceRoadLink, roadLinkService.pickRightMost(sourceRoadLink, adjacents))
-        case TrafficSignType.NoUTurn =>{
+        case TrafficSignType.NoUTurn => {
           val leftMost = roadLinkService.pickLeftMost(sourceRoadLink, adjacents)
-          Seq(sourceRoadLink, leftMost, roadLinkService.pickLeftMost(leftMost, adjacents))
+          val newAdjacents = recursiveGetAdjacent(leftMost.linkId, Some(tsDirection))
+          Seq(sourceRoadLink, leftMost, roadLinkService.pickLeftMost(leftMost, newAdjacents))
         }
         case _ => Seq.empty[RoadLink]
       }
@@ -272,13 +272,13 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
+  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 
   private def recursiveGetAdjacent(linkId: Long, direction: Option[Int]): Seq[RoadLink] = {
     val adjacents = roadLinkService.getAdjacent(linkId, direction)
-    if(adjacents.size == 1) {
+    if (adjacents.size == 1) {
       adjacents ++ recursiveGetAdjacent(adjacents.head.linkId, direction)
     }
     adjacents
