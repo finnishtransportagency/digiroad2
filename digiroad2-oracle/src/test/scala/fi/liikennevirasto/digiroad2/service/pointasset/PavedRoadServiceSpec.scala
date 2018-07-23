@@ -36,11 +36,13 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val multiTypePropSeq1 = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("40")))))
   val multiTypePropSeq2 = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("10")))))
   val multiTypePropSeq3 = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("99")))))
+  val multiTypePropSeq4 = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("0")))))
 
   val propertyData = DynamicValue(multiTypePropSeq)
   val propertyData1 = DynamicValue(multiTypePropSeq1)
   val propertyData2 = DynamicValue(multiTypePropSeq2)
   val propertyData3 = DynamicValue(multiTypePropSeq3)
+  val propertyData4 = DynamicValue(multiTypePropSeq4)
 
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -226,10 +228,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val newLinkId2 = 5001
     val newLinkId3 = 5002
     val newLinkId4 = 5003
-    val unpaved1 = createPavedRoad(1, newLinkId1, None, 10L)
-    val unpaved2 = createPavedRoad(2, newLinkId2, None, 10L)
-    val unpaved3 = createPavedRoad(3, newLinkId3, None, 10L)
-    val unpaved4 = createPavedRoad(4, newLinkId4, None, 10L)
+    val unpaved1 = createPavedRoad(1, newLinkId1, Some(propertyData4), 10L)
+    val unpaved2 = createPavedRoad(2, newLinkId2, Some(propertyData4), 10L)
+    val unpaved3 = createPavedRoad(3, newLinkId3, Some(propertyData4), 10L)
+    val unpaved4 = createPavedRoad(4, newLinkId4, Some(propertyData4), 10L)
     val paved1 = createPavedRoad(1, newLinkId1, Some(propertyData), 10L)
     val paved2 = createPavedRoad(2, newLinkId2, Some(propertyData), 10L)
     val paved3 = createPavedRoad(3, newLinkId3, Some(propertyData), 10L)

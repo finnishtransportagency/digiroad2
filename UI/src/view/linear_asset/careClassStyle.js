@@ -21,8 +21,8 @@
     };
 
     var winterCareClassRules = [
-      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where('noWinterCare').is(true).use({ stroke : { color: '#000000'}, icon: {src:  'images/na.svg'}}),
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, winterCareClass)){return findValue(asset, winterCareClass); }}).is(1).use({stroke: {color: '#880015'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, winterCareClass)){return findValue(asset, winterCareClass); }}).is(2).use({stroke: {color: '#f64343'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, winterCareClass)){return findValue(asset, winterCareClass); }}).is(3).use({stroke: {color: '#ff982c'}}),
@@ -43,8 +43,8 @@
     ];
 
     var greenCareClassRules = [
-      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where('noGreenCare').is(true).use({ stroke : { color: '#000000'}, icon: {src:  'images/na.svg'}}),
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, greenCareClass)){return findValue(asset, greenCareClass); }}).is(1).use({stroke: {color: '#008000'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, greenCareClass)){return findValue(asset, greenCareClass); }}).is(2).use({stroke: {color: '#4ec643'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, greenCareClass)){return findValue(asset, greenCareClass); }}).is(3).use({stroke: {color: '#ffe82d'}}),
@@ -97,7 +97,7 @@
 
     this.getNewFeatureProperties = function(linearAssets){
       var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
-        var hasAsset = !_.isUndefined(linearAsset.id);
+        var hasAsset = me.hasValue(linearAsset);
         var type =  me.isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
         return _.merge({}, linearAsset, { hasAsset: hasAsset }, type);
       });

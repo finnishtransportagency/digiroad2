@@ -42,15 +42,15 @@
     function _setValue(value){
       if (validator(value)) {
 
-        if(!currentValue)
+        if(!currentValue || _.isEmpty(currentValue.properties))
           currentValue = value;
 
         else{
-          var properties = _.find(currentValue.properties, function(property){ return property.publicId === value.properties[0].publicId; });
-          if (properties) 
-            properties.values = value.properties[0].values;
-
-          else{
+          var properties = _.map(currentValue.properties, function(property){ return _.find(value.properties, function(valueprop){return valueprop.publicId === property.publicId; });});
+          if (properties){
+            _.forEach(properties, function(property, i){property.values = value.properties[i].values;});
+            currentValue.properties = properties;
+          } else {
             currentValue.properties.push({
               publicId: value.properties[0].publicId,
               values: value.properties[0].values,

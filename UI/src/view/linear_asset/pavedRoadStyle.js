@@ -20,7 +20,7 @@
 
     this.renderOverlays = function(linearAssets) {
       return me.lineFeatures(_.map(linearAssets, function(linearAsset) {
-        var hasAsset = !_.isUndefined(linearAsset.id);
+        var hasAsset = me.hasValue(linearAsset);
         return _.merge({}, linearAsset, { type: 'overlay' }, { hasAsset: hasAsset }); }));
     };
 

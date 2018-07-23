@@ -445,7 +445,7 @@
 
             var existingValidityPeriodElements =
                 _(_.map(fieldValue, function(values) { return values.value ; }))
-                    .sortByAll('days', 'startHour', 'startMinute', 'endHour', 'endMinute')
+                    .sortBy('days', 'startHour', 'startMinute', 'endHour', 'endMinute')
                     .map(validityPeriodElement)
                     .join('');
 
@@ -743,7 +743,7 @@
         };
 
         function _isReadOnly(selectedAsset){
-            return checkEditConstrains(selectedAsset) || applicationModel.isReadOnly();
+            return checkAuthorizationPolicy(selectedAsset) || applicationModel.isReadOnly();
         }
 
         me.renderForm = function (selectedAsset, isDisabled) {
@@ -821,21 +821,22 @@
                 '  </div>' +
                 '</div>');
 
-      toggleElement.find('.radio input').on('change', function(event) {
-        var disabled = $(this).val() === 'disabled';
-        var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
-        input.prop('disabled', disabled);
+            toggleElement.find('.radio input').on('change', function(event) {
+                var disabled = $(this).val() === 'disabled';
+                var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+                input.prop('disabled', disabled);
 
                 if(disabled){
-                    removeValueFn();
-                    _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
+                  removeValueFn();
+                  _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
+                  if(asset.value)
+                    setValueFn(asset.value);
+                  else
                     setValueFn({ properties: [] });
                 }
 
-        formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
-
-                eventbus.trigger(events('valueChanged'));
+                formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
             });
 
             formGroup.append(toggleElement);
@@ -924,13 +925,13 @@
             return sideCode ? _assetTypeConfiguration.className + '-' + sideCode : _assetTypeConfiguration.className;
         }
 
-        function checkEditConstrains(selectedAsset){
-            var editConstrains = _assetTypeConfiguration.editConstrains || function() { return false; };
+        function checkAuthorizationPolicy(selectedAsset){
+            var auth = _assetTypeConfiguration.authorizationPolicy || function() { return false; };
 
             var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
-                return editConstrains(asset);
+              return auth.formEditModeAccess(asset);
             });
-            return !_.isEmpty(selectedAssets);
+          return _.isEmpty(selectedAssets);
         }
 
         me.isSplitOrSeparatedAllowed = function(){
