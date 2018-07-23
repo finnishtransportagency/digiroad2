@@ -262,7 +262,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       val rl = tsType match {
         case TrafficSignType.NoLeftTurn => Seq(sourceRoadLink, roadLinkService.pickLeftMost(sourceRoadLink, adjacents))
         case TrafficSignType.NoRightTurn => Seq(sourceRoadLink, roadLinkService.pickRightMost(sourceRoadLink, adjacents))
-        case TrafficSignType.NoUTurn => Seq(sourceRoadLink, roadLinkService.pickLeftMost(sourceRoadLink, adjacents), roadLinkService.pickLeftMost(sourceRoadLink, adjacents))
+        case TrafficSignType.NoUTurn =>{
+          val leftMost = roadLinkService.pickLeftMost(sourceRoadLink, adjacents)
+          Seq(sourceRoadLink, leftMost, roadLinkService.pickLeftMost(leftMost, adjacents))
+        }
         case _ => Seq.empty[RoadLink]
       }
       createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, rl.map(_.linkId), Some(trafficSign.id)))
