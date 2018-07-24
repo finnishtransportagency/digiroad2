@@ -377,6 +377,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   }
 
   test("actor should update roadWidth measures even if MTKClass is not valid "){
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
@@ -413,6 +414,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   }
 
   test("actor should not update roadWidth measures if MTKClass is valid ") {
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
