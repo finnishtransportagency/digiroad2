@@ -385,7 +385,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getAdjacent(1000, Some(2))).thenReturn(Seq(roadLink))
       when(mockRoadLinkService.getAdjacent(1001, Some(2))).thenReturn(Seq(roadLink1, roadLink2))
 
-      when(mockRoadLinkService.pickRightMost(sourceRoadLink, Seq(roadLink1, roadLink2))).thenReturn(roadLink1)
+      when(mockRoadLinkService.pickRightMost(roadLink, Seq(roadLink1, roadLink2))).thenReturn(roadLink1)
 
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
