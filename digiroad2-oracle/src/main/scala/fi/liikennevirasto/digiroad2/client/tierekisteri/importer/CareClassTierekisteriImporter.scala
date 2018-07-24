@@ -151,7 +151,8 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
       }
       val assetId = service.dao.createLinearAsset(typeId, roadAddressInfo.head._1.linkId, false, SideCode.BothDirections.value, segment, "batch_process_" + assetName,
         vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadAddressInfo.head._1.linkSource.value))
-      trAssets.foreach{
+
+      trAssets.distinct.foreach{
         asset =>
           val enumeratedId = Queries.getPropertyIdByPublicId(asset._2)
           println(s"Add property to asset $assetId with value ${asset._1}, public id ${asset._2} and enumerated Id $enumeratedId")
