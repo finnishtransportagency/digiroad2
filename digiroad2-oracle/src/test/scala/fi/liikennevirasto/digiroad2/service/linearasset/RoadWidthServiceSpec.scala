@@ -405,7 +405,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
       newAsset should have size 1
       captor.getValue.expiredAssetIds  should have size 0
-      captor.getValue.expiredAssetIds should be(Set(1))
       captor.getValue.adjustedVVHChanges should have size 1
       captor.getValue.adjustedVVHChanges.head.startMeasure should be (0)
       captor.getValue.adjustedVVHChanges.head.endMeasure should be (GeometryUtils.geometryLength(geometry))
@@ -442,6 +441,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
       newAsset should have size 1
       captor.getValue.expiredAssetIds should have size 1
+      captor.getValue.expiredAssetIds should be(Set(1))
       captor.getValue.adjustedVVHChanges should have size 0
     }
   }
