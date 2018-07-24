@@ -1,11 +1,14 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Saturday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService}
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -20,7 +23,11 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   private def vvhRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
     RoadLink(linkId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
   }
-
+  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
+  val testUser = User(
+    id = 1,
+    username = "Hannu",
+    configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]]))
     .thenReturn(Seq(vvhRoadLink(1611419, 235), vvhRoadLink(1611412, 235), vvhRoadLink(1611410, 235)))
@@ -31,6 +38,11 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val manoeuvreService = new ManoeuvreService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
+  }
+
+  val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
@@ -272,6 +284,121 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       manoeuvreUpdated.exceptions should be(exceptions)
       manoeuvreUpdated.validityPeriods should be(validityPeriod)
       manoeuvreUpdated.additionalInfo should be (additionalInfo)
+    }
+  }
+  test("create manoeuvre where traffic sign is not turn left and towards digitizing"){
+    runWithRollback{
+      val roadLink = RoadLink(1001, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink1 =  RoadLink(1002, Seq(Point(0.0, 0.0), Point(0.0, 500)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+      val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("10"))))
+
+      when(mockRoadLinkService.getAdjacent(any[Long], any[Option[Int]])).thenReturn(Seq(roadLink, roadLink1))
+      when(mockRoadLinkService.pickLeftMost(any[RoadLink], any[Seq[RoadLink]])).thenReturn(roadLink1)
+      val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
+      val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
+
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+      val manoeuvre = manoeuvreService.find(manoeuvreId).get
+
+      manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
+      manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.destLinkId should equal(1002)
+      manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).get.sourceLinkId should equal(1002)
+      manoeuvre.createdBy should be ("automatic_creation_manoeuvre")
+    }
+  }
+
+  test("create manoeuvre where traffic sign is not U turn and towards digitizing"){
+    runWithRollback{
+      val roadLink = RoadLink(1001, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink1 =  RoadLink(1002, Seq(Point(0.0, 0.0), Point(0.0, 500)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 500))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink2 =  RoadLink(1003, Seq(Point(0.0, 0.0), Point(0.0, 1500)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 1500))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+      val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("12"))))
+
+      when(mockRoadLinkService.getAdjacent(1000, Some(2))).thenReturn(Seq(roadLink, roadLink1))
+      when(mockRoadLinkService.getAdjacent(1001, Some(2))).thenReturn(Seq(roadLink1, roadLink2))
+
+      when(mockRoadLinkService.pickLeftMost(sourceRoadLink, Seq(roadLink, roadLink1))).thenReturn(roadLink)
+      when(mockRoadLinkService.pickLeftMost(roadLink, Seq(roadLink1, roadLink2))).thenReturn(roadLink1)
+
+      val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
+      val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
+
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+      val manoeuvre = manoeuvreService.find(manoeuvreId).get
+
+      manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
+      manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.destLinkId should equal(1001)
+      manoeuvre.elements.find(_.elementType == ElementTypes.IntermediateElement).get.sourceLinkId should equal(1001)
+      manoeuvre.elements.find(_.elementType == ElementTypes.IntermediateElement).get.destLinkId should equal(1002)
+      manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).get.sourceLinkId should equal(1002)
+      manoeuvre.createdBy should be ("automatic_creation_manoeuvre")
+    }
+  }
+
+
+  test("Should throw exception for empty adjacents return"){
+    runWithRollback{
+      intercept[ManoeuvreCreationException] {
+        val sourceRoadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+        val properties = Set(
+          SimpleProperty("trafficSigns_type", List(PropertyValue("10"))))
+
+        when(mockRoadLinkService.getAdjacent(any[Long], any[Option[Int]])).thenReturn(Seq())
+        val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 3, None), testUser.username, sourceRoadLink)
+        val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
+        manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+      }
+    }
+  }
+
+  test("Should throw exception for traffic sign with both directions"){
+    runWithRollback{
+      intercept[ManoeuvreCreationException] {
+        val sourceRoadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+        val properties = Set(
+          SimpleProperty("trafficSigns_type", List(PropertyValue("10"))))
+
+        when(mockRoadLinkService.getAdjacent(any[Long], any[Option[Int]])).thenReturn(Seq())
+        val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 1, None), testUser.username, sourceRoadLink)
+        val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
+        manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+      }
+    }
+  }
+
+  test("create manoeuvre turning right with intermediates"){
+    runWithRollback{
+      val roadLink = RoadLink(1001, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink1 =  RoadLink(1002, Seq(Point(0.0, 0.0), Point(0.0, 500)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 500))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink2 =  RoadLink(1003, Seq(Point(0.0, 0.0), Point(0.0, 1500)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 1500))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+      val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("11"))))
+
+      when(mockRoadLinkService.getAdjacent(1000, Some(2))).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.getAdjacent(1001, Some(2))).thenReturn(Seq(roadLink1, roadLink2))
+
+      when(mockRoadLinkService.pickRightMost(sourceRoadLink, Seq(roadLink1, roadLink2))).thenReturn(roadLink1)
+
+      val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
+      val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
+
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+      val manoeuvre = manoeuvreService.find(manoeuvreId).get
+
+      manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
+      manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.destLinkId should equal(1001)
+      manoeuvre.elements.find(_.elementType == ElementTypes.IntermediateElement).get.sourceLinkId should equal(1001)
+      manoeuvre.elements.find(_.elementType == ElementTypes.IntermediateElement).get.destLinkId should equal(1002)
+      manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).get.sourceLinkId should equal(1002)
+      manoeuvre.createdBy should be ("automatic_creation_manoeuvre")
     }
   }
 }
