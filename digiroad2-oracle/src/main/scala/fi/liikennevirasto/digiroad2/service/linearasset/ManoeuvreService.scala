@@ -245,7 +245,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink) = {
+  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink): Option[Long] = {
     val tsLinkId = trafficSign.linkId
     val tsDirection = trafficSign.validityDirection
 
@@ -265,7 +265,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
         case TrafficSignType.NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
 
-        case TrafficSignType.NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(sourceRoadLink, adjacents)
+        case TrafficSignType.NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(manoeuvreInit.last, adjacents)
 
         case TrafficSignType.NoUTurn => {
           val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)

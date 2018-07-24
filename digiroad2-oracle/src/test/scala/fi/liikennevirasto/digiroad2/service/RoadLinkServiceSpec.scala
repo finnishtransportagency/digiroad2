@@ -872,7 +872,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
 
-  test("Should return adjacents according to given direction as towards on a towards roadLink"){
+  test("Should return adjacents according to given direction"){
     OracleDatabase.withDynTransaction {
 
       insertFunctionalClass()
@@ -911,7 +911,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Should return adjacents according to empty direction as towards on a BothDirections roadLink"){
+  test("Should return adjacents according to empty direction"){
     OracleDatabase.withDynTransaction {
       insertFunctionalClass()
       insertLinkType()
@@ -943,7 +943,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Should pick the most left roadLink - TowardsDigitizing"){
+  test("PickMost: Should pick the most left roadLink"){
     OracleDatabase.withDynTransaction {
       val sourceRoadLink = RoadLink(445521, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), 105.06772542032195, Municipality, 6, TowardsDigitizing, Motorway, None, None, linkSource = NormalLinkInterface)
 
@@ -960,7 +960,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Should pick the most right roadLink - AgainstDigitizing"){
+  test("PickMost: Should pick the most right roadLink"){
     OracleDatabase.withDynTransaction {
       val sourceRoadLink = RoadLink(445521, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), 105.06772542032195, Municipality, 6, AgainstDigitizing, Motorway, None, None, linkSource = NormalLinkInterface)
 
@@ -973,6 +973,32 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val rightMost = service.pickRightMost(sourceRoadLink, roadLinks)
 
       rightMost.linkId should be(445522)
+    }
+  }
+
+  test("PickMost: Should pick the most right adjacent"){
+    OracleDatabase.withDynTransaction {
+      val sourceGeometry = Seq(Point(533701.563,6994545.568, 100.42699999999604), Point(533700.872,6994552.548, 100.4030000000057),
+                              Point(533700.608, 6994559.672,100.38499999999476), Point(533696.367,6994589.226,99.94599999999627))
+
+      val roadLink1Geometry = Seq( Point(533696.367,6994589.226,99.94599999999627), Point(533675.111,6994589.313,100.67699999999604),
+                                Point(533669.956,6994589.771,101.08000000000175), Point(533656.28,6994601.636,102.28399999999965),
+                                Point(533649.832,6994618.702,102.26499999999942), Point(533647.351,6994643.607,101.22900000000664))
+      val roadLink2Geometry = Seq(Point(533696.367,6994589.226,99.94599999999627), Point(533694.885,6994596.395,99.82799999999406),
+                                  Point(533687.513,6994659.491,97.33999999999651), Point(533682.186,6994702.867,94.096000000005),
+                                  Point(533678.296,6994729.959,91.96300000000338), Point(533675.016,6994741.734,91.28699999999662))
+
+      val sourceRoadLink = RoadLink(5169340, sourceGeometry, 53.2185423077318, Municipality, 6, BothDirections, Motorway, None, None, linkSource = NormalLinkInterface)
+
+      val roadLinks =
+        Seq(RoadLink(5169276, roadLink1Geometry, 87.80880628900667, Municipality, 6, BothDirections, Motorway, None, None, linkSource = NormalLinkInterface)
+          , RoadLink(5169274, roadLink2Geometry, 154.1408100462925, Municipality, 6, BothDirections, Motorway, None, None, linkSource = NormalLinkInterface))
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+
+      val service = new RoadLinkTestService(mockVVHClient)
+      val rightMost = service.pickRightMost(sourceRoadLink, roadLinks)
+
+      rightMost.linkId should be(5169274)
     }
   }
 
