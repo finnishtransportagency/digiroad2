@@ -282,7 +282,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           NewManoeuvre(
             convertValidityPeriod(manoeuvre.properties.find(_.name == "validityPeriods")).getOrElse(Seq()).toSet,
             manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt)).getOrElse(Seq()),
-            manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString), linkIds),
+            manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString), linkIds, None),
          roadLinks.filter(road => linkIds.contains(road.linkId))
         )
       }

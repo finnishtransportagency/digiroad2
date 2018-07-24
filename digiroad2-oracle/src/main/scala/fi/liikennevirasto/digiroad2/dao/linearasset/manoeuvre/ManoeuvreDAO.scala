@@ -59,8 +59,8 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
     val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
     sqlu"""
-             insert into manoeuvre(id, type, created_date, created_by, additional_info)
-             values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo)
+             insert into manoeuvre(id, type, created_date, created_by, additional_info, traffic_sign_id)
+             values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo, ${manoeuvre.trafficSignId})
           """.execute
 
     val linkPairs = manoeuvre.linkIds.zip(manoeuvre.linkIds.tail)

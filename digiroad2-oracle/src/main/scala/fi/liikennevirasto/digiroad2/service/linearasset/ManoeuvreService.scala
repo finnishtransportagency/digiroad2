@@ -3,17 +3,22 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import java.security.InvalidParameterException
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime], modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String)
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
-case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long])
+case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
+
+class ManoeuvreCreationException(response: String) extends RuntimeException(response)
 
 object ElementTypes {
   val FirstElement = 1
@@ -22,7 +27,7 @@ object ElementTypes {
 }
 
 class ManoeuvreService(roadLinkService: RoadLinkService) {
-
+  val logger = LoggerFactory.getLogger(getClass)
   def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -240,4 +245,53 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink) = {
+    val tsLinkId = trafficSign.linkId
+    val tsDirection = trafficSign.validityDirection
+
+    if (tsLinkId != sourceRoadLink.linkId)
+      throw new ManoeuvreCreationException("Wrong roadlink")
+
+    if (SideCode(tsDirection) == SideCode.BothDirections)
+      throw new ManoeuvreCreationException("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections")
+
+    val (intermediates, adjacents) = recursiveGetAdjacent(tsLinkId, Some(tsDirection))
+    val manoeuvreInit = sourceRoadLink +: intermediates
+
+    getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
+      val tsType = TrafficSignType(prop.propertyValue.toInt)
+
+      val rl = tsType match {
+
+        case TrafficSignType.NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
+
+        case TrafficSignType.NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(sourceRoadLink, adjacents)
+
+        case TrafficSignType.NoUTurn => {
+          val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
+          val (int, newAdjacents)= recursiveGetAdjacent(firstLeftMost.linkId, Some(tsDirection))
+          (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
+        }
+        case _ => Seq.empty[RoadLink]
+      }
+      createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, rl.map(_.linkId), Some(trafficSign.id)), rl)
+    }
+  }
+
+  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  }
+
+  private def recursiveGetAdjacent(linkId: Long, direction: Option[Int], intermediants: Seq[RoadLink] = Seq()): (Seq[RoadLink], Seq[RoadLink]) = {
+    val adjacents = roadLinkService.getAdjacent(linkId, direction)
+    if (adjacents.isEmpty)
+      throw new ManoeuvreCreationException("No adjecents found for that link id, the manoeuvre will not be created")
+
+    if (adjacents.size == 1) {
+      recursiveGetAdjacent(adjacents.head.linkId, direction, intermediants ++ adjacents)
+    } else {
+      (intermediants, adjacents)
+    }
+
+  }
 }

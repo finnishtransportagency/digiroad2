@@ -393,5 +393,23 @@ object GeometryUtils {
     }
   }
 
+  def connectionPoint(geometries: Seq[Seq[Point]], epsilon: Double = DefaultEpsilon): Option[Point] = {
+    def getAdjacent(point: Point): Boolean = geometries.tail.forall(geometry => areAdjacent(geometry, point, epsilon))
+
+    geometries.size match {
+      case 0 => None
+      case _ =>
+        val (head, last) = geometryEndpoints(geometries.head)
+        getAdjacent(head) match {
+          case true => Some(head)
+          case false => Some(last)
+        }
+    }
+  }
+
+  def connectionPoint(geometries: Seq[Seq[Point]]): Option[Point] = {
+    connectionPoint(geometries, DefaultEpsilon)
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }
