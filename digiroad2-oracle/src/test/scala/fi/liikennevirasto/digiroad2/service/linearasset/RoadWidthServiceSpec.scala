@@ -405,7 +405,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
 
       newAsset should have size 1
-      captor.getValue.expiredAssetIds  should have size 1
+      captor.getValue.expiredAssetIds  should have size 0
       captor.getValue.expiredAssetIds should be(Set(1))
       captor.getValue.adjustedVVHChanges should have size 1
       captor.getValue.adjustedVVHChanges.head.startMeasure should be (0)

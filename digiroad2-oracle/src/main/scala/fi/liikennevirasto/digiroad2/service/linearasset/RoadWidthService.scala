@@ -85,9 +85,10 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
 
     val expiredAssets = changedAssets.flatMap {
-      case (_, changeInfo, assets) =>
+      case (Some(road), changeInfo, assets) =>
         assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
-          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default")
+          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default") ||
+          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_generated")
         ).map{asset => (asset.id, asset.linkId)}
       case _ =>
         List()
@@ -123,7 +124,8 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }.toSeq
 
     (newAssets , changedSet.copy( expiredAssetIds = changedSet.expiredAssetIds ++ expiredAssets.map(_._1).filterNot(_ == 0),
-                                  adjustedVVHChanges = changedSet.adjustedVVHChanges.filterNot(change => expiredAssets.map(_._1).contains(change.assetId))))
+                                  adjustedVVHChanges = changedSet.adjustedVVHChanges.filterNot(change => expiredAssets.map(_._1).contains(change.assetId)),
+                                  adjustedSideCodes = changedSet.adjustedSideCodes.filterNot(change => expiredAssets.map(_._1).contains(change.assetId))))
   }
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
