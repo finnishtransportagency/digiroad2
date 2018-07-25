@@ -320,7 +320,7 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("get unVerified linear assets") {
-    when(mockMunicipalityDao.getMunicipalityNameByCode(235)).thenReturn("Kauniainen")
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
       runWithRollback {
         val (propId1, propId2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
 
@@ -351,8 +351,9 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
         1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
 
-    when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
-    when(mockMunicipalityDao.getMunicipalityNameByCode(92)).thenReturn("Vantaa")
+    val municipalitiesInfo = List(MunicipalityInfo(91, 9, "Helsinki"), MunicipalityInfo(92, 9, "Vantaa"))
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfo)
+
     runWithRollback {
       val (propId1, propId2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
 
