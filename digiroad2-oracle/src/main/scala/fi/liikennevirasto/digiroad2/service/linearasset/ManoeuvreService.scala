@@ -245,7 +245,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink): Option[Long] = {
+  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink, validateManoeuvre: (Long, Long, Int) => Boolean): Option[Long] = {
     val tsLinkId = trafficSign.linkId
     val tsDirection = trafficSign.validityDirection
 
@@ -258,10 +258,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     val (intermediates, adjacents) = recursiveGetAdjacent(tsLinkId, Some(tsDirection))
     val manoeuvreInit = sourceRoadLink +: intermediates
 
-    getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
+    val roadLinks = getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
       val tsType = TrafficSignType(prop.propertyValue.toInt)
 
-      val rl = tsType match {
+      tsType match {
 
         case TrafficSignType.NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
 
@@ -274,8 +274,13 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
         }
         case _ => Seq.empty[RoadLink]
       }
-      createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, rl.map(_.linkId), Some(trafficSign.id)), rl)
-    }
+    }.getOrElse(Seq.empty[RoadLink])
+
+    if(!validateManoeuvre(sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
+      throw new ManoeuvreCreationException("Manoeuvre creation not valid")
+    else
+      Some(createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSign.id)), roadLinks))
+
   }
 
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
@@ -292,6 +297,9 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     } else {
       (intermediants, adjacents)
     }
+  }
 
+  def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
+    dao.countExistings(sourceId, destId, elementType)
   }
 }

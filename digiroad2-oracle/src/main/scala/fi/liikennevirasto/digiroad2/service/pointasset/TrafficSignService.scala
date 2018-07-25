@@ -254,4 +254,26 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case _ => assets
     }
   }
+
+  def getTrafficSignsWithTrafficRestrictions(newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
+    val enumeratedValueIds = getRestrictionsEnumeratedValues(newTransaction)
+    if(newTransaction)
+        withDynSession {
+          OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValueIds)
+        }
+    else {
+      OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValueIds)
+    }
+  }
+
+
+  private def getRestrictionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
+    if(newTransaction)
+      withDynSession {
+        OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
+      }
+    else {
+      OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
+    }
+  }
 }

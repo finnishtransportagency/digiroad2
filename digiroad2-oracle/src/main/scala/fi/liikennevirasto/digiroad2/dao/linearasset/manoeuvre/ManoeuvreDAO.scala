@@ -299,4 +299,12 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       .map(manoeuvreRowsToManoeuvre(manoeuvreExceptionsById, manoeuvreValidityPeriodsById))
       .toSeq
   }
+
+  def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
+    sql"""
+         select COUNT(*)
+         from manoeuvre_element
+         where LINK_ID = $sourceId and element_type = $elementType and DEST_LINK_ID = $destId
+      """.as[Long].first
+  }
 }

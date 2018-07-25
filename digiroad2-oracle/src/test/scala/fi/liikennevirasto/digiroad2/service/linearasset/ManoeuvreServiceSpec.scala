@@ -300,7 +300,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
@@ -329,7 +329,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
@@ -352,7 +352,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         when(mockRoadLinkService.getAdjacent(any[Long], any[Option[Int]])).thenReturn(Seq())
         val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 3, None), testUser.username, sourceRoadLink)
         val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-        manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+        manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
       }
     }
   }
@@ -367,7 +367,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         when(mockRoadLinkService.getAdjacent(any[Long], any[Option[Int]])).thenReturn(Seq())
         val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 1, None), testUser.username, sourceRoadLink)
         val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-        manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+        manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
       }
     }
   }
@@ -390,7 +390,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink).get
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)

@@ -334,4 +334,29 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
     }
   }
+
+  test("Should return only assets with traffic restrictions"){
+    runWithRollback {
+
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val properties1 = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("10"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
+      val id1 = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties1, 1, None), testUser.username, roadLink)
+
+      val assets = service.getTrafficSignsWithTrafficRestrictions()
+
+      assets.find(_.id == id).size should be(0)
+      assets.find(_.id == id1).size should be(1)
+    }
+  }
+
 }

@@ -97,6 +97,10 @@ object DataFixture {
     new RoadAddressesService(viiteClient)
   }
 
+  lazy val manoeuvreService: ManoeuvreService = {
+    new ManoeuvreService(roadLinkService)
+  }
+
   lazy val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -1338,6 +1342,51 @@ object DataFixture {
     }
   }
 
+  def createManoeuvresUsingTrafficSigns(): Unit = {
+
+
+    def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int): Boolean  = {
+      OracleDatabase.withDynSession { manoeuvreService.countExistings(sourceId, destLinkId, elementType) == 0 }
+    }
+
+    println(s"Obtaining all traffic Signs with turning restriction")
+    //Get All Traffic Signs with traffic restriction
+    val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions()
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Seq(749)
+      }
+
+    println(s"Obtaining Municipalities")
+
+    municipalities.foreach { municipality =>
+
+      println(s"Obtaining all Road Links for Municipality: $municipality")
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+
+      trafficSigns.foreach(ts =>
+        try {
+          roadLinks.find(_.linkId == ts.linkId) match {
+            case Some(roadLink) =>
+              manoeuvreService.createManoeuvreBasedOnTrafficSign(ts, roadLink, validateManoeuvre)
+              println("manoeuvre created")
+            case _ =>
+              println(s"No roadLink available to create manouvre")
+              println(s"Asset id ${ts.id} did not generate a manoeuvre ")
+          }
+
+        }catch {
+          case ex: ManoeuvreCreationException => {
+            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
+          }
+        }
+      )
+    }
+  }
+
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1429,6 +1478,8 @@ object DataFixture {
         updateInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>
         updateTrafficDirectionRoundabouts()
+      case Some("create_manoeuvres_using_traffic_signs") =>
+        createManoeuvresUsingTrafficSigns()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1436,7 +1487,8 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts")
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | verify_inaccurate_speed_limit_assets | " +
+        " update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts | create_manoeuvres_using_traffic_signs")
     }
   }
 }
