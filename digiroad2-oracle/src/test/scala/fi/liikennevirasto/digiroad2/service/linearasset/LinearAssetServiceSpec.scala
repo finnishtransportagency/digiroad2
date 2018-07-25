@@ -965,7 +965,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("should not get administrative class 'State'") {
     val roadLink = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
-    when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(Set(91))).thenReturn(List(MunicipalityInfo(91, 9, "Helsinki")))
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
 
     runWithRollback {
