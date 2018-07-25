@@ -200,10 +200,11 @@ trait LinearAssetOperations {
         case (id, linkId) =>  roads.filter(_.linkId == linkId).map { road =>
             (road.municipalityCode, id, road.administrativeClass)
           }
-      }
+    }
+      val municipalityNames = municipalityDao.getMunicipalitiesNameAndIdByCode(unVerified.map(_._1).toSet).groupBy(_.id)
 
       unVerified.groupBy(_._1).map{
-        case (municipalityCode, grouped) => (municipalityDao.getMunicipalityNameByCode(municipalityCode), grouped)}
+        case (municipalityCode, grouped) => (municipalityNames.get(municipalityCode).get.map(_.name).head, grouped)}
         .mapValues(municipalityAssets => municipalityAssets
           .groupBy(_._3.toString)
           .mapValues(_.map(_._2)))
