@@ -86,7 +86,7 @@ object DataFixture {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider, eventbus)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
@@ -1344,25 +1344,18 @@ object DataFixture {
 
   def createManoeuvresUsingTrafficSigns(): Unit = {
 
-
-    def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int): Boolean  = {
-      OracleDatabase.withDynSession { manoeuvreService.countExistings(sourceId, destLinkId, elementType) == 0 }
-    }
-
-    println(s"Obtaining all traffic Signs with turning restriction")
+     println(s"Obtaining all traffic Signs with turning restriction")
     //Get All Traffic Signs with traffic restriction
     val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions()
 
     //Get All Municipalities
+    println(s"Obtaining Municipalities")
     val municipalities: Seq[Int] =
       OracleDatabase.withDynSession {
-        Seq(749)
+        Queries.getMunicipalities
       }
 
-    println(s"Obtaining Municipalities")
-
     municipalities.foreach { municipality =>
-
       println(s"Obtaining all Road Links for Municipality: $municipality")
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
 
@@ -1370,13 +1363,12 @@ object DataFixture {
         try {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
-              manoeuvreService.createManoeuvreBasedOnTrafficSign(ts, roadLink, validateManoeuvre)
+              manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(ts, roadLink))
               println("manoeuvre created")
             case _ =>
               println(s"No roadLink available to create manouvre")
               println(s"Asset id ${ts.id} did not generate a manoeuvre ")
           }
-
         }catch {
           case ex: ManoeuvreCreationException => {
             println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")

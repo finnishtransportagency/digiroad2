@@ -1480,7 +1480,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) =>
         validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
-        service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username, link.linkSource)
+        service.update(id, updatedAsset, link, user.username)
     }
   }
 

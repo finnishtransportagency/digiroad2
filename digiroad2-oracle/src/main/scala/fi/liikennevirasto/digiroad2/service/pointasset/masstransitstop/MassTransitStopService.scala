@@ -161,7 +161,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  override def update(id: Long, updatedAsset: NewMassTransitStop, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: NewMassTransitStop, roadLink: RoadLink, username: String): Long = {
     throw new NotImplementedError("Use updateExisting instead. Mass transit is legacy.")
   }
 

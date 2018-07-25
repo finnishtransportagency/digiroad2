@@ -68,9 +68,9 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     }
   }
 
-  override def update(id: Long, updatedAsset: IncomingRailwayCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: IncomingRailwayCrossing, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink.geometry, roadLink.municipalityCode, username, roadLink.linkSource, None, None)
     }
   }
 

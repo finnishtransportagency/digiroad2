@@ -41,9 +41,9 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     }
   }
 
-  override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource)
+      updateWithoutTransaction(id, updatedAsset, roadLink.geometry, roadLink.municipalityCode, username, roadLink.linkSource)
     }
   }
 

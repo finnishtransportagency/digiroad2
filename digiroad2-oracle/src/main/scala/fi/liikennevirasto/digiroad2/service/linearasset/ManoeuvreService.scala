@@ -17,7 +17,7 @@ case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods:
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
-
+case class ManoeuvreProvider(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink)
 class ManoeuvreCreationException(response: String) extends RuntimeException(response)
 
 object ElementTypes {
@@ -233,6 +233,12 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+  def deleteManoeuvreFromSign(id: Long): Long = {
+    withDynTransaction {
+      dao.deleteManoeuvreByTrafficSign(id)
+    }
+  }
+
   def getSourceRoadLinkIdById(id: Long) : Long = {
     withDynTransaction {
       dao.getSourceRoadLinkIdById(id)
@@ -245,20 +251,20 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  def createManoeuvreBasedOnTrafficSign(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink, validateManoeuvre: (Long, Long, Int) => Boolean): Option[Long] = {
-    val tsLinkId = trafficSign.linkId
-    val tsDirection = trafficSign.validityDirection
+  def createManoeuvreBasedOnTrafficSign(manouvreProvider: ManoeuvreProvider): Option[Long] = {
+    val tsLinkId = manouvreProvider.trafficSign.linkId
+    val tsDirection = manouvreProvider.trafficSign.validityDirection
 
-    if (tsLinkId != sourceRoadLink.linkId)
+    if (tsLinkId != manouvreProvider.sourceRoadLink.linkId)
       throw new ManoeuvreCreationException("Wrong roadlink")
 
     if (SideCode(tsDirection) == SideCode.BothDirections)
       throw new ManoeuvreCreationException("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections")
 
     val (intermediates, adjacents) = recursiveGetAdjacent(tsLinkId, Some(tsDirection))
-    val manoeuvreInit = sourceRoadLink +: intermediates
+    val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
-    val roadLinks = getTrafficSignsProperties(trafficSign, "trafficSigns_type").map { prop =>
+    val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
       val tsType = TrafficSignType(prop.propertyValue.toInt)
 
       tsType match {
@@ -276,10 +282,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       }
     }.getOrElse(Seq.empty[RoadLink])
 
-    if(!validateManoeuvre(sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
+    if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
       throw new ManoeuvreCreationException("Manoeuvre creation not valid")
     else
-      Some(createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSign.id)), roadLinks))
+      Some(createManoeuvre("automatic_creation_manoeuvre", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
 
   }
 
@@ -299,7 +305,11 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
+  private def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
     dao.countExistings(sourceId, destId, elementType)
+  }
+
+  private def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int): Boolean  = {
+    OracleDatabase.withDynSession { countExistings(sourceId, destLinkId, elementType) == 0 }
   }
 }

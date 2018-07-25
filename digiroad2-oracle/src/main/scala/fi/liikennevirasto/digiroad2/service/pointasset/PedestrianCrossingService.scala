@@ -40,9 +40,9 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     }
   }
 
-  override def update(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: IncomingPedestrianCrossing, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink.geometry, roadLink.municipalityCode, username, roadLink.linkSource, None, None)
     }
   }
 

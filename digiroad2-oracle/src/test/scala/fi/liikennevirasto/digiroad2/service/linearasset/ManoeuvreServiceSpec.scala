@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Saturday
@@ -40,7 +40,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider) {
+  val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -300,7 +300,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink)).get
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
@@ -329,7 +329,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink)).get
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
@@ -352,7 +352,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         when(mockRoadLinkService.getAdjacent(any[Long], any[Option[Int]])).thenReturn(Seq())
         val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 3, None), testUser.username, sourceRoadLink)
         val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-        manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
+        manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink)).get
       }
     }
   }
@@ -367,7 +367,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         when(mockRoadLinkService.getAdjacent(any[Long], any[Option[Int]])).thenReturn(Seq())
         val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 1, None), testUser.username, sourceRoadLink)
         val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-        manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
+        manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink)).get
       }
     }
   }
@@ -390,7 +390,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(assets, sourceRoadLink, (_,_,_) => true).get
+      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink)).get
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)

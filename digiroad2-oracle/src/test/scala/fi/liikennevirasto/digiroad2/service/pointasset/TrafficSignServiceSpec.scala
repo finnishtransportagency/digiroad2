@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup.SpeedLimits
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, GeometryUtils, Point}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -47,7 +47,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     VVHRoadlink(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
   val userProvider = new OracleUserProvider
-  val service = new TrafficSignService(mockRoadLinkService, mockUserProvider) {
+  val service = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus) {
     override def withDynTransaction[T](f: => T): T = f
 
     override def withDynSession[T](f: => T): T = f

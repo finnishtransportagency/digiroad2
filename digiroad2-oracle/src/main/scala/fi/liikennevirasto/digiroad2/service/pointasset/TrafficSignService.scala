@@ -9,7 +9,9 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreProvider
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import org.slf4j.LoggerFactory
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
@@ -93,9 +95,12 @@ object TrafficSignType {
   case object Unknown extends TrafficSignType { def value = 99;  def group = TrafficSignTypeGroup.Unknown; }
 }
 
-class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider) extends PointAssetOperations {
+class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
+
+  def eventBus: DigiroadEventBus = eventBusImpl
   type IncomingAsset = IncomingTrafficSign
   type PersistedAsset = PersistedTrafficSign
+  val logger = LoggerFactory.getLogger(getClass)
 
   override def typeId: Int = 300
 
@@ -122,9 +127,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    withDynTransaction {
+    val id =  withDynTransaction {
       OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
+    logger.info("creating manoeuvre from traffic sign")
+    eventBus.publish("manoeuvre:create", ManoeuvreProvider(getById(id).get, roadLink))
+    id
   }
 
   def createFloating(asset: IncomingTrafficSign, username: String, municipality: Int): Long = {
@@ -133,9 +141,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  override def update(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink.geometry, roadLink.municipalityCode, username, roadLink.linkSource, None, None)
     }
   }
 
@@ -275,5 +283,13 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     else {
       OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
     }
+  }
+
+  override def expire(id: Long, username: String): Long = {
+    withDynSession {
+      expireWithoutTransaction(id, username)
+    }
+    eventBus.publish("manoeuvre:expire", id)
+    id
   }
 }

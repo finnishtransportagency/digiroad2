@@ -41,7 +41,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider, eventbus)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
