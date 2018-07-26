@@ -97,7 +97,8 @@ class HeightLimitServiceSpec extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      an[UnsupportedOperationException] should be thrownBy service.update(id = 600074, IncomingHeightLimit(100, 0, 123, 20, 0, Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+      val roadLink =  RoadLink(123, linkGeometry, 200, Municipality, FunctionalClass.Unknown, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), linkSource = NormalLinkInterface)
+      an[UnsupportedOperationException] should be thrownBy service.update(id = 600074, IncomingHeightLimit(100, 0, 123, 20, 0, Some(0)), roadLink, "test")
     }
   }
 }

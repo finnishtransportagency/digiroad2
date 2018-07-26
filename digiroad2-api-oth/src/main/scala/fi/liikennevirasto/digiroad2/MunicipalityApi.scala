@@ -209,7 +209,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateMeasures(Set(pointAsset.mValue), pointAsset.linkId)
     val link = roadLinkService.getRoadLinkAndComplementaryFromVVH(pointAsset.linkId).getOrElse(throw new NoSuchElementException(s"Roadlink with ${pointAsset.linkId} does not exist"))
     val incomingAsset = service.toIncomingAsset(pointAsset, link)
-    val updatedAsset = service.update(assetId, incomingAsset.get, link.geometry, link.municipalityCode, user.username, link.linkSource)
+    val updatedAsset = service.update(assetId, incomingAsset.get, link, user.username)
     getPointAssetById(typeId, updatedAsset)
   }
 
