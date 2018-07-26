@@ -286,6 +286,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       manoeuvreUpdated.additionalInfo should be (additionalInfo)
     }
   }
+
   test("create manoeuvre where traffic sign is not turn left and towards digitizing"){
     runWithRollback{
       val roadLink = RoadLink(1001, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))

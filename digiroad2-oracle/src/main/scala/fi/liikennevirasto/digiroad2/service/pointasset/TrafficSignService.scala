@@ -131,7 +131,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
     logger.info("creating manoeuvre from traffic sign")
-    eventBus.publish("manoeuvre:create", ManoeuvreProvider(getById(id).get, roadLink))
+    eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIds(Set(id)).head, roadLink))
     id
   }
 
