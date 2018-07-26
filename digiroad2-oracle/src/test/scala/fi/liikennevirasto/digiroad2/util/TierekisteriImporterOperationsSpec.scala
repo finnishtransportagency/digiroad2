@@ -25,7 +25,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockTRClient: TierekisteriLightingAssetClient = MockitoSugar.mock[TierekisteriLightingAssetClient]
   val mockTRTrafficSignsLimitClient: TierekisteriTrafficSignAssetClient = MockitoSugar.mock[TierekisteriTrafficSignAssetClient]
-  val mockTRTrafficSignsLimitSpeedLimitClient: TierekisteriTrafficSignSpeedLimitClient = MockitoSugar.mock[TierekisteriTrafficSignSpeedLimitClient]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -94,7 +93,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
-    override val tierekisteriClient = mockTRTrafficSignsLimitSpeedLimitClient
+    override val tierekisteriClient = mockTRTrafficSignsLimitClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
