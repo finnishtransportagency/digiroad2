@@ -87,8 +87,8 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val expiredAssets = changedAssets.flatMap {
       case (Some(road), changeInfo, assets) =>
         assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
-          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default") ||
-          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse("") == "vvh_generated" && asset.createdBy.getOrElse("") == "vvh_mtkclass_default")
+          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && (asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default" ||
+            asset.modifiedBy.getOrElse("") == "vvh_generated" && asset.createdBy.getOrElse("") == "vvh_mtkclass_default"))
         ).map{asset => (asset.id, asset.linkId)}
       case _ =>
         List()
