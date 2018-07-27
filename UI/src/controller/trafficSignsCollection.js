@@ -3,6 +3,7 @@
   root.TrafficSignsCollection = function (backend, specs, verificationCollection) {
     PointAssetsCollection.call(this);
     var me = this;
+    this.trafficSignsAsset = [];
 
     var trafficSignsShowing = {
       speedLimits: false,
@@ -66,9 +67,42 @@
           eventbus.trigger('pointAssets:fetched');
           me.allowComplementaryIsActive(specs.allowComplementaryLinks);
           verificationCollection.fetch(boundingBox, center, specs.typeId, specs.hasMunicipalityValidation);
+          me.trafficSignsAsset = assets;
           return filterTrafficSigns(me.filterComplementaries(assets));
         });
     };
+
+    var isRelevantToManoeuvres = function(current) {
+      var trafficSignsTurnRestriction = [10, 11, 12];
+      var trafficSignTypeValue = _.head(_.find(current.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
+
+      if (_.includes(trafficSignsTurnRestriction, parseInt(trafficSignTypeValue))) {
+        var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
+        var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
+
+        //if traffic type changes, should be relevant to Manoeuvres
+        if (oldTrafficSignTypeValue !== trafficSignTypeValue)
+          return true;
+
+        var diffProperties = _.reduce(oldTrafficSign, function (result, value, key) {
+          return _.isEqual(value, current[key]) ?
+            result : result.concat(key);
+        }, []);
+
+        //if traffic Signs moves or orientation changes, should be relevant to Manoeuvres
+       return _.some(diffProperties, function(prop) {
+            return _.includes(['validityDirection', 'lon', 'lat'], prop);
+        });
+      } else
+        return false;
+    };
+
+    eventbus.on('trafficSigns:updated', function(current) {
+      if(isRelevantToManoeuvres(current)) {
+        new GenericConfirmPopup('Huom! Liikennemerkin siirto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
+          {type: 'alert'});
+      }
+    });
   };
 
 })(this);

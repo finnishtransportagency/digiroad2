@@ -89,6 +89,7 @@
       } else if (isNew()) {
         backend.createPointAsset(current, endPointName).done(done).fail(fail);
       } else {
+        eventbus.trigger(endPointName + ':updated', current);
         backend.updatePointAsset(current, endPointName).done(done).fail(fail);
       }
 
