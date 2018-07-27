@@ -6,12 +6,16 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreProvider
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup.SpeedLimits
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import fi.liikennevirasto.digiroad2.{DummyEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -360,4 +364,54 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("Should call creation of manoeuvre actor on traffic sign creation"){
+    runWithRollback {
+
+      val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+      val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+      val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
+
+      val trService = new TrafficSignService(mockRoadLinkService, mockUserProvider, mockEventBus) {
+        override def withDynTransaction[T](f: => T): T = f
+        override def withDynSession[T](f: => T): T = f
+      }
+
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("10"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
+      val asset = trService.getPersistedAssetsByIds(Set(id)).head
+
+      verify(mockEventBus, times(1)).publish("manoeuvre:create", ManoeuvreProvider(asset, roadLink))
+    }
+  }
+
+  test("Should call expire of manoeuvre actor on traffic sign expirinf"){
+    runWithRollback {
+
+      val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+      val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+      val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
+
+      val trService = new TrafficSignService(mockRoadLinkService, mockUserProvider, mockEventBus) {
+        override def withDynTransaction[T](f: => T): T = f
+        override def withDynSession[T](f: => T): T = f
+      }
+
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("10"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
+      val asset = trService.getPersistedAssetsByIds(Set(id)).head
+
+      verify(mockEventBus, times(1)).publish("manoeuvre:create", ManoeuvreProvider(asset, roadLink))
+
+      trService.expire(id, "test_user")
+      verify(mockEventBus, times(1)).publish("manoeuvre:expire", id)
+    }
+  }
 }

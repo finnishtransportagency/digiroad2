@@ -145,7 +145,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     val updatedId = withDynTransaction {
       updateWithoutTransaction(id, updatedAsset, roadLink.geometry, roadLink.municipalityCode, username, roadLink.linkSource, None, None)
     }
+    logger.info("expiring manoeuvre")
     eventBus.publish("manoeuvre:expire", id)
+    logger.info("creating manoeuvre from traffic sign")
     eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIds(Set(updatedId)).head, roadLink))
     updatedId
   }
