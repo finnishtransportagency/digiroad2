@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures}
@@ -45,7 +45,8 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
 
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
       expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds,
-      adjustedMValues = newAndUpdatedPavingAssets.filter(_.id != 0).map( a => MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)),
+      adjustedMValues = Seq.empty[MValueAdjustment],
+      adjustedVVHChanges = newAndUpdatedPavingAssets.filter(_.id != 0).map( a => VVHChangesAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure, a.vvhTimeStamp)),
       adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val combinedAssets = existingAssets.filterNot(a => expiredIds.contains(a.id) || newAndUpdatedPavingAssets.exists(_.id == a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
