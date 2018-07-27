@@ -313,8 +313,9 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
     sql"""
          select COUNT(*)
-         from manoeuvre_element
-         where LINK_ID = $sourceId and element_type = $elementType and DEST_LINK_ID = $destId
+         from manoeuvre_element me
+         join MANOEUVRE m on m.ID = me.MANOEUVRE_ID
+         where me.LINK_ID = $sourceId and me.element_type = $elementType and me.DEST_LINK_ID = $destId and m.VALID_TO is null
       """.as[Long].first
   }
 }

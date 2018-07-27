@@ -142,9 +142,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   override def update(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String): Long = {
-    withDynTransaction {
+    val updatedId = withDynTransaction {
       updateWithoutTransaction(id, updatedAsset, roadLink.geometry, roadLink.municipalityCode, username, roadLink.linkSource, None, None)
     }
+    eventBus.publish("manoeuvre:expire", id)
+    eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIds(Set(updatedId)).head, roadLink))
+    updatedId
   }
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
