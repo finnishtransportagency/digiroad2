@@ -532,7 +532,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   }
 
   test("get unVerified prohibition assets") {
-    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(Set(91))).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(Set(235))).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
     runWithRollback {
 
       val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
