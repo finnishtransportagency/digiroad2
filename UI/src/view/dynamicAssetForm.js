@@ -832,6 +832,9 @@
                     removeValueFn();
                     _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
+                  if(asset.value)
+                    setValueFn(asset.value);
+                  else
                     setValueFn({ properties: [] });
                 }
 
