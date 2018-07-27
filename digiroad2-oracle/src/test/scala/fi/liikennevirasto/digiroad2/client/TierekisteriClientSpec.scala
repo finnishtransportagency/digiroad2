@@ -90,12 +90,6 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
-  lazy val tierekisteriTrafficSignSpeedLimit: TierekisteriTrafficSignSpeedLimitClient = {
-    new TierekisteriTrafficSignSpeedLimitClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-      HttpClientBuilder.create().build())
-  }
-
   lazy val tierekisteriWinterCareClass: TierekisteriWinterCareClassAssetClient = {
     new TierekisteriWinterCareClassAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -656,10 +650,10 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   }
 
   test("When in 'wrong' side of the road (LIIKVAST = 1), don't map SpeedLimit, SpeedLimitZone and UrbanArea") {
-    val assetsTypeSpeedLimit = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLIIKVAST = "1"))
-    val assetsTypeSpeedLimitZone = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(SpeedLimitZone, fldLIIKVAST = "1"))
-    val assetsTypeUrbanArea = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(UrbanArea, fldLIIKVAST = "1"))
-    val assetsTypeEndSpeedLimitZone = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(EndSpeedLimitZone, fldLIIKVAST = "1"))
+    val assetsTypeSpeedLimit = tierekisteriTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLIIKVAST = "1"))
+    val assetsTypeSpeedLimitZone = tierekisteriTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimitZone, fldLIIKVAST = "1"))
+    val assetsTypeUrbanArea = tierekisteriTrafficSignAsset.mapFields(trSpeedLimitDataTest(UrbanArea, fldLIIKVAST = "1"))
+    val assetsTypeEndSpeedLimitZone = tierekisteriTrafficSignAsset.mapFields(trSpeedLimitDataTest(EndSpeedLimitZone, fldLIIKVAST = "1"))
     assetsTypeSpeedLimit.size should be (0)
     assetsTypeSpeedLimitZone.size should be (0)
     assetsTypeUrbanArea.size should be (0)
@@ -667,13 +661,13 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   }
 
   test("when 'LMTEKSTI' is null, get NOPRA506 info") {
-    val assetsTypeSpeedLimit = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(SpeedLimit, fldNOPRA506 = "80"))
+    val assetsTypeSpeedLimit = tierekisteriTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimit, fldNOPRA506 = "80"))
     assetsTypeSpeedLimit.size should be (1)
     assetsTypeSpeedLimit.map(_.assetValue).head should be ("80")
   }
 
   test("when 'LMTEKSTI' has value, don't get NOPRA506 info") {
-    val assetsTypeSpeedLimit = tierekisteriTrafficSignSpeedLimit.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLMTEKSTI= "100", fldNOPRA506 = "80"))
+    val assetsTypeSpeedLimit = tierekisteriTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLMTEKSTI= "100", fldNOPRA506 = "80"))
     assetsTypeSpeedLimit.size should be (1)
     assetsTypeSpeedLimit.map(_.assetValue).head should be ("100")
   }
