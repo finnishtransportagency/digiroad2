@@ -323,6 +323,10 @@
       eventbus.trigger('assetPropertyValue:changed', { propertyData: propertyData, id: currentAsset.id });
     };
 
+    var setAdditionalParameter = function(key, value) {
+      currentAsset.payload[key] = value;
+    };
+
     var getCurrentAsset = function() {
       return currentAsset;
     };
@@ -389,6 +393,12 @@
       if(_.isEmpty(currentAsset))
         return {};
       return roadCollection.getRoadLinkByLinkId(currentAsset.roadLinkId ? currentAsset.roadLinkId : currentAsset.linkId);
+    };
+
+    var getCurrentRoadLink = function(){
+      if(_.isEmpty(currentAsset))
+        return {};
+      return roadCollection.getRoadLinkByLinkId(currentAsset.payload.roadLinkId ? currentAsset.payload.roadLinkId : currentAsset.payload.linkId);
     };
 
     var deleteMassTransitStop = function (poistaSelected) {
@@ -493,6 +503,17 @@
       });
     }
 
+    function hasRoadAddress(properties) {
+      var stopRoadlink = getCurrentRoadLink();
+      if(stopRoadlink){
+        return !_.isUndefined(stopRoadlink.getData().roadNumber);
+      }
+      var roadNumber = _.find(properties, function(property){
+        return property.publicId === 'tie';
+      });
+      return !_.isUndefined(roadNumber) && !_.isEmpty(roadNumber.values);
+    }
+
     return {
       close: close,
       save: save,
@@ -527,7 +548,9 @@
       isRoadNameDif: isRoadNameDif,
       setRoadNameFields: setRoadNameFields,
       isTerminalChild: isTerminalChild,
-      getMunicipalityCode: getMunicipalityCode
+      getMunicipalityCode: getMunicipalityCode,
+      hasRoadAddress: hasRoadAddress,
+      setAdditionalParameter: setAdditionalParameter
     };
   };
 
