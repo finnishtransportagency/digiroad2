@@ -13,7 +13,6 @@ import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.mockito.Matchers._
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -403,7 +402,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
+      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("roadWidth:update"), captor.capture())
 
       newAsset should have size 1
       captor.getValue.expiredAssetIds  should have size 0
@@ -440,7 +439,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
+      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("roadWidth:update"), captor.capture())
 
       newAsset should have size 1
       captor.getValue.expiredAssetIds should have size 1
