@@ -75,4 +75,19 @@ class OracleAssetDao {
     val assetTypes = sql"""select name from asset_type where verifiable = 1""".as[(String)].list
     assetTypes
   }
+
+  def getAssetIdByLinks(typeId: Long, linkIds: Seq[Long]) = {
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""select A.ID from ASSET A
+         join ASSET_LINK AL on AL.ASSET_ID = A.ID
+         join LRM_POSITION lrm on lrm.ID = AL.POSITION_ID
+         join  #$idTableName i on i.id = lrm.link_id
+         where A.ASSET_TYPE_ID = $typeId""".as[Long].list
+    }
+  }
+
+  def expireWithoutTransaction(id: Long, username: String) = {
+    Queries.updateAssetModified(id, username).first
+    sqlu"update asset set valid_to = sysdate where id = $id".first
+  }
 }

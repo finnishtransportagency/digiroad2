@@ -127,17 +127,17 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    val id = withDynTransaction {
-      OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    withDynTransaction {
+      val id = OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      if (belongsToTurnRestriction(asset)) {
+        eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIdsWithoutTransaction(Set(id)).head, roadLink))
+      }
+      id
     }
-    if (belongsToTurnRestriction(asset)) {
-      eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIds(Set(id)).head, roadLink))
-    }
-    id
   }
 
-  private def belongsToTurnRestriction(asset: IncomingTrafficSign)  = {
-    val turnRestrictionsGroup =  Seq(TrafficSignType.NoUTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoLeftTurn)
+  def belongsToTurnRestriction(asset: IncomingTrafficSign)  = {
+    val turnRestrictionsGroup =  Seq(/*TrafficSignType.NoUTurn, */TrafficSignType.NoRightTurn, TrafficSignType.NoLeftTurn)
     turnRestrictionsGroup.contains(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.headOption.map(t => TrafficSignType(t.propertyValue.toInt)).get)
   }
 
@@ -156,12 +156,13 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
-      case old if old.bearing != updatedAsset.bearing || (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
+      case old if old.bearing != updatedAsset.bearing || (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) || old.validityDirection != updatedAsset.validityDirection =>
         expireWithoutTransaction(id)
         val newId = OracleTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
         if(belongsToTurnRestriction(updatedAsset)) {
+          println(s"Creating manoeuvre on linkId: ${roadLink.linkId} from import traffic sign with id $newId" )
           eventBus.publish("manoeuvre:expire", id)
-          eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIds(Set(newId)).head, roadLink))
+          eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIdsWithoutTransaction(Set(newId)).head, roadLink))
         }
         newId
       case _ =>
@@ -289,10 +290,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   private def getRestrictionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction)
       withDynSession {
-        OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
+        OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn/*, TrafficSignType.NoUTurn*/))
       }
     else {
-      OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
+      OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn/*, TrafficSignType.NoUTurn*/))
     }
   }
 
@@ -300,6 +301,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     withDynSession {
       expireWithoutTransaction(id, username)
     }
+    eventBus.publish("manoeuvre:expire", id)
+    id
+  }
+
+  def expireAssetWithoutTransaction(id: Long, username: String): Long = {
+    expireWithoutTransaction(id)
     eventBus.publish("manoeuvre:expire", id)
     id
   }

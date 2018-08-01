@@ -3,7 +3,9 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.getClass
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -143,10 +145,19 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
 }
 
 case class ManoeuvreUpdater[A, B](manoeuvreProvider: ManoeuvreService) extends Actor {
+
+  val logger = LoggerFactory.getLogger(getClass)
+
   def receive = {
     case x: Long => manoeuvreProvider.deleteManoeuvreFromSign(x.asInstanceOf[Long])
-    case x: ManoeuvreProvider => manoeuvreProvider.createManoeuvreBasedOnTrafficSign(x.asInstanceOf[ManoeuvreProvider])
-    case _      => println("Manoeuvre not created")
+    case x: ManoeuvreProvider =>
+      try {
+        manoeuvreProvider.createManoeuvreBasedOnTrafficSign(x.asInstanceOf[ManoeuvreProvider])
+      }catch {
+        case e: ManoeuvreCreationException =>
+          logger.error("Manoeuvre creation error: " + e.response.mkString(" "))
+      }
+    case _ => println("Manoeuvre not created")
   }
 }
 
