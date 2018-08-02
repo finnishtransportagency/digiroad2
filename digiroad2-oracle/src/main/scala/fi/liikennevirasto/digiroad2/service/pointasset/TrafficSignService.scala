@@ -275,14 +275,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getTrafficSignsWithTrafficRestrictions(newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
+  def getTrafficSignsWithTrafficRestrictions( municipality: Int, newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
     val enumeratedValueIds = getRestrictionsEnumeratedValues(newTransaction)
     if(newTransaction)
         withDynSession {
-          OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValueIds)
+          OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValueIds, municipality)
         }
     else {
-      OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValueIds)
+      OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValueIds, municipality)
     }
   }
 

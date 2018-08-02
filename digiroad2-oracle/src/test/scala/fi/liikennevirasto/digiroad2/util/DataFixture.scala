@@ -1343,11 +1343,6 @@ object DataFixture {
   }
 
   def createManoeuvresUsingTrafficSigns(): Unit = {
-
-     println(s"Obtaining all traffic Signs with turning restriction")
-    //Get All Traffic Signs with traffic restriction
-    val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions()
-
     //Get All Municipalities
     println(s"Obtaining Municipalities")
     val municipalities: Seq[Int] =
@@ -1356,15 +1351,22 @@ object DataFixture {
       }
 
     municipalities.foreach { municipality =>
+
+      println(s"Obtaining all traffic Signs with turning restriction for municipality $municipality")
+      //Get All Traffic Signs with traffic restriction
+      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality)
+
       println(s"Obtaining all Road Links for Municipality: $municipality")
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      println(s"End of roadLinks fetch for Municipality: $municipality")
 
+      println("Start processing traffic signs, to create manoeuvres")
       trafficSigns.foreach(ts =>
         try {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
               manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(ts, roadLink))
-              println("manoeuvre created")
+              println(s"manoeuvre created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create manouvre")
               println(s"Asset id ${ts.id} did not generate a manoeuvre ")
