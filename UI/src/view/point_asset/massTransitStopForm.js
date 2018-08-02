@@ -60,7 +60,8 @@
   function optionalSave(properties) {
     var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY(properties);
     var hasRoadAddress = selectedMassTransitStopModel.hasRoadAddress(properties);
-    return authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()  && ((isAdministratorELY && !hasRoadAddress) || (hasRoadAddress && !isAdministratorELY));
+    var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL(properties);
+    return authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()  && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && !isAdministratorHSL));
   }
 
   var SaveButton = function(isTerminalActive) {
@@ -77,7 +78,7 @@
         if(optionalSave(selectedMassTransitStopModel.getProperties())){
           new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
             successCallback: function () {
-              selectedMassTransitStopModel.setAdditionalParameter('alternativeSave', true);
+              selectedMassTransitStopModel.setAdditionalParameter('trSave', false);
               saveStop();
             },
             closeCallback: function () {

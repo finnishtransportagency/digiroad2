@@ -369,7 +369,7 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
         halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
-    val saveOption = (parsedBody \ "alternativeSave").extractOpt[Boolean]
+    val saveOption = (parsedBody \ "trSave").extractOpt[Boolean]
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     validateBusStopMaintainerUser(properties)
     val id = params("id").toLong
@@ -380,7 +380,7 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
       case _ => None
     }
     try {
-      massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
+      massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id), saveOption)
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
       case e: RoadAddressException =>
@@ -441,7 +441,7 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
     try {
-      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink)
+      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink, saveOption)
       massTransitStopService.getNormalAndComplementaryById(id, roadLink)
     } catch {
       case e: RoadAddressException =>

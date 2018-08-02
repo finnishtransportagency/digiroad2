@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Poi
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{Equipment, TierekisteriBusStopMarshaller, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkLike, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
@@ -71,7 +71,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       properties.map(epv => epv.publicId -> epv.values).toMap
   }
 
-  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
+  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop], saveOption: Option[Boolean]): Boolean = {
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
         (existingAsset.propertyData.
@@ -81,12 +81,16 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       case _ => newProperties.toSeq
     }
 
-    TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass))
+    saveOption.getOrElse(TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass)))
   }
 
   override def was(existingAsset: PersistedMassTransitStop): Boolean = {
     val administrationClass = MassTransitStopOperations.getAdministrationClass(existingAsset.propertyData)
-    TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
+    val stopLiviId = existingAsset.propertyData.
+      find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
+      flatMap(property => property.values.headOption).map(p => p.propertyValue)
+
+    stopLiviId.isDefined && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
   }
 
   override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {

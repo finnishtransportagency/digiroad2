@@ -52,6 +52,7 @@ trait AbstractBusStopStrategy {
   val massTransitStopDao: MassTransitStopDao
 
   def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop]): Boolean = {false}
+  def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop], saveOption: Option[Boolean]): Boolean = {false}
   def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
   def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {}
   def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean)
@@ -227,7 +228,7 @@ trait MassTransitStopService extends PointAssetOperations {
   override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink): Long = {
     val (persistedAsset, publishInfo, strategy) = withDynTransaction {
       val point = Point(asset.lon, asset.lat)
-      val strategy = getStrategy(asset.properties.toSet, roadLink)
+      val strategy = getStrategy(asset.properties.toSet, roadLink, None)
       val (persistedAsset, publishInfo) = strategy.create(asset, username, point, roadLink)
       withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
 
@@ -235,6 +236,19 @@ trait MassTransitStopService extends PointAssetOperations {
     }
       strategy.publishSaveEvent(publishInfo)
       persistedAsset.id
+  }
+
+  def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink, saveOption: Option[Boolean]): Long = {
+    val (persistedAsset, publishInfo, strategy) = withDynTransaction {
+      val point = Point(asset.lon, asset.lat)
+      val strategy = getStrategy(asset.properties.toSet, roadLink, saveOption)
+      val (persistedAsset, publishInfo) = strategy.create(asset, username, point, roadLink)
+      withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
+
+      (persistedAsset, publishInfo, strategy)
+    }
+    strategy.publishSaveEvent(publishInfo)
+    persistedAsset.id
   }
 
   protected override def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[RoadLinkLike]) : String = {
@@ -286,7 +300,32 @@ trait MassTransitStopService extends PointAssetOperations {
       }
       val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false).getOrElse(throw new NoSuchElementException)
 
-      val (previousStrategy, currentStrategy) = getStrategy(properties, asset, roadLink)
+      val (previousStrategy, currentStrategy) = getStrategy(properties, asset, roadLink, None)
+
+      if (previousStrategy != currentStrategy)
+        previousStrategy.undo(asset, properties, username)
+
+      val (persistedAsset, publishInfo) = currentStrategy.update(asset, optionalPosition, properties, username, municipalityValidation, roadLink)
+
+      val (enrichPersistedAsset, error) = currentStrategy.enrichBusStop(persistedAsset)
+      (currentStrategy, publishInfo, withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(enrichPersistedAsset))
+    }
+    currentStrategy.publishSaveEvent(publishInfo)
+    persistedAsset
+  }
+
+  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, saveOption: Option[Boolean]): MassTransitStopWithProperties = {
+
+    val (currentStrategy, publishInfo, persistedAsset ) =  withDynTransaction {
+      val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
+
+      val linkId = optionalPosition match {
+        case Some(position) => position.linkId
+        case _ => asset.linkId
+      }
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false).getOrElse(throw new NoSuchElementException)
+
+      val (previousStrategy, currentStrategy) = getStrategy(properties, asset, roadLink, saveOption)
 
       if (previousStrategy != currentStrategy)
         previousStrategy.undo(asset, properties, username)
@@ -533,18 +572,20 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def getStrategy(asset: PersistedMassTransitStop): AbstractBusStopStrategy ={
     val (strategies, defaultStrategy) = getStrategies()
-    strategies.find(strategy => strategy.is(Set(), None, Some(asset))).getOrElse(defaultStrategy)
+    strategies.find(strategy => strategy.is(Set(), None, Some(asset), None)).getOrElse(defaultStrategy)
   }
 
-  private def getStrategy(newProperties: Set[SimpleProperty], roadLink: RoadLink): AbstractBusStopStrategy ={
+  //used by create
+  private def getStrategy(newProperties: Set[SimpleProperty], roadLink: RoadLink, saveOption: Option[Boolean]): AbstractBusStopStrategy ={
     val (strategies, defaultStrategy) = getStrategies()
-    strategies.find(strategy => strategy.is(newProperties, Some(roadLink), None)).getOrElse(defaultStrategy)
+    strategies.find(strategy => strategy.is(newProperties, Some(roadLink), None, saveOption)).getOrElse(defaultStrategy)
   }
 
-  private def getStrategy(newProperties: Set[SimpleProperty], asset: PersistedMassTransitStop, roadLink: RoadLink): (AbstractBusStopStrategy, AbstractBusStopStrategy) ={
+  //used by update
+  private def getStrategy(newProperties: Set[SimpleProperty], asset: PersistedMassTransitStop, roadLink: RoadLink, saveOption: Option[Boolean]): (AbstractBusStopStrategy, AbstractBusStopStrategy) ={
     val (strategies, defaultStrategy) = getStrategies()
     val previousStrategy = strategies.find(v => v.was(asset)).getOrElse(defaultStrategy)
-    val currentStrategy = strategies.find(strategy => strategy.is(newProperties, Some(roadLink), Some(asset))).getOrElse(defaultStrategy)
+    val currentStrategy = strategies.find(strategy => strategy.is(newProperties, Some(roadLink), Some(asset), saveOption)).getOrElse(defaultStrategy)
     (previousStrategy, currentStrategy)
   }
 
