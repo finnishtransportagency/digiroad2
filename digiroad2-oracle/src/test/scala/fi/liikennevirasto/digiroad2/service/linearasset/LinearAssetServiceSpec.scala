@@ -128,20 +128,22 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
-
       val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i, _) => Unit)
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId(1))).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
+      
+      createdId.length should be(2)
 
-      oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
-      oldLimit.value should be (Some(NumericValue(2)))
-      oldLimit.modifiedBy should be (Some("unittest"))
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
+      val createdLimit1 = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.last)).head
 
       createdLimit.linkId should be (388562360)
-      createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
-      createdLimit.value should be (Some(NumericValue(3)))
-      createdLimit.createdBy should be (Some("test"))
+      createdLimit.sideCode should be (SideCode.TowardsDigitizing.value)
+      createdLimit.value should be (Some(NumericValue(2)))
+      createdLimit.modifiedBy should be (Some("unittest"))
+
+      createdLimit1.linkId should be (388562360)
+      createdLimit1.sideCode should be (SideCode.AgainstDigitizing.value)
+      createdLimit1.value should be (Some(NumericValue(3)))
+      createdLimit1.createdBy should be (Some("test"))
     }
   }
 

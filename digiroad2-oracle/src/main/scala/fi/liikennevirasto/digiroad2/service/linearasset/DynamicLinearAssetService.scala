@@ -102,7 +102,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         val props = properties ++ defaultValues.toSet
         validateRequiredProperties(typeId, props)
         dynamicLinearAssetDao.updateAssetProperties(id, props)
-        dynamicLinearAssetDao.updateValue(id, username)
+        dynamicLinearAssetDao.updateAssetLastModified(id, username)
       case _ => None
     }
     id

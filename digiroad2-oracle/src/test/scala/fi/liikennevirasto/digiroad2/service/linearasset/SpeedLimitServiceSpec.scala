@@ -107,7 +107,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
         when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
 
         val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
-        provider.split(asset.id, 100, 120, 60, "test", failingMunicipalityValidation)
+        provider.split(asset.id, 100, 120, 60, "test", (Int, AdministrativeClass) => throw new IllegalArgumentException)
       }
     }
   }
@@ -118,7 +118,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     "and creates new speed limit for second split") {
     runWithRollback {
       val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
-      val (createdId1, createdId2) = provider.splitSpeedLimit(asset, vvhRoadLink, 100, 120, 60, "test")
+      val (createdId1, createdId2) = provider.split(asset, vvhRoadLink, 100, 120, 60, "test")
       val created1 = provider.getPersistedSpeedLimitById(createdId1).get
       val created2 = provider.getPersistedSpeedLimitById(createdId2).get
 
@@ -138,7 +138,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split") {
     runWithRollback {
       val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
-      val (createdId1, createdId2) = provider.splitSpeedLimit(asset, vvhRoadLink, 50, 120, 60, "test")
+      val (createdId1, createdId2) = provider.split(asset, vvhRoadLink, 50, 120, 60, "test")
       val created1 = provider.getPersistedSpeedLimitById(createdId1).get
       val created2 = provider.getPersistedSpeedLimitById(createdId2).get
 

@@ -173,18 +173,28 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
       val createdId = ServiceWithDao.separate(assetId, Some(propertyData2), Some(propertyData3), "unittest", (i, a) => Unit)
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId(1))).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
+
+      createdId.length should be (2)
+
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
+      val createdLimit1 = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.last)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
       oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
-      oldLimit.value should be (Some(propertyData2))
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.sideCode should be (SideCode.BothDirections.value)
+      oldLimit.expired should be (true)
+      oldLimit.modifiedBy should be (None)
 
       createdLimit.linkId should be (388562360)
-      createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
-      createdLimit.value should be (Some(propertyData3))
+      createdLimit.sideCode should be (SideCode.TowardsDigitizing.value)
+      createdLimit.value should be (Some(propertyData2))
       createdLimit.createdBy should be (Some("test"))
+      createdLimit.modifiedBy should be (Some("unittest"))
+
+      createdLimit1.linkId should be (388562360)
+      createdLimit1.sideCode should be (SideCode.AgainstDigitizing.value)
+      createdLimit1.value should be (Some(propertyData3))
+      createdLimit1.createdBy should be (Some("test"))
     }
   }
 
@@ -206,8 +216,10 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, None, Some(propertyData3), "unittest", (i, a) => Unit).filter(_ != assetId).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId)).head
+      val createdId = ServiceWithDao.separate(assetId, None, Some(propertyData3), "unittest", (i, a) => Unit)
+      createdId.length should be (1)
+
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
       oldLimit.linkId should be (388562360)
@@ -220,7 +232,7 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       createdLimit.value should be (Some(propertyData3))
       createdLimit.expired should be (false)
       createdLimit.createdBy should be (Some("test"))
-    }
+      createdLimit.modifiedBy should be (Some("unittest"))    }
   }
 
   test("Separate with empty value against digitization") {
@@ -275,23 +287,24 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val ids = ServiceWithDao.split(assetId, 2.0, Some(propertyData2), Some(propertyData3), "unittest", (i, a) => Unit)
 
-      val createdId = ids(1)
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.head)).head
+      ids.length should be(2)
 
-      oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.BothDirections.value)
-      oldLimit.value should be (Some(propertyData2))
-      oldLimit.modifiedBy should be (Some("unittest"))
-      oldLimit.startMeasure should be (2.0)
-      oldLimit.endMeasure should be (10.0)
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.head)).head
+      val createdLimit1 = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.last)).head
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.BothDirections.value)
-      createdLimit.value should be (Some(propertyData3))
-      createdLimit.createdBy should be (Some("test"))
-      createdLimit.startMeasure should be (0.0)
-      createdLimit.endMeasure should be (2.0)
+      createdLimit.value should be (Some(propertyData2))
+      createdLimit.modifiedBy should be (Some("unittest"))
+      createdLimit.startMeasure should be (2.0)
+      createdLimit.endMeasure should be (10.0)
+
+      createdLimit1.linkId should be (388562360)
+      createdLimit1.sideCode should be (SideCode.BothDirections.value)
+      createdLimit1.value should be (Some(propertyData3))
+      createdLimit1.createdBy should be (Some("test"))
+      createdLimit1.startMeasure should be (0.0)
+      createdLimit1.endMeasure should be (2.0)
     }
   }
 
