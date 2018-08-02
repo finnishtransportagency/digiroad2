@@ -152,16 +152,16 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     ids.flatMap { id =>
       val typeId = assetTypeById(id)
-      val oldLinearAsset = dao.fetchProhibitionsByIds(typeId, Set(id)).head
-      val newMeasures = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
-      val newSideCode = sideCode.getOrElse(oldLinearAsset.sideCode)
-      val roadLink = vvhClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val oldAsset = dao.fetchProhibitionsByIds(typeId, Set(id)).head
+      val newMeasures = measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure))
+      val newSideCode = sideCode.getOrElse(oldAsset.sideCode)
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(oldAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
       value match {
         case prohibitions: Prohibitions =>
-          if (((newMeasures.startMeasure - oldLinearAsset.startMeasure > 0.01 || oldLinearAsset.startMeasure - newMeasures.startMeasure > 0.01) || (newMeasures.endMeasure - oldLinearAsset.endMeasure > 0.01 || oldLinearAsset.endMeasure - newMeasures.endMeasure > 0.01)) || newSideCode != oldLinearAsset.sideCode) {
+          if ((validateMinDistance(newMeasures.startMeasure, oldAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldAsset.endMeasure)) || newSideCode != oldAsset.sideCode) {
             dao.updateExpiration(id)
-            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, prohibitions, newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), verifiedBy =  getVerifiedBy(username, oldLinearAsset.typeId)))
+            Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), verifiedBy =  getVerifiedBy(username, oldAsset.typeId)))
           }
           else {
             dao.updateVerifiedInfo(Set(id), username)

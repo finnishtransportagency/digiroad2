@@ -77,6 +77,12 @@ trait LinearAssetOperations {
     }
   }
 
+  def validateMinDistance(measure1: Double, measure2: Double): Boolean = {
+    val minDistanceAllow = 0.01
+    val (maxMeasure, minMeasure) = (math.max(measure1, measure2), math.min(measure1, measure2))
+    (maxMeasure - minMeasure) > minDistanceAllow
+  }
+
   /**
     * Returns linear assets for Digiroad2Api /linearassets GET endpoint.
     *
@@ -715,7 +721,7 @@ trait LinearAssetOperations {
 
       value match {
         case NumericValue(intValue) =>
-          if (((newMeasures.startMeasure - oldLinearAsset.startMeasure > 0.01 || oldLinearAsset.startMeasure - newMeasures.startMeasure > 0.01) || (newMeasures.endMeasure - oldLinearAsset.endMeasure > 0.01 || oldLinearAsset.endMeasure - newMeasures.endMeasure > 0.01)) || newSideCode != oldLinearAsset.sideCode) {
+          if ((validateMinDistance(newMeasures.startMeasure, oldLinearAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) || newSideCode != oldLinearAsset.sideCode) {
             dao.updateExpiration(id)
             Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue.apply(intValue), newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldLinearAsset.verifiedBy, informationSource = informationSource))
           }

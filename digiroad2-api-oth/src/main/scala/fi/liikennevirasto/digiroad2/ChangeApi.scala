@@ -29,7 +29,6 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case _ => false
     }
 
-    //TODO: check update methods to see if the rule is correct on that service
     params("assetType") match {
       case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust))
       case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(TotalWeightLimit.typeId , since, until, withAdjust))

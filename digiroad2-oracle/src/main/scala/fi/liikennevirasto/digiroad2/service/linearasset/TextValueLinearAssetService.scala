@@ -116,7 +116,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
 
       value match {
         case TextualValue(textValue) =>
-          if (((newMeasures.startMeasure - oldLinearAsset.startMeasure > 0.01 || oldLinearAsset.startMeasure - newMeasures.startMeasure > 0.01) || (newMeasures.endMeasure - oldLinearAsset.endMeasure > 0.01 || oldLinearAsset.endMeasure - newMeasures.endMeasure > 0.01)) || newSideCode != oldLinearAsset.sideCode) {
+          if ((validateMinDistance(newMeasures.startMeasure, oldLinearAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) || newSideCode != oldLinearAsset.sideCode) {
             dao.updateExpiration(id)
             Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, TextualValue.apply(textValue), newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldLinearAsset.verifiedBy, informationSource = informationSource))
           }

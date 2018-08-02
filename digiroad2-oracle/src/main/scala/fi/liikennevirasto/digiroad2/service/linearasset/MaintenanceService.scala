@@ -124,7 +124,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       val newSideCode = sideCode.getOrElse(oldAsset.sideCode)
       val roadLink = vvhClient.fetchRoadLinkByLinkId(oldAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
-      if (((newMeasures.startMeasure - oldAsset.startMeasure > 0.01 || oldAsset.startMeasure - newMeasures.startMeasure > 0.01) || (newMeasures.endMeasure - oldAsset.endMeasure > 0.01 || oldAsset.endMeasure - newMeasures.endMeasure > 0.01)) || newSideCode != oldAsset.sideCode) {
+      if ((validateMinDistance(newMeasures.startMeasure, oldAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldAsset.endMeasure)) || newSideCode != oldAsset.sideCode) {
         dao.updateExpiration(oldAsset.id)
         Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldAsset.verifiedBy))
       }
