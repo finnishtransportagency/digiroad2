@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset._
 
 case class Configuration(
-                        zoom: Option[Long] = None,
+                        zoom: Option[Int] = None,
                         east: Option[Long] = None,
                         north: Option[Long] = None,
                         municipalityNumber: Option[Int]  = None,
@@ -13,7 +13,6 @@ case class Configuration(
                         authorizedAreas: Set[Int] = Set(),
                         roles: Set[String] = Set()
                         )
-case class MapViewZoom(geometry : Point, zoom: Int)
 
 case class User(id: Long, username: String, configuration: Configuration, name: Option[String] = None) {
   def hasWriteAccess() = !isViewer()
@@ -29,7 +28,6 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
   def isOperator(): Boolean = {
     configuration.roles(Role.Operator)
   }
-  //ely
   def isBusStopMaintainer(): Boolean = {
     configuration.roles(Role.BusStopMaintainer)
   }

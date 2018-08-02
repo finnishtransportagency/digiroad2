@@ -26,13 +26,4 @@ trait UserProvider {
   def saveUser(user: User): User
 
   def updateUserConfiguration(user: User): User
-
-  def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom]
-
-  def getCenterViewArea(area: Int): Option[MapViewZoom]
-
-  def getCenterViewEly(ely: Int): Option[MapViewZoom]
-
-  def getElysByMunicipalities(municipalities: Set[Int]): Seq[Int]
-
 }

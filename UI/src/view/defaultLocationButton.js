@@ -7,7 +7,7 @@
 
 
     eventbus.on('roles:fetched', function(userInfo) {
-      if (!(_.isEmpty(userInfo.roles) || _.some(userInfo.roles, function(role) {return role === "viewer"})))
+      if (!(_.isEmpty(userInfo.roles) || _.some(userInfo.roles, function(role) {return role === "viewer"; })))
         $('.default-location-btn-container').append('<button class="btn btn-sm btn-tertiary" id="default-location-btn">Muuta oletussijainniksi</button>');
 
       $('#default-location-btn').on('click', function () {

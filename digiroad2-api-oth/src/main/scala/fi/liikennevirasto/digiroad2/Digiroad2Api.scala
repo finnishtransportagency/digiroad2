@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -15,7 +16,7 @@ import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
-import fi.liikennevirasto.digiroad2.user.{MapViewZoom, User, UserProvider}
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
@@ -147,6 +148,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
 
+  def municipalityDao = new MunicipalityDao
+
   private def getMapViewStartParameters(mapView: Option[MapViewZoom]):(Option[Double], Option[Double], Option[Int]) = (mapView.map(_.geometry.x),mapView.map(_.geometry.y), mapView.map(_.zoom))
 
 
@@ -159,12 +162,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case (Some(east), Some(north), Some(zoom)) => (Some(east.toDouble), Some(north.toDouble),Some(zoom.toInt))
       case (_, _, _) =>
         if(user.isMunicipalityMaintainer())
-          getStartUpParameters(defaultValues, user.configuration.authorizedMunicipalities, userProvider.getCenterViewMunicipality)
+          getStartUpParameters(defaultValues, user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality)
         else {
           if (user.isServiceRoadMaintainer())
-            getStartUpParameters(defaultValues, user.configuration.authorizedAreas, userProvider.getCenterViewArea)
+            getStartUpParameters(defaultValues, user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
           else if (user.isBusStopMaintainer()) //case ely maintainer
-            getStartUpParameters(defaultValues, getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), userProvider.getCenterViewEly)
+            getStartUpParameters(defaultValues, getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
           else defaultValues
         }
     }
@@ -174,7 +177,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getUserElysByMunicipalities(authorizedMunicipalities: Set[Int]): Set[Int] = {
     val userMunicipalities = authorizedMunicipalities.toSeq
 
-    userProvider.getElysByMunicipalities(authorizedMunicipalities).sorted.find { ely =>
+    municipalityDao.getElysByMunicipalities(authorizedMunicipalities).sorted.find { ely =>
         val municipalities = municipalityProvider.getMunicipalities(Set(ely))
         municipalities.forall(userMunicipalities.contains)
     }.toSet
@@ -1606,7 +1609,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val east = (parsedBody \ "lon").extractOpt[Long]
     val north = (parsedBody \ "lat").extractOpt[Long]
-    val zoom = (parsedBody \ "zoom").extractOpt[Long]
+    val zoom = (parsedBody \ "zoom").extractOpt[Int]
 
     val updatedUser = user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
     userProvider.updateUserConfiguration(updatedUser)

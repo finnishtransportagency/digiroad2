@@ -20,22 +20,7 @@ class DummyUserProvider extends UserProvider {
   }
   def saveUser(user: User): User = user
 
-  def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom] = {
-    Some(MapViewZoom(Point(390000, 6900000), 5))
-  }
-
-  def getCenterViewArea(area: Int): Option[MapViewZoom] = {
-    Some(MapViewZoom(Point(390000, 6900000), 5))
-  }
-
-  def getCenterViewEly(ely: Int): Option[MapViewZoom] = {
-    Some(MapViewZoom(Point(390000, 6900000), 5))
-  }
-
   def updateUserConfiguration(user: User): User = {
     User(0, "username", Configuration())
-  }
-  def getElysByMunicipalities(municipalities: Set[Int]): Seq[Int] = {
-    Seq(941,170,683,614,698,417,320,751,261,766,60,65,583,742,148,732,498,736,76,318,890,758,240,851,438,241,35,295,43,845,976,771,478,854,273,47,62)
   }
 }

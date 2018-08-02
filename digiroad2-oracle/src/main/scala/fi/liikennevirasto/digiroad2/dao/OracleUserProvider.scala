@@ -5,7 +5,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
-import fi.liikennevirasto.digiroad2.user.{Configuration, MapViewZoom, User, UserProvider}
+import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
@@ -25,16 +25,6 @@ class OracleUserProvider extends UserProvider {
   implicit val getUserArea = new GetResult[Point] {
     def apply(r: PositionedResult) = {
       Point(r.nextDouble(), r.nextDouble(), r.nextDouble())
-    }
-  }
-
-  implicit val getMapViewZoom = new GetResult[MapViewZoom] {
-    def apply(r: PositionedResult) = {
-
-      val geometry = r.nextBytesOption().map(bytesToPoint).get
-      val zoom = r.nextInt()
-
-      MapViewZoom(geometry, zoom)
     }
   }
 
@@ -80,30 +70,5 @@ class OracleUserProvider extends UserProvider {
     }
   }
 
-  def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom] =  {
-    OracleDatabase.withDynSession {
-      sql"""select geometry, zoom from municipality where id = $municipalityId""".as[MapViewZoom].firstOption
-    }
-  }
-
-
-  def getCenterViewArea(area: Int): Option[MapViewZoom] =  {
-    OracleDatabase.withDynSession {
-      sql"""select geometry, zoom from service_area where id = $area""".as[MapViewZoom].firstOption
-    }
-  }
-
-
-  def getCenterViewEly(ely: Int): Option[MapViewZoom] =  {
-    OracleDatabase.withDynSession {
-      sql"""select geometry, zoom from ely where id = $ely""".as[MapViewZoom].firstOption
-    }
-  }
-
-  def getElysByMunicipalities(municipalities: Set[Int]): Seq[Int] =  {
-    OracleDatabase.withDynSession {
-      sql"""select ELY_NRO from municipality  where id in (#${municipalities.mkString(",")} ) group by ELY_NRO""".as[Int].list
-    }
-  }
 
 }
