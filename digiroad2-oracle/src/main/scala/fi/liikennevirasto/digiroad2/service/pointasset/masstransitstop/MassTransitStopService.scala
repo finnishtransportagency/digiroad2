@@ -575,13 +575,11 @@ trait MassTransitStopService extends PointAssetOperations {
     strategies.find(strategy => strategy.is(Set(), None, Some(asset), None)).getOrElse(defaultStrategy)
   }
 
-  //used by create
   private def getStrategy(newProperties: Set[SimpleProperty], roadLink: RoadLink, saveOption: Option[Boolean]): AbstractBusStopStrategy ={
     val (strategies, defaultStrategy) = getStrategies()
     strategies.find(strategy => strategy.is(newProperties, Some(roadLink), None, saveOption)).getOrElse(defaultStrategy)
   }
 
-  //used by update
   private def getStrategy(newProperties: Set[SimpleProperty], asset: PersistedMassTransitStop, roadLink: RoadLink, saveOption: Option[Boolean]): (AbstractBusStopStrategy, AbstractBusStopStrategy) ={
     val (strategies, defaultStrategy) = getStrategies()
     val previousStrategy = strategies.find(v => v.was(asset)).getOrElse(defaultStrategy)
