@@ -434,7 +434,7 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
     val linkId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    val saveOption = (parsedBody \ "alternativeSave").extractOpt[Boolean]
+    val saveOption = (parsedBody \ "trSave").extractOpt[Boolean]
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
     validateUserAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
     validateBusStopMaintainerUser(properties)
