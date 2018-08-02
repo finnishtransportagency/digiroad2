@@ -256,7 +256,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  def createManoeuvreBasedOnTrafficSign(manouvreProvider: ManoeuvreProvider, newTransaction: Boolean = true): Option[Long] = {
+  private def createManoeuvreFromTrafficSign(manouvreProvider: ManoeuvreProvider, newTransaction: Boolean = true): Option[Long] = {
     logger.info("creating manoeuvre from traffic sign")
     val tsLinkId = manouvreProvider.trafficSign.linkId
     val tsDirection = manouvreProvider.trafficSign.validityDirection
@@ -294,6 +294,16 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     else
       Some(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
 
+  }
+
+  def createManoeuvreBasedOnTrafficSign(manouvreProvider: ManoeuvreProvider, newTransaction: Boolean = true): Option[Long] = {
+    if(newTransaction) {
+      withDynTransaction {
+        createManoeuvreFromTrafficSign(manouvreProvider, !newTransaction)
+      }
+    }
+    else
+      createManoeuvreFromTrafficSign(manouvreProvider, newTransaction)
   }
 
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {

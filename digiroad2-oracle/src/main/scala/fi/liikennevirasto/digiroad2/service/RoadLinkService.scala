@@ -227,7 +227,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, bounds2: BoundingRectangle) : Seq[RoadLink] =
     getRoadLinksAndChangesFromVVH(bounds, bounds2)._1
 
-  def getRoadLinksFromVVHByBounds(bounds: BoundingRectangle, bounds2: BoundingRectangle, newTransaction: Boolean = false) : Seq[RoadLink] =
+  def getRoadLinksFromVVHByBounds(bounds: BoundingRectangle, bounds2: BoundingRectangle, newTransaction: Boolean = true) : Seq[RoadLink] =
     getRoadLinksAndChangesByBoundsFromVVH(bounds, bounds2, newTransaction)._1
 
   /**
@@ -456,7 +456,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       withDynTransaction {
         (enrichRoadLinksFromVVH(links ++ links2, changes), changes)
       }
-    (enrichRoadLinksFromVVH(links ++ links2, changes), changes)
+    else
+      (enrichRoadLinksFromVVH(links ++ links2, changes), changes)
   }
 
   /**
@@ -1164,21 +1165,35 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def pickRightMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
-    val cPoint =  getConnectionPoint(lastLink, candidates)
-    val forward = getGeometryFirstSegmentVector(cPoint ,pickForwardMost(lastLink, candidates))
+    val cPoint = getConnectionPoint(lastLink, candidates)
+    val forward = getGeometryFirstSegmentVector(cPoint, pickForwardMost(lastLink, candidates))
     val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
-    val (_, hVector) = forward
-    val (candidate, _) = vectors.maxBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
-    candidate
+
+    if(candidates.size <= 2){
+      val (_, hVector) = vectors.head
+      val (candidate, _) = vectors.maxBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+      candidate
+    }else {
+      val (_, hVector) = forward
+      val (candidate, _) = vectors.maxBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+      pickRightMost(candidate, candidates.filter(_.linkId == candidate.linkId))
+    }
   }
 
   def pickLeftMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
-    val cPoint =  getConnectionPoint(lastLink, candidates)
-    val forward = getGeometryFirstSegmentVector(cPoint ,pickForwardMost(lastLink, candidates))
+    val cPoint = getConnectionPoint(lastLink, candidates)
+    val forward = getGeometryFirstSegmentVector(cPoint, pickForwardMost(lastLink, candidates))
     val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
-    val (_, hVector) = forward
-    val (candidate, _) = vectors.minBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
-    candidate
+
+    if(candidates.size <=  2){
+      val (_, hVector) = vectors.head
+      val (candidate, _) = vectors.minBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+      candidate
+    }else {
+      val (_, hVector) = forward
+      val (candidate, _) = vectors.minBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+      pickRightMost(candidate, candidates.filter(_.linkId == candidate.linkId))
+    }
   }
 
   def pickForwardMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
