@@ -1170,7 +1170,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
       user.username,
-      validateUserAccess(user, Some(SpeedLimitAsset.typeId)))
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _)
   }
 
   post("/speedlimits/:speedLimitId/separate") {
