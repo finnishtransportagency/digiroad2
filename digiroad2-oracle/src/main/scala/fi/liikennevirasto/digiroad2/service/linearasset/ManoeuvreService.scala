@@ -267,7 +267,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     if (SideCode(tsDirection) == SideCode.BothDirections)
       throw new ManoeuvreCreationException(Set("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections"))
 
-    val (intermediates, adjacents) = recursiveGetAdjacent(tsLinkId, Some(tsDirection), Seq(), newTransaction)
+    val (intermediates, adjacents) = recursiveGetAdjacent(tsLinkId, Some(tsDirection), Seq(), newTransaction, 0)
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
     val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
@@ -279,12 +279,11 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
         case TrafficSignType.NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(manoeuvreInit.last, adjacents)
 
-//        case TrafficSignType.NoUTurn => {
-//          val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
-//          val (int, newAdjacents)= recursiveGetAdjacent(firstLeftMost.linkId, Some(tsDirection))
-//          (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
-//          manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
-//        }
+        case TrafficSignType.NoUTurn => {
+          val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
+          val (int, newAdjacents)= recursiveGetAdjacent(firstLeftMost.linkId, Some(tsDirection), Seq(), newTransaction, 0)
+          (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
+        }
         case _ => Seq.empty[RoadLink]
       }
     }.getOrElse(Seq.empty[RoadLink])
@@ -310,13 +309,13 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 
-  private def recursiveGetAdjacent(linkId: Long, direction: Option[Int], intermediants: Seq[RoadLink] = Seq(), newTransaction: Boolean = true): (Seq[RoadLink], Seq[RoadLink]) = {
+  private def recursiveGetAdjacent(linkId: Long, direction: Option[Int], intermediants: Seq[RoadLink] = Seq(), newTransaction: Boolean = true, numberOfConnections: Int): (Seq[RoadLink], Seq[RoadLink]) = {
     val adjacents = roadLinkService.getAdjacent(linkId, direction, newTransaction)
     if (adjacents.isEmpty)
       throw new ManoeuvreCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
 
-    if (adjacents.size == 1) {
-      recursiveGetAdjacent(adjacents.head.linkId, direction, intermediants ++ adjacents, newTransaction)
+    if (adjacents.size == 1 && numberOfConnections <= 3) {
+      recursiveGetAdjacent(adjacents.head.linkId, direction, intermediants ++ adjacents, newTransaction, numberOfConnections + 1)
     } else {
       (intermediants, adjacents)
     }

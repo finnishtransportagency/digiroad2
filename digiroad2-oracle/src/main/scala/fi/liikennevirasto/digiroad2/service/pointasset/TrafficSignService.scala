@@ -137,7 +137,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   def belongsToTurnRestriction(asset: IncomingTrafficSign)  = {
-    val turnRestrictionsGroup =  Seq(/*TrafficSignType.NoUTurn, */TrafficSignType.NoRightTurn, TrafficSignType.NoLeftTurn)
+    val turnRestrictionsGroup =  Seq(TrafficSignType.NoUTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoLeftTurn)
     turnRestrictionsGroup.contains(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.headOption.map(t => TrafficSignType(t.propertyValue.toInt)).get)
   }
 
@@ -290,10 +290,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   private def getRestrictionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction)
       withDynSession {
-        OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn/*, TrafficSignType.NoUTurn*/))
+        OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
       }
     else {
-      OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn/*, TrafficSignType.NoUTurn*/))
+      OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
     }
   }
 
