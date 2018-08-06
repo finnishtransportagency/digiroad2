@@ -50,9 +50,14 @@
             return value.propertyValue;
           }), "2");
 
+      var hasLivi = _.find(properties, function(property) {
+          return property.publicId === 'yllapitajan_koodi'; });
+
+      var liviCondition = typeof hasLivi != 'undefined' && typeof hasLivi.values != 'undefined' &&  !_.isEmpty(hasLivi.values);
+
       var hasAccess = this.assetSpecificAccess();
 
-      eventbus.trigger('application:controlledTR',condition);
+      eventbus.trigger('application:controlledTR', (condition && liviCondition));
       /**boolean inverted because it is used for 'isReadOnly' in mass transit stop form*/
       return !hasAccess;
     };
