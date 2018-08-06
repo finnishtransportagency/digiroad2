@@ -89,6 +89,14 @@ case class Vector3d(x: Double, y: Double, z: Double) {
   def angleXYWithNegativeValues(that: Vector3d): Double = {
     Math.atan2(that.x * this.y - that.y * this.x, that.x * this.x + that.y * this.y)
   }
+
+  def angleXY(that: Vector3d): Double = {
+    val angle = angleXYWithNegativeValues(that)
+    if(angle < 0)
+      angle + 2 * Math.PI
+    else
+      angle
+  }
 }
 
 case class Point(x: Double, y: Double, z: Double = 0.0) {

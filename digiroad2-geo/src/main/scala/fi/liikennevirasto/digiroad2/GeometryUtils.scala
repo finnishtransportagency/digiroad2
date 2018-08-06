@@ -342,7 +342,7 @@ object GeometryUtils {
     geometry.size match {
       case 0 | 1 => throw new IllegalArgumentException("Geometry had less than 2 points")
       case 2 =>
-        val (p1, p2) = (geometry.head, geometry.last)
+        val (p1, p2) = (geometry.last, geometry.init.last)
         Vector3d(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
       case _ =>
         lastSegmentDirection(geometry.tail)
