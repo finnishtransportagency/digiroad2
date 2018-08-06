@@ -49,7 +49,8 @@ object TRTrafficSignType {
     ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations, NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoVehiclesWithDangerGoods,
     NoBuses, NoMopeds, NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback, NoEntry, OvertakingProhibited, EndProhibitionOfOvertaking,
     MaxWidthExceeding, MaxHeightExceeding, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding, WRightBend, WLeftBend,
-    WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit)
+    WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit, FreeWidth, FreeHeight, HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat,
+    TimeLimit, PassengerCar, Bus)
 
   def apply(value: Int): TRTrafficSignType = {
     values.find(_.value == value).getOrElse(Unknown)
@@ -98,6 +99,15 @@ object TRTrafficSignType {
   case object WSteepAscent extends TRTrafficSignType { def value = 116;  def trafficSignType = TrafficSignType.WSteepAscent; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
   case object WUnevenRoad extends TRTrafficSignType { def value = 141;  def trafficSignType = TrafficSignType.WUnevenRoad; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
   case object WChildren extends TRTrafficSignType { def value = 152;  def trafficSignType = TrafficSignType.WChildren; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object FreeWidth extends TRTrafficSignType { def value = 821; def trafficSignType = TrafficSignType.FreeWidth; def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object FreeHeight extends TRTrafficSignType { def value = 822; def trafficSignType = TrafficSignType.FreeHeight; def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object PassengerCar extends TRTrafficSignType { def value = 831; def trafficSignType = TrafficSignType.PassengerCar; def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object Bus extends TRTrafficSignType { def value = 832; def trafficSignType = TrafficSignType.Bus; def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object HazmatProhibitionA extends TRTrafficSignType { def value = 848; def trafficSignType = TrafficSignType.HazmatProhibitionA; def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object HazmatProhibitionB extends TRTrafficSignType { def value = 849; def trafficSignType = TrafficSignType.HazmatProhibitionB; def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object ValidMonFri extends TRTrafficSignType { def value = 851; def trafficSignType = TrafficSignType.ValidMonFri; def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object ValidSat extends TRTrafficSignType { def value = 852; def trafficSignType = TrafficSignType.ValidSat; def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object TimeLimit extends TRTrafficSignType { def value = 854; def trafficSignType = TrafficSignType.TimeLimit; def group = TrafficSignTypeGroup.AdditionalPanels; }
   case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; def group = TrafficSignTypeGroup.Unknown; }
 }
 

@@ -85,7 +85,8 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     "arvo" -> "value",
     "kaksipuolinen merkki" -> "twoSided",
     "liikennevirran suunta" -> "trafficDirection",
-    "suuntima" -> "bearing"
+    "suuntima" -> "bearing",
+    "lisatieto" -> "additionalInfo"
   )
 
   private val codeValueFieldMappings = Map(
@@ -162,8 +163,9 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val twoSided = getPropertyValue(trafficSignAttributes, "twoSided").toString match { case "Kaksipuoleinen" => true case _ => false }
     val lon = getPropertyValue(trafficSignAttributes, "lon").asInstanceOf[BigDecimal].toLong
     val lat = getPropertyValue(trafficSignAttributes, "lat").asInstanceOf[BigDecimal].toLong
+    val additionalInfo = Some(getPropertyValue(trafficSignAttributes, "additionalInfo").toString())
 
-    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided), TrafficDirection.apply(trafficDirection), bearing)
+    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided), TrafficDirection.apply(trafficDirection), bearing, additionalInfo)
   }
 
 

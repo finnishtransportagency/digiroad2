@@ -28,6 +28,7 @@ object TrafficSignTypeGroup {
   case object MaximumRestrictions extends TrafficSignTypeGroup { def value = 3 }
   case object GeneralWarningSigns extends TrafficSignTypeGroup { def value = 4 }
   case object ProhibitionsAndRestrictions extends TrafficSignTypeGroup { def value = 5 }
+  case object AdditionalPanels extends TrafficSignTypeGroup { def value = 6 }
   case object Unknown extends TrafficSignTypeGroup { def value = 99 }
 }
 
@@ -40,7 +41,8 @@ object TrafficSignType {
     NoRightTurn, NoUTurn, ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations, NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges,
     NoVehiclesWithDangerGoods, NoBuses, NoMopeds, NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback, NoEntry, OvertakingProhibited,
     EndProhibitionOfOvertaking, NoWidthExceeding, MaxHeightExceeding, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding,
-    WRightBend, WLeftBend, WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit)
+    WRightBend, WLeftBend, WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit, FreeWidth, FreeHeight,
+    HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat, TimeLimit, PassengerCar, Bus)
 
   def apply(intValue: Int): TrafficSignType = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -90,6 +92,15 @@ object TrafficSignType {
   case object WUnevenRoad extends TrafficSignType { def value = 42;  def group = TrafficSignTypeGroup.GeneralWarningSigns; }
   case object WChildren extends TrafficSignType { def value = 43;  def group = TrafficSignTypeGroup.GeneralWarningSigns; }
   case object TelematicSpeedLimit extends TrafficSignType { def value = 44;  def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object FreeWidth extends TrafficSignType { def value = 45;  def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object FreeHeight extends TrafficSignType { def value = 46;  def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object HazmatProhibitionA extends TrafficSignType { def value = 47;  def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object HazmatProhibitionB extends TrafficSignType { def value = 48;  def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object ValidMonFri extends TrafficSignType { def value = 49;  def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object ValidSat extends TrafficSignType { def value = 50;  def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object TimeLimit extends TrafficSignType { def value = 51;  def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object PassengerCar extends TrafficSignType { def value = 52;  def group = TrafficSignTypeGroup.AdditionalPanels; }
+  case object Bus extends TrafficSignType { def value = 53;  def group = TrafficSignTypeGroup.AdditionalPanels; }
   case object Unknown extends TrafficSignType { def value = 99;  def group = TrafficSignTypeGroup.Unknown; }
 }
 
@@ -112,7 +123,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
 
-  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions)
+  private val additionalInfoTypeGroups =
+    Set(
+      TrafficSignTypeGroup.GeneralWarningSigns,
+      TrafficSignTypeGroup.ProhibitionsAndRestrictions,
+      TrafficSignTypeGroup.AdditionalPanels
+    )
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
@@ -208,25 +224,26 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
-  private def generateProperties(tRTrafficSignType: TRTrafficSignType, value: Any) = {
+  private def generateProperties(tRTrafficSignType: TRTrafficSignType, value: Any, additionalInfo: String) = {
     val signValue = value.toString
+    val signAdditionalInfo = additionalInfo
     val trafficType = tRTrafficSignType.trafficSignType
     val typeProperty = SimpleProperty(typePublicId, Seq(PropertyValue(trafficType.value.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
-      case true => SimpleProperty(infoPublicId, Seq(PropertyValue(signValue)))
+      case true => SimpleProperty(infoPublicId, Seq(PropertyValue(signAdditionalInfo)))
       case _ => SimpleProperty(valuePublicId, Seq(PropertyValue(signValue)))
     }
 
     Set(typeProperty, valueProperty)
   }
 
-  def createFromCoordinates(lon: Long, lat: Long, trafficSignType: TRTrafficSignType, value: Option[Int], twoSided: Option[Boolean], trafficDirection: TrafficDirection, bearing: Option[Int]): Long = {
+  def createFromCoordinates(lon: Long, lat: Long, trafficSignType: TRTrafficSignType, value: Option[Int], twoSided: Option[Boolean], trafficDirection: TrafficDirection, bearing: Option[Int], additionalInfo: Option[String]): Long = {
     val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon, lat))
     if (roadLinks.nonEmpty) {
       val closestLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
       val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
       if (vvhRoad.isEmpty || vvhRoad.size > 1) {
-        val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse("")), 0, None)
+        val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), 0, None)
         createFloating(asset, userProvider.getCurrentUser().username, municipality)
       }
       else {
@@ -238,7 +255,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
               case None if twoSided.getOrElse(false) => BothDirections.value
               case _ => getTrafficSignValidityDirection(Point(lon, lat), link.geometry)
             }
-          val asset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
+          val asset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
           create(asset, userProvider.getCurrentUser().username, link)
         }.getOrElse(0L)
       }
