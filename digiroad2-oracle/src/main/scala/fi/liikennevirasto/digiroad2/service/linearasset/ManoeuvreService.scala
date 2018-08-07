@@ -226,7 +226,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   def createWithoutTransaction(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
     if(!isValid(manoeuvre, roadlinks))
-      throw new InvalidParameterException("Invalid 'manouevre")
+      throw new InvalidParameterException("Invalid 'manoeuvre")
 
     dao.createManoeuvre(userName, manoeuvre)
   }
@@ -267,7 +267,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     if (SideCode(tsDirection) == SideCode.BothDirections)
       throw new ManoeuvreCreationException(Set("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections"))
 
-    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(manouvreProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ManoeuvreCreationException(Set("sdajndjasnd")))
+    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(manouvreProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ManoeuvreCreationException(Set("Connection Point not valid")))
 
     val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint, newTransaction)
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
