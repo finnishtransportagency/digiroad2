@@ -85,6 +85,7 @@
       eventbus.trigger(assetName + ':saving');
       current = _.omit(current, 'geometry');
       if (current.toBeDeleted) {
+        eventbus.trigger(endPointName + ':deleted', current);
         backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
       } else if (isNew()) {
         backend.createPointAsset(current, endPointName).done(done).fail(fail);

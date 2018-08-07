@@ -21,6 +21,16 @@
       prohibitionsAndRestrictions: { values : [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], groupName: 'Kiellot ja rajoitukset'}
     };
 
+    var trafficSignsTurnRestriction = [10, 11, 12];
+
+    var isTurningRestriction = function(current) {
+      return _.includes(trafficSignsTurnRestriction, parseInt(getValue(current)));
+    };
+
+    var getValue = function(current) {
+      return _.head(_.find(current.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
+    };
+
     this.getGroup = function(signTypes){
       return  _.groupBy(
         _.map(signTypes[0], function(signType) {
@@ -73,15 +83,13 @@
     };
 
     var isRelevantToManoeuvres = function(current) {
-      var trafficSignsTurnRestriction = [10, 11, 12];
-      var trafficSignTypeValue = _.head(_.find(current.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
 
-      if (_.includes(trafficSignsTurnRestriction, parseInt(trafficSignTypeValue))) {
+      if (isTurningRestriction(current)) {
         var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
         var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
 
         //if traffic type changes, should be relevant to Manoeuvres
-        if (oldTrafficSignTypeValue !== trafficSignTypeValue)
+        if (oldTrafficSignTypeValue !== getValue(current))
           return true;
 
         var diffProperties = _.reduce(oldTrafficSign, function (result, value, key) {
@@ -100,6 +108,12 @@
     eventbus.on('trafficSigns:updated', function(current) {
       if(isRelevantToManoeuvres(current)) {
         new GenericConfirmPopup('Huom! Liikennemerkin siirto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
+          {type: 'alert'});
+      }
+    });
+    eventbus.on('trafficSigns:deleted', function(current) {
+      if(isTurningRestriction(current)) {
+        new GenericConfirmPopup('Huom! Liikennemerkin poisto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
           {type: 'alert'});
       }
     });

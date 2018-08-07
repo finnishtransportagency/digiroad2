@@ -314,7 +314,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     if (adjacents.isEmpty)
       throw new ManoeuvreCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
 
-    if (adjacents.size == 1 && numberOfConnections <= 3) {
+    if (adjacents.size == 1 && numberOfConnections <= 3 && roadLinkService.getAdjacent(adjacents.head.linkId, direction, newTransaction).nonEmpty) {
       recursiveGetAdjacent(adjacents.head.linkId, direction, intermediants ++ adjacents, newTransaction, numberOfConnections + 1)
     } else {
       (intermediants, adjacents)
