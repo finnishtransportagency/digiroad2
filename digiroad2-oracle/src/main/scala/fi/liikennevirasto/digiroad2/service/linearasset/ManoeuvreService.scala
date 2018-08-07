@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -267,7 +267,9 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     if (SideCode(tsDirection) == SideCode.BothDirections)
       throw new ManoeuvreCreationException(Set("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections"))
 
-    val (intermediates, adjacents) = recursiveGetAdjacent(tsLinkId, Some(tsDirection), Seq(), newTransaction, 0)
+    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(manouvreProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ManoeuvreCreationException(Set("sdajndjasnd")))
+
+    val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint, newTransaction)
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
     val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
@@ -281,7 +283,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
         case TrafficSignType.NoUTurn => {
           val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
-          val (int, newAdjacents)= recursiveGetAdjacent(firstLeftMost.linkId, Some(tsDirection), Seq(), newTransaction, 0)
+          val (int, newAdjacents, _)= recursiveGetAdjacent(firstLeftMost.linkId, getOpositePoint(firstLeftMost.geometry, adjacentConnectPoint), newTransaction)
           (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
         }
         case _ => Seq.empty[RoadLink]
@@ -309,15 +311,24 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 
-  private def recursiveGetAdjacent(linkId: Long, direction: Option[Int], intermediants: Seq[RoadLink] = Seq(), newTransaction: Boolean = true, numberOfConnections: Int): (Seq[RoadLink], Seq[RoadLink]) = {
-    val adjacents = roadLinkService.getAdjacent(linkId, direction, newTransaction)
+  private def getOpositePoint(geometry: Seq[Point], point: Point) = {
+    val (headPoint, lastPoint) = GeometryUtils.geometryEndpoints(geometry)
+    if(GeometryUtils.areAdjacent(headPoint, point))
+      lastPoint
+    else
+      headPoint
+  }
+
+  private def recursiveGetAdjacent(linkId: Long, point: Point, newTransaction: Boolean = true, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): (Seq[RoadLink], Seq[RoadLink], Point) = {
+
+    val adjacents = roadLinkService.getAdjacent(linkId, Seq(point), newTransaction)
     if (adjacents.isEmpty)
       throw new ManoeuvreCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
 
-    if (adjacents.size == 1 && numberOfConnections <= 3 && roadLinkService.getAdjacent(adjacents.head.linkId, direction, newTransaction).nonEmpty) {
-      recursiveGetAdjacent(adjacents.head.linkId, direction, intermediants ++ adjacents, newTransaction, numberOfConnections + 1)
+    if (adjacents.size == 1 && numberOfConnections <= 3/* && roadLinkService.getAdjacent(adjacents.head.linkId, direction, newTransaction).nonEmpty*/) {
+      recursiveGetAdjacent(adjacents.head.linkId, getOpositePoint(adjacents.head.geometry, point), newTransaction, intermediants ++ adjacents, numberOfConnections + 1)
     } else {
-      (intermediants, adjacents)
+      (intermediants, adjacents, point)
     }
   }
 

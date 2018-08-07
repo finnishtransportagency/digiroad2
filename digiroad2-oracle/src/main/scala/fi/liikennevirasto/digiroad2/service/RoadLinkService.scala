@@ -1035,24 +1035,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-//  /**
-//    * Get the link end points depending on the road link directions
-//    *
-//    * @param roadlink The Roadlink
-//    * @return End points of the road link directions
-//    */
-//  def getRoadLinkEndDirectionPoints(roadlink: RoadLink) : Seq[Point] = {
-//    val endPoints = GeometryUtils.geometryEndpoints(roadlink.geometry)
-//    roadlink.trafficDirection match {
-//      case TrafficDirection.TowardsDigitizing =>
-//        Seq(endPoints._2)
-//      case TrafficDirection.AgainstDigitizing =>
-//        Seq(endPoints._1)
-//      case _ =>
-//        Seq(endPoints._1, endPoints._2)
-//    }
-//  }
-
   /**
     * Get the link points depending on the road link
     *
@@ -1064,23 +1046,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     Seq(endPoints._1, endPoints._2)
   }
 
-//  /**
-//    * Get the link start points depending on the road link directions
-//    *
-//    * @param roadlink The Roadlink
-//    * @return Start points of the road link directions
-//    */
-//  def getRoadLinkStartDirectionPoints(roadlink: RoadLink) : Seq[Point] = {
-//    val endPoints = GeometryUtils.geometryEndpoints(roadlink.geometry)
-//    roadlink.trafficDirection match {
-//      case TrafficDirection.TowardsDigitizing =>
-//        Seq(endPoints._1)
-//      case TrafficDirection.AgainstDigitizing =>
-//        Seq(endPoints._2)
-//      case _ =>
-//        Seq(endPoints._1, endPoints._2)
-//    }
-//  }
 
   def getRoadLinkEndDirectionPoints(roadLink: RoadLink, direction: Option[Int] = None) : Seq[Point] = {
     val endPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
@@ -1141,10 +1106,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }).getOrElse(Nil)
   }
 
-  def getAdjacent(linkId: Long, direction: Option[Int]= None, newTransaction: Boolean = true): Seq[RoadLink] = {
+  def getAdjacent(linkId: Long, sourcePoints: Seq[Point], newTransaction: Boolean = true): Seq[RoadLink] = {
     val sourceRoadLink = getRoadLinksByLinkIdsFromVVH(Set(linkId), newTransaction).headOption
     val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
-    val sourcePoints = getRoadLinkEndDirectionPoints(sourceRoadLink.get, direction)
     sourceLinkGeometryOption.map(sourceLinkGeometry => {
       val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
       val delta: Vector3d = Vector3d(0.1, 0.1, 0)
