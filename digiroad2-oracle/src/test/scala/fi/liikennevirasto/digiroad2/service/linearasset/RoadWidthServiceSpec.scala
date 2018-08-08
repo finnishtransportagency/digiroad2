@@ -58,28 +58,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
-  val mockEventBus1 = MockitoSugar.mock[DigiroadEventBus]
-
-  class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus1) {
-    override def withDynTransaction[T](f: => T): T = f
-    override def dao: OracleLinearAssetDao = mockLinearAssetDao
-    override def eventBus: DigiroadEventBus = mockEventBus1
-
-    def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
-      super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
-  }
-
-
-  val mockEventBus2 = MockitoSugar.mock[DigiroadEventBus]
-
-  class TestRoadWidthService2 extends RoadWidthService(mockRoadLinkService, mockEventBus) {
-    override def withDynTransaction[T](f: => T): T = f
-    override def dao: OracleLinearAssetDao = mockLinearAssetDao
-    override def eventBus: DigiroadEventBus = mockEventBus
-
-    def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
-      super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
-  }
 
   def runWithRollback(test: => Unit): Unit = assetLock.synchronized {
     TestTransactions.runWithRollback()(test)
