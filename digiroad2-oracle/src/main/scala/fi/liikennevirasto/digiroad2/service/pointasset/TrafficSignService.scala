@@ -171,25 +171,15 @@ object TrafficSignType {
   case object MotorwayEnds extends TrafficSignType { def value = 108; def group = TrafficSignTypeGroup.RegulatorySigns; }
   case object ResidentialZone extends TrafficSignType { def value = 109; def group = TrafficSignTypeGroup.RegulatorySigns; }
   case object EndOfResidentialZone extends TrafficSignType { def value = 110; def group = TrafficSignTypeGroup.RegulatorySigns; }
-
-
-
-  case object PedestrianZone extends TrafficSignType { def value = 112; def group = TrafficSignTypeGroup.RegulatorySigns; }
-  case object EndOfPedestrianZone extends TrafficSignType { def value = 113; def group = TrafficSignTypeGroup.RegulatorySigns; }
-  case object NoThroughRoad extends TrafficSignType { def value = 114; def group = TrafficSignTypeGroup.InformationSigns; }
-  case object NoThroughRoadRight extends TrafficSignType { def value = 115; def group = TrafficSignTypeGroup.InformationSigns; }
-  case object SymbolOfMotorway extends TrafficSignType { def value = 116; def group = TrafficSignTypeGroup.InformationSigns; }
-  case object Parking extends TrafficSignType { def value = 117; def group = TrafficSignTypeGroup.InformationSigns; }
-  case object ItineraryForIndicatedVehicleCategory extends TrafficSignType { def value = 118;  def trafficSignType = TrafficSignType.ItineraryForIndicatedVehicleCategory; def group = TrafficSignTypeGroup.InformationSigns; }
-  case object ItineraryForPedestrians extends TrafficSignType { def value = 119; def group = TrafficSignTypeGroup.InformationSigns; }
-  case object ItineraryForHandicapped extends TrafficSignType { def value = 120; def group = TrafficSignTypeGroup.InformationSigns; }
-
-
-
-
-
-
-
+  case object PedestrianZone extends TrafficSignType { def value = 111; def group = TrafficSignTypeGroup.RegulatorySigns; }
+  case object EndOfPedestrianZone extends TrafficSignType { def value = 112; def group = TrafficSignTypeGroup.RegulatorySigns; }
+  case object NoThroughRoad extends TrafficSignType { def value = 113; def group = TrafficSignTypeGroup.InformationSigns; }
+  case object NoThroughRoadRight extends TrafficSignType { def value = 114; def group = TrafficSignTypeGroup.InformationSigns; }
+  case object SymbolOfMotorway extends TrafficSignType { def value = 115; def group = TrafficSignTypeGroup.InformationSigns; }
+  case object Parking extends TrafficSignType { def value = 116; def group = TrafficSignTypeGroup.InformationSigns; }
+  case object ItineraryForIndicatedVehicleCategory extends TrafficSignType { def value = 117;  def trafficSignType = TrafficSignType.ItineraryForIndicatedVehicleCategory; def group = TrafficSignTypeGroup.InformationSigns; }
+  case object ItineraryForPedestrians extends TrafficSignType { def value = 118; def group = TrafficSignTypeGroup.InformationSigns; }
+  case object ItineraryForHandicapped extends TrafficSignType { def value = 119; def group = TrafficSignTypeGroup.InformationSigns; }
   case object LocationSignForTouristService extends TrafficSignType { def value = 120; def group = TrafficSignTypeGroup.ServiceSigns; }
   case object FirstAid extends TrafficSignType { def value = 121; def group = TrafficSignTypeGroup.ServiceSigns; }
   case object FillingStation extends TrafficSignType { def value = 122; def group = TrafficSignTypeGroup.ServiceSigns; }

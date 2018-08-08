@@ -188,437 +188,52 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval,  107 , 'Moottoritie', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  108 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  108 , 'Moottoritie päättyy', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  109 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  109 , 'Pihakatu', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  110 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  110 , 'Pihakatu päättyy', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  111 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  111 , 'Kävelykatu', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  112 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  112 , 'Kävelykatu päättyy', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  113 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  113 , 'Umpitie', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  114 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  114 , 'Umpitie', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  115 , 'Moottoritien tunnus', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  116 , 'Pysäköinti', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  117 , 'Tietyille ajoneuvoille tai ajoneuvoyhdistelmille t', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  118 , 'Jalankulkijoille tarkoitettu reitti', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  119 , 'Vammaisille tarkoitettu reitti', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  120 , 'Palvelukohteen osoiteviitta', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  121 , 'Ensiapu', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  122 , 'Huoltoasema', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  123 , 'Ruokailupaikka', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  45 , 'Vapaa Leveys', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
+VALUES (primary_key_seq.nextval,  124 , 'Käymälä', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
