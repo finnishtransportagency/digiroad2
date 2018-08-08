@@ -50,7 +50,7 @@ object TrafficSignType {
     HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat, TimeLimit, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee,
     ObligatoryUseOfParkingDisc, AdditionalPanelWithText, DrivingInServicePurposesAllowed, BusLane, BusLaneEnds, TramLane, BusStopForLocalTraffic, BusStopForLongDistanceTraffic,
     TramStop, TaxiStation, CompulsoryFootPath, CompulsoryCycleTrack, CombinedCycleTrackAndFootPath, ParallelCycleTrackAndFootPath, DirectionToBeFollowed3, DirectionToBeFollowed4,
-    DirectionToBeFollowed5, CompulsoryRoundabout, PassThisSide, DividerOfTraffic, TaxiStationZoneBeginning, StandingPlaceForTaxi, RoadNarrows, TwoWayTraffic, SwingBridge, UnevenRoad,
+    DirectionToBeFollowed5, CompulsoryRoundabout, PassThisSide, DividerOfTraffic, TaxiStationZoneBeginning, StandingPlaceForTaxi, RoadNarrows, TwoWayTraffic, SwingBridge,
     RoadWorks, SlipperyRoad, PedestrianCrossingWarningSign, Cyclists, IntersectionWithEqualRoads, LightSignals, TramwayLine, FallingRocks, CrossWind, PriorityRoad, EndOfPriority,
     PriorityOverOncomingTraffic, PriorityForOncomingTraffic, GiveWay, Stop, ParkingLot, OneWayRoad, Motorway, MotorwayEnds, ResidentialZone, EndOfResidentialZone, PedestrianZone,
     EndOfPedestrianZone, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped,
