@@ -692,6 +692,14 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assets.head.assetValue should be (5)
   }
 
+  test("Switch side code of signs with LIIKVAST = 1") {
+    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLIIKVAST = "0"))
+    val assetsTypeEndSpeedLimitZone = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(EndSpeedLimitZone, fldLIIKVAST = "1"))
+
+    assetsTypeSpeedLimit.get.roadSide should be (RoadSide.Right)
+    assetsTypeEndSpeedLimitZone.get.roadSide should be (RoadSide.Right)
+  }
+
   def trSpeedLimitDataTest(speedLimitType: TRTrafficSignType, fldLIIKVAST: String = null, fldNOPRA506: String = null, fldLMTEKSTI: String = null ) = {
     Map("PUOLI" -> "1",
         "OSA" -> "1",
