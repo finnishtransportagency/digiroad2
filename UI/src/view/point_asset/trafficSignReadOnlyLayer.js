@@ -2,10 +2,10 @@
   root.TrafficSignReadOnlyLayer = function(params) {
     var allowGrouping = true,
       parentLayerName = params.layerName,
-      style = params.style,
-      assetLabel = params.assetLabel,
-      collection = params.collection,
-      assetGrouping = params.assetGrouping,
+      style = new PointAssetStyle('trafficSigns'),
+      assetLabel = new TrafficSignLabel(9),
+      collection = new TrafficSignsReadOnlyCollection(params.backend, 'trafficSigns', true),
+      assetGrouping = new AssetGrouping(9),
       map = params.map;
 
     var me = this;
