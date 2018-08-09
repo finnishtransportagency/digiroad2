@@ -325,7 +325,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     if (adjacents.isEmpty)
       throw new ManoeuvreCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
 
-    if (adjacents.size == 1 && numberOfConnections <= 3/* && roadLinkService.getAdjacent(adjacents.head.linkId, direction, newTransaction).nonEmpty*/) {
+    if(adjacents.size == 1 && numberOfConnections == 3)
+      throw new ManoeuvreCreationException(Set("No turn found, manoeuvre not created"))
+
+    if (adjacents.size == 1 /* && roadLinkService.getAdjacent(adjacents.head.linkId, direction, newTransaction).nonEmpty*/) {
       recursiveGetAdjacent(adjacents.head.linkId, getOpositePoint(adjacents.head.geometry, point), newTransaction, intermediants ++ adjacents, numberOfConnections + 1)
     } else {
       (intermediants, adjacents, point)
