@@ -71,7 +71,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       properties.map(epv => epv.publicId -> epv.values).toMap
   }
 
-  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop], saveOption: Option[Boolean]): Boolean = {
+  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
         (existingAsset.propertyData.
@@ -80,8 +80,11 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
           filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
       case _ => newProperties.toSeq
     }
+    val trSave = newProperties.
+      find(property => property.publicId == AssetPropertyConfiguration.TrSaveId).
+      flatMap(property => property.values.headOption).map(p => p.propertyValue)
 
-    saveOption.getOrElse(TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass)))
+    trSave.isEmpty && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass))
   }
 
   override def was(existingAsset: PersistedMassTransitStop): Boolean = {
@@ -93,10 +96,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     stopLiviId.isDefined && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
   }
 
-  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {
-    //Remove the Livi ID
-    massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, "")
-
+  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Option[Long] = {
+    massTransitStopDao.expireMassTransitStop(username, existingAsset.id)
     getLiviIdValue(existingAsset.propertyData).map {
       liviId =>
         if(MassTransitStopOperations.isVirtualBusStop(newProperties))
@@ -104,6 +105,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         else
           expireTierekisteriBusStop(existingAsset, liviId, username)
     }
+    None
   }
 
   override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {

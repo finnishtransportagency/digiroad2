@@ -78,7 +78,7 @@
         if(optionalSave(selectedMassTransitStopModel.getProperties())){
           new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
             successCallback: function () {
-              selectedMassTransitStopModel.setAdditionalParameter('trSave', false);
+              selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
               saveStop();
             },
             closeCallback: function () {
@@ -658,7 +658,8 @@
           'liityntapysakoinnin_lisatiedot',
           'pysakin_omistaja',
           'palauteosoite',
-          'lisatiedot'];
+          'lisatiedot',
+          'trSave'];
 
         return _.sortBy(properties, function(property) {
           return _.indexOf(propertyOrdering, property.publicId);

@@ -14,6 +14,7 @@ object AssetPropertyConfiguration {
   val ValidToId = "viimeinen_voimassaolopaiva"
   val CreatedId = "lisatty_jarjestelmaan"
   val ModifiedId = "muokattu_viimeksi"
+  val TrSaveId = "trSave"
   //TODO this is not a common property
   val ConnectedToTerminal = "liitetty_terminaaliin"
   val assetPropertyNamesByLanguage: Map[String, Map[String, String]] = Map(
@@ -33,7 +34,8 @@ object AssetPropertyConfiguration {
     ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(0, ValidFromId, Date, values = Seq())),
     ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(0, ValidToId, Date, values = Seq())),
     CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(0, CreatedId, ReadOnlyText, values = Seq())),
-    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, values = Seq()))
+    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, values = Seq())),
+    TrSaveId -> CommonAssetProperty(TrSaveId, "",  ReadOnlyText, Property(0, TrSaveId, ReadOnlyText, values = Seq()))
   )
 
   def assetRowToCommonProperties(row: MassTransitStopRow): Seq[Property] = {

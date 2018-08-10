@@ -246,7 +246,7 @@
         });
       } else {
         currentAsset.payload.id = currentAsset.id;
-        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"] , ["osoite_suomeksi"], ["osoite_ruotsiksi"]);
+        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"] , ["osoite_suomeksi"], ["osoite_ruotsiksi"], ["trSave"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
         backend.updateAsset(currentAsset.id, payload, function (asset) {
@@ -323,8 +323,10 @@
       eventbus.trigger('assetPropertyValue:changed', { propertyData: propertyData, id: currentAsset.id });
     };
 
-    var setAdditionalParameter = function(key, value) {
-      currentAsset.payload[key] = value;
+    var setAdditionalProperty = function(publicId, values) {
+      var propertyData = {publicId: publicId, values: values};
+      currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
+      // currentAsset.payload.properties[key] = value;
     };
 
     var getCurrentAsset = function() {
@@ -550,7 +552,7 @@
       isTerminalChild: isTerminalChild,
       getMunicipalityCode: getMunicipalityCode,
       hasRoadAddress: hasRoadAddress,
-      setAdditionalParameter: setAdditionalParameter
+      setAdditionalProperty: setAdditionalProperty
     };
   };
 

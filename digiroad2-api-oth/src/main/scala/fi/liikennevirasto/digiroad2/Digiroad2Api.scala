@@ -369,7 +369,6 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
         halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
-    val saveOption = (parsedBody \ "trSave").extractOpt[Boolean]
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     validateBusStopMaintainerUser(properties)
     val id = params("id").toLong
@@ -380,7 +379,7 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
       case _ => None
     }
     try {
-      massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id), saveOption)
+      massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
       case e: RoadAddressException =>
@@ -434,14 +433,13 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
     val linkId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    val saveOption = (parsedBody \ "trSave").extractOpt[Boolean]
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
     validateUserAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
     try {
-      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink, saveOption)
+      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink)
       massTransitStopService.getNormalAndComplementaryById(id, roadLink)
     } catch {
       case e: RoadAddressException =>
