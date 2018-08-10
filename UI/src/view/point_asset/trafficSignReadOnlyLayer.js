@@ -1,12 +1,12 @@
 (function (root) {
   root.TrafficSignReadOnlyLayer = function(params) {
     var allowGrouping = true,
-      parentLayerName = params.layerName,
-      style = new PointAssetStyle('trafficSigns'),
-      assetLabel = new TrafficSignLabel(9),
-      collection = new TrafficSignsReadOnlyCollection(params.backend, 'trafficSigns', true),
-      assetGrouping = new AssetGrouping(9),
-      map = params.map;
+        parentLayerName = params.layerName,
+        style = new PointAssetStyle('trafficSigns'),
+        assetLabel = new TrafficSignLabel(),
+        collection = new TrafficSignsReadOnlyCollection(params.backend, 'trafficSigns', true),
+        assetGrouping = new AssetGrouping(9),
+        map = params.map;
 
     var me = this;
     var minZoomForContent = zoomlevels.minZoomForAssets;

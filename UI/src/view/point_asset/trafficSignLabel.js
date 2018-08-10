@@ -1,10 +1,10 @@
 (function(root) {
 
-  root.TrafficSignLabel = function(groupingDistance) {
+  root.TrafficSignLabel = function() {
     AssetLabel.call(this, this.MIN_DISTANCE);
     var me = this;
 
-    this.MIN_DISTANCE = groupingDistance;
+    this.MIN_DISTANCE = Math.pow(3, 2);
 
     var backgroundStyle = function (trafficSign, counter) {
       return new ol.style.Style({
