@@ -72,7 +72,7 @@
         {signValue: [43], image: 'images/traffic-signs/childrenSign.png'},
         {signValue: [45], image: 'images/traffic-signs/freeWidthSign.png', validation: validateAdditionalInfo, maxLabelLength: 11, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, offsetY: -38 - (counter * 35)},
         {signValue: [46], image: 'images/traffic-signs/freeHeight.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -50 - (counter * 35)},
-        {signValue: [47], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetX: 1, offsetY: -35 - (counter * 35)},
+        {signValue: [47], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
         {signValue: [48], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
         {signValue: [49], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
         {signValue: [50], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
