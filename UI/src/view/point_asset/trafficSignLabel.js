@@ -69,8 +69,71 @@
         {signValue: [40], image: 'images/traffic-signs/dangerousDescentSign.png'},
         {signValue: [41], image: 'images/traffic-signs/steepAscentSign.png'},
         {signValue: [42], image: 'images/traffic-signs/unevenRoadSign.png'},
-        {signValue: [43], image: 'images/traffic-signs/childrenSign.png'}
-      ];
+        {signValue: [43], image: 'images/traffic-signs/childrenSign.png'},
+        {signValue: [45], image: 'images/traffic-signs/freeWidthSign.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: isToShowAdditionalInfo},
+        // {signValue: [52], image: 'images/traffic-signs/passengerCar.png'},
+        {signValue: [63], image: 'images/traffic-signs/busLane.png'},
+        {signValue: [64], image: 'images/traffic-signs/busLane.png'},
+        {signValue: [65], image: 'images/traffic-signs/busLane.png'},
+        {signValue: [66], image: 'images/traffic-signs/busStopForLocalTraffic.png'},
+        {signValue: [67], image: 'images/traffic-signs/busStopForLocalTraffic.png'},
+        {signValue: [68], image: 'images/traffic-signs/busStopForLocalTraffic.png'},
+        {signValue: [69], image: 'images/traffic-signs/busStopForLocalTraffic.png'},
+        {signValue: [70], image: 'images/traffic-signs/compulsoryFootPath.png'},
+        {signValue: [71], image: 'images/traffic-signs/compulsoryFootPath.png'},
+        {signValue: [72], image: 'images/traffic-signs/compulsoryFootPath.png'},
+        {signValue: [73], image: 'images/traffic-signs/compulsoryFootPath.png'},
+        {signValue: [74], image: 'images/traffic-signs/directionToBeFollowed3.png'},
+        {signValue: [75], image: 'images/traffic-signs/directionToBeFollowed3.png'},
+        {signValue: [76], image: 'images/traffic-signs/directionToBeFollowed3.png'},
+        {signValue: [77], image: 'images/traffic-signs/directionToBeFollowed3.png'},
+        {signValue: [78], image: 'images/traffic-signs/directionToBeFollowed3.png'},
+        {signValue: [79], image: 'images/traffic-signs/directionToBeFollowed3.png'},
+        {signValue: [80], image: 'images/traffic-signs/taxiStationZoneBeginning.png'},
+        {signValue: [81], image: 'images/traffic-signs/taxiStationZoneBeginning.png'},
+        {signValue: [82], image: 'images/traffic-signs/roadNarrows.png'},
+        {signValue: [83], image: 'images/traffic-signs/twoWayTraffic.png'},
+        {signValue: [84], image: 'images/traffic-signs/swingBridge.png'},
+        {signValue: [85], image: 'images/traffic-signs/roadWorks.png'},
+        {signValue: [86], image: 'images/traffic-signs/slipperyRoad.png'},
+        {signValue: [87], image: 'images/traffic-signs/pedestrianCrossingWarningSign.png'},
+        {signValue: [88], image: 'images/traffic-signs/cyclists.png'},
+        {signValue: [89], image: 'images/traffic-signs/intersectionWithEqualRoads.png'},
+        {signValue: [90], image: 'images/traffic-signs/lightSignals.png'},
+        {signValue: [92], image: 'images/traffic-signs/fallingRocks.png'},
+        {signValue: [93], image: 'images/traffic-signs/crossWind.png'},
+        {signValue: [94], image: 'images/traffic-signs/priorityRoad.png'},
+        {signValue: [95], image: 'images/traffic-signs/endOfPriority.png'},
+        {signValue: [96], image: 'images/traffic-signs/priorityOverOncomingTraffic.png'},
+        {signValue: [97], image: 'images/traffic-signs/priorityForOncomingTraffic.png'},
+        {signValue: [98], image: 'images/traffic-signs/giveWay.png'},
+        {signValue: [99], image: 'images/traffic-signs/stop.png'},
+        {signValue: [100], image: 'images/traffic-signs/standingAndParkingProhibited.png'},
+        {signValue: [101], image: 'images/traffic-signs/parkingProhibited.png'},
+        {signValue: [102], image: 'images/traffic-signs/parkingProhibitedZone.png'},
+        {signValue: [103], image: 'images/traffic-signs/endOfParkingProhibitedZone.png'},
+        {signValue: [104], image: 'images/traffic-signs/alternativeParkingOddDays.png'},
+        {signValue: [105], image: 'images/traffic-signs/parkingLot.png'},
+        {signValue: [106], image: 'images/traffic-signs/oneWayRoad.png'},
+        {signValue: [107], image: 'images/traffic-signs/motorway.png'},
+        {signValue: [108], image: 'images/traffic-signs/motorwayEnds.png'},
+        {signValue: [109], image: 'images/traffic-signs/residentialZone.png'},
+        {signValue: [110], image: 'images/traffic-signs/endOfResidentialZone.png'},
+        {signValue: [111], image: 'images/traffic-signs/pedestrianZone.png'},
+        {signValue: [112], image: 'images/traffic-signs/endOfPedestrianZone.png'},
+        {signValue: [113], image: 'images/traffic-signs/noThroughRoad.png'},
+        {signValue: [114], image: 'images/traffic-signs/noThroughRoadRight.png'},
+        {signValue: [115], image: 'images/traffic-signs/symbolOfMotorway.png'},
+        {signValue: [116], image: 'images/traffic-signs/parking.png'},
+        // {signValue: [117], image: 'images/traffic-signs/itineraryForIndicatedVehicleCategory.png'}
+        {signValue: [118], image: 'images/traffic-signs/itineraryForPedestrians.png'},
+        {signValue: [119], image: 'images/traffic-signs/itineraryForHandicapped.png'},
+        {signValue: [120], image: 'images/traffic-signs/locationSignForTouristService.png'},
+        {signValue: [121], image: 'images/traffic-signs/firstAid.png'},
+        {signValue: [122], image: 'images/traffic-signs/fillingStation.png'},
+        {signValue: [123], image: 'images/traffic-signs/restaurant.png'},
+        {signValue: [124], image: 'images/traffic-signs/publicLavatory.png'}
+    ];
 
       var labelProperty = _.find(labelingProperties, function(properties) {
         return _.includes(properties.signValue, trafficSign.type);
@@ -93,6 +156,10 @@
         return labelProperty && labelProperty.convertion ? labelProperty.convertion.call(trafficSign) : trafficSign.value;
       }
 
+      function getAdditionalInfo(){
+        return labelProperty && labelProperty.isToShowAdditionalInfo ? labelProperty.isToShowAdditionalInfo.call(trafficSign) : '';
+      }
+
       function getUnit() {
         return labelProperty && labelProperty.unit ? labelProperty.unit.call(trafficSign) : '';
       }
@@ -102,14 +169,15 @@
         getTextOffset: getTextOffset,
         getValidation: getValidation,
         getValue : getValue,
-        getUnit : getUnit
+        getUnit : getUnit,
+        getAdditionalInfo: getAdditionalInfo
       };
     };
 
     var textStyle = function (trafficSign) {
       if (!getLabelProperty(trafficSign).getValidation())
         return '';
-      return getLabelProperty(trafficSign).getValue() + getLabelProperty(trafficSign).getUnit();
+      return getLabelProperty(trafficSign).getValue() + getLabelProperty(trafficSign).getAdditionalInfo() + getLabelProperty(trafficSign).getUnit();
     };
 
     var addTons = function () {
@@ -128,6 +196,10 @@
       return this.value / 100;
     };
 
+    var isToShowAdditionalInfo = function () {
+      return _.isEmpty(this.value) ? this.additionalInfo : '';
+    };
+
     var validateSpeedLimitValues = function () {
       return this.value && (this.value > 0 && this.value <= 120);
     };
@@ -135,6 +207,10 @@
     var validateMaximumRestrictions = function () {
       // Not specified the maximum restriction value
       return this.value && (this.value > 0 && this.value < 100000);
+    };
+
+    var validateAdditionalInfo = function () {
+      return this.value || (this.additionalInfo && this.additionalInfo.length <= 20);
     };
 
     this.getStyle = function (trafficSign, counter) {
@@ -191,7 +267,8 @@
       if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
         return;
       var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : '';
-      return {value : value, type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue)};
+      var additionalInfo = getProperty(asset, "trafficSigns_info") ? getProperty(asset, "trafficSigns_info").propertyValue : '';
+      return {value: value, type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue), additionalInfo: additionalInfo};
     };
   };
 })(this);

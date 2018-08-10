@@ -27,7 +27,7 @@
         '     <label><input name="speedLimits" type="checkbox" /> Nopeusrajoitukset</label> <br>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="pedestrianCrossings" type="checkbox" /> Suojatiet</label> <br>' +
+        '     <label><input name="regulatorySigns" type="checkbox" /> Ohjemerkit</label> <br>' +
         '   </div>' +
         '   <div class="checkbox">' +
         '     <label><input name="maximumRestrictions" type="checkbox" /> Suurin sallittu - rajoitukset</label> <br>' +
@@ -37,6 +37,21 @@
         '   </div>' +
         '   <div class="checkbox">' +
         '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +
+        '   </div>' +
+        '   <div class="checkbox">' +
+        '     <label><input name="additionalPanels" type="checkbox" /> Lisakilvet</label>' +
+        '   </div>' +
+        '   <div class="checkbox">' +
+        '     <label><input name="mandatorySigns" type="checkbox" /> Maaraysmerkit</label>' +
+        '   </div>' +
+        '   <div class="checkbox">' +
+        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus- ja vaistamismerkit</label>' +
+        '   </div>' +
+        '   <div class="checkbox">' +
+        '     <label><input name="informationSigns" type="checkbox" /> Opastusmerkit</label>' +
+        '   </div>' +
+        '   <div class="checkbox">' +
+        '     <label><input name="serviceSigns" type="checkbox" /> Palvelukohteiden opastusmerkit</label>' +
         '   </div>' +
         '</div>'].join(''));
     };
