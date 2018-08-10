@@ -657,7 +657,7 @@
           disabled: 'Tuntematon'
         },
         label: new TRSpeedLimitAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         style: new TRSpeedLimitStyle(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy()
       }

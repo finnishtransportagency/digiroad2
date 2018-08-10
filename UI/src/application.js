@@ -293,16 +293,6 @@
        );
     });
 
-    var trafficSignReadOnlyLayer = function(layerName){
-      return new TrafficSignReadOnlyLayer({
-        layerName: layerName,
-        style: new PointAssetStyle('trafficSigns'),
-        collection: new TrafficSignsReadOnlyCollection(backend, 'trafficSigns', true),
-        assetLabel: new TrafficSignLabel(9),
-        assetGrouping: new AssetGrouping(9),
-        map: map
-      });
-    };
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
       var parameters ={
@@ -346,8 +336,6 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
-       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
        authorizationPolicy: asset.authorizationPolicy
      });
      return acc;
@@ -369,7 +357,6 @@
         roadAddressInfoPopup: roadAddressInfoPopup,
         allowGrouping: asset.allowGrouping,
         assetGrouping: new AssetGrouping(asset.groupingDistance),
-        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
         authorizationPolicy: asset.authorizationPolicy,
         assetTypeIds: asset.typeIds
       });
@@ -385,7 +372,7 @@
        application: applicationModel,
        collection: models.speedLimitsCollection,
        selectedSpeedLimit: models.selectedSpeedLimit,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer('speedLimit'),
+       readOnlyLayer: new TrafficSignReadOnlyLayer({ layerName: 'speedLimit', map: map, backend: backend }),
        style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer,
        roadAddressInfoPopup: roadAddressInfoPopup
