@@ -1439,8 +1439,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
-      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
-      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit }, Some(false)) //false to prevent saving in tr
+      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet ++ Set(SimpleProperty("trSave", Seq(PropertyValue("false"))))
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit})
       verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
     }
