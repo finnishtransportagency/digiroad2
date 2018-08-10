@@ -31,10 +31,10 @@
         {signValue: [2], image: 'images/traffic-signs/endOfSpeedLimitSign.png', validation: validateSpeedLimitValues},
         {signValue: [3], image: 'images/traffic-signs/speedLimitZoneSign.png', validation: validateSpeedLimitValues},
         {signValue: [4], image: 'images/traffic-signs/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues},
-        {signValue: [5], image: 'images/traffic-signs/urbanAreaSign.png', offset: -8 - (counter * 35)},
+        {signValue: [5], image: 'images/traffic-signs/urbanAreaSign.png', offsetY: -8 - (counter * 35)},
         {signValue: [6], image: 'images/traffic-signs/endOfUrbanAreaSign.png'},
         {signValue: [7], image: 'images/traffic-signs/crossingSign.png'},
-        {signValue: [8], image: 'images/traffic-signs/maximumLengthSign.png', validation: validateMaximumRestrictions, offset: -38 - (counter * 35), convertion: convertToMeters, unit: addMeters},
+        {signValue: [8], image: 'images/traffic-signs/maximumLengthSign.png', validation: validateMaximumRestrictions, offsetY: -38 - (counter * 35), convertion: convertToMeters, unit: addMeters},
         {signValue: [9], image: 'images/traffic-signs/warningSign.png'},
         {signValue: [10], image: 'images/traffic-signs/turningRestrictionLeftSign.png'},
         {signValue: [11], image: 'images/traffic-signs/turningRestrictionRightSign.png'},
@@ -59,9 +59,9 @@
         {signValue: [30], image: 'images/traffic-signs/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
         {signValue: [31], image: 'images/traffic-signs/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters},
         {signValue: [32], image: 'images/traffic-signs/totalWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons},
-        {signValue: [33], image: 'images/traffic-signs/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, offset: -38 - (counter * 35), convertion: convertToTons, unit: addTons},
-        {signValue: [34], image: 'images/traffic-signs/axleWeightLimit.png', validation: validateMaximumRestrictions, offset: -46 - (counter * 35), convertion: convertToTons, unit: addTons },
-        {signValue: [35], image: 'images/traffic-signs/bogieWeightLimit.png', validation: validateMaximumRestrictions, offset: -46 - (counter * 35), convertion: convertToTons, unit: addTons },
+        {signValue: [33], image: 'images/traffic-signs/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, offsetY: -38 - (counter * 35), convertion: convertToTons, unit: addTons},
+        {signValue: [34], image: 'images/traffic-signs/axleWeightLimit.png', validation: validateMaximumRestrictions, offsetY: -46 - (counter * 35), convertion: convertToTons, unit: addTons },
+        {signValue: [35], image: 'images/traffic-signs/bogieWeightLimit.png', validation: validateMaximumRestrictions, offsetY: -46 - (counter * 35), convertion: convertToTons, unit: addTons },
         {signValue: [36], image: 'images/traffic-signs/rightBendSign.png'},
         {signValue: [37], image: 'images/traffic-signs/leftBendSign.png'},
         {signValue: [38], image: 'images/traffic-signs/severalBendRightSign.png'},
@@ -70,7 +70,13 @@
         {signValue: [41], image: 'images/traffic-signs/steepAscentSign.png'},
         {signValue: [42], image: 'images/traffic-signs/unevenRoadSign.png'},
         {signValue: [43], image: 'images/traffic-signs/childrenSign.png'},
-        {signValue: [45], image: 'images/traffic-signs/freeWidthSign.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: isToShowAdditionalInfo},
+        {signValue: [45], image: 'images/traffic-signs/freeWidthSign.png', validation: validateAdditionalInfo, maxLabelLength: 11, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, offsetY: -38 - (counter * 35)},
+        {signValue: [46], image: 'images/traffic-signs/freeHeight.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -50 - (counter * 35)},
+        {signValue: [47], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetX: 1, offsetY: -35 - (counter * 35)},
+        {signValue: [48], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
+        {signValue: [49], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
+        {signValue: [50], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
+        {signValue: [51], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
         {signValue: [52], image: 'images/traffic-signs/passengerCar.png'},
         {signValue: [53], image: 'images/traffic-signs/bus.png'},
         {signValue: [54], image: 'images/traffic-signs/lorry.png'},
@@ -78,6 +84,10 @@
         {signValue: [56], image: 'images/traffic-signs/vehicleForHandicapped.png'},
         {signValue: [57], image: 'images/traffic-signs/motorCycle.png'},
         {signValue: [58], image: 'images/traffic-signs/cycle.png'},
+        {signValue: [59], image: 'images/traffic-signs/parkingAgainstFee.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 12, offsetY: -50 - (counter * 35)},
+        {signValue: [60], image: 'images/traffic-signs/obligatoryUseOfParkingDisc.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 12, offsetY: -42 - (counter * 35)},
+        {signValue: [61], image: 'images/traffic-signs/additionalPanelWithText.png', validation: validateAdditionalInfo, maxLabelLength: 19, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 3, offsetY: -30 - (counter * 35)},
+        {signValue: [62], image: 'images/traffic-signs/drivingInServicePurposesAllowed.png', validation: validateAdditionalInfo, maxLabelLength: 13, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, offsetY: -50 - (counter * 35)},
         {signValue: [63], image: 'images/traffic-signs/busLane.png'},
         {signValue: [64], image: 'images/traffic-signs/busLane.png'},
         {signValue: [65], image: 'images/traffic-signs/busLane.png'},
@@ -150,8 +160,12 @@
         return labelProperty && labelProperty.image ? labelProperty.image : 'images/traffic-signs/badValue.png';
       }
 
-      function getTextOffset(){
-        return labelProperty && labelProperty.offset ? labelProperty.offset :  -45 - (counter * 35);
+      function getTextOffsetX(){
+        return labelProperty && labelProperty.offsetX ? labelProperty.offsetX :  0;
+      }
+
+      function getTextOffsetY(){
+        return labelProperty && labelProperty.offsetY ? labelProperty.offsetY :  -45 - (counter * 35);
       }
 
       function getValidation(){
@@ -170,13 +184,20 @@
         return labelProperty && labelProperty.unit ? labelProperty.unit.call(trafficSign) : '';
       }
 
+      function getMaxLength() {
+        return labelProperty && labelProperty.maxLabelLength ? labelProperty.maxLabelLength : 20;
+      }
+
       return {
         findImage: findImage,
-        getTextOffset: getTextOffset,
+        getTextOffsetX: getTextOffsetX,
+        getTextOffsetY: getTextOffsetY,
         getValidation: getValidation,
         getValue : getValue,
         getUnit : getUnit,
-        getAdditionalInfo: getAdditionalInfo
+        getAdditionalInfo: getAdditionalInfo,
+        getMaxLength: getMaxLength
+
       };
     };
 
@@ -216,7 +237,8 @@
     };
 
     var validateAdditionalInfo = function () {
-      return this.value || (this.additionalInfo && this.additionalInfo.length <= 20);
+      var labelMaxLength = getLabelProperty(this).getMaxLength();
+      return this.value || (this.additionalInfo && this.additionalInfo.length <= labelMaxLength);
     };
 
     this.getStyle = function (trafficSign, counter) {
@@ -227,8 +249,8 @@
             color: '#000000'
           }),
           font: '12px sans-serif',
-          offsetX: 0,
-          offsetY: getLabelProperty(trafficSign, counter).getTextOffset()
+          offsetX: getLabelProperty(trafficSign, counter).getTextOffsetX(),
+          offsetY: getLabelProperty(trafficSign, counter).getTextOffsetY()
         })
       })];
     };

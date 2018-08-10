@@ -50,7 +50,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval,  61 , 'Tekstillinen lisäkilpi', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  62 , 'Tekstillinen lisäkilpi', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  62 , 'Tekstillinen lisäkilpi: Huoltoajo sallittu', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval,  63 , 'Linja-autokaista', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
