@@ -156,48 +156,11 @@ class VerificationServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  private def insertForTestLastModificationDate {
-    val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
-    val lrmPositionsIds = Queries.fetchLrmPositionIds(6)
-
-    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
-            values ($id, 100, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 1000, null, 0.000, 25.000)""".execute
-    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id,${lrmPositionsIds(0)})""".execute
-
-    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
-            values ($id+1, 30, TO_TIMESTAMP('2016-02-19 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 2000, null, 0.000, 25.000)""".execute
-    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+1,${lrmPositionsIds(1)})""".execute
-
-    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
-            values ($id+2, 50, TO_TIMESTAMP('2016-02-21 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(2)}, 3000, null, 0.000, 25.000)""".execute
-    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+2,${lrmPositionsIds(2)})""".execute
-
-    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
-            values ($id+3, 70, TO_TIMESTAMP('2016-02-21 15:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(3)}, 4000, null, 0.000, 25.000)""".execute
-    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+3,${lrmPositionsIds(3)})""".execute
-
-    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
-            values ($id+4, 70, TO_TIMESTAMP('2016-02-21 15:33:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(4)}, 5000, null, 0.000, 25.000)""".execute
-    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+4,${lrmPositionsIds(4)})""".execute
-
-    sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by)
-            values ($id+5, 90, TO_TIMESTAMP('2016-02-23 15:33:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'testuser')""".execute
-    sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(5)}, 6000, null, 0.000, 25.000)""".execute
-    sqlu"""insert into asset_link (asset_id,position_id) VALUES ($id+5,${lrmPositionsIds(5)})""".execute
-  }
-
   test("get assets Latests Modifications with one municipality") {
     runWithRollback {
 
       val tinnyRoadLinkMunicipality235 = Seq( TinnyRoadLink(1000),  TinnyRoadLink(3000), TinnyRoadLink(5000))
       when(mockRoadLinkService.getTinnyRoadLinkFromVVH(235)).thenReturn(tinnyRoadLinkMunicipality235)
-
-      insertForTestLastModificationDate
 
       val latestModificationInfoMunicipality = ServiceWithDao.getAssetLatestModifications(Set(235))
       latestModificationInfoMunicipality should have size 3
@@ -213,7 +176,6 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getTinnyRoadLinkFromVVH(235)).thenReturn(tinnyRoadLinkMunicipality235)
       when(mockRoadLinkService.getTinnyRoadLinkFromVVH(100)).thenReturn(tinnyRoadLinkMunicipality100)
-      insertForTestLastModificationDate
 
       val latestModificationInfo = ServiceWithDao.getAssetLatestModifications(Set(100, 235))
       latestModificationInfo should have size 4
