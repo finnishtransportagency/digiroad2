@@ -1364,10 +1364,10 @@ object DataFixture {
     args.headOption match {
       case Some("test") =>
         tearDown()
-        importMunicipalityCodes()
-        setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
+        importMunicipalityCodes()
+        setUpTest()
         TrafficSignTestData.createTestData
         ServicePointTestData.createTestData
       case Some("import_roadlink_data") =>
