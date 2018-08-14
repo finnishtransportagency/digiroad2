@@ -21,6 +21,7 @@ object AssetPropertyConfiguration {
     LangFi -> Map(ValidityDirectionId -> "Vaikutussuunta", ValidFromId -> "Ensimmäinen voimassaolopäivä", ValidToId -> "Viimeinen voimassaolopäivä", CreatedId -> "Lisätty järjestelmään", ModifiedId -> "Muokattu viimeksi", ConnectedToTerminal -> "Liitetty Terminaaliin"),
     LangSv -> Map()
   )
+  val ExcludedProperties: Set[String] = Set(TrSaveId)
 
   val ValidityDirectionSame = "2"
   val ValidityDirectionOpposite = "3"
@@ -34,8 +35,7 @@ object AssetPropertyConfiguration {
     ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(0, ValidFromId, Date, values = Seq())),
     ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(0, ValidToId, Date, values = Seq())),
     CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(0, CreatedId, ReadOnlyText, values = Seq())),
-    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, values = Seq())),
-    TrSaveId -> CommonAssetProperty(TrSaveId, "",  ReadOnlyText, Property(0, TrSaveId, ReadOnlyText, values = Seq()))
+    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, values = Seq()))
   )
 
   def assetRowToCommonProperties(row: MassTransitStopRow): Seq[Property] = {

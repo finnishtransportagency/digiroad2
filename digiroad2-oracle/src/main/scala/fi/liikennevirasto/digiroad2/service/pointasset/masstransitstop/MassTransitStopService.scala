@@ -239,7 +239,8 @@ trait MassTransitStopService extends PointAssetOperations {
     val (persistedAsset, publishInfo, strategy) = withDynTransaction {
       val point = Point(asset.lon, asset.lat)
       val strategy = getStrategy(asset.properties.toSet, roadLink)
-      val (persistedAsset, publishInfo) = strategy.create(asset, username, point, roadLink)
+      val newAsset = asset.copy(properties = excludeProperties(asset.properties))
+      val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
       withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
 
       (persistedAsset, publishInfo, strategy)
@@ -305,9 +306,11 @@ trait MassTransitStopService extends PointAssetOperations {
        } else
         Some(assetId)
 
+      //filter properties which are not saved in db
+      val newProperties = excludeProperties(properties.toSeq)
 
       val (persistedAsset, publishInfo) = if(existingAssetId.isEmpty){
-        val props = MassTransitStopOperations.setPropertiesDefaultValues(properties.toSeq, roadLink).toSet
+        val props = MassTransitStopOperations.setPropertiesDefaultValues(newProperties, roadLink).toSet
 
         if (MassTransitStopOperations.mixedStoptypes(props))
           throw new IllegalArgumentException
@@ -316,7 +319,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
         //Remove from common assets the side code property
         val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
-          filterNot(prop => prop._1 == AssetPropertyConfiguration.ValidityDirectionId || prop._1 == AssetPropertyConfiguration.ValidToId || prop._1 == AssetPropertyConfiguration.TrSaveId)
+          filterNot(prop => prop._1 == AssetPropertyConfiguration.ValidityDirectionId || prop._1 == AssetPropertyConfiguration.ValidToId)
 
         val mergedProperties = (asset.propertyData.
           filterNot(property => props.exists(_.publicId == property.publicId)).
@@ -602,6 +605,10 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.updateAssetLastModified(adjustment.assetId, "vvh_generated")
     massTransitStopDao.updateLrmPosition(adjustment.assetId, adjustment.mValue, adjustment.linkId, linkSource, Some(adjustment.vvhTimeStamp))
     updateAssetGeometry(adjustment.assetId, Point(adjustment.lon, adjustment.lat))
+  }
+
+  private def excludeProperties(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
+    properties.filterNot(prop => AssetPropertyConfiguration.ExcludedProperties.contains(prop.publicId))
   }
 }
 
