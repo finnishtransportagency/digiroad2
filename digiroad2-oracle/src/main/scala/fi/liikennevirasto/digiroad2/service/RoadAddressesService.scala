@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2.service
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
+import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.TractorRoad
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress}
+import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -96,7 +96,9 @@ class RoadAddressesService(viiteClient: SearchViiteClient ) {
     */
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     try {
-      val addressData = groupRoadAddress(getAllByLinkIds(roadLinks.map(_.linkId))).map(a => (a.linkId, a)).toMap
+      val roadAddressLinks = getAllByLinkIds(roadLinks.map(_.linkId))
+      val addressData = groupRoadAddress(roadAddressLinks).map(a => (a.linkId, a)).toMap
+      logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
       roadLinks.map(rl =>
         if (addressData.contains(rl.linkId))
           rl.copy(attributes = rl.attributes ++ roadAddressAttributes(addressData(rl.linkId)))
@@ -106,6 +108,9 @@ class RoadAddressesService(viiteClient: SearchViiteClient ) {
     } catch {
       case hhce: HttpHostConnectException =>
         logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        roadLinks
+      case vce: ViiteClientException =>
+        logger.error(s"Viite error with message ${vce.getMessage}")
         roadLinks
     }
   }
@@ -123,6 +128,9 @@ class RoadAddressesService(viiteClient: SearchViiteClient ) {
     } catch {
       case hhce: HttpHostConnectException =>
         logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        massLimitationAsset
+      case vce: ViiteClientException =>
+        logger.error(s"Viite error with message ${vce.getMessage}")
         massLimitationAsset
     }
   }
@@ -146,6 +154,9 @@ class RoadAddressesService(viiteClient: SearchViiteClient ) {
       case hhce: HttpHostConnectException =>
         logger.error(s"Viite connection failing with message ${hhce.getMessage}")
         pieceWiseLinearAssets
+      case vce: ViiteClientException =>
+        logger.error(s"Viite error with message ${vce.getMessage}")
+        pieceWiseLinearAssets
     }
   }
 
@@ -167,6 +178,9 @@ class RoadAddressesService(viiteClient: SearchViiteClient ) {
     } catch {
       case hhce: HttpHostConnectException =>
         logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        speedLimits
+      case vce: ViiteClientException =>
+        logger.error(s"Viite error with message ${vce.getMessage}")
         speedLimits
     }
   }

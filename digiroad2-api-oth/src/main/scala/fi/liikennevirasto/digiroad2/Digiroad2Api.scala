@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -22,6 +25,7 @@ import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
@@ -69,8 +73,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
                    val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
-                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
-  extends ScalatraServlet
+                   val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService,
+                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)  extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication {
@@ -146,6 +150,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
+
+  post("/userNotification") {
+    val user = userProvider.getCurrentUser()
+
+    val updatedUser = user.copy(configuration = user.configuration.copy(lastNotificationDate = Some(LocalDate.now.toString)))
+    userProvider.updateUserConfiguration(updatedUser)
+
+    userNotificationService.getAllUserNotifications.map { notification =>
+
+      Map("id" -> notification.id,
+        "createdDate" -> notification.createdDate.toString(DatePropertyFormat),
+        "heading" -> notification.heading,
+        "content" -> notification.content,
+        "unRead" -> (user.configuration.lastNotificationDate match {
+          case Some(dateValue) if dateValue.compareTo(notification.createdDate.toString("yyyy-MM-dd")) >= 0 => false
+          case _ => true
+        })
+      )
+    }
+  }
 
   get("/startupParameters") {
     val (east, north, zoom) = {
@@ -913,7 +937,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
       //TODO Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset
-      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId =>
+      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId =>
         value.extractOpt[Seq[NewDynamicLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, DynamicValue(x.value), x.sideCode, 0, None))
       case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
@@ -1541,7 +1565,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId =>  dynamicLinearAssetService
+      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
       case _ => linearAssetService
     }
   }

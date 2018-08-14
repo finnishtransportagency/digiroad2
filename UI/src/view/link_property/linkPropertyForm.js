@@ -185,6 +185,14 @@
       $("#adminClass").find("option[value = State ]").prop('disabled', true);
     }
 
+    function controlAdministrativeClassesOnToggle(selectedLinkProperty) {
+      var disabled = !_.isEmpty(_.filter(selectedLinkProperty.get(), function (link) {
+        return link.administrativeClass === "State";
+      }));
+      $("#adminClass").prop('disabled', disabled);
+      $("#adminClass").find("option[value = State ]").prop('disabled', true);
+    }
+
     function validateAdministrativeClass(selectedLinkProperty, authorizationPolicy){
       var selectedAssets = _.filter(selectedLinkProperty.get(), function (selected) {
         return !authorizationPolicy.formEditModeAccess(selected);
@@ -256,6 +264,7 @@
           selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
         });
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || applicationModel.isReadOnly());
+        controlAdministrativeClasses(linkProperties.administrativeClass);
       });
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
@@ -265,6 +274,7 @@
       });
       eventbus.on('application:readOnly', function(readOnly){
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || readOnly);
+        controlAdministrativeClassesOnToggle(selectedLinkProperty);
       });
       rootElement.on('click', '.link-properties button.save', function() {
         selectedLinkProperty.save();

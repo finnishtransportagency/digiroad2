@@ -12,6 +12,7 @@
       maintenanceRoad: function() { return true; },
       roadDamagedByThaw: function() { return true; },
       massTransitLanes: function() { return true; },
+      carryingCapacity: function() { return true; },
       careClass: function(val) {
         return true;
         //TODO: check functionality after merge

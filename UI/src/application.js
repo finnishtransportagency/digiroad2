@@ -8,6 +8,7 @@
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
+    var userNotificationCollection = new UserNotificationCollection(backend);
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection, verificationCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
@@ -62,7 +63,8 @@
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
-      manoeuvresCollection: manoeuvresCollection
+      manoeuvresCollection: manoeuvresCollection,
+      userNotificationCollection: userNotificationCollection
     };
 
     bindEvents(enabledLinearAssetSpecs, assetConfiguration.pointAssetsConfig);
@@ -119,6 +121,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
+    new UserNotificationPopup(models.userNotificationCollection).initialize();
 
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
@@ -193,7 +196,7 @@
     });
 
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched municipality:verified ' + fetchedEventNames, function() {
+    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched userNotification:fetched municipality:verified ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 
@@ -266,6 +269,7 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
     new TrafficSignToggle(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
+
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
 
     if (withTileMaps) { new TileMapCollection(map); }
@@ -409,11 +413,6 @@
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
 
-    // Show information modal in integration environment (remove when not needed any more)
-    if (Environment.name() === 'integration') {
-      showInformationModal('Huom!<br>Tämä sivu ei ole enää käytössä.<br>Digiroad-sovellus on siirtynyt osoitteeseen <a href="https://extranet.liikennevirasto.fi/digiroad/" style="color:#FFFFFF;text-decoration: underline">https://extranet.liikennevirasto.fi/digiroad/</a>');
-    }
-
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
     applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
@@ -458,6 +457,7 @@
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
+    var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -478,6 +478,7 @@
           .concat([trafficSignBox])
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
+          .concat([carryingCapacityBox])
           .concat(getLinearAsset(assetType.damagedByThaw))
           .concat([careClassBox]),
       [manoeuvreBox]

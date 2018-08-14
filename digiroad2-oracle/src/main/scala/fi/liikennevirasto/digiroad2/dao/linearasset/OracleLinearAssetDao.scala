@@ -462,6 +462,36 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
+    * Updates from Change Info in db.
+    */
+  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), vvhTimestamp: Long, username: String): Unit = {
+    println("asset_id -> " + id)
+    val (startMeasure, endMeasure) = linkMeasures
+    sqlu"""
+      update LRM_POSITION
+      set
+        start_measure = $startMeasure,
+        end_measure = $endMeasure,
+        modified_date = SYSDATE,
+        adjusted_timestamp = $vvhTimestamp
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = $id)
+    """.execute
+
+    sqlu"""
+      update ASSET
+      set modified_by = $username,
+          modified_date = SYSDATE
+      where id = $id
+    """.execute
+  }
+
+
+  /**
     * Updates side codes in db. Used by LinearAssetService.persistSideCodeAdjustments and LinearAssetService.separate.
     */
   def updateSideCode(id: Long, sideCode: SideCode): Unit = {
@@ -740,14 +770,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getUnVerifiedLinearAsset(assetTypeId: Int): List[(Long, Long)] = {
+    val TwoYears: Int = 24
     sql"""
           Select a.id, pos.link_id
           from ASSET a
           join ASSET_LINK al on a.id = al.asset_id
           join LRM_POSITION pos on al.position_id = pos.id
           where a.asset_type_id = $assetTypeId
-          and(valid_to is NULL OR valid_to >= SYSDATE)
-          and a.created_by in ('dr1_conversion', 'dr1conversion') AND a.modified_date is NULL AND a.verified_date is NULL
+          and (valid_to is NULL OR valid_to >= SYSDATE)
+          and (a.created_by in ('dr1_conversion', 'dr1conversion') OR MONTHS_BETWEEN(sysdate, a.created_date) > $TwoYears)
+          and (a.modified_date is NULL OR (a.modified_date is NOT NULL and a.modified_by = 'vvh_generated'))
+          and (a.verified_date is NULL OR MONTHS_BETWEEN(sysdate, a.verified_date) > $TwoYears)
           and a.floating = 0
       """.as[(Long, Long)].list
   }

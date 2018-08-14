@@ -298,7 +298,8 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var propertyOrdering = [
       'trafficSigns_type',
       'trafficSigns_value',
-      'trafficSigns_info'];
+      'trafficSigns_info',
+      'counter'];
 
     return _.sortBy(properties, function(property) {
       return _.indexOf(propertyOrdering, property.publicId);
@@ -345,6 +346,18 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       '      </select>' +
       '    </div>';
   };
+
+  var readOnlyHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
+
+    return '' +
+      '    <div class="form-group editable form-traffic-sign">' +
+      '        <label class="control-label">' + displayValue + '</label>' +
+      '        <p class="form-control-static">' + propertyValue + '</p>' +
+      '    </div>';
+  };
+
 
   function renderValueElement(asset, collection) {
     if (asset.obstacleType) {
@@ -428,6 +441,9 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
 
         if (propertyType === "single_choice")
           return singleChoiceHandler(feature, collection);
+
+        if (propertyType === "read_only_number")
+          return readOnlyHandler(feature);
 
       }), function(prev, curr) { return prev + curr; }, '');
 

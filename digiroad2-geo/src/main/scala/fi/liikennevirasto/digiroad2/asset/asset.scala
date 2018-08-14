@@ -310,8 +310,8 @@ object AssetTypeInfo {
                     NumberOfLanes, MassTransitLane, TrafficVolume, WinterSpeedLimit,
                     Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
-                    TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, TrHeightLimit,
-                    TrWidthLimit, UnknownAssetTypeId)
+                    TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, TrHeightLimit, TrWidthLimit,
+                    CarryingCapacity, UnknownAssetTypeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
@@ -360,3 +360,4 @@ case object TrAxleWeightLimit extends  AssetTypeInfo {val typeId = 340; def geom
 case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometryType = "point"; val label = "TrWeightLimit"; val layerName = "trWeightLimits"}
 case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryType = "linear"; val label = "Manoeuvre"; val layerName = "manoeuvres" }
 case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType = "linear"; val label = "CareClass"; val layerName = ""}
+case object CarryingCapacity extends AssetTypeInfo { val typeId = 400; def geometryType = "linear"; val label = "CarryingCapacity" }
