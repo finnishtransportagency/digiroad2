@@ -9,15 +9,14 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
-import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
+import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationBody, FeedbackApplicationService}
+import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
@@ -74,8 +73,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
                    val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
-val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService)
-  extends ScalatraServlet
+                   val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService,
+                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)  extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication {
@@ -257,6 +256,31 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
       TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found")))
     } else {
       massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
+    }
+  }
+
+
+  get("/massTransitStop/:id") {
+    val id = params("id").toLong
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByIdWithTRWarnings(id)
+    val massTransitStop = massTransitStopReturned._1.map { stop =>
+      Map("id" -> stop.id,
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "validityDirection" -> stop.validityDirection,
+        "bearing" -> stop.bearing,
+        "validityPeriod" -> stop.validityPeriod,
+        "floating" -> stop.floating,
+        "propertyData" -> stop.propertyData,
+        "municipalityCode" -> massTransitStopReturned._3)
+    }
+
+    if (massTransitStopReturned._2) {
+      TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found")))
+    } else {
+      massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found"))
     }
   }
 
@@ -778,16 +802,14 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
     verificationService.getAssetVerificationInfo(typeId, municipalityCode)
   }
 
-  post("/feedback"){
-    val body = extractFeedbackBody(parsedBody \ "body")
+  private def sendFeedback(service: Feedback)(implicit m: Manifest[service.FeedbackBody]): Long= {
+    val body = (parsedBody \ "body").extract[service.FeedbackBody]
     val user = userProvider.getCurrentUser()
-    applicationFeedback.insertApplicationFeedback(user.username, body)
+    service.insertFeedback(user.username, body)
   }
 
-  private def extractFeedbackBody(value: JValue): FeedbackApplicationBody = {
-    value.extractOpt[FeedbackApplicationBody].map { x => FeedbackApplicationBody(x.feedbackType, x.headline, x.freeText, x.name, x.email, x.phoneNumber)}.get
-  }
-
+  post("/feedbackApplication")(sendFeedback(applicationFeedback))
+  post("/feedbackData")(sendFeedback(dataFeedback))
 
   get("/linearassets/massLimitation") {
     val user = userProvider.getCurrentUser()
@@ -1402,7 +1424,21 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
   get("/trWidthLimits")(getPointAssets(widthLimitService))
   get("/trWidthLimits/:id")(getPointAssetById(widthLimitService))
 
+  get("/servicePoints")(getServicePoints)
+  get("/servicePoints/:id")(getServicePointsById)
+
   get("/groupedPointAssets")(getGroupedPointAssets)
+  get("/groupedPointAssets/:id")(getGroupedPointAssetsById)
+
+
+  private def getServicePoints: Set[ServicePoint] = {
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    servicePointService.get(bbox)
+  }
+
+  private def getServicePointsById: ServicePoint ={
+    servicePointService.getById(params("id").toLong)
+  }
 
   private def getGroupedPointAssets: Seq[MassLimitationPointAsset] = {
     val user = userProvider.getCurrentUser()
@@ -1410,6 +1446,10 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
     val typeIds = params.get("typeIds").getOrElse(halt(BadRequest("type Id parameters missing")))
     validateBoundingBox(bbox)
     pointMassLimitationService.getByBoundingBox(user,bbox)
+  }
+
+  private def getGroupedPointAssetsById: Seq[MassLimitationPointAsset] = {
+    pointMassLimitationService.getByIds(params("id").split(",").map(_.toLong))
   }
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
@@ -1530,10 +1570,6 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
     }
   }
 
-  get("/servicePoints") {
-    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
-    servicePointService.get(bbox)
-  }
 
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()

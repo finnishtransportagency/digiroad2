@@ -1,9 +1,9 @@
 (function (root) {
-root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
+root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition);
+  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection);
 
   function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
@@ -13,7 +13,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var layerName = pointAsset.layerName;
     var localizedTexts = pointAsset.formLabels;
     var authorizationPolicy = pointAsset.authorizationPolicy;
-
+    new FeedbackDataTool(feedbackCollection, layerName, authorizationPolicy);
 
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
       if(event.assetType == typeId)

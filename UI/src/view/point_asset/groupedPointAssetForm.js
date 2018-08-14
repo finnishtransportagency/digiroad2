@@ -3,7 +3,7 @@
         initialize: bindEvents
     };
 
-    function bindEvents(pointAsset, roadCollection) {
+    function bindEvents(pointAsset, roadCollection, feedbackCollection) {
 
         var typeIds = pointAsset.typeIds,
             selectedAsset = pointAsset.selectedPointAsset,
@@ -11,6 +11,8 @@
             localizedTexts = pointAsset.formLabels,
             propertiesData = pointAsset.propertyData,
             authorizationPolicy = pointAsset.authorizationPolicy;
+
+        new FeedbackDataTool(feedbackCollection, layerName, authorizationPolicy);
 
         var rootElement = $('#feature-attributes');
 

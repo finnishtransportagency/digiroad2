@@ -329,6 +329,23 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  def getMassTransitStopByIdWithTRWarnings(id: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
+    withDynTransaction {
+      val persistedStopOption = fetchPointAssets(massTransitStopDao.withId(id)).headOption
+      persistedStopOption match {
+        case Some(persistedStop) =>
+          val roadLink = fetchRoadLink(persistedStop.linkId)
+
+          val strategy = getStrategy(persistedStop)
+          val (enrichedStop, error) = strategy.enrichBusStop(persistedStop, roadLink)
+
+          (Some(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => roadLink))(enrichedStop)), error, Some(persistedStop.municipalityCode))
+        case _ =>
+          (None, false, None)
+      }
+    }
+  }
+
   def getByLiviId[T <: FloatingAsset](liviId: String, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): Option[T] = {
     withDynTransaction {
       val nationalId = massTransitStopDao.getNationalIdByLiviId(liviId).headOption

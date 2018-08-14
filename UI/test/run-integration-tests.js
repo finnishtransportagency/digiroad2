@@ -1,6 +1,7 @@
 require.config({
   paths: {
     jquery:                           '../../node_modules/jquery/dist/jquery.min',
+    validator:                        '../../node_modules/jquery-validation/dist/jquery.validate.min',
     chai:                             '../../node_modules/chai/chai',
     'chai-jquery':                    '../../node_modules/chai-jquery/chai-jquery',
     eventbus:                         '../src/utils/eventbus',
@@ -14,7 +15,7 @@ require.config({
     AssetTypePropertiesTestData:      '../test_data/assetTypePropertiesTestData'
   },
   shim: {
-    'chai-jquery': ['jquery', 'chai'],
+    'chai-jquery': ['validator', 'jquery', 'chai'],
     'eventbus': { exports: 'eventbus' },
     'AssetsTestData': { exports: 'AssetsTestData' },
     'RoadLinkTestData': { exports: 'RoadLinkTestData' },

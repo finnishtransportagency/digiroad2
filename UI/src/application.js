@@ -5,7 +5,6 @@
     var roadCollection = new RoadCollection(backend);
     var verificationCollection = new AssetsVerificationCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend, verificationCollection);
-    var feedbackCollection = new FeedbackModel(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
@@ -17,7 +16,10 @@
     var enabledExperimentalAssets = isExperimental ? assetConfiguration.experimentalAssetsConfig : [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
     var authorizationPolicy = new AuthorizationPolicy();
-    new FeedbackTool(authorizationPolicy, feedbackCollection);
+
+    var feedbackCollection = new FeedbackModel(backend, assetConfiguration);
+    new FeedbackApplicationTool(authorizationPolicy, feedbackCollection);
+
 
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec) ;
@@ -112,8 +114,8 @@
     );
 
     RoadAddressInfoDataInitializer.initialize(isExperimental);
-    MassTransitStopForm.initialize(backend);
-    SpeedLimitForm.initialize(selectedSpeedLimit);
+    MassTransitStopForm.initialize(backend, new FeedbackModel(backend, assetConfiguration, selectedMassTransitStopModel));
+    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration, selectedSpeedLimit));
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
@@ -125,21 +127,25 @@
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets);
+        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration);
       });
     });
   };
 
-  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets) {
+  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
+      var selectedServicePoint = getSelectedPointAsset(pointAssets, 'servicePoints');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
       var selectedRailwayCrossing =  getSelectedPointAsset(pointAssets, 'railwayCrossings');
       var selectedDirectionalTrafficSign = getSelectedPointAsset(pointAssets, 'directionalTrafficSigns');
       var selectedTrafficSign = getSelectedPointAsset(pointAssets, 'trafficSigns');
+      var selectedTrHeightLimits = getSelectedPointAsset(pointAssets, 'trHeightLimits');
+      var selectedTrWidthLimits = getSelectedPointAsset(pointAssets, 'trWidthLimits');
+      var selectedGroupPointAsset = getSelectedGroupAsset(groupedPointAssets, 'trWeightLimits');
       var selectedMaintenanceRoad = getSelectedLinearAsset(linearAssets, 'maintenanceRoad');
       new URLRouter(map, backend, _.merge({}, models,
           { selectedPedestrianCrossing: selectedPedestrianCrossing },
@@ -147,8 +153,12 @@
           { selectedObstacle: selectedObstacle },
           { selectedRailwayCrossing: selectedRailwayCrossing },
           { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign },
+          { selectedServicePoint: selectedServicePoint },
           { selectedTrafficSign: selectedTrafficSign},
           { selectedMaintenanceRoad: selectedMaintenanceRoad},
+          { selectedGroupPointAsset: selectedGroupPointAsset},
+          { selectedGroupPointAsset: selectedTrHeightLimits},
+          { selectedGroupPointAsset: selectedTrWidthLimits},
           { linearAssets: linearAssets}
     ));
       eventbus.trigger('application:initialized');
@@ -245,7 +255,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets) {
+  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration) {
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -265,15 +275,16 @@
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
-    new LinkPropertyForm(models.selectedLinkProperty);
-    new ManoeuvreForm(models.selectedManoeuvreSource);
+    new LinkPropertyForm(models.selectedLinkProperty, new FeedbackModel(backend, assetConfiguration, models.selectedLinkProperty));
+    new ManoeuvreForm(models.selectedManoeuvreSource, new FeedbackModel(backend, assetConfiguration, models.selectedManoeuvreSource));
     _.forEach(linearAssets, function(linearAsset) {
       if(linearAsset.form)
-        linearAsset.form.initialize(linearAsset);
+        linearAsset.form.initialize(linearAsset, new FeedbackModel(backend, assetConfiguration, linearAsset.selectedLinearAsset));
       else
         LinearAssetForm.initialize(
             linearAsset,
-            AssetFormElementsFactory.construct(linearAsset)
+            AssetFormElementsFactory.construct(linearAsset),
+            new FeedbackModel(backend, assetConfiguration, linearAsset.selectedLinearAsset)
         );
     });
 
@@ -283,13 +294,15 @@
        roadCollection,
        applicationModel,
        backend,
-       pointAsset.saveCondition || function() {return true;});
+       pointAsset.saveCondition || function() {return true;},
+        new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset));
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
       GroupedPointAssetForm.initialize(
         pointAsset,
-        roadCollection
+        roadCollection,
+          new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset)
        );
     });
 
@@ -419,6 +432,10 @@
     return _(linearAssets).find({ layerName: layerName }).selectedLinearAsset;
   }
 
+  function getSelectedGroupAsset(groupedPointAssets, layerName) {
+    return _(groupedPointAssets).find({ layerName: layerName }).selectedPointAsset;
+  }
+
   function groupAssets(assetConfiguration,
                        linearAssets,
                        pointAssets,
@@ -445,9 +462,9 @@
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
           .concat(getLinearAsset(assetType.pavedRoad))
-          .concat(getLinearAsset(assetType.width))
+          .concat(getLinearAsset(assetType.roadWidth))
           .concat(getLinearAsset(assetType.numberOfLanes))
-          .concat(getLinearAsset(assetType.massTransitLane))
+          .concat(getLinearAsset(assetType.massTransitLanes))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers)),
       [speedLimitBox]

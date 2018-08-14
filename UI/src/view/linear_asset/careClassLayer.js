@@ -19,7 +19,7 @@
     var findValue = function(asset, publicId) {
       var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
       if(properties)
-        return _.first(properties.values).value;
+        return _.head(properties.values).value;
     };
 
     var emptyValues = function(asset, publicId) {
