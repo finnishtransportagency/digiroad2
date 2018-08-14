@@ -326,7 +326,6 @@
     var setAdditionalProperty = function(publicId, values) {
       var propertyData = {publicId: publicId, values: values};
       currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
-      // currentAsset.payload.properties[key] = value;
     };
 
     var getCurrentAsset = function() {
