@@ -13,7 +13,7 @@
     };
 
     this.editModeAccessByFeatures = function(features) {
-      return ((me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(features.values_.municipalityCode)) || me.isOperator();
+      return ((me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(features.getProperties().municipalityCode)) || me.isOperator();
     };
 
   };
