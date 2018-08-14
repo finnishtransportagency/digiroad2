@@ -233,7 +233,7 @@ object TierekisteriDataImporter {
     "heightLimit" -> heightLimitTierekisteriImporter,
     "widthLimit" -> widthLimitTierekisteriImporter,
     "careClass" -> careClassTierekisteriImporter,
-    "carryingCapacity" -> carryingCapacityTierekisteriImporter
+    "carryingCapacity" -> carryingCapacityTierekisteriImporter,
     "pedestrianCrossing" -> pedestrianCrossingTierekisteriImporter
   )
 
