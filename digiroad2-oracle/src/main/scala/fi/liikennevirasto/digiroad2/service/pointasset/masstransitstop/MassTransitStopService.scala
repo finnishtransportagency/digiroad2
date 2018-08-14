@@ -4,11 +4,13 @@ import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopOperations.logger
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.joda.time.LocalDate
@@ -167,16 +169,21 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]) = {
     super.updateFloating(id, floating, floatingReason)
+    logger.info(s"Asset with id $id is being update to floating = $floating and floatingReason = ${floatingReason.getOrElse("None")}")
 
     floatingReason match {
       case None =>
         deleteFloatingReasonValue(id)
+        logger.info(s"Deleted floating reason for massTransitStop with id = $id")
       case Some(reason) =>
         updateFloatingReasonValue(id, reason)
+        logger.info(s"Update floating reason for massTransitStop with id = $id with floating Reason = ${reason.value}")
     }
   }
 
   override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    logger.info(s"MassTransitStopService isFloating #183 roadLink is instanceof VVHRoadLink : ${roadLinkOption.get.isInstanceOf[VVHRoadlink]}")
+    logger.info("MassTransitStopService: isFloating #183")
     val persistedMassTransitStop = persistedAsset.asInstanceOf[PersistedMassTransitStop]
 
     roadLinkOption match {
@@ -192,8 +199,10 @@ trait MassTransitStopService extends PointAssetOperations {
     val strategy = getStrategy(persistedMassTransitStop)
     val (floating, floatingReason) = strategy.isFloating(persistedMassTransitStop, roadLinkOption)
     if(floating){
+      logger.info(s"MassTransitStopService: isFloating #183 is Floating")
       (floating, floatingReason)
     }else{
+      logger.info(s"MassTransitStopService: isFloating #183 calling super.isFloating")
       super.isFloating(persistedAsset, roadLinkOption)
     }
   }

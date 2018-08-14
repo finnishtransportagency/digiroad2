@@ -1,10 +1,12 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimpleProperty, _}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{EventBusMassTransitStop, FloatingReason}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.slf4j.LoggerFactory
 
 sealed trait BusStopType {
   def value: Int
@@ -52,6 +54,7 @@ object MassTransitStopOperations {
   val raisePublicId = "korotettu"
 
   val terminalChildrenPublicId = "liitetyt_pysakit"
+  lazy val logger = LoggerFactory.getLogger(getClass)
 
   /**
     * Check for administrative class change: road link has differing owner other than Unknown.
@@ -69,22 +72,31 @@ object MassTransitStopOperations {
   }
 
   def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-
+    logger.info(s"MassTransitStopOperations  isFloating #72 roadLink is instanceof VVHRoadLink : ${roadLinkOption.get.isInstanceOf[VVHRoadlink]}")
     val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
-    if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass))
+    if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass)){
+      logger.info(s"MassTransitStopOperations: isFloating #72, administrativeClass: ${administrativeClass.value} roadLinkAdminClass: ${roadLinkAdminClass.get}")
       (true, Some(FloatingReason.RoadOwnerChanged))
-    else
+    }
+    else {
+      logger("MassTransitStopOperations: isFloating #72, not floating")
       (false, None)
+    }
   }
 
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    logger.info("MassTransitStopOperations isFloating #86, checking directions")
+    logger.info(s"MassTransitStopOperations  isFloating #86 roadLink is instanceof VVHRoadLink : ${roadLinkOption.get.isInstanceOf[VVHRoadlink]}")
     val simpleProperty = persistedAsset.propertyData.map{x => SimpleProperty(x.publicId , x.values)}
 
     if(persistedAsset.propertyData.exists(_.publicId == "vaikutussuunta") &&
-      isValidBusStopDirections(simpleProperty, roadLinkOption))
+      isValidBusStopDirections(simpleProperty, roadLinkOption)) {
+      logger.info(s"MassTransitStopOperations isFloating #86 is not floating")
       (false, None)
+    }
     else
-      (true, Some(FloatingReason.TrafficDirectionNotMatch))
+      logger.info(s"MassTransitStopOperations isFloating #86 is floating")
+       (true, Some(FloatingReason.TrafficDirectionNotMatch))
     }
 
 
@@ -136,11 +148,16 @@ object MassTransitStopOperations {
   }
 
   def isValidBusStopDirections(properties: Seq[SimpleProperty], roadLink: Option[RoadLinkLike]) = {
+    logger.info(s"MassTransitStopOperations isValidBusStopDirections #149 roadLink is instanceof VVHRoadLink : ${roadLink.get.isInstanceOf[VVHRoadlink]}")
     val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).getOrElse(throw new IllegalStateException("Road link no longer available"))
+    logger.info(s"MassTransitStopOperations isValidBusStopDirections #149 roadLinkDirection: ${roadLinkDirection.value}")
 
     properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.propertyValue)) match {
-      case Some(busDir) =>
+      case Some(busDir) => {
+        logger.info(s"MassTransitStopOperations roadLinkDirection != TrafficDirection.BothDirections): ${roadLinkDirection != TrafficDirection.BothDirections}")
+        logger.info(s"MassTransitStopOperations roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString: ${roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString}")
         !((roadLinkDirection != TrafficDirection.BothDirections) && (roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString))
+      }
       case None => false
     }
   }

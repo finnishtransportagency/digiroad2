@@ -856,7 +856,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * - information transfer from old link to new link from change data
     * It also passes updated links and incomplete links to be saved to db by actor.
     *
-    * @param vvhRoadLinks
+    * @param allVvhRoadLinks
     * @param changes
     * @return Road links
     */
