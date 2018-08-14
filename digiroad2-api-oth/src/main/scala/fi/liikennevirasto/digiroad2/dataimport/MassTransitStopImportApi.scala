@@ -26,7 +26,6 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Municipality, Pr
 import javax.naming.OperationNotSupportedException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.ImportLogService
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
 
 class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
@@ -39,7 +38,6 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
     override val massTransitStopService: MassTransitStopService = Digiroad2Context.massTransitStopService
     override val userProvider: UserProvider = Digiroad2Context.userProvider
     override val vvhClient: VVHClient = Digiroad2Context.vvhClient
-    override val roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
   }
 
   before() {

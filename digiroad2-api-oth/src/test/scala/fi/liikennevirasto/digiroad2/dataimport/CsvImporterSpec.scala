@@ -25,14 +25,12 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val MunicipalityKauniainen = 235
   val testUserProvider = new OracleUserProvider
   val csvImporter = importerWithNullService()
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
   private def importerWithService(service: MassTransitStopService, testVVHClient: VVHClient) : CsvImporter = {
     new CsvImporter {
       override val massTransitStopService: MassTransitStopService = service
       override val userProvider: UserProvider = testUserProvider
       override val vvhClient: VVHClient = testVVHClient
-      override val roadLinkService: RoadLinkService = mockRoadLinkService
     }
   }
 
@@ -41,7 +39,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       override val massTransitStopService: MassTransitStopService = MockitoSugar.mock[MassTransitStopService]
       override val userProvider: UserProvider = testUserProvider
       override val vvhClient: VVHClient = MockitoSugar.mock[VVHClient]
-      override val roadLinkService: RoadLinkService = mockRoadLinkService
     }
   }
 
