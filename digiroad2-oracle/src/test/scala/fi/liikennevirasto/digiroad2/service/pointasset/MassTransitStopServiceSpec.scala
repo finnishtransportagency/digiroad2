@@ -802,9 +802,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1")))
       )
 
-      service.updateExistingById(id, None, newProperties, "test2", (Int, _) => Unit)
-
-      val massTransitStop = service.getById(id).get
+      val massTransitStop = service.updateExistingById(id, None, newProperties, "test2", (Int, _) => Unit)
 
       val administratorProperty = massTransitStop.propertyData.find(p => p.publicId == "tietojen_yllapitaja").get
       administratorProperty.values.head.propertyValue should be("1")

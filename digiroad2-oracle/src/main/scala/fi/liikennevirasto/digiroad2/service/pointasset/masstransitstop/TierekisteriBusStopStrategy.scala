@@ -97,6 +97,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   }
 
   override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Option[Long] = {
+    massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, "")
     massTransitStopDao.expireMassTransitStop(username, existingAsset.id)
     getLiviIdValue(existingAsset.propertyData).map {
       liviId =>
