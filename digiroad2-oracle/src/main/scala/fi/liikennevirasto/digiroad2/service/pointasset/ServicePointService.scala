@@ -39,6 +39,13 @@ class ServicePointService {
     }
   }
 
+  def getById(id: Long): ServicePoint = {
+    withDynSession {
+      OracleServicePointDao.getById(id).headOption.getOrElse(throw new NoSuchElementException("Asset not found"))
+    }
+  }
+
+
   def getByMunicipality(municipalityNumber: Int): Set[ServicePoint] = {
     withDynSession {
       OracleServicePointDao.getByMunicipality(municipalityNumber)

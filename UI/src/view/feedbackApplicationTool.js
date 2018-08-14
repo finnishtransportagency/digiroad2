@@ -1,7 +1,8 @@
 (function (root) {
-   root.FeedbackTool = function (authorizationPolicy, collection) {
+   root.FeedbackApplicationTool = function (authorizationPolicy, collection) {
 
        var initialize = function(){
+            eventbus.trigger('closeFeedBackData');
            purge();
            renderConfirmDialog();
            $('#kidentifier').text(authorizationPolicy.username);
@@ -14,7 +15,7 @@
            cancelButton: 'Peruuta',
            saveCallback: function(){
                addSpinner();
-               collection.send( $(".form-horizontal").serializeArray());
+               collection.sendFeedbackApplication( $(".form-horizontal").serializeArray());
                },
            cancelCallback: function(){
                $(':input').val('');
@@ -71,7 +72,6 @@
                new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
            });
        };
-
 
        var confirmDiv =
            '<div class="modal-overlay confirm-modal" id="feedback">' +

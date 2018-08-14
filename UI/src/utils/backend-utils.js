@@ -364,6 +364,10 @@
       $.get('api/massTransitStops/' + nationalId, callback);
     };
 
+    this.getMassTransitStopById = function(id, callback) {
+      $.get('api/massTransitStop/' + id, callback);
+    };
+
     this.getUserRoles = function () {
       $.get('api/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);
@@ -503,6 +507,10 @@
       };
     });
 
+    this.userNotificationInfo = function() {
+      return $.post('api/userNotification');
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
@@ -555,15 +563,27 @@
       });
     };
 
-    this.sendFeedback = function (data, successCallback, errorCallback) {
+    this.sendFeedbackApplication = function (data, successCallback, errorCallback) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/feedback",
+        url: "api/feedbackApplication",
         data: data,
         dataType: "json",
         success: successCallback,
         error: errorCallback
+        });
+    };
+
+    this.sendFeedbackData = function (data, successCallback, errorCallback) {
+        $.ajax({
+            contentType: "application/json",
+            type: "POST",
+            url: "api/feedbackData",
+            data: data,
+            dataType: "json",
+            success: successCallback,
+            error: errorCallback
         });
     };
 

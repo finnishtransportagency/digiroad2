@@ -20,7 +20,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
 
   override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress]) = throw new UnsupportedOperationException("Not supported method")
 
-  override val tierekisteriClient = new TierekisteriTrafficSignSpeedLimitClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  override val tierekisteriClient = new TierekisteriTrafficSignAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
@@ -270,7 +270,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
           val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber)
           //Get all TelematicSpeedLimit
           val trTelematicSpeedLimitAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber)
-          val trAssets = getAllTierekisteriAssets(roadNumber) ++ trTelematicSpeedLimitAssets
+          val trAssets = getAllTierekisteriAssets(roadNumber).filter(_.assetType.trafficSignType.group == TrafficSignTypeGroup.SpeedLimits) ++ trTelematicSpeedLimitAssets
           //Get all the existing road address for the road number
           val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
           //Generate all speed limits of the right side of the road

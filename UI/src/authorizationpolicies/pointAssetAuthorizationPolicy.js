@@ -6,7 +6,7 @@
 
     this.formEditModeAccess = function(selectedAsset) {
       var municipalityCode = selectedAsset.getMunicipalityCode();
-      return (me.isMunicipalityMaintainer() && !me.isState(selectedAsset) && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
+      return (me.isMunicipalityMaintainer() && !me.isState(selectedAsset.get()) && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
     };
 
 

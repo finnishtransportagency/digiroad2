@@ -15,6 +15,7 @@ class TierekisteriWinterCareClassAssetClient(trEndPoint: String, trEnable: Boole
 
   override val trAssetType = "tl132"
   private val trCareClass = "KPLK"
+  private val allowedValues = Seq(1,2,3,4,5,6,7,8,9,10,11,20,30,40,50,60,70)
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriWinterCareClassAssetData] = {
 
@@ -29,6 +30,11 @@ class TierekisteriWinterCareClassAssetClient(trEndPoint: String, trEnable: Boole
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    Some(TierekisteriWinterCareClassAssetData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue, publicId))
+    if(allowedValues.contains(assetValue)) {
+      Some(TierekisteriWinterCareClassAssetData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue, publicId))
+    } else {
+      println(s"Tierekisteri ($trAssetType) asset ignored with value $assetValue at $roadNumber / $roadPartNumber")
+      None
+    }
   }
 }

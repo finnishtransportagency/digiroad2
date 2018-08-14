@@ -355,6 +355,21 @@
       }
     };
 
+    var changeById = function(id) {
+      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.id !== id && !assetHasBeenModified;
+      if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
+        if (exists()) { close(); }
+        backend.getMassTransitStopById(id, function (asset, statusMessage, errorObject) {
+          if (errorObject !== undefined) {
+              if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
+                  eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
+              }
+          }
+          eventbus.trigger('asset:fetched', asset);
+        });
+      }
+    };
+
     var getId = function() {
       return currentAsset.id;
     };
@@ -379,9 +394,19 @@
       return getPropertyValue({ propertyData: getProperties() }, 'viimeinen_voimassaolopaiva');
     };
 
-    var get = function(key) {
+    var getByProperty = function(key) {
       if (exists()) {
         return currentAsset.payload[key];
+      }
+    };
+
+    var get = function() {
+      if (exists()) {
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var linkId = nearestLine.linkId;
+          if (!currentAsset.linkId)
+              currentAsset.linkId = linkId;
+          return currentAsset;
       }
     };
 
@@ -502,11 +527,13 @@
       exists: exists,
       change: change,
       changeByExternalId: changeByNationalId,
+      changeById:changeById,
+      get: get,
       getId: getId,
       getName: getName,
       getDirection: getDirection,
       getFloatingReason: getFloatingReason,
-      get: get,
+      getByProperty: getByProperty,
       getProperties: getProperties,
       switchDirection: switchDirection,
       move: move,
