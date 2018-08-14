@@ -36,6 +36,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
   val mockTREuropeanRoadClient: TierekisteriEuropeanRoadAssetClient = MockitoSugar.mock[TierekisteriEuropeanRoadAssetClient]
   val mockTRSpeedLimitAssetClient: TierekisteriSpeedLimitAssetClient = MockitoSugar.mock[TierekisteriSpeedLimitAssetClient]
+  val mockTierekisteriAssetDataClient: TierekisteriAssetDataClient = MockitoSugar.mock[TierekisteriAssetDataClient]
   val dynamicDao = new DynamicLinearAssetDao
   val mockGreenCareClassAssetClient: TierekisteriGreenCareClassAssetClient = MockitoSugar.mock[TierekisteriGreenCareClassAssetClient]
   val mockWinterCareClassAssetClient: TierekisteriWinterCareClassAssetClient = MockitoSugar.mock[TierekisteriWinterCareClassAssetClient]
@@ -205,6 +206,62 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
+  }
+
+  case class TierekisteriAssetDataTest (roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, startAddressMValue: Long,
+                                        endAddressMValue: Long, track: Track) extends TierekisteriAssetData
+
+  class TestPointAssetTierekisteriImporterOperations extends PointAssetTierekisteriImporterOperations {
+    override def typeId: Int = 999
+    override def withDynSession[T](f: => T): T = f
+    override def withDynTransaction[T](f: => T): T = f
+    override def assetName: String = "assetTest"
+    override type TierekisteriClientType = TierekisteriAssetDataClient
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+    override val tierekisteriClient: TierekisteriAssetDataClient = mockTierekisteriAssetDataClient
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+
+    var createObject: Seq[(ViiteRoadAddress, VVHRoadlink, Double, TierekisteriAssetData)] = Seq()
+
+    override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+      createObject = List.concat(createObject , Seq((roadAddress, vvhRoadlink, mValue, trAssetData)))
+    }
+
+    def getCreatedValues: Seq[(ViiteRoadAddress, VVHRoadlink, Double, TierekisteriAssetData)] = {
+      createObject
+    }
+
+    def createAssetTest(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress]) =
+      super.createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress])
+  }
+
+  test("test createPoint main method") {
+    val pointImporterOperations = new TestPointAssetTierekisteriImporterOperations()
+
+    val roadNumber: Int = 4
+    val startRoadPartNumber: Int = 203
+    val startAddressMValue: Int = 3184
+    val endAddressMValue: Int = 3400
+    val track: Track = Track.RightSide
+
+    val trAssetData = TierekisteriAssetDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, startAddressMValue, startAddressMValue, Track.RightSide)
+    val section = AddressSection(roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, Some(endAddressMValue))
+    val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+
+    when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
+
+    pointImporterOperations.createAssetTest(section, trAssetData.asInstanceOf[pointImporterOperations.TierekisteriAssetData], Seq(roadAddress))
+
+    pointImporterOperations.getCreatedValues.foreach { case (viiteRoadAddress, roadLink, mValue, tierekisteriAssetData ) =>
+      viiteRoadAddress should be (roadAddress)
+      roadLink should be (vvhRoadLink)
+      mValue should be (1)
+      tierekisteriAssetData should be (trAssetData)
+    }
   }
 
   test("assets splited are split properly") {
