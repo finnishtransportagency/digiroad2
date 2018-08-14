@@ -330,7 +330,7 @@ trait MassTransitStopService extends PointAssetOperations {
         currentStrategy.create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
           mergedProperties), username, Point(position.lon, position.lat), roadLink)
       }else{
-        currentStrategy.update(asset, optionalPosition, properties, username, municipalityValidation, roadLink)
+        currentStrategy.update(asset, optionalPosition, newProperties.toSet, username, municipalityValidation, roadLink)
       }
 
       val (enrichPersistedAsset, error) = currentStrategy.enrichBusStop(persistedAsset)
