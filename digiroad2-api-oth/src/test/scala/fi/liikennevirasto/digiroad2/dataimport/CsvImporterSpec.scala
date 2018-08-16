@@ -2,13 +2,15 @@ package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{ByteArrayInputStream, InputStream}
 
+import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
@@ -26,11 +28,12 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testUserProvider = new OracleUserProvider
   val csvImporter = importerWithNullService()
 
-  private def importerWithService(service: MassTransitStopService, testVVHClient: VVHClient) : CsvImporter = {
+  private def importerWithService(service: MassTransitStopService, testVVHClient: VVHClient, testRoadLinkService: RoadLinkService) : CsvImporter = {
     new CsvImporter {
       override val massTransitStopService: MassTransitStopService = service
       override val userProvider: UserProvider = testUserProvider
       override val vvhClient: VVHClient = testVVHClient
+      override val roadLinkService: RoadLinkService = testRoadLinkService
     }
   }
 
@@ -39,6 +42,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       override val massTransitStopService: MassTransitStopService = MockitoSugar.mock[MassTransitStopService]
       override val userProvider: UserProvider = testUserProvider
       override val vvhClient: VVHClient = MockitoSugar.mock[VVHClient]
+      override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
     }
   }
 
@@ -68,10 +72,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("update name by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(2l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(2, 2, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "UpdatedAssetName"),
       Map("Valtakunnallinen ID" -> 2, "Pysäkin nimi" -> "Asset2Name"))
 
@@ -88,10 +93,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("do not update name if field is empty in CSV", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = createCSV(Map("Valtakunnallinen ID" -> 1))
 
     val inputStream = new ByteArrayInputStream(csv.getBytes)
@@ -131,10 +137,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("update asset type by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "1,2 , 3 ,4")))
 
     importer.importAssets(csv) should equal(ImportResult())
@@ -146,10 +153,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("update asset admin id by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Ylläpitäjän tunnus" -> "NewAdminId")))
 
     importer.importAssets(csv) should equal(ImportResult())
@@ -160,10 +168,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("Should not update asset LiVi id by CSV import (after Tierekisteri integration)", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "LiVi-tunnus" -> "Livi987654")))
 
     importer.importAssets(csv) should equal(ImportResult())
@@ -174,10 +183,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("update asset stop code by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Matkustajatunnus" -> "H156")))
 
     importer.importAssets(csv) should equal(ImportResult())
@@ -188,10 +198,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("update additional information by CSV import", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Lisätiedot" -> "Updated additional info")))
 
     importer.importAssets(csv) should equal(ImportResult())
@@ -225,10 +236,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("update asset's properties in a generic manner", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1) ++ csvImporter.mappings.mapValues(exampleValues(_)._2)))
 
     importer.importAssets(csv) should equal(ImportResult())
@@ -242,11 +254,12 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("raise an error when updating non-existent asset", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(6l), anyObject())).thenReturn(None)
     val assetFields = Map("Valtakunnallinen ID" -> "6", "Pysäkin nimi" -> "AssetName")
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val csv = createCSV(assetFields)
 
     val inputStream = new ByteArrayInputStream(csv.getBytes)
@@ -258,10 +271,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("raise an error when csv row does not define required parameter", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-    val importer = importerWithService(mockService, mockVVHClient)
+    val importer = importerWithService(mockService, mockVVHClient, mockRoadLinkService)
     val missingRequiredKeys = defaultKeys.filterNot(Set("Pysäkin nimi"))
     val csv =
       missingRequiredKeys.mkString(";") + "\n" +
@@ -275,15 +289,17 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject())
   }
 
-  private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, VVHClient) = {
+  private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, VVHClient, RoadLinkService) = {
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     stops.foreach { case(id, administrativeClass) =>
-      when(mockVVHRoadLinkClient.fetchByLinkId(ArgumentMatchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(ArgumentMatchers.eq(id), anyBoolean())).thenReturn(Some(RoadLink(id, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass,
+            1, TrafficDirection.BothDirections, Motorway, None, None)))
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
@@ -322,12 +338,12 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       }
     })
 
-    (mockMassTransitStopService, mockVVHClient)
+    (mockMassTransitStopService, mockVVHClient, mockRoadLinkService)
   }
 
   test("ignore updates on other road types than streets when import is limited to streets") {
-    val (mockMassTransitStopService, mockVVHClient) = mockWithMassTransitStops(Seq((1l, State)))
-    val importer = importerWithService(mockMassTransitStopService, mockVVHClient)
+    val (mockMassTransitStopService, mockVVHClient, mockRoadLinkService) = mockWithMassTransitStops(Seq((1l, State)))
+    val importer = importerWithService(mockMassTransitStopService, mockVVHClient, mockRoadLinkService)
     val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "NewName")
 
     val csv = createCSV(assetFields)
@@ -341,8 +357,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("update asset on street when import is limited to streets") {
-    val (mockMassTransitStopService, mockVVHClient) = mockWithMassTransitStops(Seq((1l, Municipality)))
-    val importer = importerWithService(mockMassTransitStopService, mockVVHClient)
+    val (mockMassTransitStopService, mockVVHClient, mockRoadLinkService) = mockWithMassTransitStops(Seq((1l, Municipality)))
+    val importer = importerWithService(mockMassTransitStopService, mockVVHClient, mockRoadLinkService)
 
     val csv = createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "NewName"))
     val inputStream = new ByteArrayInputStream(csv.getBytes)
@@ -354,8 +370,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("update asset on roads and streets when import is limited to roads and streets") {
-    val (mockMassTransitStopService, mockVVHClient) = mockWithMassTransitStops(Seq((1l, Municipality), (2l, State)))
-    val importer = importerWithService(mockMassTransitStopService, mockVVHClient)
+    val (mockMassTransitStopService, mockVVHClient, mockRoadLinkService) = mockWithMassTransitStops(Seq((1l, Municipality), (2l, State)))
+    val importer = importerWithService(mockMassTransitStopService, mockVVHClient, mockRoadLinkService)
 
     val csv = createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "NewName1"), Map("Valtakunnallinen ID" -> 2, "Pysäkin nimi" -> "NewName2"))
     val inputStream = new ByteArrayInputStream(csv.getBytes)
@@ -369,8 +385,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("ignore updates on all other road types than private roads when import is limited to private roads") {
-    val (mockMassTransitStopService, mockVVHClient) = mockWithMassTransitStops(Seq((1l, Municipality), (2l, State)))
-    val importer = importerWithService(mockMassTransitStopService, mockVVHClient)
+    val (mockMassTransitStopService, mockVVHClient, mockRoadLinkService) = mockWithMassTransitStops(Seq((1l, Municipality), (2l, State)))
+    val importer = importerWithService(mockMassTransitStopService, mockVVHClient, mockRoadLinkService)
 
     val assetOnStreetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "NewName1")
     val assetOnRoadFields = Map("Valtakunnallinen ID" -> 2, "Pysäkin nimi" -> "NewName2")

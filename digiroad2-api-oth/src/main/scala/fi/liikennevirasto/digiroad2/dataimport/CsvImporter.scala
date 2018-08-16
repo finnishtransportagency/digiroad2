@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 
 object CsvImporter {
@@ -30,6 +31,7 @@ trait CsvImporter {
   val massTransitStopService: MassTransitStopService
   val vvhClient: VVHClient
   val userProvider: UserProvider
+  val roadLinkService: RoadLinkService
 
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
@@ -158,9 +160,7 @@ trait CsvImporter {
   private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingAsset {}
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
-      logger.info("CsvImporter - fetching vvhRoadLink vvhClient.roadLinkData.fetchByLinkId(stop.linkId)")
-      val roadLink = vvhClient.roadLinkData.fetchByLinkId(stop.linkId)
-      logger.info(s"CsvImporter - Checking is floating, with roadLink asInstance of VVHRoadLink ${roadLink.get.isInstanceOf[VVHRoadlink]}")
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(stop.linkId)
       val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
       (new CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }

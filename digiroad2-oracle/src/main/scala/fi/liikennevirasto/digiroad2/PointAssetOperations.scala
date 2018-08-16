@@ -15,7 +15,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopOperations.logger
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
@@ -90,7 +89,6 @@ trait PointAssetOperations {
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long
   def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
-  lazy val logger = LoggerFactory.getLogger(getClass)
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
@@ -121,7 +119,6 @@ trait PointAssetOperations {
       }
       assetsBeforeUpdate.foreach { asset =>
         if (asset.asset.floating != asset.persistedFloating) {
-          logger.info(s"Asset with id ${asset.asset.id} will have his floating property updated")
           updateFloating(asset.asset.id, asset.asset.floating, asset.floatingReason)
         }
       }
@@ -376,7 +373,6 @@ object PointAssetOperations {
       lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
 
   def isFloating(municipalityCode: Int, lon: Double, lat: Double, mValue: Double, roadLink: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    logger.info(s"PointAssetOperations  isFloating #377 roadLink is instanceof VVHRoadLink : ${roadLink.getOrElse(None).isInstanceOf[VVHRoadlink]}")
     roadLink match {
       case None => return (true, Some(FloatingReason.NoRoadLinkFound))
       case Some(roadLink) =>
