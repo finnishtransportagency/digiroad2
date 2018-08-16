@@ -57,6 +57,26 @@
         });
       }
 
+      function saveFormData() {
+        new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
+          successCallback: function () {
+            $.ajax({
+              type: "POST",
+              url: "api/import/data/csv",
+              data: $(".form-horizontal").serialize(),
+              success: function () {
+              },
+              error: function (errorValue) {
+                if (errorValue.status === 400) {
+                  alert('CSV-tiedoston lähetys epäonnistui. Yritä hetken kuluttua uudestaan.');
+                }
+              }
+            });
+          }
+        });
+        return false;
+      }
+
       jQuery(document).ready(function($) {
         $('#municipalities_search').multiselect({
           search: {
@@ -88,9 +108,10 @@
 </head>
 <body>
 <div class="page csv-import">
+    <div class="container"></div>
     <div class="content-box form-box">
         <header>Päivitä tietolajit CSV-tiedostosta</header>
-        <form class="form form-horizontal" id="csvImport" role="form" method="post" action="api/import/data/csv"
+        <form class="form form-horizontal" id="csvImport" role="form" onsubmit="return saveFormData()"
               enctype="multipart/form-data">
             <div class="form-group">
                 <div class="file-upload">
