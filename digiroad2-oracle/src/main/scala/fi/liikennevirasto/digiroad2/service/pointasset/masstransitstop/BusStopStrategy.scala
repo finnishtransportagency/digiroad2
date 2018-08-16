@@ -2,10 +2,12 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddressException}
+import org.slf4j.LoggerFactory
 
 import scala.util.Try
 
@@ -16,6 +18,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   private val startMeasurePublicId = "aet"        // Etaisyys
   private val trackCodePublicId = "ajr"           // Ajorata
   private val sideCodePublicId = "puoli"
+  lazy val logger = LoggerFactory.getLogger(getClass)
 
   def getRoadAddressPropertiesByLinkId(persistedStop: PersistedMassTransitStop, roadLink: RoadLinkLike, oldProperties: Seq[Property]): Seq[Property] = {
     val road =
@@ -140,8 +143,11 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   }
 
   override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    logger.info(s"BusStopStrategy  isFloating #144 roadLink is instanceof VVHRoadLink : ${roadLinkOption.getOrElse(None).isInstanceOf[VVHRoadlink]}")
+    logger.info(s"BusStopStrategy: isFLoating #144")
     roadLinkOption match {
       case Some(roadLink) =>
+        logger.info("BusStopStrategy: isFLoating #144 will call MassTransitStopOperations.isFloating(persistedAsset, roadLinkOption)")
         val (floatingDir, floatingReasonDir) = MassTransitStopOperations.isFloating(persistedAsset, roadLinkOption)
           (floatingDir, floatingReasonDir)
       case _ => (false, None)

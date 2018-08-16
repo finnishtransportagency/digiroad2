@@ -96,6 +96,7 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
       // Current user is stored in a thread-local variable (feel free to provide better solution)
       userProvider.setCurrentUser(user)
       try {
+        logger.info("Importing assets from massTransitStopImportApi")
         val result = csvImporter.importAssets(csvFileInputStream, administrativeClassLimitations)
         val response = result match {
           case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."

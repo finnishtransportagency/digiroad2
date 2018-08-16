@@ -4,7 +4,7 @@ import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -97,7 +97,7 @@ trait PointAssetOperations {
 
   protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
                        adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {
-
+    val logger = LoggerFactory.getLogger(getClass)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
@@ -120,6 +120,7 @@ trait PointAssetOperations {
       assetsBeforeUpdate.foreach { asset =>
         if (asset.asset.floating != asset.persistedFloating) {
           updateFloating(asset.asset.id, asset.asset.floating, asset.floatingReason)
+          logger.info(s"Asset with id ${asset.asset.id} will have his floating property updated")
         }
       }
       assetsBeforeUpdate.map(_.asset)
@@ -360,6 +361,8 @@ trait PointAssetOperations {
 }
 
 object PointAssetOperations {
+  lazy val logger = LoggerFactory.getLogger(getClass)
+
   def calculateBearing(persistedPointAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): Option[Int] = {
     roadLinkOption match {
       case None => None
@@ -373,6 +376,7 @@ object PointAssetOperations {
       lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
 
   def isFloating(municipalityCode: Int, lon: Double, lat: Double, mValue: Double, roadLink: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    logger.info(s"PointAssetOperations  isFloating #377 roadLink is instanceof VVHRoadLink : ${roadLink.getOrElse(None).isInstanceOf[VVHRoadlink]}")
     roadLink match {
       case None => return (true, Some(FloatingReason.NoRoadLinkFound))
       case Some(roadLink) =>
