@@ -72,10 +72,10 @@ object MassTransitStopOperations {
   }
 
   def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    logger.info(s"MassTransitStopOperations  isFloating #72 roadLink is instanceof VVHRoadLink : ${roadLinkOption.getOrElse(None).isInstanceOf[VVHRoadlink]}")
+    logger.info(s"MassTransitStopOperations  isFloating #72 roadLink: $roadLinkOption")
+    logger.info(s"MassTransitStopOperations  isFloating #72 administrativeClass: $administrativeClass")
     val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
     if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass)){
-      logger.info(s"MassTransitStopOperations: isFloating #72, administrativeClass: ${administrativeClass.value} roadLinkAdminClass: ${roadLinkAdminClass.get}")
       (true, Some(FloatingReason.RoadOwnerChanged))
     }
     else {
