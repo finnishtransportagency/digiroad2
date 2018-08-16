@@ -79,7 +79,7 @@ object MassTransitStopOperations {
       (true, Some(FloatingReason.RoadOwnerChanged))
     }
     else {
-      logger("MassTransitStopOperations: isFloating #72, not floating")
+      logger.info("MassTransitStopOperations: isFloating #72, not floating")
       (false, None)
     }
   }

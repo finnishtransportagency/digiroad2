@@ -104,7 +104,6 @@ trait MassTransitStopService extends PointAssetOperations {
   type IncomingAsset = NewMassTransitStop
   type PersistedAsset = PersistedMassTransitStop
 
-  lazy val logger = LoggerFactory.getLogger(getClass)
   val massTransitStopDao: MassTransitStopDao
   val municipalityDao: MunicipalityDao
   val roadLinkService: RoadLinkService
