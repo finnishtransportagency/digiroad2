@@ -168,7 +168,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]) = {
     super.updateFloating(id, floating, floatingReason)
-    logger.info(s"Asset with id $id is being update to floating = $floating and floatingReason = ${floatingReason.getOrElse("None")}")
+    logger.info(s"Asset with id $id is being update to floating = $floating and floatingReason = $floatingReason")
 
     floatingReason match {
       case None =>
@@ -181,7 +181,8 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    logger.info(s"MassTransitStopService isFloating #183 roadLink is instanceof VVHRoadLink : ${roadLinkOption.getOrElse(None).isInstanceOf[VVHRoadlink]}")
+    logger.info(s"MassTransitStopService isFloating #183 roadLink : $roadLinkOption")
+    logger.info(s"MassTransitStopService isFloating #183 persisted : $persistedAsset")
     logger.info("MassTransitStopService: isFloating #183")
     val persistedMassTransitStop = persistedAsset.asInstanceOf[PersistedMassTransitStop]
 
@@ -198,10 +199,10 @@ trait MassTransitStopService extends PointAssetOperations {
     val strategy = getStrategy(persistedMassTransitStop)
     val (floating, floatingReason) = strategy.isFloating(persistedMassTransitStop, roadLinkOption)
     if(floating){
-      logger.info(s"MassTransitStopService: isFloating #183 is Floating")
+      logger.info(s"MassTransitStopService: isFloating #183 persisted: $persistedMassTransitStop")
       (floating, floatingReason)
     }else{
-      logger.info(s"MassTransitStopService: isFloating #183 calling super.isFloating")
+      logger.info(s"MassTransitStopService: isFloating #183 calling super.isFloating with persisted: $persistedAsset and roadLink: $roadLinkOption")
       super.isFloating(persistedAsset, roadLinkOption)
     }
   }
@@ -233,6 +234,8 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink): Long = {
+    logger.info(s"Creating massTransitStopService asset: : $asset")
+    logger.info(s"Creating massTransitStopService roadLink: $roadLink")
     val (persistedAsset, publishInfo, strategy) = withDynTransaction {
       val point = Point(asset.lon, asset.lat)
       val strategy = getStrategy(asset.properties.toSet, roadLink)
