@@ -10,18 +10,23 @@
 
     <script type="text/javascript">
 
-      var municipalityCheckbox = "input[id='deleteCheckbox']";
+      var deleteCheckbox = "input[id='deleteCheckbox']";
       var municipalities;
 
-      function onChangeEvent() {
-        $("btn.btn-primary.btn-lg").prop('disabled', boxChecked());
+      function isToDelete() {
+        if ($(deleteCheckbox).is(':checked')) {
+          $(".municipalities").show();
+          $('.btn.btn-primary.btn-lg').prop('disabled', true);
+        } else {
+          $(".municipalities").hide();
+          $('.btn.btn-primary.btn-lg').prop('disabled', false);
+        }
       }
 
-      function isMunicipality(){
-        if($(municipalityCheckbox).is(':checked')){
-          $(".municipalities").show();
-        }
-        else{  $(".municipalities").hide();}
+      function hasValue() {
+        var municipalitiesSelectedSize = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option').length;
+        var disableStatus = municipalitiesSelectedSize >= 1 ? false : true;
+        $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
       }
 
       function getMunicipalities() {
@@ -50,10 +55,6 @@
             text: municipality.name
           }));
         });
-      }
-
-      function boxChecked() {
-        return _.some([municipalityCheckbox], function(checkbox){return $(checkbox).is(':checked');});
       }
 
       jQuery(document).ready(function($) {
@@ -105,22 +106,22 @@
                 </select>
 
                 <div class="checkbox" id="csvImportPoistaCheckbox">
-                    <input type="checkbox" id ="deleteCheckbox" onchange="onChangeEvent(), isMunicipality()">
+                    <input type="checkbox" id ="deleteCheckbox" onchange="isToDelete()">
                     <label id="labelCsvImportPoistaCheckbox"><b>Poista aiemmin lisätyt</b></label>
 
                     <div class="form-group municipalities" disabled="disabled">
                         <div class="row">
-                            <div class="col-xs-5" >
+                            <div class="col-xs-5" ondblclick="hasValue()">
                                 <select id="municipalities_search" class="form-control" multiple="multiple">
                                 </select>
                             </div>
 
-                            <div class="col-xs-2" >
-                                <button type="button" id="municipalities_search_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" > > </button>
-                                <button type="button" id="municipalities_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary" > < </button>
+                            <div class="col-xs-2" onclick="hasValue()">
+                                <button type="button" id="municipalities_search_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary"> > </button>
+                                <button type="button" id="municipalities_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary"> < </button>
                             </div>
 
-                            <div class="col-xs-5">
+                            <div class="col-xs-5" ondblclick="hasValue()">
                                 <select name="municipalityNumbers" id="municipalities_search_to" class="form-control" multiple="multiple"></select>
                             </div>
                         </div>
@@ -146,6 +147,7 @@
   };
   $('#asset-selection').on('change', function () {
     $('.btn.btn-primary.btn-lg').prop('disabled', !$(this).val());
+    $(deleteCheckbox).prop('disabled', !$(this).val());
   }).trigger('change');
 </script>
 </body>
