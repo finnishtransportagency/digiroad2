@@ -376,7 +376,7 @@ object PointAssetOperations {
       lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
 
   def isFloating(municipalityCode: Int, lon: Double, lat: Double, mValue: Double, roadLink: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    logger.info(s"PointAssetOperations  isFloating #377 roadLink is instanceof VVHRoadLink : ${roadLink.get.isInstanceOf[VVHRoadlink]}")
+    logger.info(s"PointAssetOperations  isFloating #377 roadLink is instanceof VVHRoadLink : ${roadLink.getOrElse(None).isInstanceOf[VVHRoadlink]}")
     roadLink match {
       case None => return (true, Some(FloatingReason.NoRoadLinkFound))
       case Some(roadLink) =>

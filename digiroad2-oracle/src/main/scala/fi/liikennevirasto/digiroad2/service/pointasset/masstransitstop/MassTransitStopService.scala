@@ -181,7 +181,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    logger.info(s"MassTransitStopService isFloating #183 roadLink is instanceof VVHRoadLink : ${roadLinkOption.get.isInstanceOf[VVHRoadlink]}")
+    logger.info(s"MassTransitStopService isFloating #183 roadLink is instanceof VVHRoadLink : ${roadLinkOption.getOrElse(None).isInstanceOf[VVHRoadlink]}")
     logger.info("MassTransitStopService: isFloating #183")
     val persistedMassTransitStop = persistedAsset.asInstanceOf[PersistedMassTransitStop]
 

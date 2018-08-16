@@ -72,7 +72,7 @@ object MassTransitStopOperations {
   }
 
   def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    logger.info(s"MassTransitStopOperations  isFloating #72 roadLink is instanceof VVHRoadLink : ${roadLinkOption.get.isInstanceOf[VVHRoadlink]}")
+    logger.info(s"MassTransitStopOperations  isFloating #72 roadLink is instanceof VVHRoadLink : ${roadLinkOption.getOrElse(None).isInstanceOf[VVHRoadlink]}")
     val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
     if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass)){
       logger.info(s"MassTransitStopOperations: isFloating #72, administrativeClass: ${administrativeClass.value} roadLinkAdminClass: ${roadLinkAdminClass.get}")
@@ -86,7 +86,7 @@ object MassTransitStopOperations {
 
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
     logger.info("MassTransitStopOperations isFloating #86, checking directions")
-    logger.info(s"MassTransitStopOperations  isFloating #86 roadLink is instanceof VVHRoadLink : ${roadLinkOption.get.isInstanceOf[VVHRoadlink]}")
+    logger.info(s"MassTransitStopOperations  isFloating #86 roadLink is instanceof VVHRoadLink : ${roadLinkOption.getOrElse(None).isInstanceOf[VVHRoadlink]}")
     val simpleProperty = persistedAsset.propertyData.map{x => SimpleProperty(x.publicId , x.values)}
 
     if(persistedAsset.propertyData.exists(_.publicId == "vaikutussuunta") &&
@@ -148,7 +148,7 @@ object MassTransitStopOperations {
   }
 
   def isValidBusStopDirections(properties: Seq[SimpleProperty], roadLink: Option[RoadLinkLike]) = {
-    logger.info(s"MassTransitStopOperations isValidBusStopDirections #149 roadLink is instanceof VVHRoadLink : ${roadLink.get.isInstanceOf[VVHRoadlink]}")
+    logger.info(s"MassTransitStopOperations isValidBusStopDirections #149 roadLink is instanceof VVHRoadLink : ${roadLink.getOrElse(None).isInstanceOf[VVHRoadlink]}")
     val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).getOrElse(throw new IllegalStateException("Road link no longer available"))
     logger.info(s"MassTransitStopOperations isValidBusStopDirections #149 roadLinkDirection: ${roadLinkDirection.value}")
 
