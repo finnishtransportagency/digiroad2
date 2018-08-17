@@ -116,6 +116,7 @@
         {signValue: [88], image: 'images/traffic-signs/cyclists.png'},
         {signValue: [89], image: 'images/traffic-signs/intersectionWithEqualRoads.png'},
         {signValue: [90], image: 'images/traffic-signs/lightSignals.png'},
+        {signValue: [91], image: 'images/traffic-signs/tramwayLine.png'},
         {signValue: [92], image: 'images/traffic-signs/fallingRocks.png'},
         {signValue: [93], image: 'images/traffic-signs/crossWind.png'},
         {signValue: [94], image: 'images/traffic-signs/priorityRoad.png'},
