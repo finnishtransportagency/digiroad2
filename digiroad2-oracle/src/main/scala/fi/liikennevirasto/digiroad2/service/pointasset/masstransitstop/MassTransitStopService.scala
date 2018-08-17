@@ -167,6 +167,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]) = {
+    MassTransitStopOperations.logStackTrace()
     super.updateFloating(id, floating, floatingReason)
     logger.info(s"Asset with id $id is being update to floating = $floating and floatingReason = $floatingReason")
 
@@ -181,9 +182,8 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    logger.info(s"MassTransitStopService isFloating #183 roadLink : $roadLinkOption")
-    logger.info(s"MassTransitStopService isFloating #183 persisted : $persistedAsset")
-    logger.info("MassTransitStopService: isFloating #183")
+    MassTransitStopOperations.logStackTrace()
+    logger.info(s"MassTransitStopService isFloating #183 roadLink : $roadLinkOption persisted : $persistedAsset")
     val persistedMassTransitStop = persistedAsset.asInstanceOf[PersistedMassTransitStop]
 
     roadLinkOption match {
@@ -234,8 +234,8 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink): Long = {
-    logger.info(s"Creating massTransitStopService asset: : $asset")
-    logger.info(s"Creating massTransitStopService roadLink: $roadLink")
+    MassTransitStopOperations.logStackTrace()
+    logger.info(s"Creating massTransitStopService roadLink: $roadLink asset: : $asset")
     val (persistedAsset, publishInfo, strategy) = withDynTransaction {
       val point = Point(asset.lon, asset.lat)
       val strategy = getStrategy(asset.properties.toSet, roadLink)

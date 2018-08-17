@@ -143,9 +143,8 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   }
 
   override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    logger.info(s"BusStopStrategy  isFloating #144 roadLink : $roadLinkOption")
-    logger.info(s"BusStopStrategy  isFloating #144 rpersistedAssetoadLink : $persistedAsset")
-    logger.info(s"BusStopStrategy: isFLoating #144")
+    MassTransitStopOperations.logStackTrace()
+    logger.info(s"BusStopStrategy  isFloating #144 roadLink : $roadLinkOption  persistedAssetoadLink : $persistedAsset")
     roadLinkOption match {
       case Some(roadLink) =>
         logger.info("BusStopStrategy: isFLoating #144 will call MassTransitStopOperations.isFloating(persistedAsset, roadLinkOption)")

@@ -56,6 +56,14 @@ object MassTransitStopOperations {
   val terminalChildrenPublicId = "liitetyt_pysakit"
   lazy val logger = LoggerFactory.getLogger(getClass)
 
+  def logStackTrace(): Unit = {
+    try {
+      throw new Exception("Logging stack trace")
+    } catch {
+      case e:Exception => logger.error("Stack trace " , e.printStackTrace())
+    }
+  }
+
   /**
     * Check for administrative class change: road link has differing owner other than Unknown.
     *
@@ -72,6 +80,7 @@ object MassTransitStopOperations {
   }
 
   def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    logStackTrace()
     logger.info(s"MassTransitStopOperations  isFloating #72 roadLink: $roadLinkOption")
     logger.info(s"MassTransitStopOperations  isFloating #72 administrativeClass: $administrativeClass")
     val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
@@ -85,6 +94,7 @@ object MassTransitStopOperations {
   }
 
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    logStackTrace()
     logger.info(s"MassTransitStopOperations isFloating #86 persistedAsset: $persistedAsset")
     logger.info(s"MassTransitStopOperations  isFloating #86 roadLink: $roadLinkOption")
     val simpleProperty = persistedAsset.propertyData.map{x => SimpleProperty(x.publicId , x.values)}
@@ -102,6 +112,7 @@ object MassTransitStopOperations {
 
 
   def floatingReason(administrativeClass: AdministrativeClass, roadLink: RoadLinkLike): Option[String] = {
+    logStackTrace()
     if (administrativeClassMismatch(administrativeClass, Some(roadLink.administrativeClass)))
       Some("Road link administrative class has changed from %d to %d".format(roadLink.administrativeClass.value, administrativeClass.value))
     else
@@ -149,6 +160,7 @@ object MassTransitStopOperations {
   }
 
   def isValidBusStopDirections(properties: Seq[SimpleProperty], roadLink: Option[RoadLinkLike]) = {
+    logStackTrace()
     logger.info(s"MassTransitStopOperations isValidBusStopDirections #149 roadLink: $roadLink")
     logger.info(s"MassTransitStopOperations isValidBusStopDirections #149 property vaikutussuunta: ${properties.find(prop => prop.publicId == "vaikutussuunta")}")
 
