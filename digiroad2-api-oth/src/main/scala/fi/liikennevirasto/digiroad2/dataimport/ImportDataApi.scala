@@ -16,13 +16,15 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
   private val ROAD_LINK_LOG = "road link import"
   private val TRAFFIC_SIGN_LOG = "traffic sign import"
+  private val DELETE_TRAFFIC_SIGN_LOG = "traffic sign delete"
   private val MAINTENANCE_ROAD_LOG = "maintenance import"
   private val roadLinkCsvImporter = new RoadLinkCsvImporter
   private val trafficSignCsvImporter = new TrafficSignCsvImporter
   private val maintenanceRoadCsvImporter = new MaintenanceRoadCsvImporter
 
-  private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream): CsvDataImporterOperations = {
+  private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream, municipalities: Option[Seq[Int]]): CsvDataImporterOperations = {
     assetType match {
+      case "trafficsigns" if(!municipalities.isEmpty)=> deleteTrafficSigns(csvFileInputStream, municipalities)
       case "trafficsigns" => importTrafficSigns(csvFileInputStream)
       case "maintenanceRoads" => importMaintenanceRoads(csvFileInputStream)
       case _ => importRoadLinks(csvFileInputStream)
@@ -58,6 +60,27 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
       csvFileInputStream.close()
     }
     redirect(url("/log/" + id + "/" + TRAFFIC_SIGN_LOG))
+  }
+
+  def deleteTrafficSigns(csvFileInputStream: InputStream, municipalities: Option[Seq[Int]]): Nothing = {
+    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", DELETE_TRAFFIC_SIGN_LOG)
+    try {
+      val result = trafficSignCsvImporter.deleteTrafficSigns(csvFileInputStream)
+      val response = result match {
+        case trafficSignCsvImporter.DeleteResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
+        case trafficSignCsvImporter.DeleteResult(Nil, excludedLinks, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
+        case _ => pretty(Extraction.decompose(result))
+      }
+      ImportLogService.save(id, response, DELETE_TRAFFIC_SIGN_LOG)
+    } catch {
+      case e: Exception => {
+        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), DELETE_TRAFFIC_SIGN_LOG) //error when saving log
+        throw e
+      }
+    } finally {
+      csvFileInputStream.close()
+    }
+    redirect(url("/log/" + id + "/" + DELETE_TRAFFIC_SIGN_LOG))
   }
 
   def importRoadLinks(csvFileInputStream: InputStream): Nothing = {
@@ -112,6 +135,34 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     }
     val csvFileInputStream = fileParams("csv-file").getInputStream
     val assetType = params.getOrElse("asset-type", halt(BadRequest("Import not supported for selected asset type")))
-    verifyServiceToUse(assetType, csvFileInputStream)
+    val municipalities = request.getParameterValues("municipalityNumbers")== null match {
+      case false =>
+        val municipalitiesSeq = splitToInts(request.getParameterValues("municipalityNumbers").mkString(","))
+        validateUserMunicipality(municipalitiesSeq)
+        municipalitiesSeq
+      case true => None
+    }
+    verifyServiceToUse(assetType, csvFileInputStream, municipalities)
+  }
+
+  def validateUserMunicipality(municipalities: Option[Seq[Int]]) = {
+    val userAuthorizedMunicipalities = userProvider.getCurrentUser().configuration.authorizedMunicipalities
+    municipalities match {
+      case Some(values) =>
+        values.foreach { v =>
+          if (!userAuthorizedMunicipalities.contains(v)) {
+            halt(Unauthorized("User Not Authorized to do modification at one of the selected municipalities!"))
+          }
+        }
+      case _ => None
+    }
+  }
+
+  def splitToInts(numbers: String) : Option[Seq[Int]] = {
+    val split = numbers.split(",").filterNot(_.trim.isEmpty)
+    split match {
+      case Array() => None
+      case _ => Some(split.map(_.trim.toInt).toSeq)
+    }
   }
 }
