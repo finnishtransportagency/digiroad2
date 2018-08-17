@@ -58,23 +58,31 @@
       }
 
       function saveFormData() {
-        new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
-          successCallback: function () {
-            $.ajax({
-              type: "POST",
-              url: "api/import/data/csv",
-              data: $(".form-horizontal").serialize(),
-              success: function () {
-              },
-              error: function (errorValue) {
-                if (errorValue.status === 400) {
-                  alert('CSV-tiedoston lähetys epäonnistui. Yritä hetken kuluttua uudestaan.');
-                }
-              }
-            });
+        if ($(deleteCheckbox).is(':checked')) {
+          new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
+            successCallback: function () {
+              ajaxRequestPost();
+            }
+          });
+        } else {
+          ajaxRequestPost();
+        }
+        return false;
+      }
+
+      function ajaxRequestPost() {
+        $.ajax({
+          type: "POST",
+          url: "api/import/data/csv",
+          data: $(".form-horizontal").serialize(),
+          success: function () {
+          },
+          error: function (errorValue) {
+            if (errorValue.status === 400) {
+              alert('CSV-tiedoston lähetys epäonnistui. Yritä hetken kuluttua uudestaan.');
+            }
           }
         });
-        return false;
       }
 
       jQuery(document).ready(function($) {
