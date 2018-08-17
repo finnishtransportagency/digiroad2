@@ -464,7 +464,7 @@
           .concat(getLinearAsset(assetType.pavedRoad))
           .concat(getLinearAsset(assetType.roadWidth))
           .concat(getLinearAsset(assetType.numberOfLanes))
-          .concat(getLinearAsset(assetType.massTransitLanes))
+          .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers)),
       [speedLimitBox]
@@ -479,7 +479,7 @@
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
           .concat([carryingCapacityBox])
-          .concat(getLinearAsset(assetType.damagedByThaw))
+          .concat(getLinearAsset(assetType.roadDamagedByThaw))
           .concat([careClassBox]),
       [manoeuvreBox]
         .concat(getLinearAsset(assetType.prohibition))
