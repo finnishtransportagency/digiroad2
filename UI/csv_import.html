@@ -57,32 +57,22 @@
         });
       }
 
-      function saveFormData() {
+      function confSubmit(form) {
         if ($(deleteCheckbox).is(':checked')) {
           new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
             successCallback: function () {
-              ajaxRequestPost();
+              form.submit();
+              return true;
+            },
+            closeCallback: function () {
+              return false;
             }
           });
         } else {
-          ajaxRequestPost();
+          form.submit();
+          return true;
         }
         return false;
-      }
-
-      function ajaxRequestPost() {
-        $.ajax({
-          type: "POST",
-          url: "api/import/data/csv",
-          data: $(".form-horizontal").serialize(),
-          success: function () {
-          },
-          error: function (errorValue) {
-            if (errorValue.status === 400) {
-              alert('CSV-tiedoston lähetys epäonnistui. Yritä hetken kuluttua uudestaan.');
-            }
-          }
-        });
       }
 
       jQuery(document).ready(function($) {
@@ -119,7 +109,7 @@
     <div class="container"></div>
     <div class="content-box form-box">
         <header>Päivitä tietolajit CSV-tiedostosta</header>
-        <form class="form form-horizontal" id="csvImport" role="form" onsubmit="return saveFormData()"
+        <form class="form form-horizontal" id="csvImport" role="form" method="post" action="api/import/data/csv"
               enctype="multipart/form-data">
             <div class="form-group">
                 <div class="file-upload">
@@ -160,7 +150,7 @@
             </div>
 
             <div class="form-group form-controls">
-                <button type="submit" class="btn btn-primary btn-lg">Lataa tiedot</button>
+                <button onclick="return confSubmit(this.form);" class="btn btn-primary btn-lg">Lataa tiedot</button>
             </div>
         </form>
     </div>
