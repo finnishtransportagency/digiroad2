@@ -24,8 +24,7 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
 
   private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream, municipalities: Option[Seq[Int]]): CsvDataImporterOperations = {
     assetType match {
-      case "trafficsigns" if(!municipalities.isEmpty)=> deleteTrafficSigns(csvFileInputStream, municipalities)
-      case "trafficsigns" => importTrafficSigns(csvFileInputStream)
+      case "trafficsigns" => importTrafficSigns(csvFileInputStream, municipalities)
       case "maintenanceRoads" => importMaintenanceRoads(csvFileInputStream)
       case _ => importRoadLinks(csvFileInputStream)
     }
@@ -41,10 +40,10 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
-  def importTrafficSigns(csvFileInputStream: InputStream): Nothing = {
+  def importTrafficSigns(csvFileInputStream: InputStream, municipalities: Option[Seq[Int]]): Nothing = {
     val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", TRAFFIC_SIGN_LOG)
     try {
-      val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream)
+      val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream, municipalities)
       val response = result match {
         case trafficSignCsvImporter.ImportResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
         case trafficSignCsvImporter.ImportResult(Nil, excludedLinks, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
@@ -60,27 +59,6 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
       csvFileInputStream.close()
     }
     redirect(url("/log/" + id + "/" + TRAFFIC_SIGN_LOG))
-  }
-
-  def deleteTrafficSigns(csvFileInputStream: InputStream, municipalities: Option[Seq[Int]]): Nothing = {
-    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", DELETE_TRAFFIC_SIGN_LOG)
-    try {
-      val result = trafficSignCsvImporter.deleteTrafficSigns(csvFileInputStream)
-      val response = result match {
-        case trafficSignCsvImporter.DeleteResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
-        case trafficSignCsvImporter.DeleteResult(Nil, excludedLinks, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
-        case _ => pretty(Extraction.decompose(result))
-      }
-      ImportLogService.save(id, response, DELETE_TRAFFIC_SIGN_LOG)
-    } catch {
-      case e: Exception => {
-        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), DELETE_TRAFFIC_SIGN_LOG) //error when saving log
-        throw e
-      }
-    } finally {
-      csvFileInputStream.close()
-    }
-    redirect(url("/log/" + id + "/" + DELETE_TRAFFIC_SIGN_LOG))
   }
 
   def importRoadLinks(csvFileInputStream: InputStream): Nothing = {
