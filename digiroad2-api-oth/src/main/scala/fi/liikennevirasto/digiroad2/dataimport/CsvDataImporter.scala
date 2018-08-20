@@ -11,8 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.Digiroad2Context
-import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, MaintenanceService}
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
@@ -168,8 +167,13 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided), TrafficDirection.apply(trafficDirection), bearing, additionalInfo)
   }
 
+  def deleteTrafficSignsByMunicipality(municipality: Int) = {
+    trafficSignService.getByMunicipality(municipality).foreach { ts =>
+      trafficSignService.expire(ts.id, userProvider.getCurrentUser().username)
+    }
+  }
 
-  def importTrafficSigns(inputStream: InputStream): ImportResult = {
+  def importTrafficSigns(inputStream: InputStream, municipalities: Option[Seq[Int]]): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -191,11 +195,18 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
           })
 
       } else {
-          val parsedRow = CsvAssetRow(properties = properties)
-          createTrafficSigns(parsedRow)
-          result
-      }
+        municipalities match {
+          case Some(values) =>
+            values.foreach{ municipality =>
+              deleteTrafficSignsByMunicipality(municipality)
+            }
+          case _ => None
+        }
 
+        val parsedRow = CsvAssetRow(properties = properties)
+        createTrafficSigns(parsedRow)
+        result
+      }
     }
   }
 }
