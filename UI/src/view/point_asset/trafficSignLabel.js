@@ -72,10 +72,10 @@
         {signValue: [43], image: 'images/traffic-signs/childrenSign.png'},
         {signValue: [45], image: 'images/traffic-signs/freeWidthSign.png', validation: validateAdditionalInfo, maxLabelLength: 11, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, offsetY: -38 - (counter * 35)},
         {signValue: [46], image: 'images/traffic-signs/freeHeight.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -50 - (counter * 35)},
-        {signValue: [47], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
-        {signValue: [48], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
-        {signValue: [49], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
-        {signValue: [50], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
+        {signValue: [47], image: 'images/traffic-signs/hazmatProhibitionA.png'},
+        {signValue: [48], image: 'images/traffic-signs/hazmatProhibitionB.png'},
+        {signValue: [49], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: showPartialAdditionalInfo(), offsetX: 1, offsetY: -35 - (counter * 35)},
+        {signValue: [50], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: showPartialAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
         {signValue: [51], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
         {signValue: [52], image: 'images/traffic-signs/passengerCar.png'},
         {signValue: [53], image: 'images/traffic-signs/bus.png'},
@@ -102,9 +102,9 @@
         {signValue: [74], image: 'images/traffic-signs/directionToBeFollowed3.png'},
         {signValue: [75], image: 'images/traffic-signs/directionToBeFollowed3.png'},
         {signValue: [76], image: 'images/traffic-signs/directionToBeFollowed3.png'},
-        {signValue: [77], image: 'images/traffic-signs/directionToBeFollowed3.png'},
-        {signValue: [78], image: 'images/traffic-signs/directionToBeFollowed3.png'},
-        {signValue: [79], image: 'images/traffic-signs/directionToBeFollowed3.png'},
+        {signValue: [77], image: 'images/traffic-signs/compulsoryRoundabout.png'},
+        {signValue: [78], image: 'images/traffic-signs/passThisSide.png'},
+        {signValue: [79], image: 'images/traffic-signs/dividerOfTraffic.png'},
         {signValue: [80], image: 'images/traffic-signs/taxiStationZoneBeginning.png'},
         {signValue: [81], image: 'images/traffic-signs/taxiStationZoneBeginning.png'},
         {signValue: [82], image: 'images/traffic-signs/roadNarrows.png'},
@@ -226,6 +226,10 @@
 
     var isToShowAdditionalInfo = function () {
       return _.isEmpty(this.value) ? this.additionalInfo : '';
+    };
+
+    var showPartialAdditionalInfo = function () {
+      return _.isEmpty(this.value) ? _.first(this.additionalInfo ? this.additionalInfo.split(' ') : '') : '';
     };
 
     var validateSpeedLimitValues = function () {

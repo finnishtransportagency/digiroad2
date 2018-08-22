@@ -95,7 +95,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval,  76 , 'Pakollinen ajosuunta', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  77 , 'Pakollinen kiertosuunta', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  77 , 'Pakollinen ajosuunta, kiertoliittymä', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval,  78 , 'Liikenteenjakaja', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
