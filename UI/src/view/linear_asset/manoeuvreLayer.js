@@ -140,7 +140,8 @@
         },
         onSelect: selectManoeuvre,
         draggable : false,
-        enableSelect : enableSelect
+        enableSelect : enableSelect,
+        layerName : layerName
     });
 
     this.selectControl = selectControl;
