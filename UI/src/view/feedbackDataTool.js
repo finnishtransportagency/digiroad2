@@ -81,11 +81,6 @@
     });
 
     var bindEvents = function (selectedData) {
-      $('.feedback-modal .cancel').on('click', function() {
-        $('.feedback-modal :input').val('');
-        setDropdownValue( me.layerName,  $('.feedback-modal'));
-      });
-
       $('.feedback-modal .save').on('click', function() {
         applicationModel.setApplicationkState('normal');
         var formElements = $(this).closest('.modal-dialog').find('.form-horizontal');
@@ -107,7 +102,7 @@
         $(this).valid();
       });
 
-      $(' .feedback-modal .sulje').on('click', function() {
+      $(' .feedback-modal .sulje, .feedback-modal .cancel').on('click', function() {
         applicationModel.setApplicationkState('normal');
         purge();
       });
@@ -199,7 +194,7 @@
     var createFeedbackForm = function(selectedAsset, layer) {
       var  dialog =  $('<div class="feedback-modal" id="feedbackData">' +
         '<div class="modal-dialog">' +
-        '<div class="content">' + me.message() + '<a class="header-link sulje"">X</a>' + '</div>' +
+        '<div class="content">' + me.message() + '<a class="header-link sulje">Sulje</a></div>' +
         '<form class="form form-horizontal" role="form">' +
         '<div class="form-group" id="feedbackForm">' +
         me.formContent(selectedAsset) +

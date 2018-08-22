@@ -17,10 +17,6 @@
                addSpinner();
                collection.sendFeedbackApplication( $(".form-horizontal").serializeArray());
                },
-           cancelCallback: function(){
-               $(':input').val('');
-               setSaveButtonState();
-           },
            closeCallback: function() { purge(); }
        };
 
@@ -49,7 +45,7 @@
        var bindEvents = function() {
 
            $('.confirm-modal .cancel').on('click', function() {
-               options.cancelCallback();
+             options.closeCallback();
            });
            $('.confirm-modal .save').on('click', function() {
                options.saveCallback();
