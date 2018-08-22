@@ -3,13 +3,13 @@ package fi.liikennevirasto.digiroad2.util
 import java.io.File
 
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHRoadNodes}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinnyRoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
 
 /**
   * Created by venholat on 2.6.2016.
   */
 trait VVHSerializer {
-  def readCachedTinnyRoadLinks(file: File): Seq[TinnyRoadLink]
+  def readCachedTinyRoadLinks(file: File): Seq[TinyRoadLink]
 
   def readCachedGeometry(file: File): Seq[RoadLink]
 

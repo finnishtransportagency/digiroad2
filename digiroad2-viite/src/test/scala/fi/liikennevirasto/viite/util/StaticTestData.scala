@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.util
 import java.io.{File, FileReader}
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, TinnyRoadLink, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, TinyRoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh._
@@ -287,9 +287,9 @@ class RoadLinkDeserializer extends VVHSerializer {
     read[Seq[VVHHistoryRoadLink]](json)
   }
 
-  override def readCachedTinnyRoadLinks(file: File): Seq[TinnyRoadLink] = {
+  override def readCachedTinyRoadLinks(file: File): Seq[TinyRoadLink] = {
     val json = new FileReader(file)
-    read[Seq[TinnyRoadLink]](json)
+    read[Seq[TinyRoadLink]](json)
   }
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {

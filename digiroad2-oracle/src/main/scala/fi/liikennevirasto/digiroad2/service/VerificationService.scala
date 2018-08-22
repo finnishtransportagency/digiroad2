@@ -100,12 +100,12 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def getAssetLatestModifications(municipalities: Set[Int]): List[LatestModificationInfo] = {
-    val tinnyRoadLink = municipalities.flatMap { municipality =>
-      roadLinkService.getTinnyRoadLinkFromVVH(municipality)
+    val tinyRoadLink = municipalities.flatMap { municipality =>
+      roadLinkService.getTinyRoadLinkFromVVH(municipality)
     }
 
     withDynTransaction {
-      dao.getModifiedAssetTypes(tinnyRoadLink.map(_.linkId))
+      dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
     }
   }
 }

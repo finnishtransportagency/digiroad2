@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.dao.{Queries, VerificationDao}
-import fi.liikennevirasto.digiroad2.linearasset.TinnyRoadLink
+import fi.liikennevirasto.digiroad2.linearasset.TinyRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.mock.MockitoSugar
@@ -151,8 +151,8 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   test("get assets Latests Modifications with one municipality") {
     runWithRollback {
 
-      val tinnyRoadLinkMunicipality235 = Seq( TinnyRoadLink(1000),  TinnyRoadLink(3000), TinnyRoadLink(5000))
-      when(mockRoadLinkService.getTinnyRoadLinkFromVVH(235)).thenReturn(tinnyRoadLinkMunicipality235)
+      val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
+      when(mockRoadLinkService.getTinyRoadLinkFromVVH(235)).thenReturn(tinyRoadLinkMunicipality235)
 
       val latestModificationInfoMunicipality = ServiceWithDao.getAssetLatestModifications(Set(235))
       latestModificationInfoMunicipality should have size 3
@@ -163,11 +163,11 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get assets Latests Modifications for Ely user with two municipalities"){
     runWithRollback {
-      val tinnyRoadLinkMunicipality100 = Seq( TinnyRoadLink(2000), TinnyRoadLink(4000), TinnyRoadLink(6000))
-      val tinnyRoadLinkMunicipality235 = Seq( TinnyRoadLink(1000),  TinnyRoadLink(3000), TinnyRoadLink(5000))
+      val tinyRoadLinkMunicipality100 = Seq( TinyRoadLink(2000), TinyRoadLink(4000), TinyRoadLink(6000))
+      val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
 
-      when(mockRoadLinkService.getTinnyRoadLinkFromVVH(235)).thenReturn(tinnyRoadLinkMunicipality235)
-      when(mockRoadLinkService.getTinnyRoadLinkFromVVH(100)).thenReturn(tinnyRoadLinkMunicipality100)
+      when(mockRoadLinkService.getTinyRoadLinkFromVVH(235)).thenReturn(tinyRoadLinkMunicipality235)
+      when(mockRoadLinkService.getTinyRoadLinkFromVVH(100)).thenReturn(tinyRoadLinkMunicipality100)
 
       val latestModificationInfo = ServiceWithDao.getAssetLatestModifications(Set(100, 235))
       latestModificationInfo should have size 4
