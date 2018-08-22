@@ -139,20 +139,12 @@ class VerificationServiceSpec extends FunSuite with Matchers {
            values ($id+2, 235, 30, (sysdate - interval '2' year), 'testuser')""".execute
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
            values ($id+3, 235, 190, sysdate, 'testuser')""".execute
-      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
-           values ($id+4, 235, 380, (sysdate - interval '20' month), 'testuser')""".execute
 
       val verificationInfo = ServiceWithDao.getCriticalAssetTypesByMunicipality(235)
       verificationInfo should have size 5
+      verificationInfo.filter(info => Set(10,20,30,190,380).contains(info.assetTypeCode)) should have size 5
       verificationInfo.filter(_.municipalityCode == 235) should have size 5
-      verificationInfo.filter(_.verifiedBy.isDefined) should have size 5
-      verificationInfo.find(_.assetTypeCode == 10).map(_.verified).head should be (true)
-      verificationInfo.find(_.assetTypeCode == 20).map(_.verified).head should be (true)
-      verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (false)
-      verificationInfo.find(_.assetTypeCode == 190).map(_.verified).head should be (true)
-      verificationInfo.find(_.assetTypeCode == 380).map(_.verified).head should be (true)
-      verificationInfo.filter(info => Set(10,20,30,190,380).contains(info.assetTypeCode)).map(_.verifiedBy) should have size 5
-      verificationInfo.filter(info => Set(10,20,30,190,380).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
+      verificationInfo.filter(_.verifiedBy.contains("testuser")) should have size 4
     }
   }
 
