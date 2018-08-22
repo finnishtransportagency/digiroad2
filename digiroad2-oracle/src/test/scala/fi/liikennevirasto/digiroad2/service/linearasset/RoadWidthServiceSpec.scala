@@ -378,7 +378,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   test("actor should update roadWidth measures even if MTKClass is not valid "){
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
+    class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
@@ -386,6 +386,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
         super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
     }
+    val service = new TestRoadWidthService
 
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(2))
     val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
@@ -402,7 +403,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
+      verify(service.eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
 
       newAsset should have size 1
       captor.getValue.expiredAssetIds  should have size 0
@@ -415,14 +416,15 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   test("actor should not update roadWidth measures if MTKClass is valid ") {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
+    class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
 
-      def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] =
+      def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
         super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
     }
+    val service = new TestRoadWidthService
 
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(12112))
     val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
@@ -439,7 +441,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
+      verify(service.eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
 
       newAsset should have size 1
       captor.getValue.expiredAssetIds should have size 1
