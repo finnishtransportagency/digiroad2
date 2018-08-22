@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -200,10 +200,11 @@ trait LinearAssetOperations {
         case (id, linkId) =>  roads.filter(_.linkId == linkId).map { road =>
             (road.municipalityCode, id, road.administrativeClass)
           }
-      }
+    }
+      val municipalityNames = municipalityDao.getMunicipalitiesNameAndIdByCode(unVerified.map(_._1).toSet).groupBy(_.id)
 
       unVerified.groupBy(_._1).map{
-        case (municipalityCode, grouped) => (municipalityDao.getMunicipalityNameByCode(municipalityCode), grouped)}
+        case (municipalityCode, grouped) => (municipalityNames.get(municipalityCode).get.map(_.name).head, grouped)}
         .mapValues(municipalityAssets => municipalityAssets
           .groupBy(_._3.toString)
           .mapValues(_.map(_._2)))
@@ -239,6 +240,7 @@ trait LinearAssetOperations {
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                adjustedMValues = Seq.empty[MValueAdjustment],
+                               adjustedVVHChanges =  Seq.empty[VVHChangesAdjustment],
                                adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
@@ -256,17 +258,6 @@ trait LinearAssetOperations {
     eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filter(_.id == 0L))
 
     filledTopology
-  }
-
-  def withRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] ={
-    val addressData = roadLinkService.getRoadAddressesByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)).toSet).map(a => (a.linkId, a)).toMap
-    pieceWiseLinearAssets.map(
-        _.map(pwa =>
-          if (addressData.contains(pwa.linkId))
-            pwa.copy(attributes = pwa.attributes ++ addressData(pwa.linkId).asAttributes)
-          else
-            pwa
-    ))
   }
 
   /**
@@ -696,6 +687,13 @@ trait LinearAssetOperations {
 
       changeSet.adjustedMValues.foreach { adjustment =>
         dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+      }
+
+      if (changeSet.adjustedVVHChanges.nonEmpty)
+        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+
+      changeSet.adjustedVVHChanges.foreach { adjustment =>
+        dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
       }
 
       changeSet.adjustedSideCodes.foreach { adjustment =>

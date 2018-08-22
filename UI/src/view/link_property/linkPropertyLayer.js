@@ -217,7 +217,8 @@
           return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});
       },
       onInteractionEnd: onInteractionEnd,
-      onSelect: selectRoadLink
+      onSelect: selectRoadLink,
+      layerName : layerName
     });
 
     this.activateSelection = function() {
@@ -296,7 +297,7 @@
       var dashedFunctionalClasses = [2, 4, 6, 8];
       var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedFunctionalClasses, roadLink.functionalClass) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);
+        return _.includes(dashedFunctionalClasses, roadLink.functionalClass) && !_.includes(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
       return createDashedLineFeatures(dashedRoadLinks, 'functionalClass');
     };
@@ -305,7 +306,7 @@
       var dashedLinkTypes = [2, 4, 6, 8, 12, 15, 21];
       var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedLinkTypes, roadLink.linkType) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);
+        return _.includes(dashedLinkTypes, roadLink.linkType) && !_.includes(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
       return createDashedLineFeatures(dashedRoadLinks, 'linkType');
     };

@@ -8,9 +8,9 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -27,7 +27,7 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
     val credentials = username + ":" + password
     val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials + "="
+    val authorizationToken = "Basic " + encodedCredentials
     get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
   }
 

@@ -137,6 +137,7 @@ class VerificationDao {
            and mv.asset_type_id = $assetTypeCode
            and valid_to is null
       """.execute
+    assetTypeCode
   }
 
   def getVerifiableAssetTypes: Seq[Int] = {

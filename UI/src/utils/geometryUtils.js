@@ -45,6 +45,7 @@
   root.calculateMeasureAtPoint = function (lineString, point) {
     var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));
+
     var split = _.reduce(lineString.getCoordinates(), function (acc, vertex, index) {
       var convertedVertex = { x: vertex[0] , y: vertex[1] };
       if (acc.firstSplit) {
@@ -127,7 +128,7 @@
   root.calculateMidpointOfLineString = function (lineString) {
     var length = lineString.getLength();
     var vertices = lineString.getCoordinates();
-    var firstVertex = _.first(vertices);
+    var firstVertex = _.head(vertices);
     var optionalMidpoint = _.reduce(_.tail(vertices), function (acc, vertex) {
       if (acc.midpoint) return acc;
       var distance = distanceOfPoints(vertex, acc.previousVertex);

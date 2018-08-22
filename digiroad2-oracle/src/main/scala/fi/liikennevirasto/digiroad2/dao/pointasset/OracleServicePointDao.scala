@@ -73,14 +73,20 @@ object OracleServicePointDao {
         ($id, $assetId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount})
       """.execute
     }
+    assetId
   }
 
   def expire(id: Long, username: String) = {
-    Queries.expireAsset(id, username)
+    Queries.updateAssetModified(id, username).first
+    sqlu"update asset set valid_to = sysdate where id = $id".first
   }
 
   def get: Set[ServicePoint] = {
     getWithFilter("")
+  }
+
+  def getById(id: Long): Set[ServicePoint] = {
+    getWithFilter(s"a.id = $id")
   }
 
   def getByMunicipality(municipalityNumber: Int): Set[ServicePoint] = {

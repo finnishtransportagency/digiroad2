@@ -1,9 +1,9 @@
 (function (root) {
-root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
+root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition);
+  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection);
 
   function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
@@ -13,7 +13,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var layerName = pointAsset.layerName;
     var localizedTexts = pointAsset.formLabels;
     var authorizationPolicy = pointAsset.authorizationPolicy;
-
+    new FeedbackDataTool(feedbackCollection, layerName, authorizationPolicy);
 
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
       if(event.assetType == typeId)
@@ -298,7 +298,8 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var propertyOrdering = [
       'trafficSigns_type',
       'trafficSigns_value',
-      'trafficSigns_info'];
+      'trafficSigns_info',
+      'counter'];
 
     return _.sortBy(properties, function(property) {
       return _.indexOf(propertyOrdering, property.publicId);
@@ -318,8 +319,8 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
   };
 
   var singleChoiceHandler = function (property, collection) {
-    var propertyValue = (property.values.length === 0) ? '' : _.first(property.values).propertyValue;
-    var propertyDisplayValue = (property.values.length === 0) ? '' : _.first(property.values).propertyDisplayValue;
+    var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+    var propertyDisplayValue = (property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
     var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
 
     var groups =  collection.getGroup(signTypes);
@@ -345,6 +346,18 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       '      </select>' +
       '    </div>';
   };
+
+  var readOnlyHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
+
+    return '' +
+      '    <div class="form-group editable form-traffic-sign">' +
+      '        <label class="control-label">' + displayValue + '</label>' +
+      '        <p class="form-control-static">' + propertyValue + '</p>' +
+      '    </div>';
+  };
+
 
   function renderValueElement(asset, collection) {
     if (asset.obstacleType) {
@@ -404,7 +417,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
           '  </div>': '');
     } else if (asset.services) {
       var services = _(asset.services)
-        .sortByAll('serviceType', 'id')
+        .sortBy('serviceType', 'id')
         .map(renderService)
         .join('');
 
@@ -428,6 +441,9 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
 
         if (propertyType === "single_choice")
           return singleChoiceHandler(feature, collection);
+
+        if (propertyType === "read_only_number")
+          return readOnlyHandler(feature);
 
       }), function(prev, curr) { return prev + curr; }, '');
 

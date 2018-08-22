@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import org.joda.time.DateTime
 
@@ -502,6 +502,7 @@ object NumericalLimitFiller {
       case None => ChangeSet( droppedAssetIds = Set.empty[Long],
                               expiredAssetIds = Set.empty[Long],
                               adjustedMValues = Seq.empty[MValueAdjustment],
+                              adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                               adjustedSideCodes = Seq.empty[SideCodeAdjustment])
     }
 
@@ -556,7 +557,7 @@ object NumericalLimitFiller {
 
     val changeSet = assetId match {
       case 0 => changedSet
-      case _ => changedSet.copy(adjustedMValues =  changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode))))
+      case _ => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode))))
     }
 
     (PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,

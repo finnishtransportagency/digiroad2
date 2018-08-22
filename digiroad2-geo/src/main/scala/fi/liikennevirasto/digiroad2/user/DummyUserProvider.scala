@@ -18,5 +18,4 @@ class DummyUserProvider extends UserProvider {
   }
   def saveUser(user: User): User = user
   def updateUserConfiguration(user: User): User = user
-
 }

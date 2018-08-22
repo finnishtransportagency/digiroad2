@@ -7,12 +7,11 @@
     <script type="text/javascript" src="../../node_modules/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="../../node_modules/jquery-migrate/dist/jquery-migrate.min.js"></script>
     <script type="text/javascript" src="../../node_modules/moment/min/moment.min.js"></script>
-    <script type="text/javascript" src="../../node_modules/lodash/index.js"></script>
+    <script type="text/javascript" src="../../node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="../../node_modules/lodash/lodash.js"></script>
     <script type="text/javascript" src="../../node_modules/backbone/backbone.js"></script>
     <script type="text/javascript" src="../../node_modules/pikaday/pikaday.js"></script>
     <script type="text/javascript" src="../../node_modules/proj4/dist/proj4.js"></script>
-    <script type="text/javascript" src="../../node_modules/baconjs/dist/Bacon.js"></script>
-    <script type="text/javascript" src="../../node_modules/bacon.jquery/dist/bacon.jquery.js"></script>
     <script type="text/javascript" src="../components/ol3.js"></script>
     <script type="text/javascript" src="../src/utils/eventbus.js"></script>
     <script type="text/javascript" src="../src/utils/geometry-calculations.js"></script>
@@ -41,6 +40,7 @@
     <div id="feature-attributes"></div>
 </div>
 <div id="mocha"></div>
+<script type="text/javascript" src="../src/applicationState.js"></script>
 <script type="text/javascript" src="../src/utils/roadAddressInfoPopup.js"></script>
 <script type="text/javascript" src="../src/view/tileMapCollection.js"></script>
 <script type="text/javascript" src="../src/view/providers/layer.js"></script>
@@ -76,6 +76,7 @@
 <script type="text/javascript" src="../src/view/linear_asset/winterSpeedLimitStyle.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/trSpeedLimitStyle.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/serviceRoadStyle.js"></script>
+<script type="text/javascript" src="../src/view/linear_asset/carryingCapacityStyle.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/speedLimitMassUpdateDialog.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/manoeuvreStyle.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/manoeuvreLayer.js"></script>
@@ -87,7 +88,9 @@
 <script type="text/javascript" src="../src/view/point_asset/widthLimitLabel.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/linearAssetLayer.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/serviceRoadLayer.js"></script>
+<script type="text/javascript" src="../src/view/linear_asset/carryingCapacityLayer.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/groupedLinearAssetLayer.js"></script>
+<script type="text/javascript" src="../src/view/linear_asset/careClassLayer.js"></script>
 <script type="text/javascript" src="../src/view/point_asset/pointAssetLayer.js"></script>
 <script type="text/javascript" src="../src/view/point_asset/groupedPointAssetLayer.js"></script>
 <script type="text/javascript" src="../src/view/filterCollection.js"></script>
@@ -96,6 +99,7 @@
 <script type="text/javascript" src="../src/view/link_property/linkPropertyLayerStyles.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/speedLimitStyle.js"></script>
 <script type="text/javascript" src="../src/view/linear_asset/piecewiseLinearAssetStyle.js"></script>
+<script type="text/javascript" src="../src/view/linear_asset/careClassStyle.js"></script>
 <script type="text/javascript" src="../src/view/point_asset/pointAssetStyle.js"></script>
 <script type="text/javascript" src="../src/view/link_property/linkPropertyMassUpdateDialog.js"></script>
 <script type="text/javascript" src="../src/view/point_asset/trafficSignReadOnlyLayer.js"></script>
@@ -118,10 +122,13 @@
 <script type="text/javascript" src="../src/view/navigationpanel/heightLimitationBox.js"></script>
 <script type="text/javascript" src="../src/view/navigationpanel/widthLimitationBox.js"></script>
 <script type="text/javascript" src="../src/view/navigationpanel/weightLimitationBox.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/careClassBox.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/carryingCapacityBox.js"></script>
 <script type="text/javascript" src="../src/view/assetSelectionMenu.js"></script>
 <script type="text/javascript" src="../src/view/navigationpanel/navigationPanel.js"></script>
 <script type="text/javascript" src="../src/view/navigationpanel/searchBox.js"></script>
 <script type="text/javascript" src="../src/model/applicationModel.js"></script>
+<script type="text/javascript" src="../src/controller/userNotificationCollection.js"></script>
 <script type="text/javascript" src="../src/controller/assetsVerificationCollection.js"></script>
 <script type="text/javascript" src="../src/controller/trafficSignsCollection.js"></script>
 <script type="text/javascript" src="../src/controller/trafficSignsReadOnlyCollection.js"></script>
@@ -135,6 +142,7 @@
 <script type="text/javascript" src="../src/controller/pointAssetsCollection.js"></script>
 <script type="text/javascript" src="../src/model/selectedPointAsset.js"></script>
 <script type="text/javascript" src="../src/controller/roadCollection.js"></script>
+<script type="text/javascript" src="../src/controller/careClassCollection.js"></script>
 <script type="text/javascript" src="../src/model/selectedSpeedLimit.js"></script>
 <script type="text/javascript" src="../src/model/selectedLinearAsset.js"></script>
 <script type="text/javascript" src="../src/model/selectedLinkProperty.js"></script>
@@ -145,6 +153,7 @@
 <script type="text/javascript" src="../src/model/selectedLinearAssetFactory.js"></script>
 <script type="text/javascript" src="../src/view/confirm.js"></script>
 <script type="text/javascript" src="../src/view/genericConfirmPopup.js"></script>
+<script type="text/javascript" src="../src/view/userNotificationPopup.js"></script>
 <script type="text/javascript" src="../src/view/crosshairToggle.js"></script>
 <script type="text/javascript" src="../src/view/municipalityDisplay.js"></script>
 <script type="text/javascript" src="../src/view/providers/assetFormElementsFactory.js"></script>
@@ -172,7 +181,8 @@
 <script type="text/javascript" src="../src/utils/property-utils.js"></script>
 <script type="text/javascript" src="../src/assetgrouping/asset-grouping.js"></script>
 <script type="text/javascript" src="../src/controller/feedbackModel.js"></script>
-<script type="text/javascript" src="../src/view/feedbackTool.js"></script>
+<script type="text/javascript" src="../src/view/feedbackDataTool.js"></script>
+<script type="text/javascript" src="../src/view/feedbackApplicationTool.js"></script>
 <script type="text/javascript" src="../src/view/municipalitySituationPopup.js"></script>
 <script src="../../node_modules/web-console-reporter/WebConsole.js"></script>
 <script data-main="run-integration-tests" src="../../node_modules/requirejs/require.js"></script>

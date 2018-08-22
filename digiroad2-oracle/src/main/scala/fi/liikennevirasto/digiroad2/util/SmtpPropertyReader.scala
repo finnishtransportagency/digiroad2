@@ -32,5 +32,4 @@ class SmtpPropertyReader {
       throw new IllegalArgumentException("Missing email Password")
     loadedKeyString
   }
-
 }

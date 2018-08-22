@@ -8,24 +8,26 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MunicipalityInfo, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.{ArgumentCaptor, Mockito}
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
 class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  val geometryTransform = new GeometryTransform
+  val mockRoadAddressesService = MockitoSugar.mock[RoadAddressesService]
+  val geometryTransform = new GeometryTransform(mockRoadAddressesService)
   val boundingBoxWithKauniainenAssets = BoundingRectangle(Point(374000,6677000), Point(374800,6677600))
   val userWithKauniainenAuthorization = User(
     id = 1,
@@ -636,7 +638,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val position = Some(Position(60.0, 0.0, 123l, None))
       service.updateExistingById(300002, position, Set.empty, "user", (_,_) => Unit)
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -670,7 +672,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.size should be(0)
 
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -696,7 +698,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.size should be(0)
 
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -727,7 +729,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
 
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -773,7 +775,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val capturedStop = captor.getValue
       capturedStop.liviId should be (liviId)
 
-      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -825,17 +827,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-
-
   test ("Convert PersistedMassTransitStop into TierekisteriMassTransitStop") {
     val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
     runWithRollback {
-      val (lrm, raId) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextViitePrimaryKeySeqValue)
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
-    values ($lrm,null,1,109,298.694,null,1021227,0,to_timestamp('17.02.17 12:21:39','RR.MM.DD HH24:MI:SS'))""".execute
 
-      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
-    values ($raId,1,1,0,5,0,299,$lrm,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
+      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+
+      when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
       val assetId = 300006
       val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
@@ -863,12 +861,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
     runWithRollback {
 
-      val (lrm, raId) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextViitePrimaryKeySeqValue)
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
-    values ($lrm,null,1,109,298.694,null,1021227,0,to_timestamp('17.02.17 12:21:39','RR.MM.DD HH24:MI:SS'))""".execute
+      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
-    values ($raId,1,1,0,5,0,299,$lrm,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
+      when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
       val assetId = 300006
       val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
@@ -1208,7 +1203,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("getByMunicipality gets Tierekisteri Equipment") {
-    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, mockEventBus, new GeometryTransform)
+    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, mockEventBus, mockGeometryTransform)
     val combinations: List[(Existence, String)] = List(Existence.No, Existence.Yes, Existence.Unknown).zip(List("1", "2", "99"))
     combinations.foreach { case (e, v) =>
       reset(mockTierekisteriClient, mockRoadLinkService)

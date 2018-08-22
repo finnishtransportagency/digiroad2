@@ -1,23 +1,22 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.util.Properties
-
 import java.util
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.{OracleAssetDao, InaccurateAssetDAO}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, OracleAssetDao}
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, LinearAssetUtils}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -199,6 +198,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                   expiredAssetIds = oldSpeedLimits.map(_.id).toSet,
                                   adjustedMValues = Seq.empty[MValueAdjustment],
+                                  adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                                   adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
 
@@ -219,17 +219,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
     (filledTopology, roadLinksByLinkId)
-  }
-
-  def withRoadAddress(pieceWiseLinearAssets: Seq[Seq[SpeedLimit]]): Seq[Seq[SpeedLimit]] ={
-    val addressData = roadLinkService.getRoadAddressesByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)).toSet).map(a => (a.linkId, a)).toMap
-    pieceWiseLinearAssets.map(
-      _.map(pwa =>
-        if (addressData.contains(pwa.linkId))
-          pwa.copy(attributes = pwa.attributes ++ addressData(pwa.linkId).asAttributes)
-        else
-          pwa
-      ))
   }
 
   /**

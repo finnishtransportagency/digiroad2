@@ -8,8 +8,6 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, NodeType, VVHRoadNodes}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink, ValidityPeriodDayOfWeek}
-import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}
 import org.json4s._
@@ -19,7 +17,7 @@ class JsonSerializer extends VVHSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
-  DiscontinuitySerializer + TrackSerializer + PointSerializer
+    TrackSerializer + PointSerializer
 
   override def readCachedTinyRoadLinks(file: File): Seq[TinyRoadLink] = {
     val json = new FileReader(file)
@@ -84,7 +82,7 @@ class JsonSerializer extends VVHSerializer {
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
-    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer
+    TrackSerializer + PointSerializer
 }
 
 
@@ -140,13 +138,6 @@ case object NodeTypeSerializer extends CustomSerializer[NodeType](format => ( {
     JInt(BigInt(nodeType.value))
 }))
 
-case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](format => ( {
-  case s: JString => Discontinuity.apply(s.values)
-  case i: JInt => Discontinuity.apply(i.values.intValue)
-}, {
-  case s: Discontinuity => JInt(s.value)
-}))
-
 case object TrackSerializer extends CustomSerializer[Track](format => ( {
   case i: JInt => Track.apply(i.values.intValue)
 }, {
@@ -163,18 +154,3 @@ case object PointSerializer extends CustomSerializer[Point](format => ( {
   case p: Point => JObject(("x", JDouble(p.x)), ("y", JDouble(p.y)), ("z", JDouble(p.z)))
 }))
 
-case object LinkStatusSerializer extends CustomSerializer[LinkStatus](format => ( {
-  case i: JInt =>
-    LinkStatus.apply(i.values.intValue)
-}, {
-  case l: LinkStatus => JInt(l.value)
-}
-))
-
-case object RoadTypeSerializer extends CustomSerializer[RoadType](format => ( {
-  case i: JInt =>
-    RoadType.apply(i.values.intValue)
-}, {
-  case r: RoadType => JInt(r.value)
-}
-))

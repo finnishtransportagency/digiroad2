@@ -68,7 +68,7 @@
     };
 
     var pickProperties = function(properties, publicIds) {
-      return _.filter(properties, function(property) { return _.contains(publicIds, property.publicId); });
+      return _.filter(properties, function(property) { return _.includes(publicIds, property.publicId); });
     };
 
     var payloadWithProperties = function(payload, publicIds) {
@@ -78,7 +78,7 @@
 
       return _.merge(
         {},
-        _.pick(payload, function(value, key) { return key != 'properties'; }),
+        _.pickBy(payload, function(value, key) { return key != 'properties'; }),
         {
           properties: pickProperties(payload.properties, publicIds)
         });
@@ -143,7 +143,7 @@
     });
 
     eventbus.on('validityPeriod:changed', function(validityPeriods) {
-      if (currentAsset && (!_.contains(validityPeriods, currentAsset.validityPeriod) &&
+      if (currentAsset && (!_.includes(validityPeriods, currentAsset.validityPeriod) &&
         currentAsset.validityPeriod !== undefined)) {
         close();
       }
@@ -227,7 +227,7 @@
       return _.some(currentAsset.payload.properties, function(property) {
         return isRequiredProperty(property.publicId) && (
                 isChoicePropertyWithUnknownValue(property) ||
-                  _.all(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
+                  _.every(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
           );
       });
     };
@@ -355,6 +355,21 @@
       }
     };
 
+    var changeById = function(id) {
+      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.id !== id && !assetHasBeenModified;
+      if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
+        if (exists()) { close(); }
+        backend.getMassTransitStopById(id, function (asset, statusMessage, errorObject) {
+          if (errorObject !== undefined) {
+              if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
+                  eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
+              }
+          }
+          eventbus.trigger('asset:fetched', asset);
+        });
+      }
+    };
+
     var getId = function() {
       return currentAsset.id;
     };
@@ -379,9 +394,19 @@
       return getPropertyValue({ propertyData: getProperties() }, 'viimeinen_voimassaolopaiva');
     };
 
-    var get = function(key) {
+    var getByProperty = function(key) {
       if (exists()) {
         return currentAsset.payload[key];
+      }
+    };
+
+    var get = function() {
+      if (exists()) {
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var linkId = nearestLine.linkId;
+          if (!currentAsset.linkId)
+              currentAsset.linkId = linkId;
+          return currentAsset;
       }
     };
 
@@ -502,11 +527,13 @@
       exists: exists,
       change: change,
       changeByExternalId: changeByNationalId,
+      changeById:changeById,
+      get: get,
       getId: getId,
       getName: getName,
       getDirection: getDirection,
       getFloatingReason: getFloatingReason,
-      get: get,
+      getByProperty: getByProperty,
       getProperties: getProperties,
       switchDirection: switchDirection,
       move: move,

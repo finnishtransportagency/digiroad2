@@ -26,7 +26,7 @@
     };
 
     this.separate = function() {
-      selection = collection.separateLinearAsset(_.first(selection));
+      selection = collection.separateLinearAsset(_.head(selection));
       isSeparated = true;
       dirty = true;
       eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
@@ -48,8 +48,8 @@
 
     this.addSelection = function(linearAssets){
       var partitioned = _.groupBy(linearAssets, isUnknown);
-      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
-      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
       selection = selection.concat(existingLinearAssets.concat(unknownLinearAssets));
     };
 
@@ -64,8 +64,8 @@
 
     this.openMultiple = function(linearAssets) {
       var partitioned = _.groupBy(linearAssets, isUnknown);
-      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
-      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
       selection = existingLinearAssets.concat(unknownLinearAssets);
       eventbus.trigger(singleElementEvent('multiSelected'));
     };
@@ -80,6 +80,7 @@
 
     this.closeMultiple = function() {
       eventbus.trigger(singleElementEvent('unselect'), self);
+      dirty = false;
       collection.setSelection(null);
       selection = [];
     };
@@ -92,7 +93,7 @@
 
       var payload = {
         newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value: value, expired: false }); }),
-        ids: _.pluck(knownLinearAssets, 'id'),
+        ids: _.map(knownLinearAssets, 'id'),
         value: value,
         typeId: typeId
       };
@@ -129,7 +130,7 @@
         if (self.isUnknown()) {
           return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
         } else {
-          return { ids: _.pluck(selection, 'id') };
+          return { ids: _.map(selection, 'id') };
         }
       };
       var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
@@ -208,7 +209,7 @@
     this.verify = function() {
       eventbus.trigger(singleElementEvent('saving'));
       var knownLinearAssets = _.reject(selection, isUnknown);
-      var payload = {ids: _.pluck(knownLinearAssets, 'id'), typeId: typeId};
+      var payload = {ids: _.map(knownLinearAssets, 'id'), typeId: typeId};
       collection.verifyLinearAssets(payload);
       dirty = false;
       self.close();
@@ -305,7 +306,7 @@
           else
             return zipper[0].value !== zipper[1].value;
       });
-      return _.contains(mapped, true);
+      return _.includes(mapped, true);
     }
 
     function getRequiredFields(properties){
@@ -404,6 +405,50 @@
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
 
+    this.requiredPropertiesMissing = function (formStructure) {
 
+      var requiredFields = _.filter(formStructure.fields, function(form) { return form.required; });
+
+      var assets = this.isSplitOrSeparated() ? _.filter(selection, function(asset){ return asset.value; }) : selection;
+
+      return !_.every(assets, function(asset){
+
+        return _.every(requiredFields, function(field){
+          if(!asset.value || _.isEmpty(asset.value))
+            return false;
+
+          var property  = _.find(asset.value.properties, function(p){ return p.publicId === field.publicId;});
+
+          if(!property)
+            return false;
+
+          if(_.isEmpty(property.values))
+            return false;
+
+          return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
+        });
+      });
+    };
+
+    this.isSplitOrSeparatedEqual = function(){
+      if (_.filter(selection, function(p){return p.value;}).length <= 1)
+        return false;
+
+      return _.every(selection[0].value.properties, function(property){
+          var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
+          if(!iProperty)
+            return false;
+
+          return _.isEqual(property.values, iProperty.values);
+      });
+    };
+
+    this.hasValidValues = function () {
+       return isValid;
+    };
+
+    this.setValidValues = function (valid) {
+      isValid = valid;
+    };
   };
 })(this);

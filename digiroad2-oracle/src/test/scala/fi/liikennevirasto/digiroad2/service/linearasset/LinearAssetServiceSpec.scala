@@ -4,7 +4,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
@@ -16,9 +16,9 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUt
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentCaptor
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -118,7 +118,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     linearAssets.map(_.linkId) should be(Seq(1))
     linearAssets.map(_.value) should be(Seq(Some(NumericValue(40000))))
     verify(mockEventBus, times(1))
-      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil, Set.empty[Long]))
+      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil, Nil, Set.empty[Long]))
   }
 
   test("Separate linear asset") {
@@ -283,7 +283,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:update"), captor.capture())
+      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:update"), captor.capture())
       captor.getValue.expiredAssetIds should be (Set(asset1,asset2,asset3))
 
       dynamicSession.rollback()
@@ -634,7 +634,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedLinearAssets = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
-      val changeSet = projectedLinearAssets.foldLeft(ChangeSet(Set.empty, Nil, Nil, Set.empty)) {
+      val changeSet = projectedLinearAssets.foldLeft(ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) {
         case (acc, proj) =>
           acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode))))
       }
@@ -891,10 +891,10 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
+        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
-      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
+      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
       val projectedAssets = captor.getValue
       projectedAssets.length should be(1)
       projectedAssets.foreach { proj =>
@@ -923,7 +923,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("get unVerified linear assets") {
-    when(mockMunicipalityDao.getMunicipalityNameByCode(235)).thenReturn("Kauniainen")
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
       runWithRollback {
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
       val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, NumericValue(800), 1, 0, None)), 40, "testuser")
@@ -942,10 +942,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
         1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(92)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
       RoadLink(3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
 
-    when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
-    when(mockMunicipalityDao.getMunicipalityNameByCode(92)).thenReturn("Vantaa")
+    val municipalitiesInfo = List(MunicipalityInfo(91, 9, "Helsinki"), MunicipalityInfo(92, 9, "Vantaa"))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfo)
+
     runWithRollback {
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
       val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(2, 0, 60, NumericValue(800), 1, 0, None)), 40, "dr1_conversion")
@@ -964,7 +965,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("should not get administrative class 'State'") {
     val roadLink = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
-    when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(Set(91))).thenReturn(List(MunicipalityInfo(91, 9, "Helsinki")))
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
 
     runWithRollback {

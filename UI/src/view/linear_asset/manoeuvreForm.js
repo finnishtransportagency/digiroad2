@@ -1,7 +1,8 @@
 (function (root) {
-  root.ManoeuvreForm = function(selectedManoeuvreSource) {
+  root.ManoeuvreForm = function(selectedManoeuvreSource, feedbackCollection) {
 
     var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
+    new FeedbackDataTool(feedbackCollection, 'manoeuvre', authorizationPolicy);
 
     /*
     * HTML Templates
@@ -170,6 +171,9 @@
 
       // Listen to road link selection on map
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
+        if(!_.isEmpty(roadLink.manoeuvres))
+          eventbus.trigger('manoeuvres:selectedAvailable');
+
         roadLink.modifiedBy = roadLink.modifiedBy || '-';
         roadLink.modifiedAt = roadLink.modifiedAt || '';
         rootElement.html(_.template(templateWithHeaderAndFooter)(roadLink));
@@ -180,7 +184,7 @@
           var isLinkChain = manoeuvre.intermediateLinkIds && manoeuvre.intermediateLinkIds.length > 0;
           var localizedExceptions = localizeExceptions(manoeuvre.exceptions);
           var validityPeriodElements = _(manoeuvre.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+              .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodDisplayElement)
               .join('');
 
@@ -201,14 +205,14 @@
           var existingValidityPeriodElements =
             manoeuvre ?
               _(manoeuvre.validityPeriods)
-                .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+                .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
                 .map(validityPeriodElement)
                 .join('') :
               '';
           var isLinkChain = (manoeuvre && manoeuvre.intermediateLinkIds.length) > 0;
           var newExceptionSelect = _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), manoeuvreExists: manoeuvreExists });
           var validityPeriodElements = manoeuvre ? _(manoeuvre.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+              .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
@@ -233,13 +237,13 @@
           var additionalInfo = (!_.isEmpty(manoeuvre.additionalInfo)) ? manoeuvre.additionalInfo : null;
           var existingValidityPeriodElements =
               _(manoeuvre.validityPeriods)
-                  .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+                  .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
                   .map(validityPeriodElement)
                   .join('');
           // Verify if Manoeuvre have intermediate Links to show the plus sign
           var isLinkChain = true;
           var validityPeriodElements = manoeuvre ? _(manoeuvre.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
+              .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
@@ -319,7 +323,7 @@
         rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvreToEliminate = manoeuvreData($(event.delegateTarget));
-          if (eventTarget.attr('checked') === 'checked') {
+          if (eventTarget.prop('checked')) {
             selectedManoeuvreSource.removeManoeuvre(manoeuvreToEliminate);
             rootElement.find('.manoeuvre-details input[class!="checkbox-remove"], .manoeuvre-details select, .manoeuvre-details button').attr('disabled', true);
           } else {

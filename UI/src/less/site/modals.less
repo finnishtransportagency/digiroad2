@@ -69,14 +69,11 @@
   }
 
   #title {
-    margin-right: 58px;
     width: 340px;
     text-align: left;
-    margin-left: 18px;
     text-transform: none;
     font-size: 13px;
-    margin-bottom: 12px;
-    margin-top: 18px;
+    margin: 18px 58px 12px 18px;
   }
 
   .form-group {
@@ -91,17 +88,102 @@
 
   #freetext {
     height: 149px;
+    resize: vertical;
   }
 
   #phoneNumber{
     width: 284px;
   }
 
-  #kidentifier{
+  #kidentifier, #linkId, #assetId{
     width: 50px;
     margin-right: 195px;
     font-size: 11px;
     margin-top: 8px;
+  }
+
+}
+
+
+#feedbackData {
+  .modal-dialog {
+    width: 401px;
+    right: 410px;
+    top: 10px;
+    position: absolute;
+    z-index: 1020;
+    background-color: #e3e3e1;
+  }
+
+  #title {
+    width: 340px;
+    text-align: left;
+    text-transform: none;
+    font-size: 13px;
+    margin: 18px 58px 12px 18px;
+  }
+
+  .content {
+    padding: 10px;
+    border-bottom: 1px solid #171717;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    color: #fff;
+    background-color: #282826;
+  }
+
+  .actions {
+    padding: 10px;
+    text-align: right;
+  }
+
+  .actions .btn {
+    float: none;
+    margin-left: 5px;
+  }
+
+  .form-control {
+    width: 251px;
+    margin-right: 8px;
+  }
+
+  .form {
+    width: 100%;
+  }
+
+  .form-element {
+    > #phoneNumber-error,
+    > #email-error {
+      margin-left: 123px;
+    }
+
+    .error { color: red;}
+  }
+
+  .control-label{
+    width: 110px;
+    margin-right: 10px;
+    font-size: 10px;
+    margin-top: 5px;
+  }
+
+  #freetext {
+    height: 149px;
+    overflow-y: auto;
+  }
+
+  #phoneNumber{
+    width: 184px;
+  }
+
+
+  span {
+    display: inline-block;
+    width: 208px;
+    margin-right: 0;
+    font-size: 11px;
+    margin-top: 8px;
+    min-height: 20px;
   }
 }
 
@@ -122,6 +204,71 @@
 
 .modal-overlay.confirm-modal {
   background: rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), 0.6);
+}
+
+.modal-overlay.feedback-modal {
+  background: none;
+  position: relative;
+}
+
+.modal-overlay.confirm-modal {
+
+  .notification {
+    width: 750px;
+    margin: auto;
+    max-height: 576px;;
+
+    .selected {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .bold {
+      font-weight: bold;
+    }
+
+    nav {
+      float: left;
+      width: 24%;
+      padding-left: 10px;
+      margin: 10px 10px 0 12px;
+      border: 1px solid black;
+      color: @blue-light;
+      display: flex;
+      height: 476px;
+
+
+      > ul {
+        list-style-type: none;
+        padding: 0;
+        overflow-y: auto;
+        padding-right: 12px;
+        margin: 0;
+
+        > li {
+          margin-top: 15px;
+        }
+      }
+    }
+
+    section:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+
+    article {
+      float: left;
+      padding: 10px;
+      width: 67%;
+      background-color: #f1f1f1;
+      margin-top: 10px;
+      border: 1px solid black;
+      flex: auto;
+      height: 456px;
+      overflow-y: auto;
+    }
+  }
 }
 
 //** Asset visibility info modal on zoom changes

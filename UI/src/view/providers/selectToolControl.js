@@ -25,7 +25,9 @@
             layers: []
         }, options);
 
-        var dragBoxInteraction = new ol.interaction.DragBox({
+      var layerName = settings.layerName ? settings.layerName : layer.get('name');
+
+      var dragBoxInteraction = new ol.interaction.DragBox({
             condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) && settings.enableBoxSelect(); }
         });
 
@@ -165,8 +167,8 @@
         };
 
         var activate = function() {
+          if(applicationModel.getSelectedLayer() === layerName) {
             enabled = true;
-
             if(!initialized){
                 map.addInteraction(selectInteraction);
                 map.addInteraction(multiSelectInteraction);
@@ -180,6 +182,7 @@
                 });
             });
             toggleDragBox();
+          }
         };
 
         var deactivate = function() {
