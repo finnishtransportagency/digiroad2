@@ -339,12 +339,35 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
               case None if twoSided.getOrElse(false) => BothDirections.value
               case _ => getTrafficSignValidityDirection(Point(lon, lat), link.geometry)
             }
-          val asset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
-          create(asset, userProvider.getCurrentUser().username, link)
+          val newAsset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
+          getDuplicated(newAsset, link.geometry) match {
+            case Some(existingAsset) =>
+              update(existingAsset.id, newAsset, link.geometry, link.municipalityCode, userProvider.getCurrentUser().username, link.linkSource)
+            case _ =>
+              create(newAsset, userProvider.getCurrentUser().username, link)
+          }
         }.getOrElse(0L)
       }
     } else {
       0L
+    }
+  }
+
+  def getDuplicated(asset: IncomingTrafficSign, assetGeometry: Seq[Point]): Option[PersistedTrafficSign] = {
+    val signToCreateLinkId = asset.linkId
+    val signToCreateType = asset.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt
+    val signToCreateDirection = asset.validityDirection
+    val groupType = Some(TrafficSignTypeGroup.apply(signToCreateType))
+
+    withDynTransaction {
+      getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).foreach {
+        ts =>
+          val signType = ts.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt
+          if (signType == signToCreateType && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection) {
+            return Some(ts)
+          }
+      }
+      None
     }
   }
 
