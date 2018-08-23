@@ -56,7 +56,7 @@
         });
 
       };
-      return $('<table id="tableData"/>').append(tableContentRows(municipalityValues));
+      return $('<table id="tableData"><tbody>').append(tableContentRows(municipalityValues)).append('</tbody></table>');
     };
 
     this.workListItemTable = function(workListItems, layerName, municipalityId) {

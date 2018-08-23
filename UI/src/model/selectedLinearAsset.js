@@ -48,8 +48,8 @@
 
     this.addSelection = function(linearAssets){
       var partitioned = _.groupBy(linearAssets, isUnknown);
-      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
-      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
       selection = selection.concat(existingLinearAssets.concat(unknownLinearAssets));
     };
 
@@ -80,6 +80,7 @@
 
     this.closeMultiple = function() {
       eventbus.trigger(singleElementEvent('unselect'), self);
+      dirty = false;
       collection.setSelection(null);
       selection = [];
     };

@@ -21,6 +21,21 @@
       return  me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.renderOverlays(linearAssets));
     };
 
+    this.getNewFeatureProperties = function(linearAssets){
+      var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
+        var expired = _.isUndefined(linearAsset.value);
+        var type =  me.isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
+        return _.merge({}, linearAsset, { expired: expired }, type);
+      });
+      var offsetBySideCode = function(linearAsset) {
+        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+      };
+      var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
+      return _.sortBy(linearAssetsWithAdjustments, function(asset) {
+        return asset.expired ? -1 : 1;
+      });
+    };
+
     var serviceRoadStyleRules = [
       new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "huoltotie_kayttooikeus"); }}).is(1).use({stroke: {color: '#0011bb'}}),

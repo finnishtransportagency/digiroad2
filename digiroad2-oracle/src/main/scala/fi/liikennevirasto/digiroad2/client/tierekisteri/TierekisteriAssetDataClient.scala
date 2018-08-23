@@ -57,7 +57,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchActiveAssetData(roadNumber: Long): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(trAssetType, roadNumber)) match {
       case Left(content) => {
-        content("Data").flatMap{
+        content("Data").filter(isActive).flatMap{
           asset => mapFields(asset)
         }
       }
@@ -69,7 +69,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchActiveAssetData(roadNumber: Long, roadPartNumber: Long): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(trAssetType, roadNumber, roadPartNumber)) match {
       case Left(content) =>
-        content("Data").flatMap{
+        content("Data").filter(isActive).flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -80,7 +80,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchActiveAssetData(roadNumber: Long, roadPartNumber: Long, startDistance: Int): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(trAssetType, roadNumber, roadPartNumber, startDistance)) match {
       case Left(content) =>
-        content("Data").flatMap{
+        content("Data").filter(isActive).flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -91,7 +91,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   def fetchActiveAssetData(roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(trAssetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance)) match {
       case Left(content) =>
-        content("Data").flatMap{
+        content("Data").filter(isActive).flatMap{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -142,6 +142,13 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
       case Right(null) => Seq()
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
+  }
+
+  protected def isActive(asset: Map[String, Any]): Boolean = {
+    val today = DateTime.now().withTimeAtStartOfDay()
+    val startDate = convertToDate(getFieldValue(asset, field = "ALKUPVM")).map(new DateTime(_))
+    val endDate = convertToDate(getFieldValue(asset, field = "LOPPUPVM")).map(new DateTime(_))
+    (startDate.isEmpty || today.isEqual(startDate.get) || today.isAfter(startDate.get)) && (endDate.isEmpty || today.isBefore(endDate.get))
   }
 }
 

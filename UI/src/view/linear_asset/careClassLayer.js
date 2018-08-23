@@ -19,7 +19,7 @@
     var findValue = function(asset, publicId) {
       var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
       if(properties)
-        return _.first(properties.values).value;
+        return _.head(properties.values).value;
     };
 
     var emptyValues = function(asset, publicId) {
@@ -71,7 +71,7 @@
     };
 
     this.renderOverlays = function(linearAssets) {
-      return lineFeatures(_.map(_.filter(linearAssets, function (asset){return asset.value && !emptyValues(asset, winterCareClass) && _.contains(overlayAssets, parseInt(findValue(asset, winterCareClass)));}), function(linearAsset) {
+      return lineFeatures(_.map(_.filter(linearAssets, function (asset){return asset.value && !emptyValues(asset, winterCareClass) && _.includes(overlayAssets, parseInt(findValue(asset, winterCareClass)));}), function(linearAsset) {
         return _.merge({}, linearAsset, { type: 'overlay' }); }));
     };
 

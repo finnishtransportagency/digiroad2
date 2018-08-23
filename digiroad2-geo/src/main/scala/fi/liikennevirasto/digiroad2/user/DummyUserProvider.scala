@@ -23,4 +23,5 @@ class DummyUserProvider extends UserProvider {
   def updateUserConfiguration(user: User): User = {
     User(0, "username", Configuration())
   }
+  def updateUserConfiguration(user: User): User = user
 }

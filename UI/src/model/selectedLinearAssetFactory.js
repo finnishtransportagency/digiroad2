@@ -12,6 +12,7 @@
       maintenanceRoad: function() { return true; },
       roadDamagedByThaw: function() { return true; },
       massTransitLanes: function() { return true; },
+      carryingCapacity: function() { return true; },
       careClass: function(val) {
         return true;
         //TODO: check functionality after merge
@@ -33,6 +34,7 @@
         return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/);
       });
     }
+    return true;
   }
 
   function construct(backend, collection, asset) {

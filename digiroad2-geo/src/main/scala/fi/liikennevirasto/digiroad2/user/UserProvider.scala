@@ -24,6 +24,8 @@ trait UserProvider {
   def getUser(username: String): Option[User]
 
   def saveUser(user: User): User
+  def updateUserConfiguration(user: User): User
+}
 
   def updateUserConfiguration(user: User): User
 }

@@ -1,147 +1,180 @@
 (function(root) {
-    root.StyleRule = function(){
-        var expressionFn = [];
-        var styles = [];
+  root.StyleRule = function(){
+    var expressionFn = [];
+    var styles = [];
 
-        var runExpression = function(expression, obj, previousCondition){
-            if(previousCondition !== undefined)
-                return expression.compareExpressions(previousCondition, expression.compare(expression.getValue(obj)));
-            return expression.compare(expression.getValue(obj));
-        };
-
-        var generateExpression = function(property, propertyValue) {
-
-          var expression = _.isFunction(property)?
-            {getValue: property} :
-            (propertyValue ?
-              {getValue: function() {return propertyValue;}} :
-              {getValue: function(obj) {return obj[property];}}
-            );
-          expressionFn.push(expression);
-          return expression;
-        };
-
-
-        this.where = function(property, propertyValue){
-            generateExpression(property, propertyValue);
-            return this;
-        };
-
-        this.and = function(property, propertyValue){
-            if(expressionFn.length === 0)
-                throw 'You must have a "where" function before use the "and" function.';
-            var expression = generateExpression(property, propertyValue);
-            expression.compareExpressions = function(arg1, arg2) { return arg1 && arg2; };
-            return this;
-        };
-
-        this.or = function(property, propertyValue){
-            if(expressionFn.length === 0)
-                throw 'You must have a "where" function before use the "or" function.';
-            var expression = generateExpression(property, propertyValue);
-            expression.compareExpressions = function(arg1, arg2) { return arg1 || arg2; };
-            return this;
-        };
-
-        this.isDefined = function(){
-            var expression = expressionFn[expressionFn.length-1];
-            if(!expression || expression.compare)
-                throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
-            expression.compare = function(propertyValue){
-                return !_.isUndefined(propertyValue);
-            };
-            return this;
-        };
-
-        this.isUndefined = function(){
-            var expression = expressionFn[expressionFn.length-1];
-            if(!expression || expression.compare)
-                throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
-            expression.compare = function(propertyValue){
-                return _.isUndefined(propertyValue);
-            };
-            return this;
-        };
-
-        this.is = function(value){
-            var expression = expressionFn[expressionFn.length-1];
-            if(!expression || expression.compare)
-                throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
-            expression.compare = function(propertyValue){
-                return propertyValue == value;
-            };
-            return this;
-        };
-
-        this.isNot = function(value){
-            var expression = expressionFn[expressionFn.length-1];
-            if(!expression || expression.compare)
-                throw 'You must have on of the following functions ["where", "and", "or"] before use the "isNot".';
-            expression.compare = function(propertyValue){
-                return propertyValue != value;
-            };
-            return this;
-        };
-
-        this.isIn = function(values){
-            var expression = expressionFn[expressionFn.length-1];
-            if(!expression || expression.compare)
-                throw 'You must have on of the following functions ["where", "and", "or"] before use the "isIn".';
-            expression.compare = function(propertyValue){
-                for(var i=0; i < values.length ; ++i)
-                    if(values[i] == propertyValue)
-                        return true;
-                return false;
-            };
-            return this;
-        };
-
-        this.isNotIn = function(values){
-            var expression = expressionFn[expressionFn.length-1];
-            if(!expression || expression.compare)
-                throw 'You must have on of the following functions ["where", "and", "or"] before use the "isNotIn".';
-            expression.compare = function(propertyValue){
-                var exists = false;
-                for(var i=0; i < values.length ; ++i)
-                    if(values[i] == propertyValue)
-                        exists = true;
-                return !exists;
-            };
-            return this;
-        };
-
-      this.isBetween = function(values){
-        var expression = expressionFn[expressionFn.length-1];
-        if(!expression || expression.compare)
-          throw 'You must have on of the following functions ["where", "and", "or"] before use the "isBetween".';
-        if(values.length !== 2)
-          throw 'you must put an interval between two values [value_1, value_2]';
-        expression.compare = function(propertyValue){
-            return values[0] <= propertyValue  && propertyValue < values[1];
-        };
-        return this;
-      };
-
-        this.use = function(obj){
-            styles.push(obj);
-            return this;
-        };
-
-        this._match = function(obj){
-            if(expressionFn.length === 0)
-                return false;
-
-            var condition = runExpression(expressionFn[0], obj);
-            for(var i=1 ; i < expressionFn.length; i++)
-                condition = runExpression(expressionFn[i], obj, condition);
-
-            return condition;
-        };
-
-        this._get = function(){
-            return styles;
-        };
+    var runExpression = function(expression, obj, previousCondition){
+      if(previousCondition !== undefined)
+        return expression.compareExpressions(previousCondition, expression.compare(expression.getValue(obj)));
+      return expression.compare(expression.getValue(obj));
     };
+
+    var generateExpression = function(property, propertyValue) {
+
+      var expression = _.isFunction(property)?
+        {getValue: property} :
+        (propertyValue ?
+            {getValue: function() {return propertyValue;}} :
+            {getValue: function(obj) {return obj[property];}}
+        );
+      expressionFn.push(expression);
+      return expression;
+    };
+
+
+    this.where = function(property, propertyValue){
+      generateExpression(property, propertyValue);
+      return this;
+    };
+
+    this.and = function(property, propertyValue){
+      if(expressionFn.length === 0)
+        throw 'You must have a "where" function before use the "and" function.';
+      var expression = generateExpression(property, propertyValue);
+      expression.compareExpressions = function(arg1, arg2) { return arg1 && arg2; };
+      return this;
+    };
+
+    this.or = function(property, propertyValue){
+      if(expressionFn.length === 0)
+        throw 'You must have a "where" function before use the "or" function.';
+      var expression = generateExpression(property, propertyValue);
+      expression.compareExpressions = function(arg1, arg2) { return arg1 || arg2; };
+      return this;
+    };
+
+    this.isDefined = function(){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
+      expression.compare = function(propertyValue){
+        return !_.isUndefined(propertyValue);
+      };
+      return this;
+    };
+
+    this.isUndefined = function(){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
+      expression.compare = function(propertyValue){
+        return _.isUndefined(propertyValue);
+      };
+      return this;
+    };
+
+    this.is = function(value){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
+      expression.compare = function(propertyValue){
+        return propertyValue == value;
+      };
+      return this;
+    };
+
+    this.isNot = function(value){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "isNot".';
+      expression.compare = function(propertyValue){
+        return propertyValue != value;
+      };
+      return this;
+    };
+
+    this.isIn = function(values){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "isIn".';
+      expression.compare = function(propertyValue){
+        for(var i=0; i < values.length ; ++i)
+          if(values[i] == propertyValue)
+            return true;
+        return false;
+      };
+      return this;
+    };
+
+    this.isNotIn = function(values){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "isNotIn".';
+      expression.compare = function(propertyValue){
+        var exists = false;
+        for(var i=0; i < values.length ; ++i)
+          if(values[i] == propertyValue)
+            exists = true;
+        return !exists;
+      };
+      return this;
+    };
+
+    this.isBetween = function(values){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "isBetween".';
+      if(values.length !== 2)
+        throw 'you must put an interval between two values [value_1, value_2]';
+      expression.compare = function(propertyValue){
+        return values[0] <= propertyValue  && propertyValue < values[1];
+      };
+      return this;
+    };
+
+    this.isGreater = function(value){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "isGreater".';
+
+      expression.compare = function(propertyValue){
+        return value < propertyValue;
+      };
+      return this;
+    };
+
+    this.isGreaterOrEqual = function(value){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "isGreater".';
+
+      expression.compare = function(propertyValue){
+        return value <= propertyValue;
+      };
+      return this;
+    };
+
+    this.isLessOrEqual = function(value){
+      var expression = expressionFn[expressionFn.length-1];
+      if(!expression || expression.compare)
+        throw 'You must have on of the following functions ["where", "and", "or"] before use the "isLess".';
+
+      expression.compare = function(propertyValue){
+        return value >= propertyValue;
+      };
+      return this;
+    };
+
+    this.use = function(obj){
+      styles.push(obj);
+      return this;
+    };
+
+    this._match = function(obj){
+      if(expressionFn.length === 0)
+        return false;
+
+      var condition = runExpression(expressionFn[0], obj);
+      for(var i=1 ; i < expressionFn.length; i++)
+        condition = runExpression(expressionFn[i], obj, condition);
+
+      return condition;
+    };
+
+    this._get = function(){
+      return styles;
+    };
+  };
 
     root.StyleRuleProvider = function(defaultStyle){
 
