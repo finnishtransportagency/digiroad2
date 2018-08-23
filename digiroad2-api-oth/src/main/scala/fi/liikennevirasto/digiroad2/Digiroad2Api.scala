@@ -150,28 +150,34 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   def municipalityDao = new MunicipalityDao
 
-  private def getMapViewStartParameters(mapView: Option[MapViewZoom]):(Option[Double], Option[Double], Option[Int]) = (mapView.map(_.geometry.x),mapView.map(_.geometry.y), mapView.map(_.zoom))
+  private def getMapViewStartParameters(mapView: Option[MapViewZoom]): Option[(Double, Double, Int)] = mapView.map(m => (m.geometry.x, m.geometry.y, m.zoom))
 
 
   get("/startupParameters") {
-    val defaultValues: (Option[Double], Option[Double], Option[Int]) = (Some(390000), Some(6900000), Some(2))
+    val defaultValues: (Double, Double, Int) = (390000, 6900000, 2)
     val user = userProvider.getCurrentUser()
-    val userPreferences = (user.configuration.east, user.configuration.north, user.configuration.zoom)
+    val userPreferences: Option[(Long, Long, Int)] = (user.configuration.east, user.configuration.north, user.configuration.zoom) match {
+      case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom)
+      case _  => None
+    }
 
-    val (east, north, zoom) = userPreferences match {
-      case (Some(east), Some(north), Some(zoom)) => (Some(east.toDouble), Some(north.toDouble),Some(zoom.toInt))
-      case (_, _, _) =>
+
+    val location = userPreferences match {
+      case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3)
+      case _ =>
         if(user.isMunicipalityMaintainer())
-          getStartUpParameters(defaultValues, user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality)
+          getStartUpParameters(user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality)
         else {
           if (user.isServiceRoadMaintainer())
-            getStartUpParameters(defaultValues, user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
+            getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
           else if (user.isBusStopMaintainer()) //case ely maintainer
-            getStartUpParameters(defaultValues, getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
-          else defaultValues
+            getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
+          else
+            None
         }
     }
-    StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
+    val loc = location.getOrElse(defaultValues)
+    StartupParameters(loc._1, loc._2, loc._3)
   }
 
   private def getUserElysByMunicipalities(authorizedMunicipalities: Set[Int]): Set[Int] = {
@@ -191,10 +197,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getStartUpParameters(defaultValues: (Option[Double], Option[Double], Option[Int]), authorizedTo: Set[Int], getter: Int => Option[MapViewZoom]):(Option[Double], Option[Double], Option[Int])  = {
+  private def getStartUpParameters(authorizedTo: Set[Int], getter: Int => Option[MapViewZoom]): Option[(Double, Double, Int)]  = {
     authorizedTo.headOption.map { id => getMapViewStartParameters(getter(id)) } match {
       case Some(param) => param
-      case None => defaultValues
+      case None => None
     }
   }
 
