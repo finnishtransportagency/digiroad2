@@ -3,14 +3,16 @@
   root.TrafficSignLabel = function(groupingDistance) {
     AssetLabel.call(this, this.MIN_DISTANCE);
     var me = this;
+    var stickPosition = {x: 0, y: 30 };
 
     this.MIN_DISTANCE = groupingDistance;
 
-    var backgroundStyle = function (trafficSign, counter) {
+    var backgroundStyle = function (trafficSign, position) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: getLabelProperty(trafficSign, counter).findImage(),
-          anchor : [0.48, 1.75 + (counter)]
+          src: getLabelProperty(trafficSign).findImage(),
+          anchor : [0.48, position.y],
+          anchorYUnits: "pixels"
         }))
       });
     };
@@ -19,137 +21,134 @@
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: 'images/traffic-signs/trafficSignStick.png',
-          anchor : [0.5, 1]
+          anchor : [0.5, stickPosition.y],
+          anchorYUnits: "pixels"
         }))
       });
     };
 
-    var getLabelProperty = function (trafficSign, counter) {
+    var getLabelProperty = function (trafficSign) {
 
       var labelingProperties = [
-        {signValue: [1], image: 'images/traffic-signs/speedLimitSign.png', validation: validateSpeedLimitValues},
-        {signValue: [2], image: 'images/traffic-signs/endOfSpeedLimitSign.png', validation: validateSpeedLimitValues},
-        {signValue: [3], image: 'images/traffic-signs/speedLimitZoneSign.png', validation: validateSpeedLimitValues},
-        {signValue: [4], image: 'images/traffic-signs/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues},
-        {signValue: [5], image: 'images/traffic-signs/urbanAreaSign.png', offsetY: -8 - (counter * 35)},
-        {signValue: [6], image: 'images/traffic-signs/endOfUrbanAreaSign.png'},
-        {signValue: [7], image: 'images/traffic-signs/crossingSign.png'},
-        {signValue: [8], image: 'images/traffic-signs/maximumLengthSign.png', validation: validateMaximumRestrictions, offsetY: -38 - (counter * 35), convertion: convertToMeters, unit: addMeters},
-        {signValue: [9], image: 'images/traffic-signs/warningSign.png'},
-        {signValue: [10], image: 'images/traffic-signs/turningRestrictionLeftSign.png'},
-        {signValue: [11], image: 'images/traffic-signs/turningRestrictionRightSign.png'},
-        {signValue: [12], image: 'images/traffic-signs/uTurnRestrictionSign.png'},
-        {signValue: [13], image: 'images/traffic-signs/noVehicles.png'},
-        {signValue: [14], image: 'images/traffic-signs/noPowerDrivenVehiclesSign.png'},
-        {signValue: [15], image: 'images/traffic-signs/noLorriesSign.png'},
-        {signValue: [16], image: 'images/traffic-signs/noVehicleCombinationsSign.png'},
-        {signValue: [17], image: 'images/traffic-signs/noTractorSign.png'},
-        {signValue: [18], image: 'images/traffic-signs/noMotorCycleSign.png'},
-        {signValue: [19], image: 'images/traffic-signs/noMotorSledgesSign.png'},
-        {signValue: [20], image: 'images/traffic-signs/noDangerousGoodsSign.png'},
-        {signValue: [21], image: 'images/traffic-signs/noBusSign.png'},
-        {signValue: [22], image: 'images/traffic-signs/noMopedsSign.png'},
-        {signValue: [23], image: 'images/traffic-signs/noCycleSign.png'},
-        {signValue: [24], image: 'images/traffic-signs/noPedestrianSign.png'},
-        {signValue: [25], image: 'images/traffic-signs/noPedestrianOrCycleSign.png'},
-        {signValue: [26], image: 'images/traffic-signs/noHorsesSign.png'},
-        {signValue: [27], image: 'images/traffic-signs/noEntrySign.png'},
-        {signValue: [28], image: 'images/traffic-signs/overtakingProhibitedSign.png'},
-        {signValue: [29], image: 'images/traffic-signs/endOfOvertakingProhibitionSign.png'},
-        {signValue: [30], image: 'images/traffic-signs/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
-        {signValue: [31], image: 'images/traffic-signs/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters},
-        {signValue: [32], image: 'images/traffic-signs/totalWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons},
-        {signValue: [33], image: 'images/traffic-signs/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, offsetY: -38 - (counter * 35), convertion: convertToTons, unit: addTons},
-        {signValue: [34], image: 'images/traffic-signs/axleWeightLimit.png', validation: validateMaximumRestrictions, offsetY: -46 - (counter * 35), convertion: convertToTons, unit: addTons },
-        {signValue: [35], image: 'images/traffic-signs/bogieWeightLimit.png', validation: validateMaximumRestrictions, offsetY: -46 - (counter * 35), convertion: convertToTons, unit: addTons },
-        {signValue: [36], image: 'images/traffic-signs/rightBendSign.png'},
-        {signValue: [37], image: 'images/traffic-signs/leftBendSign.png'},
-        {signValue: [38], image: 'images/traffic-signs/severalBendRightSign.png'},
-        {signValue: [39], image: 'images/traffic-signs/severalBendLeftSign.png'},
-        {signValue: [40], image: 'images/traffic-signs/dangerousDescentSign.png'},
-        {signValue: [41], image: 'images/traffic-signs/steepAscentSign.png'},
-        {signValue: [42], image: 'images/traffic-signs/unevenRoadSign.png'},
-        {signValue: [43], image: 'images/traffic-signs/childrenSign.png'},
-        {signValue: [45], image: 'images/traffic-signs/freeWidthSign.png', validation: validateAdditionalInfo, maxLabelLength: 11, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, offsetY: -38 - (counter * 35)},
-        {signValue: [46], image: 'images/traffic-signs/freeHeight.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -50 - (counter * 35)},
-        {signValue: [47], image: 'images/traffic-signs/hazmatProhibitionA.png'},
-        {signValue: [48], image: 'images/traffic-signs/hazmatProhibitionB.png'},
-        {signValue: [49], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: showPartialAdditionalInfo(), offsetX: 1, offsetY: -35 - (counter * 35)},
-        {signValue: [50], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: showPartialAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
-        {signValue: [51], image: 'images/traffic-signs/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, offsetY: -35 - (counter * 35)},
-        {signValue: [52], image: 'images/traffic-signs/passengerCar.png'},
-        {signValue: [53], image: 'images/traffic-signs/bus.png'},
-        {signValue: [54], image: 'images/traffic-signs/lorry.png'},
-        {signValue: [55], image: 'images/traffic-signs/van.png'},
-        {signValue: [56], image: 'images/traffic-signs/vehicleForHandicapped.png'},
-        {signValue: [57], image: 'images/traffic-signs/motorCycle.png'},
-        {signValue: [58], image: 'images/traffic-signs/cycle.png'},
-        {signValue: [59], image: 'images/traffic-signs/parkingAgainstFee.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 12, offsetY: -50 - (counter * 35)},
-        {signValue: [60], image: 'images/traffic-signs/obligatoryUseOfParkingDisc.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 12, offsetY: -42 - (counter * 35)},
-        {signValue: [61], image: 'images/traffic-signs/additionalPanelWithText.png', validation: validateAdditionalInfo, maxLabelLength: 19, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 3, offsetY: -30 - (counter * 35)},
-        {signValue: [62], image: 'images/traffic-signs/drivingInServicePurposesAllowed.png', validation: validateAdditionalInfo, maxLabelLength: 13, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, offsetY: -50 - (counter * 35)},
-        {signValue: [63], image: 'images/traffic-signs/busLane.png'},
-        {signValue: [64], image: 'images/traffic-signs/busLane.png'},
-        {signValue: [65], image: 'images/traffic-signs/busLane.png'},
-        {signValue: [66], image: 'images/traffic-signs/busStopForLocalTraffic.png'},
-        {signValue: [67], image: 'images/traffic-signs/busStopForLocalTraffic.png'},
-        {signValue: [68], image: 'images/traffic-signs/busStopForLocalTraffic.png'},
-        {signValue: [69], image: 'images/traffic-signs/busStopForLocalTraffic.png'},
-        {signValue: [70], image: 'images/traffic-signs/compulsoryFootPath.png'},
-        {signValue: [71], image: 'images/traffic-signs/compulsoryFootPath.png'},
-        {signValue: [72], image: 'images/traffic-signs/compulsoryFootPath.png'},
-        {signValue: [73], image: 'images/traffic-signs/compulsoryFootPath.png'},
-        {signValue: [74], image: 'images/traffic-signs/directionToBeFollowed3.png'},
-        {signValue: [75], image: 'images/traffic-signs/directionToBeFollowed3.png'},
-        {signValue: [76], image: 'images/traffic-signs/directionToBeFollowed3.png'},
-        {signValue: [77], image: 'images/traffic-signs/compulsoryRoundabout.png'},
-        {signValue: [78], image: 'images/traffic-signs/passThisSide.png'},
-        {signValue: [79], image: 'images/traffic-signs/dividerOfTraffic.png'},
-        {signValue: [80], image: 'images/traffic-signs/taxiStationZoneBeginning.png'},
-        {signValue: [81], image: 'images/traffic-signs/taxiStationZoneBeginning.png'},
-        {signValue: [82], image: 'images/traffic-signs/roadNarrows.png'},
-        {signValue: [83], image: 'images/traffic-signs/twoWayTraffic.png'},
-        {signValue: [84], image: 'images/traffic-signs/swingBridge.png'},
-        {signValue: [85], image: 'images/traffic-signs/roadWorks.png'},
-        {signValue: [86], image: 'images/traffic-signs/slipperyRoad.png'},
-        {signValue: [87], image: 'images/traffic-signs/pedestrianCrossingWarningSign.png'},
-        {signValue: [88], image: 'images/traffic-signs/cyclists.png'},
-        {signValue: [89], image: 'images/traffic-signs/intersectionWithEqualRoads.png'},
-        {signValue: [90], image: 'images/traffic-signs/lightSignals.png'},
-        {signValue: [91], image: 'images/traffic-signs/tramwayLine.png'},
-        {signValue: [92], image: 'images/traffic-signs/fallingRocks.png'},
-        {signValue: [93], image: 'images/traffic-signs/crossWind.png'},
-        {signValue: [94], image: 'images/traffic-signs/priorityRoad.png'},
-        {signValue: [95], image: 'images/traffic-signs/endOfPriority.png'},
-        {signValue: [96], image: 'images/traffic-signs/priorityOverOncomingTraffic.png'},
-        {signValue: [97], image: 'images/traffic-signs/priorityForOncomingTraffic.png'},
-        {signValue: [98], image: 'images/traffic-signs/giveWay.png'},
-        {signValue: [99], image: 'images/traffic-signs/stop.png'},
-        {signValue: [100], image: 'images/traffic-signs/standingAndParkingProhibited.png'},
-        {signValue: [101], image: 'images/traffic-signs/parkingProhibited.png'},
-        {signValue: [102], image: 'images/traffic-signs/parkingProhibitedZone.png'},
-        {signValue: [103], image: 'images/traffic-signs/endOfParkingProhibitedZone.png'},
-        {signValue: [104], image: 'images/traffic-signs/alternativeParkingOddDays.png'},
-        {signValue: [105], image: 'images/traffic-signs/parkingLot.png'},
-        {signValue: [106], image: 'images/traffic-signs/oneWayRoad.png'},
-        {signValue: [107], image: 'images/traffic-signs/motorway.png'},
-        {signValue: [108], image: 'images/traffic-signs/motorwayEnds.png'},
-        {signValue: [109], image: 'images/traffic-signs/residentialZone.png'},
-        {signValue: [110], image: 'images/traffic-signs/endOfResidentialZone.png'},
-        {signValue: [111], image: 'images/traffic-signs/pedestrianZone.png'},
-        {signValue: [112], image: 'images/traffic-signs/endOfPedestrianZone.png'},
-        {signValue: [113], image: 'images/traffic-signs/noThroughRoad.png'},
-        {signValue: [114], image: 'images/traffic-signs/noThroughRoadRight.png'},
-        {signValue: [115], image: 'images/traffic-signs/symbolOfMotorway.png'},
-        {signValue: [116], image: 'images/traffic-signs/parking.png'},
-        {signValue: [117], image: 'images/traffic-signs/itineraryForIndicatedVehicleCategory.png'},
-        {signValue: [118], image: 'images/traffic-signs/itineraryForPedestrians.png'},
-        {signValue: [119], image: 'images/traffic-signs/itineraryForHandicapped.png'},
-        {signValue: [120], image: 'images/traffic-signs/locationSignForTouristService.png'},
-        {signValue: [121], image: 'images/traffic-signs/firstAid.png'},
-        {signValue: [122], image: 'images/traffic-signs/fillingStation.png'},
-        {signValue: [123], image: 'images/traffic-signs/restaurant.png'},
-        {signValue: [124], image: 'images/traffic-signs/publicLavatory.png'}
+        {signValue: [1], image: 'images/traffic-signs/speed-limits/speedLimitSign.png', validation: validateSpeedLimitValues},
+        {signValue: [2], image: 'images/traffic-signs/speed-limits/endOfSpeedLimitSign.png', validation: validateSpeedLimitValues},
+        {signValue: [3], image: 'images/traffic-signs/speed-limits/speedLimitZoneSign.png', validation: validateSpeedLimitValues},
+        {signValue: [4], image: 'images/traffic-signs/speed-limits/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues},
+        {signValue: [5], image: 'images/traffic-signs/speed-limits/urbanAreaSign.png', height: 30},
+        {signValue: [6], image: 'images/traffic-signs/speed-limits/endOfUrbanAreaSign.png',  height: 30},
+        {signValue: [7], image: 'images/traffic-signs/regulator-signs/crossingSign.png'},
+        {signValue: [8], image: 'images/traffic-signs/maximum-restrictions/maximumLengthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters},
+        {signValue: [9], image: 'images/traffic-signs/general-warning-signs/warningSign.png'},
+        {signValue: [10], image: 'images/traffic-signs/prohibitions-and-restrictions/turningRestrictionLeftSign.png'},
+        {signValue: [11], image: 'images/traffic-signs/prohibitions-and-restrictions/turningRestrictionRightSign.png'},
+        {signValue: [12], image: 'images/traffic-signs/prohibitions-and-restrictions/uTurnRestrictionSign.png'},
+        {signValue: [13], image: 'images/traffic-signs/prohibitions-and-restrictions/noVehicles.png'},
+        {signValue: [14], image: 'images/traffic-signs/prohibitions-and-restrictions/noPowerDrivenVehiclesSign.png'},
+        {signValue: [15], image: 'images/traffic-signs/prohibitions-and-restrictions/noLorriesSign.png'},
+        {signValue: [16], image: 'images/traffic-signs/prohibitions-and-restrictions/noVehicleCombinationsSign.png'},
+        {signValue: [17], image: 'images/traffic-signs/prohibitions-and-restrictions/noTractorSign.png'},
+        {signValue: [18], image: 'images/traffic-signs/prohibitions-and-restrictions/noMotorCycleSign.png'},
+        {signValue: [19], image: 'images/traffic-signs/prohibitions-and-restrictions/noMotorSledgesSign.png'},
+        {signValue: [20], image: 'images/traffic-signs/prohibitions-and-restrictions/noDangerousGoodsSign.png'},
+        {signValue: [21], image: 'images/traffic-signs/prohibitions-and-restrictions/noBusSign.png'},
+        {signValue: [22], image: 'images/traffic-signs/prohibitions-and-restrictions/noMopedsSign.png'},
+        {signValue: [23], image: 'images/traffic-signs/prohibitions-and-restrictions/noCycleSign.png'},
+        {signValue: [24], image: 'images/traffic-signs/prohibitions-and-restrictions/noPedestrianSign.png'},
+        {signValue: [25], image: 'images/traffic-signs/prohibitions-and-restrictions/noPedestrianOrCycleSign.png'},
+        {signValue: [26], image: 'images/traffic-signs/prohibitions-and-restrictions/noHorsesSign.png'},
+        {signValue: [27], image: 'images/traffic-signs/prohibitions-and-restrictions/noEntrySign.png'},
+        {signValue: [28], image: 'images/traffic-signs/prohibitions-and-restrictions/overtakingProhibitedSign.png'},
+        {signValue: [29], image: 'images/traffic-signs/prohibitions-and-restrictions/endOfOvertakingProhibitionSign.png'},
+        {signValue: [30], image: 'images/traffic-signs/maximum-restrictions/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
+        {signValue: [31], image: 'images/traffic-signs/maximum-restrictions/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters},
+        {signValue: [32], image: 'images/traffic-signs/maximum-restrictions/totalWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons},
+        {signValue: [33], image: 'images/traffic-signs/maximum-restrictions/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons},
+        {signValue: [34], image: 'images/traffic-signs/maximum-restrictions/axleWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons },
+        {signValue: [35], image: 'images/traffic-signs/maximum-restrictions/bogieWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons },
+        {signValue: [36], image: 'images/traffic-signs/general-warning-signs/rightBendSign.png'},
+        {signValue: [37], image: 'images/traffic-signs/general-warning-signs/leftBendSign.png'},
+        {signValue: [38], image: 'images/traffic-signs/general-warning-signs/severalBendRightSign.png'},
+        {signValue: [39], image: 'images/traffic-signs/general-warning-signs/severalBendLeftSign.png'},
+        {signValue: [40], image: 'images/traffic-signs/general-warning-signs/dangerousDescentSign.png'},
+        {signValue: [41], image: 'images/traffic-signs/general-warning-signs/steepAscentSign.png'},
+        {signValue: [42], image: 'images/traffic-signs/general-warning-signs/unevenRoadSign.png'},
+        {signValue: [43], image: 'images/traffic-signs/general-warning-signs/childrenSign.png'},
+        {signValue: [45], image: 'images/traffic-signs/additional-panels/freeWidthSign.png', validation: validateAdditionalInfo, maxLabelLength: 11, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, height: 30},
+        {signValue: [46], image: 'images/traffic-signs/additional-panels/freeHeight.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, height: 40},
+        {signValue: [47], image: 'images/traffic-signs/additional-panels/hazmatProhibitionA.png', height: 27},
+        {signValue: [48], image: 'images/traffic-signs/additional-panels/hazmatProhibitionB.png', height: 27},
+        {signValue: [49], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [50], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [51], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: showHourMinAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [52], image: 'images/traffic-signs/additional-panels/passengerCar.png', height: 20},
+        {signValue: [53], image: 'images/traffic-signs/additional-panels/bus.png', height: 20},
+        {signValue: [54], image: 'images/traffic-signs/additional-panels/lorry.png', height: 20},
+        {signValue: [55], image: 'images/traffic-signs/additional-panels/van.png', height: 20},
+        {signValue: [56], image: 'images/traffic-signs/additional-panels/vehicleForHandicapped.png', height: 20},
+        {signValue: [57], image: 'images/traffic-signs/additional-panels/motorCycle.png', height: 20},
+        {signValue: [58], image: 'images/traffic-signs/additional-panels/cycle.png', height: 20},
+        {signValue: [59], image: 'images/traffic-signs/additional-panels/parkingAgainstFee.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 12, height: 40},
+        {signValue: [60], image: 'images/traffic-signs/additional-panels/obligatoryUseOfParkingDisc.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: showHourMinAdditionalInfo, offsetX: 12, height: 33},
+        {signValue: [61], image: 'images/traffic-signs/additional-panels/additionalPanelWithText.png', validation: validateAdditionalInfo, maxLabelLength: 19, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 3,  height: 25},
+        {signValue: [62], image: 'images/traffic-signs/additional-panels/drivingInServicePurposesAllowed.png', validation: validateAdditionalInfo, maxLabelLength: 13, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, height: 28},
+        {signValue: [63], image: 'images/traffic-signs/regulatory-signs/busLane.png'},
+        {signValue: [64], image: 'images/traffic-signs/regulatory-signs/busLaneEnds.png'},
+        {signValue: [65], image: 'images/traffic-signs/regulatory-signs/tramLane.png'},
+        {signValue: [66], image: 'images/traffic-signs/regulatory-signs/busStopForLocalTraffic.png'},
+        {signValue: [68], image: 'images/traffic-signs/regulatory-signs/tramStop.png'},
+        {signValue: [69], image: 'images/traffic-signs/regulatory-signs/taxiStation.png'},
+        {signValue: [70], image: 'images/traffic-signs/mandatory-signs/compulsoryFootPath.png'},
+        {signValue: [71], image: 'images/traffic-signs/mandatory-signs/compulsoryCycleTrack.png'},
+        {signValue: [72], image: 'images/traffic-signs/mandatory-signs/combinedCycleTrackAndFootPath.png'},
+        {signValue: [74], image: 'images/traffic-signs/mandatory-signs/directionToBeFollowed3.png'},
+        {signValue: [77], image: 'images/traffic-signs/mandatory-signs/compulsoryRoundabout.png'},
+        {signValue: [78], image: 'images/traffic-signs/mandatory-signs/passThisSide.png'},
+        {signValue: [79], image: 'images/traffic-signs/mandatory-signs/passThisSide.png'},
+        {signValue: [80], image: 'images/traffic-signs/prohibitions-and-restrictions/taxiStationZoneBeginning.png'},
+        {signValue: [81], image: 'images/traffic-signs/prohibitions-and-restrictions/standingPlaceForTaxi.png'},
+        {signValue: [82], image: 'images/traffic-signs/general-warning-signs/roadNarrows.png'},
+        {signValue: [83], image: 'images/traffic-signs/general-warning-signs/twoWayTraffic.png'},
+        {signValue: [84], image: 'images/traffic-signs/general-warning-signs/swingBridge.png'},
+        {signValue: [85], image: 'images/traffic-signs/general-warning-signs/roadWorks.png'},
+        {signValue: [86], image: 'images/traffic-signs/general-warning-signs/slipperyRoad.png'},
+        {signValue: [87], image: 'images/traffic-signs/general-warning-signs/pedestrianCrossingWarningSign.png'},
+        {signValue: [88], image: 'images/traffic-signs/general-warning-signs/cyclists.png'},
+        {signValue: [89], image: 'images/traffic-signs/general-warning-signs/intersectionWithEqualRoads.png'},
+        {signValue: [90], image: 'images/traffic-signs/general-warning-signs/lightSignals.png'},
+        {signValue: [91], image: 'images/traffic-signs/general-warning-signs/tramwayLine.png'},
+        {signValue: [92], image: 'images/traffic-signs/general-warning-signs/fallingRocks.png'},
+        {signValue: [93], image: 'images/traffic-signs/general-warning-signs/crossWind.png'},
+        {signValue: [94], image: 'images/traffic-signs/priority-and-give-way-signs/priorityRoad.png'},
+        {signValue: [95], image: 'images/traffic-signs/priority-and-give-way-signs/endOfPriority.png'},
+        {signValue: [96], image: 'images/traffic-signs/priority-and-give-way-signs/priorityOverOncomingTraffic.png'},
+        {signValue: [97], image: 'images/traffic-signs/priority-and-give-way-signs/priorityForOncomingTraffic.png'},
+        {signValue: [98], image: 'images/traffic-signs/priority-and-give-way-signs/giveWay.png'},
+        {signValue: [99], image: 'images/traffic-signs/priority-and-give-way-signs/stop.png'},
+        {signValue: [100], image: 'images/traffic-signs/prohibitions-and-restrictions/standingAndParkingProhibited.png'},
+        {signValue: [101], image: 'images/traffic-signs/prohibitions-and-restrictions/parkingProhibited.png'},
+        {signValue: [102], image: 'images/traffic-signs/prohibitions-and-restrictions/parkingProhibitedZone.png'},
+        {signValue: [103], image: 'images/traffic-signs/prohibitions-and-restrictions/endOfParkingProhibitedZone.png'},
+        {signValue: [104], image: 'images/traffic-signs/prohibitions-and-restrictions/alternativeParkingOddDays.png'},
+        {signValue: [105], image: 'images/traffic-signs/regulatory-signs/parkingLot.png'},
+        {signValue: [106], image: 'images/traffic-signs/regulatory-signs/oneWayRoad.png', height: 17},
+        {signValue: [107], image: 'images/traffic-signs/regulatory-signs/motorway.png', height: 40},
+        {signValue: [108], image: 'images/traffic-signs/regulatory-signs/motorwayEnds.png', height: 40},
+        {signValue: [109], image: 'images/traffic-signs/regulatory-signs/residentialZone.png'},
+        {signValue: [110], image: 'images/traffic-signs/regulatory-signs/endOfResidentialZone.png'},
+        {signValue: [111], image: 'images/traffic-signs/regulatory-signs/pedestrianZone.png'},
+        {signValue: [112], image: 'images/traffic-signs/regulatory-signs/endOfPedestrianZone.png'},
+        {signValue: [113], image: 'images/traffic-signs/information-signs/noThroughRoad.png'},
+        {signValue: [114], image: 'images/traffic-signs/information-signs/noThroughRoadRight.png'},
+        {signValue: [115], image: 'images/traffic-signs/information-signs/symbolOfMotorway.png'},
+        {signValue: [116], image: 'images/traffic-signs/information-signs/parking.png'},
+        {signValue: [117], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'},
+        {signValue: [118], image: 'images/traffic-signs/information-signs/itineraryForPedestrians.png'},
+        {signValue: [119], image: 'images/traffic-signs/information-signs/itineraryForHandicapped.png'},
+        {signValue: [120], image: 'images/traffic-signs/service-signs/locationSignForTouristService.png', height: 25},
+        {signValue: [121], image: 'images/traffic-signs/service-signs/firstAid.png'},
+        {signValue: [122], image: 'images/traffic-signs/service-signs/fillingStation.png'},
+        {signValue: [123], image: 'images/traffic-signs/service-signs/restaurant.png'},
+        {signValue: [124], image: 'images/traffic-signs/service-signs/publicLavatory.png'}
     ];
 
       var labelProperty = _.find(labelingProperties, function(properties) {
@@ -166,7 +165,7 @@
       }
 
       function getTextOffsetY(){
-        return labelProperty && labelProperty.offsetY ? labelProperty.offsetY :  -45 - (counter * 35);
+        return parseInt(''+ getHeight() / 2) + 1
       }
 
       function getValidation(){
@@ -189,6 +188,10 @@
         return labelProperty && labelProperty.maxLabelLength ? labelProperty.maxLabelLength : 20;
       }
 
+      function getHeight() {
+        return labelProperty && labelProperty.height ? labelProperty.height : 35;
+      }
+
       return {
         findImage: findImage,
         getTextOffsetX: getTextOffsetX,
@@ -197,8 +200,8 @@
         getValue : getValue,
         getUnit : getUnit,
         getAdditionalInfo: getAdditionalInfo,
-        getMaxLength: getMaxLength
-
+        getMaxLength: getMaxLength,
+        getHeight: getHeight
       };
     };
 
@@ -228,8 +231,14 @@
       return _.isEmpty(this.value) ? this.additionalInfo : '';
     };
 
-    var showPartialAdditionalInfo = function () {
-      return _.isEmpty(this.value) ? _.first(this.additionalInfo ? this.additionalInfo.split(' ') : '') : '';
+    var showHourMinAdditionalInfo  = function () {
+      var timePeriod = _.first(this.additionalInfo.match(/\d+\s*[h]{1}\s*\d+\s*[min]{3}|\d+\s*[h]{1}|\d+\s*[min]{3}/));
+      return timePeriod ? timePeriod : this.additionalInfo ? this.additionalInfo : '';
+    };
+
+    var showPeriodTimeAdditionalInfo = function () {
+      var firstPeriod = _.first(this.additionalInfo.match(/[(]?\d+\s*[-]{1}\s*\d+[)]?/));
+      return firstPeriod ? firstPeriod : this.additionalInfo ? this.additionalInfo : '';
     };
 
     var validateSpeedLimitValues = function () {
@@ -246,16 +255,16 @@
       return this.value || (this.additionalInfo && this.additionalInfo.length <= labelMaxLength);
     };
 
-    this.getStyle = function (trafficSign, counter) {
-      return [backgroundStyle(trafficSign, counter), new ol.style.Style({
+    this.getStyle = function (trafficSign, position) {
+      return [backgroundStyle(trafficSign, position), new ol.style.Style({
         text: new ol.style.Text({
           text: textStyle(trafficSign),
           fill: new ol.style.Fill({
             color: '#000000'
           }),
           font: '12px sans-serif',
-          offsetX: getLabelProperty(trafficSign, counter).getTextOffsetX(),
-          offsetY: getLabelProperty(trafficSign, counter).getTextOffsetY()
+          offsetX: getLabelProperty(trafficSign).getTextOffsetX(),
+          offsetY: getLabelProperty(trafficSign).getTextOffsetY() - position.y
         })
       })];
     };
@@ -271,12 +280,14 @@
         return [];
       var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
       return _.flatten(_.chain(groupedAssets).map(function(assets){
-        return _.map(assets, function(asset, index){
+        var imgPosition = {x: 0 , y: stickPosition.y};
+        return _.map(assets, function(asset){
           var value = me.getValue(asset);
           if(value !== undefined){
             var styles = [];
             styles = styles.concat(me.getStickStyle());
-            styles = styles.concat(me.getStyle(value, index));
+            imgPosition.y += getLabelProperty(value).getHeight();
+            styles = styles.concat(me.getStyle(value, imgPosition));
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(styles);
             feature.setProperties(_.omit(asset, 'geometry'));

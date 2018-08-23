@@ -326,6 +326,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
 
   var singleChoiceSubType = function (collection, mainType, property) {
     var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+    var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
     var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
     var groups =  collection.getGroup(signTypes);
 
@@ -341,6 +342,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
 
     return '<div class="form-group editable form-traffic-sign">' +
       '      <label class="control-label"> ALITYYPPI</label>' +
+      '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
       '      <select class="form-control" style="display:none" id="trafficSigns_type">  ' +
       subTypesTrafficSigns +
       '      </select></div>';
@@ -349,7 +351,6 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
 
   var singleChoiceHandler = function (property, collection) {
     var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
-    var propertyDisplayValue = (property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
     var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
 
     var groups =  collection.getGroup(signTypes);
@@ -368,7 +369,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     return '' +
       '    <div class="form-group editable form-traffic-sign">' +
       '      <label class="control-label">' + property.localizedName + '</label>' +
-      '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
+      '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
       '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
       mainTypesTrafficSigns +
       '      </select>' +

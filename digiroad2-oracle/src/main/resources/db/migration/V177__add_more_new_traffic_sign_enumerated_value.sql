@@ -65,9 +65,6 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval,  66 , 'Paikallisliikenteen linja-auton pysäkki', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  67 , 'Kaukoliikenteen linja-auton pysäkki', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval,  68 , 'Raitiovaunun pysäkki', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
@@ -83,25 +80,13 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval,  72 , 'Yhdistetty pyörätie ja jalkakäytävä', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  73 , 'Pyörätie ja jalkakäytävä rinnakkain', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval,  74 , 'Pakollinen ajosuunta', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  75 , 'Pakollinen ajosuunta', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  76 , 'Pakollinen ajosuunta', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval,  77 , 'Pakollinen ajosuunta, kiertoliittymä', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval,  78 , 'Liikenteenjakaja', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  79 , 'Liikenteenjakaja', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval,  80 , 'Taksiasemaalue', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
@@ -206,7 +191,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval,  113 , 'Umpitie', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval,  114 , 'Umpitie', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
+VALUES (primary_key_seq.nextval,  114 , 'Umpitie (puoli)', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval,  115 , 'Moottoritien tunnus', ' ' , 'db_migration_v177',  (select id from property where public_ID = 'trafficSigns_type'));
