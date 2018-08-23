@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, Persis
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import org.joda.time.DateTime
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
@@ -192,6 +193,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   type IncomingAsset = IncomingTrafficSign
   type PersistedAsset = PersistedTrafficSign
 
+  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _ )
+
   override def typeId: Int = 300
 
   override def setAssetPosition(asset: IncomingTrafficSign, geometry: Seq[Point], mValue: Double): IncomingTrafficSign = {
@@ -203,7 +206,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  private val typePublicId = "trafficSigns_type"
+  val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
 
@@ -340,7 +343,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
               case _ => getTrafficSignValidityDirection(Point(lon, lat), link.geometry)
             }
           val newAsset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
-          getDuplicated(newAsset, link.geometry) match {
+          checkDuplicates(newAsset) match {
             case Some(existingAsset) =>
               update(existingAsset.id, newAsset, link.geometry, link.municipalityCode, userProvider.getCurrentUser().username, link.linkSource)
             case _ =>
@@ -353,19 +356,21 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getDuplicated(asset: IncomingTrafficSign, assetGeometry: Seq[Point]): Option[PersistedTrafficSign] = {
+  def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
     val signToCreateType = asset.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt
     val signToCreateDirection = asset.validityDirection
     val groupType = Some(TrafficSignTypeGroup.apply(signToCreateType))
 
     withDynTransaction {
-      getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).foreach {
+      val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
         ts =>
-          val signType = ts.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt
-          if (signType == signToCreateType && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection) {
-            return Some(ts)
-          }
+          ts.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt == signToCreateType
+            && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
+      )
+
+      if (trafficSignsInRadius.size >= 1) {
+        return Some(getLatestModifiedAsset(trafficSignsInRadius))
       }
       None
     }
@@ -377,5 +382,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case Some(groupType) => assets.filter(asset => TrafficSignTypeGroup.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.toInt) == groupType)
       case _ => assets
     }
+  }
+
+  def getLatestModifiedAsset(trafficSigns: Seq[PersistedTrafficSign]): PersistedTrafficSign = {
+    trafficSigns.maxBy { ts => ts.modifiedAt.getOrElse(ts.createdAt.get) }
   }
 }
