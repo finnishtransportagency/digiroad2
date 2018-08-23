@@ -27,5 +27,3 @@ trait UserProvider {
   def updateUserConfiguration(user: User): User
 }
 
-  def updateUserConfiguration(user: User): User
-}
