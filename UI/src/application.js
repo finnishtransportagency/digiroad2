@@ -65,7 +65,7 @@
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
       manoeuvresCollection: manoeuvresCollection,
-      municipalitySituationCollection: municipalitySituationCollection
+      municipalitySituationCollection: municipalitySituationCollection,
       userNotificationCollection: userNotificationCollection
     };
 
