@@ -154,7 +154,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   def getPropertyValue(trafficSignAttributes: CsvAssetRow, propertyName: String) = {
     trafficSignAttributes.properties.find (prop => prop.columnName == propertyName).map(_.value).get
   }
-  def createTrafficSigns(trafficSignAttributes: CsvAssetRow): Unit ={
+  def createTrafficSigns(trafficSignAttributes: CsvAssetRow, municipalitiesToExpire: Option[Seq[Int]]): Unit ={
     val value = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString)
     val trafficSignType = getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt
     val bearing = tryToInt(getPropertyValue(trafficSignAttributes, "bearing").toString)
@@ -164,16 +164,11 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val lat = getPropertyValue(trafficSignAttributes, "lat").asInstanceOf[BigDecimal].toLong
     val additionalInfo = Some(getPropertyValue(trafficSignAttributes, "additionalInfo").toString())
 
-    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided), TrafficDirection.apply(trafficDirection), bearing, additionalInfo)
+    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided),
+      TrafficDirection.apply(trafficDirection), bearing, additionalInfo, municipalitiesToExpire)
   }
 
-  def deleteTrafficSignsByMunicipality(municipality: Int) = {
-    trafficSignService.getByMunicipality(municipality).foreach { ts =>
-      trafficSignService.expire(ts.id, userProvider.getCurrentUser().username)
-    }
-  }
-
-  def importTrafficSigns(inputStream: InputStream, municipalities: Option[Seq[Int]]): ImportResult = {
+  def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Option[Seq[Int]]): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -195,16 +190,8 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
           })
 
       } else {
-        municipalities match {
-          case Some(values) =>
-            values.foreach{ municipality =>
-              deleteTrafficSignsByMunicipality(municipality)
-            }
-          case _ => None
-        }
-
         val parsedRow = CsvAssetRow(properties = properties)
-        createTrafficSigns(parsedRow)
+        createTrafficSigns(parsedRow, municipalitiesToExpire)
         result
       }
     }

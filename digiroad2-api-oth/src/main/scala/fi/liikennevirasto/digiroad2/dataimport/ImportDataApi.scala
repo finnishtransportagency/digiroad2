@@ -22,9 +22,9 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   private val trafficSignCsvImporter = new TrafficSignCsvImporter
   private val maintenanceRoadCsvImporter = new MaintenanceRoadCsvImporter
 
-  private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream, municipalities: Option[Seq[Int]]): CsvDataImporterOperations = {
+  private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream, municipalitiesToExpire: Option[Seq[Int]]): CsvDataImporterOperations = {
     assetType match {
-      case "trafficsigns" => importTrafficSigns(csvFileInputStream, municipalities)
+      case "trafficsigns" => importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
       case "maintenanceRoads" => importMaintenanceRoads(csvFileInputStream)
       case _ => importRoadLinks(csvFileInputStream)
     }
@@ -40,10 +40,10 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
-  def importTrafficSigns(csvFileInputStream: InputStream, municipalities: Option[Seq[Int]]): Nothing = {
+  def importTrafficSigns(csvFileInputStream: InputStream, municipalitiesToExpire: Option[Seq[Int]]): Nothing = {
     val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", TRAFFIC_SIGN_LOG)
     try {
-      val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream, municipalities)
+      val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
       val response = result match {
         case trafficSignCsvImporter.ImportResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
         case trafficSignCsvImporter.ImportResult(Nil, excludedLinks, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
@@ -112,15 +112,16 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val csvFileInputStream = fileParams("csv-file").getInputStream
+    if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
     val assetType = params.getOrElse("asset-type", halt(BadRequest("Import not supported for selected asset type")))
-    val municipalities = request.getParameterValues("municipalityNumbers")== null match {
+    val municipalitiesToExpire = request.getParameterValues("municipalityNumbers")== null match {
       case false =>
         val municipalitiesSeq = splitToInts(request.getParameterValues("municipalityNumbers").mkString(","))
         validateUserMunicipality(municipalitiesSeq)
         municipalitiesSeq
       case true => None
     }
-    verifyServiceToUse(assetType, csvFileInputStream, municipalities)
+    verifyServiceToUse(assetType, csvFileInputStream, municipalitiesToExpire)
   }
 
   def validateUserMunicipality(municipalities: Option[Seq[Int]]) = {
