@@ -37,7 +37,7 @@
         {signValue: [5], image: 'images/traffic-signs/speed-limits/urbanAreaSign.png', height: 30},
         {signValue: [6], image: 'images/traffic-signs/speed-limits/endOfUrbanAreaSign.png',  height: 30},
         {signValue: [7], image: 'images/traffic-signs/regulator-signs/crossingSign.png'},
-        {signValue: [8], image: 'images/traffic-signs/maximum-restrictions/maximumLengthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters},
+        {signValue: [8], image: 'images/traffic-signs/maximum-restrictions/maximumLengthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters, offsetY: 5},
         {signValue: [9], image: 'images/traffic-signs/general-warning-signs/warningSign.png'},
         {signValue: [10], image: 'images/traffic-signs/prohibitions-and-restrictions/turningRestrictionLeftSign.png'},
         {signValue: [11], image: 'images/traffic-signs/prohibitions-and-restrictions/turningRestrictionRightSign.png'},
@@ -62,9 +62,9 @@
         {signValue: [30], image: 'images/traffic-signs/maximum-restrictions/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
         {signValue: [31], image: 'images/traffic-signs/maximum-restrictions/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters, unit: addMeters},
         {signValue: [32], image: 'images/traffic-signs/maximum-restrictions/totalWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons},
-        {signValue: [33], image: 'images/traffic-signs/maximum-restrictions/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons},
-        {signValue: [34], image: 'images/traffic-signs/maximum-restrictions/axleWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons },
-        {signValue: [35], image: 'images/traffic-signs/maximum-restrictions/bogieWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons },
+        {signValue: [33], image: 'images/traffic-signs/maximum-restrictions/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons, offsetY: 5},
+        {signValue: [34], image: 'images/traffic-signs/maximum-restrictions/axleWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons, offsetY: -1},
+        {signValue: [35], image: 'images/traffic-signs/maximum-restrictions/bogieWeightLimit.png', validation: validateMaximumRestrictions, convertion: convertToTons, unit: addTons, offsetY: -1 },
         {signValue: [36], image: 'images/traffic-signs/general-warning-signs/rightBendSign.png'},
         {signValue: [37], image: 'images/traffic-signs/general-warning-signs/leftBendSign.png'},
         {signValue: [38], image: 'images/traffic-signs/general-warning-signs/severalBendRightSign.png'},
@@ -77,9 +77,9 @@
         {signValue: [46], image: 'images/traffic-signs/additional-panels/freeHeight.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, height: 40},
         {signValue: [47], image: 'images/traffic-signs/additional-panels/hazmatProhibitionA.png', height: 27},
         {signValue: [48], image: 'images/traffic-signs/additional-panels/hazmatProhibitionB.png', height: 27},
-        {signValue: [49], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
-        {signValue: [50], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
-        {signValue: [51], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: showHourMinAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [49], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [50], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [51], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showHourMinAdditionalInfo, offsetX: 1, height: 30},
         {signValue: [52], image: 'images/traffic-signs/additional-panels/passengerCar.png', height: 20},
         {signValue: [53], image: 'images/traffic-signs/additional-panels/bus.png', height: 20},
         {signValue: [54], image: 'images/traffic-signs/additional-panels/lorry.png', height: 20},
@@ -87,8 +87,8 @@
         {signValue: [56], image: 'images/traffic-signs/additional-panels/vehicleForHandicapped.png', height: 20},
         {signValue: [57], image: 'images/traffic-signs/additional-panels/motorCycle.png', height: 20},
         {signValue: [58], image: 'images/traffic-signs/additional-panels/cycle.png', height: 20},
-        {signValue: [59], image: 'images/traffic-signs/additional-panels/parkingAgainstFee.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 12, height: 40},
-        {signValue: [60], image: 'images/traffic-signs/additional-panels/obligatoryUseOfParkingDisc.png', validation: validateAdditionalInfo, isToShowAdditionalInfo: showHourMinAdditionalInfo, offsetX: 12, height: 33},
+        {signValue: [59], image: 'images/traffic-signs/additional-panels/parkingAgainstFee.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showPeriodDayAdditionalInfo, offsetX: 12, height: 40},
+        {signValue: [60], image: 'images/traffic-signs/additional-panels/obligatoryUseOfParkingDisc.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showHourMinAdditionalInfo, offsetX: 12, height: 33},
         {signValue: [61], image: 'images/traffic-signs/additional-panels/additionalPanelWithText.png', validation: validateAdditionalInfo, maxLabelLength: 19, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 3,  height: 25},
         {signValue: [62], image: 'images/traffic-signs/additional-panels/drivingInServicePurposesAllowed.png', validation: validateAdditionalInfo, maxLabelLength: 13, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, height: 28},
         {signValue: [63], image: 'images/traffic-signs/regulatory-signs/busLane.png'},
@@ -165,7 +165,8 @@
       }
 
       function getTextOffsetY(){
-        return parseInt(''+ getHeight() / 2) + 1
+        var offsetY =  labelProperty && labelProperty.offsetY ? labelProperty.offsetY :  1;
+        return parseInt(''+ getHeight() / 2) + offsetY;
       }
 
       function getValidation(){
@@ -239,6 +240,20 @@
     var showPeriodTimeAdditionalInfo = function () {
       var firstPeriod = _.first(this.additionalInfo.match(/[(]?\d+\s*[-]{1}\s*\d+[)]?/));
       return firstPeriod ? firstPeriod : this.additionalInfo ? this.additionalInfo : '';
+    };
+
+    var showPeriodDayAdditionalInfo = function () {
+      var counter = 2;
+      var index = 0;
+      var output = "";
+      var timePeriods = this.additionalInfo ? this.additionalInfo.match(/[(]?\d+\s*[-]{1}\s*\d+[)]?/g) : [];
+
+      while (index < counter && timePeriods.length > index) {
+
+          output = output.concat((index > 0 ? '\n' : ""), timePeriods[index]);
+          index++;
+        }
+        return output.length !== 0 ? output : this.additionalInfo ? this.additionalInfo : '' ;
     };
 
     var validateSpeedLimitValues = function () {
