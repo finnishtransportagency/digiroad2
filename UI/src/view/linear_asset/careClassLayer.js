@@ -12,7 +12,7 @@
     var selectToolControl = me.getSelectToolControl();
     var vectorSource = me.getVectorSource();
 
-    function hasAsset(linearAsset) {
+    function hasAssetOrValue(linearAsset) {
       var id = linearAsset.id;
       var value = linearAsset.value;
       var nullOrUndefined = function(id){return _.isUndefined(id) || _.isNull(id);};
@@ -45,7 +45,7 @@
         var points = _.map(linearAsset.points, function(point) {
           return [point.x, point.y];
         });
-        var hasAsset = hasAsset(linearAsset);
+        var hasAsset = hasAssetOrValue(linearAsset);
         var road = new ol.geom.LineString(points);
         var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
         var noGreenCare = hasAsset && !valueExists(linearAsset, greenCareClass);
@@ -64,7 +64,7 @@
         });
         var noGreenCare = !_.isUndefined(linearAsset.id) && !valueExists(linearAsset, greenCareClass);
         var noWinterCare = !_.isUndefined(linearAsset.id) && !valueExists(linearAsset, winterCareClass);
-        var hasAsset = hasAsset(linearAsset);
+        var hasAsset = hasAssetOrValue(linearAsset);
 
         var properties = _.merge(linearAsset, {noGreenCare: noGreenCare}, {noWinterCare: noWinterCare}, { hasAsset: hasAsset });
         var feature = new ol.Feature(new ol.geom.LineString(points));
