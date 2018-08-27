@@ -18,14 +18,8 @@
       return properties ?  !_.isUndefined(asset.id) && _.isEmpty(properties.values): !_.isUndefined(asset.id) ;
     };
 
-    this.renderOverlays = function(linearAssets) {
-      return me.lineFeatures(_.map(linearAssets, function(linearAsset) {
-        var hasAsset = me.hasValue(linearAsset);
-        return _.merge({}, linearAsset, { type: 'overlay' }, { hasAsset: hasAsset }); }));
-    };
-
     me.renderFeatures = function(linearAssets) {
-      return  me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.renderOverlays(linearAssets));
+      return  me.lineFeatures(me.getNewFeatureProperties(linearAssets));
     };
 
     var pavedRoadStyleRules = [

@@ -44,7 +44,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     existingAssets
   }
 
-  protected def updateValueByExpiration(assetId: Long, typeId: Int, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int]): Option[Long] = {
+  protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int]): Option[Long] = {
     //Get Old Asset
     val oldAsset =
       valueToUpdate match {
@@ -66,18 +66,14 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
-//TODO check if this code could be move to inside the updateValueByExpiration, we already have the typeId info from old
+
     val assetTypeId = assetDao.getAssetTypeId(ids)
     validateRequiredProperties(assetTypeId.head._2, value.asInstanceOf[DynamicValue].value.properties)
 
-    val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
-//------
     ids.flatMap { id =>
-      //TODO remove this assetTypeById(id) and replace updateValueByExpiration(id, DynamicValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
-      val typeId = assetTypeById(id)
       value match {
         case DynamicValue(multiTypeProps) =>
-          updateValueByExpiration(id, typeId, DynamicValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
+          updateValueByExpiration(id, DynamicValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
         case _ =>
           Some(id)
       }
@@ -170,7 +166,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     }
   }
 
-  def validateRequiredProperties(typeId: Int, properties: Seq[DynamicProperty]): Unit = {
+  protected def validateRequiredProperties(typeId: Int, properties: Seq[DynamicProperty]): Unit = {
     val mandatoryProperties: Map[String, String] = dynamicLinearAssetDao.getAssetRequiredProperties(typeId)
     val nonEmptyMandatoryProperties: Seq[DynamicProperty] = properties.filter { property =>
       mandatoryProperties.contains(property.publicId) && property.values.nonEmpty

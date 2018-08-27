@@ -303,7 +303,6 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         style: new PavedRoadStyle(),
-        layer : PavedRoadLayer,
         form: new DynamicAssetForm({
             fields : [
               {

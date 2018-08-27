@@ -24,8 +24,6 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def assetDao: OracleAssetDao = new OracleAssetDao
   override def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
-  val PavedRoadAssetTypeId = 110
-
   val defaultMultiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("99")))))
   val defaultpPopertyData = DynamicValue(defaultMultiTypePropSeq)
 
@@ -35,7 +33,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
     val existingAssets =
       withDynTransaction {
-        enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoadAssetTypeId, linkIds ++ removedLinkIds))
+        dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, linkIds ++ removedLinkIds)
       }.filterNot(_.expired)
 
     val timing = System.currentTimeMillis
@@ -104,7 +102,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           if (assets.isEmpty)
             Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(defaultpPopertyData), 0,
               GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false,
-              LinearAssetTypes.PavedRoadAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
+              PavedRoad.typeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
               (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
@@ -131,7 +129,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
 
       if(toUpdate.nonEmpty) {
-        val persisted = enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet)).groupBy(_.id)
+        val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
         updateProjected(toUpdate, persisted, roadLinks)
 
         if (newLinearAssets.nonEmpty)
@@ -145,9 +143,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLink), informationSource = Some(MmlNls.value))
         linearAsset.value match {
           case Some(DynamicValue(multiTypeProps)) =>
-            val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
-            val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(linearAsset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-            val props = properties ++ defaultValues.toSet
+            val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset)
             validateRequiredProperties(linearAsset.typeId, props)
             dynamicLinearAssetDao.updateAssetProperties(id, props)
           case _ => None
@@ -172,9 +168,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case Some(DynamicValue(multiTypeProps)) =>
             dynamicLinearAssetDao.updateAssetLastModified(id, LinearAssetTypes.VvhGenerated) match {
               case Some(id) =>
-                val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
-                val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(linearAsset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-                val props = properties ++ defaultValues.toSet
+                val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset)
                 validateRequiredProperties(linearAsset.typeId, props)
                 dynamicLinearAssetDao.updateAssetProperties(id, props)
               case _ => None
@@ -183,6 +177,12 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         }
       }
     }
+  }
+
+  def setDefaultAndFilterProperties(multiTypeProps: DynamicAssetValue, roadLink: Option[RoadLink], linearAsset: PersistedLinearAsset) = {
+    val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
+    val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(linearAsset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+    properties ++ defaultValues.toSet
   }
 
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Seq[Long] = {
