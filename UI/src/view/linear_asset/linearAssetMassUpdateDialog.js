@@ -39,54 +39,6 @@
       }
     }
 
-    function _setValue(value){
-      if (validator(value)) {
-
-        if(!currentValue || _.isEmpty(currentValue.properties))
-          currentValue = value;
-
-        else{
-          var properties = _.map(currentValue.properties, function(property){ return _.find(value.properties, function(valueprop){return valueprop.publicId === property.publicId; });});
-          if (properties){
-            _.forEach(properties, function(property, i){property.values = value.properties[i].values;});
-            currentValue.properties = properties;
-          } else {
-            currentValue.properties.push({
-              publicId: value.properties[0].publicId,
-              values: value.properties[0].values,
-              propertyType: value.properties[0].propertyType,
-              required: value.properties[0].required
-            });
-          }
-        }
-
-        if(requiredPropertiesMissing())
-          $('button.save').prop('disabled', '');
-        else
-          $('button.save').prop('disabled', 'disabled');
-
-        selectedLinearAsset.setMultiValue(currentValue);
-      }
-
-      else {
-        $('button.save').prop('disabled', 'disabled');
-      }
-    }
-
-    function requiredPropertiesMissing() {
-
-      return _.every(currentValue.properties, function(property){
-        if(!property.required)
-          return true;
-
-        if(_.isEmpty(property.values))
-          return false;
-
-        return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
-      });
-
-    }
-
     function removeValue() {
       currentValue = undefined;
       selectedLinearAsset.removeMultiValue();
@@ -107,7 +59,7 @@
     var _renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({ count: count,  editElement: '' }));
       var selectedMulti = _.clone(selectedLinearAsset);
-      selectedMulti.setValue =  _setValue;
+      selectedMulti.setValue =  setValue;
       selectedMulti.removeValue = removeValue;
       container.find('.form-elements-container').html(formElements.renderForm(selectedMulti, true).find('.editable'));
       eventbus.trigger('massDialog:rendered' , $('button.save'));

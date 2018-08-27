@@ -33,6 +33,7 @@
   </span>
     <a class="header-link" id="startfeedback">Palaute työkalusta</a>
     <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
+    <a class="header-link" id="userNotification">Tiedotteet</a>
     <a href="#work-list/municipality" class="header-link" title="Kuntasivun ohjeistus on vielä työn alla. Tarkempi ohjeistus lisätään käyttöohjeeseen viikolla 7.">Tietolajien kuntasivu</a>
 </header>
 <div class="container">
@@ -58,6 +59,7 @@
 
 <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
 <script type="text/javascript" src="node_modules/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script type="text/javascript" src="node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
 <script type="text/javascript" src="node_modules/moment/min/moment.min.js"></script>
 <script type="text/javascript" src="node_modules/lodash/lodash.js"></script>
 <script type="text/javascript" src="node_modules/backbone/backbone.js"></script>
@@ -114,6 +116,7 @@
 <script type="text/javascript" src="src/view/linear_asset/trSpeedLimitStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/serviceRoadStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/pavedRoadStyle.js"></script>
+<script type="text/javascript" src="src/view/linear_asset/carryingCapacityStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/speedLimitMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/manoeuvreStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/manoeuvreLayer.js"></script>
@@ -122,6 +125,7 @@
 <script type="text/javascript" src="src/view/linear_asset/serviceRoadLabel.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/linearAssetLayer.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/serviceRoadLayer.js"></script>
+<script type="text/javascript" src="src/view/linear_asset/carryingCapacityLayer.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/groupedLinearAssetLayer.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/careClassLayer.js"></script>
 <script type="text/javascript" src="src/view/point_asset/pointAssetLayer.js"></script>
@@ -142,6 +146,7 @@
 <script type="text/javascript" src="src/view/point_asset/massTransitMarker.js"></script>
 <script type="text/javascript" src="src/view/point_asset/massTransitStop.js"></script>
 <script type="text/javascript" src="src/router.js"></script>
+<script type="text/javascript" src="src/applicationState.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/editModeToggleButton.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/actionPanelBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/trafficSignBox.js"></script>
@@ -161,10 +166,12 @@
 <script type="text/javascript" src="src/view/navigationpanel/widthLimitationBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/weightLimitationBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/careClassBox.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/carryingCapacityBox.js"></script>
 <script type="text/javascript" src="src/view/assetSelectionMenu.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/navigationPanel.js"></script>
 <script type="text/javascript" src="src/model/applicationModel.js"></script>
 <script type="text/javascript" src="src/controller/assetsVerificationCollection.js"></script>
+<script type="text/javascript" src="src/controller/userNotificationCollection.js"></script>
 <script type="text/javascript" src="src/controller/trafficSignsCollection.js"></script>
 <script type="text/javascript" src="src/controller/trafficSignsReadOnlyCollection.js"></script>
 <script type="text/javascript" src="src/controller/massTransitStopsCollection.js"></script>
@@ -183,17 +190,18 @@
 <script type="text/javascript" src="src/model/selectedManoeuvreSource.js"></script>
 <script type="text/javascript" src="src/model/linkPropertiesModel.js"></script>
 <script type="text/javascript" src="src/controller/manoeuvresCollection.js"></script>
-<script type="text/javascript" src="src/controller/FeedbackModel.js"></script>
+<script type="text/javascript" src="src/controller/feedbackModel.js"></script>
 <script type="text/javascript" src="src/model/locationSearch.js"></script>
 <script type="text/javascript" src="src/model/selectedLinearAssetFactory.js"></script>
 <script type="text/javascript" src="src/view/confirm.js"></script>
 <script type="text/javascript" src="src/view/genericConfirmPopup.js"></script>
+<script type="text/javascript" src="src/view/userNotificationPopup.js"></script>
 <script type="text/javascript" src="src/view/crosshairToggle.js"></script>
 <script type="text/javascript" src="src/view/providers/assetFormElementsFactory.js"></script>
 <script type="text/javascript" src="src/view/point_asset/massTransitStopForm.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/speedLimitForm.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/linearAssetForm.js"></script>
-<script type="text/javascript" src="src/view/FeedbackTool.js"></script>
+<script type="text/javascript" src="src/view/feedbackApplicationTool.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/piecewiseLinearAssetFormElements.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/prohibitionFormElements.js"></script>
 <script type="text/javascript" src="src/view/link_property/linkPropertyForm.js"></script>
@@ -212,6 +220,7 @@
 <script type="text/javascript" src="src/view/verificationWorkList.js"></script>
 <script type="text/javascript" src="src/view/speedLimitWorkList.js"></script>
 <script type="text/javascript" src="src/view/municipalityDisplay.js"></script>
+<script type="text/javascript" src="src/view/feedbackDataTool.js"></script>
 <script type="text/javascript" src="src/controller/assetsVerificationCollection.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'STAGING' -->

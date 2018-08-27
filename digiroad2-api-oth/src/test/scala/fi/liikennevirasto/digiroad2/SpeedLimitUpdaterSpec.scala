@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.Municipality
 import fi.liikennevirasto.digiroad2.linearasset.UnknownSpeedLimit
 import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class SpeedLimitUpdaterSpec extends FunSuite with Matchers {

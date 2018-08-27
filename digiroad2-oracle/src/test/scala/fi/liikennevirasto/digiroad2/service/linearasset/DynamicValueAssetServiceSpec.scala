@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 class DynamicValueAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -48,5 +48,15 @@ class DynamicValueAssetServiceSpec extends FunSuite with Matchers {
     val asset1 = DynamicValue(DynamicAssetValue(Seq(choice1, ratings)))
     val asset2 = DynamicValue(DynamicAssetValue(Seq(ratings, choice2)))
     asset1.equals(asset2) should be (true)
+  }
+
+  test("comparison is done correctly regardless of order"){
+    val withValue = DynamicProperty("ratings", PropertyTypes.Number, required = false, Seq(DynamicPropertyValue(1000)))
+    val withoutValue = DynamicProperty("ratings", PropertyTypes.Number, required = false, Seq())
+    val assetWithValue = DynamicValue(DynamicAssetValue(Seq(withValue)))
+    val assetWithoutValue = DynamicValue(DynamicAssetValue(Seq(withoutValue)))
+
+    assetWithValue.equals(assetWithoutValue) should be (false)
+    assetWithoutValue.equals(assetWithValue) should be (false)
   }
 }

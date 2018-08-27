@@ -58,7 +58,7 @@
         };
 
         me.viewModeRender = function (field, propertyValues) {
-            var value = _.first(propertyValues, function(propertyValue) { return propertyValue.value ; });
+            var value = _.head(propertyValues, function(propertyValue) { return propertyValue.value ; });
             var _value = value ? value.value : '-';
 
             return $('' +
@@ -88,7 +88,7 @@
         var className =  assetTypeConfiguration.className;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             me.element = $('' +
@@ -113,7 +113,7 @@
         var className = assetTypeConfiguration.className;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             me.element = $('' +
@@ -147,7 +147,7 @@
         };
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
@@ -175,7 +175,7 @@
         var me = this;
 
         me.editModeRender = function (fieldValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : '-';
             return $('' +
                 '<div class="form-group">' +
@@ -201,20 +201,22 @@
         };
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
+      var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
             me.element =   $('' +
                 '<div class="form-group">' +
                 '   <label class="control-label">' + field.label + '</label>' +
-                '   <input type="text" name="' + field.publicId + '" '+ me.required +' class="form-control"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ me.disabled() + '>' +
+                '   <input type="text" name="' + field.publicId + '" '+ me.required() +' class="form-control' + unitClass + '"  fieldType = "' + field.type + '" value="' + _value + '"  id="' + className + '" '+ me.disabled() + '>' +
                 unit +
                 '</div>');
 
-            if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+
+      if (!isDisabled && me.hasDefaultValue()&& !value)
+        me.setSelectedValue(setValue, getValue);
 
             me.element.find('input[type=text]').on('keyup', function () {
                 me.setSelectedValue(setValue, getValue);
@@ -230,7 +232,7 @@
         var className = assetTypeConfiguration.className;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var selectedValue = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var template =  _.template(
@@ -242,7 +244,7 @@
 
             var optionTags = _.map(field.values, function(value) {
                 var selected = value.id.toString() === selectedValue ? " selected" : "";
-                return '<option value="' + value.id + '"' + selected + '>' + value.label + '</option>';
+                return value.hidden ? '' : '<option value="' + value.id + '"' + selected + '>' + value.label + '</option>';
             }).join('');
 
             me.element = $(template({className: className, optionTags: optionTags, disabled: me.disabled(), name: field.publicId, fieldType: field.type, required: me.required()}));
@@ -262,7 +264,7 @@
         };
 
         me.viewModeRender = function (field, currentValue) {
-            var value = _.first(currentValue, function(values) { return values.value ; });
+            var value = _.head(currentValue, function(values) { return values.value ; });
             var _value = value ? value.value : '-';
 
             var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
@@ -282,7 +284,7 @@
         var me = this;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var checkedValue = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var template =  _.template(
@@ -343,7 +345,7 @@
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
 
-            var someValue = _.first(fieldValue, function(values) { return values.value ; });
+            var someValue = _.head(fieldValue, function(values) { return values.value ; });
             var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
 
             var addDatePickers = function (field, html) {
@@ -356,9 +358,9 @@
                 '<label class="control-label">' + field.label + '</label>' +
                 '</div>');
 
-            var inputLabel = $('<input type="text" ' + me.disabled() + ' ' +  me.required() + '/>').addClass('form-control')
+            var inputLabel = $('<input type="text" ' + me.disabled() + '/>').addClass('form-control')
                 .attr('id', field.publicId)
-                .attr('required', me.required)
+                .attr('required', me.required())
                 .attr('placeholder',"pp.kk.vvvv")
                 .attr('fieldType', fieldValue.type)
                 .attr('value', value )
@@ -384,7 +386,7 @@
         var me = this;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : "0";
 
             var checked = !!parseInt(_value) ? 'checked' : '';
@@ -605,7 +607,7 @@
         var me = this;
 
         me.viewModeRender = function (field, currentValue) {
-            var value = _.first(currentValue, function(values) { return values.value ; });
+            var value = _.head(currentValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
 
             var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
@@ -792,7 +794,7 @@
             var unit = _assetTypeConfiguration.unit ? asset.value ? asset.value + ' ' + _assetTypeConfiguration.unit : '-' : asset.value ? 'on' : 'ei ole';
 
             var formGroup = $('' +
-                '<div class="form-group editable form-editable-'+ sideCodeClass +'">' +
+                '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
                 '  <label class="control-label">' + _assetTypeConfiguration.editControlLabels.title + '</label>' +
                 '  <p class="form-control-static ' + _assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
                 '</div>');
@@ -929,9 +931,9 @@
             var auth = _assetTypeConfiguration.authorizationPolicy || function() { return false; };
 
             var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
-              return auth.formEditModeAccess(asset);
+                return auth.formEditModeAccess(asset);
             });
-          return _.isEmpty(selectedAssets);
+            return _.isEmpty(selectedAssets);
         }
 
         me.isSplitOrSeparatedAllowed = function(){
@@ -950,11 +952,18 @@
       });
     };
 
-        me.isSaveable = function(sideCode){
-            return _.every(forms.getAllFields(), function(field){
-                return field.isValid();
-            });
+    me.isSaveable = function(){
+        var otherSaveCondition = function () {
+            if (_.isUndefined(_assetTypeConfiguration.saveCondition)) {
+                return true;
+            } else {
+                return _assetTypeConfiguration.saveCondition(forms.getAllFields());
+            }
         };
+        return _.every(forms.getAllFields(), function(field){
+          return field.isValid();
+        })&& otherSaveCondition();
+    };
 
         function events() {
             return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');

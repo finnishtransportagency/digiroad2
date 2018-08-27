@@ -204,7 +204,8 @@ object DataFixture {
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
       "kauniainen_traffic_signs.sql",
-      "kauniainen_maximum_x7_restrictions.sql"
+      "kauniainen_maximum_x7_restrictions.sql",
+      "user_notification_examples.sql"
     ))
   }
 
@@ -967,7 +968,8 @@ object DataFixture {
         val expiredAssetsIds = changedAssets.flatMap {
           case (_, changeInfo, assets) =>
               assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
-                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default")
+                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && (asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default" ||
+                  asset.modifiedBy.getOrElse("") == "vvh_generated" && asset.createdBy.getOrElse("") == "vvh_mtkclass_default"))
             ).map(_.id)
         }.toSet
 

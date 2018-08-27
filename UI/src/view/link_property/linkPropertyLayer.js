@@ -217,7 +217,8 @@
           return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});
       },
       onInteractionEnd: onInteractionEnd,
-      onSelect: selectRoadLink
+      onSelect: selectRoadLink,
+      layerName : layerName
     });
 
     this.activateSelection = function() {

@@ -1,7 +1,9 @@
 (function (root) {
-  root.LinkPropertyForm = function(selectedLinkProperty) {
+  root.LinkPropertyForm = function(selectedLinkProperty, feedbackCollection) {
+    var layer;
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+    new FeedbackDataTool(feedbackCollection, 'linkProperty', authorizationPolicy);
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -163,7 +165,7 @@
       if(notRendered) {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
-              '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
+            '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
           '</div>');
       }
     };
@@ -180,6 +182,14 @@
 
     function controlAdministrativeClasses(administrativeClass) {
       $("#adminClass").prop('disabled', administrativeClass == 'State');
+      $("#adminClass").find("option[value = State ]").prop('disabled', true);
+    }
+
+    function controlAdministrativeClassesOnToggle(selectedLinkProperty) {
+      var disabled = !_.isEmpty(_.filter(selectedLinkProperty.get(), function (link) {
+        return link.administrativeClass === "State";
+      }));
+      $("#adminClass").prop('disabled', disabled);
       $("#adminClass").find("option[value = State ]").prop('disabled', true);
     }
 
@@ -254,6 +264,7 @@
           selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
         });
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || applicationModel.isReadOnly());
+        controlAdministrativeClasses(linkProperties.administrativeClass);
       });
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
@@ -263,6 +274,7 @@
       });
       eventbus.on('application:readOnly', function(readOnly){
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || readOnly);
+        controlAdministrativeClassesOnToggle(selectedLinkProperty);
       });
       rootElement.on('click', '.link-properties button.save', function() {
         selectedLinkProperty.save();
@@ -271,9 +283,9 @@
         selectedLinkProperty.cancel();
       });
 
-
-      eventbus.on('layer:selected', function(layer) {
-        if(layer === 'linkProperty') {
+      eventbus.on('layer:selected', function(layerName) {
+        layer = layerName;
+        if(layerName === 'linkProperty') {
           renderLinkToIncompleteLinks();
         }
         else {

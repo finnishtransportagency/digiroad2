@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimi
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service._
-import fi.liikennevirasto.digiroad2.service.feedback.FeedbackApplicationService
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -276,6 +276,10 @@ object Digiroad2Context {
     new DynamicLinearAssetService(roadLinkService, eventbus)
   }
 
+  lazy val userNotificationService: UserNotificationService = {
+    new UserNotificationService()
+  }
+
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }
@@ -386,6 +390,8 @@ object Digiroad2Context {
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
+
+  lazy val dataFeedback : FeedbackDataService = new FeedbackDataService()
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {
