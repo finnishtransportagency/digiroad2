@@ -46,7 +46,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
       expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds,
       adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = newAndUpdatedPavingAssets.filter(_.id != 0).map( a => VVHChangesAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure, a.vvhTimeStamp)),
+      adjustedVVHChanges = newAndUpdatedPavedRoadAssets.filter(_.id != 0).map( a => VVHChangesAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure, a.vvhTimeStamp)),
       adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val combinedAssets = existingAssets.filterNot(a => expiredIds.contains(a.id) || newAndUpdatedPavedRoadAssets.exists(_.id == a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
