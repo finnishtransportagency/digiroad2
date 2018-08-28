@@ -508,7 +508,7 @@
     });
 
     this.userNotificationInfo = function() {
-      return $.post('api/userNotification');
+      return $.get('api/userNotification');
     };
 
     this.createAsset = function (data, errorCallback) {

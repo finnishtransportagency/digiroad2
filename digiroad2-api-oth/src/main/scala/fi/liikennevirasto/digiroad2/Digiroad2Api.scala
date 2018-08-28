@@ -151,7 +151,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
 
-  post("/userNotification") {
+  get("/userNotification") {
     val user = userProvider.getCurrentUser()
 
     val updatedUser = user.copy(configuration = user.configuration.copy(lastNotificationDate = Some(LocalDate.now.toString)))
