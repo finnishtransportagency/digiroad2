@@ -151,6 +151,10 @@ object DataFixture {
     new OracleAssetDao()
   }
 
+  lazy val dynamicLinearAssetDao : DynamicLinearAssetDao = {
+    new DynamicLinearAssetDao()
+  }
+
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
     if(property != null)
@@ -1309,7 +1313,7 @@ object DataFixture {
       OracleDatabase.withDynTransaction {
 
         println("Fetching assets")
-        val existingAssets = oracleLinearAssetDao.fetchLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
 
         println(s"Number of existing assets: ${existingAssets.length}")
         println(s"Start updating assets with Information Source")
