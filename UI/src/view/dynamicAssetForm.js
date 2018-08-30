@@ -77,7 +77,7 @@
 
             var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
             var value = properties.concat(currentPropertyValue);
-
+            console.log("value: " + value);
             setValue({ properties: value});
         };
     };
