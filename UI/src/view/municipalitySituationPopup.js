@@ -15,7 +15,7 @@ window.MunicipalitySituationPopup = function (models) {
     };
 
     var options = {
-        message: 'Tietolajien päivitystilanne: Huittinen',
+        message: 'Tietolajien päivitystilanne',
         saveButton: 'Siirry tietolajien kuntasivulle',
         cancelButton: 'Sulje',
         saveCallback: function(){},
