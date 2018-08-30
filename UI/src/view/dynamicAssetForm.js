@@ -8,6 +8,7 @@
         me.required = function() { return _.isUndefined(fieldSettings.required) ? '' : 'required';};
 
         me.hasDefaultValue = function(){
+            console.log(fieldSettings.defaultValue);
             return !_.isUndefined(fieldSettings.defaultValue);
         };
 
@@ -254,10 +255,12 @@
             };
 
             if (!isDisabled && me.hasDefaultValue() && !value)
+                console.log("first conditional: " + isDisabled + " " + me.hasDefaultValue() + " " + value);
                 me.setSelectedValue(setValue, getValue);
 
             me.element.find('select').on('change', function(){
-                me.setSelectedValue(setValue, getValue);
+                console.log("second conditional: " + isDisabled + " " + me.hasDefaultValue() + " " + value);
+              me.setSelectedValue(setValue, getValue);
             });
 
             return me.element;
