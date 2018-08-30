@@ -115,7 +115,6 @@ class VerificationDao {
           FROM municipality m
           JOIN asset_type atype ON atype.verifiable = 1 AND atype.id IN  (#${assetTypeCodes.mkString(",")})
           LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
-          LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID and a.municipality_code = m.id AND a.VALID_TO IS NULL
           WHERE m.id = $municipalityId""".as[(Int, String, Option[String], Option[DateTime], Int, String)].list
     criticalAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName) =>
       VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate)
