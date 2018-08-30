@@ -22,7 +22,7 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   private val trafficSignCsvImporter = new TrafficSignCsvImporter
   private val maintenanceRoadCsvImporter = new MaintenanceRoadCsvImporter
 
-  private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream, municipalitiesToExpire: Option[Seq[Int]]): CsvDataImporterOperations = {
+  private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream, municipalitiesToExpire: Seq[Int]): CsvDataImporterOperations = {
     assetType match {
       case "trafficsigns" => importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
       case "maintenanceRoads" => importMaintenanceRoads(csvFileInputStream)
@@ -40,7 +40,7 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
-  def importTrafficSigns(csvFileInputStream: InputStream, municipalitiesToExpire: Option[Seq[Int]]): Nothing = {
+  def importTrafficSigns(csvFileInputStream: InputStream, municipalitiesToExpire: Seq[Int]): Nothing = {
     val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", TRAFFIC_SIGN_LOG)
     try {
       val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
@@ -119,29 +119,27 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
         val municipalitiesSeq = splitToInts(request.getParameterValues("municipalityNumbers").mkString(","))
         validateUserMunicipality(municipalitiesSeq)
         municipalitiesSeq
-      case true => None
+      case true => Seq()
     }
     verifyServiceToUse(assetType, csvFileInputStream, municipalitiesToExpire)
   }
 
-  def validateUserMunicipality(municipalities: Option[Seq[Int]]) = {
+  def validateUserMunicipality(municipalities: Seq[Int]) = {
     val userAuthorizedMunicipalities = userProvider.getCurrentUser().configuration.authorizedMunicipalities
-    municipalities match {
-      case Some(values) =>
-        values.foreach { v =>
+
+    municipalities.foreach { v =>
           if (!userAuthorizedMunicipalities.contains(v)) {
             halt(Unauthorized("User Not Authorized to do modification at one of the selected municipalities!"))
           }
         }
-      case _ => None
-    }
+
   }
 
-  def splitToInts(numbers: String) : Option[Seq[Int]] = {
+  def splitToInts(numbers: String) : Seq[Int] = {
     val split = numbers.split(",").filterNot(_.trim.isEmpty)
     split match {
-      case Array() => None
-      case _ => Some(split.map(_.trim.toInt).toSeq)
+      case Array() => Seq()
+      case _ => split.map(_.trim.toInt).toSeq
     }
   }
 }

@@ -60,7 +60,7 @@
 
       function confSubmit(form) {
         if ($(deleteCheckbox).is(':checked')) {
-          new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
+          new GenericConfirmPopup('Haluatko varmasti poistaa kaikki jo aiemmin kunnan alueelle lisätyt liikennemerkit?', {
             successCallback: function () {
               var optionValues = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option');
               _.each(optionValues, function (opt) {
@@ -68,6 +68,7 @@
               });
 
               form.submit();
+              indicatorOverlayForCsvImport();
               return true;
             },
             closeCallback: function () {
@@ -75,6 +76,7 @@
             }
           });
         } else {
+          indicatorOverlayForCsvImport();
           form.submit();
           return true;
         }
@@ -96,6 +98,12 @@
           }
         });
       });
+
+
+      var indicatorOverlayForCsvImport= function() {
+        jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+      };
+
 
     </script>
 
@@ -171,6 +179,11 @@
   $('#asset-selection').on('change', function () {
     $('.btn.btn-primary.btn-lg').prop('disabled', !$(this).val());
     $(deleteCheckbox).prop('disabled', !$(this).val());
+    if($(this).val() === 'trafficsigns'){
+      $('#csvImportPoistaCheckbox').show();
+    } else {
+      $('#csvImportPoistaCheckbox').hide();
+    }
   }).trigger('change');
 </script>
 </body>

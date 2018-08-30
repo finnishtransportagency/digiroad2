@@ -316,7 +316,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
 
-    trafficSignCsvImporter.importTrafficSigns(invalidCsv, None) should equal(trafficSignCsvImporter.ImportResult(
+    trafficSignCsvImporter.importTrafficSigns(invalidCsv, Seq()) should equal(trafficSignCsvImporter.ImportResult(
       malformedAssets = List(trafficSignCsvImporter.MalformedAsset(
         malformedParameters = List("liikennemerkin tyyppi"),
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
@@ -327,7 +327,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
     val csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)
-    val assets = trafficSignCsvImporter.importTrafficSigns(invalidCsv, None)
+    val assets = trafficSignCsvImporter.importTrafficSigns(invalidCsv, Seq())
 
     assets.malformedAssets.flatMap(_.malformedParameters) should contain allOf ("koordinaatti x", "koordinaatti y", "liikennemerkin tyyppi")
     assets.malformedAssets.foreach {

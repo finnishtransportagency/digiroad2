@@ -334,20 +334,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def createFromCoordinates(lon: Long, lat: Long, trafficSignType: TRTrafficSignType, value: Option[Int],
                             twoSided: Option[Boolean], trafficDirection: TrafficDirection, bearing: Option[Int],
-                            additionalInfo: Option[String], municipalitiesToExpire: Option[Seq[Int]]): Long = {
+                            additionalInfo: Option[String]): Long = {
 
     val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon, lat))
     if (roadLinks.nonEmpty) {
       val closestLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
       val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
-      withDynTransaction {
-        municipalitiesToExpire match {
-          case Some(values) =>
-            values.foreach { municipality =>
-              deleteTrafficSignsByMunicipality(municipality)
-            }
-          case _ => None
-        }
 
         if (vvhRoad.isEmpty || vvhRoad.size > 1) {
           val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), 0, None)
@@ -371,7 +363,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
             }
           }.getOrElse(0L)
         }
-      }
     } else {
       0L
     }
@@ -405,11 +396,5 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def getLatestModifiedAsset(trafficSigns: Seq[PersistedTrafficSign]): PersistedTrafficSign = {
     trafficSigns.maxBy { ts => ts.modifiedAt.getOrElse(ts.createdAt.get) }
-  }
-
-  def deleteTrafficSignsByMunicipality(municipality: Int) = {
-    getByMunicipality(municipality).foreach { ts =>
-      expireWithoutTransaction(ts.id, userProvider.getCurrentUser().username)
-    }
   }
 }

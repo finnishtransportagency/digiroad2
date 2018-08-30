@@ -154,7 +154,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   def getPropertyValue(trafficSignAttributes: CsvAssetRow, propertyName: String) = {
     trafficSignAttributes.properties.find (prop => prop.columnName == propertyName).map(_.value).get
   }
-  def createTrafficSigns(trafficSignAttributes: CsvAssetRow, municipalitiesToExpire: Option[Seq[Int]]): Unit ={
+  def createTrafficSigns(trafficSignAttributes: CsvAssetRow): Unit ={
     val value = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString)
     val trafficSignType = getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt
     val bearing = tryToInt(getPropertyValue(trafficSignAttributes, "bearing").toString)
@@ -162,37 +162,42 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val twoSided = getPropertyValue(trafficSignAttributes, "twoSided").toString match { case "Kaksipuoleinen" => true case _ => false }
     val lon = getPropertyValue(trafficSignAttributes, "lon").asInstanceOf[BigDecimal].toLong
     val lat = getPropertyValue(trafficSignAttributes, "lat").asInstanceOf[BigDecimal].toLong
-    val additionalInfo = Some(getPropertyValue(trafficSignAttributes, "additionalInfo").toString())
+    val additionalInfo = Some(getPropertyValue(trafficSignAttributes, "additionalInfo").toString)
 
     trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided),
-      TrafficDirection.apply(trafficDirection), bearing, additionalInfo, municipalitiesToExpire)
+      TrafficDirection.apply(trafficDirection), bearing, additionalInfo)
   }
 
-  def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Option[Seq[Int]]): ImportResult = {
+  def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Seq[Int]): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
-      val csvRow = row.map( r =>(r._1.toLowerCase, r._2))
-      val missingParameters = findMissingParameters(csvRow)
-      val (malformedParameters, properties) = assetRowToProperties(csvRow)
 
-      if (missingParameters.nonEmpty || malformedParameters.nonEmpty) {
-        result.copy(
-          incompleteAssets = missingParameters match {
-            case Nil => result.incompleteAssets
-            case parameters => IncompleteAsset(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteAssets
-          },
-          malformedAssets = malformedParameters match {
-            case Nil => result.malformedAssets
-            case parameters => MalformedAsset(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedAssets
-          })
+    withDynTransaction{
+      trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire.toSet)
+      csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
+        val csvRow = row.map( r =>(r._1.toLowerCase, r._2))
+        val missingParameters = findMissingParameters(csvRow)
+        val (malformedParameters, properties) = assetRowToProperties(csvRow)
 
-      } else {
-        val parsedRow = CsvAssetRow(properties = properties)
-        createTrafficSigns(parsedRow, municipalitiesToExpire)
-        result
+        if (missingParameters.nonEmpty || malformedParameters.nonEmpty) {
+          result.copy(
+            incompleteAssets = missingParameters match {
+              case Nil => result.incompleteAssets
+              case parameters =>
+                IncompleteAsset(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteAssets
+            },
+            malformedAssets = malformedParameters match {
+              case Nil => result.malformedAssets
+              case parameters =>
+                MalformedAsset(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedAssets
+            })
+        } else {
+          val parsedRow = CsvAssetRow(properties = properties)
+          createTrafficSigns(parsedRow)
+          result
+        }
       }
     }
   }
