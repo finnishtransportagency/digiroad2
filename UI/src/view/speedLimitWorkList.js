@@ -10,7 +10,6 @@
     var municipalityName;
     var authorizationPolicy = new AuthorizationPolicy();
 
-
     this.bindEvents = function () {
       eventbus.on('municipalities:select', function(listP) {
         $('.container').hide();

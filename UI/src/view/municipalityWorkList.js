@@ -128,7 +128,6 @@
           return _.indexOf(assetOrdering, property.assetName);
         });
       };
-
       var upToDateAsset = function (asset) {
         return '' +
           '<tr>' +
