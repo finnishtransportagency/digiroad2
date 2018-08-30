@@ -80,7 +80,7 @@
             var value = properties.concat(currentPropertyValue);
             console.log("value from me.setSelectedValue line 81");
             console.log(value);
-            console.log("end value from me.setSelectedValue line 81")
+            console.log("end value from me.setSelectedValue line 81");
             setValue({ properties: value});
         };
     };
