@@ -1083,6 +1083,27 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }).getOrElse(Nil)
   }
 
+  //TODO remove after merge 1447
+  def pickForwardMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
+    val cPoint = getConnectionPoint(lastLink, candidates)
+    val candidateVectors = getGeometryFirstSegmentVectors(cPoint, candidates)
+    val (_, lastLinkVector) = getGeometryLastSegmentVector(cPoint, lastLink)
+    val (candidate, _) = candidateVectors.minBy{ case (_, vector) => Math.abs(lastLinkVector.angleXYWithNegativeValues(vector)) }
+    candidate
+  }
+
+  def getConnectionPoint(lastLink: RoadLink, projectLinks: Seq[RoadLink]) : Point =
+    GeometryUtils.connectionPoint(projectLinks.map(_.geometry) :+ lastLink.geometry).getOrElse(throw new Exception("Candidates should have at least one connection point"))
+
+  def getGeometryFirstSegmentVectors(connectionPoint: Point, candidates: Seq[RoadLink]) : Seq[(RoadLink, Vector3d)] =
+    candidates.map(pl => getGeometryFirstSegmentVector(connectionPoint, pl))
+
+  def getGeometryFirstSegmentVector(connectionPoint: Point, roadLink: RoadLink) : (RoadLink, Vector3d) =
+    (roadLink, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(roadLink.geometry.head, connectionPoint)) roadLink.geometry else roadLink.geometry.reverse))
+
+  def getGeometryLastSegmentVector(connectionPoint: Point, roadLink: RoadLink) : (RoadLink, Vector3d) =
+    (roadLink, GeometryUtils.lastSegmentDirection(if (GeometryUtils.areAdjacent(roadLink.geometry.last, connectionPoint)) roadLink.geometry else roadLink.geometry.reverse))
+
   private val cacheDirectory = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))

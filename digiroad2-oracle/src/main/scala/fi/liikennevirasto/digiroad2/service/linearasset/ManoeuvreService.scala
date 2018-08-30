@@ -13,6 +13,22 @@ case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: L
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
+sealed trait ManoeuvreTurnRestrictionType {
+  def value: Int
+}
+object ManoeuvreTurnRestrictionType {
+  val values = Set(UTurn, LeftTurn, RightTurn, Unknown)
+
+  def apply(intValue: Int): ManoeuvreTurnRestrictionType = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object UTurn extends ManoeuvreTurnRestrictionType { def value = 1 }
+  case object LeftTurn extends ManoeuvreTurnRestrictionType { def value = 2 }
+  case object RightTurn extends ManoeuvreTurnRestrictionType { def value = 3 }
+  case object Unknown extends ManoeuvreTurnRestrictionType { def value = 99 }
+}
+
 object ElementTypes {
   val FirstElement = 1
   val IntermediateElement = 2

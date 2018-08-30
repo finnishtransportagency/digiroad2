@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.oracle
 
+import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult}
@@ -42,6 +43,18 @@ object GenericQueries {
       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
       where a.id = $typeID
       """.as[AssetTypeMetadataRow].list //need to be created a orderFieldInForm , valueByDefaulField
+  }
+
+  def getLinkIdsWithMatchedAsset(typeID: Int, linkIds: Seq[Long]): Seq[Long] = {
+    sql"""
+      select pos.link_id
+      from asset a
+      join asset_link al on a.id = al.asset_id
+      join lrm_position pos on al.position_id = pos.id
+      where a.asset_type_id = $typeID
+      and (a.valid_to > sysdate or a.valid_to is null)
+      and pos.link_id in (#${linkIds.mkString(",")})
+      """.as[Long].list
   }
 
 }
