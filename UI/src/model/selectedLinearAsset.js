@@ -283,6 +283,7 @@
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
+        console.log("value: " + value + " selection: " + selection[0].value);
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
