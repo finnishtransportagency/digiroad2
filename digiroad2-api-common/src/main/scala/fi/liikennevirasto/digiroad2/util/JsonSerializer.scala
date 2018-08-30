@@ -7,7 +7,7 @@ import java.nio.file.Files.copy
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, NodeType, VVHRoadNodes}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink, ValidityPeriodDayOfWeek}
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}
 import org.json4s._
@@ -18,6 +18,11 @@ class JsonSerializer extends VVHSerializer {
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
     TrackSerializer + PointSerializer
+
+  override def readCachedTinyRoadLinks(file: File): Seq[TinyRoadLink] = {
+    val json = new FileReader(file)
+    read[Seq[TinyRoadLink]](json)
+  }
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
     val json = new FileReader(file)

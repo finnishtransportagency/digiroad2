@@ -1,12 +1,15 @@
 package fi.liikennevirasto.digiroad2.service
 
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import java.util.Date
+
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.VerificationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean, counter: Option[Int])
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean = false, counter: Option[Int] = None)
+case class LatestModificationInfo(assetTypeCode: Int, modifiedBy: Option[String], modifiedDate: Option[DateTime])
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
 
@@ -23,6 +26,12 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Seq[VerificationInfo] = {
     withDynSession {
       dao.getAssetVerification(municipalityCode, assetTypeId)
+    }
+  }
+
+  def getCriticalAssetVerification(municipalityCode: Int, assetTypeIds: Seq[Int]): Seq[VerificationInfo] = {
+    withDynSession {
+      dao.getCriticalAssetVerification(municipalityCode, assetTypeIds)
     }
   }
 
@@ -69,11 +78,34 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }.toSeq
   }
 
-  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) : Unit = {
     withDynTransaction{
       assetTypeIds.map { assetType =>
         dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
       }
+    }
+  }
+
+  def getCriticalAssetTypesByMunicipality(municipalityCode: Int): List[VerificationInfo] = {
+    val criticalAssetTypes =
+      Seq(
+        MassTransitStopAsset.typeId,
+        SpeedLimitAsset.typeId,
+        TotalWeightLimit.typeId,
+        Prohibition.typeId,
+        Manoeuvres.typeId
+      )
+
+      getCriticalAssetVerification(municipalityCode, criticalAssetTypes).toList
+  }
+
+  def getAssetLatestModifications(municipalities: Set[Int]): List[LatestModificationInfo] = {
+    val tinyRoadLink = municipalities.flatMap { municipality =>
+      roadLinkService.getTinyRoadLinkFromVVH(municipality)
+    }
+
+    withDynTransaction {
+      dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
     }
   }
 }

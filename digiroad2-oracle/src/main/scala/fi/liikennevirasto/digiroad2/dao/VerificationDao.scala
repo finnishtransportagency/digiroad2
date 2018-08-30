@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2.dao
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.service.VerificationInfo
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.service.{LatestModificationInfo, VerificationInfo}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
@@ -107,6 +108,20 @@ class VerificationDao {
     }
   }
 
+  def getCriticalAssetVerification(municipalityId: Int, assetTypeCodes: Seq[Int]) = {
+    val criticalAssetTypes =
+      sql"""
+          SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName
+          FROM municipality m
+          JOIN asset_type atype ON atype.verifiable = 1 AND atype.id IN  (#${assetTypeCodes.mkString(",")})
+          LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
+          LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID and a.municipality_code = m.id AND a.VALID_TO IS NULL
+          WHERE m.id = $municipalityId""".as[(Int, String, Option[String], Option[DateTime], Int, String)].list
+    criticalAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName) =>
+      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate)
+    }
+  }
+
   def insertAssetTypeVerification(municipalityId: Int, assetTypeId: Int, username: String): Long = {
     val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
     sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
@@ -130,5 +145,25 @@ class VerificationDao {
            from asset_type asst
            where asst.verifiable = 1
       """.as[(Int)].list
+  }
+
+  def getModifiedAssetTypes(linkIds : Set[Long]) : List[LatestModificationInfo] = {
+    val modifiedAssetTypes = MassQuery.withIds(linkIds) { idTableName =>
+      sql"""
+           select assetTypeId, modifiedBy, modifiedDate
+           from (
+              select  a.asset_type_id as assetTypeId, a.modified_by as modifiedBy, TO_DATE(TO_CHAR(a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss') as modifiedDate
+              from asset a
+              join asset_link al on a.id = al.asset_id
+              join lrm_position lrm on lrm.id = al.position_id
+              join #$idTableName i on i.id = lrm.link_id
+              where a.modified_date is not null
+              group by a.asset_type_id, a.modified_by,  TO_DATE(TO_CHAR(a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss')
+              order by max(a.modified_date) desc
+              ) where rownum <= 4""".as[(Int, Option[String], Option[DateTime])].list
+      }
+    modifiedAssetTypes.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
+      LatestModificationInfo(assetTypeCode,  modifiedBy, modifiedDate)
+    }
   }
 }

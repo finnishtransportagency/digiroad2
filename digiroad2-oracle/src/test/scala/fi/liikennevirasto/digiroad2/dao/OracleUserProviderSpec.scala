@@ -35,4 +35,18 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
     userInfo.configuration.lastNotificationDate should be (Some(LocalDate.now.toString))
     userInfo.configuration.municipalityNumber should be (Some(municipalityNumber))
   }
+
+  test("update user last login date field") {
+    executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
+    provider.getUser(TestUserName) should be(None)
+    provider.createUser(TestUserName, Configuration(municipalityNumber = Some(municipalityNumber)))
+    val user = provider.getUser(TestUserName).get
+
+    val updatedUser = user.copy(configuration = user.configuration.copy(lastLoginDate = Some(LocalDate.now().toString())))
+    provider.updateUserConfiguration(updatedUser)
+    val userInfo = provider.getUser(TestUserName).get
+    userInfo.username should be(TestUserName.toLowerCase)
+    userInfo.configuration.lastLoginDate should be(Some(LocalDate.now.toString))
+    userInfo.configuration.municipalityNumber should be(Some(municipalityNumber))
+  }
 }

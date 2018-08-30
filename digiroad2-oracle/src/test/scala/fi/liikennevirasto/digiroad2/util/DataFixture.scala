@@ -188,6 +188,7 @@ object DataFixture {
 
   def setUpTest() {
     migrateAll()
+    importMunicipalityCodes()
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",
@@ -209,7 +210,8 @@ object DataFixture {
       "kauniainen_railway_crossings.sql",
       "kauniainen_traffic_signs.sql",
       "kauniainen_maximum_x7_restrictions.sql",
-      "user_notification_examples.sql"
+      "user_notification_examples.sql",
+      "siilinjarvi_verificationService_test_data.sql"
     ))
   }
 
@@ -1413,7 +1415,6 @@ object DataFixture {
         setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
-        importMunicipalityCodes()
         TrafficSignTestData.createTestData
         ServicePointTestData.createTestData
       case Some("import_roadlink_data") =>

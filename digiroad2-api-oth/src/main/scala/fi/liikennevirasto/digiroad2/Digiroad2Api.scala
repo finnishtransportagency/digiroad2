@@ -1622,4 +1622,41 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     transformation(values)
   }
+
+  get("/dashBoardInfo") {
+    val user = userProvider.getCurrentUser()
+    val userConfiguration = user.configuration
+
+    userConfiguration.lastLoginDate match {
+      case Some(lastLoginDate) if lastLoginDate.compareTo(LocalDate.now().toString) == 0  || !user.isMunicipalityMaintainer =>
+        None
+      case _ =>
+        val municipalitiesNumbers =  userConfiguration.authorizedMunicipalities ++ userConfiguration.municipalityNumber
+        val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalitiesNumbers.head)
+        val modifiedAssetTypes = verificationService.getAssetLatestModifications(municipalitiesNumbers)
+
+        val updateUserLastLoginDate = user.copy(configuration = userConfiguration.copy(lastLoginDate = Some(LocalDate.now().toString)))
+        userProvider.updateUserConfiguration(updateUserLastLoginDate)
+
+        val verifiedMap =
+          verifiedAssetTypes.map(assetType =>
+            Map(
+              "typeId" -> assetType.assetTypeCode,
+              "assetName" -> assetType.assetTypeName,
+              "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+              "verified_by" -> assetType.verifiedBy.getOrElse("")
+            ))
+
+        val modifiedMap =
+          modifiedAssetTypes.map(assetType =>
+            Map(
+              "typeId" -> assetType.assetTypeCode,
+              "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+              "modified_by" -> assetType.modifiedBy.getOrElse("")
+            ))
+
+        (verifiedMap, modifiedMap)
+    }
+  }
+
 }
