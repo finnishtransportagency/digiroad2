@@ -191,6 +191,30 @@ object SideCode {
   case object Unknown extends SideCode { def value = 99 }
 }
 
+/**
+  * Values for PavementClass types enumeration
+  */
+sealed trait PavementClass {
+  def value: Int
+  def typeDescription: String
+}
+object PavementClass {
+  val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt, GravelSurface, GravelWearLayer, OtherCoatings, Unknown)
+
+  def apply(value: Int): PavementClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
+  case object Cobblestone extends PavementClass { def value = 2; def typeDescription = "Cobblestone";}
+  case object HardAsphalt extends PavementClass { def value = 10; def typeDescription = "Hard Asphalt";}
+  case object SoftAsphalt extends PavementClass { def value = 20; def typeDescription = "Soft Asphalt";}
+  case object GravelSurface extends PavementClass { def value = 30; def typeDescription = "Gravel Surface";}
+  case object GravelWearLayer extends PavementClass { def value = 40; def typeDescription = "Gravel Wear Layer";}
+  case object OtherCoatings extends PavementClass { def value = 50; def typeDescription = "Other Coatings";}
+  case object Unknown extends PavementClass { def value = 99;  def typeDescription = "Unknown";}
+}
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]

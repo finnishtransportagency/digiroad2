@@ -823,14 +823,14 @@
                 '  </div>' +
                 '</div>');
 
-      toggleElement.find('.radio input').on('change', function(event) {
-        var disabled = $(this).val() === 'disabled';
-        var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
-        input.prop('disabled', disabled);
+            toggleElement.find('.radio input').on('change', function(event) {
+                var disabled = $(this).val() === 'disabled';
+                var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+                input.prop('disabled', disabled);
 
                 if(disabled){
-                    removeValueFn();
-                    _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
+                  removeValueFn();
+                  _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
                   if(asset.value)
                     setValueFn(asset.value);
@@ -838,9 +838,7 @@
                     setValueFn({ properties: [] });
                 }
 
-        formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
-
-                eventbus.trigger(events('valueChanged'));
+                formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
             });
 
             formGroup.append(toggleElement);

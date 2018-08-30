@@ -362,7 +362,6 @@
 
     this.setDirty = function(dirtyValue) {
       dirty = dirtyValue;
-      eventbus.trigger(singleElementEvent('valueChanged'), self);
     };
 
     this.isSelected = function(linearAsset) {

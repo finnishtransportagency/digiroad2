@@ -27,7 +27,7 @@ object LinearAssetTypes {
   val AxleWeightLimits = 50
   val BogieWeightLimits = 60
   val ProhibitionAssetTypeId = 190
-  val PavingAssetTypeId = 110
+  val PavedRoadAssetTypeId = 110
   val RoadWidthAssetTypeId = 120
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
