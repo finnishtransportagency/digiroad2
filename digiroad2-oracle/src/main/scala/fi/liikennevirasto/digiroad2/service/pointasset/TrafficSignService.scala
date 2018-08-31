@@ -351,7 +351,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getTrafficSign(linkId : Long): Seq[PersistedTrafficSign] = {
-    OracleTrafficSignDao.fetchByLinkId(linkId)
+  def getTrafficSign(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+    OracleTrafficSignDao.fetchByLinkId(linkIds)
   }
 }

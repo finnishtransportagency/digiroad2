@@ -44,17 +44,4 @@ object GenericQueries {
       where a.id = $typeID
       """.as[AssetTypeMetadataRow].list //need to be created a orderFieldInForm , valueByDefaulField
   }
-
-  def getLinkIdsWithMatchedAsset(typeID: Int, linkIds: Seq[Long]): Seq[Long] = {
-    sql"""
-      select pos.link_id
-      from asset a
-      join asset_link al on a.id = al.asset_id
-      join lrm_position pos on al.position_id = pos.id
-      where a.asset_type_id = $typeID
-      and (a.valid_to > sysdate or a.valid_to is null)
-      and pos.link_id in (#${linkIds.mkString(",")})
-      """.as[Long].list
-  }
-
 }

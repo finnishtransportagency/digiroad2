@@ -77,8 +77,8 @@ object OracleTrafficSignDao {
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
   }
 
-  def fetchByLinkId(linkId : Long): Seq[PersistedTrafficSign] = {
-    val filter = s"Where a.asset_type_id = 300 and lp.link_id = "
+  def fetchByLinkId(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+    val filter = s"Where a.asset_type_id = 300 and lp.link_id in (${linkIds.mkString(",")})"
     fetchByFilter(query => query + filter)
   }
 

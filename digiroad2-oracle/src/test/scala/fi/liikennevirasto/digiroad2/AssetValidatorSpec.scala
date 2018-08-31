@@ -1,24 +1,20 @@
 package fi.liikennevirasto.digiroad2
 
 
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, OracleUserProvider}
+import fi.liikennevirasto.digiroad2.asset.{AxleWeightLimit, TotalWeightLimit, WidthLimit, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.process.{AssetServiceValidator, HazmatTransportProhibitionValidator, ManoeuvreServiceValidator}
+import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType, TrafficSignTypeGroup}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType.{NoLeftTurn, NoRightTurn, NoUTurn}
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -87,7 +83,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propNoLeftTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10003l, 2, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1003l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l))).thenReturn(Seq(roadLink1, roadLink2))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.pickForwardMost(roadLink2, Seq(roadLink3))).thenReturn(roadLink3)
@@ -250,7 +246,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propNoLeftTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10003l, 2, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1003l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l))).thenReturn(Seq(roadLink1, roadLink2))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.pickForwardMost(roadLink2, Seq(roadLink3))).thenReturn(roadLink3)
@@ -276,7 +272,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propNoLeftTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10003l, 2, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1003l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l))).thenReturn(Seq(roadLink1, roadLink2))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.pickForwardMost(roadLink1, Seq(roadLink3))).thenReturn(roadLink3)
@@ -302,7 +298,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propNoRightTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.NoRightTurn.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10003l, 2, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1003l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l))).thenReturn(Seq(roadLink1, roadLink2))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.pickForwardMost(roadLink1, Seq(roadLink3))).thenReturn(roadLink3)
@@ -331,7 +327,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propNoLeftTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.NoUTurn.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10003l, 2, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1003l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l))).thenReturn(Seq(roadLink1, roadLink2))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l, 1005l))).thenReturn(Seq(roadLink1, roadLink2, roadLink5))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
@@ -359,7 +355,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propNoLeftTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.NoUTurn.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10003l, 2, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1003l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l))).thenReturn(Seq(roadLink1, roadLink2))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.pickForwardMost(roadLink1, Seq(roadLink3))).thenReturn(roadLink3)
@@ -390,11 +386,11 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propNoLeftTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10005l, 2, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1004l)).thenReturn(Seq())
-      when(mockTrafficSignService.getTrafficSign(1006l)).thenReturn(Seq())
-      when(mockTrafficSignService.getTrafficSign(1007l)).thenReturn(Seq())
+      when(mockTrafficSignService.getTrafficSign(Seq(1004l))).thenReturn(Seq())
+      when(mockTrafficSignService.getTrafficSign(Seq(1006l))).thenReturn(Seq())
+      when(mockTrafficSignService.getTrafficSign(Seq(1007l))).thenReturn(Seq())
 
-      when(mockTrafficSignService.getTrafficSign(1005l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1005l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l, 1003l))).thenReturn(Seq(roadLink1, roadLink2))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1003l, 1002l))).thenReturn(Seq(roadLink3, roadLink2))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink2, roadLink3, roadLink4, roadLink5, roadLink6, roadLink7))
@@ -427,8 +423,8 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propNoLeftTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10007l, 2, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1004l)).thenReturn(Seq())
-      when(mockTrafficSignService.getTrafficSign(1007l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1004l))).thenReturn(Seq())
+      when(mockTrafficSignService.getTrafficSign(Seq(1007l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l, 1003l))).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1003l, 1002l))).thenReturn(Seq(roadLink3, roadLink2))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink2, roadLink3, roadLink4, roadLink5, roadLink6, roadLink7))
@@ -459,7 +455,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       val propHazmatProhibitionA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.HazmatProhibitionA.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 10002l, 2, 2, 2, false, 0, 235, propHazmatProhibitionA, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockTrafficSignService.getTrafficSign(1003l)).thenReturn(Seq(trafficSign))
+      when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1001l, 1002l))).thenReturn(Seq(roadLink1, roadLink2))
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.pickForwardMost(roadLink2, Seq(roadLink3))).thenReturn(roadLink3)
@@ -518,4 +514,149 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
       dynamicSession.rollback()
     }
   }
+
+  /*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  /*------------------------------------------------------------------------------------ Mass Limitation Validator  ------------------------------------------------------------------------------------*/
+  /*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+//  val roadLink1 = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(0, 10.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+//  val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+//  val roadLink3 = RoadLink(1003l, Seq(Point(0.0, 20.0), Point(0.0, 30.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+//  val roadLink4 = RoadLink(1004l, Seq(Point(0.0, 30.0), Point(0.0, 40.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+//
+//  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+//
+//  val widthLimitValidator = new WidthLimitValidator(mockRoadLinkService, mockTrafficSignService) {
+//    override def roadLinkService: RoadLinkService = mockRoadLinkService
+//    override def trafficSignService: TrafficSignService = mockTrafficSignService
+//
+//    val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+//    override def dao: OracleLinearAssetDao =  mockLinearAssetDao
+//  }
+//
+//  val heightLimitValidator = new HeightLimitValidator(mockRoadLinkService, mockTrafficSignService) {
+//    override def roadLinkService: RoadLinkService = mockRoadLinkService
+//    override def trafficSignService: TrafficSignService = mockTrafficSignService
+//
+//    val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+//    override def dao: OracleLinearAssetDao =  mockLinearAssetDao
+//  }
+//
+//  val totalWeightLimitValidator = new TotalWeightLimitValidator(mockRoadLinkService, mockTrafficSignService) {
+//    override def roadLinkService: RoadLinkService = mockRoadLinkService
+//    override def trafficSignService: TrafficSignService = mockTrafficSignService
+//
+//    val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+//    override def dao: OracleLinearAssetDao =  mockLinearAssetDao
+//  }
+//
+//  val trailerTruckWeightLimitValidator = new TrailerTruckWeightLimitValidator(mockRoadLinkService, mockTrafficSignService) {
+//    override def roadLinkService: RoadLinkService = mockRoadLinkService
+//    override def trafficSignService: TrafficSignService = mockTrafficSignService
+//
+//    val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+//    override def dao: OracleLinearAssetDao =  mockLinearAssetDao
+//  }
+//
+//  val axleWeightLimitValidator = new AxleWeightLimitValidator(mockRoadLinkService, mockTrafficSignService) {
+//    override def roadLinkService: RoadLinkService = mockRoadLinkService
+//    override def trafficSignService: TrafficSignService = mockTrafficSignService
+//
+//    val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+//    override def dao: OracleLinearAssetDao =  mockLinearAssetDao
+//  }
+//
+//  val bogieWeightLimitValidator = new BogieWeightLimitValidator(mockRoadLinkService, mockTrafficSignService) {
+//    override def roadLinkService: RoadLinkService = mockRoadLinkService
+//    override def trafficSignService: TrafficSignService = mockTrafficSignService
+//
+//    val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+//    override def dao: OracleLinearAssetDao =  mockLinearAssetDao
+//  }
+//
+//  val lengthLimitValidator = new LengthLimitValidator(mockRoadLinkService, mockTrafficSignService) {
+//    override def roadLinkService: RoadLinkService = mockRoadLinkService
+//    override def trafficSignService: TrafficSignService = mockTrafficSignService
+//
+//    val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+//    override def dao: OracleLinearAssetDao =  mockLinearAssetDao
+//  }
+//
+//  case class MassLimitationValidator(typeId: Int, service: MassLimitationValidator, trafficSign: TrafficSignType )
+//  val massLimitationAssets = Seq(
+//    MassLimitationValidator(WidthLimit.typeId, widthLimitValidator, TrafficSignType.FreeWidth),
+//    MassLimitationValidator(HeightLimit.typeId, heightLimitValidator, TrafficSignType.MaxHeightExceeding),
+//    MassLimitationValidator(TotalWeightLimit.typeId, totalWeightLimitValidator, TrafficSignType.MaxLadenExceeding),
+//    MassLimitationValidator(TrailerTruckWeightLimit.typeId, trailerTruckWeightLimitValidator,TrafficSignType.MaxMassCombineVehiclesExceeding),
+//    MassLimitationValidator(AxleWeightLimit.typeId, axleWeightLimitValidator, TrafficSignType.MaxTonsOneAxleExceeding),
+//    MassLimitationValidator(BogieWeightLimit.typeId, bogieWeightLimitValidator, TrafficSignType.MaxTonsOnBogieExceeding),
+//    MassLimitationValidator(LengthLimit.typeId, lengthLimitValidator, TrafficSignType.MaximumLength)
+//  )
+//
+//  def massLimitationWithoutMatchedAssset(massLimitationAsset: MassLimitationValidator): Unit = {
+//    OracleDatabase.withDynTransaction {
+//
+//      val propTrafficSign = Seq(
+//        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(massLimitationAsset.trafficSign.value.toString))),
+//        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
+//        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
+//
+//      val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+//
+//      when(massLimitationAsset.service.dao.fetchLinearAssetsByLinkIds(widthLimitValidator.assetTypeInfo.typeId, Seq(1003l), LinearAssetTypes.numericValuePropertyId, false)).thenReturn(Seq())
+//      when(massLimitationAsset.service.dao.fetchLinearAssetsByLinkIds(widthLimitValidator.assetTypeInfo.typeId, Seq(1004l), LinearAssetTypes.numericValuePropertyId, false))
+//        .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(100)), 0.4, 9.6, None, None, None, None, false, massLimitationAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+//
+//      val result = widthLimitValidator.assetValidator(trafficSign)
+//      withClue("assetName " + AssetTypeInfo.apply(massLimitationAsset.typeId).toString) {
+//        result should be(false)
+//      }
+//
+//      dynamicSession.rollback()
+//    }
+//  }
+//
+//  def massLimitationWithtMatchedAssset(massLimitationAsset: MassLimitationValidator): Unit = {
+//    OracleDatabase.withDynTransaction {
+//      val propTrafficSign = Seq(
+//        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(massLimitationAsset.trafficSign.value.toString))),
+//        Property(1, "trafficSigns_value", "", false, Seq()),
+//        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
+//
+//      val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+//
+//      when(massLimitationAsset.service.dao.fetchLinearAssetsByLinkIds(widthLimitValidator.assetTypeInfo.typeId, Seq(1003l), LinearAssetTypes.numericValuePropertyId, false)).thenReturn(Seq())
+//      when(massLimitationAsset.service.dao.fetchLinearAssetsByLinkIds(widthLimitValidator.assetTypeInfo.typeId, Seq(1004l), LinearAssetTypes.numericValuePropertyId, false))
+//        .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(200)), 0.4, 9.6, None, None, None, None, false, massLimitationAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+//
+//      val result = widthLimitValidator.assetValidator(trafficSign)
+//      withClue("assetName " + AssetTypeInfo.apply(massLimitationAsset.typeId).toString) {
+//        result should be(true)
+//      }
+//
+//      dynamicSession.rollback()
+//    }
+//  }
+//
+//  test(" massLimitation traffic sign without match asset") {
+//    massLimitationAssets.foreach { massLimitationAsset =>
+//      massLimitationWithoutMatchedAssset(massLimitationAsset)
+//    }
+//  }
+//
+//  test(" widthLimit traffic sign should find a match asset") {
+//    massLimitationAssets.foreach { massLimitationAsset =>
+//      massLimitationWithtMatchedAssset(massLimitationAsset)
+//    }
+//  }
+
+
+
 }
+
+
+
+
+
+
+
+

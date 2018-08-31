@@ -1,15 +1,16 @@
 package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, HazmatTransportProhibition, PropertyValue, SideCode}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibitions, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, Prohibitions, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.GenericQueries
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, Manoeuvre, ManoeuvreTurnRestrictionType}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, LinearAssetTypes, Manoeuvre, ManoeuvreTurnRestrictionType}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType.NoVehiclesWithDangerGoods
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType, TrafficSignTypeGroup}
 
 import scala.math.Pi
@@ -46,13 +47,15 @@ trait AssetServiceValidator {
 
   def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Boolean
 
-  def verifyAssetX(asset: AssetType, roadLinks: Seq[RoadLink], trafficSigns: Seq[PersistedTrafficSign]): Boolean
+  def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSigns: Seq[PersistedTrafficSign]): Boolean
 
   def getAsset(roadLink: RoadLink): Seq[AssetType]
 
   def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign]
 
-  def getAdjacentRoadLink(point: Point,  prevRoadLink: RoadLink, roadLinks: Seq[RoadLink]) : Seq[(RoadLink, (Point, Point))]
+  def getAdjacentRoadLink(point: Point,  prevRoadLink: RoadLink, roadLinks: Seq[RoadLink]) : Seq[(RoadLink, (Point, Point))] = {
+    getAdjacents(point, roadLinks)
+  }
 
   def getAdjacents(previousPoint: Point, roadLinks: Seq[RoadLink]): Seq[(RoadLink, (Point, Point))] = {
     roadLinks.filter {
@@ -110,7 +113,7 @@ trait AssetServiceValidator {
       if (trafficSign.isEmpty) {
         validatorX(oppositePoint, newRoadLink, filteredRoadLink, asset)
       } else {
-        verifyAssetX(asset, roadLinks, trafficSign)
+        verifyAssetX(asset, newRoadLink, trafficSign)
       }
     }
   }
@@ -156,7 +159,7 @@ class ManoeuvreServiceValidator(roadLinkServiceImpl: RoadLinkService, trafficSig
     adjacentInfo.filter(_._1 == mostForwardRoadLink)
   }
 
-  override def verifyAssetX(asset: AssetType, roadLinks: Seq[RoadLink], trafficSign: Seq[PersistedTrafficSign]): Boolean = {
+  override def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSign: Seq[PersistedTrafficSign]): Boolean = {
     val manoeuvres = Seq(asset.asInstanceOf[Manoeuvre])
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(manoeuvres.flatMap{_.elements.filterNot(_.elementType == ElementTypes.LastElement).flatMap{element => Seq(element.sourceLinkId) ++ Seq(element.destLinkId)}}.toSet)
 
@@ -228,7 +231,7 @@ class ManoeuvreServiceValidator(roadLinkServiceImpl: RoadLinkService, trafficSig
 
   override def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign] = {
     val trafficSignsRelevantToManoeuvre: Set[TrafficSignType] = Set(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn)
-    trafficSignService.getTrafficSign(roadLink.linkId).filter(trafficSign =>
+    trafficSignService.getTrafficSign(Seq(roadLink.linkId)).filter(trafficSign =>
       trafficSignsRelevantToManoeuvre.contains(TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)))
   }
 
@@ -257,10 +260,6 @@ class HazmatTransportProhibitionValidator(roadLinkServiceImpl: RoadLinkService, 
 
   def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
 
-  override def getAdjacentRoadLink(point: Point,  prevRoadLink: RoadLink, roadLinks: Seq[RoadLink]) : Seq[(RoadLink, (Point, Point))] = {
-    getAdjacents(point, roadLinks)
-  }
-
   def comparingProhibitionValue(prohibition: PersistedLinearAsset, typeId: Int) : Boolean = {
     prohibition.value match {
       case Some(value) => value.asInstanceOf[Prohibitions].prohibitions.exists(_.typeId == typeId)
@@ -276,13 +275,14 @@ class HazmatTransportProhibitionValidator(roadLinkServiceImpl: RoadLinkService, 
 
         case TrafficSignType.HazmatProhibitionA => comparingProhibitionValue(prohibition, 24)
         case TrafficSignType.HazmatProhibitionB => comparingProhibitionValue(prohibition, 25)
+        case NoVehiclesWithDangerGoods => true
         case _ => throw new NumberFormatException("Not supported trafficSign on Prohibition asset")
       }
     }
   }
 
-  override def verifyAssetX(asset: AssetType, roadLinks: Seq[RoadLink], trafficSigns: Seq[PersistedTrafficSign]): Boolean = {
-    val prohibitions = Seq(asset.asInstanceOf[PersistedLinearAsset])
+  override def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSigns: Seq[PersistedTrafficSign]): Boolean = {
+/*    val prohibitions = Seq(asset.asInstanceOf[PersistedLinearAsset])
     // fetch all asset in theses roadLinks
     //verify if exist some place in adjacent without link
     val linkIdWithAsset = GenericQueries.getLinkIdsWithMatchedAsset(asset.typeId, roadLinks.map(_.linkId))
@@ -295,14 +295,13 @@ class HazmatTransportProhibitionValidator(roadLinkServiceImpl: RoadLinkService, 
           TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
 
             case TrafficSignType.HazmatProhibitionA => comparingProhibitionValue(prohibitions.head, 24)
-
             case TrafficSignType.HazmatProhibitionB => comparingProhibitionValue(prohibitions.head, 24)
+            case NoVehiclesWithDangerGoods => true
             case _ => throw new NumberFormatException("Not supported trafficSign on Prohibition asset")
           }
-
         }
       }
-    }else true
+    }els*/ true
   }
 
   override def getAsset(roadLink: RoadLink): Seq[AssetType] = {
@@ -311,7 +310,7 @@ class HazmatTransportProhibitionValidator(roadLinkServiceImpl: RoadLinkService, 
 
   override def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign] = {
     val trafficSignsRelevantToHazmatTransportProhibition: Set[TrafficSignType] = Set(TrafficSignType.HazmatProhibitionA, TrafficSignType.HazmatProhibitionB)
-    trafficSignService.getTrafficSign(roadLink.linkId).filter(trafficSign =>
+    trafficSignService.getTrafficSign(Seq(roadLink.linkId)).filter(trafficSign =>
       trafficSignsRelevantToHazmatTransportProhibition.contains(TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)))
   }
 
@@ -324,5 +323,170 @@ class HazmatTransportProhibitionValidator(roadLinkServiceImpl: RoadLinkService, 
     if (!pointsOfInterest.exists { pointOfInterest =>
       assetValidatorX(prohibition, pointOfInterest, roadLink)
     }) false else true
+  }
+}
+
+abstract class MassLimitationValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService ) extends AssetServiceValidator {
+  override type AssetType = PersistedLinearAsset
+  override def trafficSignService: TrafficSignService = trafficSignServiceImpl
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+
+  def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+
+  def assetTypeInfo: AssetTypeInfo
+
+  def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign) : Boolean
+
+  def getAssetValue(asset: PersistedLinearAsset) : String = {
+    asset.value match {
+      case Some(NumericValue(intValue)) => intValue.toString
+      case _ => ""
+    }
+  }
+
+  override def getAsset(roadLink: RoadLink): Seq[AssetType] = {
+    dao.fetchLinearAssetsByLinkIds(assetTypeInfo.typeId ,Seq(roadLink.linkId), LinearAssetTypes.numericValuePropertyId, false)
+  }
+
+  override def verifyAsset(assets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Boolean = {
+    assets.forall { asset =>
+      comparingAssetAndTrafficValue(asset, trafficSign)
+    }
+  }
+
+  override def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSign: Seq[PersistedTrafficSign]): Boolean = {
+    false
+  }
+
+  def verifyAssetXX(asset: AssetType, pointOfInterest: Point, roadLink: RoadLink, trafficSign: Seq[PersistedTrafficSign], assetsOnRadius: Seq[PersistedLinearAsset]): Boolean = {
+    trafficSign.exists(comparingAssetAndTrafficValue(asset, _)) || assetsOnRadius.exists(_.value == asset.value)
+  }
+
+  override def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
+
+      val roadLinks = getLinkIdsByRadius(pointOfInterest)
+      val assetsOnRadius = dao.fetchLinearAssetsByLinkIds(asset.typeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId, false)
+      val trafficSigns = trafficSignService.getTrafficSign(roadLinks.map(_.linkId))
+
+      validatorXX(pointOfInterest, defaultRoadLink, roadLinks, asset, assetsOnRadius ,trafficSigns)
+    }
+
+  def validatorXX(point: Point, prevRoadLink: RoadLink, roadLinks: Seq[RoadLink], asset: PersistedLinearAsset, assetsOnRadius: Seq[PersistedLinearAsset], trafficSigns: Seq[PersistedTrafficSign]) : Boolean = {
+    val filteredRoadLink = roadLinks.filterNot(_.linkId == prevRoadLink.linkId)
+    getAdjacentRoadLink(point, prevRoadLink, filteredRoadLink).exists { case (newRoadLink, (_, oppositePoint)) =>
+      val filterTrafficSigns = trafficSigns.filter(_.linkId == newRoadLink)
+      val existingAsset = assetsOnRadius.filter { asset =>
+        asset.linkId == newRoadLink.linkId && GeometryUtils.areAdjacent(GeometryUtils.truncateGeometry2D(newRoadLink.geometry, asset.startMeasure, asset.endMeasure), point)
+      }
+
+      if (filterTrafficSigns.isEmpty || existingAsset.isEmpty) {
+        validatorXX(oppositePoint, newRoadLink, filteredRoadLink, asset, assetsOnRadius, trafficSigns)
+      } else {
+        verifyAssetXX(asset, point, newRoadLink, filterTrafficSigns, existingAsset )
+      }
+    }
+  }
+
+  val allowedTrafficSign: Set[TrafficSignType]
+
+  override def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign] = {
+    trafficSignService.getTrafficSign(Seq(roadLink.linkId)).filter(trafficSign =>
+      allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)))
+  }
+}
+
+class HeightLimitValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService ) extends MassLimitationValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService) {
+  override def assetTypeInfo: AssetTypeInfo = HeightLimit
+  override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.FreeHeight, TrafficSignType.MaxHeightExceeding)
+
+  override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
+    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      case TrafficSignType.FreeHeight =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_info").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case TrafficSignType.MaxHeightExceeding =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
+    }
+  }
+}
+
+class TotalWeightLimitValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService ) extends MassLimitationValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService) {
+  override def assetTypeInfo: AssetTypeInfo = TotalWeightLimit
+  override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.FreeHeight, TrafficSignType.MaxHeightExceeding)
+
+  override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
+    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      case TrafficSignType.MaxLadenExceeding =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
+    }
+  }
+}
+
+class TrailerTruckWeightLimitValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService ) extends MassLimitationValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService) {
+  override def assetTypeInfo: AssetTypeInfo = TrailerTruckWeightLimit
+  override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaxMassCombineVehiclesExceeding)
+
+  override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
+    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      case TrafficSignType.MaxMassCombineVehiclesExceeding =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
+    }
+  }
+}
+
+class AxleWeightLimitValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService ) extends MassLimitationValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService) {
+  override def assetTypeInfo: AssetTypeInfo = AxleWeightLimit
+  override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaxTonsOneAxleExceeding)
+
+  override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
+    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      case TrafficSignType.MaxTonsOneAxleExceeding =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
+    }
+  }
+}
+
+class BogieWeightLimitValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService ) extends MassLimitationValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService) {
+  override def assetTypeInfo: AssetTypeInfo = BogieWeightLimit
+  override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaxTonsOnBogieExceeding)
+
+  override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
+    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      case TrafficSignType.MaxTonsOnBogieExceeding =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
+    }
+  }
+}
+
+class WidthLimitValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService ) extends MassLimitationValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService) {
+  override def assetTypeInfo: AssetTypeInfo = WidthLimit
+  override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.NoWidthExceeding, TrafficSignType.FreeWidth)
+
+  override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
+    val assetValue = getAssetValue(asset)
+    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      case TrafficSignType.NoWidthExceeding =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case TrafficSignType.FreeWidth =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_info").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
+    }
+  }
+}
+
+class LengthLimitValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService ) extends MassLimitationValidator(roadLinkServiceImpl: RoadLinkService, trafficSignServiceImpl: TrafficSignService) {
+  override def assetTypeInfo: AssetTypeInfo = LengthLimit
+  override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaximumLength)
+
+  override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
+    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      case TrafficSignType.MaximumLength =>
+        getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+      case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
+    }
   }
 }
