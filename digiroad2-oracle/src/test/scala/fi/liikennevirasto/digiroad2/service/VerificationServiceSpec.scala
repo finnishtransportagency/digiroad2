@@ -37,8 +37,6 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
            values ($id, 235, 30, (sysdate - interval '1' year), 'testuser')""".execute
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
-           values ($id+1, 235, 40, (sysdate - interval '23' month), 'testuser')""".execute
-      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
            values ($id+2, 235, 50, (sysdate - interval '2' year), 'testuser')""".execute
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
            values ($id+3, 235, 60, sysdate, 'testuser')""".execute
@@ -46,15 +44,40 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       val verificationInfo = ServiceWithDao.getAssetTypesByMunicipality(235)
       verificationInfo should have size 25
       verificationInfo.filter(_.municipalityCode == 235) should have size 25
-      verificationInfo.filter(_.verifiedBy.isDefined) should have size 4
+      verificationInfo.filter(_.verifiedBy.isDefined) should have size 3
       verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (true)
-      verificationInfo.find(_.assetTypeCode == 40).map(_.verified).head should be (true)
       verificationInfo.find(_.assetTypeCode == 50).map(_.verified).head should be (false)
       verificationInfo.find(_.assetTypeCode == 60).map(_.verified).head should be (true)
-      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy) should have size 4
-      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
+      verificationInfo.filter(info => Set(30,50,60).contains(info.assetTypeCode)).map(_.verifiedBy) should have size 3
+      verificationInfo.filter(info => Set(30,50,60).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
     }
   }
+//TODO: The test belows contains a "23 months before" insert, can not be run on 31st day of the month.
+//  test("get verification asset types info"){
+//    runWithRollback {
+//      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+//           values ($id, 235, 30, (sysdate - interval '1' year), 'testuser')""".execute
+//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+//           values ($id+1, 235, 40, (sysdate - interval '23' month), 'testuser')""".execute
+//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+//           values ($id+2, 235, 50, (sysdate - interval '2' year), 'testuser')""".execute
+//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+//           values ($id+3, 235, 60, sysdate, 'testuser')""".execute
+//
+//      val verificationInfo = ServiceWithDao.getAssetTypesByMunicipality(235)
+//      verificationInfo should have size 25
+//      verificationInfo.filter(_.municipalityCode == 235) should have size 25
+//      verificationInfo.filter(_.verifiedBy.isDefined) should have size 4
+//      verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (true)
+//      verificationInfo.find(_.assetTypeCode == 40).map(_.verified).head should be (true)
+//      verificationInfo.find(_.assetTypeCode == 50).map(_.verified).head should be (false)
+//      verificationInfo.find(_.assetTypeCode == 60).map(_.verified).head should be (true)
+//      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy) should have size 4
+//      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
+//    }
+//  }
+
 
   test("get asset verification"){
     runWithRollback {
