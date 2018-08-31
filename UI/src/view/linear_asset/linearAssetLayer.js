@@ -185,6 +185,9 @@ root.LinearAssetLayer  = function(params) {
     if(evt.selected.length !== 0) {
       var feature = evt.selected[0];
       var properties = feature.getProperties();
+      console.log("onSelect line 188: ");
+      console.log(evt);
+      console.log(properties);
       verifyClickEvent(properties, evt);
     }else{
       if (selectedLinearAsset.exists()) {
