@@ -39,6 +39,10 @@
       selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       originalLinearAssetValue = self.getValue();
       collection.setSelection(self);
+      console.log("linearAsset:");
+      console.log(linearAsset);
+      console.log("selectedLinearAsset 42: \n selection before trigger:");
+      console.log(selection);
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
