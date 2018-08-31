@@ -8,7 +8,6 @@
         me.required = function() { return _.isUndefined(fieldSettings.required) ? '' : 'required';};
 
         me.hasDefaultValue = function(){
-            console.log(fieldSettings.defaultValue);
             return !_.isUndefined(fieldSettings.defaultValue);
         };
 
@@ -78,9 +77,6 @@
 
             var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
             var value = properties.concat(currentPropertyValue);
-            console.log("value from me.setSelectedValue line 81");
-            console.log(value);
-            console.log("end value from me.setSelectedValue line 81");
             setValue({ properties: value});
         };
     };
@@ -235,9 +231,6 @@
         var className = assetTypeConfiguration.className;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            console.log("value from SingleChoiceField editModeRender");
-            console.log(fieldValue);
-            console.log("end value from SingleChoiceField editModeRender");
             var value = _.head(fieldValue, function(values) { return values.value ; });
             var selectedValue = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
@@ -259,8 +252,6 @@
                 return me.element.find(":selected").val();
             };
             if (!isDisabled && me.hasDefaultValue() && !value){
-              console.log("has no value but has default value: " + isDisabled + " " + me.hasDefaultValue());
-              console.log(value);
               me.setSelectedValue(setValue, getValue);
             }
 
@@ -692,9 +683,6 @@
 
             eventbus.on(events('selected', 'cancelled'), function () {
                 var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
-                console.log("eventbus selected line 695: ");
-                console.log(_assetTypeConfiguration.selectedLinearAsset);
-                console.log(isDisabled);
                 rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
 
             });
@@ -747,11 +735,6 @@
                 var dynamicField = _.find(dynamicFormFields, function (availableFieldType) { return availableFieldType.name === field.type; });
                 var fieldType = new dynamicField.fieldType(_assetTypeConfiguration, field, isDisabled);
                 forms.addField(fieldType, sideCode);
-                console.log("me.renderFormElements line 746: ");
-                console.log("asset: ");
-                console.log(asset);
-                console.log("fieldValues:");
-                console.log(fieldValues);
                 var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
 
                 fieldGroupElement.append(fieldElement);
@@ -779,10 +762,6 @@
             }
             else
             {
-                console.log("me.renderForm line 778: asset:");
-                console.log(asset);
-                console.log(asset[0]);
-                console.log("end me.renderForm");
                 renderFormElements(asset[0], isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, selectedAsset.removeValue, isDisabled, body);
             }
 
@@ -857,9 +836,6 @@
                   else
                     setValueFn({ properties: [] });
                 }
-                console.log("renderFormElements with 8 parameters line 857: asset ");
-                console.log(asset);
-                console.log("end renderFormElements with 8 parameters line 857: asset");
                 formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
             });
 

@@ -39,10 +39,6 @@
       selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       originalLinearAssetValue = self.getValue();
       collection.setSelection(self);
-      console.log("linearAsset:");
-      console.log(linearAsset);
-      console.log("selectedLinearAsset 42: \n selection before trigger:");
-      console.log(selection);
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
@@ -287,10 +283,6 @@
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
-        console.log("setValue in selectedLinearAsset: ");
-        console.log(value);
-        console.log(selection[0].value);
-        console.log("end setValue in selectedLinearAsset");
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
