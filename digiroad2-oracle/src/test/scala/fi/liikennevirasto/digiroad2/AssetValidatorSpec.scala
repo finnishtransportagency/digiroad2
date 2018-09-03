@@ -12,6 +12,8 @@ import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, Traf
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.OracleAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
@@ -23,7 +25,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  //  val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
   //  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   //  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
@@ -66,15 +68,27 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
   //
 
 
-  val  manoeuvreValidator = new ManoeuvreServiceValidator(mockRoadLinkService, mockTrafficSignService) {
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def trafficSignService: TrafficSignService = mockTrafficSignService
 
-    val mockManoeuvreDAO = MockitoSugar.mock[ManoeuvreDao]
-    override def manoeuvreDao: ManoeuvreDao = mockManoeuvreDAO
+  val mockAssetDao: ManoeuvreDao = MockitoSugar.mock[ManoeuvreDao]
+  val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+
+
+  class TestManoeuvreServiceValidator extends ManoeuvreServiceValidator {
+    override lazy val manoeuvreDao: ManoeuvreDao = mockAssetDao
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
   }
 
-  test(" restriction sign without a match assset") {
+  class TestHazmatProhibitionServiceValidator extends HazmatTransportProhibitionValidator {
+    override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+  }
+
+  val manoeuvreValidator = new TestManoeuvreServiceValidator
+  val prohibitionValidator =  new TestHazmatProhibitionServiceValidator
+
+  test("Restriction sign without a match assset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(0.0, .0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -438,13 +452,6 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  val  prohibitionValidator = new HazmatTransportProhibitionValidator(mockRoadLinkService, mockTrafficSignService) {
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def trafficSignService: TrafficSignService = mockTrafficSignService
-
-    val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
-    override def dao: OracleLinearAssetDao =  mockLinearAssetDao
-  }
 
   test("  prohibition traffic sign validation should return false") {
     OracleDatabase.withDynTransaction {
