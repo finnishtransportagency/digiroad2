@@ -379,17 +379,25 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   private def checkInaccurateSpeedLimit(id: Option[Long] = None) = {
-    dao.getSpeedLimitLinksById(id.head).foreach { speedLimit =>
+    getSpeedLimitById(id.head, false) match {
+      case Some(speedLimit) =>
+        val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(speedLimit.linkId, false)
+          .find(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
+          .getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
 
-      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(speedLimit.linkId, false)
-        .find(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
-        .getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
+        val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(roadLink.linkId)
 
-      speedLimitValidator.checkInaccurateSpeedLimitValues(speedLimit, roadLink) match {
-        case Some(speedLimitAsset) =>
-          inaccurateAssetDao.createInaccurateAsset(speedLimitAsset.id, SpeedLimitAsset.typeId, roadLink.municipalityCode, roadLink.administrativeClass)
-        case _ => None
-      }
+        val inaccurateAssets =
+          speedLimitValidator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, Seq(speedLimit)).map {
+            inaccurateAsset =>
+              println(s"Inaccurate asset ${inaccurateAsset.id} found ")
+              (inaccurateAsset, roadLink.administrativeClass)
+          }
+
+        inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
+          inaccurateAssetDao.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, roadLink.municipalityCode, administrativeClass)
+        }
+      case _ => None
     }
   }
 

@@ -1041,11 +1041,10 @@ object DataFixture {
     }
 
     //Get All Municipalities
-    //TODO REVERTER ISTO
-    val municipalities: Seq[Int] = Seq(766)
-//    OracleDatabase.withDynSession {
-//      Queries.getMunicipalities
-//    }
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
@@ -1057,13 +1056,11 @@ object DataFixture {
         val inaccurateAssets = speedLimitsByLinkId.flatMap {
           case (linkId, speedLimits) =>
             val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkId)
-            trafficSigns.flatMap { trafficSign =>
-              val roadLink = roadLinks(linkId).head
-              speedLimitValidator.checkSpeedLimitUsingTrafficSign(trafficSign, roadLink, speedLimits).map {
-                inaccurateAsset =>
-                  println(s"Inaccurate asset ${inaccurateAsset.id} found ")
-                  (inaccurateAsset, roadLink.administrativeClass)
-              }
+            val roadLink = roadLinks(linkId).head
+            speedLimitValidator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimits).map {
+              inaccurateAsset =>
+                println(s"Inaccurate asset ${inaccurateAsset.id} found ")
+                (inaccurateAsset, roadLink.administrativeClass)
             }
         }
 
