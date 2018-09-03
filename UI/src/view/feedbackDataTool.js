@@ -90,7 +90,7 @@
           {name: 'assetId',   value : selectedData.assetId },
           {name: 'assetName', value : selectedData.title},
           {name: 'typeId',    value : selectedData.typeId},
-          {name: 'freeText',  value: $('#freetextData').html()});
+          {name: 'freeText',  value: $('#freeTextData').html()});
 
         if (formElements.valid()) {
           addSpinner();
@@ -117,12 +117,12 @@
     };
 
     var purge = function() {
-      $('.feedback-modal').remove();
+      $('.feedback-modal').empty();
     };
 
     var renderDialog = function(selectedAsset, layer) {
       var dialog = createFeedbackForm(selectedAsset, layer);
-      $('.container').append(dialog);
+      $('#feedbackData').html(dialog).addClass('feedback-modal');
     };
 
     var getData = function(){
@@ -178,7 +178,7 @@
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">Palaute</label>' +
-        '<div contenteditable="true" id="freetextData" class="form-control"></div>'+
+        '<div contenteditable="true" id="freeTextData" class="form-control"></div>'+
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">K-tunnus</label>' +
@@ -192,8 +192,7 @@
     };
 
     var createFeedbackForm = function(selectedAsset, layer) {
-      var  dialog =  $('<div class="feedback-modal" id="feedbackData">' +
-        '<div class="modal-dialog">' +
+      var  dialog =  $('<div class="modal-dialog">' +
         '<div class="content">' + me.message() + '<a class="header-link sulje">Sulje</a></div>' +
         '<form class="form form-horizontal" role="form">' +
         '<div class="form-group" id="feedbackForm">' +
