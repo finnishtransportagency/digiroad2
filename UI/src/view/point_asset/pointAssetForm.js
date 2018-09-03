@@ -132,6 +132,12 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       });
     }
 
+    function removeService(services, id) {
+      return _.remove(services, function(service) {
+        return service.id === id;
+      });
+    }
+
     function checkTypeExtension(service, modifications)  {
       var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
       if(!serviceTypeExtensions[serviceType])
@@ -153,12 +159,13 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       }
     });
 
-    rootElement.on('click', 'button.delete', function (evt) {
+    rootElement.on('click', '.service-point button.delete', function (evt) {
       var existingService = $(evt.target).closest('.service-point');
       $(evt.target).parent().parent().remove();
       var serviceId =  parseInt(existingService.find('input[type="text"]').attr('data-service-id'), 10);
       var services = selectedAsset.get().services;
-      var newServices = _.reject(services, { id: serviceId });
+      removeService(services, serviceId);
+      var newServices = selectedAsset.get().services;
       if(newServices.length < 2){
         rootElement.find('button.delete').hide();
       }
