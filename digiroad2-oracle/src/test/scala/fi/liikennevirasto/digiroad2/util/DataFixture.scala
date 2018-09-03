@@ -1021,53 +1021,6 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
-  def verifyInaccurateSpeedLimits(): Unit = {
-    println("Start inaccurate SpeedLimit verification\n")
-    println(DateTime.now())
-
-    val polygonTools: PolygonTools = new PolygonTools()
-    val dao = new OracleSpeedLimitDao(null, null)
-
-    //Expire all inaccuratedAssets
-    OracleDatabase.withDynTransaction {
-      inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
-    }
-
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-    OracleDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
-
-    municipalities.foreach { municipality =>
-      println("Working on... municipality -> " + municipality)
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
-
-      OracleDatabase.withDynTransaction {
-        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet))
-        val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(speedLimits.map(_.linkId).toSet)
-
-        val inaccurateAssets =  speedLimits.flatMap{speedLimit =>
-          val roadLink = roadLinks.get(speedLimit.linkId).get.head
-          println(s"Proncessing speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
-          speedLimitValidator.checkInaccurateSpeedLimitValuesWithTrafficSigns(speedLimit, roadLink, trafficSigns.filter(_.linkId == speedLimit.linkId)) match {
-            case Some(inaccurateAsset) =>
-              println(s"Inaccurate asset ${inaccurateAsset.id} found ")
-              Some(inaccurateAsset, roadLink.administrativeClass)
-            case _ => None
-          }
-        }
-
-        inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
-          inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
-        }
-      }
-    }
-
-    println("Ended inaccurate SpeedLimit verification\n")
-    println(DateTime.now())
-  }
-
   def updateAreasOnAsset(): Unit = {
     println("\nStart Update areas on Asset at time ")
     println(DateTime.now())
@@ -1425,8 +1378,6 @@ object DataFixture {
         updateAreasOnAsset()
       case Some("update_OTH_BS_with_TR_info") =>
         updateOTHBusStopWithTRInfo()
-      case Some("verify_inaccurate_speed_limit_assets") =>
-        verifyInaccurateSpeedLimits()
       case Some("update_information_source_on_existing_assets") =>
         updateInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>

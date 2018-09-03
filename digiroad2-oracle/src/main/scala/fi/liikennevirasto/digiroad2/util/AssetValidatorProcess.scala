@@ -2,8 +2,12 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.asset.{Municipality, SpeedLimitAsset}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{AssetServiceValidator, _}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
@@ -77,6 +81,61 @@ object AssetValidatorProcess {
     new LengthLimitValidator()
   }
 
+  lazy val speedLimitValidator: SpeedLimitValidator = {
+    new SpeedLimitValidator(trafficSignService)
+  }
+
+  lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
+    new InaccurateAssetDAO()
+  }
+
+  def verifyInaccurateSpeedLimits(): Unit = {
+    println("Start inaccurate SpeedLimit verification\n")
+    println(DateTime.now())
+
+    val polygonTools: PolygonTools = new PolygonTools()
+    val dao = new OracleSpeedLimitDao(null, null)
+
+    //Expire all inaccuratedAssets
+    OracleDatabase.withDynTransaction {
+      inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
+    }
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("Working on... municipality -> " + municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
+
+      OracleDatabase.withDynTransaction {
+        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet))
+        val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(speedLimits.map(_.linkId).toSet)
+
+        val inaccurateAssets =  speedLimits.flatMap{speedLimit =>
+          val roadLink = roadLinks.get(speedLimit.linkId).get.head
+          println(s"Proncessing speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
+          speedLimitValidator.checkInaccurateSpeedLimitValuesWithTrafficSigns(speedLimit, roadLink, trafficSigns.filter(_.linkId == speedLimit.linkId)) match {
+            case Some(inaccurateAsset) =>
+              println(s"Inaccurate asset ${inaccurateAsset.id} found ")
+              Some(inaccurateAsset, roadLink.administrativeClass)
+            case _ => None
+          }
+        }
+
+        inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
+          inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
+        }
+      }
+    }
+
+    println("Ended inaccurate SpeedLimit verification\n")
+    println(DateTime.now())
+  }
+
   val validatorProcessAssets = Map[String, AssetServiceValidator](
       "manoeuvre" -> manoeuvreServiceValidator,
       "hazmatTransportProhibition" -> hazmatTransportProhibitionValidator,
@@ -115,10 +174,13 @@ object AssetValidatorProcess {
         case _ => None
       }
 
-      val availableAssets = validatorProcessAssets.keySet
+      val availableAssets = validatorProcessAssets.keySet ++ Set("speedLimit")
 
       if(availableAssets.contains(assetName)){
-        validateAssets(validatorProcessAssets.get(assetName).get, radiousDistance)
+        if(assetName == "speedLimit")
+          verifyInaccurateSpeedLimits()
+        else
+          validateAssets(validatorProcessAssets.get(assetName).get, radiousDistance)
       }else{
         println(s"The asset with name $assetName is not supported")
         println()
