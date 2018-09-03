@@ -122,7 +122,7 @@
 
     var renderDialog = function(selectedAsset, layer) {
       var dialog = createFeedbackForm(selectedAsset, layer);
-      $('#feedbackData').html(dialog).addClass('feedback-modal');
+      $('#feedbackData').html(dialog);
     };
 
     var getData = function(){
