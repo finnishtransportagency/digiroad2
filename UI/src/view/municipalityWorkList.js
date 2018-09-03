@@ -71,7 +71,7 @@
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th id="name">TIETOLAJI</th> <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr></thead>';
+        return '<thead><th></th><th id="name">TIETOLAJI</th> <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
