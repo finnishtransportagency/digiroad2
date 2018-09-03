@@ -33,7 +33,7 @@
 
     function set(asset) {
       dirty = true;
-      _.merge(current, asset, function(a, b) {
+      _.mergeWith(current, asset, function(a, b) {
         if (_.isArray(a)) { return b; }
       });
       eventbus.trigger(assetName + ':changed');
