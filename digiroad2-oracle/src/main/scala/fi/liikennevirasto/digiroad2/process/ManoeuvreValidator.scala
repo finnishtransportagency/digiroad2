@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, Manoeuvre
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import scala.math.Pi
 
-class ManoeuvreServiceValidator extends AssetServiceValidator {
+class ManoeuvreValidator extends AssetServiceValidator {
   override type AssetType = Manoeuvre
 
   lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao(vvhClient)

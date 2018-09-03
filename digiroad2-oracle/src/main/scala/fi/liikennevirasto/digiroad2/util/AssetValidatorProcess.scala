@@ -45,8 +45,8 @@ object AssetValidatorProcess {
     new TrafficSignService(roadLinkService, userProvider)
   }
 
-  lazy val manoeuvreServiceValidator: ManoeuvreServiceValidator = {
-    new ManoeuvreServiceValidator()
+  lazy val manoeuvreServiceValidator: ManoeuvreValidator = {
+    new ManoeuvreValidator()
   }
 
   lazy val hazmatTransportProhibitionValidator: HazmatTransportProhibitionValidator = {
