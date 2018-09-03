@@ -90,7 +90,7 @@
           {name: 'assetId',   value : selectedData.assetId },
           {name: 'assetName', value : selectedData.title},
           {name: 'typeId',    value : selectedData.typeId},
-          {name: 'freeText',  value: $('#freetext').html()});
+          {name: 'freeText',  value: $('#freetextData').html()});
 
         if (formElements.valid()) {
           addSpinner();
@@ -178,7 +178,7 @@
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">Palaute</label>' +
-        '<div contenteditable="true" id="freetext" class="form-control"></div>'+
+        '<div contenteditable="true" id="freetextData" class="form-control"></div>'+
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">K-tunnus</label>' +
