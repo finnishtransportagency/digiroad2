@@ -8,9 +8,10 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, Manoeuvre
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import scala.math.Pi
 
-class ManoeuvreValidator extends AssetServiceValidator {
+class ManoeuvreValidator extends AssetServiceValidatorOperations {
   override type AssetType = Manoeuvre
-
+  override def assetName: String = "manoeuvre"
+  override val radiusDistance: Int = 50
   lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao(vvhClient)
 
   override def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Boolean = {
@@ -128,12 +129,6 @@ class ManoeuvreValidator extends AssetServiceValidator {
     val pointOfInterest : Point = if (GeometryUtils.areAdjacent(sourceFirst, secondFirst) || GeometryUtils.areAdjacent(sourceFirst, secondLast)) sourceLast else sourceFirst
 
     assetValidatorX(manoeuvre, pointOfInterest ,roadLinks.filter(_.linkId == sourceLinkId).head)
-  }
-
-  override def assetName: String = "manoeuvre"
-
-  def validate(radiousDistance: Option[Int]) = {
-
   }
 }
 

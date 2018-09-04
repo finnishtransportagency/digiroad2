@@ -35,7 +35,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
   val manoeuvreValidator = new TestManoeuvreValidator
 
-  test("Restriction sign without a match assset") {
+  test("restriction sign without a match assset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(0.0, .0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -57,7 +57,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("Left turn sign restriction with a match asset") {
+  test("left turn sign restriction with a match asset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, .0), Point(10, 5.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -193,7 +193,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" left manoeuvre without a sign") {
+  test("left manoeuvre without a sign") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -219,7 +219,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" left manoeuvre with a sign turn Left") {
+  test("left manoeuvre with a sign turn Left") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -245,7 +245,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" right manoeuvre with a sign turn right") {
+  test("right manoeuvre with a sign turn right") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(20.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -271,7 +271,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" manoeuvre with Uturn sign") {
+  test("manoeuvre with Uturn sign") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -302,7 +302,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" manoeuvre only turn left and Uturn sign") {
+  test("manoeuvre only turn left and Uturn sign") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -328,7 +328,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" manoeuvre without sign on a correct Road Link") {
+  test("manoeuvre without sign on a correct Road Link") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(100.0, 100.0), Point(150, 100.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(150.0, 100.0), Point(200, 100.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -365,7 +365,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" manoeuvre with a sign turn left Road Links ahead") {
+  test("manoeuvre with a sign turn left Road Links ahead") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(100.0, 100.0), Point(150, 100.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(150.0, 100.0), Point(200, 100.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))

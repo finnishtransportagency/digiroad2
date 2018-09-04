@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
 class LengthLimitValidator extends MassLimitationValidator {
   override def assetTypeInfo: AssetTypeInfo = LengthLimit
+  override def assetName: String = "lengthLimit"
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaximumLength)
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
@@ -16,6 +17,4 @@ class LengthLimitValidator extends MassLimitationValidator {
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }
-
-  override def assetName: String = "lengthLimit"
 }

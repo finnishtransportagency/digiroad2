@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
 class AxleWeightLimitValidator extends MassLimitationValidator{
   override def assetTypeInfo: AssetTypeInfo = AxleWeightLimit
+  override def assetName: String = "axleWeightLimit"
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaxTonsOneAxleExceeding)
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
@@ -16,6 +17,4 @@ class AxleWeightLimitValidator extends MassLimitationValidator{
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }
-
-  override def assetName: String = "axleWeightLimit"
 }

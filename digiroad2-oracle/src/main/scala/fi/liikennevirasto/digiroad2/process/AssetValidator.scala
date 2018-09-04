@@ -11,59 +11,31 @@ import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, Traf
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 
+case class Inaccurant(assetIds: Seq[Long], linkIds: Seq[Long])
+
 trait AssetServiceValidator {
 
-  protected def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
+  val eventbus = new DummyEventBus
 
   lazy val dr2properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-
   lazy val userProvider: UserProvider = {
     Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
-
-  val eventbus = new DummyEventBus
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider)
 
   type AssetType
   def assetName: String
-  val radiusDistance: Int = 50
+  val radiusDistance: Int
   val TrafficSignsGroup: Option[TrafficSignTypeGroup] = None
 
-  def getAssetName() = {
+  def getAssetName = {
     assetName
-  }
-
-  def getLinkIdsByRadius(point: Point): Seq[RoadLink] = {
-    val topLeft = Point(point.x - radiusDistance, point.y - radiusDistance)
-    val bottomRight = Point(point.x + radiusDistance, point.y + radiusDistance)
-
-    roadLinkService.getRoadLinksWithComplementaryFromVVH(BoundingRectangle(topLeft, bottomRight))
-  }
-
-  protected def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
-    sideCode match {
-      case SideCode.TowardsDigitizing => Seq(first)
-      case SideCode.AgainstDigitizing => Seq(last)
-      case _ => Seq(first, last) //Not expected a traffic sign with bothDirection
-    }
-  }
-
-  def findNearestRoadLink(point: Point, roadLinks: Seq[RoadLink]): RoadLink = {
-    roadLinks.map { roadLink =>
-      (GeometryUtils.calculateLinearReferenceFromPoint(Point(point.x, point.y), roadLink.geometry), roadLink)
-    }.minBy(_._1)._2
   }
 
   def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Boolean
@@ -74,6 +46,40 @@ trait AssetServiceValidator {
 
   def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign]
 
+  protected def getProperty(name: String) = {
+    val property = dr2properties.getProperty(name)
+    if(property != null)
+      property
+    else
+      throw new RuntimeException(s"cannot find property $name")
+  }
+
+  protected def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
+    sideCode match {
+      case SideCode.TowardsDigitizing => Seq(first)
+      case SideCode.AgainstDigitizing => Seq(last)
+      case _ => Seq(first, last) //Not expected a traffic sign with bothDirection
+    }
+  }
+
+  def verifyInaccurate(): Unit
+
+}
+
+trait AssetServiceValidatorOperations extends AssetServiceValidator{
+
+  def findNearestRoadLink(point: Point, roadLinks: Seq[RoadLink]): RoadLink = {
+    roadLinks.map { roadLink =>
+      (GeometryUtils.calculateLinearReferenceFromPoint(Point(point.x, point.y), roadLink.geometry), roadLink)
+    }.minBy(_._1)._2
+  }
+
+  def getLinkIdsByRadius(point: Point): Seq[RoadLink] = {
+    val topLeft = Point(point.x - radiusDistance, point.y - radiusDistance)
+    val bottomRight = Point(point.x + radiusDistance, point.y + radiusDistance)
+
+    roadLinkService.getRoadLinksWithComplementaryFromVVH(BoundingRectangle(topLeft, bottomRight))
+  }
   def getAdjacentRoadLink(point: Point,  prevRoadLink: RoadLink, roadLinks: Seq[RoadLink]) : Seq[(RoadLink, (Point, Point))] = {
     getAdjacents(point, roadLinks)
   }
@@ -140,6 +146,13 @@ trait AssetServiceValidator {
   //TODO move this method to a generic place
   def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  }
+
+  def verifyInaccurate() = {
+
+    println("Start verification ")
+
+    throw new UnsupportedOperationException
   }
 
 }

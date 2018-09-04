@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.process
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PropertyValue, WidthLimit}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
 class WidthLimitValidator extends MassLimitationValidator{
   override def assetTypeInfo: AssetTypeInfo = WidthLimit
+  override def assetName: String = "widthLimit"
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.NoWidthExceeding, TrafficSignType.FreeWidth)
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
@@ -21,6 +21,5 @@ class WidthLimitValidator extends MassLimitationValidator{
     }
   }
 
-  override def assetName: String = "widthLimit"
 }
 

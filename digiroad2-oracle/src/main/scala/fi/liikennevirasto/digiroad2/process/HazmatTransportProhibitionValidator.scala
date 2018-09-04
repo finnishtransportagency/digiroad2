@@ -5,13 +5,14 @@ import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibition, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibitions, RoadLink}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, ProhibitionService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType.NoVehiclesWithDangerGoods
 
-class HazmatTransportProhibitionValidator extends AssetServiceValidator {
+class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperations {
   override type AssetType = PersistedLinearAsset
+  override def assetName: String = "hazmatTransportProhibition"
+  override val radiusDistance: Int = 50
+
   lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
 
   def comparingProhibitionValue(prohibition: PersistedLinearAsset, typeId: Int) : Boolean = {
@@ -78,7 +79,5 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidator {
       assetValidatorX(prohibition, pointOfInterest, roadLink)
     }) false else true
   }
-
-  override def assetName: String = "hazmatTransportProhibition"
 }
 

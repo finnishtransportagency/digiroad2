@@ -128,13 +128,13 @@ class MassLimitationValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" massLimitation traffic sign without match asset") {
+  test("massLimitation traffic sign without match asset") {
     massLimitationAssets.foreach { massLimitationAsset =>
       massLimitationWithoutMatchedAssset(massLimitationAsset)
     }
   }
 
-  test(" widthLimit traffic sign should find a match asset") {
+  test("widthLimit traffic sign should find a match asset") {
     massLimitationAssets.foreach { massLimitationAsset =>
       massLimitationWithtMatchedAssset(massLimitationAsset)
     }

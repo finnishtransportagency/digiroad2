@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.process
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, HeightLimit, PropertyValue}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
 class HeightLimitValidator extends MassLimitationValidator {
   override def assetTypeInfo: AssetTypeInfo = HeightLimit
+  override def assetName: String = "heighLimit"
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.FreeHeight, TrafficSignType.MaxHeightExceeding)
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
@@ -19,7 +19,5 @@ class HeightLimitValidator extends MassLimitationValidator {
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }
-
-  override def assetName: String = "heighLimit"
 }
 

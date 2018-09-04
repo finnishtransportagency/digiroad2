@@ -1,18 +1,18 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.AssetTypeInfo
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes}
+import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
-trait MassLimitationValidator extends AssetServiceValidator {
+trait MassLimitationValidator extends AssetServiceValidatorOperations {
 
   override type AssetType = PersistedLinearAsset
+  override val radiusDistance: Int = 50
   lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
-
   def assetTypeInfo: AssetTypeInfo
 
   def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign) : Boolean

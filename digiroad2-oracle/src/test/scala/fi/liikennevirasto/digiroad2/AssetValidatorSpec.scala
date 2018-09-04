@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 
-import fi.liikennevirasto.digiroad2.asset.{AxleWeightLimit, TotalWeightLimit, WidthLimit, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -13,7 +13,6 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.OracleAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
@@ -48,7 +47,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
   val prohibitionValidator =  new TestHazmatProhibitionValidator
 
 
-  test("Restriction sign without a match assset") {
+  test("restriction sign without a match assset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(0.0, .0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -70,7 +69,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Left turn sign restriction with a match asset") {
+  test("left turn sign restriction with a match asset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, .0), Point(10, 5.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -206,7 +205,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test(" left manoeuvre without a sign") {
+  test("left manoeuvre without a sign") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -232,7 +231,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test(" left manoeuvre with a sign turn Left") {
+  test("left manoeuvre with a sign turn Left") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -258,7 +257,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test(" right manoeuvre with a sign turn right") {
+  test("right manoeuvre with a sign turn right") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(20.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -284,7 +283,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test(" manoeuvre with Uturn sign") {
+  test("manoeuvre with Uturn sign") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -315,7 +314,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test(" manoeuvre only turn left and Uturn sign") {
+  test("manoeuvre only turn left and Uturn sign") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -341,7 +340,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test(" manoeuvre without sign on a correct Road Link") {
+  test("manoeuvre without sign on a correct Road Link") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(100.0, 100.0), Point(150, 100.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(150.0, 100.0), Point(200, 100.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -378,7 +377,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test(" manoeuvre with a sign turn left Road Links ahead") {
+  test("manoeuvre with a sign turn left Road Links ahead") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(100.0, 100.0), Point(150, 100.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(150.0, 100.0), Point(200, 100.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -413,7 +412,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
   }
 
 
-  test("  prohibition traffic sign validation should return false") {
+  test("prohibition traffic sign validation should return false") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -434,7 +433,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("  prohibition traffic sign validation should find match asset") {
+  test("prohibition traffic sign validation should find match asset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(0.0, .0), Point(0, 10.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -458,7 +457,7 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test(" prohibition traffic validation should have all with asset") {
+  test("prohibition traffic validation should have all with asset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 0.0), Point(10, 10.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 10.0), Point(10, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -488,12 +487,6 @@ class AssetServiceValidatorSpec  extends FunSuite with Matchers with BeforeAndAf
   val roadLink4 = RoadLink(1004l, Seq(Point(0.0, 30.0), Point(0.0, 40.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
   when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
-
-
-
-
-
-
 }
 
 

@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.process.{AssetServiceValidator, _}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.getClass
 import org.joda.time.DateTime
 
 object AssetValidatorProcess {
@@ -93,7 +92,6 @@ object AssetValidatorProcess {
     println("Start inaccurate SpeedLimit verification\n")
     println(DateTime.now())
 
-    val polygonTools: PolygonTools = new PolygonTools()
     val dao = new OracleSpeedLimitDao(null, null)
 
     //Expire all inaccuratedAssets
@@ -136,7 +134,7 @@ object AssetValidatorProcess {
     println(DateTime.now())
   }
 
-  val validatorProcessAssets = Map[String, AssetServiceValidator](
+  private val validatorProcessAssets = Map[String, AssetServiceValidator](
       "manoeuvre" -> manoeuvreServiceValidator,
       "hazmatTransportProhibition" -> hazmatTransportProhibitionValidator,
       "heighLimit" -> heightLimitValidator,
@@ -180,7 +178,7 @@ object AssetValidatorProcess {
         if(assetName == "speedLimit")
           verifyInaccurateSpeedLimits()
         else
-          validateAssets(validatorProcessAssets.get(assetName).get, radiousDistance)
+          validateAssets(validatorProcessAssets.get(assetName).get)
       }else{
         println(s"The asset with name $assetName is not supported")
         println()
@@ -189,15 +187,14 @@ object AssetValidatorProcess {
     }
   }
 
-  private def validateAssets(assetServiceValidator: AssetServiceValidator, radiousDistance: Option[Int]): Unit = {
-    val assetType = assetServiceValidator.getAssetName()
+  private def validateAssets(assetServiceValidator: AssetServiceValidator): Unit = {
+    val assetType = assetServiceValidator.getAssetName
 
     println()
     println(s"Start $assetType import at: ")
     println(DateTime.now())
 
-    //TODO Pass the meters
-//    assetServiceValidator.validate(radiousDistance)
+    assetServiceValidator.verifyInaccurate()
 
     println(s"$assetType import complete at time: ")
     println(DateTime.now())

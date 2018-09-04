@@ -34,7 +34,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
 
   val prohibitionValidator = new TestHazmatProhibitionValidator
 
-  test("  prohibition traffic sign validation should return false") {
+  test("prohibition traffic sign validation should return false") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -55,7 +55,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("  prohibition traffic sign validation should find match asset") {
+  test("prohibition traffic sign validation should find match asset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(0.0, .0), Point(0, 10.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -79,7 +79,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test(" prohibition traffic validation should have all with asset") {
+  test("prohibition traffic validation should have all with asset") {
     OracleDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 0.0), Point(10, 10.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 10.0), Point(10, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
