@@ -4,14 +4,17 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
+import org.joda.time.DateTime
 
-case class Inaccurant(assetIds: Seq[Long], linkIds: Seq[Long])
+case class Inaccurate(assetIds: Seq[Long], linkIds: Seq[Long])
 
 trait AssetServiceValidator {
 
@@ -149,10 +152,26 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
   }
 
   def verifyInaccurate() = {
+    println(s"Start verification for asset $assetName")
+    println(DateTime.now())
 
-    println("Start verification ")
+    println("Fetching municipalities")
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
+      Queries.getMunicipalities
+    }
 
-    throw new UnsupportedOperationException
+    municipalities.foreach{
+      municipality =>
+        println(s"Start process for municipality $municipality")
+        val trafficSigns = trafficSignService.getByMunicipality(municipality)
+        trafficSigns.foreach {
+          trafficSign =>
+            println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
+            assetValidator(trafficSign)  // Will return an Inaccurent with a Seq[assetId] and Seq[LinkId]
+
+            //Iterate through the Seq[LinkId] and add it to the Inaccurate table
+            //Iterate through the Seq[AssetId] and add it to the Inaccurate table
+        }
+    }
   }
-
 }
