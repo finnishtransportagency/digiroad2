@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDA
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
 
-case class Inaccurate(assetIds: Option[Long], linkId: Option[Long], administrativeClass: AdministrativeClass)
+case class Inaccurate(assetId: Option[Long], linkId: Option[Long], administrativeClass: AdministrativeClass)
 
 trait AssetServiceValidator {
 
@@ -113,8 +113,8 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
     validator(pointOfInterest, trafficSignRoadLink, roadLinks: Seq[RoadLink], trafficSign)
   }
 
-  def assetValidator_(trafficSign: PersistedTrafficSign): Inaccurate = {
-    Inaccurate(None, None, Unknown)
+  def assetValidator_(trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
+    Seq.empty[Inaccurate]
   }
 
   def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
@@ -173,17 +173,22 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
         trafficSigns.foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
-            val inaccurate = assetValidator_(trafficSign)  // Will return an Inaccurate with a Seq[assetId] and Seq[LinkId]
-            val assetIds = inaccurate.assetIds
+            val inaccurates = assetValidator_(trafficSign)  // Will return an Inaccurate with a Seq[assetId] and Seq[LinkId]
 
             println("Processing inaccurate linkIds")
-
-
-//            inaccurate.roadLinks.foreach {
-//              roadLink =>
-//                println(s"Creating inaccurate link id for assetType $assetType and linkId ${roadLink.linkId}")
-//                inaccurateAssetDAO.createInaccurateLink(roadLink.linkId, assetType, municipality, roadLink.administrativeClass)
-//            }
+            inaccurates.foreach {
+              inaccurate =>
+                inaccurate.assetId match {
+                  case Some(asset) =>
+                    println(s"Creating inaccurate asset for assetType $assetType and assetId $asset")
+                    inaccurateAssetDAO.createInaccurateAsset(asset, assetType, municipality, inaccurate.administrativeClass)
+                  case _ => inaccurate.linkId match {
+                    case Some(linkId) =>
+                      println(s"Creating inaccurate link id for assetType $assetType and linkId $linkId")
+                      inaccurateAssetDAO.createInaccurateLink(linkId, assetType, municipality, inaccurate.administrativeClass)
+                  }
+                }
+            }
         }
     }
   }
