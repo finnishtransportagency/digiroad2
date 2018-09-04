@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType.NoVehicle
 class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperations {
   override type AssetType = PersistedLinearAsset
   override def assetName: String = "hazmatTransportProhibition"
+  override def assetType: Int = HazmatTransportProhibition.typeId
   override val radiusDistance: Int = 50
 
   lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)

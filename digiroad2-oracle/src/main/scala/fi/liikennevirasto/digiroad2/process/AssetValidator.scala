@@ -11,10 +11,11 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
 
-case class Inaccurate(assetIds: Seq[Long], linkIds: Seq[Long])
+case class Inaccurate(assetIds: Seq[Long], linkIds: Seq[Long], roadLinks: Seq[RoadLink])
 
 trait AssetServiceValidator {
 
@@ -34,6 +35,7 @@ trait AssetServiceValidator {
 
   type AssetType
   def assetName: String
+  def assetType: Int
   val radiusDistance: Int
   val TrafficSignsGroup: Option[TrafficSignTypeGroup] = None
 
@@ -111,6 +113,10 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
     validator(pointOfInterest, trafficSignRoadLink, roadLinks: Seq[RoadLink], trafficSign)
   }
 
+  def assetValidator_(trafficSign: PersistedTrafficSign): Inaccurate = {
+    Inaccurate(Seq.empty[Long], Seq.empty[Long], Seq.empty[RoadLink])
+  }
+
   def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
     val roadLinks = getLinkIdsByRadius(pointOfInterest)
     validatorX(pointOfInterest, defaultRoadLink, roadLinks, asset)
@@ -167,8 +173,17 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
         trafficSigns.foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
-            assetValidator(trafficSign)  // Will return an Inaccurent with a Seq[assetId] and Seq[LinkId]
+            val inaccurate = assetValidator_(trafficSign)  // Will return an Inaccurate with a Seq[assetId] and Seq[LinkId]
+            val assetIds = inaccurate.assetIds
 
+            inaccurate.linkIds.foreach {
+              linkId =>
+                val administrativeClass = inaccurate.roadLinks.find(_.linkId == linkId) match {
+                  case Some(roadLink) => roadLink.administrativeClass
+                  case _ => Unknown
+                }
+                inaccurateAssetDAO.createInaccurateLink(linkId, assetType, municipality, administrativeClass)
+            }
             //Iterate through the Seq[LinkId] and add it to the Inaccurate table
             //Iterate through the Seq[AssetId] and add it to the Inaccurate table
         }
