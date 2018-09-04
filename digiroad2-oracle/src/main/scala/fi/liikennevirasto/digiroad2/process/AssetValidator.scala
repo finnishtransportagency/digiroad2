@@ -4,14 +4,13 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
 
@@ -32,6 +31,8 @@ trait AssetServiceValidator {
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider)
+  lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
+
 
   type AssetType
   def assetName: String
@@ -89,7 +90,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
     val topLeft = Point(point.x - radiusDistance, point.y - radiusDistance)
     val bottomRight = Point(point.x + radiusDistance, point.y + radiusDistance)
 
-    roadLinkService.getRoadLinksWithComplementaryFromVVH(BoundingRectangle(topLeft, bottomRight))
+    roadLinkService.getRoadLinksWithComplementaryFromVVH(BoundingRectangle(topLeft, bottomRight), newTransaction = false)
   }
   def getAdjacentRoadLink(point: Point,  prevRoadLink: RoadLink, roadLinks: Seq[RoadLink]) : Seq[(RoadLink, (Point, Point))] = {
     getAdjacents(point, roadLinks)
@@ -109,7 +110,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
 
   //TODO needs to be refactor
   def assetValidator(trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
-    val point = Point(trafficSign.lon, trafficSign.lon)
+    val point = Point(trafficSign.lon, trafficSign.lat)
     val roadLinks = getLinkIdsByRadius(point)
     val trafficSignRoadLink = findNearestRoadLink(point, roadLinks)
 
@@ -125,9 +126,6 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
 //    validatorX(pointOfInterest, defaultRoadLink, roadLinks, asset)
 //  }
 
-  def assetValidator_(trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
-    Seq.empty[Inaccurate]
-  }
 
 //  def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
 //    val roadLinks = getLinkIdsByRadius(pointOfInterest)
@@ -177,6 +175,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
       Queries.getMunicipalities
     }
 
+//    val municipalities = Seq(749)
     municipalities.foreach{
       municipality =>
         println(s"Start process for municipality $municipality")
@@ -184,20 +183,19 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
         trafficSigns.foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
-            val inaccurates = assetValidator_(trafficSign)
-
-            println("Processing inaccurate linkIds")
-            inaccurates.foreach {
-              inaccurate =>
-                (inaccurate.assetId, inaccurate.linkId)match {
-                  case (Some(asset), _ )  =>
-                    println(s"Creating inaccurate asset for assetType $assetType and assetId $asset")
-                    inaccurateAssetDAO.createInaccurateAsset(asset, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                  case (_ , Some(linkId)) =>
+            OracleDatabase.withDynSession {
+              assetValidator(trafficSign).foreach {
+                inaccurate =>
+                  (inaccurate.assetId, inaccurate.linkId) match {
+                    case (Some(asset), _) =>
+                      println(s"Creating inaccurate asset for assetType $assetType and assetId $asset")
+                      inaccurateAssetDAO.createInaccurateAsset(asset, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                    case (_, Some(linkId)) =>
                       println(s"Creating inaccurate link id for assetType $assetType and linkId $linkId")
                       inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                  case( _, _) =>
-                }
+                    case (_, _) =>
+                  }
+              }
             }
         }
     }
