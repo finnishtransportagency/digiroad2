@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, Manoeuvre, ManoeuvreTurnRestrictionType}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
+import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDAO
 
 import scala.math.Pi
 
@@ -166,6 +167,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
           (inaccurate.assetId, inaccurate.linkId) match {
             case (Some(assetId), _) => inaccurateAssetDAO.createInaccurateAsset(assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
             case (_, Some(linkId)) => inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, roadLink.administrativeClass)
+            case _ => None
           }
       }
     }

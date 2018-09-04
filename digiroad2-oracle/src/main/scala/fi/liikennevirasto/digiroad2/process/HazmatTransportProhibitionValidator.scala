@@ -107,6 +107,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
           (inaccurate.assetId, inaccurate.linkId) match {
             case (Some(assetId), _) => inaccurateAssetDAO.createInaccurateAsset(assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
             case (_, Some(linkId)) => inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, roadLink.administrativeClass)
+            case _ => None
           }
       }
     }
