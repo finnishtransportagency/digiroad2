@@ -167,11 +167,6 @@ object AssetValidatorProcess {
       println("Usage: AssetValidatorProcess <asset> [<radiousDistance>]")
     }else{
       val assetName = args(0)
-      val radiousDistance = args.size match {
-        case 2 => Some(args(1).toInt)
-        case _ => None
-      }
-
       val availableAssets = validatorProcessAssets.keySet ++ Set("speedLimit")
 
       if(availableAssets.contains(assetName)){

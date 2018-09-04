@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDA
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
 
-case class Inaccurate(assetId: Option[Long], linkId: Option[Long], administrativeClass: AdministrativeClass)
+case class Inaccurate(assetId: Option[Long], linkId: Option[Long], municipalityCode: Int,  administrativeClass: AdministrativeClass)
 
 trait AssetServiceValidator {
 
@@ -173,20 +173,19 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
         trafficSigns.foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
-            val inaccurates = assetValidator_(trafficSign)  // Will return an Inaccurate with a Seq[assetId] and Seq[LinkId]
+            val inaccurates = assetValidator_(trafficSign)
 
             println("Processing inaccurate linkIds")
             inaccurates.foreach {
               inaccurate =>
-                inaccurate.assetId match {
-                  case Some(asset) =>
+                (inaccurate.assetId, inaccurate.linkId)match {
+                  case (Some(asset), _ )  =>
                     println(s"Creating inaccurate asset for assetType $assetType and assetId $asset")
-                    inaccurateAssetDAO.createInaccurateAsset(asset, assetType, municipality, inaccurate.administrativeClass)
-                  case _ => inaccurate.linkId match {
-                    case Some(linkId) =>
+                    inaccurateAssetDAO.createInaccurateAsset(asset, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                  case (_ , Some(linkId)) =>
                       println(s"Creating inaccurate link id for assetType $assetType and linkId $linkId")
-                      inaccurateAssetDAO.createInaccurateLink(linkId, assetType, municipality, inaccurate.administrativeClass)
-                  }
+                      inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                  case( _, _) =>
                 }
             }
         }
