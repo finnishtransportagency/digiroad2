@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
@@ -39,19 +39,25 @@ trait AssetServiceValidator {
   val radiusDistance: Int
   val TrafficSignsGroup: Option[TrafficSignTypeGroup] = None
 
-  def getAssetName = {
+  def getAssetName: String = {
     assetName
   }
 
-  def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Boolean
+  def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[Inaccurate]
 
-  def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSigns: Seq[PersistedTrafficSign]): Boolean
+//  def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSigns: Seq[PersistedTrafficSign]): Boolean
 
-  def getAsset(roadLink: RoadLink): Seq[AssetType]
+  def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType]
 
   def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign]
 
-  protected def getProperty(name: String) = {
+  def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType]): Seq[AssetType]
+
+  def reprocessAllRelevantTrafficSigns(asset: AssetType, roadLink: RoadLink) : Unit
+
+  val allowedTrafficSign: Set[TrafficSignType]
+
+  protected def getProperty(name: String): String = {
     val property = dr2properties.getProperty(name)
     if(property != null)
       property
@@ -63,7 +69,7 @@ trait AssetServiceValidator {
     sideCode match {
       case SideCode.TowardsDigitizing => Seq(first)
       case SideCode.AgainstDigitizing => Seq(last)
-      case _ => Seq(first, last) //Not expected a traffic sign with bothDirection
+      case _ => Seq() //Not expected a traffic sign with bothDirection
     }
   }
 
@@ -102,7 +108,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
   }
 
   //TODO needs to be refactor
-  def assetValidator(trafficSign: PersistedTrafficSign): Boolean = {
+  def assetValidator(trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
     val point = Point(trafficSign.lon, trafficSign.lon)
     val roadLinks = getLinkIdsByRadius(point)
     val trafficSignRoadLink = findNearestRoadLink(point, roadLinks)
@@ -110,54 +116,59 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
     val (first, last) = GeometryUtils.geometryEndpoints(trafficSignRoadLink.geometry)
     val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(trafficSign.validityDirection)).head
 
-    validator(pointOfInterest, trafficSignRoadLink, roadLinks: Seq[RoadLink], trafficSign)
+    val assets = getAsset(roadLinks)
+    validator(pointOfInterest, trafficSignRoadLink, roadLinks: Seq[RoadLink], trafficSign, assets, Seq())
   }
+
+//  def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
+//    val roadLinks = getLinkIdsByRadius(pointOfInterest)
+//    validatorX(pointOfInterest, defaultRoadLink, roadLinks, asset)
+//  }
 
   def assetValidator_(trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
     Seq.empty[Inaccurate]
   }
 
-  def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
-    val roadLinks = getLinkIdsByRadius(pointOfInterest)
-    validatorX(pointOfInterest, defaultRoadLink, roadLinks, asset)
-  }
+//  def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
+//    val roadLinks = getLinkIdsByRadius(pointOfInterest)
+//    validatorX(pointOfInterest, defaultRoadLink, roadLinks, asset)
+//  }
 
-  protected def validator(point: Point, oldRoadLink: RoadLink, roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Boolean = {
+  protected def validator(point: Point, oldRoadLink: RoadLink, roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign, assets: Seq[AssetType], inaccurate: Seq[Inaccurate]): Seq[Inaccurate] = {
     val filteredRoadLink = roadLinks.filterNot(_.linkId == oldRoadLink.linkId)
     val adjAcents = getAdjacents(point, filteredRoadLink)
     if(adjAcents.isEmpty)
-      false
+      Inaccurate(None, Some(oldRoadLink.linkId), oldRoadLink.municipalityCode, oldRoadLink.administrativeClass) +: inaccurate
     else {
-      adjAcents.forall { case (newRoadLink, (_, oppositePoint)) =>
-
-        val asset = getAsset(newRoadLink)
+      adjAcents.flatMap{ case (newRoadLink, (_, oppositePoint)) =>
+        val asset = filteredAsset(newRoadLink, assets)
         if (asset.isEmpty) {
-          validator(oppositePoint, newRoadLink: RoadLink, filteredRoadLink, trafficSign)
+          validator(oppositePoint, newRoadLink: RoadLink, filteredRoadLink, trafficSign, assets, inaccurate)
         } else {
-          verifyAsset(asset, roadLinks, trafficSign)
+          verifyAsset(asset, roadLinks, trafficSign) ++ inaccurate
         }
       }
     }
   }
 
-  protected def validatorX(point: Point, prevRoadLink: RoadLink, roadLinks: Seq[RoadLink], asset: AssetType): Boolean = {
-    val filteredRoadLink = roadLinks.filterNot(_.linkId == prevRoadLink.linkId)
-    getAdjacentRoadLink(point, prevRoadLink, filteredRoadLink).exists { case (newRoadLink, (_, oppositePoint)) =>
-      val trafficSign = getAssetTrafficSign(newRoadLink)
-      if (trafficSign.isEmpty) {
-        validatorX(oppositePoint, newRoadLink, filteredRoadLink, asset)
-      } else {
-        verifyAssetX(asset, newRoadLink, trafficSign)
-      }
-    }
-  }
+//  protected def validatorX(point: Point, prevRoadLink: RoadLink, roadLinks: Seq[RoadLink], asset: AssetType): Boolean = {
+//    val filteredRoadLink = roadLinks.filterNot(_.linkId == prevRoadLink.linkId)
+//    getAdjacentRoadLink(point, prevRoadLink, filteredRoadLink).exists { case (newRoadLink, (_, oppositePoint)) =>
+//      val trafficSign = getAssetTrafficSign(newRoadLink)
+//      if (trafficSign.isEmpty) {
+//        validatorX(oppositePoint, newRoadLink, filteredRoadLink, asset)
+//      } else {
+//        verifyAssetX(asset, newRoadLink, trafficSign)
+//      }
+//    }
+//  }
 
   //TODO move this method to a generic place
   def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 
-  def verifyInaccurate() = {
+  def verifyInaccurate() : Unit = {
     println(s"Start verification for asset $assetName")
     println(DateTime.now())
 
