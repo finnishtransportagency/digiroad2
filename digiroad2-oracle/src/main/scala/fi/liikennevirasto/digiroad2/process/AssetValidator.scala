@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDA
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
 
-case class Inaccurate(assetIds: Seq[Long], roadLinks: Seq[RoadLink])
+case class Inaccurate(assetIds: Option[Long], linkId: Option[Long], administrativeClass: AdministrativeClass)
 
 trait AssetServiceValidator {
 
@@ -114,7 +114,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
   }
 
   def assetValidator_(trafficSign: PersistedTrafficSign): Inaccurate = {
-    Inaccurate(Seq.empty[Long], Seq.empty[RoadLink])
+    Inaccurate(None, None, Unknown)
   }
 
   def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
@@ -177,13 +177,13 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
             val assetIds = inaccurate.assetIds
 
             println("Processing inaccurate linkIds")
-            inaccurate.roadLinks.foreach {
-              roadLink =>
-                println(s"Creating inaccurate link id for assetType $assetType and linkId ${roadLink.linkId}")
-                inaccurateAssetDAO.createInaccurateLink(roadLink.linkId, assetType, municipality, roadLink.administrativeClass)
-            }
-            //Iterate through the Seq[LinkId] and add it to the Inaccurate table
-            //Iterate through the Seq[AssetId] and add it to the Inaccurate table
+
+
+//            inaccurate.roadLinks.foreach {
+//              roadLink =>
+//                println(s"Creating inaccurate link id for assetType $assetType and linkId ${roadLink.linkId}")
+//                inaccurateAssetDAO.createInaccurateLink(roadLink.linkId, assetType, municipality, roadLink.administrativeClass)
+//            }
         }
     }
   }
