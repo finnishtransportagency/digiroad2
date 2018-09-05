@@ -591,7 +591,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   }
 
   get("/:assetType") {
-    contentType = formats("json")
+    contentType = formats("json")+ "; charset=utf-8"
     params.get("municipality").map { municipality =>
       val municipalityNumber = municipality.toInt
       val assetType = params("assetType")
