@@ -73,5 +73,9 @@ class InaccurateAssetDAO {
     sqlu"""delete from inaccurate_asset
           where asset_type_id = $typeId""".execute
   }
+
+  def deleteInaccurateAssetByIds(assetIds: Seq[Long]): Unit = {
+    sqlu"""delete from inaccurate_asset where asset_id in (#${assetIds.mkString(",")})""".execute
+  }
 }
 

@@ -136,10 +136,10 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
     manoeuvreDao.getByRoadLinks(roadLinks.map(_.linkId))
   }
 
-  override def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign] = {
-    trafficSignService.getTrafficSign(Seq(roadLink.linkId)).filter(trafficSign =>
-      allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)))
-  }
+//  override def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign] = {
+//    trafficSignService.getTrafficSign(Seq(roadLink.linkId)).filter(trafficSign =>
+//      allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)))
+//  }
 
 //  def validateManoeuvre(manoeuvre: Manoeuvre) : Boolean  = {
 //
@@ -156,35 +156,41 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 //    assetValidatorX(manoeuvre, pointOfInterest ,roadLinks.filter(_.linkId == sourceLinkId).head)
 //  }
 
-  override def reprocessAllRelevantTrafficSigns(asset: AssetType, roadLink: RoadLink): Unit = {
-    val sourceLinkId = asset.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).head
-    val nextLinkId = asset.elements.find(_.elementType == ElementTypes.IntermediateElement).map(_.sourceLinkId)
-      .getOrElse(asset.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).head)
+  override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
 
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(sourceLinkId, nextLinkId))
-
-    val (sourceFirst, sourceLast) = GeometryUtils.geometryEndpoints(roadLinks.filter(_.linkId == sourceLinkId).head.geometry)
-    val (secondFirst, secondLast) = GeometryUtils.geometryEndpoints(roadLinks.filter(_.linkId == nextLinkId).head.geometry)
-
-    val pointOfInterest : Point = if (GeometryUtils.areAdjacent(sourceFirst, secondFirst) || GeometryUtils.areAdjacent(sourceFirst, secondLast)) sourceLast else sourceFirst
-
-
-    val trafficSingsByRadius: Seq[PersistedTrafficSign] =
-      trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance)
-        .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
-
-    inaccurateAssetDAO.deleteInaccurateAssetById(asset.id)
-
-    trafficSingsByRadius.foreach { trafficSign =>
-      assetValidator(trafficSign).foreach{
-        inaccurate =>
-          (inaccurate.assetId, inaccurate.linkId) match {
-            case (Some(assetId), _) => inaccurateAssetDAO.createInaccurateAsset(assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
-            case (_, Some(linkId)) => inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, roadLink.administrativeClass)
-            case _ => None
-          }
-      }
-    }
-  }
+//    val asset: PersistedLinearAsset = validatorInfo.newAssetId match {
+//      case Some(newAssetId) => dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, Set(newAssetId)).head
+//      case _ => validatorInfo.oldAsset.asInstanceOf[Manoeuvre]
+//    }
+//
+//    val sourceLinkId = asset.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).head
+//    val nextLinkId = asset.elements.find(_.elementType == ElementTypes.IntermediateElement).map(_.sourceLinkId)
+//      .getOrElse(asset.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).head)
+//
+//    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(sourceLinkId, nextLinkId), newTransaction = false)
+//
+//    val (sourceFirst, sourceLast) = GeometryUtils.geometryEndpoints(roadLinks.filter(_.linkId == sourceLinkId).head.geometry)
+//    val (secondFirst, secondLast) = GeometryUtils.geometryEndpoints(roadLinks.filter(_.linkId == nextLinkId).head.geometry)
+//
+//    val pointOfInterest : Point = if (GeometryUtils.areAdjacent(sourceFirst, secondFirst) || GeometryUtils.areAdjacent(sourceFirst, secondLast)) sourceLast else sourceFirst
+//
+//
+//    val trafficSingsByRadius: Seq[PersistedTrafficSign] =
+//      trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance)
+//        .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+//
+//    inaccurateAssetDAO.deleteInaccurateAssetById(asset.id)
+//
+//    trafficSingsByRadius.foreach { trafficSign =>
+//      assetValidator(trafficSign).foreach{
+//        inaccurate =>
+//          (inaccurate.assetId, inaccurate.linkId) match {
+//            case (Some(assetId), _) => inaccurateAssetDAO.createInaccurateAsset(assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+//            case (_, Some(linkId)) => inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, roadLink.administrativeClass)
+//            case _ => None
+//          }
+//      }
+//    }
+ }
 }
 

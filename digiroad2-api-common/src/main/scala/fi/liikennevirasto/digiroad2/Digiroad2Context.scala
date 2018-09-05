@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.process.{AssetValidatorInfo, HazmatTransportProhibitionValidator}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.FeedbackApplicationService
 import fi.liikennevirasto.digiroad2.service.linearasset._
@@ -142,6 +143,13 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
   }
 }
 
+class HazmatTransportProhibitionValidation(prohibitionValidator: HazmatTransportProhibitionValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => prohibitionValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("hazmatTransportProhibitionValidator: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -205,6 +213,9 @@ object Digiroad2Context {
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
+
+  val hazmatTransportProhibitionValidator = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibition), name = "hazmatTransportProhibitionValidator")
+  eventbus.subscribe(hazmatTransportProhibitionValidator, "hazmatTransportProhibition:AssetValidator")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -321,6 +332,14 @@ object Digiroad2Context {
 
   lazy val prohibitionService: ProhibitionService = {
     new ProhibitionService(roadLinkService, eventbus)
+  }
+
+  lazy val hazmatTransportProhibitionService: HazmatTransportProhibitionService = {
+    new HazmatTransportProhibitionService(roadLinkService, eventbus)
+  }
+
+  lazy val hazmatTransportProhibition: HazmatTransportProhibitionValidator = {
+    new HazmatTransportProhibitionValidator()
   }
 
   lazy val textValueLinearAssetService: TextValueLinearAssetService = {

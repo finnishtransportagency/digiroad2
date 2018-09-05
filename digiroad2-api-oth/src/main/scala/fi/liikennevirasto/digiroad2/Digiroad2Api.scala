@@ -58,6 +58,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val pavingService: PavingService,
                    val roadWidthService: RoadWidthService,
                    val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
+                   val hazmatTransportProhibitionService: HazmatTransportProhibitionService = Digiroad2Context.hazmatTransportProhibitionService,
                    val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
                    val numericValueLinearAssetService: NumericValueLinearAssetService = Digiroad2Context.numericValueLinearAssetService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
@@ -1523,7 +1524,7 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
       case PavedRoad.typeId => pavingService
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
-      case HazmatTransportProhibition.typeId => prohibitionService
+      case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
       case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
       case _ => linearAssetService
