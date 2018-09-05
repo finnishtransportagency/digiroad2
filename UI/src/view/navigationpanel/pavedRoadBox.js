@@ -20,7 +20,7 @@
         [30, 'Soratien pintaus'],
         [40, 'Sorakulutuskerros '],
         [50, 'Muut pinnoitteet'],
-        [99, 'Päällysteen tyyppi tuntematon']
+        [99, 'Päällystetty, tyyppi tuntematon']
       ];
 
       return _.map(pavementClassValues, function (pavementClassValue) {

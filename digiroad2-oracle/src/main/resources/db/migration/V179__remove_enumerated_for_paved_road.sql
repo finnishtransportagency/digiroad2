@@ -1,1 +1,0 @@
-delete from ENUMERATED_VALUE where name_fi =  'Päällystemätön tie';
