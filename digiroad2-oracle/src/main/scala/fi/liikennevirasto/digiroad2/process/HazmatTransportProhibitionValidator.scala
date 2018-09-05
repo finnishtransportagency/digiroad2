@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibition, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -19,8 +19,23 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
 
   val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.HazmatProhibitionA, TrafficSignType.HazmatProhibitionB, NoVehiclesWithDangerGoods)
 
-  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType]): Seq[AssetType] = {
-    assets.filter(_.linkId == roadLink.linkId)
+  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double): Seq[AssetType] = {
+    def assetDistance(): (AssetType, Double) =  {
+      val (first, _) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+      if(GeometryUtils.areAdjacent(pointOfInterest, first)) {
+        val nearestAsset = assets.filter(a => a.linkId == roadLink.linkId).minBy(_.startMeasure)
+        (nearestAsset, nearestAsset.startMeasure)
+      }else{
+        val nearestAsset = assets.filter(a => a.linkId == roadLink.linkId).maxBy(_.endMeasure)
+        (nearestAsset, GeometryUtils.geometryLength(roadLink.geometry) - nearestAsset.endMeasure)
+      }
+    }
+
+    val (nearestAsset, nearestDistance) = assetDistance()
+    if(nearestDistance + distance <= radiusDistance)
+      Seq(nearestAsset)
+    else
+      Seq()
   }
 
   def comparingProhibitionValue(prohibition: PersistedLinearAsset, typeId: Int) : Boolean = {
@@ -30,7 +45,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
     }
   }
 
-  override def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
+  override def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val prohibitions = assets.asInstanceOf[Seq[PersistedLinearAsset]]
 
     prohibitions.flatMap{ prohibition =>
@@ -44,7 +59,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
         case NoVehiclesWithDangerGoods => Seq()
         case _ => throw new NumberFormatException("Not supported trafficSign on Prohibition asset")
       }
-    }
+    }.toSet
   }
 
 //  override def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSigns: Seq[PersistedTrafficSign]): Boolean = {
@@ -100,6 +115,8 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
       trafficSignService.getTrafficSignByRadius(position, radiusDistance)
         .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
     }
+
+    inaccurateAssetDAO.deleteInaccurateAssetById(asset.id)
 
     trafficSingsByRadius.foreach { trafficSign =>
       assetValidator(trafficSign).foreach{

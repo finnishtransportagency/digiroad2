@@ -1084,6 +1084,32 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   //TODO remove after merge 1447
+  def pickRightMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
+    val cPoint =  getConnectionPoint(lastLink, candidates)
+    val forward = getGeometryLastSegmentVector(cPoint, lastLink)
+    val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
+    val (_, hVector) = forward
+    val (candidate, _) = vectors.maxBy {
+      case (rl, vector) =>
+        val rAngle = hVector.angleXY(vector)
+        println(s"rl = ${rl.linkId} hVector = $hVector vector = $vector angle = ${Math.toDegrees(rAngle)} ")
+        rAngle
+    }
+    candidate
+  }
+  def pickLeftMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
+    val cPoint =  getConnectionPoint(lastLink, candidates)
+    val forward = getGeometryLastSegmentVector(cPoint, lastLink)
+    val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
+    val (_, hVector) = forward
+    val (candidate, _) = vectors.minBy {  case (rl, vector) =>
+      val rAngle = hVector.angleXY(vector)
+      println(s"rl = ${rl.linkId} hVector = $hVector vector = $vector angle = ${Math.toDegrees(rAngle)} ")
+      rAngle
+    }
+    candidate
+  }
+
   def pickForwardMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
     val cPoint = getConnectionPoint(lastLink, candidates)
     val candidateVectors = getGeometryFirstSegmentVectors(cPoint, candidates)

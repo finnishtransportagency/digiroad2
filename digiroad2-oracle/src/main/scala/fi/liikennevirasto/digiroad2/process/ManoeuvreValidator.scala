@@ -16,13 +16,13 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
   override def assetType: Int = Manoeuvres.typeId
   lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao(vvhClient)
 
-  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType]): Seq[AssetType] = {
+  val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn)
+
+  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double): Seq[AssetType] = {
     assets.filter{_.elements.filter(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).contains(roadLink.linkId)}
   }
 
-  val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn)
-
-  override def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
+  override def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val manoeuvres = assets.asInstanceOf[Seq[Manoeuvre]]
 
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(manoeuvres.flatMap(manoeuvre => manoeuvre.elements.map(_.sourceLinkId)).toSet)
@@ -44,13 +44,27 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
               Seq(Inaccurate(Some(manoeuvre.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
           case _ => throw new NumberFormatException("Not supported trafficSign on Manoeuvres asset")
         }
-    }
+    }.toSet
   }
 
-  override def getAdjacentRoadLink(point: Point,  prevRoadLink: RoadLink, roadLinks: Seq[RoadLink]) : Seq[(RoadLink, (Point, Point))] = {
-    val adjacentInfo = getAdjacents(point, roadLinks)
-    val mostForwardRoadLink = roadLinkService.pickForwardMost(prevRoadLink, adjacentInfo.map(_._1))
-    adjacentInfo.filter(_._1 == mostForwardRoadLink)
+  override def getAdjacents(previousInfo: (Point, RoadLink), roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign) : Seq[(RoadLink, (Point, Point))] = {
+    val adjacentInfo = roadLinks.filter {
+      roadLink =>
+        GeometryUtils.areAdjacent(roadLink.geometry, previousInfo._1)
+    }.map { roadLink =>
+      val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+      val points = if (GeometryUtils.areAdjacent(first, previousInfo._1)) (first, last) else (last, first)
+
+      (roadLink, points)
+    }
+
+    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      case TrafficSignType.NoLeftTurn | TrafficSignType.NoUTurn =>
+        adjacentInfo.filter(_._1 == roadLinkService.pickLeftMost(previousInfo._2, adjacentInfo.map(_._1)))
+      case TrafficSignType.NoRightTurn =>
+        adjacentInfo.filter(_._1 == roadLinkService.pickRightMost(previousInfo._2, adjacentInfo.map(_._1)))
+      case _ => Seq()
+    }
   }
 
 //  override def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSign: Seq[PersistedTrafficSign]): Boolean = {
@@ -158,6 +172,8 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
     val trafficSingsByRadius: Seq[PersistedTrafficSign] =
       trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance)
         .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+
+    inaccurateAssetDAO.deleteInaccurateAssetById(asset.id)
 
     trafficSingsByRadius.foreach { trafficSign =>
       assetValidator(trafficSign).foreach{

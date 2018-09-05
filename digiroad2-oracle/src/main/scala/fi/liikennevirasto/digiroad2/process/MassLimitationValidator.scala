@@ -20,8 +20,23 @@ trait MassLimitationValidator extends AssetServiceValidatorOperations {
 
   def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean
 
-  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType]): Seq[AssetType] = {
-    assets.filter(_.linkId == roadLink.linkId)
+  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double): Seq[AssetType] = {
+    def assetDistance(assets: Seq[AssetType]): (AssetType, Double) = {
+      val (first, _) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+      if (GeometryUtils.areAdjacent(pointOfInterest, first)) {
+        val nearestAsset = assets.minBy(_.startMeasure)
+        (nearestAsset, nearestAsset.startMeasure)
+      } else {
+        val nearestAsset = assets.maxBy(_.endMeasure)
+        (nearestAsset, GeometryUtils.geometryLength(roadLink.geometry) - nearestAsset.endMeasure)
+      }
+    }
+
+    val assetOnLink = assets.filter(_.linkId == roadLink.linkId)
+    if (assetOnLink.nonEmpty && assetDistance(assetOnLink)._2 + distance <= radiusDistance) {
+      Seq(assetDistance(assets)._1)
+    } else
+        Seq()
   }
 
   def getAssetValue(asset: PersistedLinearAsset): String = {
@@ -35,7 +50,7 @@ trait MassLimitationValidator extends AssetServiceValidatorOperations {
     dao.fetchLinearAssetsByLinkIds(assetTypeInfo.typeId, roadLink.map(_.linkId), LinearAssetTypes.numericValuePropertyId, false)
   }
 
-  override def verifyAsset(assets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
+  override def verifyAsset(assets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     assets.flatMap { asset =>
       val roadLink = roadLinks.find(_.linkId == asset.linkId).get
 
@@ -43,7 +58,7 @@ trait MassLimitationValidator extends AssetServiceValidatorOperations {
         Seq(Inaccurate(Some(asset.id), None, roadLink.municipalityCode, roadLink.administrativeClass))
       else
         Seq()
-    }
+    }.toSet
   }
 
   //  override def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSign: Seq[PersistedTrafficSign]): Boolean = {
@@ -89,10 +104,12 @@ trait MassLimitationValidator extends AssetServiceValidatorOperations {
     val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
     val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
 
-    val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { case position =>
-      trafficSignService.getTrafficSignByRadius(position, radiusDistance)
+    val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap {
+      trafficSignService.getTrafficSignByRadius(_, radiusDistance)
         .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
     }
+
+    inaccurateAssetDAO.deleteInaccurateAssetById(asset.id)
 
     trafficSingsByRadius.foreach { trafficSign =>
       assetValidator(trafficSign).foreach{

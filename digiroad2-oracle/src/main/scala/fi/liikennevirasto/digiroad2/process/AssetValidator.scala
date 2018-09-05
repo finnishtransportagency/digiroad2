@@ -44,7 +44,7 @@ trait AssetServiceValidator {
     assetName
   }
 
-  def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[Inaccurate]
+  def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Set[Inaccurate]
 
 //  def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSigns: Seq[PersistedTrafficSign]): Boolean
 
@@ -52,7 +52,7 @@ trait AssetServiceValidator {
 
   def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign]
 
-  def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType]): Seq[AssetType]
+  def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], point: Point, distance: Double): Seq[AssetType]
 
   def reprocessAllRelevantTrafficSigns(asset: AssetType, roadLink: RoadLink) : Unit
 
@@ -81,9 +81,9 @@ trait AssetServiceValidator {
 trait AssetServiceValidatorOperations extends AssetServiceValidator{
 
   def findNearestRoadLink(point: Point, roadLinks: Seq[RoadLink]): RoadLink = {
-    roadLinks.map { roadLink =>
-      (GeometryUtils.calculateLinearReferenceFromPoint(Point(point.x, point.y), roadLink.geometry), roadLink)
-    }.minBy(_._1)._2
+    roadLinks.minBy { roadLink =>
+      GeometryUtils.minimumDistance(point, roadLink.geometry)
+    }
   }
 
   def getLinkIdsByRadius(point: Point): Seq[RoadLink] = {
@@ -92,24 +92,21 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
 
     roadLinkService.getRoadLinksWithComplementaryFromVVH(BoundingRectangle(topLeft, bottomRight), newTransaction = false)
   }
-  def getAdjacentRoadLink(point: Point,  prevRoadLink: RoadLink, roadLinks: Seq[RoadLink]) : Seq[(RoadLink, (Point, Point))] = {
-    getAdjacents(point, roadLinks)
-  }
 
-  def getAdjacents(previousPoint: Point, roadLinks: Seq[RoadLink]): Seq[(RoadLink, (Point, Point))] = {
+  def getAdjacents(previousInfo: (Point, RoadLink), roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[(RoadLink, (Point, Point))] = {
     roadLinks.filter {
       roadLink =>
-        GeometryUtils.areAdjacent(roadLink.geometry, previousPoint)
+        GeometryUtils.areAdjacent(roadLink.geometry, previousInfo._1)
     }.map { roadLink =>
       val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-      val points = if (GeometryUtils.areAdjacent(first, previousPoint)) (first, last) else (last, first)
+      val points = if (GeometryUtils.areAdjacent(first, previousInfo._1)) (first, last) else (last, first)
 
       (roadLink, points)
     }
   }
 
   //TODO needs to be refactor
-  def assetValidator(trafficSign: PersistedTrafficSign): Seq[Inaccurate] = {
+  def assetValidator(trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val point = Point(trafficSign.lon, trafficSign.lat)
     val roadLinks = getLinkIdsByRadius(point)
     val trafficSignRoadLink = findNearestRoadLink(point, roadLinks)
@@ -117,8 +114,13 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
     val (first, last) = GeometryUtils.geometryEndpoints(trafficSignRoadLink.geometry)
     val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(trafficSign.validityDirection)).head
 
+    val distance = if(GeometryUtils.areAdjacent(pointOfInterest, first))
+      GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry)
+    else
+      GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry.reverse)
+
     val assets = getAsset(roadLinks)
-    validator(pointOfInterest, trafficSignRoadLink, roadLinks: Seq[RoadLink], trafficSign, assets, Seq())
+    validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
   }
 
 //  def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
@@ -132,21 +134,21 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
 //    validatorX(pointOfInterest, defaultRoadLink, roadLinks, asset)
 //  }
 
-  protected def validator(point: Point, oldRoadLink: RoadLink, roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign, assets: Seq[AssetType], inaccurate: Seq[Inaccurate]): Seq[Inaccurate] = {
-    val filteredRoadLink = roadLinks.filterNot(_.linkId == oldRoadLink.linkId)
-    val adjAcents = getAdjacents(point, filteredRoadLink)
-    if(adjAcents.isEmpty)
-      Inaccurate(None, Some(oldRoadLink.linkId), oldRoadLink.municipalityCode, oldRoadLink.administrativeClass) +: inaccurate
+  protected def validator(previousInfo: (Point, RoadLink), roadLinks: Seq[RoadLink], trafficSign: (PersistedTrafficSign, AdministrativeClass), assets: Seq[AssetType], inaccurate: Set[Inaccurate], distance: Double): Set[Inaccurate] = {
+    val filteredRoadLink = roadLinks.filterNot(_.linkId == previousInfo._2.linkId)
+    val adjAcents = getAdjacents(previousInfo, filteredRoadLink, trafficSign._1)
+    if(adjAcents.isEmpty || distance >= radiusDistance)
+      inaccurate ++ Seq(Inaccurate(None, Some(trafficSign._1.linkId), trafficSign._1.municipalityCode, trafficSign._2))
     else {
       adjAcents.flatMap{ case (newRoadLink, (_, oppositePoint)) =>
-        val asset = filteredAsset(newRoadLink, assets)
+        val asset = filteredAsset(newRoadLink, assets, oppositePoint, distance)
         if (asset.isEmpty) {
-          validator(oppositePoint, newRoadLink: RoadLink, filteredRoadLink, trafficSign, assets, inaccurate)
+          validator((oppositePoint, newRoadLink), filteredRoadLink, trafficSign, assets, inaccurate, distance + GeometryUtils.geometryLength(newRoadLink.geometry))
         } else {
-          verifyAsset(asset, roadLinks, trafficSign) ++ inaccurate
+          verifyAsset(asset, roadLinks, trafficSign._1) ++ inaccurate
         }
       }
-    }
+    }.toSet
   }
 
 //  protected def validatorX(point: Point, prevRoadLink: RoadLink, roadLinks: Seq[RoadLink], asset: AssetType): Boolean = {
@@ -175,7 +177,6 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
       Queries.getMunicipalities
     }
 
-//    val municipalities = Seq(749)
     municipalities.foreach{
       municipality =>
         println(s"Start process for municipality $municipality")
