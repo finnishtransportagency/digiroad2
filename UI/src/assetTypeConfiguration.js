@@ -309,8 +309,7 @@
               {
                 label: 'Paallysteluokka', type: 'single_choice', publicId: "paallysteluokka", defaultValue: "99",
                 values: [
-                  {id: 99, label: 'Päällysteen tyyppi tuntematon'},
-                  {id: 0, label: 'Päällystemätön tie'},
+                  {id: 99, label: 'Päällystetty, tyyppi tuntematon'},
                   {id: 1, label: 'Betoni'},
                   {id: 2, label: 'Kivi'},
                   {id: 10, label: 'Kovat asfalttibetonit'},
