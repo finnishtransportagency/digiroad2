@@ -613,9 +613,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   protected override def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val attributes = extractFeatureAttributes(feature)
     val path = extractFeatureGeometry(feature)
-    val result = extractRoadLinkFeature(attributes, path)
-    logger.info(s"$result")
-    result
+    extractRoadLinkFeature(attributes, path)
   }
 
   protected def extractRoadLinkFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
