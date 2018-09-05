@@ -516,9 +516,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
     val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
     val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-    val result = optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_))
-    logger.info(s"$result")
-    result.getOrElse(Right(VVHError(content, url)))
+    optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
   }
 
   /**
@@ -615,7 +613,9 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   protected override def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val attributes = extractFeatureAttributes(feature)
     val path = extractFeatureGeometry(feature)
-    extractRoadLinkFeature(attributes, path)
+    val result = extractRoadLinkFeature(attributes, path)
+    logger.info(s"$result")
+    result
   }
 
   protected def extractRoadLinkFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
