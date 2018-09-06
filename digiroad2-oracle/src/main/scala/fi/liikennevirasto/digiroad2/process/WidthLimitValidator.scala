@@ -7,8 +7,6 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
 class WidthLimitValidator extends MassLimitationValidator{
   override def assetTypeInfo: AssetTypeInfo = WidthLimit
-  override def assetName: String = "widthLimit"
-  override def assetType: Int = WidthLimit.typeId
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.NoWidthExceeding, TrafficSignType.FreeWidth)
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {

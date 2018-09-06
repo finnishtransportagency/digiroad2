@@ -4,6 +4,7 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.trailerTruckWeightLimitValidator
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -14,10 +15,10 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.process.{AssetValidatorInfo, HazmatTransportProhibitionValidator}
+import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.FeedbackApplicationService
-import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearTotalWeightLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -150,6 +151,55 @@ class HazmatTransportProhibitionValidation(prohibitionValidator: HazmatTransport
   }
 }
 
+class TotalWeightLimitValidation(totalWeightLimitValidator: TotalWeightLimitValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => totalWeightLimitValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("totalWeightLimitValidator: Received unknown message")
+  }
+}
+
+class AxleWeightLimitValidation(axleWeightLimitValidator: AxleWeightLimitValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => axleWeightLimitValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("axleWeightLimitValidator: Received unknown message")
+  }
+}
+
+class BogieWeightLimitValidation(bogieWeightLimitValidator: BogieWeightLimitValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => bogieWeightLimitValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("bogieWeightLimitValidator: Received unknown message")
+  }
+}
+
+class HeightLimitValidation(heightLimitValidator: HeightLimitValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => heightLimitValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("heightLimitValidator: Received unknown message")
+  }
+}
+
+class LengthLimitValidation(lengthLimitValidator: LengthLimitValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => lengthLimitValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("lengthLimitValidator: Received unknown message")
+  }
+}
+
+class TrailerTruckWeightLimitValidation(trailerTruckWeightLimitValidator: TrailerTruckWeightLimitValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => trailerTruckWeightLimitValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("trailerTruckWeightLimitValidator: Received unknown message")
+  }
+}
+
+class WidthLimitValidation(widthLimitValidator: WidthLimitValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => widthLimitValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("trailerTruckWeightLimitValidator: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -214,8 +264,29 @@ object Digiroad2Context {
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
-  val hazmatTransportProhibitionValidator = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibition), name = "hazmatTransportProhibitionValidator")
-  eventbus.subscribe(hazmatTransportProhibitionValidator, "hazmatTransportProhibition:AssetValidator")
+  val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
+  eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
+
+  val axleWeightLimitVerifier = system.actorOf(Props(classOf[AxleWeightLimitValidation], axleWeightLimitValidator), name = "axleWeightLimitValidator")
+  eventbus.subscribe(axleWeightLimitVerifier, "axleWeightLimit:Validator")
+
+  val totalWeightLimitVerifier = system.actorOf(Props(classOf[TotalWeightLimitValidation], totalWeightLimitValidator), name = "sevenRestrictionsValidator")
+  eventbus.subscribe(totalWeightLimitVerifier, "sevenRestrictions:Validator")
+
+  val bogieWeightLimitVerifier = system.actorOf(Props(classOf[BogieWeightLimitValidation], bogieWeightLimitValidator), name = "bogieWeightLimitValidator")
+  eventbus.subscribe(bogieWeightLimitVerifier, "bogieWeightLimit:Validator")
+
+  val heightLimitVerifier = system.actorOf(Props(classOf[HeightLimitValidation], heightLimitValidator), name = "heightLimitValidator")
+  eventbus.subscribe(heightLimitVerifier, "heightLimit:Validator")
+
+  val lengthLimitVerifier = system.actorOf(Props(classOf[LengthLimitValidation], lengthLimitValidator), name = "lengthLimitValidator")
+  eventbus.subscribe(lengthLimitVerifier, "lengthLimit:Validator")
+
+  val trailerTruckWeightLimitVerifier = system.actorOf(Props(classOf[TrailerTruckWeightLimitValidation], trailerTruckWeightLimitValidator), name = "trailerTruckWeightLimitValidator")
+  eventbus.subscribe(trailerTruckWeightLimitVerifier, "trailerTruckWeightLimit:Validator")
+
+  val widthLimitVerifier = system.actorOf(Props(classOf[WidthLimitValidation], widthLimitValidator), name = "widthLimitValidator")
+    eventbus.subscribe(widthLimitVerifier, "widthLimit:Validator")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -287,6 +358,34 @@ object Digiroad2Context {
     new DynamicLinearAssetService(roadLinkService, eventbus)
   }
 
+  lazy val linearLengthLimitService: LinearLengthLimitService = {
+    new LinearLengthLimitService(roadLinkService, eventbus)
+  }
+
+  lazy val linearTotalWeightLimitService: LinearTotalWeightLimitService = {
+    new LinearTotalWeightLimitService(roadLinkService, eventbus)
+  }
+
+  lazy val linearAxleWeightLimitService: LinearAxleWeightLimitService = {
+    new LinearAxleWeightLimitService(roadLinkService, eventbus)
+  }
+
+  lazy val linearBogieWeightLimitService: LinearBogieWeightLimitService = {
+    new LinearBogieWeightLimitService(roadLinkService, eventbus)
+  }
+
+  lazy val linearTrailerTruckWeightLimitService: LinearTrailerTruckWeightLimitService = {
+    new LinearTrailerTruckWeightLimitService(roadLinkService, eventbus)
+  }
+
+  lazy val linearWidthLimitService: LinearWidthLimitService = {
+    new LinearWidthLimitService(roadLinkService, eventbus)
+  }
+
+  lazy val linearHeightLimitService: LinearHeightLimitService = {
+    new LinearHeightLimitService(roadLinkService, eventbus)
+  }
+
   lazy val userNotificationService: UserNotificationService = {
     new UserNotificationService()
   }
@@ -336,10 +435,6 @@ object Digiroad2Context {
 
   lazy val hazmatTransportProhibitionService: HazmatTransportProhibitionService = {
     new HazmatTransportProhibitionService(roadLinkService, eventbus)
-  }
-
-  lazy val hazmatTransportProhibition: HazmatTransportProhibitionValidator = {
-    new HazmatTransportProhibitionValidator()
   }
 
   lazy val textValueLinearAssetService: TextValueLinearAssetService = {
@@ -409,6 +504,38 @@ object Digiroad2Context {
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
+
+  lazy val hazmatTransportProhibitionValidator: HazmatTransportProhibitionValidator = {
+    new HazmatTransportProhibitionValidator()
+  }
+
+  lazy val axleWeightLimitValidator: AxleWeightLimitValidator = {
+    new AxleWeightLimitValidator()
+  }
+
+  lazy val totalWeightLimitValidator: TotalWeightLimitValidator = {
+    new TotalWeightLimitValidator()
+  }
+
+  lazy val bogieWeightLimitValidator: BogieWeightLimitValidator = {
+    new BogieWeightLimitValidator()
+  }
+
+  lazy val heightLimitValidator: HeightLimitValidator = {
+    new HeightLimitValidator()
+  }
+
+  lazy val lengthLimitValidator: LengthLimitValidator = {
+    new LengthLimitValidator()
+  }
+
+  lazy val trailerTruckWeightLimitValidator: TrailerTruckWeightLimitValidator = {
+    new TrailerTruckWeightLimitValidator()
+  }
+
+  lazy val widthLimitValidator: WidthLimitValidator = {
+    new WidthLimitValidator()
+  }
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {

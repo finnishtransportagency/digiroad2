@@ -186,6 +186,8 @@ trait LinearAssetOperations {
 
   protected def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String,List[Long]]]
 
+  def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): List[(Long, String, Int)]
+
   def getUnverifiedLinearAssets(typeId: Int, municipalityCodes: Set[Int]): Map[String, Map[String,List[Long]]] = {
     withDynTransaction {
       if (!verifiableAssetType.contains(typeId)) throw new IllegalStateException("Asset type not allowed")
@@ -828,6 +830,8 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def assetDao: OracleAssetDao = new OracleAssetDao
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+
+  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {

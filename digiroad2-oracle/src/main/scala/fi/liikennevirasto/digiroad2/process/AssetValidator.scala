@@ -34,25 +34,16 @@ trait AssetServiceValidator {
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 
-
   type AssetType
-  def assetName: String
-  def assetType: Int
+  def assetTypeInfo: AssetTypeInfo
   val radiusDistance: Int
-  val TrafficSignsGroup: Option[TrafficSignTypeGroup] = None
 
   def getAssetName: String = {
-    assetName
+    assetTypeInfo.label
   }
 
   def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Set[Inaccurate]
-
-//  def verifyAssetX(asset: AssetType, roadLink: RoadLink, trafficSigns: Seq[PersistedTrafficSign]): Boolean
-
   def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType]
-
-//  def getAssetTrafficSign(roadLink: RoadLink): Seq[PersistedTrafficSign]
-
   def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], point: Point, distance: Double): Seq[AssetType]
 
   def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo) : Unit
@@ -79,7 +70,7 @@ trait AssetServiceValidator {
 
 }
 
-trait AssetServiceValidatorOperations extends AssetServiceValidator{
+trait AssetServiceValidatorOperations extends AssetServiceValidator {
 
   def findNearestRoadLink(point: Point, roadLinks: Seq[RoadLink]): RoadLink = {
     roadLinks.minBy { roadLink =>
@@ -120,29 +111,14 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
     else
       GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry.reverse)
 
-    val assets = getAsset(roadLinks)
 
-
-    val asset = filteredAsset(trafficSignRoadLink, assets, pointOfInterest, distance)
-    if (asset.isEmpty) {
+    val assets = filteredAsset(trafficSignRoadLink, getAsset(roadLinks), pointOfInterest, -distance)
+    if (assets.isEmpty) {
       validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
     } else {
-      verifyAsset(asset, roadLinks, trafficSign)
+      verifyAsset(assets, roadLinks, trafficSign)
     }
-//
-//    validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
   }
-
-//  def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
-//    val roadLinks = getLinkIdsByRadius(pointOfInterest)
-//    validatorX(pointOfInterest, defaultRoadLink, roadLinks, asset)
-//  }
-
-
-//  def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
-//    val roadLinks = getLinkIdsByRadius(pointOfInterest)
-//    validatorX(pointOfInterest, defaultRoadLink, roadLinks, asset)
-//  }
 
   protected def validator(previousInfo: (Point, RoadLink), roadLinks: Seq[RoadLink], trafficSign: (PersistedTrafficSign, AdministrativeClass), assets: Seq[AssetType], inaccurate: Set[Inaccurate], distance: Double): Set[Inaccurate] = {
     val filteredRoadLink = roadLinks.filterNot(_.linkId == previousInfo._2.linkId)
@@ -161,13 +137,13 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
     }.toSet
   }
 
-  //TODO move this method to a generic place
+  //TODO move this method to a generic place, same in speedLimit Validation
   def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 
   def verifyInaccurate() : Unit = {
-    println(s"Start verification for asset $assetName")
+    println(s"Start verification for asset ${assetTypeInfo.label}: AssetTypeInfo = ")
     println(DateTime.now())
 
     println("Fetching municipalities")
@@ -187,11 +163,11 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
                 inaccurate =>
                   (inaccurate.assetId, inaccurate.linkId) match {
                     case (Some(asset), _) =>
-                      println(s"Creating inaccurate asset for assetType $assetType and assetId $asset")
-                      inaccurateAssetDAO.createInaccurateAsset(asset, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      println(s"Creating inaccurate asset for assetType ${assetTypeInfo.typeId} and assetId $asset")
+                      inaccurateAssetDAO.createInaccurateAsset(asset, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
                     case (_, Some(linkId)) =>
-                      println(s"Creating inaccurate link id for assetType $assetType and linkId $linkId")
-                      inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      println(s"Creating inaccurate link id for assetType ${assetTypeInfo.typeId} and linkId $linkId")
+                      inaccurateAssetDAO.createInaccurateLink(linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
                     case (_, _) =>
                   }
               }

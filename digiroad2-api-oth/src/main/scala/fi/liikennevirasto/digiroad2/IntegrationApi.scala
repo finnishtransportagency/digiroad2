@@ -2,14 +2,14 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, LinearAssetTypes, Manoeuvre}
-import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
@@ -239,9 +239,17 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case MaintenanceRoadAsset.typeId => maintenanceRoadService
         case PavedRoad.typeId => pavingService
         case RoadWidth.typeId => roadWidthService
-        case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
+        case Prohibition.typeId => prohibitionService
+        case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case CareClass.typeId | DamagedByThaw.typeId  => dynamicLinearAssetService
+        case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+        case HeightLimitInfo.typeId => linearHeightLimitService
+        case   LengthLimit.typeId => linearLengthLimitService
+        case WidthLimitInfo.typeId => linearWidthLimitService
+        case TotalWeightLimit.typeId => linearTotalWeightLimitService
+        case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
+        case AxleWeightLimit.typeId => linearAxleWeightLimitService
+        case BogieWeightLimit.typeId => linearBogieWeightLimitService
         case _ => linearAssetService
       }
     }

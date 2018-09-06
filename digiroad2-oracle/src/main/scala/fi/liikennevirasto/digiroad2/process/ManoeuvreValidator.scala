@@ -1,19 +1,19 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.asset.Manoeuvres
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, Manoeuvre, ManoeuvreTurnRestrictionType}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
+
 import scala.math.Pi
 
 class ManoeuvreValidator extends AssetServiceValidatorOperations {
   override type AssetType = Manoeuvre
-  override def assetName: String = "manoeuvre"
   override val radiusDistance: Int = 50
-  override def assetType: Int = Manoeuvres.typeId
+  override def assetTypeInfo: AssetTypeInfo = Manoeuvres
   lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao(vvhClient)
 
   val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn)

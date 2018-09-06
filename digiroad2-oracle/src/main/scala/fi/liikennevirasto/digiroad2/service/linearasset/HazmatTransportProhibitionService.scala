@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AxleWeightLimit, HazmatTransportProhibition}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -17,6 +18,8 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: OracleAssetDao = new OracleAssetDao
+
+  def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     if (newLinearAssets.nonEmpty)
@@ -63,5 +66,8 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     outputIds
   }
 
+  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): List[(Long, String, Int)] = {
+    inaccurateDAO.getInaccurateAssetByTypeId(HazmatTransportProhibition.typeId, municipalities, adminClass)
+  }
 
 }

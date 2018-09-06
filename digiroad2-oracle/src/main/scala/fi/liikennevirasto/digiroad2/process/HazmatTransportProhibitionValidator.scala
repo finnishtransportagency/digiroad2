@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.process
 import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, HazmatTransportProhibition, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetTypeInfo, HazmatTransportProhibition, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibitions, RoadLink}
@@ -13,8 +13,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType.NoVehicle
 
 class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperations {
   override type AssetType = PersistedLinearAsset
-  override def assetName: String = "hazmatTransportProhibition"
-  override def assetType: Int = HazmatTransportProhibition.typeId
+  override def assetTypeInfo: AssetTypeInfo =  HazmatTransportProhibition
   override val radiusDistance: Int = 50
 
   lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
@@ -71,59 +70,44 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
   }
 
   override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
-    def insertInaccurate(insertInaccurate:(Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass) : Unit = {
+    def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
       try {
         insertInaccurate(id, assetType, municipalityCode, adminClass)
       } catch {
         case ex: SQLIntegrityConstraintViolationException =>
           print("duplicate key inserted ")
-        case e: Exception =>  print("duplicate key inserted ")
+        case e: Exception => print("duplicate key inserted ")
           throw new RuntimeException("SQL exception " + e.getMessage)
       }
     }
 
-    withDynTransaction {
-      inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds.toSeq)
+    if (assetInfo.oldIds.toSeq.nonEmpty) {
+      withDynTransaction {
 
-      val assets = dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetInfo.newIds)
-      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false)
+        inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds.toSeq)
 
-      assets.foreach { asset =>
-        val roadLink = roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new NoSuchElementException)
-        val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
-        val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
+        val assets = dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetInfo.newIds)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false)
 
-        val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
-          trafficSignService.getTrafficSignByRadius(position, radiusDistance)
-            .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
-        }
+        assets.foreach { asset =>
+          val roadLink = roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new NoSuchElementException)
+          val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
+          val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
 
+          val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
+            trafficSignService.getTrafficSignByRadius(position, radiusDistance)
+              .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+          }
 
-        trafficSingsByRadius.foreach { trafficSign =>
-          assetValidator(trafficSign).foreach {
-            inaccurate =>
-              (inaccurate.assetId, inaccurate.linkId) match {
-                case (Some(assetId), _) =>
-                  insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                case (_, Some(linkId)) =>
-                  insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
-//                  try {
-//                  inaccurateAssetDAO.createInaccurateAsset(assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
-//                } catch {
-//                  case ex: SQLIntegrityConstraintViolationException =>
-//                    print("duplicate key inserted ")
-//                  case e: _ =>  print("duplicate key inserted ")
-//                    throw new RuntimeException("SQL exception " + e.getMessage)
-//                }
-//                case (_, Some(linkId)) => try {
-//                  inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, roadLink.administrativeClass)
-//                } catch {
-//                  case ex: SQLIntegrityConstraintViolationException =>
-//                    print("duplicate key inserted ")
-//                  case e: _ => throw new RuntimeException("SQL exception " + e.getMessage)
-//                }
-                case _ => None
-              }
+          trafficSingsByRadius.foreach { trafficSign =>
+            assetValidator(trafficSign).foreach {
+              inaccurate =>
+                (inaccurate.assetId, inaccurate.linkId) match {
+                  case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                  case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                  case _ => None
+                }
+            }
           }
         }
       }

@@ -5,11 +5,10 @@ import java.time.LocalDate
 
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -17,7 +16,7 @@ import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationBody, F
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
@@ -75,7 +74,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
                    val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
-val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService)
+                   val linearTotalWeightLimitService: LinearTotalWeightLimitService = Digiroad2Context.linearTotalWeightLimitService,
+                   val linearAxleWeightLimitService: LinearAxleWeightLimitService = Digiroad2Context.linearAxleWeightLimitService,
+                   val linearBogieWeightLimitService: LinearBogieWeightLimitService = Digiroad2Context.linearBogieWeightLimitService,
+                   val linearHeightLimitService: LinearHeightLimitService = Digiroad2Context.linearHeightLimitService,
+                   val linearLengthLimitService: LinearLengthLimitService = Digiroad2Context.linearLengthLimitService,
+                   val linearTrailerTruckWeightLimitService: LinearTrailerTruckWeightLimitService = Digiroad2Context.linearTrailerTruckWeightLimitService,
+                   val linearWidthLimitService: LinearWidthLimitService = Digiroad2Context.linearWidthLimitService,
+                   val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1175,6 +1181,21 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
     }
   }
 
+  get("/api/inaccurates") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
+
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    user.isOperator() match {
+      case true =>
+        getLinearAssetService(typeId).getInaccurateRecords()
+      case false =>
+        getLinearAssetService(typeId).getInaccurateRecords(municipalityCode, Set(Municipality))
+    }
+  }
+
+
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
@@ -1527,6 +1548,13 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
       case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+      case HeightLimitInfo.typeId => linearHeightLimitService
+      case   LengthLimit.typeId => linearLengthLimitService
+      case WidthLimitInfo.typeId => linearWidthLimitService
+      case TotalWeightLimit.typeId => linearTotalWeightLimitService
+      case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
+      case AxleWeightLimit.typeId => linearAxleWeightLimitService
+      case BogieWeightLimit.typeId => linearBogieWeightLimitService
       case _ => linearAssetService
     }
   }
