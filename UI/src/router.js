@@ -102,6 +102,17 @@
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'speedLimit/:linkId(/municipality/:municipalityId/:position)': 'speedLimit',
         'speedLimitErrors/:id': 'speedLimitErrors',
+
+        'hazardousMaterialProhibitionErrors/:id': 'hazardousMaterialProhibitionErrors',
+        'manoeuvreErrors/:id': 'manoeuvreErrors' ,
+        'heightLimitErrors/:id':  'heightLimitErrors',
+        'bogieWeightErrors/:id': 'bogieWeightErrors' ,
+        'axleWeightLimitErrors/:id':'axleWeightLimitErrors' ,
+        'lengthLimitErrors/:id': 'lengthLimitErrors',
+        'totalWeightLimitErrors/:id': 'totalWeightLimitErrors',
+        'trailerTruckWeightLimitErrors/:id': 'trailerTruckWeightLimitErrors',
+        'widthLimitErrors/:id': 'widthLimitErrors',
+
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
         'obstacles/:id': 'obstacles',
