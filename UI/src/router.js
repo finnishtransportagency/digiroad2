@@ -7,18 +7,18 @@
       mapView.setZoom(zoom);
     };
 
-  function fetchLinearAssetEvent (asset, result) {
-    eventbus.once(asset.multiElementEventCategory + ':fetched', function() {
-      var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
-      if (linearAsset) {
-        asset.selectedLinearAsset.open(linearAsset, true);
-        applicationModel.setSelectedTool('Select');
-      }
-    });
-  }
+    function fetchLinearAssetEvent (asset, result) {
+      eventbus.once(asset.multiElementEventCategory + ':fetched', function() {
+        var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
+        if (linearAsset) {
+          asset.selectedLinearAsset.open(linearAsset, true);
+          applicationModel.setSelectedTool('Select');
+        }
+      });
+    }
 
     function fetchSpeedLimitEvent (asset, result) {
-        eventbus.once('speedLimits:redrawed', function() {
+      eventbus.once('speedLimits:redrawed', function() {
         var speedLimit = asset.getSpeedLimitById(result.id);
         if (speedLimit) {
           eventbus.trigger('speedLimits:enableTrafficSigns');
@@ -41,11 +41,11 @@
           if(result.source === 1){
             fetchLinearAssetEvent(asset, result);
           }else if(result.source === 2) {
-             eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
+            eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
               eventbus.trigger(layerName + ':activeComplementaryLayer');
               eventbus.trigger('complementaryLinks:show');
-               fetchLinearAssetEvent(asset, result);
-             });
+              fetchLinearAssetEvent(asset, result);
+            });
           }
           mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
         }
@@ -137,6 +137,16 @@
         'work-list/speedLimit/state' : 'speedLimitStateWorkList',
         'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
         'work-list/speedLimitErrors': 'speedLimitErrorsWorkList',
+
+        'work-list/hazardousMaterialProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
+        'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList',
+        'work-list/heightLimitErrors': 'heightLimitErrorsWorkList',
+        'work-list/bogieWeightErrors': 'bogieWeightErrorsWorkList',
+        'work-list/axleWeightLimitErrors': 'axleWeightLimitErrorsWorkList',
+        'work-list/totalWeightLimitErrors': 'totalWeightLimitErrorsWorkList',
+        'work-list/trailerTruckWeightLimitErrors': 'trailerTruckWeightLimitErrorsWorkList',
+        'work-list/widthLimitErrors': 'widthLimitErrorsWorkList',
+
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
@@ -279,8 +289,36 @@
 
       },
 
-      speedLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'speedLimitErrors', backend.getSpeedLimitErrors());
+      hazardousMaterialProhibitionErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'hazardousMaterialProhibitionErrors');
+      },
+
+      manoeuvreErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'manoeuvreErrors');
+      },
+
+      heightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'heightLimitErrors');
+      },
+
+      bogieWeightErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'bogieWeightErrors');
+      },
+
+      axleWeightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'axleWeightLimitErrors');
+      },
+
+      totalWeightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'totalWeightLimitErrors');
+      },
+
+      trailerTruckWeightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', ' trailerTruckWeightLimitErrors');
+      },
+
+      widthLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'widthLimitErrors');
       },
 
       linkPropertyWorkList: function () {
@@ -324,6 +362,25 @@
 
       speedLimitErrors: function (id) {
         speedLimitCentering('speedLimit', id);
+      },
+
+      hazardousMaterialProhibitionErrors: function (id) {
+      },
+      manoeuvreErrors: function (id) {
+      },
+      heightLimitErrors: function (id) {
+      },
+      bogieWeightErrors: function (id) {
+      },
+      axleWeightLimitErrors: function (id) {
+      },
+      lengthLimitErrors: function (id) {
+      },
+      totalWeightLimitErrors: function (id) {
+      },
+      trailerTruckWeightLimitErrors: function (id) {
+      },
+      widthLimitErrors: function (id) {
       },
 
       maintenanceRoad: function (id) {
