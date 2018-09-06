@@ -11,7 +11,8 @@
       title = linearAsset.title,
       authorizationPolicy = linearAsset.authorizationPolicy,
       layerName = linearAsset.layerName,
-      isVerifiable = linearAsset.isVerifiable;
+      isVerifiable = linearAsset.isVerifiable,
+      hasInaccurate = linearAsset.hasInaccurate;
 
     var rootElement = $('#feature-attributes');
 
@@ -65,8 +66,14 @@
     }
 
     eventbus.on('layer:selected', function(layer) {
-      if(isVerifiable && layerName === layer){
-        renderLinktoWorkList(layer);
+      var workListLink;
+      if(layerName === layer){
+        if(isVerifiable){
+          renderLinktoWorkList(layer);
+        }
+        if(hasInaccurate){
+          renderInaccurateWorkList(layer);
+        }
       }
        else {
         $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
@@ -167,7 +174,14 @@
           '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
           '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">' + textName + '</a>' +
           '</div>');
-};
+  };
+
+  var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
+    $('#information-content').append('' +
+      '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
+      '<a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a>' +
+      '</div>');
+  };
 
   function validateAdministrativeClass(selectedLinearAsset, authorizationPolicy){
     var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {

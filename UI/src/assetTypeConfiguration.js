@@ -69,6 +69,7 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
@@ -93,6 +94,7 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
@@ -117,6 +119,7 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
@@ -141,6 +144,7 @@
         label: new MassLimitationsLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
@@ -164,6 +168,7 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy()
@@ -187,6 +192,7 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy()
@@ -211,6 +217,7 @@
         label: new LinearAssetLabel(),
         hasTrafficSignReadOnlyLayer: true,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy()
@@ -414,6 +421,7 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
+        hasInaccurate: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true
@@ -528,7 +536,7 @@
         isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true
       },
-        {
+      {
             typeId: assetType.careClass,
             singleElementEventCategory: 'careClass',
             multiElementEventCategory: 'careClasses',

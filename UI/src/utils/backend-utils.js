@@ -191,6 +191,10 @@
       return $.getJSON('api/speedLimits/inaccurates');
     };
 
+    this.getInaccurateAssets = function(typeId) {
+      return $.getJSON('api/inaccurates?typeId=' + typeId);
+    };
+
     this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox
@@ -289,7 +293,7 @@
     }, 1000);
 
     this.deleteLinearAssets = _.throttle(function(data, success, failure) {
-      if (data.typeId == 110) { // Pavement must be set to null value, not deleted
+      if (data.typeId === 110) { // Pavement must be set to null value, not deleted
         $.ajax({
           contentType: "application/json",
           type: "POST",

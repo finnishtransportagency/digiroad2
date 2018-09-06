@@ -88,10 +88,10 @@
         trafficSigns: 'Geometrian ulkopuolelle jääneet liikennemerkit',
 
         maintenanceRoad: 'Tarkistamattomien huoltoteiden lista',
-        hazardousMaterialProhibitionErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'hazardousMaterialTransportProhibition'},
+        hazardousMaterialTransportProhibitionErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'hazardousMaterialTransportProhibition'},
         manoeuvreErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'manoeuvre'},
         heightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'heightLimit'},
-        bogieWeightErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'bogieWeightLimit'},
+        bogieWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'bogieWeightLimit'},
         axleWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'axleWeightLimit'},
         lengthLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'lengthLimit'},
         totalWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'totalWeightLimit'},

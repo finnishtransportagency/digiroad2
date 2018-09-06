@@ -138,7 +138,7 @@
         'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
         'work-list/speedLimitErrors': 'speedLimitErrorsWorkList',
 
-        'work-list/hazardousMaterialProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
+        'work-list/hazardousMaterialTransportProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
         'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList',
         'work-list/heightLimitErrors': 'heightLimitErrorsWorkList',
         'work-list/bogieWeightErrors': 'bogieWeightErrorsWorkList',
@@ -289,36 +289,41 @@
 
       },
 
+      speedLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'speedLimitErrors', backend.getSpeedLimitErrors());
+      },
+
       hazardousMaterialProhibitionErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'hazardousMaterialProhibitionErrors');
+        //TODO: Search type id by layer name on models.linearAssets
+        eventbus.trigger('workList:select', 'hazardousMaterialProhibitionErrors', backend.getInaccurateAssets(210));
       },
 
       manoeuvreErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'manoeuvreErrors');
+        eventbus.trigger('workList:select', 'manoeuvreErrors', backend.getInaccurateAssets(380));
       },
 
       heightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'heightLimitErrors');
+        eventbus.trigger('workList:select', 'heightLimitErrors', backend.getInaccurateAssets(70));
       },
 
       bogieWeightErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'bogieWeightErrors');
+        eventbus.trigger('workList:select', 'bogieWeightErrors', backend.getInaccurateAssets(60));
       },
 
       axleWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'axleWeightLimitErrors');
+        eventbus.trigger('workList:select', 'axleWeightLimitErrors', backend.getInaccurateAssets(50));
       },
 
       totalWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'totalWeightLimitErrors');
+        eventbus.trigger('workList:select', 'totalWeightLimitErrors', backend.getInaccurateAssets(30));
       },
 
       trailerTruckWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', ' trailerTruckWeightLimitErrors');
+        eventbus.trigger('workList:select', ' trailerTruckWeightLimitErrors', backend.getInaccurateAssets(40));
       },
 
       widthLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'widthLimitErrors');
+        eventbus.trigger('workList:select', 'widthLimitErrors', backend.getInaccurateAssets(90));
       },
 
       linkPropertyWorkList: function () {
@@ -365,22 +370,31 @@
       },
 
       hazardousMaterialProhibitionErrors: function (id) {
+        //TODO: Linecentering
       },
       manoeuvreErrors: function (id) {
+        //TODO: Linecentering
       },
       heightLimitErrors: function (id) {
+        //TODO: Linecentering
       },
       bogieWeightErrors: function (id) {
+        //TODO: Linecentering
       },
       axleWeightLimitErrors: function (id) {
+        //TODO: Linecentering
       },
       lengthLimitErrors: function (id) {
+        //TODO: Linecentering
       },
       totalWeightLimitErrors: function (id) {
+        //TODO: Linecentering
       },
       trailerTruckWeightLimitErrors: function (id) {
+        //TODO: Linecentering
       },
       widthLimitErrors: function (id) {
+        //TODO: Linecentering
       },
 
       maintenanceRoad: function (id) {
