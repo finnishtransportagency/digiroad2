@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2.process
 
-import java.sql.SQLException
+import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibition, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, HazmatTransportProhibition, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibitions, RoadLink}
@@ -71,7 +71,16 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
   }
 
   override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
-    val MYSQL_DUPLICATE_PK = 1062
+    def insertInaccurate(insertInaccurate:(Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass) : Unit = {
+      try {
+        insertInaccurate(id, assetType, municipalityCode, adminClass)
+      } catch {
+        case ex: SQLIntegrityConstraintViolationException =>
+          print("duplicate key inserted ")
+        case e: Exception =>  print("duplicate key inserted ")
+          throw new RuntimeException("SQL exception " + e.getMessage)
+      }
+    }
 
     withDynTransaction {
       inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds.toSeq)
@@ -94,22 +103,25 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
           assetValidator(trafficSign).foreach {
             inaccurate =>
               (inaccurate.assetId, inaccurate.linkId) match {
-                case (Some(assetId), _) => try {
-                  inaccurateAssetDAO.createInaccurateAsset(assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                } catch {
-                  case ex: SQLException => if (ex.getErrorCode == MYSQL_DUPLICATE_PK) {
-                    print("duplicate key inserted ")
-                  } else
-                    throw new RuntimeException("Sql exception not defined")
-                }
-                case (_, Some(linkId)) => try {
-                  inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, roadLink.administrativeClass)
-                } catch {
-                  case ex: SQLException => if (ex.getErrorCode == MYSQL_DUPLICATE_PK) {
-                    print("duplicate key inserted ")
-                  } else
-                    throw new RuntimeException("Sql exception not defined")
-                }
+                case (Some(assetId), _) =>
+                  insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                case (_, Some(linkId)) =>
+                  insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+//                  try {
+//                  inaccurateAssetDAO.createInaccurateAsset(assetId, assetType, inaccurate.municipalityCode, inaccurate.administrativeClass)
+//                } catch {
+//                  case ex: SQLIntegrityConstraintViolationException =>
+//                    print("duplicate key inserted ")
+//                  case e: _ =>  print("duplicate key inserted ")
+//                    throw new RuntimeException("SQL exception " + e.getMessage)
+//                }
+//                case (_, Some(linkId)) => try {
+//                  inaccurateAssetDAO.createInaccurateLink(linkId, assetType, inaccurate.municipalityCode, roadLink.administrativeClass)
+//                } catch {
+//                  case ex: SQLIntegrityConstraintViolationException =>
+//                    print("duplicate key inserted ")
+//                  case e: _ => throw new RuntimeException("SQL exception " + e.getMessage)
+//                }
                 case _ => None
               }
           }

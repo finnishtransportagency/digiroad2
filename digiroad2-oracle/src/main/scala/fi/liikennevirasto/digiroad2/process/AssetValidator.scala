@@ -121,7 +121,16 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator{
       GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry.reverse)
 
     val assets = getAsset(roadLinks)
-    validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
+
+
+    val asset = filteredAsset(trafficSignRoadLink, assets, pointOfInterest, distance)
+    if (asset.isEmpty) {
+      validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
+    } else {
+      verifyAsset(asset, roadLinks, trafficSign)
+    }
+//
+//    validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
   }
 
 //  def assetValidatorX(asset: AssetType, pointOfInterest: Point, defaultRoadLink: RoadLink): Boolean = {
