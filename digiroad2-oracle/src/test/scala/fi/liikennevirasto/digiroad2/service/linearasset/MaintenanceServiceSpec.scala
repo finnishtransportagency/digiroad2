@@ -58,6 +58,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val maintenanceDao = new OracleMaintenanceDao(mockVVHClient, mockRoadLinkService)
 
+  //TODO check the reason of this service on maintenance
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
@@ -69,6 +70,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def assetDao: OracleAssetDao = mockAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+    override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
   object ServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
@@ -81,6 +83,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def maintenanceDAO: OracleMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
+    override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
 
@@ -94,6 +97,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def maintenanceDAO: OracleMaintenanceDao = mockMaintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
+    override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
   val geomFact= new GeometryFactory()

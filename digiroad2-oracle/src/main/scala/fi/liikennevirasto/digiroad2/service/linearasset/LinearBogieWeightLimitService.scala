@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 
-class LinearBogieWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+class LinearBogieWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -32,7 +32,17 @@ class LinearBogieWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventB
     outputIds
   }
 
-  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): List[(Long, String, Int)] = {
-    inaccurateDAO.getInaccurateAssetByTypeId(BogieWeightLimit.typeId, municipalities, adminClass)
+  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
+    def toInaccurateLinearAsset(x: (Long, String, Int)) = InaccurateLinearAsset(x._1, x._2, AdministrativeClass(x._3).toString)
+
+    withDynTransaction {
+      inaccurateDAO.getInaccurateAssetByTypeId(BogieWeightLimit.typeId, municipalities, adminClass)
+        .map(toInaccurateLinearAsset)
+        .groupBy(_.municipality)
+        .mapValues {
+          _.groupBy(_.administrativeClass)
+            .mapValues(_.map(_.linkId))
+        }
+    }
   }
 }
