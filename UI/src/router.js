@@ -98,6 +98,10 @@
       });
     };
 
+    var getLinearAssetType = function(layerName) {
+      return _(models.linearAssets).find({layerName: layerName}).typeId;
+    };
+
     var Router = Backbone.Router.extend({
       initialize: function () {
         // Support legacy format for opening mass transit stop via ...#300289
@@ -315,8 +319,7 @@
       },
 
       hazardousMaterialProhibitionErrorsWorkList: function () {
-        //TODO: Search type id by layer name on models.linearAssets
-        eventbus.trigger('workList:select', 'hazardousMaterialTransportProhibitionErrors', backend.getInaccurateAssets(210));
+        eventbus.trigger('workList:select', 'hazardousMaterialTransportProhibitionErrors', backend.getInaccurateAssets(getLinearAssetType('hazardousMaterialTransportProhibition')));
       },
 
       manoeuvreErrorsWorkList: function () {
@@ -324,31 +327,33 @@
       },
 
       heightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'heightLimitErrors', backend.getInaccurateAssets(70));
+        var typeId = _(models.linearAssets).find({ layerName: 'heightLimit' }).typeId;
+        eventbus.trigger('workList:select', 'heightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('heightLimit')));
       },
 
       lengthLimitErrorsWorkList: function(){
-        eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(80));
+        var typeId = _(models.linearAssets).find({ layerName: 'lengthLimit' }).typeId;
+        eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('lengthLimit')));
       },
 
       bogieWeightErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'bogieWeightErrors', backend.getInaccurateAssets(60));
+        eventbus.trigger('workList:select', 'bogieWeightErrors', backend.getInaccurateAssets(getLinearAssetType('bogieWeight')));
       },
 
       axleWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'axleWeightLimitErrors', backend.getInaccurateAssets(50));
+        eventbus.trigger('workList:select', 'axleWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('axleWeightLimit')));
       },
 
       totalWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'totalWeightLimitErrors', backend.getInaccurateAssets(30));
+        eventbus.trigger('workList:select', 'totalWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('totalWeightLimit')));
       },
 
       trailerTruckWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', ' trailerTruckWeightLimitErrors', backend.getInaccurateAssets(40));
+        eventbus.trigger('workList:select', 'trailerTruckWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('trailerTruckWeightLimit')));
       },
 
       widthLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'widthLimitErrors', backend.getInaccurateAssets(90));
+        eventbus.trigger('workList:select', 'widthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('widthLimit')));
       },
 
       linkPropertyWorkList: function () {
