@@ -119,6 +119,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
+    new InaccurateWorkList().initialize();
     new UserNotificationPopup(models.userNotificationCollection).initialize();
 
     backend.getStartupParametersWithCallback(function(startupParameters) {

@@ -72,7 +72,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         .groupBy(_.municipality)
         .mapValues {
           _.groupBy(_.administrativeClass)
-            .mapValues(_.map(_.linkId))
+            .mapValues(_.map{values => Map("id" -> values.assetId, "linkId" -> values.linkId)})
         }
     }
   }
