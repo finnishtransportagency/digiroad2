@@ -20,8 +20,9 @@
         });
       };
       var idLink = function(item) {
-        var link = '#' + layerName + '/linkId/' + item.linkId;
-        return $('<a class="work-list-item"/>').attr('href', link).html(link);
+        var href =  '#' + layerName + '/linkId/' + item.linkId;
+        var link =  '#' + layerName + '/' + item.linkId;
+        return $('<a class="work-list-item"/>').attr('href', href).html(link);
       };
 
       var assetLink = function(item) {
