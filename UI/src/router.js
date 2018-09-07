@@ -76,10 +76,10 @@
       });
     };
 
-    var linearAssetMapCenterAndZoom  = function (layerName, id, linkId) {
-      if(linkId) {
+    var linearAssetMapCenterAndZoom  = function (layerName, idType, id) {
+      if(idType) {
         applicationModel.selectLayer(layerName);
-        backend.getRoadLinkByLinkId(linkId, function (response) {
+        backend.getRoadLinkByLinkId(id, function (response) {
           if (response.success)
             mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
         });
@@ -126,13 +126,13 @@
         'speedLimitErrors/:id': 'speedLimitErrors',
         'hazardousMaterialProhibitionErrors/:id(/linkId/:linkId)': 'hazardousMaterialProhibitionErrors',
         'manoeuvreErrors/:linkId': 'manoeuvreErrors',
-        'heightLimitErrors/:id(/linkId/:linkId)': 'heightLimitErrors',
-        'bogieWeightErrors/:id(/linkId/:linkId)': 'bogieWeightErrors',
-        'axleWeightLimitErrors/:id(/linkId/:linkId)': 'axleWeightLimitErrors',
-        'lengthLimitErrors/:id(/linkId/:linkId)': 'lengthLimitErrors',
-        'totalWeightLimitErrors/:id(/linkId/:linkId)': 'totalWeightLimitErrors',
-        'trailerTruckWeightLimitErrors/:id(/linkId/:linkId)': 'trailerTruckWeightLimitErrors',
-        'widthLimitErrors/:id(/linkId/:linkId)': 'widthLimitErrors',
+        'heightLimitErrors/(:id/:linkId)': 'heightLimitErrors',
+        'bogieWeightErrors/(:id/:linkId)': 'bogieWeightErrors',
+        'axleWeightLimitErrors/(:id/:linkId)': 'axleWeightLimitErrors',
+        'lengthLimitErrors(/:typeId)/:id': 'lengthLimitErrors',
+        'totalWeightLimitErrors/(:id/:linkId)': 'totalWeightLimitErrors',
+        'trailerTruckWeightLimitErrors/(:id/:linkId)': 'trailerTruckWeightLimitErrors',
+        'widthLimitErrors(/:typeId)/:id': 'widthLimitErrors',
 
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
