@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.linearasset.InaccurateLinearAsset
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -42,6 +43,26 @@ class InaccurateAssetDAO {
        left join municipality m on ia.municipality_code = m.id
        where ia.asset_type_id = $typeId #$withAuthorizedMunicipalities #$withAdminClassRestrictions
      """.as[(Long, String, Int)].list
+  }
+
+  def getInaccurateAsset(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Seq[InaccurateLinearAsset] = {
+
+    val withAuthorizedMunicipalities =
+      if (municipalities.nonEmpty) s" and ia.municipality_code in (${municipalities.mkString(",")})"  else s""
+
+    val withAdminClassRestrictions =
+      if(adminClass.nonEmpty) s" and ia.administrative_class in (${adminClass.map(_.value).mkString(",")})" else s""
+
+    val inacurates = sql"""
+       select ia.asset_id, m.name_fi, ia.administrative_class, ia.link_id
+       from inaccurate_asset ia
+       left join municipality m on ia.municipality_code = m.id
+       where ia.asset_type_id = $typeId #$withAuthorizedMunicipalities #$withAdminClassRestrictions
+     """.as[(Option[Long], String, Int, Option[Long])].list
+
+    inacurates.map{ case(asseId, municipality, administrativeClass, linkId ) =>
+      InaccurateLinearAsset(asseId, municipality, AdministrativeClass(administrativeClass).toString, linkId)
+    }
   }
 
   def getInaccurateByTypeId(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): List[(Long, String, Int, Long)] = {

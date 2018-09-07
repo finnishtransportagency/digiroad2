@@ -70,7 +70,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def assetDao: OracleAssetDao = mockAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-    override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
+    override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
   object ServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
@@ -83,7 +83,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def maintenanceDAO: OracleMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
-    override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
+    override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
 
@@ -97,7 +97,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def maintenanceDAO: OracleMaintenanceDao = mockMaintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
-    override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
+    override def getInaccurateRecords(typeId: Int,municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
   val geomFact= new GeometryFactory()

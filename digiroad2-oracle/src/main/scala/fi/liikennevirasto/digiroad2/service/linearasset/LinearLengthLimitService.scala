@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 
-class LinearLengthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
+class LinearLengthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearSevenRestrictionsOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -21,7 +21,7 @@ class LinearLengthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-  def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
+//  def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
 
   override def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     val outputIds = withDynTransaction {
@@ -32,17 +32,17 @@ class LinearLengthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImp
     outputIds
   }
 
-  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
-    def toInaccurateLinearAsset(x: (Long, String, Int)) = InaccurateLinearAsset(x._1, x._2, AdministrativeClass(x._3).toString)
-
-    withDynTransaction {
-      inaccurateDAO.getInaccurateAssetByTypeId(LengthLimit.typeId, municipalities, adminClass)
-        .map(toInaccurateLinearAsset)
-        .groupBy(_.municipality)
-        .mapValues {
-          _.groupBy(_.administrativeClass)
-            .mapValues(_.map(_.linkId))
-        }
-    }
-  }
+//  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
+//    def toInaccurateLinearAsset(x: (Long, String, Int)) = InaccurateLinearAsset(x._1, x._2, AdministrativeClass(x._3).toString)
+//
+//    withDynTransaction {
+//      inaccurateDAO.getInaccurateAssetByTypeId(LengthLimit.typeId, municipalities, adminClass)
+//        .map(toInaccurateLinearAsset)
+//        .groupBy(_.municipality)
+//        .mapValues {
+//          _.groupBy(_.administrativeClass)
+//            .mapValues(_.map(_.linkId))
+//        }
+//    }
+//  }
 }

@@ -1189,9 +1189,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     user.isOperator() match {
       case true =>
-        getLinearAssetService(typeId).getInaccurateRecords()
+        getLinearAssetService(typeId).getInaccurateRecords(typeId)
       case false =>
-        getLinearAssetService(typeId).getInaccurateRecords(municipalityCode, Set(Municipality))
+        getLinearAssetService(typeId).getInaccurateRecords(typeId, municipalityCode, Set(Municipality))
     }
   }
 

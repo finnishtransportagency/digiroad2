@@ -66,12 +66,9 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     outputIds
   }
 
-  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
-    def toInaccurateLinearAsset(x: (Long, String, Int)) = InaccurateLinearAsset(x._1, x._2, AdministrativeClass(x._3).toString)
-
+  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
     withDynTransaction {
-      inaccurateDAO.getInaccurateAssetByTypeId(HazmatTransportProhibition.typeId, municipalities, adminClass)
-        .map(toInaccurateLinearAsset)
+      inaccurateDAO.getInaccurateAsset(typeId, municipalities, adminClass)
         .groupBy(_.municipality)
         .mapValues {
           _.groupBy(_.administrativeClass)
