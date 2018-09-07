@@ -32,9 +32,10 @@
 
       var tableForGroupingValues = function(values, Ids) {
         if (!Ids || Ids.length === 0) return '';
-        return $('<table/>').addClass('table')
+        return $('<table><tbody>').addClass('table')
           .append(tableHeaderRow(values))
-          .append(tableContentRows(Ids));
+          .append(tableContentRows(Ids))
+          .append('</tbody></table>');
       };
 
       return $('<div/>').append(municipalityHeader(municipalityName))
