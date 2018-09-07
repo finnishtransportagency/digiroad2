@@ -19,7 +19,7 @@ trait LinearSevenRestrictionsOperations extends LinearAssetOperations {
         .groupBy(_.municipality)
         .mapValues {
           _.groupBy(_.administrativeClass)
-            .mapValues(_.map{values => Map("id" -> values.assetId, "linkId" -> values.linkId)})
+            .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
         }
     }
   }

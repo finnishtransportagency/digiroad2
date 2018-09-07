@@ -308,7 +308,7 @@
       },
 
       lengthLimitErrorsWorkList: function(){
-        eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(70));
+        eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(80));
       },
 
       bogieWeightErrorsWorkList: function () {
