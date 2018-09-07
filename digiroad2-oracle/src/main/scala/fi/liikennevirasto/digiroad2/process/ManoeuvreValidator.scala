@@ -32,16 +32,17 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
         val roadLink = roadLinks.find(roadLink =>  manoeuvre.elements.map(_.sourceLinkId).contains(roadLink.linkId)).get
         val manoeuvreTurnRestrictionType = getManoeuvreTurnRestrictionType(manoeuvre, roadLinks)
 
+        val manoeuvreLinkId = manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)
         TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
           case TrafficSignType.NoLeftTurn =>
             if(manoeuvreTurnRestrictionType != ManoeuvreTurnRestrictionType.LeftTurn)
-              Seq(Inaccurate(Some(manoeuvre.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
+              Seq(Inaccurate(None, manoeuvreLinkId , roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
           case TrafficSignType.NoRightTurn =>
             if (manoeuvreTurnRestrictionType != ManoeuvreTurnRestrictionType.RightTurn)
-              Seq(Inaccurate(Some(manoeuvre.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
+              Seq(Inaccurate(None, manoeuvreLinkId, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
           case TrafficSignType.NoUTurn =>
             if (manoeuvreTurnRestrictionType != ManoeuvreTurnRestrictionType.UTurn)
-              Seq(Inaccurate(Some(manoeuvre.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
+              Seq(Inaccurate(None, manoeuvreLinkId, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
           case _ => throw new NumberFormatException("Not supported trafficSign on Manoeuvres asset")
         }
     }.toSet

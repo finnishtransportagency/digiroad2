@@ -35,7 +35,4 @@ case class LinearSevenRestrictionsService(roadLinkServiceImpl: RoadLinkService, 
   override def assetDao: OracleAssetDao = new OracleAssetDao
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-
-
-
 }

@@ -76,6 +76,28 @@
       });
     };
 
+    var linearAssetMapCenterAndZoom  = function (layerName, id, linkId) {
+      if(linkId) {
+        applicationModel.selectLayer(layerName);
+        backend.getRoadLinkByLinkId(linkId, function (response) {
+          if (response.success)
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+        });
+      } else
+        linearCentering(layerName, id);
+    };
+
+    var manoeuvreMapCenterAndZoom = function(linkId){
+      applicationModel.selectLayer('manoeuvre');
+
+      backend.getRoadLinkByLinkId(linkId, function (response) {
+        eventbus.once('manoeuvres:fetched', function () {
+          models.selectedManoeuvreSource.open(linkId);
+        });
+        mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+      });
+    };
+
     var Router = Backbone.Router.extend({
       initialize: function () {
         // Support legacy format for opening mass transit stop via ...#300289
@@ -102,16 +124,15 @@
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'speedLimit/:linkId(/municipality/:municipalityId/:position)': 'speedLimit',
         'speedLimitErrors/:id': 'speedLimitErrors',
-
-        'hazardousMaterialProhibitionErrors/:id': 'hazardousMaterialProhibitionErrors',
-        'manoeuvreErrors/:id': 'manoeuvreErrors' ,
-        'heightLimitErrors/:id':  'heightLimitErrors',
-        'bogieWeightErrors/:id': 'bogieWeightErrors' ,
-        'axleWeightLimitErrors/:id':'axleWeightLimitErrors' ,
-        'lengthLimitErrors/:id': 'lengthLimitErrors',
-        'totalWeightLimitErrors/:id': 'totalWeightLimitErrors',
-        'trailerTruckWeightLimitErrors/:id': 'trailerTruckWeightLimitErrors',
-        'widthLimitErrors/:id': 'widthLimitErrors',
+        'hazardousMaterialProhibitionErrors/:id(/linkId/:linkId)': 'hazardousMaterialProhibitionErrors',
+        'manoeuvreErrors/:linkId': 'manoeuvreErrors',
+        'heightLimitErrors/:id(/linkId/:linkId)': 'heightLimitErrors',
+        'bogieWeightErrors/:id(/linkId/:linkId)': 'bogieWeightErrors',
+        'axleWeightLimitErrors/:id(/linkId/:linkId)': 'axleWeightLimitErrors',
+        'lengthLimitErrors/:id(/linkId/:linkId)': 'lengthLimitErrors',
+        'totalWeightLimitErrors/:id(/linkId/:linkId)': 'totalWeightLimitErrors',
+        'trailerTruckWeightLimitErrors/:id(/linkId/:linkId)': 'trailerTruckWeightLimitErrors',
+        'widthLimitErrors/:id(/linkId/:linkId)': 'widthLimitErrors',
 
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
@@ -134,8 +155,8 @@
         'lengthLimit/:id': 'lengthLimit',
         'widthLimit/:id': 'widthLimit',
         'work-list/speedLimit': 'speedLimitWorkList',
-        'work-list/speedLimit/state' : 'speedLimitStateWorkList',
-        'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
+        'work-list/speedLimit/state': 'speedLimitStateWorkList',
+        'work-list/speedLimit/municipality(/:id)': 'speedLimitMunicipalitiesWorkList',
         'work-list/speedLimitErrors': 'speedLimitErrorsWorkList',
 
         'work-list/hazardousMaterialTransportProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
@@ -190,8 +211,7 @@
             }
             mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
           }
-          else
-          {
+          else {
             //TODO might be nice to show error message for user if roadlink  applied to #linkProperty/ url does not exist
           }
         });
@@ -374,32 +394,40 @@
         speedLimitCentering('speedLimit', id);
       },
 
-      hazardousMaterialProhibitionErrors: function (id) {
-        //TODO: Linecentering
+      hazardousMaterialProhibitionErrors: function (id, linkId) {
+        linearAssetMapCenterAndZoom('hazardousMaterialTransportProhibition', id, linkId);
       },
-      manoeuvreErrors: function (id) {
-        //TODO: Linecentering
+
+      manoeuvreErrors: function (linkId) {
+        manoeuvreMapCenterAndZoom(linkId);
       },
-      heightLimitErrors: function (id) {
-        //TODO: Linecentering
+
+      heightLimitErrors: function (id, linkId) {
+        linearAssetMapCenterAndZoom('heightLimit', id, linkId);
       },
-      bogieWeightErrors: function (id) {
-        //TODO: Linecentering
+
+      bogieWeightErrors: function (id, linkId) {
+        linearAssetMapCenterAndZoom('bogieWeightLimit', id, linkId);
       },
-      axleWeightLimitErrors: function (id) {
-        //TODO: Linecentering
+
+      axleWeightLimitErrors: function (id, linkId) {
+        linearAssetMapCenterAndZoom('axleWeightLimit', id, linkId);
       },
-      lengthLimitErrors: function (id) {
-        //TODO: Linecentering
+
+      lengthLimitErrors: function (id, linkId) {
+        linearAssetMapCenterAndZoom('lengthLimit', id, linkId);
       },
-      totalWeightLimitErrors: function (id) {
-        //TODO: Linecentering
+
+      totalWeightLimitErrors: function (id, linkId) {
+        linearAssetMapCenterAndZoom('totalWeightLimit', id, linkId);
       },
-      trailerTruckWeightLimitErrors: function (id) {
-        //TODO: Linecentering
+
+      trailerTruckWeightLimitErrors: function (id, linkId) {
+        linearAssetMapCenterAndZoom('trailerTruckWeightLimit', id, linkId);
       },
-      widthLimitErrors: function (id) {
-        //TODO: Linecentering
+
+      widthLimitErrors: function (id, linkId) {
+        linearAssetMapCenterAndZoom('widthLimit', id, linkId);
       },
 
       maintenanceRoad: function (id) {
