@@ -1181,7 +1181,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/api/inaccurates") {
+  get("/inaccurates") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
     municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))

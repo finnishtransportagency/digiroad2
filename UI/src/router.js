@@ -142,6 +142,7 @@
         'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList',
         'work-list/heightLimitErrors': 'heightLimitErrorsWorkList',
         'work-list/bogieWeightErrors': 'bogieWeightErrorsWorkList',
+        'work-list/lengthLimitErrors': 'lengthLimitErrorsWorkList',
         'work-list/axleWeightLimitErrors': 'axleWeightLimitErrorsWorkList',
         'work-list/totalWeightLimitErrors': 'totalWeightLimitErrorsWorkList',
         'work-list/trailerTruckWeightLimitErrors': 'trailerTruckWeightLimitErrorsWorkList',
@@ -295,7 +296,7 @@
 
       hazardousMaterialProhibitionErrorsWorkList: function () {
         //TODO: Search type id by layer name on models.linearAssets
-        eventbus.trigger('workList:select', 'hazardousMaterialProhibitionErrors', backend.getInaccurateAssets(210));
+        eventbus.trigger('workList:select', 'hazardousMaterialTransportProhibitionErrors', backend.getInaccurateAssets(210));
       },
 
       manoeuvreErrorsWorkList: function () {
@@ -304,6 +305,10 @@
 
       heightLimitErrorsWorkList: function () {
         eventbus.trigger('workList:select', 'heightLimitErrors', backend.getInaccurateAssets(70));
+      },
+
+      lengthLimitErrorsWorkList: function(){
+        eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(70));
       },
 
       bogieWeightErrorsWorkList: function () {
