@@ -6,12 +6,15 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.VerificationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean = false, counter: Option[Int] = None)
 case class LatestModificationInfo(assetTypeCode: Int, modifiedBy: Option[String], modifiedDate: Option[DateTime])
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
+  val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -30,8 +33,10 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def getCriticalAssetVerification(municipalityCode: Int, assetTypeIds: Seq[Int]): Seq[VerificationInfo] = {
-    withDynSession {
-      dao.getCriticalAssetVerification(municipalityCode, assetTypeIds)
+    time(logger, "Query to getCriticalAssetVerification on the DashBoard Functionality") {
+      withDynSession {
+        dao.getCriticalAssetVerification(municipalityCode, assetTypeIds)
+      }
     }
   }
 
@@ -104,8 +109,10 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       roadLinkService.getTinyRoadLinkFromVVH(municipality)
     }
 
-    withDynTransaction {
-      dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
+    time(logger, "Query to getAssetLatestModifications on the DashBoard Functionality") {
+      withDynTransaction {
+        dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
+      }
     }
   }
 }
