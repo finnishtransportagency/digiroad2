@@ -160,18 +160,14 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     println(DateTime.now())
 
     println("Fetching municipalities")
-//    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
-//      Queries.getMunicipalities
-//    }
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
+      Queries.getMunicipalities
+    }
 
-    //    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
-    //      Queries.getMunicipalities
-    //    }
-    val municipalities = Set(749)
     municipalities.foreach{
       municipality =>
         println(s"Start process for municipality $municipality")
-        val trafficSigns = trafficSignService.getByMunicipality(municipality)/*.filterNot(_.floating)*/
+        val trafficSigns = trafficSignService.getByMunicipality(municipality).filterNot(_.floating)
           .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
         trafficSigns.foreach {
           trafficSign =>
