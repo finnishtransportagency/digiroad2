@@ -92,7 +92,8 @@
 
       backend.getRoadLinkByLinkId(linkId, function (response) {
         eventbus.once('manoeuvres:fetched', function () {
-          models.selectedManoeuvreSource.open(linkId);
+          if (!_.isUndefined(models.selectedManoeuvreSource.getByLinkId(linkId)))
+            models.selectedManoeuvreSource.open(linkId);
         });
         mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
       });

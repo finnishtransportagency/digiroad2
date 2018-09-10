@@ -48,17 +48,16 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
     }
   }
 
-  override def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
+  override def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val prohibitions = assets.asInstanceOf[Seq[PersistedLinearAsset]]
 
     prohibitions.flatMap{ prohibition =>
-      val roadLink = roadLinks.find(_.linkId == prohibition.linkId)
       TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
 
         case TrafficSignType.HazmatProhibitionA => if(!comparingProhibitionValue(prohibition, 24))
-          Seq(Inaccurate(Some(prohibition.id), None, roadLink.get.municipalityCode, roadLink.get.administrativeClass)) else Seq()
+          Seq(Inaccurate(Some(prohibition.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
         case TrafficSignType.HazmatProhibitionB => if(!comparingProhibitionValue(prohibition, 25))
-          Seq(Inaccurate(Some(prohibition.id), None, roadLink.get.municipalityCode, roadLink.get.administrativeClass)) else Seq()
+          Seq(Inaccurate(Some(prohibition.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
         case NoVehiclesWithDangerGoods => Seq()
         case _ => throw new NumberFormatException("Not supported trafficSign on Prohibition asset")
       }

@@ -50,9 +50,8 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
     dao.fetchLinearAssetsByLinkIds(assetTypeInfo.typeId, roadLink.map(_.linkId), LinearAssetTypes.numericValuePropertyId, false).filterNot(_.expired)
   }
 
-  override def verifyAsset(assets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
+  override def verifyAsset(assets: Seq[PersistedLinearAsset], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     assets.flatMap { asset =>
-      val roadLink = roadLinks.find(_.linkId == asset.linkId).get
 
       if (!comparingAssetAndTrafficValue(asset, trafficSign))
         Seq(Inaccurate(Some(asset.id), None, roadLink.municipalityCode, roadLink.administrativeClass))
@@ -62,20 +61,8 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
   }
 
   override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
-    def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
-      try {
-        insertInaccurate(id, assetType, municipalityCode, adminClass)
-      } catch {
-        case ex: SQLIntegrityConstraintViolationException =>
-          print("duplicate key inserted ")
-        case e: Exception => print("duplicate key inserted ")
-          throw new RuntimeException("SQL exception " + e.getMessage)
-      }
-    }
-
     if (assetInfo.oldIds.toSeq.nonEmpty) {
       withDynTransaction {
-        inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds.toSeq)
 
         val assets = dao.fetchAssetsWithTextualValuesByIds(assetInfo.oldIds ++ assetInfo.newIds, LinearAssetTypes.getValuePropertyId(assetTypeInfo.typeId)).filterNot(_.expired)
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false)
@@ -90,6 +77,9 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
               .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
               .filterNot(_.floating)
           }
+
+          inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds.toSeq)
+          inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds.toSeq ++ trafficSingsByRadius.map(_.linkId))
 
           trafficSingsByRadius.foreach { trafficSign =>
             assetValidator(trafficSign).foreach {

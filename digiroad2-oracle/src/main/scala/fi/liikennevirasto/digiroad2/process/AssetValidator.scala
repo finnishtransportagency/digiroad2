@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUti
 import org.joda.time.DateTime
 
 case class Inaccurate(assetId: Option[Long], linkId: Option[Long], municipalityCode: Int,  administrativeClass: AdministrativeClass)
-case class AssetValidatorInfo(oldIds: Set[Long], newIds: Set[Long])
+case class AssetValidatorInfo(oldIds: Set[Long], newIds: Set[Long], newLinkIds: Set[Long] = Set())
 
 trait AssetServiceValidator {
 
@@ -43,7 +43,7 @@ trait AssetServiceValidator {
     assetTypeInfo.label
   }
 
-  def verifyAsset(assets: Seq[AssetType], roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Set[Inaccurate]
+  def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate]
   def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType]
   def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], point: Point, distance: Double): Seq[AssetType]
 
@@ -61,8 +61,8 @@ trait AssetServiceValidator {
 
   protected def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
     sideCode match {
-      case SideCode.TowardsDigitizing => Seq(first)
-      case SideCode.AgainstDigitizing => Seq(last)
+      case SideCode.TowardsDigitizing => Seq(last)
+      case SideCode.AgainstDigitizing => Seq(first)
       case _ => Seq(first, last)
     }
   }
@@ -112,12 +112,12 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     else
       GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry.reverse)
 
-
-    val assets = filteredAsset(trafficSignRoadLink, getAsset(roadLinks), pointOfInterest, -distance)
-    if (assets.isEmpty) {
+    val assets = getAsset(roadLinks)
+    val filterAssets = filteredAsset(trafficSignRoadLink, getAsset(roadLinks), pointOfInterest, -distance)
+    if (filterAssets.isEmpty) {
       validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
     } else {
-      verifyAsset(assets, roadLinks, trafficSign)
+      verifyAsset(filterAssets, trafficSignRoadLink, trafficSign)
     }
   }
 
@@ -132,7 +132,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
         if (asset.isEmpty) {
           validator((oppositePoint, newRoadLink), filteredRoadLink, trafficSign, assets, inaccurate, distance + GeometryUtils.geometryLength(newRoadLink.geometry))
         } else {
-          verifyAsset(asset, roadLinks, trafficSign._1) ++ inaccurate
+          verifyAsset(asset, newRoadLink, trafficSign._1) ++ inaccurate
         }
       }
     }.toSet
@@ -143,30 +143,35 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 
-  def verifyInaccurate() : Unit = {
-    def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
-      try {
-        insertInaccurate(id, assetType, municipalityCode, adminClass)
-      } catch {
-        case ex: SQLIntegrityConstraintViolationException =>
-          print("duplicate key inserted ")
-        case e: Exception => print("duplicate key inserted ")
-          throw new RuntimeException("SQL exception " + e.getMessage)
-      }
+  def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
+    try {
+      insertInaccurate(id, assetType, municipalityCode, adminClass)
+    } catch {
+      case ex: SQLIntegrityConstraintViolationException =>
+        print("duplicate key inserted ")
+      case e: Exception => print("duplicate key inserted ")
+        throw new RuntimeException("SQL exception " + e.getMessage)
     }
+  }
+
+  def verifyInaccurate() : Unit = {
 
     println(s"Start verification for asset ${assetTypeInfo.label} ")
     println(DateTime.now())
 
     println("Fetching municipalities")
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
-      Queries.getMunicipalities
-    }
+//    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
+//      Queries.getMunicipalities
+//    }
 
+    //    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
+    //      Queries.getMunicipalities
+    //    }
+    val municipalities = Set(749)
     municipalities.foreach{
       municipality =>
         println(s"Start process for municipality $municipality")
-        val trafficSigns = trafficSignService.getByMunicipality(municipality).filterNot(_.floating)
+        val trafficSigns = trafficSignService.getByMunicipality(municipality)/*.filterNot(_.floating)*/
           .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
         trafficSigns.foreach {
           trafficSign =>

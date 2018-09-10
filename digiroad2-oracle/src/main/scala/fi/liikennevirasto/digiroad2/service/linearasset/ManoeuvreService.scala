@@ -1,11 +1,12 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
@@ -36,7 +37,7 @@ object ElementTypes {
   val LastElement = 3
 }
 
-class ManoeuvreService(roadLinkService: RoadLinkService) {
+class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
 
   def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
@@ -67,6 +68,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       dao.expireManoeuvre(oldManoeuvreId)
       manoeuvreUpdates.exceptions.foreach(dao.setManoeuvreExceptions(manoeuvreId))
       manoeuvreUpdates.validityPeriods.foreach(dao.setManoeuvreValidityPeriods(manoeuvreId))
+
+      eventBus.publish("manoeuvre:AssetValidator",AssetValidatorInfo(Set(manoeuvreId), Set(manoeuvreId)))
       manoeuvreId
     }
   }

@@ -90,6 +90,12 @@
       });
     };
 
+    var getByLinkId = function(linkId) {
+      return _.flatten(manoeuvres).find(function (manoeuvre) {
+        return manoeuvre.linkId === linkId;
+      });
+    };
+
     /**
      * Updates model after form changes.
      *
@@ -676,6 +682,7 @@
       getFirstTargetRoadLinksBySourceLinkId: getFirstTargetRoadLinksBySourceLinkId,
       getNextTargetRoadLinksBySourceLinkId: getNextTargetRoadLinksBySourceLinkId,
       get: get,
+      getByLinkId: getByLinkId,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
       addLink: addLink,

@@ -196,9 +196,17 @@ class TrailerTruckWeightLimitValidation(trailerTruckWeightLimitValidator: Traile
 class WidthLimitValidation(widthLimitValidator: WidthLimitValidator) extends Actor {
   def receive = {
     case x: AssetValidatorInfo => widthLimitValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
-    case _ => println("trailerTruckWeightLimitValidator: Received unknown message")
+    case _ => println("widthLimitValidator: Received unknown message")
   }
 }
+
+class ManoeuvreValidation(manoeuvreValidator: ManoeuvreValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => manoeuvreValidator.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("manoeuvreValidator: Received unknown message")
+  }
+}
+
 
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
@@ -270,8 +278,8 @@ object Digiroad2Context {
   val axleWeightLimitVerifier = system.actorOf(Props(classOf[AxleWeightLimitValidation], axleWeightLimitValidator), name = "axleWeightLimitValidator")
   eventbus.subscribe(axleWeightLimitVerifier, "axleWeightLimit:Validator")
 
-  val totalWeightLimitVerifier = system.actorOf(Props(classOf[TotalWeightLimitValidation], totalWeightLimitValidator), name = "sevenRestrictionsValidator")
-  eventbus.subscribe(totalWeightLimitVerifier, "sevenRestrictions:Validator")
+  val totalWeightLimitVerifier = system.actorOf(Props(classOf[TotalWeightLimitValidation], totalWeightLimitValidator), name = "totalWeightLimitValidator")
+  eventbus.subscribe(totalWeightLimitVerifier, "totalWeightLimit:Validator")
 
   val bogieWeightLimitVerifier = system.actorOf(Props(classOf[BogieWeightLimitValidation], bogieWeightLimitValidator), name = "bogieWeightLimitValidator")
   eventbus.subscribe(bogieWeightLimitVerifier, "bogieWeightLimit:Validator")
@@ -287,6 +295,9 @@ object Digiroad2Context {
 
   val widthLimitVerifier = system.actorOf(Props(classOf[WidthLimitValidation], widthLimitValidator), name = "widthLimitValidator")
     eventbus.subscribe(widthLimitVerifier, "widthLimit:Validator")
+
+  val manoeuvreVerifier = system.actorOf(Props(classOf[ManoeuvreValidation], manoeuvreValidator), name = "manoeuvreValidator")
+  eventbus.subscribe(manoeuvreVerifier, "manoeuvre:Validator")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -470,7 +481,7 @@ object Digiroad2Context {
   }
 
   lazy val manoeuvreService = {
-    new ManoeuvreService(roadLinkService)
+    new ManoeuvreService(roadLinkService, eventbus)
   }
 
   lazy val weightLimitService: WeightLimitService = {
@@ -535,6 +546,10 @@ object Digiroad2Context {
 
   lazy val widthLimitValidator: WidthLimitValidator = {
     new WidthLimitValidator()
+  }
+
+  lazy val manoeuvreValidator: ManoeuvreValidator = {
+    new ManoeuvreValidator()
   }
 
   val env = System.getProperty("env")

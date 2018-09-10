@@ -21,8 +21,6 @@ class LinearTotalWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventB
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-//  def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-
   override def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     val outputIds = withDynTransaction {
       updateWithoutTransaction(ids, value, username)
@@ -32,17 +30,17 @@ class LinearTotalWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventB
     outputIds
   }
 
-//  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
-//    def toInaccurateLinearAsset(x: (Long, String, Int)) = InaccurateLinearAsset(x._1, x._2, AdministrativeClass(x._3).toString)
-//
-//    withDynTransaction {
-//      inaccurateDAO.getInaccurateAsset(TotalWeightLimit.typeId, municipalities, adminClass)
-//        .map(toInaccurateLinearAsset)
-//        .groupBy(_.municipality)
-//        .mapValues {
-//          _.groupBy(_.administrativeClass)
-//            .mapValues(_.map(_.linkId))
-//        }
-//    }
-//  }
+  /**
+    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+    val newIds = withDynTransaction {
+      val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
+       newLinearAssets.map { newAsset =>
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
+      }
+    }
+    eventBus.publish("totalWeightLimit:Validator",AssetValidatorInfo(Set(), Set(), newLinearAssets.map(_.linkId).toSet))
+    newIds
+  }
 }
