@@ -33,10 +33,8 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def getCriticalAssetVerification(municipalityCode: Int, assetTypeIds: Seq[Int]): Seq[VerificationInfo] = {
-    time(logger, "Query to getCriticalAssetVerification on the DashBoard Functionality") {
-      withDynSession {
-        dao.getCriticalAssetVerification(municipalityCode, assetTypeIds)
-      }
+    withDynSession {
+      dao.getCriticalAssetVerification(municipalityCode, assetTypeIds)
     }
   }
 
@@ -92,16 +90,18 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def getCriticalAssetTypesByMunicipality(municipalityCode: Int): List[VerificationInfo] = {
-    val criticalAssetTypes =
-      Seq(
-        MassTransitStopAsset.typeId,
-        SpeedLimitAsset.typeId,
-        TotalWeightLimit.typeId,
-        Prohibition.typeId,
-        Manoeuvres.typeId
-      )
+    time(logger, "GetCriticalAssetTypesByMunicipality method to populate the DashBoard Functionality") {
+      val criticalAssetTypes =
+        Seq(
+          MassTransitStopAsset.typeId,
+          SpeedLimitAsset.typeId,
+          TotalWeightLimit.typeId,
+          Prohibition.typeId,
+          Manoeuvres.typeId
+        )
 
       getCriticalAssetVerification(municipalityCode, criticalAssetTypes).toList
+    }
   }
 
   def getAssetLatestModifications(municipalities: Set[Int]): List[LatestModificationInfo] = {
