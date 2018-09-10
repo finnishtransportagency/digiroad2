@@ -323,7 +323,7 @@
       },
 
       manoeuvreErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'manoeuvreErrors', backend.getInaccurateAssets(380));
+        eventbus.trigger('workList:select', 'manoeuvreErrors', backend.getInaccurateManoeuvre());
       },
 
       heightLimitErrorsWorkList: function () {

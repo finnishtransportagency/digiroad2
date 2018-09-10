@@ -1181,11 +1181,23 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/inaccurates") {
+  get("/manoeuvre/inaccurates") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
     municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
 
+    user.isOperator() match {
+      case true =>
+//        manoeuvreService.getInaccurateRecords()
+      case false =>
+//        manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
+    }
+  }
+
+  get("/inaccurates") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     user.isOperator() match {
       case true =>
