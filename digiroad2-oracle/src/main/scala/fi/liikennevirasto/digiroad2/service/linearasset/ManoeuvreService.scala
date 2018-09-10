@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -38,6 +39,7 @@ object ElementTypes {
 class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
+  def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
@@ -251,4 +253,14 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+  def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
+    withDynTransaction {
+      inaccurateDAO.getInaccurateAsset(typeId, municipalities, adminClass)
+        .groupBy(_.municipality)
+        .mapValues {
+          _.groupBy(_.administrativeClass)
+            .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
+        }
+    }
+  }
 }
