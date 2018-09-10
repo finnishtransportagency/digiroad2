@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
-trait MassLimitationValidator extends AssetServiceValidatorOperations {
+trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperations {
 
   override type AssetType = PersistedLinearAsset
   lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
@@ -88,6 +88,7 @@ trait MassLimitationValidator extends AssetServiceValidatorOperations {
           val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap {
             trafficSignService.getTrafficSignByRadius(_, radiusDistance)
               .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+              .filterNot(_.floating)
           }
 
           trafficSingsByRadius.foreach { trafficSign =>

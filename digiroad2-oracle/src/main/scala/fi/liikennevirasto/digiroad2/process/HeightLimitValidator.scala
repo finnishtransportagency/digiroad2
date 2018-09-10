@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
-class HeightLimitValidator extends MassLimitationValidator {
+class HeightLimitValidator extends SevenRestrictionsLimitationValidator {
   override def assetTypeInfo: AssetTypeInfo = HeightLimit
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.FreeHeight, TrafficSignType.MaxHeightExceeding)
 

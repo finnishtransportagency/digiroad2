@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
-class TrailerTruckWeightLimitValidator extends MassLimitationValidator{
+class TrailerTruckWeightLimitValidator extends SevenRestrictionsLimitationValidator{
   override def assetTypeInfo: AssetTypeInfo = TrailerTruckWeightLimit
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaxMassCombineVehiclesExceeding)
 

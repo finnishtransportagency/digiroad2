@@ -97,6 +97,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
           val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
             trafficSignService.getTrafficSignByRadius(position, radiusDistance)
               .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+              .filterNot(_.floating)
           }
 
           trafficSingsByRadius.foreach { trafficSign =>

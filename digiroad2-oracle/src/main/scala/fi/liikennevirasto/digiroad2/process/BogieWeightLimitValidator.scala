@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
-class BogieWeightLimitValidator extends MassLimitationValidator {
+class BogieWeightLimitValidator extends SevenRestrictionsLimitationValidator {
   override def assetTypeInfo: AssetTypeInfo = BogieWeightLimit
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaxTonsOnBogieExceeding)
 

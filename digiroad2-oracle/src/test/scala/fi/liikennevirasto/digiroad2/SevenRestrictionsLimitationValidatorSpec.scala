@@ -18,13 +18,13 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import org.mockito.ArgumentMatchers.any
 
-class MassLimitationValidatorSpec  extends FunSuite with Matchers {
+class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
 
-  case class MassLimitationInfoValidation(typeId: Int, service: MassLimitationValidator, trafficSign: TrafficSignType )
+  case class MassLimitationInfoValidation(typeId: Int, service: SevenRestrictionsLimitationValidator, trafficSign: TrafficSignType )
   class TestWidthLimitValidator extends WidthLimitValidator {
     override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
