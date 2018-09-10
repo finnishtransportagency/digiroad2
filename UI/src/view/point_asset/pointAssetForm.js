@@ -490,9 +490,9 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       '</div><div>' +
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
-      '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
+      '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea></div>' +
       (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
-      '</div></div>' +
+      '</div>' +
       '</li>';
   }
 
