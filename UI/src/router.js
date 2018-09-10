@@ -403,7 +403,7 @@
         linearAssetMapCenterAndZoom('hazardousMaterialTransportProhibition', id, linkId);
       },
 
-      manoeuvreErrors: function (linkId) {
+      manoeuvreErrors: function (id, linkId) {
         manoeuvreMapCenterAndZoom(linkId);
       },
 
