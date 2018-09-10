@@ -149,7 +149,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("get assets Latests Modifications with one municipality") {
+  ignore("get assets Latests Modifications with one municipality") {
     runWithRollback {
 
       val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
@@ -162,7 +162,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("get assets Latests Modifications for Ely user with two municipalities"){
+  ignore("get assets Latests Modifications for Ely user with two municipalities"){
     runWithRollback {
       val tinyRoadLinkMunicipality100 = Seq( TinyRoadLink(2000), TinyRoadLink(4000), TinyRoadLink(6000))
       val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
