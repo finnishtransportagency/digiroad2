@@ -157,6 +157,7 @@ class VerificationDao {
               join lrm_position lrm on lrm.id = al.position_id
               where a.modified_date is not null
               and a.modified_date >= sysdate - 30
+              and a.valid_to is null
               and lrm.link_id in (select id from #$idTableName)
               group by a.asset_type_id, a.modified_by
               order by max(a.modified_date) desc, a.asset_type_id, a.modified_by
