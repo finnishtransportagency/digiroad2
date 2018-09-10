@@ -16,7 +16,7 @@
     };
 
     var setLinkProperty = function(name, value) {
-      if (value != data[name]) {
+      if (value !== data[name]) {
         data[name] = value;
       }
     };
@@ -57,23 +57,24 @@
   };
 
   root.RoadCollection = function(backend) {
-    var roadLinkGroups = [];
-    var roadLinkGroupsHistory = [];
-    var roadLinks = function() {
-      return _.flatten(roadLinkGroups);
+    var me = this;
+    this.roadLinkGroups = [];
+    this.roadLinkGroupsHistory = [];
+    this.roadLinks = function() {
+      return _.flatten(me.roadLinkGroups);
     };
 
-    var roadLinksHistory = function() {
-      return _.flatten(roadLinkGroupsHistory);
+    this.roadLinksHistory = function() {
+      return _.flatten(me.roadLinkGroupsHistory);
     };
 
-    var getSelectedRoadLinks = function() {
-      return _.filter(roadLinks(), function(roadLink) {
+    this.getSelectedRoadLinks = function() {
+      return _.filter(me.roadLinks(), function(roadLink) {
         return roadLink.isSelected();
       });
     };
 
-    var getSelectedRoadLinksHistory = function() {
+    this.getSelectedRoadLinksHistory = function() {
       return _.filter(roadLinksHistory(), function(roadLink) {
         return roadLink.isSelected();
       });
@@ -81,7 +82,7 @@
 
     this.fetch = function(boundingBox) {
       backend.getRoadLinks(boundingBox, function(fetchedRoadLinks) {
-          var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
+          var selectedIds = _.map(me.getSelectedRoadLinks(), function(roadLink) {
             return roadLink.getId();
           });
           var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
@@ -89,18 +90,18 @@
               return new RoadLinkModel(roadLink);
             });
           });
-          roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
+        me.roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
             return _.some(roadLinkGroup, function(roadLink) {
               _.includes(selectedIds, roadLink.getId());
             });
-          }).concat(getSelectedRoadLinks());
+          }).concat(me.getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
       });
     };
 
     this.fetchHistory = function (boundingBox) {
       backend.getHistoryRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {
-        var selectedIds = _.map(getSelectedRoadLinksHistory(), function(roadLink) {
+        var selectedIds = _.map(me.getSelectedRoadLinksHistory(), function(roadLink) {
           return roadLink.getId();
         });
         var fetchedRoadLinkModels = _.map(fetchedHistoryRoadLinks, function(roadLinkGroup) {
@@ -108,18 +109,18 @@
             return new RoadLinkModel(roadLink);
           });
         });
-        roadLinkGroupsHistory = _.reject(fetchedRoadLinkModels, function(roadLinkGroupHistory) {
+        me.roadLinkGroupsHistory = _.reject(fetchedRoadLinkModels, function(roadLinkGroupHistory) {
           return _.some(roadLinkGroupHistory, function(roadLink) {
             _.includes(selectedIds, roadLink.getId());
           });
-        }).concat(getSelectedRoadLinksHistory());
+        }).concat(me.getSelectedRoadLinksHistory());
         eventbus.trigger('roadLinks:historyFetched');
       });
     };
 
     this.fetchWithComplementary = function(boundingBox) {
       backend.getRoadLinksWithComplementary(boundingBox, function(fetchedRoadLinks) {
-        var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
+        var selectedIds = _.map(me.getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();
         });
         var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
@@ -127,20 +128,20 @@
             return new RoadLinkModel(roadLink);
           });
         });
-        roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
+        me.roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
           return _.some(roadLinkGroup, function(roadLink) {
             _.includes(selectedIds, roadLink.getId());
           });
-        }).concat(getSelectedRoadLinks());
+        }).concat(me.getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
       });
     };
 
     this.getRoadsForMassTransitStops = function() {
-      return _.chain(roadLinks())
-        .filter(function(roadLink) {
-          return roadLink.isCarTrafficRoad() && (roadLink.getData().administrativeClass != "Unknown");
-        })
+      return _.chain(me.roadLinks())
+        // .filter(function(roadLink) {
+        //   return roadLink.isCarTrafficRoad() && (roadLink.getData().administrativeClass !== "Unknown");
+        // })
         .map(function(roadLink) {
           return roadLink.getData();
         })
@@ -148,29 +149,29 @@
     };
 
     this.getRoadLinkByLinkId = function (linkId) {
-      return _.find(_.flatten(roadLinkGroups), function(road) { return road.getId() === linkId; });
+      return _.find(_.flatten(me.roadLinkGroups), function(road) { return road.getId() === linkId; });
     };
 
     this.getAll = function() {
-      return _.map(roadLinks(), function(roadLink) {
+      return _.map(me.roadLinks(), function(roadLink) {
         return roadLink.getData();
       });
     };
 
     this.getAllHistory = function() {
-      return _.map(roadLinksHistory(), function(roadLinkHistory){
+      return _.map(me.roadLinksHistory(), function(roadLinkHistory){
         return roadLinkHistory.getData();
       });
     };
 
     this.get = function(ids) {
       return _.map(ids, function(id) {
-        return _.find(roadLinks(), function(road) { return road.getId() === id; });
+        return _.find(me.roadLinks(), function(road) { return road.getId() === id; });
       });
     };
 
     this.getGroup = function(id) {
-      return _.find(roadLinkGroups, function(roadLinkGroup) {
+      return _.find(me.roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getId() === id;
         });
@@ -178,12 +179,12 @@
     };
 
     this.reset = function(){
-      roadLinkGroups = [];
-      roadLinkGroupsHistory = [];
+      me.roadLinkGroups = [];
+      me.roadLinkGroupsHistory = [];
     };
 
     this.resetHistory = function(){
-      roadLinkGroupsHistory = [];
+      me.roadLinkGroupsHistory = [];
     };
   };
 })(this);

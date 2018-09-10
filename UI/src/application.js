@@ -35,7 +35,7 @@
 
     var pointAssets = _.map(assetConfiguration.pointAssetsConfig, function(spec) {
       var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
-      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
+      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName,  spec.roadCollection ? new spec.roadCollection(backend) :  roadCollection);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
@@ -352,7 +352,7 @@
      acc[asset.layerName] = new PointAssetLayer({
        roadLayer: roadLayer,
        application: applicationModel,
-       roadCollection: models.roadCollection,
+       roadCollection: asset.roadCollection ? new asset.roadCollection(backend) :  models.roadCollection,
        collection: asset.collection,
        map: map,
        selectedAsset: asset.selectedPointAsset,
