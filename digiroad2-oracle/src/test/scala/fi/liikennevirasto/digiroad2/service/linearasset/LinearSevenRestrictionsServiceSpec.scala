@@ -257,5 +257,5 @@ class LinearSevenRestrictionsServiceSpec extends FunSuite with Matchers {
 
   test("get inaccurate values (id)") {
 
-
+  }
 }

@@ -128,7 +128,7 @@
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'speedLimit/:linkId(/municipality/:municipalityId/:position)': 'speedLimit',
         'speedLimitErrors/:id': 'speedLimitErrors',
-        'hazardousMaterialProhibitionErrors(/:typeId)/:id': 'hazardousMaterialProhibitionErrors',
+        'hazardousMaterialTransportProhibitionErrors(/:typeId)/:id': 'hazardousMaterialTransportProhibitionErrors',
         'manoeuvreErrors(/:typeId)/:id': 'manoeuvreErrors',
         'heightLimitErrors(/:typeId)/:id': 'heightLimitErrors',
         'bogieWeightErrors(/:typeId)/:id': 'bogieWeightErrors',
@@ -399,7 +399,7 @@
         speedLimitCentering('speedLimit', id);
       },
 
-      hazardousMaterialProhibitionErrors: function (id, linkId) {
+      hazardousMaterialTransportProhibitionErrors: function (id, linkId) {
         linearAssetMapCenterAndZoom('hazardousMaterialTransportProhibition', id, linkId);
       },
 

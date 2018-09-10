@@ -1549,7 +1549,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
       case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
-      case   LengthLimit.typeId => linearLengthLimitService
+      case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
       case TotalWeightLimit.typeId => linearTotalWeightLimitService
       case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService

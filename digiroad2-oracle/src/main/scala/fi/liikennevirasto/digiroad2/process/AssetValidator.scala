@@ -1,15 +1,16 @@
 package fi.liikennevirasto.digiroad2.process
 
+import java.sql.SQLIntegrityConstraintViolationException
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
@@ -143,7 +144,18 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
   }
 
   def verifyInaccurate() : Unit = {
-    println(s"Start verification for asset ${assetTypeInfo.label}: AssetTypeInfo = ")
+    def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
+      try {
+        insertInaccurate(id, assetType, municipalityCode, adminClass)
+      } catch {
+        case ex: SQLIntegrityConstraintViolationException =>
+          print("duplicate key inserted ")
+        case e: Exception => print("duplicate key inserted ")
+          throw new RuntimeException("SQL exception " + e.getMessage)
+      }
+    }
+
+    println(s"Start verification for asset ${assetTypeInfo.label} ")
     println(DateTime.now())
 
     println("Fetching municipalities")
@@ -154,20 +166,21 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     municipalities.foreach{
       municipality =>
         println(s"Start process for municipality $municipality")
-        val trafficSigns = trafficSignService.getByMunicipality(municipality)
+        val trafficSigns = trafficSignService.getByMunicipality(municipality).filterNot(_.floating)
+          .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
         trafficSigns.foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
-            OracleDatabase.withDynSession {
+            OracleDatabase.withDynTransaction {
               assetValidator(trafficSign).foreach {
                 inaccurate =>
                   (inaccurate.assetId, inaccurate.linkId) match {
                     case (Some(asset), _) =>
                       println(s"Creating inaccurate asset for assetType ${assetTypeInfo.typeId} and assetId $asset")
-                      inaccurateAssetDAO.createInaccurateAsset(asset, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, asset, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
                     case (_, Some(linkId)) =>
                       println(s"Creating inaccurate link id for assetType ${assetTypeInfo.typeId} and linkId $linkId")
-                      inaccurateAssetDAO.createInaccurateLink(linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
                     case (_, _) =>
                   }
               }
