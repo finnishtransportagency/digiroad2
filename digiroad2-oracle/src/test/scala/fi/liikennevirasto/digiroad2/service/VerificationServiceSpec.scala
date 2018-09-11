@@ -149,7 +149,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  ignore("get assets Latests Modifications with one municipality") {
+  test("get assets Latests Modifications with one municipality") {
     runWithRollback {
 
       val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
