@@ -113,7 +113,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
       GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry.reverse)
 
     val assets = getAsset(roadLinks)
-    val filterAssets = filteredAsset(trafficSignRoadLink, getAsset(roadLinks), pointOfInterest, -distance)
+    val filterAssets = filteredAsset(trafficSignRoadLink, getAsset(roadLinks), point, distance)
     if (filterAssets.isEmpty) {
       validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
     } else {
@@ -127,8 +127,8 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     if(adjAcents.isEmpty || distance >= radiusDistance)
       inaccurate ++ Seq(Inaccurate(None, Some(trafficSign._1.linkId), trafficSign._1.municipalityCode, trafficSign._2))
     else {
-      adjAcents.flatMap{ case (newRoadLink, (_, oppositePoint)) =>
-        val asset = filteredAsset(newRoadLink, assets, oppositePoint, distance)
+      adjAcents.flatMap{ case (newRoadLink, (adjacentPoint, oppositePoint)) =>
+        val asset = filteredAsset(newRoadLink, assets, adjacentPoint, distance)
         if (asset.isEmpty) {
           validator((oppositePoint, newRoadLink), filteredRoadLink, trafficSign, assets, inaccurate, distance + GeometryUtils.geometryLength(newRoadLink.geometry))
         } else {
@@ -143,7 +143,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 
-  def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
+  protected def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
     try {
       insertInaccurate(id, assetType, municipalityCode, adminClass)
     } catch {
@@ -151,6 +151,18 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
         print("duplicate key inserted ")
       case e: Exception => print("duplicate key inserted ")
         throw new RuntimeException("SQL exception " + e.getMessage)
+    }
+  }
+
+
+  def splitBothDirectionTrafficSignInTwo(trafficSigns: Seq[PersistedTrafficSign]) : Seq[PersistedTrafficSign] = {
+    trafficSigns.flatMap { trafficSign =>
+      SideCode.apply(trafficSign.validityDirection) match {
+        case SideCode.BothDirections =>
+          Seq(trafficSign.copy(validityDirection = SideCode.TowardsDigitizing.value)) ++ Seq(trafficSign.copy(validityDirection = SideCode.AgainstDigitizing.value))
+        case _ =>
+          Seq(trafficSign)
+      }
     }
   }
 
@@ -164,12 +176,14 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
       Queries.getMunicipalities
     }
 
+    inaccurateAssetDAO.deleteAllInaccurateAssets(assetTypeInfo.typeId)
+
     municipalities.foreach{
       municipality =>
         println(s"Start process for municipality $municipality")
         val trafficSigns = trafficSignService.getByMunicipality(municipality).filterNot(_.floating)
           .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
-        trafficSigns.foreach {
+        splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
             OracleDatabase.withDynTransaction {

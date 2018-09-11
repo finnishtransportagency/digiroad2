@@ -1,10 +1,9 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AxleWeightLimit, LengthLimit}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -21,8 +20,6 @@ class LinearLengthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-//  def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-
   override def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     val outputIds = withDynTransaction {
       updateWithoutTransaction(ids, value, username)
@@ -32,17 +29,17 @@ class LinearLengthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImp
     outputIds
   }
 
-//  override def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
-//    def toInaccurateLinearAsset(x: (Long, String, Int)) = InaccurateLinearAsset(x._1, x._2, AdministrativeClass(x._3).toString)
-//
-//    withDynTransaction {
-//      inaccurateDAO.getInaccurateAssetByTypeId(LengthLimit.typeId, municipalities, adminClass)
-//        .map(toInaccurateLinearAsset)
-//        .groupBy(_.municipality)
-//        .mapValues {
-//          _.groupBy(_.administrativeClass)
-//            .mapValues(_.map(_.linkId))
-//        }
-//    }
-//  }
+  /**
+    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+    val newIds = withDynTransaction {
+      val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
+      newLinearAssets.map { newAsset =>
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
+      }
+    }
+    eventBus.publish("lengthLimit:Validator",AssetValidatorInfo(Set(), Set(), newLinearAssets.map(_.linkId).toSet))
+    newIds
+  }
 }

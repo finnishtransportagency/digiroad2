@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AxleWeightLimit, HazmatTransportProhibition}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -64,6 +64,20 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
 
     eventBus.publish("hazmatTransportProhibition:AssetValidator",AssetValidatorInfo(ids.toSet, outputIds.toSet))
     outputIds
+  }
+
+  /**
+    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+    val newIds = withDynTransaction {
+      val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
+      newLinearAssets.map { newAsset =>
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
+      }
+    }
+    eventBus.publish("hazmatTransportProhibition:AssetValidator",AssetValidatorInfo(Set(), Set()))
+    newIds
   }
 
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {

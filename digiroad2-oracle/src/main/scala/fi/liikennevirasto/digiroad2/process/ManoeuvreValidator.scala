@@ -59,6 +59,9 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
   override def getAdjacents(previousInfo: (Point, RoadLink), roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[(RoadLink, (Point, Point))] = {
     val adjacentInfo = getAdjacentInfo(roadLinks, previousInfo)
+    if(adjacentInfo.size == 1) {
+      adjacentInfo
+    } else
     TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case TrafficSignType.NoLeftTurn | TrafficSignType.NoUTurn =>
         adjacentInfo.filter(_._1 == roadLinkService.pickLeftMost(previousInfo._2, adjacentInfo.map(_._1)))
@@ -130,13 +133,10 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
   override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
 
-    if (assetInfo.oldIds.toSeq.nonEmpty) {
+    if ((assetInfo.newIds ++ assetInfo.oldIds).toSeq.nonEmpty) {
       withDynTransaction {
 
-        inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds.toSeq)
-
         val manoeuvre = manoeuvreDao.fetchManoeuvreById(assetInfo.oldIds.head)
-
         val sourceLinkId = manoeuvre.find(_.elementType == ElementTypes.FirstElement).get.linkId
         val nextLinkId = manoeuvre.find(_.elementType == ElementTypes.FirstElement).get.destLinkId
 
@@ -147,11 +147,14 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
         val pointOfInterest : Point = if (GeometryUtils.areAdjacent(sourceFirst, secondFirst) || GeometryUtils.areAdjacent(sourceFirst, secondLast)) sourceLast else sourceFirst
 
-        val trafficSingsByRadius = trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance)
+        val trafficSings =
+          splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance))
           .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
           .filterNot(_.floating)
 
-        trafficSingsByRadius.foreach { trafficSign =>
+        inaccurateAssetDAO.deleteInaccurateAssetByLinkIds((manoeuvre.map(_.linkId) ++ trafficSings.map(_.linkId) ++ assetInfo.newLinkIds).toSet  ,assetTypeInfo.typeId)
+
+        trafficSings.foreach { trafficSign =>
           assetValidator(trafficSign).foreach {
             inaccurate =>
               (inaccurate.assetId, inaccurate.linkId) match {

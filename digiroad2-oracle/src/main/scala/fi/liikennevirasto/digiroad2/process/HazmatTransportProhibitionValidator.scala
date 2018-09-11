@@ -83,8 +83,6 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
     if (assetInfo.oldIds.toSeq.nonEmpty) {
       withDynTransaction {
 
-        inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds.toSeq)
-
         val assets = dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetInfo.newIds)
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false)
 
@@ -93,13 +91,16 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
           val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
           val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
 
-          val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
-            trafficSignService.getTrafficSignByRadius(position, radiusDistance)
+          val trafficSings: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
+            splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance))
               .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
               .filterNot(_.floating)
           }
 
-          trafficSingsByRadius.foreach { trafficSign =>
+          inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds)
+          inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds ++ trafficSings.map(_.linkId) ,assetTypeInfo.typeId)
+
+          trafficSings.foreach { trafficSign =>
             assetValidator(trafficSign).foreach {
               inaccurate =>
                 (inaccurate.assetId, inaccurate.linkId) match {

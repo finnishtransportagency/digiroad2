@@ -95,12 +95,12 @@ class InaccurateAssetDAO {
           where asset_type_id = $typeId""".execute
   }
 
-  def deleteInaccurateAssetByIds(assetIds: Seq[Long]): Unit = {
+  def deleteInaccurateAssetByIds(assetIds: Set[Long]): Unit = {
     sqlu"""delete from inaccurate_asset where asset_id in (#${assetIds.mkString(",")})""".execute
   }
 
-  def deleteInaccurateAssetByLinkIds(linkIds: Seq[Long]): Unit = {
-    sqlu"""delete from inaccurate_asset where link_id in (#${linkIds.mkString(",")})""".execute
+  def deleteInaccurateAssetByLinkIds(linkIds: Set[Long], typeId: Int): Unit = {
+    sqlu"""delete from inaccurate_asset where link_id in (#${linkIds.mkString(",")}) and asset_type_id = $typeId""".execute
   }
 }
 

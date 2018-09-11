@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.process
 
-import java.sql.SQLIntegrityConstraintViolationException
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetTypeInfo, HazmatTransportProhibition, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, HazmatTransportProhibition, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
@@ -72,14 +71,14 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
           val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
           val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
 
-          val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap {
-            trafficSignService.getTrafficSignByRadius(_, radiusDistance)
+          val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
+            splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance))
               .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
               .filterNot(_.floating)
           }
 
-          inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds.toSeq)
-          inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds.toSeq ++ trafficSingsByRadius.map(_.linkId))
+          inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds)
+          inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds ++ trafficSingsByRadius.map(_.linkId), assetTypeInfo.typeId)
 
           trafficSingsByRadius.foreach { trafficSign =>
             assetValidator(trafficSign).foreach {

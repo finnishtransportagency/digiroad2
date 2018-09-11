@@ -48,7 +48,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     getBySourceRoadLinks(roadLinks)
   }
 
-  def getByMunicipalityAndRoadLinks(municipalityNumber: Int): Seq[(Manoeuvre, Seq[(RoadLink)])] = {
+  def getByMunicipalityAndRoadLinks(municipalityNumber: Int): Seq[(Manoeuvre, Seq[RoadLink])] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
     val manoeuvres = getBySourceRoadLinks(roadLinks)
     manoeuvres.map{ manoeuvre => (manoeuvre, roadLinks.filter(road => road.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).get ||
@@ -69,7 +69,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       manoeuvreUpdates.exceptions.foreach(dao.setManoeuvreExceptions(manoeuvreId))
       manoeuvreUpdates.validityPeriods.foreach(dao.setManoeuvreValidityPeriods(manoeuvreId))
 
-      eventBus.publish("manoeuvre:AssetValidator",AssetValidatorInfo(Set(manoeuvreId), Set(manoeuvreId)))
+      eventBus.publish("manoeuvre:AssetValidator",AssetValidatorInfo(Set(oldManoeuvreId), Set(manoeuvreId)))
       manoeuvreId
     }
   }
@@ -112,7 +112,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     * @param intermediateElements Intermediate elements' list
     * @return Sequence of Start->Intermediate(s)->Target elements.
     */
-  def cleanChain(firstElement: ManoeuvreElement, lastElement: ManoeuvreElement, intermediateElements: Seq[ManoeuvreElement]) = {
+  def cleanChain(firstElement: ManoeuvreElement, lastElement: ManoeuvreElement, intermediateElements: Seq[ManoeuvreElement]) :Seq[ManoeuvreElement] = {
     if (intermediateElements.isEmpty)
       Seq(firstElement, lastElement)
     else {
@@ -147,7 +147,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
     val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
 
-    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.getOrElse(null), null, null)
+    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.orNull, null, null)
 
     isValidManoeuvre(roadLinks)(manoeuvre)
   }
@@ -232,25 +232,32 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     }
   }
 
-  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre) = {
-    withDynTransaction {
+  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre) : Long = {
+    val manoeuvreId = withDynTransaction {
       dao.createManoeuvre(userName, manoeuvre)
     }
+
+    eventBus.publish("manoeuvre:AssetValidator",AssetValidatorInfo(Set(), Set(manoeuvreId)))
+    manoeuvreId
+
   }
 
   def deleteManoeuvre(s: String, id: Long): Long = {
-    withDynTransaction {
+    val deletedId = withDynTransaction {
       dao.deleteManoeuvre(s, id)
     }
+
+    eventBus.publish("manoeuvre:AssetValidator",AssetValidatorInfo(Set(deletedId), Set()))
+    deletedId
   }
 
-  def getSourceRoadLinkIdById(id: Long) = {
+  def getSourceRoadLinkIdById(id: Long) : Long = {
     withDynTransaction {
       dao.getSourceRoadLinkIdById(id)
     }
   }
 
-  def find(id: Long) = {
+  def find(id: Long) : Option[Manoeuvre] = {
     withDynTransaction {
       dao.find(id)
     }
