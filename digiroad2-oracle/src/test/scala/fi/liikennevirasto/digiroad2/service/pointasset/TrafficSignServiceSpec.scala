@@ -348,4 +348,66 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
     }
   }
+
+  test("Get traffic all traffic signs types by group name"){
+    val groupType = TrafficSignTypeGroup.InformationSigns
+    val assetsIncluded = TrafficSignType.apply(groupType)
+
+    assetsIncluded.toSeq.sorted should be (Seq(113, 114, 115, 116, 117, 118, 119))
+  }
+
+  test("Get by municipality and group"){
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
+      VVHRoadlink(388553075, 235,Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+
+    runWithRollback {
+
+      val properties = Set(
+      SimpleProperty("trafficSigns_type", List(PropertyValue("82"))),
+      SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
+      SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+    val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
+
+    val properties1 = Set(
+      SimpleProperty("trafficSigns_type", List(PropertyValue("83"))),
+      SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
+      SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+    val id1 = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties1, 1, None), testUser.username, roadLink)
+
+
+    val properties2 = Set(
+      SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+      SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+      SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+    val id2 = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties2, 1, None), testUser.username, roadLink)
+
+    val result = service.getByMunicipalityAndGroup(235, TrafficSignTypeGroup.GeneralWarningSigns)
+
+    result.map(_.id) should be (Seq(id, id1))
+    }
+  }
+
+  test("Should not return nothing on get by municipality and group"){
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
+      VVHRoadlink(388553075, 235,Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+
+    runWithRollback {
+
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
+
+      val result = service.getByMunicipalityAndGroup(235, TrafficSignTypeGroup.GeneralWarningSigns)
+
+      result.map(_.id) should be (Seq())
+    }
+  }
 }

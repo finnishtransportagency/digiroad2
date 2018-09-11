@@ -279,7 +279,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
                         from asset at
                         join property p on at.asset_type_id = p.asset_type_id
                         join single_choice_value scv on scv.asset_id = at.id and scv.property_id = p.id and p.property_type = 'single_choice'
-                        join enumerated_value ev on scv.enumerated_value_id = ev.id and ev.value in (${trafficSignTypes.mkString(",")})""")(query)
+                        join enumerated_value ev on scv.enumerated_value_id = ev.id and ev.value in (${trafficSignTypes.mkString(",")}))""")(query)
 
   }
 
