@@ -48,9 +48,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
     }
   }
 
-  override def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
-    val prohibitions = assets.asInstanceOf[Seq[PersistedLinearAsset]]
-
+  override def verifyAsset(prohibitions: Seq[PersistedLinearAsset], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     prohibitions.flatMap{ prohibition =>
       TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
 
