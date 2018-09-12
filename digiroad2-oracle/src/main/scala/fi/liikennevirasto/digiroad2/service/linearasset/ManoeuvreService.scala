@@ -300,7 +300,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   def createManoeuvreBasedOnTrafficSign(manouvreProvider: ManoeuvreProvider, newTransaction: Boolean = true): Option[Long] = {
     if(newTransaction) {
       withDynTransaction {
-        createManoeuvreFromTrafficSign(manouvreProvider, !newTransaction)
+        createManoeuvreFromTrafficSign(manouvreProvider, newTransaction = false)
       }
     }
     else
