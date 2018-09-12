@@ -15,7 +15,7 @@
 
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
-        '<div class="modal-dialog form form-horizontal linear-asset">' +
+        '<div class="modal-dialog form form-horizontal form-editable linear-asset ">' +
           '<div class="content">' +
             'Olet valinnut <%- count %> tielinkkiä' +
           '</div>' +
@@ -39,52 +39,6 @@
       }
     }
 
-    function _setValue(value){
-      if (validator(value)) {
-
-        if(!currentValue)
-          currentValue = value;
-
-        else{
-          var properties = _.find(currentValue.properties, function(property){ return property.publicId === value.properties[0].publicId; });
-          if (properties) 
-            properties.values = value.properties[0].values;
-
-          else{
-            currentValue.properties.push({
-              publicId: value.properties[0].publicId,
-              values: value.properties[0].values,
-              propertyType: value.properties[0].propertyType,
-              required: value.properties[0].required
-            });
-          }
-        }
-
-        if(requiredPropertiesMissing())
-          $('button.save').prop('disabled', '');
-        else
-          $('button.save').prop('disabled', 'disabled');
-      }
-
-      else {
-        $('button.save').prop('disabled', 'disabled');
-      }
-    }
-
-    function requiredPropertiesMissing() {
-
-      return _.every(currentValue.properties, function(property){
-        if(!property.required)
-          return true;
-
-        if(_.isEmpty(property.values))
-          return false;
-
-        return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
-      });
-
-    }
-
     function removeValue() {
       currentValue = undefined;
       selectedLinearAsset.removeMultiValue();
@@ -105,9 +59,10 @@
     var _renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({ count: count,  editElement: '' }));
       var selectedMulti = _.clone(selectedLinearAsset);
-      selectedMulti.setValue =  _setValue;
+      selectedMulti.setValue =  setValue;
       selectedMulti.removeValue = removeValue;
-      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti).find('.editable'));
+      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti, true).find('.editable'));
+      eventbus.trigger('massDialog:rendered' , $('button.save'));
     };
 
 

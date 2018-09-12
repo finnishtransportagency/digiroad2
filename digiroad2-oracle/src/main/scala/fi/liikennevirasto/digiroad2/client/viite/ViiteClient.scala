@@ -5,7 +5,6 @@ import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.ErrorMessageConverter
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriClientException, TierekisteriError}
 import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
@@ -86,7 +85,7 @@ trait ViiteClientOperations {
       value.map(_.toLong)
     } catch {
       case e: NumberFormatException =>
-        throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value))
+        throw new ViiteClientException("Invalid value in response: Long expected, got '%s'".format(value))
     }
   }
 
@@ -95,7 +94,7 @@ trait ViiteClientOperations {
       value.map(_.toDouble)
     } catch {
       case e: NumberFormatException =>
-        throw new TierekisteriClientException("Invalid value in response: Double expected, got '%s'".format(value))
+        throw new ViiteClientException("Invalid value in response: Double expected, got '%s'".format(value))
     }
   }
 
@@ -104,7 +103,7 @@ trait ViiteClientOperations {
       value.map(_.toInt)
     } catch {
       case e: NumberFormatException =>
-        throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value))
+        throw new ViiteClientException("Invalid value in response: Int expected, got '%s'".format(value))
     }
   }
 
@@ -113,7 +112,7 @@ trait ViiteClientOperations {
       value.map(dv => new SimpleDateFormat(dateFormat).parse(dv))
     } catch {
       case e: ParseException =>
-        throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value))
+        throw new ViiteClientException("Invalid value in response: Date expected, got '%s'".format(value))
     }
   }
 
@@ -130,7 +129,7 @@ trait ViiteClientOperations {
       value.map(_.toBoolean)
     } catch {
       case e: NumberFormatException =>
-        throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value))
+        throw new ViiteClientException("Invalid value in response: Int expected, got '%s'".format(value))
     }
   }
 
@@ -148,7 +147,7 @@ trait ViiteClientOperations {
   protected def getMandatoryFieldValue(data: Map[String, Any], field: String): Option[String] = {
     val fieldValue = getFieldValue(data, field)
     if (fieldValue.isEmpty)
-      throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
+      throw new ViiteClientException("Missing mandatory field in response '%s'".format(field))
     fieldValue
   }
 }

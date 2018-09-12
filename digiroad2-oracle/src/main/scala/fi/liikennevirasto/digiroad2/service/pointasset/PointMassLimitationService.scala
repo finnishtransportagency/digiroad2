@@ -55,6 +55,23 @@ class PointMassLimitationService(roadLinkService: RoadLinkService, dao: OraclePo
     }
   }
 
+  def getByIds(ids: Seq[Long]):Seq[MassLimitationPointAsset] = {
+    withDynTransaction {
+      val filter = s"where a.id in (${ids.mkString(",")})"
+      val assets = dao.fetchByBoundingBox(pointMassLimitationTypes, withFilter(filter))
+
+      assets.foldLeft(Seq.empty[MassLimitationPointAsset]) {
+        (prev, asset) =>
+          prev.exists( massLimitationSeq => massLimitationSeq.assets.exists(persisted => persisted.id == asset.id)) match {
+            case true => prev
+            case false =>
+              val assetsOnRange = assets.filter( weighGroup => GeometryUtils.geometryLength(Seq(Point(asset.lon, asset.lat), Point(weighGroup.lon, weighGroup.lat))) < GeometryUtils.getDefaultEpsilon )
+              prev ++ Seq(MassLimitationPointAsset(asset.lon, asset.lat, assetsOnRange))
+          }
+      }
+    }
+  }
+
   protected def withFilter(filter: String)(query: String): String = {
     query + " " + filter
   }

@@ -542,7 +542,7 @@ object SpeedLimitFiller {
     val changeSet =
       if ((Math.abs(newStart - newEnd) > 0) && assetId != 0) {
         changedSet.copy(
-          adjustedMValues = changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)),
+          adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)),
           adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newSideCode))
         )
       }

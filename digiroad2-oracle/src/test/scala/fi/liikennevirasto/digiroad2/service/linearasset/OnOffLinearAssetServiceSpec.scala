@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 

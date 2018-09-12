@@ -23,7 +23,7 @@ object LinearAssetTypes {
   val AxleWeightLimits = 50
   val BogieWeightLimits = 60
   val ProhibitionAssetTypeId = 190
-  val PavingAssetTypeId = 110
+  val PavedRoadAssetTypeId = 110
   val RoadWidthAssetTypeId = 120
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
@@ -202,10 +202,11 @@ trait LinearAssetOperations {
         case (id, linkId) =>  roads.filter(_.linkId == linkId).map { road =>
             (road.municipalityCode, id, road.administrativeClass)
           }
-      }
+    }
+      val municipalityNames = municipalityDao.getMunicipalitiesNameAndIdByCode(unVerified.map(_._1).toSet).groupBy(_.id)
 
       unVerified.groupBy(_._1).map{
-        case (municipalityCode, grouped) => (municipalityDao.getMunicipalityNameByCode(municipalityCode), grouped)}
+        case (municipalityCode, grouped) => (municipalityNames.get(municipalityCode).get.map(_.name).head, grouped)}
         .mapValues(municipalityAssets => municipalityAssets
           .groupBy(_._3.toString)
           .mapValues(_.map(_._2)))
@@ -674,6 +675,9 @@ trait LinearAssetOperations {
       changeSet.adjustedMValues.foreach { adjustment =>
         dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
       }
+
+      if (changeSet.adjustedVVHChanges.nonEmpty)
+        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
 
       changeSet.adjustedVVHChanges.foreach { adjustment =>
         dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)

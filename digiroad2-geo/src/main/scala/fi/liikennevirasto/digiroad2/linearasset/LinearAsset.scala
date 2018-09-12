@@ -59,9 +59,11 @@ case class DynamicValue(value: DynamicAssetValue) extends Value{
       case asset: DynamicValue =>
         value.properties.size == asset.value.properties.size && (value.properties.groupBy(_.publicId), asset.value.properties.groupBy(_.publicId)).zipped.forall {
           case (asset1, asset2) => (asset1._2, asset2._2).zipped.forall {
-            case (prop1, prop2) => prop1.propertyType == prop2.propertyType && prop1.values.forall(
-              x =>  prop2.values.exists(_.value == x.value)
-            )
+            case (prop1, prop2) =>
+              val properties = Seq(prop1, prop2).sortBy(_.values.size)
+              prop1.propertyType == prop2.propertyType && properties.last.values.forall(
+                x =>  properties.head.values.exists(_.value == x.value)
+              )
           }
         }
       case _ => super.equals(obj)

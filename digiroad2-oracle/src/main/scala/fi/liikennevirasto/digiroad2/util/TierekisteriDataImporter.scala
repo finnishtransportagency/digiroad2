@@ -120,6 +120,14 @@ object TierekisteriDataImporter {
     new CareClassTierekisteriImporter()
   }
 
+  lazy val pedestrianCrossingTierekisteriImporter: PedestrianCrossingTierekisteriImporter = {
+    new PedestrianCrossingTierekisteriImporter()
+  }
+
+  lazy val carryingCapacityTierekisteriImporter: CarryingCapacityTierekisteriImporter = {
+    new CarryingCapacityTierekisteriImporter()
+  }
+
   def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
     OracleDatabase.withDynSession{
       val assetId = tierekisteriAssetImporter.getAssetTypeId
@@ -224,7 +232,9 @@ object TierekisteriDataImporter {
     "bogieWeightLimit" -> bogieWeightLimitTierekisteriImporter,
     "heightLimit" -> heightLimitTierekisteriImporter,
     "widthLimit" -> widthLimitTierekisteriImporter,
-    "careClass" -> careClassTierekisteriImporter
+    "careClass" -> careClassTierekisteriImporter,
+    "carryingCapacity" -> carryingCapacityTierekisteriImporter,
+    "pedestrianCrossing" -> pedestrianCrossingTierekisteriImporter
   )
 
   private def importAssets(tierekisteriAssetImporter: TierekisteriImporterOperations): Unit = {

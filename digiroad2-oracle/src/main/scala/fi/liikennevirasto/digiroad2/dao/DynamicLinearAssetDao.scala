@@ -375,5 +375,14 @@ class DynamicLinearAssetDao {
       ValidityPeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
     }
   }
+
+  def updateAssetLastModified(assetId: Long, modifier: String): Option[Long] = {
+    val assetsUpdated = Queries.updateAssetModified(assetId, modifier).first
+    if (assetsUpdated == 1) {
+      Some(assetId)
+    } else {
+      None
+    }
+  }
 }
 

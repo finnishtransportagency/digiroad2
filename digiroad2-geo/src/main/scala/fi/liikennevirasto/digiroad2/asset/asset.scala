@@ -191,6 +191,30 @@ object SideCode {
   case object Unknown extends SideCode { def value = 99 }
 }
 
+/**
+  * Values for PavementClass types enumeration
+  */
+sealed trait PavementClass {
+  def value: Int
+  def typeDescription: String
+}
+object PavementClass {
+  val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt, GravelSurface, GravelWearLayer, OtherCoatings, Unknown)
+
+  def apply(value: Int): PavementClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
+  case object Cobblestone extends PavementClass { def value = 2; def typeDescription = "Cobblestone";}
+  case object HardAsphalt extends PavementClass { def value = 10; def typeDescription = "Hard Asphalt";}
+  case object SoftAsphalt extends PavementClass { def value = 20; def typeDescription = "Soft Asphalt";}
+  case object GravelSurface extends PavementClass { def value = 30; def typeDescription = "Gravel Surface";}
+  case object GravelWearLayer extends PavementClass { def value = 40; def typeDescription = "Gravel Wear Layer";}
+  case object OtherCoatings extends PavementClass { def value = 50; def typeDescription = "Other Coatings";}
+  case object Unknown extends PavementClass { def value = 99;  def typeDescription = "Unknown";}
+}
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]
@@ -301,15 +325,17 @@ sealed trait AssetTypeInfo {
   val typeId: Int
   def geometryType: String
   val label: String
+  val layerName: String
 }
 //TODO change the type to be optional since manoeuvre are stored in a separated table and geometry type can be a type and the label can be a toString override
 object AssetTypeInfo {
-  val values =  Set(SpeedLimitAsset,TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
+  val values =  Set(MassTransitStopAsset, SpeedLimitAsset,TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
                     HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw,
                     NumberOfLanes, MassTransitLane, TrafficVolume, WinterSpeedLimit,
                     Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
-                    TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, UnknownAssetTypeId)
+                    TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, TrHeightLimit, TrWidthLimit,
+                    CarryingCapacity, UnknownAssetTypeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
@@ -319,41 +345,57 @@ object AssetTypeInfo {
     values.find(_.toString == stringValue).getOrElse(UnknownAssetTypeId)
   }
 }
-case object SpeedLimitAsset extends AssetTypeInfo { val typeId = 20; def geometryType = "linear"; val label = "SpeedLimit" }
-case object TotalWeightLimit extends AssetTypeInfo { val typeId = 30; def geometryType = "linear"; val label = "TotalWeightLimit" }
-case object TrailerTruckWeightLimit extends AssetTypeInfo { val typeId = 40; def geometryType = "linear"; val label = "TrailerTruckWeightLimit" }
-case object AxleWeightLimit extends AssetTypeInfo { val typeId = 50; def geometryType = "linear"; val label = "AxleWeightLimit" }
-case object BogieWeightLimit extends AssetTypeInfo { val typeId = 60; def geometryType = "linear"; val label =  "BogieWeightLimit" }
-case object HeightLimit extends AssetTypeInfo { val typeId = 70; def geometryType = "linear"; val label = "HeightLimit" }
-case object LengthLimit extends AssetTypeInfo { val typeId = 80; def geometryType = "linear"; val label = "LengthLimit" }
-case object WidthLimit extends AssetTypeInfo { val typeId = 90; def geometryType = "linear"; val label = "WidthLimit" }
-case object LitRoad extends AssetTypeInfo { val typeId = 100; def geometryType = "linear"; val label = "LitRoad" }
-case object PavedRoad extends AssetTypeInfo { val typeId = 110; def geometryType = "linear"; val label = "PavedRoad" }
-case object RoadWidth extends AssetTypeInfo { val typeId = 120; def geometryType = "linear"; val label =  "RoadWidth"}
-case object DamagedByThaw extends AssetTypeInfo { val typeId = 130; def geometryType = "linear"; val label = "DamagedByThaw" }
-case object NumberOfLanes extends AssetTypeInfo { val typeId = 140; def geometryType = "linear"; val label = "NumberOfLanes" }
-case object MassTransitLane extends AssetTypeInfo { val typeId = 160; def geometryType = "linear"; val label = "MassTransitLane"  }
-case object TrafficVolume extends AssetTypeInfo { val typeId = 170; def geometryType = "linear"; val label = "TrafficVolume" }
-case object WinterSpeedLimit extends AssetTypeInfo { val typeId = 180; def geometryType = "linear"; val label = "WinterSpeedLimit"  }
-case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = "" }
-case object PedestrianCrossings extends AssetTypeInfo { val typeId = 200; def geometryType = "point"; val label = "" }
-case object HazmatTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = "" }
-case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = "" }
-case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = "" }
-case object DirectionalTrafficSigns extends AssetTypeInfo { val typeId = 240; def geometryType = "point"; val label = "" }
-case object ServicePoints extends AssetTypeInfo { val typeId = 250; def geometryType = "point"; val label = "" }
-case object EuropeanRoads extends AssetTypeInfo { val typeId = 260; def geometryType = "linear"; val label = "" }
-case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryType = "linear"; val label = "" }
-case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label =  ""}
-case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = "" }
-case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""}
-case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryType = "linear"; val label = "Manoeuvre" }
-case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit" }
-case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""}
-case object TrWidthLimit extends  AssetTypeInfo {val typeId = 370; def geometryType = "point"; val label = "TrWidthLimit"}
-case object TrHeightLimit extends  AssetTypeInfo {val typeId = 360; def geometryType = "point"; val label = "TrHeightLimit"}
-case object TrTrailerTruckWeightLimit extends  AssetTypeInfo {val typeId = 330; def geometryType = "point"; val label = "TrTrailerTruckWeightLimit"}
-case object TrBogieWeightLimit extends  AssetTypeInfo {val typeId = 350; def geometryType = "point"; val label = "TrBogieWeightLimit"}
-case object TrAxleWeightLimit extends  AssetTypeInfo {val typeId = 340; def geometryType = "point"; val label = "TrAxleWeightLimit"}
-case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometryType = "point"; val label = "TrWeightLimit"}
-case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType = "linear"; val label = "CareClass"}
+case object MassTransitStopAsset extends AssetTypeInfo { val typeId = 10; def geometryType = "point"; val label = "MassTransitStop"; val layerName = "massTransitStops"}
+case object SpeedLimitAsset extends AssetTypeInfo { val typeId = 20; def geometryType = "linear"; val label = "SpeedLimit"; val layerName = "speedLimits"}
+case object TotalWeightLimit extends AssetTypeInfo { val typeId = 30; def geometryType = "linear"; val label = "TotalWeightLimit" ; val layerName = "totalWeightLimit"}
+case object TrailerTruckWeightLimit extends AssetTypeInfo { val typeId = 40; def geometryType = "linear"; val label = "TrailerTruckWeightLimit"; val layerName = "trailerTruckWeightLimit" }
+case object AxleWeightLimit extends AssetTypeInfo { val typeId = 50; def geometryType = "linear"; val label = "AxleWeightLimit"; val layerName = "axleWeightLimit" }
+case object BogieWeightLimit extends AssetTypeInfo { val typeId = 60; def geometryType = "linear"; val label =  "BogieWeightLimit"; val layerName = "bogieWeightLimit" }
+case object HeightLimit extends AssetTypeInfo { val typeId = 70; def geometryType = "linear"; val label = "HeightLimit"; val layerName = "heightLimit" }
+case object LengthLimit extends AssetTypeInfo { val typeId = 80; def geometryType = "linear"; val label = "LengthLimit"; val layerName = "lengthLimit" }
+case object WidthLimit extends AssetTypeInfo { val typeId = 90; def geometryType = "linear"; val label = "WidthLimit"; val layerName = "widthLimit" }
+case object LitRoad extends AssetTypeInfo { val typeId = 100; def geometryType = "linear"; val label = "LitRoad"; val layerName = "litRoad" }
+case object PavedRoad extends AssetTypeInfo { val typeId = 110; def geometryType = "linear"; val label = "PavedRoad"; val layerName = "pavedRoad" }
+case object RoadWidth extends AssetTypeInfo { val typeId = 120; def geometryType = "linear"; val label =  "RoadWidth"; val layerName = "roadWidth"}
+case object DamagedByThaw extends AssetTypeInfo { val typeId = 130; def geometryType = "linear"; val label = "DamagedByThaw"; val layerName = "roadDamagedByThaw" }
+case object NumberOfLanes extends AssetTypeInfo { val typeId = 140; def geometryType = "linear"; val label = "NumberOfLanes"; val layerName = "numberOfLanes" }
+case object MassTransitLane extends AssetTypeInfo { val typeId = 160; def geometryType = "linear"; val label = "MassTransitLane"; val layerName = "massTransitLanes"  }
+case object TrafficVolume extends AssetTypeInfo { val typeId = 170; def geometryType = "linear"; val label = "TrafficVolume"; val layerName = "trafficVolume" }
+case object WinterSpeedLimit extends AssetTypeInfo { val typeId = 180; def geometryType = "linear"; val label = "WinterSpeedLimit"; val layerName = "winterSpeedLimits"  }
+case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = ""; val layerName = "prohibition" }
+case object PedestrianCrossings extends AssetTypeInfo { val typeId = 200; def geometryType = "point"; val label = "PedestrianCrossings"; val layerName = "pedestrianCrossings" }
+case object HazmatTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = ""; val layerName = "hazardousMaterialTransportProhibition" }
+case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = ""; val layerName = "obstacles" }
+case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = ""; val layerName = "railwayCrossings" }
+case object DirectionalTrafficSigns extends AssetTypeInfo { val typeId = 240; def geometryType = "point"; val label = ""; val layerName = "directionalTrafficSigns" }
+case object ServicePoints extends AssetTypeInfo { val typeId = 250; def geometryType = "point"; val label = ""; val layerName = "servicePoints" }
+case object EuropeanRoads extends AssetTypeInfo { val typeId = 260; def geometryType = "linear"; val label = ""; val layerName = "europeanRoads" }
+case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryType = "linear"; val label = ""; val layerName = "exitNumbers" }
+case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label =  ""; val layerName = "trafficLights"}
+case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = ""; val layerName = "maintenanceRoad" }
+case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""; val layerName = "trafficSigns"}
+case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit"; val layerName = "totalWeightLimit" }
+case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""; val layerName = ""}
+case object TrWidthLimit extends  AssetTypeInfo {val typeId = 370; def geometryType = "point"; val label = "TrWidthLimit"; val layerName = "trWidthLimits"}
+case object TrHeightLimit extends  AssetTypeInfo {val typeId = 360; def geometryType = "point"; val label = "TrHeightLimit"; val layerName = "trHeightLimits"}
+case object TrTrailerTruckWeightLimit extends  AssetTypeInfo {val typeId = 330; def geometryType = "point"; val label = "TrTrailerTruckWeightLimit"; val layerName = "trWeightLimits"}
+case object TrBogieWeightLimit extends  AssetTypeInfo {val typeId = 350; def geometryType = "point"; val label = "TrBogieWeightLimit"; val layerName = "trWeightLimits"}
+case object TrAxleWeightLimit extends  AssetTypeInfo {val typeId = 340; def geometryType = "point"; val label = "TrAxleWeightLimit"; val layerName = "trWeightLimits"}
+case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometryType = "point"; val label = "TrWeightLimit"; val layerName = "trWeightLimits"}
+case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryType = "linear"; val label = "Manoeuvre"; val layerName = "manoeuvres" }
+case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType = "linear"; val label = "CareClass"; val layerName = ""}
+case object CarryingCapacity extends AssetTypeInfo { val typeId = 400; def geometryType = "linear"; val label = "CarryingCapacity" ; val layerName = "carryingCapacity"}
+
+object AutoGeneratedValues {
+  val allAutoGeneratedValues =
+    Seq(
+      "dr1conversion",
+      "dr1_conversion",
+      "automatic_correction",
+      "excel_data_migration",
+      "automatic_generation",
+      "vvh_generated",
+      "vvh_modified",
+      "vvh_mtkclass_default"
+    )
+}

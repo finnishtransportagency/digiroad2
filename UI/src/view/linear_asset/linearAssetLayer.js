@@ -277,18 +277,18 @@ root.LinearAssetLayer  = function(params) {
         if (linearAssets.length > 0) {
             selectedLinearAsset.close();
             showDialog(linearAssets);
+            onCloseForm();
         }
     }
   }
 
   function cancelSelection() {
-    if(isComplementaryChecked){
-      selectToolControl.clear();
-      selectedLinearAsset.close();
+    if(isComplementaryChecked)
       showWithComplementary();
-    }else{
+    else
       hideComplementary();
-    }
+    selectToolControl.clear();
+    selectedLinearAsset.closeMultiple();
   }
 
   var adjustStylesByZoomLevel = function(zoom) {

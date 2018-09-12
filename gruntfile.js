@@ -35,7 +35,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/styleRule.js', 'UI/src/view/point_asset/trafficSignLabel.js', 'UI/src/view/providers/assetStyle.js', 'UI/src/view/linear_asset/serviceRoadLabel.js', 'UI/src/view/point_asset/heightLimitLabel.js', 'UI/src/view/point_asset/weightLimitLabel.js', 'UI/src/view/point_asset/widthLimitLabel.js', 'UI/src/view/linear_asset/serviceRoadStyle.js', 'UI/src/view/linear_asset/winterSpeedLimitStyle.js', 'UI/src/view/providers/assetLabel.js', 'UI/src/view/linear_asset/linearAssetLabel.js', 'UI/src/controller/assetsVerificationCollection.js', 'UI/src/controller/trafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js']
+          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/styleRule.js', 'UI/src/view/point_asset/trafficSignLabel.js', 'UI/src/view/providers/assetStyle.js', 'UI/src/view/linear_asset/serviceRoadLabel.js', 'UI/src/view/point_asset/heightLimitLabel.js', 'UI/src/view/point_asset/weightLimitLabel.js', 'UI/src/view/point_asset/widthLimitLabel.js', 'UI/src/view/linear_asset/serviceRoadStyle.js', 'UI/src/view/linear_asset/winterSpeedLimitStyle.js', 'UI/src/view/linear_asset/pavedRoadStyle.js', 'UI/src/view/providers/assetLabel.js', 'UI/src/view/linear_asset/linearAssetLabel.js', 'UI/src/controller/assetsVerificationCollection.js', 'UI/src/controller/trafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -67,16 +67,14 @@ module.exports = function(grunt) {
             options: {
                 port: 9001,
                 base: ['dist', '.', 'UI'],
-                middleware: function (connect, opts) {
-                    var serveStatic = require('serve-static');
-                    var serveIndex = require('serve-index');
+                middleware: function(connect, opts) {
                     var config = [
                         // Serve static files.
-                        serveStatic(opts.base[0]),
-                        serveStatic(opts.base[1]),
-                        serveStatic(opts.base[2]),
+                        connect.static(opts.base[0]),
+                        connect.static(opts.base[1]),
+                        connect.static(opts.base[2]),
                         // Make empty directories browsable.
-                        serveIndex(opts.base[2])
+                        connect.directory(opts.base[2])
                     ];
                     var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
                     config.unshift(proxy);

@@ -151,6 +151,10 @@ object DataFixture {
     new OracleAssetDao()
   }
 
+  lazy val dynamicLinearAssetDao : DynamicLinearAssetDao = {
+    new DynamicLinearAssetDao()
+  }
+
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
     if(property != null)
@@ -184,6 +188,7 @@ object DataFixture {
 
   def setUpTest() {
     migrateAll()
+    importMunicipalityCodes()
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",
@@ -204,7 +209,9 @@ object DataFixture {
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
       "kauniainen_traffic_signs.sql",
-      "kauniainen_maximum_x7_restrictions.sql"
+      "kauniainen_maximum_x7_restrictions.sql",
+      "user_notification_examples.sql",
+      "siilinjarvi_verificationService_test_data.sql"
     ))
   }
 
@@ -967,7 +974,8 @@ object DataFixture {
         val expiredAssetsIds = changedAssets.flatMap {
           case (_, changeInfo, assets) =>
               assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
-                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default")
+                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && (asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default" ||
+                  asset.modifiedBy.getOrElse("") == "vvh_generated" && asset.createdBy.getOrElse("") == "vvh_mtkclass_default"))
             ).map(_.id)
         }.toSet
 
@@ -1214,14 +1222,15 @@ object DataFixture {
     println("\n")
   }
 
-  def updateInformationSource(): Unit = {
 
-    def isKIdentifier(username: Option[String]): Boolean = {
-      username.exists(user => user.toLowerCase.startsWith("k")) ||
-        username.exists(user => user.toLowerCase.startsWith("lx")) ||
-        username.exists(user => user.toLowerCase.startsWith("a")) ||
-        username.exists(user => user.toLowerCase.startsWith("u"))
-    }
+  private def isKIdentifier(username: Option[String]): Boolean = {
+    username.exists(user => user.toLowerCase.startsWith("k")) ||
+      username.exists(user => user.toLowerCase.startsWith("lx")) ||
+      username.exists(user => user.toLowerCase.startsWith("a")) ||
+      username.exists(user => user.toLowerCase.startsWith("u"))
+  }
+
+  def updateInformationSource(): Unit = {
 
     println("\nUpdate Information Source for RoadWidth")
     println(DateTime.now())
@@ -1284,6 +1293,51 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+
+  def updatePavedRoadInformationSource(): Unit = {
+
+    println("\nUpdate Information Source for Pavement")
+    println(DateTime.now())
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nWorking on... municipality -> " + municipality)
+      println("Fetching roadlinks")
+      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
+
+      OracleDatabase.withDynTransaction {
+
+        println("Fetching assets")
+        val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
+
+        println(s"Number of existing assets: ${existingAssets.length}")
+        println(s"Start updating assets with Information Source")
+
+        existingAssets.foreach { asset =>
+          if (asset.createdBy.contains("batch_process_pavedRoad") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
+            oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, RoadRegistry)
+          } else {
+            if (isKIdentifier(asset.createdBy) || isKIdentifier(asset.modifiedBy)) {
+              oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MunicipalityMaintenainer)
+            } else {
+              if (asset.createdBy.contains("vvh_generated") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
+                oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MmlNls)
+              } else
+                println(s"Asset with ${asset.id} not updated with Information Source")
+            }
+          }
+        }
+      }
+    }
+    println("Complete at time: " + DateTime.now())
+  }
 
   def updateTrafficDirectionRoundabouts(): Unit = {
     println("\nStart Update roundadbouts traffic direction ")
@@ -1361,7 +1415,6 @@ object DataFixture {
         setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
-        importMunicipalityCodes()
         TrafficSignTestData.createTestData
         ServicePointTestData.createTestData
       case Some("import_roadlink_data") =>
@@ -1427,6 +1480,8 @@ object DataFixture {
         verifyInaccurateSpeedLimits()
       case Some("update_information_source_on_existing_assets") =>
         updateInformationSource()
+      case Some("update_information_source_on_paved_road_assets") =>
+        updatePavedRoadInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>
         updateTrafficDirectionRoundabouts()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
@@ -1436,7 +1491,8 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts")
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
+        " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts | update_information_source_on_paved_road_assets")
     }
   }
 }
