@@ -304,7 +304,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       }
     }
     else
-      createManoeuvreFromTrafficSign(manouvreProvider, newTransaction)
+      createManoeuvreFromTrafficSign(manouvreProvider)
   }
 
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
