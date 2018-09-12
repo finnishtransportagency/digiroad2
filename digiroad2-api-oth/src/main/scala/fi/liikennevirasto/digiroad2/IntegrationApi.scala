@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
@@ -564,6 +565,23 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkSource" -> widthLimit.linkSource.value)
     }
   }
+  def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
+    trafficSigns.map{ trafficSign =>
+     Map("id" -> trafficSign.id,
+          "point" -> Point(trafficSign.lon, trafficSign.lat),
+          geometryWKTForPoints(trafficSign.lon, trafficSign.lat),
+          "linkId" -> trafficSign.linkId,
+          "m_value" -> trafficSign.mValue,
+          latestModificationTime(trafficSign.createdAt, trafficSign.modifiedAt),
+          lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
+          "linkSource" -> trafficSign.linkSource.value,
+          "value" ->trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue).getOrElse(""),
+          "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)),
+          "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
+          "addicionalIndormation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue).getOrElse("")
+      )
+    }
+  }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {
@@ -588,6 +606,20 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
        case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until))
        case _ => BadRequest("Invalid asset type")
      }
+  }
+
+  def getTrafficSignGroup(groupName: String):TrafficSignTypeGroup = {
+    groupName match {
+      case "speed_limits" => TrafficSignTypeGroup.SpeedLimits
+      case "pedestrian_crossings" => TrafficSignTypeGroup.RegulatorySigns
+      case "maximum_restrictions" => TrafficSignTypeGroup.MaximumRestrictions
+      case "warnings" => TrafficSignTypeGroup.GeneralWarningSigns
+      case "prohibitory_signs" => TrafficSignTypeGroup.ProhibitionsAndRestrictions
+      case "mandatory_signs" => TrafficSignTypeGroup.MandatorySigns
+      case "regulatory_signs" => TrafficSignTypeGroup.RegulatorySigns
+      case "additional_panels" => TrafficSignTypeGroup.AdditionalPanels
+      case _ => TrafficSignTypeGroup.Unknown
+    }
   }
 
   get("/:assetType") {
@@ -634,10 +666,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
         case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
+        case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipality.toInt))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
       BadRequest("Missing mandatory 'municipality' parameter")
+    }
+  }
+
+  get("/traffic_signs/:group_name"){
+    contentType = formats("json")
+    params.get("municipality").map { municipality =>
+      val groupName = getTrafficSignGroup(params("group_name"))
+      groupName match {
+        case TrafficSignTypeGroup.Unknown => BadRequest("Invalid group type")
+        case _ => trafficSignsToApi(trafficSignService.getByMunicipalityAndGroup(municipality.toInt, groupName))
+      }
     }
   }
 }

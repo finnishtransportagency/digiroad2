@@ -371,4 +371,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case _ => assets
     }
   }
+
+  def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  }
 }
