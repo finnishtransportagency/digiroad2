@@ -189,15 +189,6 @@ class DynamicLinearAssetDao {
     }
   }
 
-  def updateAssetLastModified(id: Long, username: String): Option[Long] = {
-    val assetsUpdated = Queries.updateAssetModified(id, username).first
-    if (assetsUpdated == 1 ) {
-      Some(id)
-    } else {
-      None
-    }
-  }
-
   private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[DynamicPropertyValue]) {
     propertyType match {
       case Text | LongText =>
