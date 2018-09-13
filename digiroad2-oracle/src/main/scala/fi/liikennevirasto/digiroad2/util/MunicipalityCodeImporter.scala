@@ -18,7 +18,8 @@ class MunicipalityCodeImporter {
   def importMunicipalityCodes() = {
     OracleDatabase.withDynTransaction {
       try {
-        val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
+        sqlu"""delete from municipality""".execute
+        val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2018.csv"))
         src.getLines().toList.drop(1).map(row => {
           val elems = row.replace("\"", "").split(";")
           val roadMaintainerID = elems(3) match {
@@ -34,7 +35,8 @@ class MunicipalityCodeImporter {
             case "0" => 0
           }
           sqlu"""
-          insert into municipality(id, name_fi, name_sv, ely_nro, road_maintainer_id) values( ${elems(0).toInt}, ${elems(1)}, ${elems(2)}, ${elems(3).toInt} ,$roadMaintainerID)
+          insert into municipality(id, name_fi, name_sv, ely_nro, road_maintainer_id, geometry, zoom) values( ${elems(0).toInt}, ${elems(1)}, ${elems(2)}, ${elems(3).toInt} ,$roadMaintainerID,
+                 MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 1, 1), MDSYS.SDO_ORDINATE_ARRAY(${elems(5).toDouble},${elems(6).toDouble}, 0, 0)), ${elems(7).toInt})
         """.execute
         })
       } catch {

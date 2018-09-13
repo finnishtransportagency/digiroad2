@@ -437,6 +437,7 @@
           var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
           if(!iProperty)
             return false;
+
           return _.isEqual(property.values, iProperty.values);
       });
     };

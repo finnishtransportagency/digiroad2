@@ -4,11 +4,13 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -171,12 +173,60 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  def municipalityDao = new MunicipalityDao
+
+  private def getMapViewStartParameters(mapView: Option[MapViewZoom]): Option[(Double, Double, Int)] = mapView.map(m => (m.geometry.x, m.geometry.y, m.zoom))
+
+
   get("/startupParameters") {
-    val (east, north, zoom) = {
-      val config = userProvider.getCurrentUser().configuration
-      (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
+    val defaultValues: (Double, Double, Int) = (390000, 6900000, 2)
+    val user = userProvider.getCurrentUser()
+    val userPreferences: Option[(Long, Long, Int)] = (user.configuration.east, user.configuration.north, user.configuration.zoom) match {
+      case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom)
+      case _  => None
     }
-    StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
+
+
+    val location = userPreferences match {
+      case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3)
+      case _ =>
+        if(user.isMunicipalityMaintainer())
+          getStartUpParameters(user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality)
+        else {
+          if (user.isServiceRoadMaintainer())
+            getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
+          else if (user.isBusStopMaintainer()) //case ely maintainer
+            getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
+          else
+            None
+        }
+    }
+    val loc = location.getOrElse(defaultValues)
+    StartupParameters(loc._1, loc._2, loc._3)
+  }
+
+  private def getUserElysByMunicipalities(authorizedMunicipalities: Set[Int]): Set[Int] = {
+    val userMunicipalities = authorizedMunicipalities.toSeq
+
+    municipalityDao.getElysByMunicipalities(authorizedMunicipalities).sorted.find { ely =>
+        val municipalities = municipalityProvider.getMunicipalities(Set(ely))
+        municipalities.forall(userMunicipalities.contains)
+    }.toSet
+  }
+
+  def splitToInts(numbers: String) : Option[Seq[Int]] = {
+    val split = numbers.split(",").filterNot(_.trim.isEmpty)
+    split match {
+      case Array() => None
+      case _ => Some(split.map(_.trim.toInt).toSeq)
+    }
+  }
+
+  private def getStartUpParameters(authorizedTo: Set[Int], getter: Int => Option[MapViewZoom]): Option[(Double, Double, Int)]  = {
+    authorizedTo.headOption.map { id => getMapViewStartParameters(getter(id)) } match {
+      case Some(param) => param
+      case None => None
+    }
   }
 
   get("/masstransitstopgapiurl"){
@@ -1623,6 +1673,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     transformation(values)
   }
 
+  put("/userConfiguration/defaultLocation") {
+    val user = userProvider.getCurrentUser()
+    val east = (parsedBody \ "lon").extractOpt[Long]
+    val north = (parsedBody \ "lat").extractOpt[Long]
+    val zoom = (parsedBody \ "zoom").extractOpt[Int]
+
+    val updatedUser = user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
+    userProvider.updateUserConfiguration(updatedUser)
+  }
+
   get("/dashBoardInfo") {
     val user = userProvider.getCurrentUser()
     val userConfiguration = user.configuration
@@ -1658,5 +1718,4 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         (verifiedMap, modifiedMap)
     }
   }
-
 }

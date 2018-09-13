@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.user
 
+import fi.liikennevirasto.digiroad2.Point
 import java.sql.Date
 import java.time.LocalDate
 
@@ -7,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset._
 
 case class Configuration(
-                        zoom: Option[Long] = None,
+                        zoom: Option[Int] = None,
                         east: Option[Long] = None,
                         north: Option[Long] = None,
                         municipalityNumber: Option[Int]  = None,
@@ -17,6 +18,7 @@ case class Configuration(
                         lastNotificationDate: Option[String] = None,
                         lastLoginDate: Option[String] = None
                         )
+
 case class User(id: Long, username: String, configuration: Configuration, name: Option[String] = None) {
   def hasWriteAccess() = !isViewer()
 
