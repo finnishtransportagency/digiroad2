@@ -106,10 +106,10 @@ class RoadWidthSaveProjected[T](roadWidthProvider: RoadWidthService) extends Act
   }
 }
 
-class PavingSaveProjected[T](pavingProvider: PavingService) extends Actor {
+class PavedRoadSaveProjected[T](pavedRoadProvider: PavedRoadService) extends Actor {
   def receive = {
-    case x: Seq[T] => pavingProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
-    case _             => println("pavingSaveProjected: Received unknown message")
+    case x: Seq[T] => pavedRoadProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("pavedRoadSaveProjected: Received unknown message")
   }
 }
 
@@ -190,8 +190,8 @@ object Digiroad2Context {
   val roadWidthSaveProjected = system.actorOf(Props(classOf[RoadWidthSaveProjected[PersistedLinearAsset]], roadWidthService), name = "roadWidthSaveProjected")
   eventbus.subscribe(roadWidthSaveProjected, "RoadWidth:saveProjectedRoadWidth")
 
-  val pavingSaveProjected = system.actorOf(Props(classOf[PavingSaveProjected[PersistedLinearAsset]], pavingService), name = "pavingSaveProjected")
-  eventbus.subscribe(pavingSaveProjected, "paving:saveProjectedPaving")
+  val pavedRoadSaveProjected = system.actorOf(Props(classOf[PavedRoadSaveProjected[PersistedLinearAsset]], pavedRoadService), name = "pavedRoadSaveProjected")
+  eventbus.subscribe(pavedRoadSaveProjected, "pavedRoad:saveProjectedPavedRoad")
 
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
@@ -303,8 +303,8 @@ object Digiroad2Context {
     new MaintenanceService(roadLinkService, eventbus)
   }
 
-  lazy val pavingService: PavingService = {
-    new PavingService(roadLinkService, eventbus)
+  lazy val pavedRoadService: PavedRoadService = {
+    new PavedRoadService(roadLinkService, eventbus)
   }
 
   lazy val roadWidthService: RoadWidthService = {
@@ -316,7 +316,7 @@ object Digiroad2Context {
   }
 
   lazy val onOffLinearAssetService: OnOffLinearAssetService = {
-    new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
+    new OnOffLinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val prohibitionService: ProhibitionService = {

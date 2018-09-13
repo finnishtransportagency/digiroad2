@@ -56,7 +56,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val linearAssetService: LinearAssetService,
                    val linearMassLimitationService: LinearMassLimitationService = Digiroad2Context.linearMassLimitationService,
                    val maintenanceRoadService: MaintenanceService,
-                   val pavingService: PavingService,
+                   val pavedRoadService: PavedRoadService,
                    val roadWidthService: RoadWidthService,
                    val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
                    val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
@@ -153,7 +153,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
 
-  post("/userNotification") {
+  get("/userNotification") {
     val user = userProvider.getCurrentUser()
 
     val updatedUser = user.copy(configuration = user.configuration.copy(lastNotificationDate = Some(LocalDate.now.toString)))
@@ -987,7 +987,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
       //TODO Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset
-      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId =>
+      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | PavedRoad.typeId =>
         value.extractOpt[Seq[NewDynamicLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, DynamicValue(x.value), x.sideCode, 0, None))
       case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
@@ -1267,7 +1267,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
       user.username,
-      validateUserAccess(user, Some(SpeedLimitAsset.typeId)))
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _)
   }
 
   post("/speedlimits/:speedLimitId/separate") {
@@ -1610,7 +1610,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
       case MaintenanceRoadAsset.typeId => maintenanceRoadService
-      case PavedRoad.typeId => pavingService
+      case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => prohibitionService
@@ -1681,5 +1681,41 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val updatedUser = user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
     userProvider.updateUserConfiguration(updatedUser)
+  }
+
+  get("/dashBoardInfo") {
+    val user = userProvider.getCurrentUser()
+    val userConfiguration = user.configuration
+
+    userConfiguration.lastLoginDate match {
+      case Some(lastLoginDate) if lastLoginDate.compareTo(LocalDate.now().toString) == 0  || !user.isMunicipalityMaintainer =>
+        None
+      case _ =>
+        val municipalitiesNumbers =  userConfiguration.authorizedMunicipalities ++ userConfiguration.municipalityNumber
+        val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalitiesNumbers.head)
+        val modifiedAssetTypes = verificationService.getAssetLatestModifications(municipalitiesNumbers)
+
+        val updateUserLastLoginDate = user.copy(configuration = userConfiguration.copy(lastLoginDate = Some(LocalDate.now().toString)))
+        userProvider.updateUserConfiguration(updateUserLastLoginDate)
+
+        val verifiedMap =
+          verifiedAssetTypes.map(assetType =>
+            Map(
+              "typeId" -> assetType.assetTypeCode,
+              "assetName" -> assetType.assetTypeName,
+              "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+              "verified_by" -> assetType.verifiedBy.getOrElse("")
+            ))
+
+        val modifiedMap =
+          modifiedAssetTypes.map(assetType =>
+            Map(
+              "typeId" -> assetType.assetTypeCode,
+              "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+              "modified_by" -> assetType.modifiedBy.getOrElse("")
+            ))
+
+        (verifiedMap, modifiedMap)
+    }
   }
 }

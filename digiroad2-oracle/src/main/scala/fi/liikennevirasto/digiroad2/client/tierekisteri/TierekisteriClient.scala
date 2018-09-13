@@ -101,27 +101,6 @@ object TRTrafficSignType {
   case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; def group = TrafficSignTypeGroup.Unknown; }
 }
 
-/**
-  * Values for PavementRoad types enumeration
-  */
-sealed trait TRPavedRoadType {
-  def value: Int
-  def pavedRoadType: String
-}
-object TRPavedRoadType {
-  val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt)
-
-  def apply(value: Int): TRPavedRoadType = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  case object CementConcrete extends TRPavedRoadType { def value = 1; def pavedRoadType = "Cement Concrete";}
-  case object Cobblestone extends TRPavedRoadType { def value = 2; def pavedRoadType = "Cobblestone";}
-  case object HardAsphalt extends TRPavedRoadType { def value = 10; def pavedRoadType = "Hard Asphalt";}
-  case object SoftAsphalt extends TRPavedRoadType { def value = 20; def pavedRoadType = "Soft Asphalt";}
-  case object Unknown extends TRPavedRoadType { def value = 99;  def pavedRoadType = "Unknown";}
-}
-
 sealed trait TRLaneArrangementType {
   def value: Int
 }

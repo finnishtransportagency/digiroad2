@@ -81,7 +81,7 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
     Some(newAssetIDcreate)
   }
 
-  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Seq[Long] = {
+  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 

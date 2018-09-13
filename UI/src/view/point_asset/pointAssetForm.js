@@ -483,14 +483,17 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       '      </select>' +
       '    </div>' +
       serviceTypeExtensionElements(service, serviceTypeExtensions) +
+      '<div>' +
       '    <label class="control-label">Palvelun nimi</label>' +
-      '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
+      '    <p class="form-control-static">' + (service.name || '–') + '</p> '+
       '    <input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
+      '</div><div>' +
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
+      '</div><div>' +
       (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
-      '  </div>' +
+      '</div></div>' +
       '</li>';
   }
 
@@ -520,12 +523,12 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       }).join('');
       var currentExtensionType = _.find(extensions, {value: service.typeExtension});
       return '' +
-        '<label class="control-label">Tarkenne</label>' +
+        '<div><label class="control-label">Tarkenne</label>' +
         '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '–') + '</p>' +
         '<select class="form-control select-service-type-extension" style="display:none" data-service-id="' + service.id + '">  ' +
         '  <option disabled selected>Lisää tarkenne</option>' +
         extensionOptions +
-        '</select>';
+        '</select></div>';
     } else {
       return '';
     }

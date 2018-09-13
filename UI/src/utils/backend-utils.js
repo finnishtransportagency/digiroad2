@@ -288,28 +288,16 @@
       });
     }, 1000);
 
-    this.deleteLinearAssets = _.throttle(function(data, success, failure) {
-      if (data.typeId == 110) { // Pavement must be set to null value, not deleted
-        $.ajax({
-          contentType: "application/json",
-          type: "POST",
-          url: "api/linearassets",
-          data: JSON.stringify(data),
-          dataType: "json",
-          success: success,
-          error: failure
-        });
-      } else {
-        $.ajax({
-          contentType: "application/json",
-          type: "DELETE",
-          url: "api/linearassets",
-          data: JSON.stringify(data),
-          dataType: "json",
-          success: success,
-          error: failure
-        });
-      }
+    this.deleteLinearAssets = _.throttle(function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/linearassets",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
     }, 1000);
 
     this.splitLinearAssets = function(typeId, id, splitMeasure, createdValue, existingValue, success, failure) {
@@ -508,7 +496,7 @@
     });
 
     this.userNotificationInfo = function() {
-      return $.post('api/userNotification');
+      return $.get('api/userNotification');
     };
 
     this.createAsset = function (data, errorCallback) {
@@ -630,6 +618,10 @@
 
     this.getMassTransitStopByPassengerIdForSearch = function(passengerID) {
       return $.get('api/massTransitStops/passenger/' + passengerID);
+    };
+
+    this.getDashBoardInfoByMunicipality = function() {
+       return $.getJSON('api/dashBoardInfo');
     };
 
     function createCallbackRequestor(getParameters) {

@@ -77,7 +77,6 @@
 
             var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
             var value = properties.concat(currentPropertyValue);
-
             setValue({ properties: value});
         };
     };
@@ -252,12 +251,12 @@
             me.getValue = function() {
                 return me.element.find(":selected").val();
             };
-
-            if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+            if (!isDisabled && me.hasDefaultValue() && !value){
+              me.setSelectedValue(setValue, getValue);
+            }
 
             me.element.find('select').on('change', function(){
-                me.setSelectedValue(setValue, getValue);
+              me.setSelectedValue(setValue, getValue);
             });
 
             return me.element;
@@ -823,24 +822,21 @@
                 '  </div>' +
                 '</div>');
 
-      toggleElement.find('.radio input').on('change', function(event) {
-        var disabled = $(this).val() === 'disabled';
-        var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
-        input.prop('disabled', disabled);
+            toggleElement.find('.radio input').on('change', function(event) {
+                var disabled = $(this).val() === 'disabled';
+                var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+                input.prop('disabled', disabled);
 
                 if(disabled){
-                    removeValueFn();
-                    _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
+                  removeValueFn();
+                  _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
                   if(asset.value)
                     setValueFn(asset.value);
                   else
                     setValueFn({ properties: [] });
                 }
-
-        formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
-
-                eventbus.trigger(events('valueChanged'));
+                formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
             });
 
             formGroup.append(toggleElement);
