@@ -189,6 +189,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val location = userPreferences match {
       case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3)
+      case _ if user.configuration.authorizedMunicipalities.isEmpty || user.configuration.authorizedAreas.isEmpty => None
       case _ =>
         if(user.isMunicipalityMaintainer())
           getStartUpParameters(user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality)
