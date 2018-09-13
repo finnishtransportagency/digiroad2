@@ -256,7 +256,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def createManoeuvreFromTrafficSign(manouvreProvider: ManoeuvreProvider, newTransaction: Boolean = true): Option[Long] = {
+  private def createManoeuvreFromTrafficSign(manouvreProvider: ManoeuvreProvider): Option[Long] = {
     logger.info("creating manoeuvre from traffic sign")
     val tsLinkId = manouvreProvider.trafficSign.linkId
     val tsDirection = manouvreProvider.trafficSign.validityDirection
@@ -269,7 +269,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(manouvreProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ManoeuvreCreationException(Set("Connection Point not valid")))
 
-    val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint, newTransaction)
+    val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint)
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
     val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
@@ -283,14 +283,14 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
         case TrafficSignType.NoUTurn => {
           val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
-          val (int, newAdjacents, _)= recursiveGetAdjacent(firstLeftMost.linkId, getOpositePoint(firstLeftMost.geometry, adjacentConnectPoint), newTransaction)
+          val (int, newAdjacents, _)= recursiveGetAdjacent(firstLeftMost.linkId, getOpositePoint(firstLeftMost.geometry, adjacentConnectPoint))
           (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
         }
         case _ => Seq.empty[RoadLink]
       }
     }.getOrElse(Seq.empty[RoadLink])
 
-    if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement, newTransaction))
+    if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
       throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
     else
       Some(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
@@ -300,7 +300,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   def createManoeuvreBasedOnTrafficSign(manouvreProvider: ManoeuvreProvider, newTransaction: Boolean = true): Option[Long] = {
     if(newTransaction) {
       withDynTransaction {
-        createManoeuvreFromTrafficSign(manouvreProvider, newTransaction = false)
+        createManoeuvreFromTrafficSign(manouvreProvider)
       }
     }
     else
@@ -319,17 +319,17 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       headPoint
   }
 
-  private def recursiveGetAdjacent(linkId: Long, point: Point, newTransaction: Boolean = true, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): (Seq[RoadLink], Seq[RoadLink], Point) = {
+  private def recursiveGetAdjacent(linkId: Long, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): (Seq[RoadLink], Seq[RoadLink], Point) = {
 
-    val adjacents = roadLinkService.getAdjacent(linkId, Seq(point), newTransaction)
+    val adjacents = roadLinkService.getAdjacent(linkId, Seq(point), newTransaction = false)
     if (adjacents.isEmpty)
       throw new ManoeuvreCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
 
     if(adjacents.size == 1 && numberOfConnections == 3)
       throw new ManoeuvreCreationException(Set("No turn found, manoeuvre not created"))
 
-    if (adjacents.size == 1  && roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction).nonEmpty) {
-      recursiveGetAdjacent(adjacents.head.linkId, getOpositePoint(adjacents.head.geometry, point), newTransaction, intermediants ++ adjacents, numberOfConnections + 1)
+    if (adjacents.size == 1  && roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).nonEmpty) {
+      recursiveGetAdjacent(adjacents.head.linkId, getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
     } else {
       (intermediants, adjacents, point)
     }
@@ -339,9 +339,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     dao.countExistings(sourceId, destId, elementType)
   }
 
-  private def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int, newTransaction: Boolean = true): Boolean  = {
-    if(newTransaction)
-      OracleDatabase.withDynSession { countExistings(sourceId, destLinkId, elementType) == 0 }
-    else countExistings(sourceId, destLinkId, elementType) == 0
+  private def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int): Boolean  = {
+    countExistings(sourceId, destLinkId, elementType) == 0
   }
 }
