@@ -566,7 +566,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
   def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
-    trafficSigns.map{ trafficSign =>
+    trafficSigns.filterNot(_.floating).map{ trafficSign =>
      Map("id" -> trafficSign.id,
           "point" -> Point(trafficSign.lon, trafficSign.lat),
           geometryWKTForPoints(trafficSign.lon, trafficSign.lat),
@@ -578,7 +578,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           "value" ->trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue).getOrElse(""),
           "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)),
           "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
-          "addicionalIndormation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue).getOrElse("")
+          "additionalInformation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue).getOrElse("")
       )
     }
   }
