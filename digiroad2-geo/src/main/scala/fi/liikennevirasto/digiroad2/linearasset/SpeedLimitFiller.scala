@@ -465,7 +465,7 @@ object SpeedLimitFiller {
       case None => ChangeSet( droppedAssetIds = Set.empty[Long],
         expiredAssetIds = Set.empty[Long],
         adjustedMValues = Seq.empty[MValueAdjustment],
-        adjustedVVHChanges =  Seq.empty[VVHChangesAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
         adjustedSideCodes = Seq.empty[SideCodeAdjustment])
     }
 

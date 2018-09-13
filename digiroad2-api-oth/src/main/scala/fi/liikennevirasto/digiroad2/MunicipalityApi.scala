@@ -185,7 +185,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateSideCodes(Seq(newAsset))
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
-    val updatedId = usedService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
+    val updatedId = usedService.update(Seq(oldAsset.id), newAsset.value, user.username, Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode), Some(Measures(newAsset.startMeasure, newAsset.endMeasure)))
     updatedId match {
       case Seq(0L) => Seq.empty
       case _ => getLinearAssetsAndRoadLinks(assetTypeId, updatedId.toSet)
@@ -267,7 +267,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     newSpeedLimitAssets.foreach{
       newAsset => validateMeasuresOnAssets(Set(newAsset.startMeasure, newAsset.endMeasure), newAsset.linkId)
     }
-    val assetsIds = speedLimitService.create(newSpeedLimitAssets, assetTypeId, user.username, 0, (_, _) => Unit)
+    val assetsIds = speedLimitService.createMultiple(newSpeedLimitAssets, assetTypeId, user.username, 0, (_, _) => Unit)
     getSpeedLimitsAndRoadLinks(assetsIds.toSet)
   }
 

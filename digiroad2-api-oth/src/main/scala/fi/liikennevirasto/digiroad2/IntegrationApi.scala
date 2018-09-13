@@ -225,9 +225,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
-      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty =>
-        dynamicTypeProperty.values.map { v =>
-           v.value} }.headOption
+      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty => dynamicTypeProperty.values.map { v => v.value} }.headOption
       case _ => value.map(_.toJson)
     }
   }
@@ -583,9 +581,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
        case _ => DateTime.now()
      }
 
+    val withAdjust = params.get("withAdjust") match{
+      case Some(value)=> value.toBoolean
+      case _ => true
+    }
+
      val assetType = params("assetType")
      assetType match {
-       case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until))
+       case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until, withAdjust))
        case _ => BadRequest("Invalid asset type")
      }
   }
