@@ -37,7 +37,8 @@ case class ServicePoint(id: Long,
                         createdAt: Option[DateTime] = None,
                         modifiedBy: Option[String] = None,
                         modifiedAt: Option[DateTime] = None,
-                        municipalityCode: Int)
+                        municipalityCode: Int,
+                        isAuthorityData: Boolean)
 
 object OracleServicePointDao {
   def create(servicePoint: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
@@ -138,8 +139,9 @@ object OracleServicePointDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val municipalityCode = r.nextInt()
+      val isAuthorityData = r.nextBoolean
 
-      ServicePoint(id, point.x, point.y, Set.empty, createdBy, createdDateTime, modifiedBy, modifiedDateTime, municipalityCode)
+      ServicePoint(id, point.x, point.y, Set.empty, createdBy, createdDateTime, modifiedBy, modifiedDateTime, municipalityCode, isAuthorityData)
     }
   }
 
