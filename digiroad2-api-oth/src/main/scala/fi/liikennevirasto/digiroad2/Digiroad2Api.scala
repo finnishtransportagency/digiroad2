@@ -1630,7 +1630,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
         validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
-        servicePointService.create(asset, link.municipalityCode, user.username)
+        try {
+          servicePointService.checkAuthorityData(asset)
+          servicePointService.create(asset, link.municipalityCode, user.username)
+        } catch {
+        case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
+      }
     }
   }
 
@@ -1643,7 +1648,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
         validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
-        servicePointService.update(id, updatedAsset, link.municipalityCode, user.username)
+        try {
+          servicePointService.checkAuthorityData(updatedAsset)
+          servicePointService.update(id, updatedAsset, link.municipalityCode, user.username)
+        } catch {
+          case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
+        }
     }
   }
 
