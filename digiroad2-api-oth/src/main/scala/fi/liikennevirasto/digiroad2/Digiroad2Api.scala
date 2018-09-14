@@ -1691,7 +1691,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     userConfiguration.lastLoginDate match {
       case Some(lastLoginDate) if lastLoginDate.compareTo(LocalDate.now().toString) == 0  || !user.isMunicipalityMaintainer =>
         None
-      case _ =>
+      case _ if userConfiguration.authorizedMunicipalities.nonEmpty || userConfiguration.municipalityNumber.nonEmpty =>
         val municipalitiesNumbers =  userConfiguration.authorizedMunicipalities ++ userConfiguration.municipalityNumber
         val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalitiesNumbers.head)
         val modifiedAssetTypes = verificationService.getAssetLatestModifications(municipalitiesNumbers)
@@ -1717,6 +1717,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             ))
 
         (verifiedMap, modifiedMap)
+      case _ => None
     }
   }
 }
