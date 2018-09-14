@@ -10,12 +10,14 @@ class ServicePointService {
 
   def create(asset: IncomingServicePoint, municipalityCode: Int, username: String) = {
     withDynTransaction {
+      checkAuthorityData(asset)
       OracleServicePointDao.create(asset, municipalityCode, username)
     }
   }
 
   def update(id: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     withDynTransaction {
+      checkAuthorityData(updatedAsset)
       OracleServicePointDao.update(id, updatedAsset, municipalityCode, username)
     }
   }

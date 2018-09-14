@@ -1631,7 +1631,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(link) =>
         validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
         try {
-          servicePointService.checkAuthorityData(asset)
           servicePointService.create(asset, link.municipalityCode, user.username)
         } catch {
         case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
@@ -1649,7 +1648,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(link) =>
         validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
         try {
-          servicePointService.checkAuthorityData(updatedAsset)
           servicePointService.update(id, updatedAsset, link.municipalityCode, user.username)
         } catch {
           case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
