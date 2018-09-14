@@ -249,18 +249,19 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
   };
 
   var serviceTypes = [
-    { value: 4,  label: 'Tulli' },
-    { value: 5,  label: 'Rajanylityspaikka' },
-    { value: 6,  label: 'Lepoalue' },
+    { value: 12, label: 'Pysäköintialue' },
+    { value: 15, label: 'Pysäköintitalo' },
+    { value: 11, label: 'Rautatieasema' },
+    { value: 16, label: 'Linja-autoasema' },
     { value: 8,  label: 'Lentokenttä' },
     { value: 9,  label: 'Laivaterminaali' },
     { value: 10, label: 'Taksiasema' },
-    { value: 11, label: 'Rautatieasema' },
-    { value: 12, label: 'Pysäköintialue' },
+    { value: 6,  label: 'Lepoalue' },
+    { value: 4,  label: 'Tulli' },
+    { value: 5,  label: 'Rajanylityspaikka' },
     { value: 13, label: 'Autojen lastausterminaali' },
     { value: 14, label: 'Kuorma-autojen pysäköintialue' },
-    { value: 15, label: 'Pysäköintitalo' },
-    { value: 16, label: 'Linja-autoasema' }
+    { value: 17, label: 'Sähköautojen latauspiste'}
   ];
 
   var commonServiceExtension = [
