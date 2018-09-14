@@ -505,8 +505,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         geometryWKTForPoints(asset.lon, asset.lat),
         "services" -> asset.services,
         latestModificationTime(asset.createdAt, asset.modifiedAt),
-        lastModifiedBy(asset.createdBy, asset.modifiedBy),
-        "isAuthorityData" -> asset.isAuthorityData)
+        lastModifiedBy(asset.createdBy, asset.modifiedBy))
     }
   }
 
