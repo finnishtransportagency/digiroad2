@@ -32,12 +32,14 @@
       { value: 14, label: 'Kuorma-autojen pysäköintialue' },
       { value: 17, label: 'Sähköautojen latauspiste'}
     ];
+
     var commonServiceExtension = [
       {value: 1, label: 'Kattava varustelu'},
       {value: 2, label: 'Perusvarustelu'},
       {value: 3, label: 'Yksityinen palvelualue'},
       {value: 4, label: 'Ei tietoa'}
     ];
+
     var serviceTypeExtensions = {
       6: commonServiceExtension,
       12: commonServiceExtension,
@@ -101,8 +103,7 @@
       });
     };
 
-
-    this.renderValueElement = function(asset, collection) {
+    this.renderValueElement = function(asset) {
       var services = _(asset.services)
         .sortBy('serviceType', 'id')
         .map(renderService)
@@ -115,7 +116,6 @@
         renderNewServiceElement() +
         '      </ul>' +
         '    </div>';
-
     };
 
     this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
@@ -228,6 +228,8 @@
         '    <label class="control-label">Palvelun lisätieto</label>' +
         '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
         '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
+        '    <label class="control-label">Viranomaisdataa</label>' +
+        '    <p class="form-control-readOnly">'+isAuthorityData(selectedServiceType)+'</p>' +
         '</div><div>' +
         (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
         '</div></div>' +
@@ -289,6 +291,10 @@
 
     function isSingleService(selectedAsset){
       return selectedAsset.get().services.length < 2;
+    }
+
+    function isAuthorityData(selectedServiceType) {
+      return (selectedServiceType.value === 10 || selectedServiceType.value === 17)?  'Kyllä' : 'Ei';
     }
 
   };
