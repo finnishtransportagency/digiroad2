@@ -1,8 +1,21 @@
 (function(root) {
-  root.ServicePointForm = function(parameters) {
-    PointAssetForm.call(this, parameters);
+  root.ServicePointForm = function() {
+    PointAssetForm.call(this);
     var me = this;
-    var applicationModel = parameters.applicationModel;
+    var pointAsset;
+    var roadCollection;
+    var applicationModel;
+    var backend;
+    var saveCondition;
+
+    this.initialize = function(parameters) {
+      pointAsset = parameters.pointAsset;
+      roadCollection = parameters.roadCollection;
+      applicationModel = parameters.applicationModel;
+      backend = parameters.backend;
+      saveCondition = parameters.saveCondition;
+      me.bindEvents(parameters);
+    };
 
     var serviceTypes = [
       { value: 12, label: 'Pysäköintialue' },
@@ -19,14 +32,12 @@
       { value: 14, label: 'Kuorma-autojen pysäköintialue' },
       { value: 17, label: 'Sähköautojen latauspiste'}
     ];
-
     var commonServiceExtension = [
       {value: 1, label: 'Kattava varustelu'},
       {value: 2, label: 'Perusvarustelu'},
       {value: 3, label: 'Yksityinen palvelualue'},
       {value: 4, label: 'Ei tietoa'}
     ];
-
     var serviceTypeExtensions = {
       6: commonServiceExtension,
       12: commonServiceExtension,
@@ -37,6 +48,59 @@
         {value: 7, label: 'Maanalainen/metroasema'}
       ]
     };
+
+    this.bindEvents = function(parameters) {
+      var rootElement = $('#feature-attributes');
+      var typeId = parameters.pointAsset.typeId;
+      var selectedAsset = parameters.pointAsset.selectedPointAsset;
+      var collection  = parameters.pointAsset.collection;
+      var layerName = parameters.pointAsset.layerName;
+      var localizedTexts = parameters.pointAsset.formLabels;
+      var authorizationPolicy = parameters.pointAsset.authorizationPolicy;
+      new FeedbackDataTool(parameters.feedbackCollection, layerName, authorizationPolicy);
+
+      eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
+        if(event.assetType === typeId)
+          me.enumeratedPropertyValues = event.enumeratedPropertyValues;
+      });
+
+      backend.getAssetEnumeratedPropertyValues(typeId);
+
+      eventbus.on('application:readOnly', function(readOnly) {
+        if(applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
+          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || readOnly);
+          if (isSingleService(selectedAsset)){
+            rootElement.find('button.delete').hide();
+          }
+        }
+      });
+
+      eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
+        if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
+          me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || applicationModel.isReadOnly());
+          rootElement.find('button#save-button').prop('disabled', true);
+          rootElement.find('button#cancel-button').prop('disabled', false);
+          if(isSingleService(selectedAsset)){
+              rootElement.find('button.delete').hide();
+          }
+        }
+      });
+
+      eventbus.on(layerName + ':changed', function() {
+        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+        rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
+      });
+
+      eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
+        rootElement.empty();
+      });
+
+      eventbus.on('layer:selected', function() {
+        $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
+      });
+    };
+
 
     this.renderValueElement = function(asset, collection) {
       var services = _(asset.services)
@@ -124,11 +188,19 @@
         var newTypeExtension = parseInt($(event.currentTarget).val(), 10);
         selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {typeExtension: newTypeExtension})});
       });
+
+      rootElement.find('.pointasset button.save').on('click', function() {
+        selectedAsset.save();
+      });
+
+      rootElement.find('.pointasset button.cancel').on('click', function() {
+        selectedAsset.cancel();
+      });
     };
 
     var renderService = function (service) {
       var serviceTypeLabelOptions = _.map(serviceTypes, function(serviceType) {
-        return $('<option>', {value: serviceType.value, selected: service.serviceType == serviceType.value, text: serviceType.label})[0].outerHTML;
+        return $('<option>', {value: serviceType.value, selected: service.serviceType === serviceType.value, text: serviceType.label})[0].outerHTML;
       }).join('');
 
       var selectedServiceType = _.find(serviceTypes, { value: service.serviceType });
@@ -169,7 +241,7 @@
     }
 
     function showParkingPlaceCount(selectedServiceType) {
-      return (selectedServiceType.value == 12 || selectedServiceType.value == 15 || selectedServiceType.value == 14);
+      return (selectedServiceType.value === 12 || selectedServiceType.value === 15 || selectedServiceType.value === 14);
     }
 
     function renderNewServiceElement() {
@@ -213,6 +285,10 @@
         }
         return service;
       });
+    }
+
+    function isSingleService(selectedAsset){
+      return selectedAsset.get().services.length < 2;
     }
 
   };

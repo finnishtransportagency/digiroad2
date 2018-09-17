@@ -288,9 +288,9 @@
       };
 
       if(pointAsset.form) {
-        new pointAsset.form(parameters);
+        new pointAsset.form().initialize(parameters);
       }else
-        new PointAssetForm(parameters);
+        new PointAssetForm().initialize(parameters);
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
