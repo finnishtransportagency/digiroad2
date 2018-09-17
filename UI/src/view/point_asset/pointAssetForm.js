@@ -2,39 +2,41 @@
 root.PointAssetForm = function(parameters) {
   var me = this;
   me.enumeratedPropertyValues = null;
-  var pointAsset = parameters.pointAsset;
-  var roadCollection = parameters.roadCollection;
-  var applicationModel = parameters.applicationModel;
-  var backend = parameters.backend;
-  var saveCondition = parameters.saveCondition;
-  var feedbackCollection =parameters.feedbackCollection;
+  var pointAsset;
+  var roadCollection;
+  var applicationModel;
+  var backend;
+  var saveCondition;
 
-  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection);
+  this.initialize = function(parameters) {
+    pointAsset = parameters.pointAsset;
+    roadCollection = parameters.roadCollection;
+    applicationModel = parameters.applicationModel;
+    backend = parameters.backend;
+    saveCondition = parameters.saveCondition;
+    me.bindEvents(parameters);
+  };
 
-  function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
+  this.bindEvents = function(parameters) {
     var rootElement = $('#feature-attributes');
-    var typeId = pointAsset.typeId;
-    var selectedAsset = pointAsset.selectedPointAsset;
-    var collection  = pointAsset.collection;
-    var layerName = pointAsset.layerName;
-    var localizedTexts = pointAsset.formLabels;
-    var authorizationPolicy = pointAsset.authorizationPolicy;
-    new FeedbackDataTool(feedbackCollection, layerName, authorizationPolicy);
+    var typeId = parameters.pointAsset.typeId;
+    var selectedAsset = parameters.pointAsset.selectedPointAsset;
+    var collection  = parameters.pointAsset.collection;
+    var layerName = parameters.pointAsset.layerName;
+    var localizedTexts = parameters.pointAsset.formLabels;
+    var authorizationPolicy = parameters.pointAsset.authorizationPolicy;
+    new FeedbackDataTool(parameters.feedbackCollection, layerName, authorizationPolicy);
 
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
-      if(event.assetType == typeId)
+      if(event.assetType === typeId)
         me.enumeratedPropertyValues = event.enumeratedPropertyValues;
     });
 
     backend.getAssetEnumeratedPropertyValues(typeId);
 
     eventbus.on('application:readOnly', function(readOnly) {
-      if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
+      if(applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || readOnly);
-        //TODO: add form configurations to assetTypeConfiguration.js to avoid if-clauses
-        if (layerName == 'servicePoints' && isSingleService(selectedAsset)){
-          rootElement.find('button.delete').hide();
-        }
       }
     });
 
@@ -42,16 +44,8 @@ root.PointAssetForm = function(parameters) {
       if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || applicationModel.isReadOnly());
-        if (layerName == 'servicePoints') {
-          rootElement.find('button#save-button').prop('disabled', true);
-          rootElement.find('button#cancel-button').prop('disabled', false);
-          if(isSingleService(selectedAsset)){
-            rootElement.find('button.delete').hide();
-          }
-        } else {
-          rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
-          rootElement.find('button#cancel-button').prop('disabled', false);
-        }
+        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+        rootElement.find('button#cancel-button').prop('disabled', false);
       }
     });
 
@@ -65,13 +59,11 @@ root.PointAssetForm = function(parameters) {
     });
 
     eventbus.on('layer:selected', function(layer) {
-      if (layer === layerName && layerName !== 'servicePoints') {
+      if (layer === layerName) {
         me.renderLinktoWorkList(layer, localizedTexts);
-      } else {
-        $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
       }
     });
-  }
+  };
 
   this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
     var id = selectedAsset.getId();
@@ -368,10 +360,6 @@ root.PointAssetForm = function(parameters) {
       '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
       '</div>');
   };
-
-  function isSingleService(selectedAsset){
-    return selectedAsset.get().services.length < 2;
-  }
 
   this.toggleMode = function(rootElement, readOnly) {
     rootElement.find('.delete').toggle(!readOnly);
