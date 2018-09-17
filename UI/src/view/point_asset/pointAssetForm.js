@@ -1,5 +1,5 @@
 (function (root) {
-root.PointAssetForm = function(parameters) {
+root.PointAssetForm = function() {
   var me = this;
   me.enumeratedPropertyValues = null;
   var pointAsset;

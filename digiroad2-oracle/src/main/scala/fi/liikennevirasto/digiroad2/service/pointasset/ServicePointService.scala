@@ -81,6 +81,6 @@ class ServicePointService {
     }
   }
 }
-class ServicePointException(val servicePointException: String) extends RuntimeException {}
+class ServicePointException(val servicePointException: String) extends RuntimeException { override def getMessage: String = servicePointException }
 
 
