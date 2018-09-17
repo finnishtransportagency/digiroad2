@@ -774,6 +774,7 @@
           newAssetLabel: 'palvelupiste'
         },
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
+        form: ServicePointForm,
         hasMunicipalityValidation: true
       },
       {

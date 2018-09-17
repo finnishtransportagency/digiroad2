@@ -294,13 +294,19 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-    new PointAssetForm(
-       pointAsset,
-       roadCollection,
-       applicationModel,
-       backend,
-       pointAsset.saveCondition || function() {return true;},
-        new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset));
+      var parameters = {
+        pointAsset: pointAsset,
+        roadCollection: roadCollection,
+        applicationModel: applicationModel,
+        backend: backend,
+        saveCondition: pointAsset.saveCondition || function () { return true; },
+        feedbackCollection: new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset)
+      };
+
+      if(pointAsset.form) {
+        new pointAsset.form(parameters);
+      }else
+        new PointAssetForm(parameters);
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
