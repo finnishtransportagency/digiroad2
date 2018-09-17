@@ -146,7 +146,7 @@
       rootElement.find('.form-service').on('change', '.select-service-type', function (event) {
         var newServiceType = parseInt($(event.currentTarget).val(), 10);
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-        var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType});
+        var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType, isAuthorityData: isAuthorityData(newServiceType)});
         selectedAsset.set({services: services});
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || applicationModel.isReadOnly());
@@ -161,7 +161,7 @@
         var assetId = selectedAsset.getId();
         var services = selectedAsset.get().services;
         var generatedId = services.length;
-        var newServices = services.concat({id: generatedId, assetId: assetId, serviceType: newServiceType});
+        var newServices = services.concat({id: generatedId, assetId: assetId, serviceType: newServiceType, isAuthorityData: isAuthorityData(newServiceType)});
         selectedAsset.set({services: newServices});
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || applicationModel.isReadOnly());
@@ -229,7 +229,7 @@
         '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
         '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
         '    <label class="control-label">Viranomaisdataa</label>' +
-        '    <p class="form-control-readOnly">'+isAuthorityData(selectedServiceType)+'</p>' +
+        '    <p class="form-control-readOnly">'+ (isAuthorityData(service.serviceType) ?  'Kyllä' : 'Ei') +'</p>' +
         '</div><div>' +
         (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
         '</div></div>' +
@@ -294,7 +294,7 @@
     }
 
     function isAuthorityData(selectedServiceType) {
-      return (selectedServiceType.value === 10 || selectedServiceType.value === 17)?  'Kyllä' : 'Ei';
+      return !(selectedServiceType === 10 || selectedServiceType === 17);
     }
 
   };
