@@ -764,8 +764,8 @@
         layerName: 'servicePoints',
         title: 'Palvelupiste',
         allowComplementaryLinks: false,
-        allowGrouping: true,
-        // newAsset: { services: [] },
+  //      allowGrouping: true,
+        newAsset: { services: [] },
         legendValues: [
           {symbolUrl: 'images/service_points/parkingGarage.png', label: 'Pysäköintitalo'},
           {symbolUrl: 'images/service_points/parking.png', label: 'Pysäköintialue'},
