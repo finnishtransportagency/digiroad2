@@ -2,18 +2,13 @@
   root.ServicePointForm = function() {
     PointAssetForm.call(this);
     var me = this;
-    var pointAsset;
-    var roadCollection;
-    var applicationModel;
-    var backend;
-    var saveCondition;
 
     this.initialize = function(parameters) {
-      pointAsset = parameters.pointAsset;
-      roadCollection = parameters.roadCollection;
-      applicationModel = parameters.applicationModel;
-      backend = parameters.backend;
-      saveCondition = parameters.saveCondition;
+      me.pointAsset = parameters.pointAsset;
+      me.roadCollection = parameters.roadCollection;
+      me.applicationModel = parameters.applicationModel;
+      me.backend = parameters.backend;
+      me.saveCondition = parameters.saveCondition;
       me.bindEvents(parameters);
     };
 
@@ -53,12 +48,12 @@
 
     this.bindEvents = function(parameters) {
       var rootElement = $('#feature-attributes');
-      var typeId = parameters.pointAsset.typeId;
-      var selectedAsset = parameters.pointAsset.selectedPointAsset;
-      var collection  = parameters.pointAsset.collection;
-      var layerName = parameters.pointAsset.layerName;
-      var localizedTexts = parameters.pointAsset.formLabels;
-      var authorizationPolicy = parameters.pointAsset.authorizationPolicy;
+      var typeId = me.pointAsset.typeId;
+      var selectedAsset = me.pointAsset.selectedPointAsset;
+      var collection  = me.pointAsset.collection;
+      var layerName = me.pointAsset.layerName;
+      var localizedTexts = me.pointAsset.formLabels;
+      var authorizationPolicy = me.pointAsset.authorizationPolicy;
       new FeedbackDataTool(parameters.feedbackCollection, layerName, authorizationPolicy);
 
       eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
@@ -66,10 +61,10 @@
           me.enumeratedPropertyValues = event.enumeratedPropertyValues;
       });
 
-      backend.getAssetEnumeratedPropertyValues(typeId);
+      me.backend.getAssetEnumeratedPropertyValues(typeId);
 
       eventbus.on('application:readOnly', function(readOnly) {
-        if(applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
+        if(me.applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
           me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || readOnly);
           if (isSingleService(selectedAsset)){
             rootElement.find('button.delete').hide();
@@ -78,9 +73,9 @@
       });
 
       eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
-        if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-          me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
-          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || applicationModel.isReadOnly());
+        if (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
+          me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection, collection);
+          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
           rootElement.find('button#save-button').prop('disabled', true);
           rootElement.find('button#cancel-button').prop('disabled', false);
           if(isSingleService(selectedAsset)){
@@ -90,7 +85,7 @@
       });
 
       eventbus.on(layerName + ':changed', function() {
-        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && saveCondition(selectedAsset)));
+        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
         rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
       });
 
@@ -118,15 +113,7 @@
         '    </div>';
     };
 
-    this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
-      var id = selectedAsset.getId();
-
-      var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-      var header = '<header><span>' + title + '</span>' + me.renderButtons() + '</header>';
-      var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection);
-      var footer = '<footer>' + me.renderButtons() + '</footer>';
-
-      rootElement.html(header + form + footer);
+    this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
 
       rootElement.find('.form-service textarea').on('input change', function (event) {
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
@@ -148,8 +135,8 @@
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
         var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType, isAuthorityData: isAuthorityData(newServiceType)});
         selectedAsset.set({services: services});
-        me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection);
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || applicationModel.isReadOnly());
+        me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection);
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
         rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
         if(services.length < 2){
           rootElement.find('button.delete').hide();
@@ -163,12 +150,18 @@
         var generatedId = services.length;
         var newServices = services.concat({id: generatedId, assetId: assetId, serviceType: newServiceType, isAuthorityData: isAuthorityData(newServiceType)});
         selectedAsset.set({services: newServices});
-        me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection);
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || applicationModel.isReadOnly());
+        me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection);
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
         rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
         if(newServices.length < 2){
           rootElement.find('button.delete').hide();
         }
+      });
+
+      rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
+        var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+        var newTypeExtension = parseInt($(event.currentTarget).val(), 10);
+        selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {typeExtension: newTypeExtension})});
       });
 
       rootElement.on('click', 'button.delete', function (evt) {
@@ -183,19 +176,6 @@
         selectedAsset.set({ services: newServices });
       });
 
-      rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
-        var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-        var newTypeExtension = parseInt($(event.currentTarget).val(), 10);
-        selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {typeExtension: newTypeExtension})});
-      });
-
-      rootElement.find('.pointasset button.save').on('click', function() {
-        selectedAsset.save();
-      });
-
-      rootElement.find('.pointasset button.cancel').on('click', function() {
-        selectedAsset.cancel();
-      });
     };
 
     var renderService = function (service) {
