@@ -717,6 +717,7 @@
           newAssetLabel: 'esterakennelma'
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        form: ObstacleForm,
         hasMunicipalityValidation: true
       },
       {
@@ -739,6 +740,7 @@
           return selected.code ? selected.code !== '' : false;
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        form: RailwayCrossingForm,
         hasMunicipalityValidation: true
       },
       {
@@ -757,6 +759,7 @@
           newAssetLabel: 'opastustaulu'
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        form: DirectionalTrafficSignForm,
         hasMunicipalityValidation: true
       },
       {
@@ -831,6 +834,7 @@
           newAssetLabel: 'liikennemerkki'
         },
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
+        form: TrafficSignForm,
         hasMunicipalityValidation: true,
         saveCondition: function (selectedAsset) {
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
@@ -856,10 +860,12 @@
         ],
         formLabels: {
           title: 'Rajoitus',
-          showUnit: true
+          showUnit: true,
+          manyFloatingAssetsLabel: 'TR suurin sallittu korkeus'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
+        form: HeightLimitForm,
         label: new HeightLimitLabel(Math.pow(5, 2))
       },
       {
@@ -875,10 +881,12 @@
         ],
         formLabels: {
           title: 'Rajoitus',
-          showUnit: true
+          showUnit: true,
+          manyFloatingAssetsLabel: 'TR suurin sallittu leveys'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
+        form: WidthLimitForm,
         label: new WidthLimitLabel(Math.pow(5, 2))
       }
     ];
