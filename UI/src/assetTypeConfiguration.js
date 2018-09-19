@@ -767,8 +767,9 @@
         layerName: 'servicePoints',
         title: 'Palvelupiste',
         allowComplementaryLinks: false,
-  //      allowGrouping: true,
-        newAsset: { services: [] },
+        allowGrouping: true,
+        groupingDistance: Math.pow(3, 2),
+         newAsset: { services: [] },
         legendValues: [
           {symbolUrl: 'images/service_points/parkingGarage.png', label: 'Pysäköintitalo'},
           {symbolUrl: 'images/service_points/parking.png', label: 'Pysäköintialue'},
@@ -788,10 +789,11 @@
 
         ],
         formLabels: {
-          // singleFloatingAssetLabel: 'palvelupisteen',
-          // manyFloatingAssetsLabel: 'palvelupisteet',
-          // newAssetLabel: 'palvelupiste'
+          singleFloatingAssetLabel: 'palvelupisteen',
+          manyFloatingAssetsLabel: 'palvelupisteet',
+          newAssetLabel: 'palvelupiste'
         },
+        label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
         hasMunicipalityValidation: true
