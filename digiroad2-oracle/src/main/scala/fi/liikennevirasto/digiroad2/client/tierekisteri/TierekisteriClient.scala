@@ -43,62 +43,152 @@ object TRRoadSide {
 sealed trait TRTrafficSignType {
   def value: Int
   def trafficSignType: TrafficSignType
+  def source: Seq[String]
 }
 object TRTrafficSignType {
-  val values = Set(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, UrbanArea, EndUrbanArea, PedestrianCrossing, PedestrianCrossing, MaximumLength, Warning, NoLeftTurn, NoRightTurn, NoUTurn,
+  //TODO Once the object is used for CSVimport too, create a generic one next time we work with those types
+  val values = Set(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, UrbanArea, EndUrbanArea, PedestrianCrossing, MaximumLength, Warning, NoLeftTurn, NoRightTurn, NoUTurn,
     ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations, NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoVehiclesWithDangerGoods,
     NoBuses, NoMopeds, NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback, NoEntry, OvertakingProhibited, EndProhibitionOfOvertaking,
     MaxWidthExceeding, MaxHeightExceeding, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding, WRightBend, WLeftBend,
-    WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit)
+    WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit, FreeWidth, FreeHeight, HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat,
+    TimeLimit, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee, ObligatoryUseOfParkingDisc, AdditionalPanelWithText, DrivingInServicePurposesAllowed, BusLane,
+    BusLaneEnds, TramLane, BusStopForLocalTraffic, BusStopForLongDistanceTraffic, TramStop, TaxiStation, CompulsoryFootPath, CompulsoryCycleTrack, CombinedCycleTrackAndFootPath, ParallelCycleTrackAndFootPath,
+    ParallelCycleTrackAndFootPath2, DirectionToBeFollowed3, DirectionToBeFollowed4, DirectionToBeFollowed5, CompulsoryRoundabout, PassThisSide, DividerOfTraffic, TaxiStationZoneBeginning, StandingPlaceForTaxi,
+    RoadNarrows, TwoWayTraffic, SwingBridge, RoadWorks, SlipperyRoad, PedestrianCrossingWarningSign, Cyclists, IntersectionWithEqualRoads, LightSignals, TramwayLine, FallingRocks, CrossWind, PriorityRoad, EndOfPriority,
+    PriorityOverOncomingTraffic, PriorityForOncomingTraffic, GiveWay, Stop, ParkingLot, OneWayRoad, Motorway, MotorwayEnds, ResidentialZone, EndOfResidentialZone, PedestrianZone, EndOfPedestrianZone, NoThroughRoad, NoThroughRoadRight,
+    SymbolOfMotorway, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped, LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, StandingAndParkingProhibited,
+    ParkingProhibited, ParkingProhibitedZone, EndOfParkingProhibitedZone, AlternativeParkingOddDays, Parking)
 
   def apply(value: Int): TRTrafficSignType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
-  case object TelematicSpeedLimit extends TRTrafficSignType { def value = 0;  def trafficSignType = TrafficSignType.TelematicSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
-  case object SpeedLimit extends TRTrafficSignType { def value = 361;  def trafficSignType = TrafficSignType.SpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
-  case object EndSpeedLimit extends TRTrafficSignType { def value = 362;  def trafficSignType = TrafficSignType.EndSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; }
-  case object SpeedLimitZone extends TRTrafficSignType { def value = 363;  def trafficSignType = TrafficSignType.SpeedLimitZone; def group = TrafficSignTypeGroup.SpeedLimits;}
-  case object EndSpeedLimitZone extends TRTrafficSignType { def value = 364;  def trafficSignType = TrafficSignType.EndSpeedLimitZone; def group = TrafficSignTypeGroup.SpeedLimits; }
-  case object UrbanArea extends TRTrafficSignType { def value = 571;  def trafficSignType = TrafficSignType.UrbanArea; def group = TrafficSignTypeGroup.SpeedLimits; }
-  case object EndUrbanArea extends TRTrafficSignType { def value = 572;  def trafficSignType = TrafficSignType.EndUrbanArea; def group = TrafficSignTypeGroup.SpeedLimits; }
-  case object PedestrianCrossing extends TRTrafficSignType { def value = 511;  def trafficSignType = TrafficSignType.PedestrianCrossing; def group = TrafficSignTypeGroup.PedestrianCrossing; }
-  case object MaximumLength extends TRTrafficSignType { def value = 343;  def trafficSignType = TrafficSignType.MaximumLength; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
-  case object Warning extends TRTrafficSignType { def value = 189;  def trafficSignType = TrafficSignType.Warning; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object NoLeftTurn extends TRTrafficSignType { def value = 332;  def trafficSignType = TrafficSignType.NoLeftTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoRightTurn extends TRTrafficSignType { def value = 333;  def trafficSignType = TrafficSignType.NoRightTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoUTurn extends TRTrafficSignType { def value = 334;  def trafficSignType = TrafficSignType.NoUTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object ClosedToAllVehicles extends TRTrafficSignType { def value = 311;  def trafficSignType = TrafficSignType.ClosedToAllVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoPowerDrivenVehicles extends TRTrafficSignType { def value = 312;  def trafficSignType = TrafficSignType.NoPowerDrivenVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoLorriesAndVans extends TRTrafficSignType { def value = 313;  def trafficSignType = TrafficSignType.NoLorriesAndVans; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoVehicleCombinations extends TRTrafficSignType { def value = 314;  def trafficSignType = TrafficSignType.NoVehicleCombinations; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoAgriculturalVehicles extends TRTrafficSignType { def value = 315;  def trafficSignType = TrafficSignType.NoAgriculturalVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoMotorCycles extends TRTrafficSignType { def value = 316;  def trafficSignType = TrafficSignType.NoMotorCycles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoMotorSledges extends TRTrafficSignType { def value = 317;  def trafficSignType = TrafficSignType.NoMotorSledges; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoVehiclesWithDangerGoods extends TRTrafficSignType { def value = 318;  def trafficSignType = TrafficSignType.NoVehiclesWithDangerGoods; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoBuses extends TRTrafficSignType { def value = 319;  def trafficSignType = TrafficSignType.NoBuses; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoMopeds extends TRTrafficSignType { def value = 321;  def trafficSignType = TrafficSignType.NoMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoCyclesOrMopeds extends TRTrafficSignType { def value = 322;  def trafficSignType = TrafficSignType.NoCyclesOrMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoPedestrians extends TRTrafficSignType { def value = 323;  def trafficSignType = TrafficSignType.NoPedestrians; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoPedestriansCyclesMopeds extends TRTrafficSignType { def value = 324;  def trafficSignType = TrafficSignType.NoPedestriansCyclesMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoRidersOnHorseback extends TRTrafficSignType { def value = 325;  def trafficSignType = TrafficSignType.NoRidersOnHorseback; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object NoEntry extends TRTrafficSignType { def value = 331;  def trafficSignType = TrafficSignType.NoEntry; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object OvertakingProhibited extends TRTrafficSignType { def value = 351;  def trafficSignType = TrafficSignType.OvertakingProhibited; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object EndProhibitionOfOvertaking extends TRTrafficSignType { def value = 352;  def trafficSignType = TrafficSignType.EndProhibitionOfOvertaking; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
-  case object MaxWidthExceeding extends TRTrafficSignType { def value = 341;  def trafficSignType = TrafficSignType.NoWidthExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
-  case object MaxHeightExceeding extends TRTrafficSignType { def value = 342;  def trafficSignType = TrafficSignType.MaxHeightExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
-  case object MaxLadenExceeding extends TRTrafficSignType { def value = 344;  def trafficSignType = TrafficSignType.MaxLadenExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
-  case object MaxMassCombineVehiclesExceeding extends TRTrafficSignType { def value = 345;  def trafficSignType = TrafficSignType.MaxMassCombineVehiclesExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
-  case object MaxTonsOneAxleExceeding extends TRTrafficSignType { def value = 346;  def trafficSignType = TrafficSignType.MaxTonsOneAxleExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
-  case object MaxTonsOnBogieExceeding extends TRTrafficSignType { def value = 347;  def trafficSignType = TrafficSignType.MaxTonsOnBogieExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions;  }
-  case object WRightBend extends TRTrafficSignType { def value = 111;  def trafficSignType = TrafficSignType.WRightBend; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object WLeftBend extends TRTrafficSignType { def value = 112;  def trafficSignType = TrafficSignType.WLeftBend; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object WSeveralBendsRight extends TRTrafficSignType { def value = 113;  def trafficSignType = TrafficSignType.WSeveralBendsRight; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object WSeveralBendsLeft extends TRTrafficSignType { def value = 114;  def trafficSignType = TrafficSignType.WSeveralBendsLeft; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object WDangerousDescent extends TRTrafficSignType { def value = 115;  def trafficSignType = TrafficSignType.WDangerousDescent; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object WSteepAscent extends TRTrafficSignType { def value = 116;  def trafficSignType = TrafficSignType.WSteepAscent; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object WUnevenRoad extends TRTrafficSignType { def value = 141;  def trafficSignType = TrafficSignType.WUnevenRoad; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object WChildren extends TRTrafficSignType { def value = 152;  def trafficSignType = TrafficSignType.WChildren; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; def group = TrafficSignTypeGroup.Unknown; }
+  case object TelematicSpeedLimit extends TRTrafficSignType { def value = 0; def trafficSignType = TrafficSignType.TelematicSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq() }
+  case object SpeedLimit extends TRTrafficSignType { def value = 361; def trafficSignType = TrafficSignType.SpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq("CSVimport") }
+  case object EndSpeedLimit extends TRTrafficSignType { def value = 362; def trafficSignType = TrafficSignType.EndSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq("CSVimport") }
+  case object SpeedLimitZone extends TRTrafficSignType { def value = 363; def trafficSignType = TrafficSignType.SpeedLimitZone; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq("CSVimport") }
+  case object EndSpeedLimitZone extends TRTrafficSignType { def value = 364; def trafficSignType = TrafficSignType.EndSpeedLimitZone; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq("CSVimport") }
+  case object UrbanArea extends TRTrafficSignType { def value = 571; def trafficSignType = TrafficSignType.UrbanArea; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq("CSVimport") }
+  case object EndUrbanArea extends TRTrafficSignType { def value = 572; def trafficSignType = TrafficSignType.EndUrbanArea; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq("CSVimport") }
+  case object PedestrianCrossing extends TRTrafficSignType { def value = 511; def trafficSignType = TrafficSignType.PedestrianCrossing; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object MaximumLength extends TRTrafficSignType { def value = 343; def trafficSignType = TrafficSignType.MaximumLength; def group = TrafficSignTypeGroup.MaximumRestrictions; def source = Seq("CSVimport") }
+  case object Warning extends TRTrafficSignType { def value = 189; def trafficSignType = TrafficSignType.Warning; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object NoLeftTurn extends TRTrafficSignType { def value = 332; def trafficSignType = TrafficSignType.NoLeftTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoRightTurn extends TRTrafficSignType { def value = 333; def trafficSignType = TrafficSignType.NoRightTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoUTurn extends TRTrafficSignType { def value = 334; def trafficSignType = TrafficSignType.NoUTurn; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object ClosedToAllVehicles extends TRTrafficSignType { def value = 311; def trafficSignType = TrafficSignType.ClosedToAllVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoPowerDrivenVehicles extends TRTrafficSignType { def value = 312; def trafficSignType = TrafficSignType.NoPowerDrivenVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoLorriesAndVans extends TRTrafficSignType { def value = 313; def trafficSignType = TrafficSignType.NoLorriesAndVans; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoVehicleCombinations extends TRTrafficSignType { def value = 314; def trafficSignType = TrafficSignType.NoVehicleCombinations; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoAgriculturalVehicles extends TRTrafficSignType { def value = 315; def trafficSignType = TrafficSignType.NoAgriculturalVehicles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoMotorCycles extends TRTrafficSignType { def value = 316; def trafficSignType = TrafficSignType.NoMotorCycles; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoMotorSledges extends TRTrafficSignType { def value = 317; def trafficSignType = TrafficSignType.NoMotorSledges; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoVehiclesWithDangerGoods extends TRTrafficSignType { def value = 318; def trafficSignType = TrafficSignType.NoVehiclesWithDangerGoods; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoBuses extends TRTrafficSignType { def value = 319; def trafficSignType = TrafficSignType.NoBuses; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoMopeds extends TRTrafficSignType { def value = 321; def trafficSignType = TrafficSignType.NoMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoCyclesOrMopeds extends TRTrafficSignType { def value = 322; def trafficSignType = TrafficSignType.NoCyclesOrMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoPedestrians extends TRTrafficSignType { def value = 323; def trafficSignType = TrafficSignType.NoPedestrians; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoPedestriansCyclesMopeds extends TRTrafficSignType { def value = 324; def trafficSignType = TrafficSignType.NoPedestriansCyclesMopeds; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoRidersOnHorseback extends TRTrafficSignType { def value = 325; def trafficSignType = TrafficSignType.NoRidersOnHorseback; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object NoEntry extends TRTrafficSignType { def value = 331; def trafficSignType = TrafficSignType.NoEntry; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object OvertakingProhibited extends TRTrafficSignType { def value = 351; def trafficSignType = TrafficSignType.OvertakingProhibited; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object EndProhibitionOfOvertaking extends TRTrafficSignType { def value = 352; def trafficSignType = TrafficSignType.EndProhibitionOfOvertaking; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object MaxWidthExceeding extends TRTrafficSignType { def value = 341; def trafficSignType = TrafficSignType.NoWidthExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions; def source = Seq("CSVimport") }
+  case object MaxHeightExceeding extends TRTrafficSignType { def value = 342; def trafficSignType = TrafficSignType.MaxHeightExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions; def source = Seq("CSVimport") }
+  case object MaxLadenExceeding extends TRTrafficSignType { def value = 344; def trafficSignType = TrafficSignType.MaxLadenExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions; def source = Seq("CSVimport") }
+  case object MaxMassCombineVehiclesExceeding extends TRTrafficSignType { def value = 345; def trafficSignType = TrafficSignType.MaxMassCombineVehiclesExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions; def source = Seq("CSVimport") }
+  case object MaxTonsOneAxleExceeding extends TRTrafficSignType { def value = 346; def trafficSignType = TrafficSignType.MaxTonsOneAxleExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions; def source = Seq("CSVimport") }
+  case object MaxTonsOnBogieExceeding extends TRTrafficSignType { def value = 347; def trafficSignType = TrafficSignType.MaxTonsOnBogieExceeding; def group = TrafficSignTypeGroup.MaximumRestrictions; def source = Seq("CSVimport") }
+  case object WRightBend extends TRTrafficSignType { def value = 111; def trafficSignType = TrafficSignType.WRightBend; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object WLeftBend extends TRTrafficSignType { def value = 112; def trafficSignType = TrafficSignType.WLeftBend; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object WSeveralBendsRight extends TRTrafficSignType { def value = 113; def trafficSignType = TrafficSignType.WSeveralBendsRight; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object WSeveralBendsLeft extends TRTrafficSignType { def value = 114; def trafficSignType = TrafficSignType.WSeveralBendsLeft; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object WDangerousDescent extends TRTrafficSignType { def value = 115; def trafficSignType = TrafficSignType.WDangerousDescent; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object WSteepAscent extends TRTrafficSignType { def value = 116; def trafficSignType = TrafficSignType.WSteepAscent; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object RoadNarrows extends TRTrafficSignType { def value = 121; def trafficSignType = TrafficSignType.RoadNarrows; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object TwoWayTraffic extends TRTrafficSignType { def value = 122; def trafficSignType = TrafficSignType.TwoWayTraffic; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object SwingBridge extends TRTrafficSignType { def value = 131; def trafficSignType = TrafficSignType.SwingBridge; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object WUnevenRoad extends TRTrafficSignType { def value = 141; def trafficSignType = TrafficSignType.WUnevenRoad; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object RoadWorks extends TRTrafficSignType { def value = 142; def trafficSignType = TrafficSignType.RoadWorks; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object SlipperyRoad extends TRTrafficSignType { def value = 144; def trafficSignType = TrafficSignType.SlipperyRoad; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object PedestrianCrossingWarningSign extends TRTrafficSignType { def value = 151; def trafficSignType = TrafficSignType.PedestrianCrossingWarningSign; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object WChildren extends TRTrafficSignType { def value = 152; def trafficSignType = TrafficSignType.WChildren; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object Cyclists extends TRTrafficSignType { def value = 153; def trafficSignType = TrafficSignType.Cyclists; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object IntersectionWithEqualRoads extends TRTrafficSignType { def value = 161; def trafficSignType = TrafficSignType.IntersectionWithEqualRoads; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object LightSignals extends TRTrafficSignType { def value = 165; def trafficSignType = TrafficSignType.LightSignals; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object TramwayLine extends TRTrafficSignType { def value = 167; def trafficSignType = TrafficSignType.TramwayLine; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object FallingRocks extends TRTrafficSignType { def value = 181; def trafficSignType = TrafficSignType.FallingRocks; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object CrossWind extends TRTrafficSignType { def value = 183; def trafficSignType = TrafficSignType.CrossWind; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport") }
+  case object PriorityRoad extends TRTrafficSignType { def value = 211; def trafficSignType = TrafficSignType.PriorityRoad; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def source = Seq("CSVimport") }
+  case object EndOfPriority extends TRTrafficSignType { def value = 212; def trafficSignType = TrafficSignType.EndOfPriority; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def source = Seq("CSVimport") }
+  case object PriorityOverOncomingTraffic extends TRTrafficSignType { def value = 221; def trafficSignType = TrafficSignType.PriorityOverOncomingTraffic; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def source = Seq("CSVimport") }
+  case object PriorityForOncomingTraffic extends TRTrafficSignType { def value = 222; def trafficSignType = TrafficSignType.PriorityForOncomingTraffic; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def source = Seq("CSVimport") }
+  case object GiveWay extends TRTrafficSignType { def value = 231; def trafficSignType = TrafficSignType.GiveWay; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def source = Seq("CSVimport") }
+  case object Stop extends TRTrafficSignType { def value = 232; def trafficSignType = TrafficSignType.Stop; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def source = Seq("CSVimport") }
+  case object StandingAndParkingProhibited extends TRTrafficSignType { def value = 371; def trafficSignType = TrafficSignType.StandingAndParkingProhibited; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object ParkingProhibited extends TRTrafficSignType { def value = 372; def trafficSignType = TrafficSignType.ParkingProhibited; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object ParkingProhibitedZone extends TRTrafficSignType { def value = 373; def trafficSignType = TrafficSignType.ParkingProhibitedZone; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object EndOfParkingProhibitedZone extends TRTrafficSignType { def value = 374; def trafficSignType = TrafficSignType.EndOfParkingProhibitedZone; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object TaxiStationZoneBeginning extends TRTrafficSignType { def value = 375; def trafficSignType = TrafficSignType.TaxiStationZoneBeginning; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object StandingPlaceForTaxi extends TRTrafficSignType { def value = 376; def trafficSignType = TrafficSignType.StandingPlaceForTaxi; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object AlternativeParkingOddDays extends TRTrafficSignType { def value = 381; def trafficSignType = TrafficSignType.AlternativeParkingOddDays; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def source = Seq("CSVimport") }
+  case object DirectionToBeFollowed3 extends TRTrafficSignType { def value = 413; def trafficSignType = TrafficSignType.DirectionToBeFollowed3; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object DirectionToBeFollowed4 extends TRTrafficSignType { def value = 414; def trafficSignType = TrafficSignType.DirectionToBeFollowed3; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object DirectionToBeFollowed5 extends TRTrafficSignType { def value = 415; def trafficSignType = TrafficSignType.DirectionToBeFollowed3; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object CompulsoryRoundabout extends TRTrafficSignType { def value = 416; def trafficSignType = TrafficSignType.CompulsoryRoundabout; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object PassThisSide extends TRTrafficSignType { def value = 417; def trafficSignType = TrafficSignType.PassThisSide; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object DividerOfTraffic extends TRTrafficSignType { def value = 418; def trafficSignType = TrafficSignType.PassThisSide; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object CompulsoryFootPath extends TRTrafficSignType { def value = 421; def trafficSignType = TrafficSignType.CompulsoryFootPath; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object CompulsoryCycleTrack extends TRTrafficSignType { def value = 422; def trafficSignType = TrafficSignType.CompulsoryCycleTrack; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object CombinedCycleTrackAndFootPath extends TRTrafficSignType { def value = 423; def trafficSignType = TrafficSignType.CombinedCycleTrackAndFootPath; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object ParallelCycleTrackAndFootPath extends TRTrafficSignType { def value = 424; def trafficSignType = TrafficSignType.CombinedCycleTrackAndFootPath; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object ParallelCycleTrackAndFootPath2 extends TRTrafficSignType { def value = 425; def trafficSignType = TrafficSignType.CombinedCycleTrackAndFootPath; def group = TrafficSignTypeGroup.MandatorySigns; def source = Seq("CSVimport") }
+  case object ParkingLot extends TRTrafficSignType { def value = 521; def trafficSignType = TrafficSignType.ParkingLot; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object BusStopForLocalTraffic extends TRTrafficSignType { def value = 531; def trafficSignType = TrafficSignType.BusStopForLocalTraffic; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object BusStopForLongDistanceTraffic extends TRTrafficSignType { def value = 532; def trafficSignType = TrafficSignType.BusStopForLocalTraffic; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object TramStop extends TRTrafficSignType { def value = 533; def trafficSignType = TrafficSignType.TramStop; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object TaxiStation extends TRTrafficSignType { def value = 534; def trafficSignType = TrafficSignType.TaxiStation; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object BusLane extends TRTrafficSignType { def value = 541; def trafficSignType = TrafficSignType.BusLane; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object BusLaneEnds extends TRTrafficSignType { def value = 542; def trafficSignType = TrafficSignType.BusLaneEnds; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object TramLane extends TRTrafficSignType { def value = 543; def trafficSignType = TrafficSignType.TramLane; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object OneWayRoad extends TRTrafficSignType { def value = 551; def trafficSignType = TrafficSignType.OneWayRoad; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object Motorway extends TRTrafficSignType { def value = 561; def trafficSignType = TrafficSignType.Motorway; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object MotorwayEnds extends TRTrafficSignType { def value = 562; def trafficSignType = TrafficSignType.MotorwayEnds; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object ResidentialZone extends TRTrafficSignType { def value = 573; def trafficSignType = TrafficSignType.ResidentialZone; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object EndOfResidentialZone extends TRTrafficSignType { def value = 574; def trafficSignType = TrafficSignType.EndOfResidentialZone; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object PedestrianZone extends TRTrafficSignType { def value = 575; def trafficSignType = TrafficSignType.PedestrianZone; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object EndOfPedestrianZone extends TRTrafficSignType { def value = 576; def trafficSignType = TrafficSignType.EndOfPedestrianZone; def group = TrafficSignTypeGroup.RegulatorySigns; def source = Seq("CSVimport") }
+  case object NoThroughRoad extends TRTrafficSignType { def value = 651; def trafficSignType = TrafficSignType.NoThroughRoad; def group = TrafficSignTypeGroup.InformationSigns; def source = Seq("CSVimport") }
+  case object NoThroughRoadRight extends TRTrafficSignType { def value = 652; def trafficSignType = TrafficSignType.NoThroughRoadRight; def group = TrafficSignTypeGroup.InformationSigns; def source = Seq("CSVimport") }
+  case object SymbolOfMotorway extends TRTrafficSignType { def value = 671; def trafficSignType = TrafficSignType.SymbolOfMotorway; def group = TrafficSignTypeGroup.InformationSigns; def source = Seq("CSVimport") }
+  case object Parking extends TRTrafficSignType { def value = 677; def trafficSignType = TrafficSignType.Parking; def group = TrafficSignTypeGroup.InformationSigns; def source = Seq("CSVimport") }
+  case object ItineraryForIndicatedVehicleCategory extends TRTrafficSignType { def value = 681; def trafficSignType = TrafficSignType.ItineraryForIndicatedVehicleCategory; def group = TrafficSignTypeGroup.InformationSigns; def source = Seq("CSVimport") }
+  case object ItineraryForPedestrians extends TRTrafficSignType { def value = 682; def trafficSignType = TrafficSignType.ItineraryForPedestrians; def group = TrafficSignTypeGroup.InformationSigns; def source = Seq("CSVimport") }
+  case object ItineraryForHandicapped extends TRTrafficSignType { def value = 683; def trafficSignType = TrafficSignType.ItineraryForHandicapped; def group = TrafficSignTypeGroup.InformationSigns; def source = Seq("CSVimport") }
+  case object LocationSignForTouristService extends TRTrafficSignType { def value = 704; def trafficSignType = TrafficSignType.LocationSignForTouristService; def group = TrafficSignTypeGroup.ServiceSigns; def source = Seq("CSVimport") }
+  case object FirstAid extends TRTrafficSignType { def value = 715; def trafficSignType = TrafficSignType.FirstAid; def group = TrafficSignTypeGroup.ServiceSigns; def source = Seq("CSVimport") }
+  case object FillingStation extends TRTrafficSignType { def value = 722; def trafficSignType = TrafficSignType.FillingStation; def group = TrafficSignTypeGroup.ServiceSigns; def source = Seq("CSVimport") }
+  case object Restaurant extends TRTrafficSignType { def value = 724; def trafficSignType = TrafficSignType.Restaurant; def group = TrafficSignTypeGroup.ServiceSigns; def source = Seq("CSVimport") }
+  case object PublicLavatory extends TRTrafficSignType { def value = 726; def trafficSignType = TrafficSignType.PublicLavatory; def group = TrafficSignTypeGroup.ServiceSigns; def source = Seq("CSVimport") }
+  case object FreeWidth extends TRTrafficSignType { def value = 821; def trafficSignType = TrafficSignType.FreeWidth; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object FreeHeight extends TRTrafficSignType { def value = 822; def trafficSignType = TrafficSignType.FreeHeight; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object PassengerCar extends TRTrafficSignType { def value = 831; def trafficSignType = TrafficSignType.PassengerCar; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object Bus extends TRTrafficSignType { def value = 832; def trafficSignType = TrafficSignType.Bus; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object Lorry extends TRTrafficSignType { def value = 833; def trafficSignType = TrafficSignType.Lorry; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object Van extends TRTrafficSignType { def value = 834; def trafficSignType = TrafficSignType.Van; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object VehicleForHandicapped extends TRTrafficSignType { def value = 836; def trafficSignType = TrafficSignType.VehicleForHandicapped; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object MotorCycle extends TRTrafficSignType { def value = 841; def trafficSignType = TrafficSignType.MotorCycle; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object Cycle extends TRTrafficSignType { def value = 843; def trafficSignType = TrafficSignType.Cycle; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object HazmatProhibitionA extends TRTrafficSignType { def value = 848; def trafficSignType = TrafficSignType.HazmatProhibitionA; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object HazmatProhibitionB extends TRTrafficSignType { def value = 849; def trafficSignType = TrafficSignType.HazmatProhibitionB; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object ValidMonFri extends TRTrafficSignType { def value = 851; def trafficSignType = TrafficSignType.ValidMonFri; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object ValidSat extends TRTrafficSignType { def value = 852; def trafficSignType = TrafficSignType.ValidSat; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object TimeLimit extends TRTrafficSignType { def value = 854; def trafficSignType = TrafficSignType.TimeLimit; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object ParkingAgainstFee extends TRTrafficSignType { def value = 855; def trafficSignType = TrafficSignType.ParkingAgainstFee; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object ObligatoryUseOfParkingDisc extends TRTrafficSignType { def value = 856; def trafficSignType = TrafficSignType.ObligatoryUseOfParkingDisc; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object AdditionalPanelWithText extends TRTrafficSignType { def value = 871; def trafficSignType = TrafficSignType.AdditionalPanelWithText; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object DrivingInServicePurposesAllowed extends TRTrafficSignType { def value = 872; def trafficSignType = TrafficSignType.DrivingInServicePurposesAllowed; def group = TrafficSignTypeGroup.AdditionalPanels; def source = Seq("CSVimport") }
+  case object Unknown extends TRTrafficSignType { def value = 999999; def trafficSignType = TrafficSignType.Unknown; def group = TrafficSignTypeGroup.Unknown; def source = Seq() }
 }
 
 sealed trait TRLaneArrangementType {
