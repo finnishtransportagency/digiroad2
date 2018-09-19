@@ -53,12 +53,19 @@
       new StyleRule().where('zoomLevel').isIn([14,15]).use({stroke: {width: 14}})
     ];
 
+    var featureTypeRules = [
+      new StyleRule().where('type').is('cutter').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
+    ];
+
     me.frostHeavingFactorStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.frostHeavingFactorStyle.addRules(frostHeavingFactorRules);
     me.frostHeavingFactorStyle.addRules(carryingCapacityFeatureSizeRules);
+    me.frostHeavingFactorStyle.addRules(featureTypeRules);
 
     me.springCarryingCapacityStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.springCarryingCapacityStyle.addRules(springCarryingCapacityRules);
     me.springCarryingCapacityStyle.addRules(carryingCapacityFeatureSizeRules);
+    me.springCarryingCapacityStyle.addRules(featureTypeRules);
+
   };
 })(this);
