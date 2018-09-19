@@ -16,7 +16,7 @@
           {signValue: [4], image: 'images/traffic-signs/speed-limits/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues},
           {signValue: [5], image: 'images/traffic-signs/speed-limits/urbanAreaSign.png', height: 30},
           {signValue: [6], image: 'images/traffic-signs/speed-limits/endOfUrbanAreaSign.png', height: 30},
-          {signValue: [7], image: 'images/traffic-signs/regulator-signs/crossingSign.png'},
+          {signValue: [7], image: 'images/traffic-signs/regulatory-signs/crossingSign.png'},
           {signValue: [8], image: 'images/traffic-signs/maximum-restrictions/maximumLengthSign.png', validation: validateMaximumRestrictions,  convertion: me.convertToMeters, unit: me.addMeters, offsetY: 5},
           {signValue: [9], image: 'images/traffic-signs/general-warning-signs/warningSign.png'},
           {signValue: [10], image: 'images/traffic-signs/prohibitions-and-restrictions/turningRestrictionLeftSign.png'},
