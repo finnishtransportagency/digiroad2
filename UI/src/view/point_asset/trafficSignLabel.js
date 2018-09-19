@@ -170,22 +170,8 @@
       };
 
       var validateAdditionalInfo = function () {
-        var labelMaxLength = getLabelProperty(this).getMaxLength();
+        var labelMaxLength = me.getLabelProperty(this).getMaxLength();
         return this.value || (this.additionalInfo && this.additionalInfo.length <= labelMaxLength);
-      };
-
-      this.getStyle = function (trafficSign, position) {
-        return [backgroundStyle(trafficSign, position), new ol.style.Style({
-          text: new ol.style.Text({
-            text: textStyle(trafficSign),
-            fill: new ol.style.Fill({
-              color: '#000000'
-            }),
-            font: '12px sans-serif',
-            offsetX: getLabelProperty(trafficSign).getTextOffsetX(),
-            offsetY: getLabelProperty(trafficSign).getTextOffsetY() - position.y
-          })
-        })];
       };
 
       this.renderFeaturesByPointAssets = function (pointAssets, zoomLevel) {
@@ -199,13 +185,13 @@
           return [];
         var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
         return _.flatten(_.chain(groupedAssets).map(function (assets) {
-          var imgPosition = {x: 0, y: stickPosition.y};
+          var imgPosition = {x: 0, y: me.stickPosition.y};
           return _.map(assets, function (asset) {
             var value = me.getValue(asset);
             if (value !== undefined) {
               var styles = [];
               styles = styles.concat(me.getStickStyle());
-              imgPosition.y += getLabelProperty(value).getHeight();
+              imgPosition.y += me.getLabelProperty(value).getHeight();
               styles = styles.concat(me.getStyle(value, imgPosition));
               var feature = me.createFeature(getPoint(asset));
               feature.setStyle(styles);

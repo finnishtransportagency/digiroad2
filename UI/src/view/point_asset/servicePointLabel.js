@@ -20,57 +20,35 @@
         {signValue: [16], image: 'images/service_points/busStation.png'},
         {signValue: [8], image: 'images/service_points/airport.png'},
         {signValue: [9], image: 'images/service_points/ferry.png'},
-        {signValue: [10], image: 'images/service_points/taxiStation.png'},
+        {signValue: [10], image: 'images/service_points/taxiStation.png', height: 30},
         {signValue: [6], image: 'images/service_points/picnicSite.png'},
         {signValue: [4], image: 'images/service_points/customsControl.png'},
-        {signValue: [5], image: 'images/service_points/linearLabel_largeText_blue.png', validation: validateText},
-        {signValue: [13], image: 'images/service_points/linearLabel_largeText_yellow_red.png', validation: validateText},
-        {signValue: [14], image: 'images/service_points/linearLabel_largeText_yellow_red.png', validation: validateText},
-        {signValue: [17], image: 'images/service_points/linearLabel_largeText_blue.png', validation: validateText}
+        {signValue: [5], image: 'images/service_points/borderCrossingPoint.png', validation: validateText, height: 25},
+        {signValue: [13], image: 'images/service_points/loadingTerminalForCars.png', validation: validateText, height: 25},
+        {signValue: [14], image: 'images/service_points/parkingAreaBusesAndTrucks.png', validation: validateText, height: 25},
+        {signValue: [17], image: 'images/service_points/chargingPointElectricCars.png', validation: validateText, height: 25}
       ];
     };
 
     var validateText = function () { return true;};
 
-    // this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
-    //   if(!this.isVisibleZoom(zoomLevel))
-    //     return [];
-    //   var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
-    //   return _.flatten(_.chain(groupedAssets).map(function(assets){
-    //     var total = -1;
-    //     return _.map(assets, function(asset, index ){
-    //       var value = me.getValue(asset);
-    //       if (!(_.isUndefined(value) || _.isEmpty(value))) {
-    //         var styles = [];
-    //         styles = styles.concat(me.getStickStyle());
-    //         styles = styles.concat(_.flatMap(_.map(me.getValue(asset), function(value) {
-    //           total = total + 1;
-    //           return me.getStyle(value, index + total);
-    //         })));
-    //         var feature = me.createFeature(getPoint(asset));
-    //         feature.setStyle(styles);
-    //         feature.setProperties(_.omit(asset, 'geometry'));
-    //         return feature;
-    //       }
-    //     });
-    //   }).filter(function(feature){ return !_.isUndefined(feature); }).value());
-    // };
     this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
       if(!this.isVisibleZoom(zoomLevel))
         return [];
       var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
       return _.flatten(_.chain(groupedAssets).map(function(assets){
-        var imgPosition = {x: 0 , y: stickPosition.y};
+        var imgPosition = {x: 0 , y: me.stickPosition.y};
         return _.map(assets, function(asset){
+          // styles = styles.concat(me.getStickStyle());
+          // imgPosition.y += me.getLabelProperty(value).getHeight();
+          var values = me.getValue(asset);
+          if (!(_.isUndefined(values) || _.isEmpty(values))) {
+            var styles = [];
             styles = styles.concat(me.getStickStyle());
-            imgPosition.y += getLabelProperty(value).getHeight();
-            if (!(_.isUndefined(value) || _.isEmpty(value))) {
-              var styles = [];
-              styles = styles.concat(me.getStickStyle());
-              styles = styles.concat(_.flatMap(_.map(values, function(value) {
-                total = total + 1;
-                return me.getStyle(value, imgPosition + total);
-              })));
+            styles = styles.concat(_.flatMap(_.map(values, function(value) {
+              imgPosition.y += me.getLabelProperty(value).getHeight();
+              return me.getStyle(value, imgPosition );
+            })));
             // styles = styles.concat(me.getStyle(value, imgPosition));
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(styles);
@@ -80,7 +58,6 @@
         });
       }).filter(function(feature){ return !_.isUndefined(feature); }).value());
     };
-
 
     function getDefaultText(type) {
       var defaultTextValues =
