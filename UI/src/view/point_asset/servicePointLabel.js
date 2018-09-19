@@ -10,7 +10,7 @@
       return sign.type;
     };
 
-    me.getPropertiesConfiguration = function (counter) {
+    me.getPropertiesConfiguration = function () {
       return [
         {signValue: [15], image: 'images/service_points/parkingGarage.png'},
         {signValue: [12], image: 'images/service_points/parking.png'},
@@ -32,21 +32,46 @@
 
     var validateText = function () { return true;};
 
+    // this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
+    //   if(!this.isVisibleZoom(zoomLevel))
+    //     return [];
+    //   var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
+    //   return _.flatten(_.chain(groupedAssets).map(function(assets){
+    //     var total = -1;
+    //     return _.map(assets, function(asset, index ){
+    //       var value = me.getValue(asset);
+    //       if (!(_.isUndefined(value) || _.isEmpty(value))) {
+    //         var styles = [];
+    //         styles = styles.concat(me.getStickStyle());
+    //         styles = styles.concat(_.flatMap(_.map(me.getValue(asset), function(value) {
+    //           total = total + 1;
+    //           return me.getStyle(value, index + total);
+    //         })));
+    //         var feature = me.createFeature(getPoint(asset));
+    //         feature.setStyle(styles);
+    //         feature.setProperties(_.omit(asset, 'geometry'));
+    //         return feature;
+    //       }
+    //     });
+    //   }).filter(function(feature){ return !_.isUndefined(feature); }).value());
+    // };
     this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
       if(!this.isVisibleZoom(zoomLevel))
         return [];
       var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
       return _.flatten(_.chain(groupedAssets).map(function(assets){
-        var total = -1;
-        return _.map(assets, function(asset, index ){
-          var value = me.getValue(asset);
-          if (!(_.isUndefined(value) || _.isEmpty(value))) {
-            var styles = [];
+        var imgPosition = {x: 0 , y: stickPosition.y};
+        return _.map(assets, function(asset){
             styles = styles.concat(me.getStickStyle());
-            styles = styles.concat(_.flatMap(_.map(me.getValue(asset), function(value) {
-              total = total + 1;
-              return me.getStyle(value, index + total);
-            })));
+            imgPosition.y += getLabelProperty(value).getHeight();
+            if (!(_.isUndefined(value) || _.isEmpty(value))) {
+              var styles = [];
+              styles = styles.concat(me.getStickStyle());
+              styles = styles.concat(_.flatMap(_.map(values, function(value) {
+                total = total + 1;
+                return me.getStyle(value, imgPosition + total);
+              })));
+            // styles = styles.concat(me.getStyle(value, imgPosition));
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(styles);
             feature.setProperties(_.omit(asset, 'geometry'));
@@ -69,7 +94,6 @@
     }
 
     me.getValue = function (asset) {
-
       return _.map(asset.services, function (service) {
         return {value: getDefaultText(service.serviceType), type: service.serviceType};
       });

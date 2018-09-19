@@ -3,15 +3,16 @@
   root.SignsLabel = function(groupingDistance) {
     AssetLabel.call(this, this.MIN_DISTANCE);
     var me = this;
+    var stickPosition = {x: 0, y: 30 };
 
     this.MIN_DISTANCE = groupingDistance;
 
-    var backgroundStyle = function (sign, counter) {
+    var backgroundStyle = function (trafficSign, position) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src:
-            me.getLabelProperty(sign, counter).findImage(),
-          anchor : [0.48, 1.75 + (counter)]
+          src: getLabelProperty(trafficSign).findImage(),
+          anchor : [0.48, position.y],
+          anchorYUnits: "pixels"
         }))
       });
     };
@@ -20,7 +21,8 @@
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: 'images/traffic-signs/trafficSignStick.png',
-          anchor : [0.5, 1]
+          anchor : [0.5, stickPosition.y],
+          anchorYUnits: "pixels"
         }))
       });
     };
@@ -31,7 +33,7 @@
 
     me.getLabelProperty = function (sign, counter) {
 
-      var labelProperty = _.find(me.getPropertiesConfiguration(counter), function(properties) {
+      var labelProperty = _.find(me.getPropertiesConfiguration(), function(properties) {
         return _.includes(properties.signValue, me.getSignType(sign));
       });
 
@@ -64,10 +66,10 @@
       };
     };
 
-    me.textStyle = function (sign) {
-      if (!me.getLabelProperty(sign).getValidation())
+    var textStyle = function (trafficSign) {
+      if (!getLabelProperty(trafficSign).getValidation())
         return '';
-      return me.getLabelProperty(sign).getValue() + me.getLabelProperty(sign).getUnit();
+      return getLabelProperty(trafficSign).getValue() + getLabelProperty(trafficSign).getAdditionalInfo() + getLabelProperty(trafficSign).getUnit();
     };
 
     me.addTons = function () {
@@ -86,16 +88,16 @@
       return this.value / 100;
     };
 
-    me.getStyle = function (sign, counter) {
-      return [backgroundStyle(sign, counter), new ol.style.Style({
+    this.getStyle = function (trafficSign, position) {
+      return [backgroundStyle(trafficSign, position), new ol.style.Style({
         text: new ol.style.Text({
-          text: me.textStyle(sign),
+          text: textStyle(trafficSign),
           fill: new ol.style.Fill({
             color: '#000000'
           }),
           font: '12px sans-serif',
-          offsetX: 0,
-          offsetY: me.getLabelProperty(sign, counter).getTextOffset()
+          offsetX: getLabelProperty(trafficSign).getTextOffsetX(),
+          offsetY: getLabelProperty(trafficSign).getTextOffsetY() - position.y
         })
       })];
     };
@@ -106,25 +108,8 @@
       });
     };
 
-    this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
-      if(!this.isVisibleZoom(zoomLevel))
-        return [];
-      var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
-      return _.flatten(_.chain(groupedAssets).map(function(assets){
-        return _.map(assets, function(asset, index){
-          var value = me.getValue(asset);
-          if(value !== undefined){
-            var styles = [];
-            styles = styles.concat(me.getStickStyle());
-            styles = styles.concat(me.getStyle(value, index));
-            var feature = me.createFeature(getPoint(asset));
-            feature.setStyle(styles);
-            feature.setProperties(_.omit(asset, 'geometry'));
-            return feature;
-          }
-        });
-      }).filter(function(feature){ return !_.isUndefined(feature); }).value());
-    };
+    this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){ };
+
 
     this.createFeature = function(point){
       return new ol.Feature(new ol.geom.Point(point));
