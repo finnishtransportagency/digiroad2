@@ -16,9 +16,11 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   type IncomingAsset = IncomingPedestrianCrossing
   type PersistedAsset = PedestrianCrossing
 
+  lazy val dao: OraclePedestrianCrossingDao = new OraclePedestrianCrossingDao()
+
   override def typeId: Int = 200
 
-  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = dao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: PedestrianCrossing, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
@@ -36,7 +38,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     withDynTransaction {
-      OraclePedestrianCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 
@@ -51,9 +53,9 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        OraclePedestrianCrossingDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
+        dao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
       case _ =>
-        OraclePedestrianCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
+        dao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
     }
   }
 
