@@ -25,7 +25,7 @@ class LinearTotalWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventB
       updateWithoutTransaction(ids, value, username)
     }
 
-    eventBus.publish("totalWeightLimit:Validator",AssetValidatorInfo(ids.toSet, outputIds.toSet))
+    eventBus.publish("totalWeightLimit:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))
     outputIds
   }
 
