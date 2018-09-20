@@ -61,7 +61,7 @@
     var drawLinearAssets = function(linearAssets) {
       var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.values, function(type) { return type.typeId == typeId; }); });
       if(assetLabel)
-        vectorSource.addFeatures(new MassLimitationsLabel().renderFeaturesByLinearAssets(_.map(linearAssets, offsetBySideCode), uiState.zoomLevel));
+        vectorSource.addFeatures(new MassLimitationsLabel().renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
       vectorSource.addFeatures(style.renderFeatures(asset));
     };
 
