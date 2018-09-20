@@ -424,7 +424,8 @@
         hasInaccurate: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        hasTrafficSignReadOnlyLayer: true
       },
       {
         typeId: assetType.europeanRoads,

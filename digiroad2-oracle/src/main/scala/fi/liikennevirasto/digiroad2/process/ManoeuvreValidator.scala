@@ -34,7 +34,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
   override def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val manoeuvres = assets.asInstanceOf[Seq[Manoeuvre]]
 
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(manoeuvres.flatMap(manoeuvre => manoeuvre.elements.map(_.sourceLinkId)).toSet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(manoeuvres.flatMap(manoeuvre => manoeuvre.elements.map(_.sourceLinkId)).toSet, newTransaction = false)
 
     manoeuvres.flatMap {
       manoeuvre =>
@@ -133,35 +133,38 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
   override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
 
-    if ((assetInfo.newIds ++ assetInfo.oldIds).toSeq.nonEmpty) {
+    if (assetInfo.ids.toSeq.nonEmpty) {
       withDynTransaction {
 
-        val manoeuvre = manoeuvreDao.fetchManoeuvreById(assetInfo.oldIds.head)
+        val manoeuvre = manoeuvreDao.fetchManoeuvreById(assetInfo.ids.head)
         val sourceLinkId = manoeuvre.find(_.elementType == ElementTypes.FirstElement).get.linkId
         val nextLinkId = manoeuvre.find(_.elementType == ElementTypes.FirstElement).get.destLinkId
 
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(sourceLinkId, nextLinkId))
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(sourceLinkId, nextLinkId), newTransaction = false)
 
-        val (sourceFirst, sourceLast) = GeometryUtils.geometryEndpoints(roadLinks.filter(_.linkId == sourceLinkId).head.geometry)
-        val (secondFirst, secondLast) = GeometryUtils.geometryEndpoints(roadLinks.filter(_.linkId == nextLinkId).head.geometry)
 
-        val pointOfInterest : Point = if (GeometryUtils.areAdjacent(sourceFirst, secondFirst) || GeometryUtils.areAdjacent(sourceFirst, secondLast)) sourceLast else sourceFirst
+        if(roadLinks.exists(road => road.linkId == sourceLinkId && road.administrativeClass != Private)){
+          val (sourceFirst, sourceLast) = GeometryUtils.geometryEndpoints(roadLinks.filter(_.linkId == sourceLinkId).head.geometry)
+          val (secondFirst, secondLast) = GeometryUtils.geometryEndpoints(roadLinks.filter(_.linkId == nextLinkId).head.geometry)
 
-        val trafficSings =
-          splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance))
-          .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
-          .filterNot(_.floating)
+          val pointOfInterest : Point = if (GeometryUtils.areAdjacent(sourceFirst, secondFirst) || GeometryUtils.areAdjacent(sourceFirst, secondLast)) sourceLast else sourceFirst
 
-        inaccurateAssetDAO.deleteInaccurateAssetByLinkIds((manoeuvre.map(_.linkId) ++ trafficSings.map(_.linkId) ++ assetInfo.newLinkIds).toSet  ,assetTypeInfo.typeId)
+          val trafficSings =
+            splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(sourceLinkId)))
+              .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+              .filterNot(_.floating)
 
-        trafficSings.foreach { trafficSign =>
-          assetValidator(trafficSign).foreach {
-            inaccurate =>
-              (inaccurate.assetId, inaccurate.linkId) match {
-                case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                case _ => None
-              }
+          inaccurateAssetDAO.deleteInaccurateAssetByLinkIds((manoeuvre.map(_.linkId) ++ trafficSings.map(_.linkId) ++ assetInfo.newLinkIds).toSet  ,assetTypeInfo.typeId)
+
+          trafficSings.foreach { trafficSign =>
+            assetValidator(trafficSign).foreach {
+              inaccurate =>
+                (inaccurate.assetId, inaccurate.linkId) match {
+                  case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                  case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                  case _ => None
+                }
+            }
           }
         }
       }

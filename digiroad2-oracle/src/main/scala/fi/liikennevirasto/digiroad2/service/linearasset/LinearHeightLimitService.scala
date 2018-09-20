@@ -39,7 +39,7 @@ class LinearHeightLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImp
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
-    eventBus.publish("heightLimit:Validator",AssetValidatorInfo(Set(), Set(), newLinearAssets.map(_.linkId).toSet))
+    eventBus.publish("heightLimit:Validator",AssetValidatorInfo(newIds.toSet, newLinearAssets.map(_.linkId).toSet))
     newIds
   }
 }

@@ -25,7 +25,7 @@ class LinearWidthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
       updateWithoutTransaction(ids, value, username)
     }
 
-    eventBus.publish("widthLimit:Validator",AssetValidatorInfo(ids.toSet, outputIds.toSet))
+    eventBus.publish("widthLimit:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))
     outputIds
   }
 
@@ -39,7 +39,7 @@ class LinearWidthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
-    eventBus.publish("widthLimit:Validator",AssetValidatorInfo(Set(), Set(), newLinearAssets.map(_.linkId).toSet))
+    eventBus.publish("widthLimit:Validator",AssetValidatorInfo(newIds.toSet, newLinearAssets.map(_.linkId).toSet))
     newIds
   }
 }

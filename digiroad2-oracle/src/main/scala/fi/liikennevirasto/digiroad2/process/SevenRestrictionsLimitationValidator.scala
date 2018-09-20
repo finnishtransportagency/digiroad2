@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, HazmatTransportProhibition, SideCode}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
@@ -60,35 +60,40 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
   }
 
   override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
-    if (assetInfo.oldIds.toSeq.nonEmpty) {
+    if (assetInfo.ids.toSeq.nonEmpty) {
       withDynTransaction {
 
-        val assets = dao.fetchAssetsWithTextualValuesByIds(assetInfo.oldIds ++ assetInfo.newIds, LinearAssetTypes.getValuePropertyId(assetTypeInfo.typeId)).filterNot(_.expired)
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false)
+        val assets = dao.fetchAssetsWithTextualValuesByIds(assetInfo.ids, LinearAssetTypes.getValuePropertyId(assetTypeInfo.typeId)).filterNot(_.expired)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
 
         assets.foreach { asset =>
-          val roadLink = roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new NoSuchElementException)
-          val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
-          val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
+          roadLinks.find(_.linkId == asset.linkId) match {
+            case Some(roadLink) =>
+              val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
+              val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
 
-          val trafficSingsByRadius: Seq[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
-            splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance))
-              .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
-              .filterNot(_.floating)
-          }
+              val trafficSingsByRadius: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
+                splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+                  .filterNot(_.floating)
+              }.toSet
+              val allLinkIds = assetInfo.newLinkIds ++ trafficSingsByRadius.map(_.linkId)
 
-          inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.oldIds)
-          inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds ++ trafficSingsByRadius.map(_.linkId), assetTypeInfo.typeId)
+              inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.ids)
+              if(allLinkIds.nonEmpty)
+                inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(allLinkIds, assetTypeInfo.typeId)
 
-          trafficSingsByRadius.foreach { trafficSign =>
-            assetValidator(trafficSign).foreach {
-              inaccurate =>
-                (inaccurate.assetId, inaccurate.linkId) match {
-                  case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                  case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                  case _ => None
+              trafficSingsByRadius.foreach { trafficSign =>
+                assetValidator(trafficSign).foreach {
+                  inaccurate =>
+                    (inaccurate.assetId, inaccurate.linkId) match {
+                      case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      case _ => None
+                    }
                 }
-            }
+              }
+            case _ =>
           }
         }
       }

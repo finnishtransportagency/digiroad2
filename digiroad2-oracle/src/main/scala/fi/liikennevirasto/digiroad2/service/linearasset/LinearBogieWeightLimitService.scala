@@ -25,7 +25,7 @@ class LinearBogieWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventB
       updateWithoutTransaction(ids, value, username)
     }
 
-    eventBus.publish("bogieWeightLimit:Validator",AssetValidatorInfo(ids.toSet, outputIds.toSet))
+    eventBus.publish("bogieWeightLimit:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))
     outputIds
   }
 
@@ -39,7 +39,7 @@ class LinearBogieWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventB
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
-    eventBus.publish("bogieWeightLimit:Validator",AssetValidatorInfo(Set(), Set(), newLinearAssets.map(_.linkId).toSet))
+    eventBus.publish("bogieWeightLimit:Validator",AssetValidatorInfo(newIds.toSet, newLinearAssets.map(_.linkId).toSet))
     newIds
   }
 }

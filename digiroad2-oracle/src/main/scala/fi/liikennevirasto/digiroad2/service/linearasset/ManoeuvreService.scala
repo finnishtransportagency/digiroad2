@@ -69,7 +69,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       manoeuvreUpdates.exceptions.foreach(dao.setManoeuvreExceptions(manoeuvreId))
       manoeuvreUpdates.validityPeriods.foreach(dao.setManoeuvreValidityPeriods(manoeuvreId))
 
-      eventBus.publish("manoeuvre:AssetValidator",AssetValidatorInfo(Set(oldManoeuvreId), Set(manoeuvreId)))
+      eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(oldManoeuvreId), Set(manoeuvreId)))
       manoeuvreId
     }
   }
@@ -237,7 +237,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       dao.createManoeuvre(userName, manoeuvre)
     }
 
-    eventBus.publish("manoeuvre:AssetValidator",AssetValidatorInfo(Set(), Set(manoeuvreId)))
+    eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(manoeuvreId)))
     manoeuvreId
 
   }
@@ -247,7 +247,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       dao.deleteManoeuvre(s, id)
     }
 
-    eventBus.publish("manoeuvre:AssetValidator",AssetValidatorInfo(Set(deletedId), Set()))
+    eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(deletedId)))
     deletedId
   }
 

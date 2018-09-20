@@ -12,11 +12,12 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
 
 case class Inaccurate(assetId: Option[Long], linkId: Option[Long], municipalityCode: Int,  administrativeClass: AdministrativeClass)
-case class AssetValidatorInfo(oldIds: Set[Long], newIds: Set[Long], newLinkIds: Set[Long] = Set())
+case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[Long] = Set())
 
 trait AssetServiceValidator {
 
@@ -101,20 +102,19 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
   //TODO needs to be refactor
   def assetValidator(trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val point = Point(trafficSign.lon, trafficSign.lat)
-    val roadLinks = getLinkIdsByRadius(point)
+    val roadLinks = getLinkIdsByRadius(point).filterNot(_.administrativeClass == Private)
     val trafficSignRoadLink = findNearestRoadLink(point, roadLinks)
 
     val (first, last) = GeometryUtils.geometryEndpoints(trafficSignRoadLink.geometry)
     val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(trafficSign.validityDirection)).head
 
-    val distance = if(GeometryUtils.areAdjacent(pointOfInterest, first))
-      GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry)
-    else
-      GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry.reverse)
-
     val assets = getAsset(roadLinks)
-    val filterAssets = filteredAsset(trafficSignRoadLink, getAsset(roadLinks), point, distance)
+    val filterAssets = filteredAsset(trafficSignRoadLink, getAsset(roadLinks), point, 0)
     if (filterAssets.isEmpty) {
+      val distance = if(GeometryUtils.areAdjacent(pointOfInterest, first))
+        GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry)
+      else
+        GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry.reverse)
       validator((pointOfInterest, trafficSignRoadLink), roadLinks: Seq[RoadLink], (trafficSign, trafficSignRoadLink.administrativeClass), assets, Set(), distance)
     } else {
       verifyAsset(filterAssets, trafficSignRoadLink, trafficSign)
@@ -155,7 +155,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
   }
 
 
-  def splitBothDirectionTrafficSignInTwo(trafficSigns: Seq[PersistedTrafficSign]) : Seq[PersistedTrafficSign] = {
+  def splitBothDirectionTrafficSignInTwo(trafficSigns: Seq[PersistedTrafficSign]) : Set[PersistedTrafficSign] = {
     trafficSigns.flatMap { trafficSign =>
       SideCode.apply(trafficSign.validityDirection) match {
         case SideCode.BothDirections =>
@@ -163,7 +163,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
         case _ =>
           Seq(trafficSign)
       }
-    }
+    }.toSet
   }
 
   def verifyInaccurate() : Unit = {
@@ -176,12 +176,14 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
       Queries.getMunicipalities
     }
 
-    inaccurateAssetDAO.deleteAllInaccurateAssets(assetTypeInfo.typeId)
+    OracleDatabase.withDynTransaction {
+      inaccurateAssetDAO.deleteAllInaccurateAssets(assetTypeInfo.typeId)
+  }
 
     municipalities.foreach{
       municipality =>
         println(s"Start process for municipality $municipality")
-        val trafficSigns = trafficSignService.getByMunicipality(municipality).filterNot(_.floating)
+        val trafficSigns = trafficSignService.getByMunicipality(municipality, Private).filterNot(_.floating)
           .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
         splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
           trafficSign =>

@@ -39,7 +39,7 @@ class LinearTotalWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventB
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
-    eventBus.publish("totalWeightLimit:Validator",AssetValidatorInfo(Set(), Set(), newLinearAssets.map(_.linkId).toSet))
+    eventBus.publish("totalWeightLimit:Validator",AssetValidatorInfo(newIds.toSet, newLinearAssets.map(_.linkId).toSet))
     newIds
   }
 }
