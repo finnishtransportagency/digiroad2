@@ -57,14 +57,28 @@
         float: none;
         margin-left: 5px;
       }
+
+      &.feedback-actions {
+        display: flex;
+        padding-top: 0;
+      }
+
+      #suggestion-label {
+        width: 400px;
+        text-align: left;
+        text-transform: none;
+        font-size: 12px;
+      }
     }
+
+
   }
 }
 
 #feedback {
   .modal-dialog {
     width: 575px;
-    height: 525px;
+    height: 530px;
     left: 45%;
   }
 
@@ -100,6 +114,16 @@
     margin-right: 195px;
     font-size: 11px;
     margin-top: 8px;
+  }
+
+  .buttons{
+    display: flex;
+    align-items: center;
+  }
+
+  .infoBox{
+    text-align: left;
+    margin-left: 18px;
   }
 
 }
