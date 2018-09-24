@@ -141,10 +141,12 @@ class FeedbackDataService extends Feedback {
       case Some(id) if id == Manoeuvres.typeId=>
         s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$linkIds>#${AssetTypeInfo.apply(id).layerName}/$linkIds</a>"""
 
-      case Some(id) => {body.assetId.flatMap(_.headOption)} match {
-        case Some(assetId) => s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$assetId>#${AssetTypeInfo.apply(id).layerName}/$assetId</a>"""
+      case Some(id) => {(body.assetId.flatMap(_.headOption), body.linkId.flatMap(_.headOption))} match {
+        case (Some(assetId), _) => s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$assetId>#${AssetTypeInfo.apply(id).layerName}/$assetId</a>"""
+        case (None, Some(linkId)) => s"""<a href=$directLink#linkProperty/$linkId>linkProperty/$linkId</a>""" //TODO: when DROTH-1492 is implemented, change this case to provide a url to the road link on the corresponding asset layer.
         case _ => ""
       }
+
       case _ => body.linkId.flatMap(_.headOption) match {
         case Some(linkId) => s"""<a href=$directLink#linkProperty/$linkId>linkProperty/$linkId</a>"""
         case _ => ""
