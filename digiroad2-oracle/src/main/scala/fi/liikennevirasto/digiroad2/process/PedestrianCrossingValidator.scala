@@ -56,14 +56,11 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
         assets.foreach { asset =>
           roadLinks.find(_.linkId == asset.linkId) match {
             case Some(roadLink) =>
-              val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.lon, asset.lat)
-              val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
-
-              val trafficSingsByRadius: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.BothDirections).flatMap { position =>
-                splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
+                val trafficSingsByRadius: Set[PersistedTrafficSign] =
+                splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), radiusDistance))
                   .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
-              }.toSet
+
               val allLinkIds = assetInfo.newLinkIds ++ trafficSingsByRadius.map(_.linkId)
 
               inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.ids)
