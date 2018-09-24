@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -638,7 +638,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val changeSet = projectedLinearAssets.foldLeft(ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) {
         case (acc, proj) =>
-          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode))))
+          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode), assetTypeId)))
       }
 
       service.updateChangeSet(changeSet)
@@ -652,6 +652,57 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       head.endMeasure should be (10.1)
       head.expired should be (false)
       dynamicSession.rollback()
+    }
+  }
+
+  case class TestAssetInfo(newLinearAsset: NewLinearAsset, typeId: Int)
+  test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
+
+    val assetsInfo = Seq(
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(2), SideCode.AgainstDigitizing.value, 0, None), NumberOfLanes.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1000), SideCode.AgainstDigitizing.value, 0, None), TotalWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1200), SideCode.AgainstDigitizing.value, 0, None), TrailerTruckWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1100), SideCode.AgainstDigitizing.value, 0, None), AxleWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(2000), SideCode.AgainstDigitizing.value, 0, None), BogieWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(400), SideCode.AgainstDigitizing.value, 0, None), HeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(200), SideCode.AgainstDigitizing.value, 0, None), LengthLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(300), SideCode.AgainstDigitizing.value, 0, None), WidthLimit.typeId))
+
+    OracleDatabase.withDynTransaction {
+      assetsInfo.foreach(testSideCodeAdjustment)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  def testSideCodeAdjustment(assetInfo: TestAssetInfo) {
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+    val id = ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "sideCode_adjust").head
+    val original = ServiceWithDao.getPersistedAssetsByIds(assetInfo.typeId, Set(id)).head
+
+    val changeSet =
+      ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)))
+
+    when(mockAssetDao.getAssetTypeId(Seq(id))).thenReturn(Seq((id, assetInfo.typeId)))
+
+    ServiceWithDao.updateChangeSet(changeSet)
+    val expiredAsset = ServiceWithDao.getPersistedAssetsByIds(assetInfo.typeId, Set(id)).head
+    val newAsset = ServiceWithDao.dao.fetchLinearAssetsByLinkIds(assetInfo.typeId, Seq(original.linkId), "mittarajoitus")
+    withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
+      newAsset.size should be(1)
+      val asset = newAsset.head
+      asset.startMeasure should be(original.startMeasure)
+      asset.endMeasure should be(original.endMeasure)
+      asset.createdBy should not be original.createdBy
+      asset.startMeasure should be(original.startMeasure)
+      asset.sideCode should be(SideCode.BothDirections.value)
+      asset.value should be(original.value)
+      asset.expired should be(false)
+      expiredAsset.expired should be(true)
     }
   }
 

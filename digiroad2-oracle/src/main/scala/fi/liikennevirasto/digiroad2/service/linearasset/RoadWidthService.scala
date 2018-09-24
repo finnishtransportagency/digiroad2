@@ -201,7 +201,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       }
 
       changeSet.adjustedSideCodes.foreach { adjustment =>
-        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
+        adjustedSideCode(adjustment)
       }
 
       val ids = changeSet.expiredAssetIds.toSeq

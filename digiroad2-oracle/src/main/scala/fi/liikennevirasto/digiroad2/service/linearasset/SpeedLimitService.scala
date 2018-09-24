@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import java.util.Properties
+import java.util.{NoSuchElementException, Properties}
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
@@ -101,14 +101,14 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       dao.updateExpiration(id, expired, username)
   }
 
-  def updateSideCode(id: Long, sideCode: SideCode, newTransaction: Boolean = true) ={
-    if (newTransaction)
-      withDynTransaction {
-        dao.updateSideCode(id, sideCode)
-      }
-    else
-      dao.updateSideCode(id, sideCode)
-  }
+//  def updateSideCode(id: Long, sideCode: SideCode, newTransaction: Boolean = true) ={
+//    if (newTransaction)
+//      withDynTransaction {
+//        dao.updateSideCode(id, sideCode)
+//      }
+//    else
+//      dao.updateSideCode(id, sideCode)
+//  }
 
   /**
     * Returns speed limits for Digiroad2Api /speedlimits GET endpoint.
@@ -245,7 +245,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, Some(projectedChangeSet))
 
     // Expire all assets that are dropped or expired. No more floating speed limits.
-    eventbus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ changeSet.droppedAssetIds, droppedAssetIds = Set()))
+    eventbus.publish("speedLimit:update", changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ changeSet.droppedAssetIds, droppedAssetIds = Set()))
     eventbus.publish("speedLimits:saveProjectedSpeedLimits", filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty))
 
     eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)
@@ -548,6 +548,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  protected def createWithoutTransaction(newLimits: Seq[NewLimit], value: Int, username: String, sideCode: SideCode): Seq[Long] = {
+    newLimits.flatMap { limit =>
+      dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, vvhClient.roadLinkData.createVVHTimeStamp(), (_,_) => Unit)
+    }
+  }
+
   private def addRoadAdministrationClassAttribute(speedLimit: SpeedLimit, roadLink: RoadLink): SpeedLimit = {
     speedLimit.copy(attributes = speedLimit.attributes ++ Map("ROAD_ADMIN_CLASS" -> roadLink.administrativeClass))
   }
@@ -588,5 +594,45 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
             .mapValues(_.map(_.linkId))
         }
     }
+  }
+
+  def updateChangeSet(changeSet: ChangeSet) : Unit = {
+    withDynTransaction {
+      dao.floatLinearAssets(changeSet.droppedAssetIds)
+
+      if (changeSet.adjustedMValues.nonEmpty)
+        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+
+      changeSet.adjustedMValues.foreach { adjustment =>
+        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+      }
+
+      if (changeSet.adjustedVVHChanges.nonEmpty)
+        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+
+      changeSet.adjustedVVHChanges.foreach { adjustment =>
+        dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
+      }
+
+      //NOTE the order between expire and sideCode adjustment cant be changed
+      if (changeSet.expiredAssetIds.toSeq.nonEmpty)
+        logger.info("Expiring ids " + changeSet.expiredAssetIds.toSeq.mkString(", "))
+      changeSet.expiredAssetIds.toSeq.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
+
+      if (changeSet.adjustedSideCodes.nonEmpty)
+        logger.info("Side Code adjustments ids " + changeSet.adjustedSideCodes.map(a => "" + a.assetId + "/" + a.sideCode).mkString(", "))
+
+      changeSet.adjustedSideCodes.foreach { adjustment =>
+        adjustedSideCode(adjustment)
+      }
+    }
+  }
+
+  def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
+    val oldSpeedLimit = getPersistedSpeedLimitById(adjustment.assetId, newTransaction = false).getOrElse(throw new IllegalStateException("Asset no longer available"))
+
+    updateByExpiration(oldSpeedLimit.id, true, LinearAssetTypes.VvhGenerated, false)
+   val newId = createWithoutTransaction(Seq(NewLimit(oldSpeedLimit.linkId, oldSpeedLimit.startMeasure, oldSpeedLimit.endMeasure)), oldSpeedLimit.value.get, LinearAssetTypes.VvhGenerated, adjustment.sideCode)
+  logger.info("SideCodeAdjustment newID" + newId)
   }
 }

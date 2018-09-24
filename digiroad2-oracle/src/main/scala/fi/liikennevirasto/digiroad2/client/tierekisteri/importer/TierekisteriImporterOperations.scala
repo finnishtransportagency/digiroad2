@@ -262,14 +262,17 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
 
   def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    val municipalities = getAllMunicipalities
+//    val municipalities = getAllMunicipalities
+
+    val municipalities = Seq(179)
+
     municipalities.foreach { municipality =>
       withDynTransaction{
         expireAssets(municipality, Some(State))
       }
     }
 
-    val roadNumbers = getAllViiteRoadNumbers
+    val roadNumbers = /*getAllViiteRoadNumbers */Seq(18)
 
     roadNumbers.foreach {
       roadNumber =>

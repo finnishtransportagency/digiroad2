@@ -25,7 +25,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
   val defaultMultiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("99")))))
-  val defaultpPopertyData = DynamicValue(defaultMultiTypePropSeq)
+  val defaultPropertyData = DynamicValue(defaultMultiTypePropSeq)
 
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
@@ -62,7 +62,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val groupedAssets = (existingAssets.filterNot(a => expiredIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
-    eventBus.publish("linearAssets:update", changeSet)
+    eventBus.publish("pavedRoad:update", changeSet)
     eventBus.publish("pavedRoad:saveProjectedPavedRoad", newAssets.filter(_.id == 0L))
 
     filledTopology
@@ -101,7 +101,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       case (Some(roadlink), changeInfo, assets) =>
         if(roadlink.isPaved)
           if (assets.isEmpty)
-            Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(defaultpPopertyData), 0,
+            Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(defaultPropertyData), 0,
               GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false,
               PavedRoad.typeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
           else
@@ -144,7 +144,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLink), informationSource = Some(MmlNls.value))
         linearAsset.value match {
           case Some(DynamicValue(multiTypeProps)) =>
-            val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset)
+            val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
             validateRequiredProperties(linearAsset.typeId, props)
             dynamicLinearAssetDao.updateAssetProperties(id, props)
           case _ => None
@@ -154,37 +154,37 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         logger.info("Added assets for linkids " + toInsert.map(_.linkId))
     }
   }
+//
+//  protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]], roadLinks: Seq[RoadLink]) : Unit = {
+//    def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
+//      !persistedLinearAsset.exists(_.value == assetToPersist.value)
+//    }
+//
+//    toUpdate.foreach { linearAsset =>
+//      val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
+//      val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
+//      val id = linearAsset.id
+//      if (valueChanged(linearAsset, persistedLinearAsset)) {
+//        linearAsset.value match {
+//          case Some(DynamicValue(multiTypeProps)) =>
+//            dynamicLinearAssetDao.updateAssetLastModified(id, LinearAssetTypes.VvhGenerated) match {
+//              case Some(id) =>
+//                val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
+//                validateRequiredProperties(linearAsset.typeId, props)
+//                dynamicLinearAssetDao.updateAssetProperties(id, props)
+//              case _ => None
+//
+//          case _ => None
+//        }
+//      }
+//    }
+//  }
 
-  protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]], roadLinks: Seq[RoadLink]) = {
-    def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(_.value == assetToPersist.value)
-    }
-
-    toUpdate.foreach { linearAsset =>
-      val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
-      val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
-      val id = linearAsset.id
-      if (valueChanged(linearAsset, persistedLinearAsset)) {
-        linearAsset.value match {
-          case Some(DynamicValue(multiTypeProps)) =>
-            dynamicLinearAssetDao.updateAssetLastModified(id, LinearAssetTypes.VvhGenerated) match {
-              case Some(id) =>
-                val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset)
-                validateRequiredProperties(linearAsset.typeId, props)
-                dynamicLinearAssetDao.updateAssetProperties(id, props)
-              case _ => None
-            }
-          case _ => None
-        }
-      }
-    }
-  }
-
-  def setDefaultAndFilterProperties(multiTypeProps: DynamicAssetValue, roadLink: Option[RoadLink], linearAsset: PersistedLinearAsset) = {
-    val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
-    val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(linearAsset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-    properties ++ defaultValues.toSet
-  }
+//  def setDefaultAndFilterProperties(multiTypeProps: DynamicAssetValue, roadLink: Option[RoadLink], linearAsset: PersistedLinearAsset) = {
+//    val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
+//    val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(linearAsset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+//    properties ++ defaultValues.toSet
+//  }
 
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
