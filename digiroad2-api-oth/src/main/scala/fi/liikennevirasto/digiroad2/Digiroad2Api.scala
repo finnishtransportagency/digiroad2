@@ -195,7 +195,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         else {
           if (user.isServiceRoadMaintainer() && user.configuration.authorizedAreas.nonEmpty)
             getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
-          else if (user.isBusStopMaintainer() && user.configuration.authorizedAreas.nonEmpty) //case ely maintainer
+          else if (user.isBusStopMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty) //case ely maintainer
             getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
           else
             None
