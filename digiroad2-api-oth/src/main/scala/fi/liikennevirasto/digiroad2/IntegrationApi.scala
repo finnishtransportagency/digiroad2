@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{HeightLimit, WidthLimit}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
@@ -634,9 +635,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "trailer_truck_weight_limits" => linearAssetsToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
         case "axle_weight_limits" => linearAssetsToApi(AxleWeightLimit.typeId, municipalityNumber)
         case "bogie_weight_limits" => linearAssetsToApi(BogieWeightLimit.typeId, municipalityNumber)
-        case "height_limits" => linearAssetsToApi(70, municipalityNumber)
+        case "height_limits" => linearAssetsToApi(HeightLimit.typeId, municipalityNumber)
         case "length_limits" => linearAssetsToApi(LengthLimit.typeId, municipalityNumber)
-        case "width_limits" => linearAssetsToApi(90, municipalityNumber)
+        case "width_limits" => linearAssetsToApi(WidthLimit.typeId, municipalityNumber)
         case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
         case "traffic_lights" => trafficLightsToApi(trafficLightService.getByMunicipality(municipalityNumber))
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
@@ -648,7 +649,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "mass_transit_lanes" => massTransitLanesToApi(municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(DamagedByThaw.typeId, municipalityNumber)
         case "widths" => roadWidthToApi(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
-        case "paved_roads" => linearAssetsToApi(110, municipalityNumber)
+        case "paved_roads" => linearAssetsToApi(PavedRoad.typeId, municipalityNumber)
         case "lit_roads" => linearAssetsToApi(LitRoad.typeId, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(WinterSpeedLimit.typeId, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(TrafficVolume.typeId, municipalityNumber)
@@ -666,7 +667,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
         case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
-        case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipality.toInt))
+        case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
