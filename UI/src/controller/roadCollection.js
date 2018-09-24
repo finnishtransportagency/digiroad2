@@ -138,7 +138,7 @@
       });
     };
 
-    this.getRoadsForMassTransitStops = function() {
+    this.getRoadsForPointAssets = function() {
       return _.chain(me.roadLinks())
         .filter(function(roadLink) {
           return roadLink.isCarTrafficRoad() && (roadLink.getData().administrativeClass !== "Unknown");

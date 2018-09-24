@@ -3,7 +3,7 @@
     RoadCollection.call(this, backend);
     var me = this;
 
-    this.getRoadsForMassTransitStops = function() {
+    this.getRoadsForPointAssets = function() {
       return _.chain(me.roadLinks())
         .filter(function(roadLink) {
           return roadLink.getData().administrativeClass !== "Unknown";
