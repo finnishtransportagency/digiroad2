@@ -112,15 +112,21 @@
       });
     };
 
+    var featureTypeRules = [
+      new StyleRule().where('type').is('cutter').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
+    ];
+
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(winterCareClassImageSizeRules);
     me.browsingStyleProvider.addRules(winterCareClassRules);
     me.browsingStyleProvider.addRules(careClassSizeRules);
     me.browsingStyleProvider.addRules(overlayStyleRules);
+    me.browsingStyleProvider.addRules(featureTypeRules);
 
     me.greenCareStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.greenCareStyle.addRules(greenCareClassRules);
     me.greenCareStyle.addRules(careClassSizeRules);
     me.greenCareStyle.addRules(greenCareClassImageSizeRules);
+    me.greenCareStyle.addRules(featureTypeRules);
   };
 })(this);

@@ -34,6 +34,10 @@
       new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(99).use({stroke: {color: '#000000'}})
     ];
 
+    var featureTypeRules = [
+      new StyleRule().where('type').is('cutter').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
+    ];
+
     var pavedRoadFeatureSizeRules = [
       new StyleRule().where('zoomLevel').isIn([2,3,4]).use({stroke: {width: 8}}),
       new StyleRule().where('zoomLevel').isIn([5,6,7,8]).use({stroke: {width: 7}}),
@@ -47,6 +51,7 @@
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(pavedRoadStyleRules);
     me.browsingStyleProvider.addRules(pavedRoadFeatureSizeRules);
+    me.browsingStyleProvider.addRules(featureTypeRules);
 
   };
 })(this);
