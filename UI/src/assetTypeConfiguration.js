@@ -689,6 +689,7 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
+        hasTrafficSignReadOnlyLayer: true,
         hasInaccurate: true,
         authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
