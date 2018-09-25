@@ -65,7 +65,7 @@
 
       eventbus.on('application:readOnly', function(readOnly) {
         if(me.applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
-          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || readOnly);
+          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || readOnly);
           if (isSingleService(selectedAsset)){
             rootElement.find('button.delete').hide();
           }
