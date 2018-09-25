@@ -86,8 +86,8 @@
         railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
         directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut',
         trafficSigns: 'Geometrian ulkopuolelle jääneet liikennemerkit',
-
         maintenanceRoad: 'Tarkistamattomien huoltoteiden lista',
+
         hazardousMaterialTransportProhibitionErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'hazardousMaterialTransportProhibition'},
         manoeuvreErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'manoeuvre'},
         heightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'heightLimit'},
@@ -96,7 +96,8 @@
         lengthLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'lengthLimit'},
         totalWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'totalWeightLimit'},
         trailerTruckWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'trailerTruckWeightLimit'},
-        widthLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'widthLimit'}
+        widthLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'widthLimit'},
+        pedestrianCrossingsErrors: {Title: 'Laatuvirheet Lista', SourceLayer: 'pedestrianCrossings'}
       };
 
       var sourceLayer = (layerInfo[layerName].SourceLayer) ? layerInfo[layerName].SourceLayer : layerName;

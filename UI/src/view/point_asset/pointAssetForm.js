@@ -60,6 +60,9 @@ root.PointAssetForm = function() {
     eventbus.on('layer:selected', function(layer) {
       if (layer === layerName) {
         me.renderLinktoWorkList(layer, localizedTexts);
+        if(parameters.pointAsset.hasInaccurate){
+          renderInaccurateWorkList(layer);
+        }
       }
       else {
         $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
@@ -151,17 +154,6 @@ root.PointAssetForm = function() {
       '</div>';
   };
 
-  var renderFloatingNotification = function(floating, localizedTexts) {
-    if (floating) {
-      return '' +
-        '<div class="form-group form-notification">' +
-        ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa ' + localizedTexts.singleFloatingAssetLabel + ' sijainti</p>' +
-        '</div>';
-    } else {
-      return '';
-    }
-  };
-
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('#information-content').append('' +
       '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
@@ -175,6 +167,24 @@ root.PointAssetForm = function() {
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
+  };
+
+  var renderFloatingNotification = function(floating, localizedTexts) {
+    if (floating) {
+      return '' +
+        '<div class="form-group form-notification">' +
+        ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa ' + localizedTexts.singleFloatingAssetLabel + ' sijainti</p>' +
+        '</div>';
+    } else {
+      return '';
+    }
+  };
+
+  var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
+    $('#information-content').append('' +
+      '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
+      '<a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a>' +
+      '</div>');
   };
 };
 })(this);

@@ -689,7 +689,8 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
-        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        hasInaccurate: true,
+        authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.obstacles,
