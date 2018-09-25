@@ -25,7 +25,6 @@ root.PointAssetForm = function(parameters) {
     var layerName = parameters.pointAsset.layerName;
     var localizedTexts = parameters.pointAsset.formLabels;
     var authorizationPolicy = parameters.pointAsset.authorizationPolicy;
-    new FeedbackDataTool(parameters.feedbackCollection, layerName, authorizationPolicy);
 
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
       if(event.assetType === typeId)
