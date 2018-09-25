@@ -142,7 +142,7 @@ root.PointAssetForm = function() {
     }
   };
 
-  this.renderValueElement = function(asset, collection) { };
+  this.renderValueElement = function(asset, collection) { return ''; };
 
   this.renderButtons = function() {
     return '' +
