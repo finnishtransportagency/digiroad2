@@ -550,11 +550,11 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
     )))
 
     val assetsInfo = Seq(
-      TestAssetInfo(NewLinearAsset(5000l, 0, 10, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 10, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 10, pavedRoadValue, SideCode.AgainstDigitizing.value, 0, None), PavedRoad.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 10, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 10, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId)
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, pavedRoadValue, SideCode.AgainstDigitizing.value, 0, None), PavedRoad.typeId),
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId)
         )
 
       assetsInfo.zipWithIndex.foreach(adjustProjectedAssetWithCreation)

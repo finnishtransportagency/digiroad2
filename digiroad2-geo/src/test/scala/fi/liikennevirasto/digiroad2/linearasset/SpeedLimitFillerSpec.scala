@@ -195,34 +195,6 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     changeSet.expiredAssetIds should be(Set(1, 2))
   }
 
-  test("merge speed limits with same dddddddddddddd on shared road link") {
-    val topology = Seq(
-      roadLink(1, Seq(Point(0.0, 0.0), Point(1.0, 0.0))))
-    val speedLimits = Map(
-      1l -> Seq(
-        SpeedLimit(
-          1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1, None, None, Some("one"), Some(DateTime.now().minus(1000)), 0, None, linkSource = NormalLinkInterface)
-//        SpeedLimit(
-//          2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-//          Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1, None, None, Some("one"), Some(DateTime.now().minus(1001)), 0, None, linkSource = NormalLinkInterface)
-////        SpeedLimit(
-//          3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-//          Seq(Point(0.55, 0.0), Point(1.0, 0.0)), 0.55, 1.0, Some("random guy"), Some(DateTime.now().minus(450)),
-//          Some("one"), Some(DateTime.now().minus(1100)), 0, None, linkSource = NormalLinkInterface)
-          ))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
-    filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
-    filledTopology.map(_.value) should be(Seq(Some(NumericValue(40))))
-    filledTopology.map(_.modifiedBy) should be (Seq(Some("random guy"))) // latest modification should show
-    changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, 1, 0.0, 1.0)))
-    changeSet.adjustedSideCodes should be(List())
-    changeSet.expiredAssetIds should be(Set(1, 2))
-  }
-
-
-
   test("create unknown speed limit on empty segments") {
     val topology = Seq(
       roadLink(1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), State))
