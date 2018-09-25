@@ -533,9 +533,7 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       DynamicProperty("mittauspaiva", "date", false, Seq(DynamicPropertyValue("11.9.2018")))
     )))
 
-    val pavedRoadValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue(1)))
-    )))
+
 
     val massTransitLaneValue = DynamicValue(DynamicAssetValue(Seq(
       DynamicProperty("public_validity_period", "time_period", false, Seq(DynamicPropertyValue(Map("days" -> 1,
@@ -552,7 +550,6 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
     val assetsInfo = Seq(
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 150, pavedRoadValue, SideCode.AgainstDigitizing.value, 0, None), PavedRoad.typeId),
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId)
         )

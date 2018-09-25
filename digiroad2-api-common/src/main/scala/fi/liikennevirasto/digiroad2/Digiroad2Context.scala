@@ -77,12 +77,15 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
 
 class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extends Actor {
   def receive = {
-    case x: ChangeSet => persistLinearAssetChanges(x)
+    case x: ChangeSet => dynamicAssetService.updateChangeSet(x)
     case _            => println("DynamicAssetUpdater: Received unknown message")
   }
+}
 
-  def persistLinearAssetChanges(changeSet: ChangeSet) {
-    dynamicAssetService.updateChangeSet(changeSet)
+class ProhibitionUpdater(prohibitionService: ProhibitionService) extends Actor {
+  def receive = {
+    case x: ChangeSet => prohibitionService.updateChangeSet(x)
+    case _            => println("ProhibitionUpdater: Received unknown message")
   }
 }
 
@@ -201,6 +204,9 @@ object Digiroad2Context {
   val dynamicAssetUpdater = system.actorOf(Props(classOf[DynamicAssetUpdater], dynamicLinearAssetService), name = "dynamicAssetUpdater")
   eventbus.subscribe(dynamicAssetUpdater, "dynamicAsset:update")
 
+  val prohibitionUpdater = system.actorOf(Props(classOf[ProhibitionUpdater], prohibitionService), name = "prohibitionUpdater")
+  eventbus.subscribe(prohibitionUpdater, "prohibition:update")
+
   val linearAssetSaveProjected = system.actorOf(Props(classOf[LinearAssetSaveProjected[PersistedLinearAsset]], linearAssetService), name = "linearAssetSaveProjected")
   eventbus.subscribe(linearAssetSaveProjected, "linearAssets:saveProjectedLinearAssets")
 
@@ -225,7 +231,7 @@ object Digiroad2Context {
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]], speedLimitService), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
-  eventbus.subscribe(speedLimitUpdater, "speedLimit:update")
+  eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")

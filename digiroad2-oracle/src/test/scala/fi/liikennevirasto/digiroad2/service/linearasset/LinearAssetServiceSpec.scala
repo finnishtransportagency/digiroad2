@@ -607,16 +607,31 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should not create new assets on update") {
+  test("Create new assets on update when exist sideCode adjustmen") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new LinearAssetService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+
     val oldLinkId1 = 1234
     val oldLinkId2 = 1235
     val assetTypeId = 100
     val vvhTimeStamp = 14440000
+
+    val roadLinkWithLinkSource = RoadLink(
+      oldLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+
+
     OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
@@ -644,13 +659,16 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       service.updateChangeSet(changeSet)
       val all = service.dao.fetchLinearAssetsByLinkIds(assetTypeId, Seq(oldLinkId1, oldLinkId2), "mittarajoitus")
       all.size should be (3)
-      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
-      persisted.size should be (1)
-      val head = persisted.head
-      head.id should be (original.id)
-      head.startMeasure should be (0.1)
-      head.endMeasure should be (10.1)
-      head.expired should be (false)
+      val persisted = service.getPersistedAssetsByLinkIds(assetTypeId, Seq(oldLinkId1))
+      persisted.size should be (2)
+      persisted.exists(_.id == asset2) should be (true)
+      persisted.exists(_.id == asset1) should be (false)
+      val newAsset = persisted.find(_.id !== asset2).get
+      newAsset.id should not be original.id
+      newAsset.startMeasure should be (0.1)
+      newAsset.endMeasure should be (10.1)
+      newAsset.expired should be (false)
+
       dynamicSession.rollback()
     }
   }
@@ -930,7 +948,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     )
     val changeInfo = Seq(
       ChangeInfo(Some(oldLinkId), Some(newLinkId), 1204467577, 1, Some(0), Some(150), Some(100), Some(200), 1461970812000L))
-
 
     OracleDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)

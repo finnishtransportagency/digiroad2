@@ -80,7 +80,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
     //Remove the asset ids adjusted in the "prohibition:saveProjectedProhibition" otherwise if the "prohibition:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
-    eventBus.publish("linearAssets:update", changeSet)
+    eventBus.publish("prohibition:update", changeSet)
     eventBus.publish("prohibition:saveProjectedProhibition", newAssets.filter(_.id == 0L))
 
     filledTopology
@@ -239,5 +239,14 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
       Seq(newId1, newId2).flatten
     }
+  }
+
+
+  override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
+    val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId)).head
+
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+    expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, true )
+    createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 }
