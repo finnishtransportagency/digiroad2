@@ -1372,6 +1372,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
   get("/pedestrianCrossings/:id")(getPointAssetById(pedestrianCrossingService))
   get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
+  get("/pedestrianCrossings/inaccurates")(getInaccuratesPointAssets(pedestrianCrossingService))
   delete("/pedestrianCrossings/:id")(deletePointAsset(pedestrianCrossingService))
   put("/pedestrianCrossings/:id")(updatePointAsset(pedestrianCrossingService))
   post("/pedestrianCrossings")(createNewPointAsset(pedestrianCrossingService))
@@ -1512,6 +1513,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false => Some(user.configuration.authorizedMunicipalities)
     }
     service.getFloatingAssets(includedMunicipalities)
+  }
+
+  private def getInaccuratesPointAssets(service: PointAssetOperations): Map[String, Map[String, Any]] = {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
+    user.isOperator() match {
+      case true =>
+        service.getInaccurateRecords(service.typeId)
+      case false =>
+        service.getInaccurateRecords(service.typeId, municipalityCode, Set(Municipality))
+    }
   }
 
   private def deletePointAsset(service: PointAssetOperations): Long = {

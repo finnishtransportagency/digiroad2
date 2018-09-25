@@ -52,6 +52,16 @@
       });
     };
 
+    var pointCentering = function (layerName, id) {
+      applicationModel.selectLayer(layerName);
+      var asset = _(models.pointAssets).find({layerName: layerName});
+      backend.getPointAssetById(id, layerName).then(function (result) {
+        mapCenterAndZoom(result.lon, result.lat, 12);
+
+        asset.selectedLinearAsset.open(result);
+      });
+    };
+
     var speedLimitCentering = function (layerName, id) {
       applicationModel.selectLayer(layerName);
       var asset = models.selectedSpeedLimit;
@@ -85,6 +95,17 @@
         });
       } else
         linearCentering(layerName, id);
+    };
+
+    var pointAssetMapCenterAndZoom  = function (layerName, idType, id) {
+      if(idType) {
+        applicationModel.selectLayer(layerName);
+        backend.getRoadLinkByLinkId(id, function (response) {
+          if (response.success)
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+        });
+      } else
+        pointCentering(layerName, id);
     };
 
     var manoeuvreMapCenterAndZoom = function(linkId){
@@ -138,6 +159,7 @@
         'totalWeightLimitErrors(/:typeId)/:id': 'totalWeightLimitErrors',
         'trailerTruckWeightLimitErrors(/:typeId)/:id': 'trailerTruckWeightLimitErrors',
         'widthLimitErrors(/:typeId)/:id': 'widthLimitErrors',
+        'pedestrianCrossingsErrors(/:typeId)/:id': 'pedestrianCrossingsErrors',
 
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
@@ -173,6 +195,7 @@
         'work-list/totalWeightLimitErrors': 'totalWeightLimitErrorsWorkList',
         'work-list/trailerTruckWeightLimitErrors': 'trailerTruckWeightLimitErrorsWorkList',
         'work-list/widthLimitErrors': 'widthLimitErrorsWorkList',
+        'work-list/pedestrianCrossingsErrors': 'pedestrianCrossingsErrorsWorkList',
 
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -357,6 +380,10 @@
         eventbus.trigger('workList:select', 'widthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('widthLimit')));
       },
 
+      pedestrianCrossingsErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'pedestrianCrossingsErrors', backend.getInaccuratePointAssets());
+      },
+
       linkPropertyWorkList: function () {
         eventbus.trigger('workList:select', 'linkProperty', backend.getIncompleteLinks());
       },
@@ -434,6 +461,10 @@
 
       widthLimitErrors: function (id, linkId) {
         linearAssetMapCenterAndZoom('widthLimit', id, linkId);
+      },
+
+      pedestrianCrossingsErrors: function (idType, id) {
+        pointAssetMapCenterAndZoom('pedestrianCrossings', idType, id);
       },
 
       maintenanceRoad: function (id) {

@@ -357,6 +357,8 @@ trait PointAssetOperations {
       lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
   }
 
+  def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = Map()
+
 }
 
 object PointAssetOperations {

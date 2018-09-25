@@ -150,7 +150,8 @@
           { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign },
           { selectedTrafficSign: selectedTrafficSign},
           { selectedMaintenanceRoad: selectedMaintenanceRoad},
-          { linearAssets: linearAssets}
+          { linearAssets: linearAssets},
+          { pointAssets: pointAssets}
     ));
       eventbus.trigger('application:initialized');
     }

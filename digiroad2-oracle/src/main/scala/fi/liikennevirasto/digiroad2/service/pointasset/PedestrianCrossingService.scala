@@ -103,7 +103,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     }
   }
 
-  def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
+  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
     withDynTransaction {
       inaccurateDAO.getInaccurateAsset(typeId, municipalities, adminClass)
         .groupBy(_.municipality)
