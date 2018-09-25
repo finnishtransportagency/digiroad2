@@ -199,7 +199,7 @@ object Digiroad2Context {
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
   val dynamicAssetUpdater = system.actorOf(Props(classOf[DynamicAssetUpdater], dynamicLinearAssetService), name = "dynamicAssetUpdater")
-  eventbus.subscribe(dynamicAssetUpdater, "dynamicAssets:update")
+  eventbus.subscribe(dynamicAssetUpdater, "dynamicAsset:update")
 
   val linearAssetSaveProjected = system.actorOf(Props(classOf[LinearAssetSaveProjected[PersistedLinearAsset]], linearAssetService), name = "linearAssetSaveProjected")
   eventbus.subscribe(linearAssetSaveProjected, "linearAssets:saveProjectedLinearAssets")
@@ -217,7 +217,7 @@ object Digiroad2Context {
   eventbus.subscribe(pavedRoadSaveProjected, "pavedRoad:saveProjectedPavedRoad")
 
   val dynamicAssetSaveProjected = system.actorOf(Props(classOf[DynamicAssetSaveProjected[PersistedLinearAsset]], dynamicLinearAssetService), name = "dynamicAssetSaveProjected")
-  eventbus.subscribe(dynamicAssetSaveProjected, "dynamicAsset:saveProjectedAsset")
+  eventbus.subscribe(dynamicAssetSaveProjected, "dynamicAsset:saveProjectedAssets")
 
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
