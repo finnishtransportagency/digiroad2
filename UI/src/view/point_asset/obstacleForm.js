@@ -35,16 +35,6 @@
         var eventTarget = $(event.currentTarget);
         selectedAsset.set({ obstacleType: parseInt(eventTarget.val(), 10) });
       });
-
-      rootElement.find('.pointasset button.save').on('click', function() {
-        selectedAsset.save();
-      });
-
-      rootElement.find('.pointasset button.cancel').on('click', function() {
-        selectedAsset.cancel();
-      });
-
     };
-
-    };
+  };
 })(this);
