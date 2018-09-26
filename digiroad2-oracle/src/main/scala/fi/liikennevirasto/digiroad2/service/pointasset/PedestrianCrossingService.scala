@@ -41,17 +41,21 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
 
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    withDynTransaction {
-      val pedestrianId = dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
-      pedestrianCrossingValidatorActor(Set(pedestrianId))
-      pedestrianId
-    }
+    val pedestrianId =
+      withDynTransaction {
+        dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      }
+    pedestrianCrossingValidatorActor(Set(pedestrianId))
+    pedestrianId
   }
 
   override def update(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
-    }
+    val pedestrianIdUpdated =
+      withDynTransaction {
+        updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
+      }
+    pedestrianCrossingValidatorActor(Set(id, pedestrianIdUpdated))
+    pedestrianIdUpdated
   }
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
@@ -59,13 +63,9 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        val pedestrianId = dao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
-        pedestrianCrossingValidatorActor(Set(id, pedestrianId))
-        pedestrianId
+        dao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
       case _ =>
-        val pedestrianIdUpdated = dao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
-        pedestrianCrossingValidatorActor(Set(pedestrianIdUpdated))
-        pedestrianIdUpdated
+        dao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
     }
   }
 

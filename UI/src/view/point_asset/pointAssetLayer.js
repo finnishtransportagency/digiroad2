@@ -162,6 +162,8 @@
       });
       if(collection.complementaryIsActive()) {
         roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
+        if (hasTrafficSignReadOnlyLayer)
+          trafficSignReadOnlyLayer.refreshView();
       }
       else
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
@@ -182,10 +184,10 @@
             vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
           applySelection();
         }
+
+        if (hasTrafficSignReadOnlyLayer)
+          trafficSignReadOnlyLayer.refreshView();
       });
-      if(hasTrafficSignReadOnlyLayer){
-        trafficSignReadOnlyLayer.refreshView();
-      }
     };
 
     this.stop = function() {
