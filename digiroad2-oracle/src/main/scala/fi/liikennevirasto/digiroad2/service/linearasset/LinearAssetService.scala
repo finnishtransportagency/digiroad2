@@ -604,30 +604,6 @@ trait LinearAssetOperations {
       Some(newAssetIDcreate)
   }
 
-//  /**
-//    * Updates start and end measures after geometry change in VVH. Used by Digiroad2Context.LinearAssetUpdater actor.
-//    */
-//  def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
-//    if (adjustments.nonEmpty)
-//      logger.info("Saving adjustments for asset/link ids=" + adjustments.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-//    withDynTransaction {
-//      adjustments.foreach { adjustment =>
-//        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-//      }
-//    }
-//  }
-//
-//  /**
-//    * Updates side codes. Used by Digiroad2Context.LinearAssetUpdater actor.
-//    */
-//  def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
-//    withDynTransaction {
-//      adjustments.foreach { adjustment =>
-//        adjustedSideCode(adjustment)
-//      }
-//    }
-//  }
-
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
