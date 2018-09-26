@@ -581,9 +581,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
        case _ => DateTime.now()
      }
 
+    val withAdjust = params.get("withAdjust") match{
+      case Some(value)=> value.toBoolean
+      case _ => true
+    }
+
      val assetType = params("assetType")
      assetType match {
-       case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until))
+       case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until, withAdjust))
        case _ => BadRequest("Invalid asset type")
      }
   }
