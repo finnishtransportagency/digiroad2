@@ -101,15 +101,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       dao.updateExpiration(id, expired, username)
   }
 
-//  def updateSideCode(id: Long, sideCode: SideCode, newTransaction: Boolean = true) ={
-//    if (newTransaction)
-//      withDynTransaction {
-//        dao.updateSideCode(id, sideCode)
-//      }
-//    else
-//      dao.updateSideCode(id, sideCode)
-//  }
-
   /**
     * Returns speed limits for Digiroad2Api /speedlimits GET endpoint.
     */
