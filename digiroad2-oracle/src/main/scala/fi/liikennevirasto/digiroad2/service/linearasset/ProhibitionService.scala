@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
+import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.{HorseRiding, PassageThrough, RecreationalVehicle, SnowMobile}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
@@ -242,7 +243,8 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
 
-  def getChanged(typeId: Int, since: DateTime, until: DateTime, excludedTypes: Seq[ProhibitionClass], withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+    val excludedTypes = Seq(PassageThrough, HorseRiding, SnowMobile, RecreationalVehicle)
     val prohibitions = withDynTransaction {
       dao.getProhibitionsChangedSince(typeId, since, until, excludedTypes, withAutoAdjust)
     }

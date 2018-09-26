@@ -244,6 +244,28 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
+  def groupProhibitionsResult(assets: List[ProhibitionsRow], assetTypeId: Int): Seq[PersistedLinearAsset] = {
+    val groupedByAssetId = assets.groupBy(_.id)
+    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_.prohibitionId))
+
+    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
+      val asset = groupedByAssetId(assetId).head
+      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
+        val rows = rowsByProhibitionId(prohibitionId)
+        val prohibitionType = rows.head.prohibitionType
+        val prohibitionAdditionalInfo = rows.head.additionalInfo
+        val exceptions = rows.flatMap(_.exceptionType).toSet
+        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
+          ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
+        }.toSet
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
+      }
+      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
+        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, assetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
+        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
+    }.toSeq
+  }
+
   /**
     * Iterates a set of link ids with prohibition asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     * and CsvGenerator.generateDroppedProhibitions.
@@ -274,25 +296,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           #$floatingFilter""".as[ProhibitionsRow].list
     }
 
-    val groupedByAssetId = assets.groupBy(_.id)
-    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_.prohibitionId))
-
-    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val asset = groupedByAssetId(assetId).head
-      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
-        val rows = rowsByProhibitionId(prohibitionId)
-        val prohibitionType = rows.head.prohibitionType
-        val prohibitionAdditionalInfo = rows.head.additionalInfo
-        val exceptions = rows.flatMap(_.exceptionType).toSet
-        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
-          ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
-        }.toSet
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
-      }
-      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
-        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, prohibitionAssetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
-        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
-    }.toSeq
+    groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
 
   /**
@@ -326,25 +330,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         .as[ProhibitionsRow].list
     }
 
-    val groupedByAssetId = assets.groupBy(_.id)
-    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_.prohibitionId))
-
-    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val asset = groupedByAssetId(assetId).head
-      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
-        val rows = rowsByProhibitionId(prohibitionId)
-        val prohibitionType = rows.head.prohibitionType
-        val exceptions = rows.flatMap(_.exceptionType).toSet
-        val prohibitionAdditionalInfo = rows.head.additionalInfo
-        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
-          ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
-        }.toSet
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
-      }
-      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
-        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, prohibitionAssetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
-        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
-    }.toSeq
+    groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
 
   def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean) : List[PersistedLinearAsset] = {
@@ -406,25 +392,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
        #$withAutoAdjustFilter
     """.as[ProhibitionsRow].list
 
-    val groupedByAssetId = assets.groupBy(_.id)
-    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_.prohibitionId))
-
-    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val asset = groupedByAssetId(assetId).head
-      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
-        val rows = rowsByProhibitionId(prohibitionId)
-        val prohibitionType = rows.head.prohibitionType
-        val prohibitionAdditionalInfo = rows.head.additionalInfo
-        val exceptions = rows.flatMap(_.exceptionType).toSet
-        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
-          ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
-        }.toSet
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
-      }
-      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
-        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, assetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
-        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
-    }.toSeq
+    groupProhibitionsResult(assets, assetTypeId)
   }
 
   /**
