@@ -99,8 +99,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-
-
   implicit val getLinearAsset = new GetResult[PersistedLinearAsset] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
@@ -380,8 +378,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
 
-  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean): Seq[PersistedLinearAsset] = {
+  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean): Seq[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val excludedTypesValues = excludedTypes.map(_.prohibitionType)
 
     val assets =  sql"""
        select a.id, pos.link_id, pos.side_code, pv.id, pv.type, pvp.type, pvp.start_hour, pvp.end_hour,pe.type,
@@ -396,7 +395,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
        join prohibition_value pv on pv.asset_id = a.id
        left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
        left join prohibition_exception pe on pe.prohibition_value_id = pv.id
-       where a.asset_type_id = $assetTypeId
+       where a.asset_type_id = $assetTypeId and pv.TYPE not in (#${excludedTypesValues.mkString(",")} )
        and (
          (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
          or

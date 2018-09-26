@@ -242,38 +242,12 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
 
-  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+  def getChanged(typeId: Int, since: DateTime, until: DateTime, excludedTypes: Seq[ProhibitionClass], withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
     val prohibitions = withDynTransaction {
-      dao.getProhibitionsChangedSince(typeId, since, until, withAutoAdjust)
+      dao.getProhibitionsChangedSince(typeId, since, until, excludedTypes, withAutoAdjust)
     }
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(prohibitions.map(_.linkId).toSet)
-    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(prohibitions.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+    mapPersistedAssetChanges(prohibitions, roadLinks)
 
-    prohibitions.flatMap { prohibition =>
-      roadLinksWithoutWalkways.find(_.linkId == prohibition.linkId).map { roadLink =>
-        val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, prohibition.startMeasure, prohibition.endMeasure)
-        val endPoints: Set[Point] =
-          try {
-            val ep = GeometryUtils.geometryEndpoints(points)
-            Set(ep._1, ep._2)
-          } catch {
-            case ex: NoSuchElementException =>
-              logger.warn("Asset is outside of geometry, asset id " + prohibition.id)
-              val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
-              Set(wholeLinkPoints._1, wholeLinkPoints._2)
-          }
-        ChangedLinearAsset(
-          linearAsset = PieceWiseLinearAsset(
-            prohibition.id, prohibition.linkId, SideCode(prohibition.sideCode), prohibition.value, points, prohibition.expired,
-            prohibition.startMeasure, prohibition.endMeasure,
-            endPoints, prohibition.modifiedBy, prohibition.modifiedDateTime,
-            prohibition.createdBy, prohibition.createdDateTime, prohibition.typeId, roadLink.trafficDirection,
-            prohibition.vvhTimeStamp, prohibition.geomModifiedDate, prohibition.linkSource, roadLink.administrativeClass,
-            verifiedBy = prohibition.verifiedBy, verifiedDate = prohibition.verifiedDate, informationSource = prohibition.informationSource)
-          ,
-          link = roadLink
-        )
-      }
-    }
   }
 }

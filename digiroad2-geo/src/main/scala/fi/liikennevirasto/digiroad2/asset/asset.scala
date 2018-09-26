@@ -215,6 +215,45 @@ object PavementClass {
   case object Unknown extends PavementClass { def value = 99;  def typeDescription = "Unknown";}
 }
 
+sealed trait ProhibitionClass {
+  def prohibitionType: Int
+  def typeDescription: String
+  def rosatteType: String
+}
+object ProhibitionClass {
+  val values = Set(Vehicle, MotorVehicle, PassageThrough, Pedestrian, Bicycle, HorseRiding, Moped, Motorcycle, SnowMobile, Bud,
+                   Taxi, PassengerCar, DeliveryCar, Truck, RecreationalVehicle, MilitaryVehicle, ArticulatedVehicle, TractorFarmVehicle,
+                   OversizedTransport, DrivingInServicePurpose, DrivingToALot, Unknown)
+
+  def apply(value: Int): ProhibitionClass = {
+    values.find(_.prohibitionType == value).getOrElse(Unknown)
+  }
+
+  case object Vehicle extends ProhibitionClass { def prohibitionType = 2; def typeDescription = "Vehicle"; def rosatteType = "AllVehicle"; }
+  case object MotorVehicle extends ProhibitionClass { def prohibitionType = 3; def typeDescription = "MotorVehicle"; def rosatteType = "AllVehicle"; }
+  case object PassageThrough extends ProhibitionClass { def prohibitionType = 23; def typeDescription = "PassageThrough"; def rosatteType = ""; }
+  case object Pedestrian extends ProhibitionClass { def prohibitionType = 12; def typeDescription = "Pedestrian"; def rosatteType = "Pedestrian";}
+  case object Bicycle extends ProhibitionClass { def prohibitionType = 11; def typeDescription = "Bicycle"; def rosatteType = "Bicycle";}
+  case object HorseRiding extends ProhibitionClass { def prohibitionType = 26; def typeDescription = "HorseRiding"; def rosatteType = "";}
+  case object Moped extends ProhibitionClass { def prohibitionType = 10; def typeDescription = "Moped"; def rosatteType = "Moped";}
+  case object Motorcycle extends ProhibitionClass { def prohibitionType = 9;  def typeDescription = "Motorcycle"; def rosatteType = "Motorcycle";}
+  case object SnowMobile extends ProhibitionClass { def prohibitionType = 27;  def typeDescription = "SnowMobile"; def rosatteType = "";}
+  case object Bud extends ProhibitionClass { def prohibitionType = 5;  def typeDescription = "Bud"; def rosatteType = "PublicBus + PrivateBus";}
+  case object Taxi extends ProhibitionClass { def prohibitionType = 8;  def typeDescription = "Taxi"; def rosatteType = "Taxi";}
+  case object PassengerCar extends ProhibitionClass { def prohibitionType = 7;  def typeDescription = "PassengerCar"; def rosatteType = "PassangerCar";}
+  case object DeliveryCar extends ProhibitionClass { def prohibitionType = 6;  def typeDescription = "DeliveryCar"; def rosatteType = "DeliveryTruck";}
+  case object Truck extends ProhibitionClass { def prohibitionType = 4;  def typeDescription = "Truck"; def rosatteType = "TransportTruck";}
+  case object RecreationalVehicle extends ProhibitionClass { def prohibitionType = 15;  def typeDescription = "RecreationalVehicle"; def rosatteType = "";}
+  case object MilitaryVehicle extends ProhibitionClass { def prohibitionType = 19;  def typeDescription = "MilitaryVehicle"; def rosatteType = "MilitaryVehicle";}
+  case object ArticulatedVehicle extends ProhibitionClass { def prohibitionType = 13;  def typeDescription = "ArticulatedVehicle"; def rosatteType = "CarWithTrailer";}
+  case object TractorFarmVehicle extends ProhibitionClass { def prohibitionType = 14;  def typeDescription = "TractorFarmVehicle"; def rosatteType = "FarmVehicle";}
+  case object OversizedTransport extends ProhibitionClass { def prohibitionType = 28;  def typeDescription = "OversizedTransport"; def rosatteType = "";}
+  case object DrivingInServicePurpose extends ProhibitionClass { def prohibitionType = 28;  def typeDescription = "DrivingInServicePurpose"; def rosatteType = "DeliveryTruck + EmergencyVehicle + FacilityVehicle + MailVehicle";}
+  case object DrivingToALot extends ProhibitionClass { def prohibitionType = 28;  def typeDescription = "DrivingToALot"; def rosatteType = "ResidentialVehicle";}
+  case object Unknown extends ProhibitionClass { def prohibitionType = 99;  def typeDescription = "Unknown"; ; def rosatteType = "";}
+}
+
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]
