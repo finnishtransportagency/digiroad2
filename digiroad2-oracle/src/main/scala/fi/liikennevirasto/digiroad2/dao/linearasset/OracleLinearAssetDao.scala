@@ -379,6 +379,55 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
+
+  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean): Seq[PersistedLinearAsset] = {
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+
+    val assets =  sql"""
+       select a.id, pos.link_id, pos.side_code, pv.id, pv.type, pvp.type, pvp.start_hour, pvp.end_hour,pe.type,
+              pos.start_measure, pos.end_measure, a.created_by, a.created_date, a.modified_by, a.modified_date,
+              case when a.valid_to <= sysdate then 1 else 0 end as expired,
+              pos.adjusted_timestamp, pos.modified_date, pvp.start_minute,
+              pvp.end_minute, pv.additional_info, pos.link_source,
+              a.verified_by, a.verified_date, a.information_source
+       from asset a
+       join asset_link al on a.id = al.asset_id
+       join lrm_position pos on al.position_id = pos.id
+       join prohibition_value pv on pv.asset_id = a.id
+       left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
+       left join prohibition_exception pe on pe.prohibition_value_id = pv.id
+       where a.asset_type_id = $assetTypeId
+       and (
+         (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
+         or
+         (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
+         or
+         (a.created_date > $sinceDate and a.created_date <= $untilDate)
+       )
+       #$withAutoAdjustFilter
+    """.as[ProhibitionsRow].list
+
+    val groupedByAssetId = assets.groupBy(_.id)
+    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_.prohibitionId))
+
+    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
+      val asset = groupedByAssetId(assetId).head
+      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
+        val rows = rowsByProhibitionId(prohibitionId)
+        val prohibitionType = rows.head.prohibitionType
+        val prohibitionAdditionalInfo = rows.head.additionalInfo
+        val exceptions = rows.flatMap(_.exceptionType).toSet
+        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
+          ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
+        }.toSet
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
+      }
+      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
+        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, assetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
+        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
+    }.toSeq
+  }
+
   /**
     * Saves number property value to db. Used by LinearAssetService.createWithoutTransaction.
     */

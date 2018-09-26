@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, InformationSource, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -238,6 +238,42 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
           valueAgainstDigitization.map( createWithoutTransaction(existing.typeId, existing.linkId, _,  SideCode.AgainstDigitizing.value,  Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))))
 
       Seq(newId1, newId2).flatten
+    }
+  }
+
+
+  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+    val prohibitions = withDynTransaction {
+      dao.getProhibitionsChangedSince(typeId, since, until, withAutoAdjust)
+    }
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(prohibitions.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+
+    prohibitions.flatMap { prohibition =>
+      roadLinksWithoutWalkways.find(_.linkId == prohibition.linkId).map { roadLink =>
+        val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, prohibition.startMeasure, prohibition.endMeasure)
+        val endPoints: Set[Point] =
+          try {
+            val ep = GeometryUtils.geometryEndpoints(points)
+            Set(ep._1, ep._2)
+          } catch {
+            case ex: NoSuchElementException =>
+              logger.warn("Asset is outside of geometry, asset id " + prohibition.id)
+              val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
+              Set(wholeLinkPoints._1, wholeLinkPoints._2)
+          }
+        ChangedLinearAsset(
+          linearAsset = PieceWiseLinearAsset(
+            prohibition.id, prohibition.linkId, SideCode(prohibition.sideCode), prohibition.value, points, prohibition.expired,
+            prohibition.startMeasure, prohibition.endMeasure,
+            endPoints, prohibition.modifiedBy, prohibition.modifiedDateTime,
+            prohibition.createdBy, prohibition.createdDateTime, prohibition.typeId, roadLink.trafficDirection,
+            prohibition.vvhTimeStamp, prohibition.geomModifiedDate, prohibition.linkSource, roadLink.administrativeClass,
+            verifiedBy = prohibition.verifiedBy, verifiedDate = prohibition.verifiedDate, informationSource = prohibition.informationSource)
+          ,
+          link = roadLink
+        )
+      }
     }
   }
 }
