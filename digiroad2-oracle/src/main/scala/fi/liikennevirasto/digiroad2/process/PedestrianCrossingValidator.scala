@@ -16,6 +16,36 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.PedestrianCrossing)
 
+  override def filteredAssetByLinkIdAndDirection(roadLink: RoadLink, assets: Seq[AssetType], trafficSign: PersistedTrafficSign, distance: Double): Seq[AssetType] = {
+    val trafficSignPoint = Point(trafficSign.lon, trafficSign.lat)
+    val (first, _) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+    val areAdjacent = GeometryUtils.areAdjacent(trafficSignPoint, first)
+
+    def assetBetweenSignAndGeometryPoint(asset: AssetType): Boolean = {
+      if (areAdjacent) {
+        asset.mValue >= trafficSign.mValue
+      } else {
+        asset.mValue <= trafficSign.mValue
+      }
+    }
+
+    def assetDistance(assets: Seq[AssetType]): (AssetType, Double) = {
+      if (areAdjacent) {
+        val nearestAsset = assets.minBy(_.mValue)
+        (nearestAsset, nearestAsset.mValue)
+      } else {
+        val nearestAsset = assets.maxBy(_.mValue)
+        (nearestAsset, GeometryUtils.geometryLength(roadLink.geometry) - nearestAsset.mValue)
+      }
+    }
+
+    val assetOnLink = assets.filter(a => a.linkId == roadLink.linkId && assetBetweenSignAndGeometryPoint(a))
+    if (assetOnLink.nonEmpty && assetDistance(assetOnLink)._2 + distance <= radiusDistance) {
+      Seq(assetDistance(assets)._1)
+    } else
+      Seq()
+  }
+
   override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], trafficSignPoint: Point, distance: Double): Seq[AssetType] = {
     def assetDistance(assets: Seq[AssetType]): (AssetType, Double) = {
       val (first, _) = GeometryUtils.geometryEndpoints(roadLink.geometry)
