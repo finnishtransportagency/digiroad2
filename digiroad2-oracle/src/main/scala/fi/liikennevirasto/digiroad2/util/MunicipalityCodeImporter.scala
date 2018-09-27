@@ -18,7 +18,36 @@ class MunicipalityCodeImporter {
   def importMunicipalityCodes() = {
     OracleDatabase.withDynTransaction {
       try {
-        sqlu"""delete from municipality""".execute
+        val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
+        src.getLines().toList.drop(1).map(row => {
+          val elems = row.replace("\"", "").split(";")
+          val roadMaintainerID = elems(3) match {
+            case "1" => 14
+            case "2" => 12
+            case "3" => 10
+            case "4" => 9
+            case "5" => 8
+            case "6" => 4
+            case "7" => 2
+            case "8" => 3
+            case "9" => 1
+            case "0" => 0
+          }
+          sqlu"""
+          insert into municipality(id, name_fi, name_sv, ely_nro, road_maintainer_id) values( ${elems(0).toInt}, ${elems(1)}, ${elems(2)}, ${elems(3).toInt} ,$roadMaintainerID)
+        """.execute
+        })
+      } catch {
+        case  npe: NullPointerException => {
+          println("//kunnat_ja_elyt_2014.csv was not found, skipping.")
+        }
+      }
+    }
+  }
+
+  def updateMunicipalityCodes() = {
+    OracleDatabase.withDynTransaction {
+      try {
         val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2018.csv"))
         src.getLines().toList.drop(1).map(row => {
           val elems = row.replace("\"", "").split(";")
@@ -35,13 +64,12 @@ class MunicipalityCodeImporter {
             case "0" => 0
           }
           sqlu"""
-          insert into municipality(id, name_fi, name_sv, ely_nro, road_maintainer_id, geometry, zoom) values( ${elems(0).toInt}, ${elems(1)}, ${elems(2)}, ${elems(3).toInt} ,$roadMaintainerID,
-                 MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 1, 1), MDSYS.SDO_ORDINATE_ARRAY(${elems(5).toDouble},${elems(6).toDouble}, 0, 0)), ${elems(7).toInt})
-        """.execute
+          update municipality set geometry = MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 1, 1), MDSYS.SDO_ORDINATE_ARRAY(${elems(5).toDouble},${elems(6).toDouble}, 0, 0)), zoom = ${elems(7).toInt}
+                 where id = ${elems(0).toInt}""".execute
         })
       } catch {
         case  npe: NullPointerException => {
-          println("//kunnat_ja_elyt_2014.csv was not found, skipping.")
+          println("//kunnat_ja_elyt_2018.csv was not found, skipping.")
         }
       }
     }
