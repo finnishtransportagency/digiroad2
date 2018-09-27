@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.{HorseRiding, PassageThrough, RecreationalVehicle, SnowMobile}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
@@ -40,7 +41,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
-      case "vehicle_prohibitions"        => linearAssetsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust))
+      case "vehicle_prohibitions"        => prohibitionToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust))
     }
   }
 
@@ -107,6 +108,76 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
             "properties" ->
               Map(
                 "value" -> linearAsset.value.map(_.toJson),
+                "link" -> Map(
+                  "type" -> "Feature",
+                  "id" -> link.linkId,
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
+                  )
+                ),
+                "sideCode" -> (link.trafficDirection match {
+                  case TrafficDirection.AgainstDigitizing =>
+                    SideCode.AgainstDigitizing.value
+                  case TrafficDirection.TowardsDigitizing =>
+                    SideCode.TowardsDigitizing.value
+                  case _ =>
+                    linearAsset.sideCode.value
+                }),
+                "startMeasure" -> linearAsset.startMeasure,
+                "endMeasure" -> linearAsset.endMeasure,
+                "createdBy" -> linearAsset.createdBy,
+                "modifiedAt" -> linearAsset.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
+                "modifiedBy" -> linearAsset.modifiedBy,
+                "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
+              )
+          )
+        }
+    )
+
+
+  def mapValue(optValue: Option[Value]): Seq[Map[String, Any]] = {
+    optValue match {
+      case Some(value) =>
+          value.asInstanceOf[Prohibitions].prohibitions.map { prohibitionValue =>
+          Map("typeId" -> prohibitionValue.typeId,
+            "exceptions" -> prohibitionValue.exceptions,
+            "validityPeriod" ->
+              prohibitionValue.validityPeriods.map { validityPeriod =>
+                Map(
+                  "startHour" -> validityPeriod.startHour,
+                  "endHour" -> validityPeriod.endHour,
+                  "startMinute" -> validityPeriod.startMinute,
+                  "endMinute" -> validityPeriod.endMinute,
+                  "days" -> validityPeriod.days.value)
+              }
+          )
+        }
+      case _ => Seq()
+    }
+  }
+
+  private def prohibitionToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        changedLinearAssets.map { case ChangedLinearAsset(linearAsset, link) =>
+          Map(
+            "type" -> "Feature",
+            "id" -> linearAsset.id,
+            "geometry" -> Map(
+              "type" -> "LineString",
+              "coordinates" -> linearAsset.geometry.map(p => Seq(p.x, p.y, p.z))
+            ),
+            "properties" ->
+              Map(
+                "value" -> mapValue(linearAsset.value),
                 "link" -> Map(
                   "type" -> "Feature",
                   "id" -> link.linkId,
