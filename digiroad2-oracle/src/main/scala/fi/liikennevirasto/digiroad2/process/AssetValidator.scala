@@ -47,7 +47,9 @@ trait AssetServiceValidator {
   def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate]
   def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType]
   def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], point: Point, distance: Double): Seq[AssetType]
-  def filteredAssetByLinkIdAndDirection(roadLink: RoadLink, assets: Seq[AssetType], trafficSign: PersistedTrafficSign, distance: Double): Seq[AssetType] = assets
+  def filteredAssetByLinkIdAndDirection(roadLink: RoadLink, assets: Seq[AssetType], trafficSign: PersistedTrafficSign, distance: Double): Seq[AssetType] = {
+    filteredAsset(roadLink, assets, Point(trafficSign.lon, trafficSign.lat), distance)
+  }
 
   def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo) : Unit
 
