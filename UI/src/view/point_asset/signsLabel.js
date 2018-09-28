@@ -87,7 +87,7 @@
       };
     };
 
-    var textStyle = function (trafficSign) {
+    this.textStyle = function (trafficSign) {
       if (!me.getLabelProperty(trafficSign).getValidation())
         return '';
       return me.getLabelProperty(trafficSign).getValue() + me.getLabelProperty(trafficSign).getAdditionalInfo() + me.getLabelProperty(trafficSign).getUnit();
@@ -112,7 +112,7 @@
     this.getStyle = function (trafficSign, position) {
       return [me.backgroundStyle(trafficSign, position), new ol.style.Style({
         text: new ol.style.Text({
-          text: textStyle(trafficSign),
+          text: me.textStyle(trafficSign),
           fill: new ol.style.Fill({
             color: '#000000'
           }),

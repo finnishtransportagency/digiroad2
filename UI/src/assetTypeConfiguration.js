@@ -778,7 +778,7 @@
           {symbolUrl: 'images/service_points/subwayStation.png', label: 'Metroasema'},
           {symbolUrl: 'images/service_points/busStation.png', label: 'Linja-autoasema'},
           {symbolUrl: 'images/service_points/airport.png', label: 'Lentokenttä'},
-          {symbolUrl: 'images/service_points/ferry.png', label: 'Laivateminaali'},
+          {symbolUrl: 'images/service_points/ferry.png', label: 'Laivaterminaali'},
           {symbolUrl: 'images/service_points/taxiStation.png', label: 'Taksiasema'},
           {symbolUrl: 'images/service_points/picnicSite.png', label: 'Lepoalue'},
           {symbolUrl: 'images/service_points/customsControl.png', label: 'Tulli'},

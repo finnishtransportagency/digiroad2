@@ -120,21 +120,41 @@
       }).filter(function(feature){ return !_.isUndefined(feature); }).value());
     };
 
-    function getDefaultText(type) {
-      var defaultTextValues =
-        [ {type: 5, text: 'Rajanylityspaikka'},
-          {type: 13, text: 'Lastausterminaali'},
-          {type: 14, text: 'Pysäköintialue'},
-          {type: 17, text: 'Latauspiste'}];
 
-     var text =_.find(defaultTextValues, function(defaultText) {return defaultText.type === type;});
+    var defaultInfoValues =
+      [ {type: 5, text: 'Rajanylityspaikka', colorText: '#ffffff'},
+        {type: 13, text: 'Lastausterminaali', colorText: '#000000'},
+        {type: 14, text: 'Pysäköintialue', colorText: '#000000'},
+        {type: 17, text: 'Latauspiste', colorText: '#ffffff'}];
+
+    function getDefaultColorText(type) {
+      var color =_.find(defaultInfoValues, function(defaultInfo) {return defaultInfo.type === type;});
+      return color ? color.colorText : "";
+    }
+
+    function getDefaultText(type) {
+     var text =_.find(defaultInfoValues, function(defaultInfo) {return defaultInfo.type === type;});
       return text ? text.text : "";
     }
 
     me.getValue = function (asset) {
       return _.map(asset.services, function (service) {
-        return {value: getDefaultText(service.serviceType), type: service.serviceType, typeExtension: service.typeExtension};
+        return {value: getDefaultText(service.serviceType), type: service.serviceType, typeExtension: service.typeExtension, textColor: getDefaultColorText(service.serviceType)};
       });
+    };
+
+    me.getStyle = function (trafficSign, position) {
+      return [me.backgroundStyle(trafficSign, position), new ol.style.Style({
+        text: new ol.style.Text({
+          text: this.textStyle(trafficSign),
+          fill: new ol.style.Fill({
+            color: trafficSign.textColor
+          }),
+          font: '12px sans-serif',
+          offsetX: me.getLabelProperty(trafficSign).getTextOffsetX(),
+          offsetY: me.getLabelProperty(trafficSign).getTextOffsetY() - position.y
+        })
+      })];
     };
   };
 })(this);
