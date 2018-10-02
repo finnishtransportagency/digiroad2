@@ -93,13 +93,13 @@
           evt.preventDefault();
           var polygon = evt.feature.getGeometry();
           var features = layer.getSource().getFeatures();
-          var selectedFeatures = _.map(_.filter(features, function(feature){
+          var selectedProperties = _.map(_.filter(features, function(feature){
             return GeometryUtils.polygonIntersect(polygon, feature.getGeometry());
           }), function(selectedFeature){
             return selectedFeature.getProperties();
           });
 
-          settings.onInteractionEnd(selectedFeatures);
+          settings.onInteractionEnd(selectedProperties);
         });
 
         selectInteraction.on('select',  function(evt){
