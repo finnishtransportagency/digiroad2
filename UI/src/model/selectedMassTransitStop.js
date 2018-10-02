@@ -246,7 +246,7 @@
         });
       } else {
         currentAsset.payload.id = currentAsset.id;
-        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"] , ["osoite_suomeksi"], ["osoite_ruotsiksi"]);
+        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"] , ["osoite_suomeksi"], ["osoite_ruotsiksi"], ["trSave"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
         backend.updateAsset(currentAsset.id, payload, function (asset) {
@@ -321,6 +321,11 @@
       currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
       assetHasBeenModified = true;
       eventbus.trigger('assetPropertyValue:changed', { propertyData: propertyData, id: currentAsset.id });
+    };
+
+    var setAdditionalProperty = function(publicId, values) {
+      var propertyData = {publicId: publicId, values: values};
+      currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
     };
 
     var getCurrentAsset = function() {
@@ -414,6 +419,12 @@
       if(_.isEmpty(currentAsset))
         return {};
       return roadCollection.getRoadLinkByLinkId(currentAsset.roadLinkId ? currentAsset.roadLinkId : currentAsset.linkId);
+    };
+
+    var getCurrentRoadLink = function(){
+      if(_.isEmpty(currentAsset))
+        return {};
+      return roadCollection.getRoadLinkByLinkId(currentAsset.payload.roadLinkId ? currentAsset.payload.roadLinkId : currentAsset.payload.linkId);
     };
 
     var deleteMassTransitStop = function (poistaSelected) {
@@ -518,6 +529,17 @@
       });
     }
 
+    function hasRoadAddress(properties) {
+      var stopRoadlink = getCurrentRoadLink();
+      if(stopRoadlink){
+        return !_.isUndefined(stopRoadlink.getData().roadNumber);
+      }
+      var roadNumber = _.find(properties, function(property){
+        return property.publicId === 'tie';
+      });
+      return !_.isUndefined(roadNumber) && !_.isEmpty(roadNumber.values);
+    }
+
     return {
       close: close,
       save: save,
@@ -554,7 +576,9 @@
       isRoadNameDif: isRoadNameDif,
       setRoadNameFields: setRoadNameFields,
       isTerminalChild: isTerminalChild,
-      getMunicipalityCode: getMunicipalityCode
+      getMunicipalityCode: getMunicipalityCode,
+      hasRoadAddress: hasRoadAddress,
+      setAdditionalProperty: setAdditionalProperty
     };
   };
 
