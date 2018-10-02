@@ -28,7 +28,7 @@ INSERT ALL
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING,CREATED_BY) values (siilinjarvi_key_seq.NEXTVAL,110,0,'testfixture')
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (siilinjarvi_lrm_key_seq.NEXTVAL, 5169764, null, 0.000, 380.551, 1)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (siilinjarvi_key_seq.CURRVAL,siilinjarvi_lrm_key_seq.CURRVAL)
-  INTO NUMBER_PROPERTY_VALUE (ID, ASSET_ID,"VALUE",PROPERTY_ID) values (siilinjarvi_lrm_key_seq.NEXTVAL, siilinjarvi_key_seq.CURRVAL,1,(select id from property where public_id = 'mittarajoitus'))
+  INTO SINGLE_CHOICE_VALUE (ASSET_ID, ENUMERATED_VALUE_ID, PROPERTY_ID, MODIFIED_DATE) VALUES (siilinjarvi_key_seq.CURRVAL, 300274, (select id from property where public_id = 'paallysteluokka'), SYSDATE)
 
 SELECT * from dual;
 INSERT ALL

@@ -14,7 +14,7 @@ import org.joda.time.DateTime
 class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOperations {
   override def typeId: Int = StateSpeedLimit.typeId
   override def assetName: String = "stateSpeedLimit"
-  override type TierekisteriClientType = TierekisteriTrafficSignAssetClient
+  override type TierekisteriClientType = TierekisteriTrafficSignSpeedLimitClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -270,7 +270,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
           val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber)
           //Get all TelematicSpeedLimit
           val trTelematicSpeedLimitAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber)
-          val trAssets = getAllTierekisteriAssets(roadNumber) ++ trTelematicSpeedLimitAssets
+          val trAssets = getAllTierekisteriAssets(roadNumber).filter(_.assetType.trafficSignType.group == TrafficSignTypeGroup.SpeedLimits) ++ trTelematicSpeedLimitAssets
           //Get all the existing road address for the road number
           val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
           //Generate all speed limits of the right side of the road

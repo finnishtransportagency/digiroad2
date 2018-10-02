@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimi
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service._
-import fi.liikennevirasto.digiroad2.service.feedback.FeedbackApplicationService
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -74,6 +74,21 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 }
 
+
+class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extends Actor {
+  def receive = {
+    case x: ChangeSet => dynamicAssetService.updateChangeSet(x)
+    case _            => println("DynamicAssetUpdater: Received unknown message")
+  }
+}
+
+class ProhibitionUpdater(prohibitionService: ProhibitionService) extends Actor {
+  def receive = {
+    case x: ChangeSet => prohibitionService.updateChangeSet(x)
+    case _            => println("ProhibitionUpdater: Received unknown message")
+  }
+}
+
 class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
   def receive = {
     case x: ChangeSet => persistRoadWidthChanges(x)
@@ -113,10 +128,18 @@ class PavedRoadSaveProjected[T](pavedRoadProvider: PavedRoadService) extends Act
   }
 }
 
-class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Actor {
+class DynamicAssetSaveProjected[T](dynamicAssetProvider: DynamicLinearAssetService) extends Actor {
+  def receive = {
+    case x: Seq[T] => dynamicAssetProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("dynamicAssetSaveProjected: Received unknown message")
+  }
+}
+
+class SpeedLimitUpdater[A, B, C](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
     case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
     case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf[Seq[UnknownSpeedLimit]])
+    case x: ChangeSet => speedLimitProvider.updateChangeSet(x)
     case _      => println("speedLimitFiller: Received unknown message")
   }
 }
@@ -178,6 +201,12 @@ object Digiroad2Context {
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
+  val dynamicAssetUpdater = system.actorOf(Props(classOf[DynamicAssetUpdater], dynamicLinearAssetService), name = "dynamicAssetUpdater")
+  eventbus.subscribe(dynamicAssetUpdater, "dynamicAsset:update")
+
+  val prohibitionUpdater = system.actorOf(Props(classOf[ProhibitionUpdater], prohibitionService), name = "prohibitionUpdater")
+  eventbus.subscribe(prohibitionUpdater, "prohibition:update")
+
   val linearAssetSaveProjected = system.actorOf(Props(classOf[LinearAssetSaveProjected[PersistedLinearAsset]], linearAssetService), name = "linearAssetSaveProjected")
   eventbus.subscribe(linearAssetSaveProjected, "linearAssets:saveProjectedLinearAssets")
 
@@ -193,12 +222,16 @@ object Digiroad2Context {
   val pavedRoadSaveProjected = system.actorOf(Props(classOf[PavedRoadSaveProjected[PersistedLinearAsset]], pavedRoadService), name = "pavedRoadSaveProjected")
   eventbus.subscribe(pavedRoadSaveProjected, "pavedRoad:saveProjectedPavedRoad")
 
+  val dynamicAssetSaveProjected = system.actorOf(Props(classOf[DynamicAssetSaveProjected[PersistedLinearAsset]], dynamicLinearAssetService), name = "dynamicAssetSaveProjected")
+  eventbus.subscribe(dynamicAssetSaveProjected, "dynamicAsset:saveProjectedAssets")
+
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
 
-  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit]], speedLimitService), name = "speedLimitUpdater")
+  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]], speedLimitService), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
+  eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
@@ -276,6 +309,10 @@ object Digiroad2Context {
     new DynamicLinearAssetService(roadLinkService, eventbus)
   }
 
+  lazy val userNotificationService: UserNotificationService = {
+    new UserNotificationService()
+  }
+
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }
@@ -312,7 +349,7 @@ object Digiroad2Context {
   }
 
   lazy val onOffLinearAssetService: OnOffLinearAssetService = {
-    new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
+    new OnOffLinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val prohibitionService: ProhibitionService = {
@@ -386,6 +423,8 @@ object Digiroad2Context {
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
+
+  lazy val dataFeedback : FeedbackDataService = new FeedbackDataService()
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {

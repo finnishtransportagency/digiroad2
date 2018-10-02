@@ -160,7 +160,7 @@
             return warningSign;
           var splitValues = values.replace(/[ \t\f\v]/g,'').split(/[\n,]+/);
           return _.flatten(_.map(splitValues, function(value, i){
-            return [backgroundStyle(value, i), textStyle(value, i)];
+            return [backgroundStyle(value, i+1), textStyle(value, i+1)];
           }));
         };
 
@@ -319,8 +319,8 @@
         var IMAGE_LABEL_ADJUSTMENT = 43;
 
         this.getStyle = function (values) {
-            var value = values.properties[0] ? values.properties[0].values[0].value : '' ;
-            return createMultiStyles(value);
+          var value = values.properties[0] && !_.isEmpty(values.properties[0].values) ? values.properties[0].values[0].value : '' ;
+          return createMultiStyles(value);
         };
 
         var createMultiStyles = function (value) {

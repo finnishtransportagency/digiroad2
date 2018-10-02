@@ -29,7 +29,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
   }
 
   def fetchAllBySection(roadNumber: Long, roadPartNumbers: Seq[Long], tracks: Seq[Track]) = {
-    post[Map[String, Any], List[Map[String, Any]]]("road_address/" + roadNumber, Map("roadParts" -> roadPartNumbers, "tracks" -> tracks), ra => new StringEntity(Serialization.write(ra), ContentType.APPLICATION_JSON)) match {
+    post[Map[String, Any], List[Map[String, Any]]](serviceName + "road_address/" + roadNumber, Map("roadParts" -> roadPartNumbers, "tracks" -> tracks), ra => new StringEntity(Serialization.write(ra), ContentType.APPLICATION_JSON)) match {
       case Left(roadAddresses) => roadAddresses.flatMap(mapFields)
       case Right(error) => throw new ViiteClientException(error.toString)
     }
@@ -84,10 +84,11 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
     val endAddrM = convertToLong(getMandatoryFieldValue(data, "endAddrM")).get
     val linkId = convertToLong(getMandatoryFieldValue(data, "linkId")).get
     val startMValue = convertToDouble(getMandatoryFieldValue(data, "startMValue")).get
+    val sideCode = convertToInt(getMandatoryFieldValue(data, "sideCode")).get
     val endMValue = convertToDouble(getMandatoryFieldValue(data, "endMValue")).get
     val floating = convertToBoolean(getMandatoryFieldValue(data, "floating")).get
 
-    Some(RoadAddress(id, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, floating, Seq(), false, None, None, None ))
+    Some(RoadAddress(id, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, SideCode.apply(sideCode), floating, Seq(), false, None, None, None ))
   }
 
 }

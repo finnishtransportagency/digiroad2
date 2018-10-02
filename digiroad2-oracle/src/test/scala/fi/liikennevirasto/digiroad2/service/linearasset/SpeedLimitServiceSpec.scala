@@ -3,23 +3,23 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 import scala.language.implicitConversions
 
@@ -51,6 +51,40 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
+  val vvhRoadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+
+  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleSpeedLimitDao = {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+      .thenReturn(roadLinks)
+
+    when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
+      .thenReturn(roadLinks)
+
+    roadLinks.foreach { roadLink =>
+      when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+    }
+
+    new OracleSpeedLimitDao(mockVVHClient, mockRoadLinkService)
+  }
+
+
+  private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
+    val geometry = vvhClient.roadLinkData.fetchByLinkId(linkId).get.geometry
+    GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
+  }
+
+  def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: OracleSpeedLimitDao) = {
+    val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure, dao.vvhClient).toList)
+    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(speedLimitId).find { link => link._1 == linkId }.get._3)
+    expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
+    expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
+  }
+
+
 
   test("create new speed limit") {
     runWithRollback {
@@ -66,17 +100,57 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-    test("Split should fail when user is not authorized for municipality") {
-      runWithRollback {
-        intercept[IllegalArgumentException] {
-          val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-          when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
+  test("Split should fail when user is not authorized for municipality") {
+    runWithRollback {
+      intercept[IllegalArgumentException] {
+        val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+        when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
 
-          val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
-          provider.split(asset.id, 100, 120, 60, "test", failingMunicipalityValidation)
-        }
+        val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
+        provider.split(asset.id, 100, 120, 60, "test", failingMunicipalityValidation _)
       }
     }
+  }
+
+  test("splitting one link speed limit " +
+    "where split measure is after link middle point " +
+    "modifies end measure of existing speed limit " +
+    "and creates new speed limit for second split") {
+    runWithRollback {
+      val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
+      val (createdId1, createdId2) = provider.split(asset, vvhRoadLink, 100, 120, 60, "test")
+      val created1 = provider.getPersistedSpeedLimitById(createdId1).get
+      val created2 = provider.getPersistedSpeedLimitById(createdId2).get
+
+      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, daoWithRoadLinks(List(vvhRoadLink)))
+      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
+
+      provider.getPersistedSpeedLimitByIds(Set(asset.id)).head.expired should be (true)
+
+      created1.modifiedBy shouldBe Some("test")
+      created2.createdBy shouldBe Some("test")
+    }
+  }
+
+  test("splitting one link speed limit " +
+    "where split measure is before link middle point " +
+    "modifies start measure of existing speed limit " +
+    "and creates new speed limit for first split") {
+    runWithRollback {
+      val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
+      val (createdId1, createdId2) = provider.split(asset, vvhRoadLink, 50, 120, 60, "test")
+      val created1 = provider.getPersistedSpeedLimitById(createdId1).get
+      val created2 = provider.getPersistedSpeedLimitById(createdId2).get
+
+      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
+      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, daoWithRoadLinks(List(vvhRoadLink)))
+
+      provider.getPersistedSpeedLimitByIds(Set(asset.id)).head.expired should be (true)
+
+      created1.modifiedBy shouldBe Some("test")
+      created2.createdBy shouldBe Some("test")
+    }
+  }
 
   test("split existing speed limit") {
     runWithRollback {
@@ -133,7 +207,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       updatedLimit.linkId should be (388562360)
       updatedLimit.sideCode should be (SideCode.TowardsDigitizing)
       updatedLimit.value should be (Some(NumericValue(50)))
-      updatedLimit.modifiedBy should be (Some("test"))
+      updatedLimit.createdBy should be (Some("test"))
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing)
@@ -220,7 +294,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset,$lrm)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
@@ -279,11 +353,11 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 25.000, ${SideCode.TowardsDigitizing.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId, null, 0.000, 25.000, ${SideCode.AgainstDigitizing.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(select id from enumerated_value where value = 60 and PROPERTY_ID = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 60),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
@@ -362,11 +436,11 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 15.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId, null, 15.000, 25.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(select id from enumerated_value where value = 60 and PROPERTY_ID = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 60),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
@@ -445,15 +519,15 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId2, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId3, null, 0.000, 5.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset3,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset3,$lrm3)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset3,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((oldRoadLinks, Nil))
 
@@ -507,7 +581,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
@@ -560,7 +634,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
@@ -613,7 +687,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
@@ -672,15 +746,15 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset1,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId2, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset2,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId3, null, 0.000, 5.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset3,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset3,$lrm3)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset3,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((oldRoadLinks, Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList.flatten
@@ -720,7 +794,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       provider.get(boundingBox, Set(municipalityCode))
 
-      verify(mockEventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), List(), List(), Set()))
+      verify(mockEventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), List(), Set()))
       verify(mockEventBus, times(1)).publish("speedLimits:saveProjectedSpeedLimits", List())
       verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
@@ -785,7 +859,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 30.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
@@ -978,7 +1052,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val after = service.get(boundingBox, Set(municipalityCode)).toList
       provider.get(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set(235))
 
-      verify(eventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), Seq(), Seq(), Set()))
+      verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), Seq(), Seq(), Seq(), Set()))
       dynamicSession.rollback()
     }
 
@@ -1353,15 +1427,15 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, 100)""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset1, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset1, $lrm1)""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset1,(select id from enumerated_value where value = 50 and PROPERTY_ID = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm2, 200)""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset2, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset2, $lrm2)""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset2,(select id from enumerated_value where value = 50 and PROPERTY_ID = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm3, 300)""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset3, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset3, $lrm3)""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset3,(select id from enumerated_value where value = 50 and PROPERTY_ID = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
@@ -1407,7 +1481,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset,$lrm)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""
+            insert into single_choice_value (asset_id,enumerated_value_id,property_id)
+            values ($asset,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId	AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))
+        """.execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val apeedLimits = service.get(boundingBox, Set(municipalityCode)).toList
@@ -1456,14 +1533,17 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset,$lrm)""".execute
-      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""
+            insert into single_choice_value (asset_id,enumerated_value_id,property_id)
+            values ($asset,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId	AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))
+        """.execute
 
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val apeedLimits = service.get(boundingBox, Set(municipalityCode)).toList
 
 
-      verify(eventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), List(), List(), Set(asset)))
+      verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), Seq(), Set(asset)))
       val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
       verify(eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
       verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())

@@ -10,6 +10,9 @@
         if (applicationModel.isDirty()) {
           new Confirm();
         }
+        else if(applicationModel.getApplicationState() === applicationState.Feedback){
+            new GenericConfirmPopup("Palautetta voi antaa kerralla vain yhdelle tietolajille. Sulje palauteikkuna, ja yritä uudelleen.", {type: 'alert'});
+        }
       }
       selectLayerButton.on('click', selectLayerOrShowConfirmDialog);
     };

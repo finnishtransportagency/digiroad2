@@ -48,8 +48,8 @@
 
     this.addSelection = function(linearAssets){
       var partitioned = _.groupBy(linearAssets, isUnknown);
-      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
-      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
       selection = selection.concat(existingLinearAssets.concat(unknownLinearAssets));
     };
 
@@ -80,6 +80,7 @@
 
     this.closeMultiple = function() {
       eventbus.trigger(singleElementEvent('unselect'), self);
+      dirty = false;
       collection.setSelection(null);
       selection = [];
     };
@@ -327,14 +328,16 @@
 
     this.setAValue = function (value) {
       if (value != selection[0].value) {
-        selection[0].value = value;
+        var newGroup = _.assign({}, selection[0], { value: value });
+        selection[0] = collection.replaceCreatedSplit(selection[0], newGroup);
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
     this.setBValue = function (value) {
       if (value != selection[1].value) {
-        selection[1].value = value;
+        var newGroup = _.assign({}, selection[1], { value: value });
+        selection[1] = collection.replaceExistingSplit(selection[1], newGroup);
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
@@ -361,7 +364,6 @@
 
     this.setDirty = function(dirtyValue) {
       dirty = dirtyValue;
-      eventbus.trigger(singleElementEvent('valueChanged'), self);
     };
 
     this.isSelected = function(linearAsset) {

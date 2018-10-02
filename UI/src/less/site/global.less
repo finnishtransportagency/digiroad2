@@ -31,16 +31,19 @@ a {
     flex-direction: column;
     max-height: 100vh;
     margin-bottom: 85px;
+    min-height: 0;
 
     > .panel-group {
       display: flex;
       flex: auto;
       flex-direction: column;
+      min-height: 0;
 
       > .panel {
         display: flex;
         flex: auto;
         flex-direction: column;
+        min-height: 0;
 
         > .panel-section {
           flex: none;
@@ -202,4 +205,11 @@ a {
 .municipality-page {
   .page;
   max-width: 900px;
+}
+
+.ol-unselectable{
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+  user-select: none;          /* Likely future */
 }

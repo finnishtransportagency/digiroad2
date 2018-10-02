@@ -151,6 +151,10 @@ object DataFixture {
     new OracleAssetDao()
   }
 
+  lazy val dynamicLinearAssetDao : DynamicLinearAssetDao = {
+    new DynamicLinearAssetDao()
+  }
+
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
     if(property != null)
@@ -184,6 +188,7 @@ object DataFixture {
 
   def setUpTest() {
     migrateAll()
+    importMunicipalityCodes()
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",
@@ -204,7 +209,9 @@ object DataFixture {
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
       "kauniainen_traffic_signs.sql",
-      "kauniainen_maximum_x7_restrictions.sql"
+      "kauniainen_maximum_x7_restrictions.sql",
+      "user_notification_examples.sql",
+      "siilinjarvi_verificationService_test_data.sql"
     ))
   }
 
@@ -213,6 +220,15 @@ object DataFixture {
     println(DateTime.now())
     new MunicipalityCodeImporter().importMunicipalityCodes()
     println("Municipality code import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def updateMunicipalities() {
+    println("\nCommencing municipality update at time: ")
+    println(DateTime.now())
+    new MunicipalityCodeImporter().updateMunicipalityCodes()
+    println("Municipality update complete at time: ")
     println(DateTime.now())
     println("\n")
   }
@@ -967,7 +983,8 @@ object DataFixture {
         val expiredAssetsIds = changedAssets.flatMap {
           case (_, changeInfo, assets) =>
               assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
-                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default")
+                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && (asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default" ||
+                  asset.modifiedBy.getOrElse("") == "vvh_generated" && asset.createdBy.getOrElse("") == "vvh_mtkclass_default"))
             ).map(_.id)
         }.toSet
 
@@ -1305,7 +1322,7 @@ object DataFixture {
       OracleDatabase.withDynTransaction {
 
         println("Fetching assets")
-        val existingAssets = oracleLinearAssetDao.fetchLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
 
         println(s"Number of existing assets: ${existingAssets.length}")
         println(s"Start updating assets with Information Source")
@@ -1405,7 +1422,6 @@ object DataFixture {
         setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
-        importMunicipalityCodes()
         TrafficSignTestData.createTestData
         ServicePointTestData.createTestData
       case Some("import_roadlink_data") =>
@@ -1475,6 +1491,10 @@ object DataFixture {
         updatePavedRoadInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>
         updateTrafficDirectionRoundabouts()
+      case Some("import_municipality_codes") =>
+        importMunicipalityCodes()
+      case Some("update_municipalities") =>
+        updateMunicipalities()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1483,7 +1503,8 @@ object DataFixture {
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
-        " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts | update_information_source_on_paved_road_assets")
+        " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
+        " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities")
     }
   }
 }

@@ -21,6 +21,21 @@
       return  me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.renderOverlays(linearAssets));
     };
 
+    this.getNewFeatureProperties = function(linearAssets){
+      var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
+        var expired = _.isUndefined(linearAsset.value);
+        var type =  me.isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
+        return _.merge({}, linearAsset, { expired: expired }, type);
+      });
+      var offsetBySideCode = function(linearAsset) {
+        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+      };
+      var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
+      return _.sortBy(linearAssetsWithAdjustments, function(asset) {
+        return asset.expired ? -1 : 1;
+      });
+    };
+
     var serviceRoadStyleRules = [
       new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "huoltotie_kayttooikeus"); }}).is(1).use({stroke: {color: '#0011bb'}}),
@@ -59,14 +74,20 @@
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(15).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 12, lineDash: [1,28] }})
     ];
 
+    var featureTypeRules = [
+      new StyleRule().where('type').is('cutter').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
+    ];
+
     me.rightOfUseStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.rightOfUseStyle.addRules(rightOfUseStyleRules);
     me.rightOfUseStyle.addRules(serviceRoadFeatureSizeRules);
     me.rightOfUseStyle.addRules(overlayStyleRules);
+    me.rightOfUseStyle.addRules(featureTypeRules);
 
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(serviceRoadStyleRules);
     me.browsingStyleProvider.addRules(serviceRoadFeatureSizeRules);
+    me.browsingStyleProvider.addRules(featureTypeRules);
 
   };
 })(this);

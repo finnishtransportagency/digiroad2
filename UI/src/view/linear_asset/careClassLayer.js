@@ -12,6 +12,15 @@
     var selectToolControl = me.getSelectToolControl();
     var vectorSource = me.getVectorSource();
 
+    function hasAssetOrValue(linearAsset) {
+      var id = linearAsset.id;
+      var value = linearAsset.value;
+      var nullOrUndefined = function(id){return _.isUndefined(id) || _.isNull(id);};
+      var hasValueProperty = function(){return linearAsset.hasOwnProperty('value');};
+
+      return (nullOrUndefined(id) && !_.isUndefined(value)) || (!nullOrUndefined(id) && !hasValueProperty()) ||  (!nullOrUndefined(id) && !_.isUndefined(value));
+    }
+
     var valueExists = function(asset, publicId) {
       return !_.isUndefined(asset.value) && !emptyValues(asset, publicId);
     };
@@ -19,12 +28,12 @@
     var findValue = function(asset, publicId) {
       var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
       if(properties)
-        return _.first(properties.values).value;
+        return _.head(properties.values).value;
     };
 
     var emptyValues = function(asset, publicId) {
-        var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
-        return properties ?  !_.isUndefined(asset.id) && _.isEmpty(properties.values): !_.isUndefined(asset.id) ;
+      var properties = _.find(asset.value.properties, function(a) { return a.publicId === publicId; });
+      return properties ?  !_.isUndefined(asset.id) && _.isEmpty(properties.values): !_.isUndefined(asset.id) ;
     };
 
     var offsetBySideCode = function (linearAsset) {
@@ -36,12 +45,12 @@
         var points = _.map(linearAsset.points, function(point) {
           return [point.x, point.y];
         });
+        var hasAsset = hasAssetOrValue(linearAsset);
         var road = new ol.geom.LineString(points);
         var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
-        var noGreenCare = !_.isUndefined(linearAsset.id) && !valueExists(linearAsset, greenCareClass);
-        var noWinterCare = !_.isUndefined(linearAsset.id) && !valueExists(linearAsset, winterCareClass);
-        var hasAsset = !_.isUndefined(linearAsset.id);
-        var properties = _.merge(_.cloneDeep(linearAsset), {noGreenCare: noGreenCare}, {noWinterCare: noWinterCare}, { hasAsset: hasAsset });
+        var noGreenCare = hasAsset && !valueExists(linearAsset, greenCareClass);
+        var noWinterCare = hasAsset && !valueExists(linearAsset, winterCareClass);
+        var properties = _.merge(linearAsset, {noGreenCare: noGreenCare}, {noWinterCare: noWinterCare}, { hasAsset: hasAsset });
         var feature = new ol.Feature(new ol.geom.Point([signPosition.x, signPosition.y]));
         feature.setProperties(_.omit(properties, 'geometry'));
         return feature;
@@ -55,8 +64,9 @@
         });
         var noGreenCare = !_.isUndefined(linearAsset.id) && !valueExists(linearAsset, greenCareClass);
         var noWinterCare = !_.isUndefined(linearAsset.id) && !valueExists(linearAsset, winterCareClass);
-        var hasAsset = !_.isUndefined(linearAsset.id);
-        var properties = _.merge(_.cloneDeep(linearAsset), {noGreenCare: noGreenCare}, {noWinterCare: noWinterCare}, { hasAsset: hasAsset });
+        var hasAsset = hasAssetOrValue(linearAsset);
+
+        var properties = _.merge(linearAsset, {noGreenCare: noGreenCare}, {noWinterCare: noWinterCare}, { hasAsset: hasAsset });
         var feature = new ol.Feature(new ol.geom.LineString(points));
         feature.setProperties(_.omit(properties, 'geometry'));
         return feature;
@@ -71,7 +81,7 @@
     };
 
     this.renderOverlays = function(linearAssets) {
-      return lineFeatures(_.map(_.filter(linearAssets, function (asset){return asset.value && !emptyValues(asset, winterCareClass) && _.contains(overlayAssets, parseInt(findValue(asset, winterCareClass)));}), function(linearAsset) {
+      return lineFeatures(_.map(_.filter(linearAssets, function (asset){return asset.value && !emptyValues(asset, winterCareClass) && _.includes(overlayAssets, parseInt(findValue(asset, winterCareClass)));}), function(linearAsset) {
         return _.merge({}, linearAsset, { type: 'overlay' }); }));
     };
 

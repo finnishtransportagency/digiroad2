@@ -25,7 +25,9 @@
             layers: []
         }, options);
 
-        var dragBoxInteraction = new ol.interaction.DragBox({
+      var layerName = settings.layerName ? settings.layerName : layer.get('name');
+
+      var dragBoxInteraction = new ol.interaction.DragBox({
             condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) && settings.enableBoxSelect(); }
         });
 
@@ -89,13 +91,11 @@
 
         drawInteraction.on('drawend', function(evt){
             evt.preventDefault();
-            var polygonGeometry = evt.feature.getGeometry();
-            var features =  layer.getSource().getFeatures();
-            var selected = _.filter(features, function(feature) {
-                return _.some(feature.getGeometry().getCoordinates(), function(coordinate) {
-                    return polygonGeometry.intersectsCoordinate(coordinate);
-                });
-              });
+            var selected = [];
+            var polygonGeometryExtent = evt.feature.getGeometry().getExtent();
+            layer.getSource().forEachFeatureIntersectingExtent(polygonGeometryExtent, function (feature) {
+              selected.push(feature);
+            });
             var selectedProperties = _.map(selected, function(select) { return select.getProperties(); });
             settings.onInteractionEnd(selectedProperties);
         });
@@ -165,8 +165,8 @@
         };
 
         var activate = function() {
+          if(applicationModel.getSelectedLayer() === layerName) {
             enabled = true;
-
             if(!initialized){
                 map.addInteraction(selectInteraction);
                 map.addInteraction(multiSelectInteraction);
@@ -180,6 +180,7 @@
                 });
             });
             toggleDragBox();
+          }
         };
 
         var deactivate = function() {

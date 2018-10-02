@@ -4,12 +4,16 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+
+case class StartUpParameters(userId: Long, username: String, configuration: Configuration,  municipalityId: Long, municipalityGeometry: Point, municipalityZoom: Int,
+                             elyId: Long, elyGeometry: Point, elyZoom: Int, serviceAreaId: Long, serviceAreaGeometry: Point, serviceAreaZoom: Int)
 
 class OracleUserProvider extends UserProvider {
   implicit val formats = Serialization.formats(NoTypeHints)
@@ -40,6 +44,13 @@ class OracleUserProvider extends UserProvider {
     }
   }
 
+  def updateUserConfiguration(user: User): User = {
+    OracleDatabase.withDynSession {
+      sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name} where lower(username) = ${user.username.toLowerCase}""".execute
+      user
+    }
+  }
+
   def saveUser(user: User): User = {
     OracleDatabase.withDynSession {
       sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name}, modified_at = sysdate where lower(username) = ${user.username.toLowerCase}""".execute
@@ -58,4 +69,6 @@ class OracleUserProvider extends UserProvider {
       sql"""select x, y, z from table(sdo_util.getvertices((select geometry from authorized_area where kpalue = $userAreaId))) order by id""".as[Point].list
     }
   }
+
+
 }

@@ -1,4 +1,6 @@
-package fi.liikennevirasto.digiroad2.user;
+package fi.liikennevirasto.digiroad2.user
+
+import fi.liikennevirasto.digiroad2.Point
 
 
 class DummyUserProvider extends UserProvider {
@@ -18,4 +20,7 @@ class DummyUserProvider extends UserProvider {
   }
   def saveUser(user: User): User = user
 
+  def updateUserConfiguration(user: User): User = {
+    User(0, "username", Configuration())
+  }
 }
