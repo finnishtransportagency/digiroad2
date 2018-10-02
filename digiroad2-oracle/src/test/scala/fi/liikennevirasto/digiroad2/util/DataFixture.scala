@@ -1233,10 +1233,8 @@ object DataFixture {
 
 
   private def isKIdentifier(username: Option[String]): Boolean = {
-    username.exists(user => user.toLowerCase.startsWith("k")) ||
-      username.exists(user => user.toLowerCase.startsWith("lx")) ||
-      username.exists(user => user.toLowerCase.startsWith("a")) ||
-      username.exists(user => user.toLowerCase.startsWith("u"))
+    val identifiers: Set[String] = Set("k", "lx", "a", "u")
+    username.exists(user => identifiers.exists(identifier => user.toLowerCase.startsWith(identifier)))
   }
 
   def updateInformationSource(): Unit = {
