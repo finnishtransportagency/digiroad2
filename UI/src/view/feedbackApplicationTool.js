@@ -1,7 +1,8 @@
 (function (root) {
-   root.FeedbackTool = function (authorizationPolicy, collection) {
+   root.FeedbackApplicationTool = function (authorizationPolicy, collection) {
 
        var initialize = function(){
+            eventbus.trigger('closeFeedBackData');
            purge();
            renderConfirmDialog();
            $('#kidentifier').text(authorizationPolicy.username);
@@ -14,12 +15,8 @@
            cancelButton: 'Peruuta',
            saveCallback: function(){
                addSpinner();
-               collection.send( $(".form-horizontal").serializeArray());
+               collection.sendFeedbackApplication( $(".form-horizontal").serializeArray());
                },
-           cancelCallback: function(){
-               $(':input').val('');
-               setSaveButtonState();
-           },
            closeCallback: function() { purge(); }
        };
 
@@ -48,7 +45,7 @@
        var bindEvents = function() {
 
            $('.confirm-modal .cancel').on('click', function() {
-               options.cancelCallback();
+             options.closeCallback();
            });
            $('.confirm-modal .save').on('click', function() {
                options.saveCallback();
@@ -72,6 +69,7 @@
            });
        };
 
+       var suggestionText = 'Jättääksesi palautetta aineistosta, valitse haluamasi linkki ja <br /> valitse "Anna palautetta kohteesta" lomakkeen oikeasta alakulmasta';
 
        var confirmDiv =
            '<div class="modal-overlay confirm-modal" id="feedback">' +
@@ -108,11 +106,17 @@
 
                         '</div>' +
                     '</form>' +
-                    '<div class="actions">' +
-                       '<button class = "btn btn-primary save" disabled>' + options.saveButton + '</button>' +
-                       '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
+                    '<div class="actions feedback-actions">' +
+                        '<div class="infoBox">' +
+                            '<label class="control-label" id="suggestion-label">' + suggestionText + '</label>' +
+                        '</div>' +
+                        '<div class="buttons">' +
+                            '<button class = "btn btn-primary save" disabled>' + options.saveButton + '</button>' +
+                            '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
+                        '</div>' +
                     '</div>' +
                 '</div>' +
            '</div>';
    };
 })(this);
+

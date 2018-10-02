@@ -350,6 +350,16 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     })
   }
 
+  def updateValues(assetId: Long, maintenanceRoad: MaintenanceRoad, username: String): Option[Long] ={
+    val assetsUpdated = Queries.updateAssetModified(assetId, username).first
+    updateMaintenanceRoadValue(assetId, maintenanceRoad, username)
+    if (assetsUpdated == 1) {
+      Some(assetId)
+    } else {
+      None
+    }
+  }
+
   /**
     * Saves textual property value to db. Used by OracleMaintenanceDao.createWithoutTransaction.
     */

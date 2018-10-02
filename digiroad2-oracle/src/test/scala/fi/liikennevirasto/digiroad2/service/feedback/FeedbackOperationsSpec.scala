@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.feedback
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
 
-class FeedbackApplicationServiceSpec extends FunSuite with Matchers {
+class FeedbackOperationsSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -17,7 +17,7 @@ class FeedbackApplicationServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       var feedbackbody = FeedbackApplicationBody(Some("bugi"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
 
-      val id = service.insertApplicationFeedback("feedback_createdBy", feedbackbody)
+      val id = service.insertFeedback("feedback_createdBy", feedbackbody)
       val feedbacks = service.getFeedbacksByIds(Set(id)).head
       feedbacks.createdBy should be (Some("feedback_createdBy"))
       feedbacks.id should be (id)
@@ -32,9 +32,9 @@ class FeedbackApplicationServiceSpec extends FunSuite with Matchers {
       var feedbackbody2 = FeedbackApplicationBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
 
       val (id, id1, id2) =(
-        service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
-        service.insertApplicationFeedback("feedback_createdBy1", feedbackbody1),
-        service.insertApplicationFeedback("feedback_createdBy2", feedbackbody2))
+        service.insertFeedback("feedback_createdBy", feedbackbody),
+        service.insertFeedback("feedback_createdBy1", feedbackbody1),
+        service.insertFeedback("feedback_createdBy2", feedbackbody2))
 
       service.updateApplicationFeedbackStatus(id2)
 
@@ -53,9 +53,9 @@ class FeedbackApplicationServiceSpec extends FunSuite with Matchers {
       var feedbackbody2 = FeedbackApplicationBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
 
       val (id, id1, id2) =(
-        service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
-        service.insertApplicationFeedback("feedback_createdBy1", feedbackbody1),
-        service.insertApplicationFeedback("feedback_createdBy2", feedbackbody2))
+        service.insertFeedback("feedback_createdBy", feedbackbody),
+        service.insertFeedback("feedback_createdBy1", feedbackbody1),
+        service.insertFeedback("feedback_createdBy2", feedbackbody2))
 
       val feedbacks = service.getAllFeedbacks
       feedbacks.length should be (3)
@@ -74,9 +74,9 @@ class FeedbackApplicationServiceSpec extends FunSuite with Matchers {
       var feedbackbody2 = FeedbackApplicationBody(Some("Vapaa palaute"), Some("feedback headline"), Some("Feedback free tex..."), Some("My name"), Some("My email"), None)
 
       val (id, id1, id2) =(
-        service.insertApplicationFeedback("feedback_createdBy", feedbackbody),
-        service.insertApplicationFeedback("feedback_createdBy1", feedbackbody1),
-        service.insertApplicationFeedback("feedback_createdBy2", feedbackbody2))
+        service.insertFeedback("feedback_createdBy", feedbackbody),
+        service.insertFeedback("feedback_createdBy1", feedbackbody1),
+        service.insertFeedback("feedback_createdBy2", feedbackbody2))
 
       service.updateApplicationFeedbackStatus(id1)
       service.updateApplicationFeedbackStatus(id2)

@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  function bindEvents(linearAsset, formElements) {
+  function bindEvents(linearAsset, formElements, feedbackModel) {
 
     var selectedLinearAsset = linearAsset.selectedLinearAsset,
       eventCategory = linearAsset.singleElementEventCategory,
@@ -12,6 +12,7 @@
       authorizationPolicy = linearAsset.authorizationPolicy,
       layerName = linearAsset.layerName,
       isVerifiable = linearAsset.isVerifiable;
+      new FeedbackDataTool(feedbackModel, linearAsset.layerName, authorizationPolicy, eventCategory);
 
     var rootElement = $('#feature-attributes');
 
@@ -59,6 +60,7 @@
       rootElement.find('.read-only-title').toggle(readOnly);
       rootElement.find('.edit-mode-title').toggle(!readOnly);
     }
+
 
     function events() {
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');

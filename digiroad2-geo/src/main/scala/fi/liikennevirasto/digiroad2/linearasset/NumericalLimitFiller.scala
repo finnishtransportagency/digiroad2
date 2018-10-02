@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import org.joda.time.DateTime
 
@@ -156,7 +156,7 @@ object NumericalLimitFiller {
       (segments, changeSet)
     } else {
       val (twoSided, oneSided) = segments.partition { s => s.sideCode == SideCode.BothDirections.value }
-      val adjusted = oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections.value), SideCodeAdjustment(s.id, SideCode.BothDirections)) }
+      val adjusted = oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections.value), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
       (twoSided ++ adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
     }
   }
@@ -323,7 +323,7 @@ object NumericalLimitFiller {
 
     val changedSideCodes = combinedSegment.filter(cl =>
       assets.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
-      map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode)))
+      map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode), sl.typeId))
     val resultingNumericalLimits = combinedSegment ++ newSegments
     val expiredIds = assets.map(_.id).toSet.--(resultingNumericalLimits.map(_.id).toSet)
 
@@ -502,6 +502,7 @@ object NumericalLimitFiller {
       case None => ChangeSet( droppedAssetIds = Set.empty[Long],
                               expiredAssetIds = Set.empty[Long],
                               adjustedMValues = Seq.empty[MValueAdjustment],
+                              adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                               adjustedSideCodes = Seq.empty[SideCodeAdjustment])
     }
 
@@ -556,7 +557,7 @@ object NumericalLimitFiller {
 
     val changeSet = assetId match {
       case 0 => changedSet
-      case _ => changedSet.copy(adjustedMValues =  changedSet.adjustedMValues ++ Seq(MValueAdjustment(assetId, newLinkId, newStart, newEnd)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode))))
+      case _ => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode), asset.typeId)))
     }
 
     (PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,

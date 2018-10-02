@@ -29,7 +29,7 @@
     };
 
     this.checkboxPanel = function () {
-      var trafficSignsCheckbox = assetConfig.hasTrafficSignReadOnlyLayer ? [
+      var trafficSignsCheckbox = assetConfig.readOnlyLayer ? [
           '<div class="check-box-container">' +
           '   <input id="trafficSignsCheckbox" type="checkbox" /> ' +
           '   <lable>Näytä liikennemerkit</lable>' +

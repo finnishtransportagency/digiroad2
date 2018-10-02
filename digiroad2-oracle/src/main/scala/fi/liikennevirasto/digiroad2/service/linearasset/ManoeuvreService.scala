@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
+import java.security.InvalidParameterException
+
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
@@ -29,7 +31,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     getBySourceRoadLinks(roadLinks)
   }
 
-  def getByMunicipalityAndRoadLinks(municipalityNumber: Int): Seq[(Manoeuvre, Seq[(RoadLink)])] = {
+  def getByMunicipalityAndRoadLinks(municipalityNumber: Int): Seq[(Manoeuvre, Seq[RoadLink])] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
     val manoeuvres = getBySourceRoadLinks(roadLinks)
     manoeuvres.map{ manoeuvre => (manoeuvre, roadLinks.filter(road => road.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).get ||
@@ -91,7 +93,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     * @param intermediateElements Intermediate elements' list
     * @return Sequence of Start->Intermediate(s)->Target elements.
     */
-  def cleanChain(firstElement: ManoeuvreElement, lastElement: ManoeuvreElement, intermediateElements: Seq[ManoeuvreElement]) = {
+  def cleanChain(firstElement: ManoeuvreElement, lastElement: ManoeuvreElement, intermediateElements: Seq[ManoeuvreElement]) : Seq[ManoeuvreElement] = {
     if (intermediateElements.isEmpty)
       Seq(firstElement, lastElement)
     else {
@@ -126,7 +128,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
 
-    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.getOrElse(null), null, null)
+    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.orNull, null, null)
 
     isValidManoeuvre(roadLinks)(manoeuvre)
   }
@@ -154,15 +156,15 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     manoeuvres.filter(isValidManoeuvre(roadLinks))
   }
 
-  private def sourceLinkId(manoeuvre: Manoeuvre) = {
+  private def sourceLinkId(manoeuvre: Manoeuvre) : Option[Long] = {
     manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)
   }
 
-  private def destinationLinkId(manoeuvre: Manoeuvre) = {
+  private def destinationLinkId(manoeuvre: Manoeuvre) : Option[Long]  = {
     manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId)
   }
 
-  private def intermediateLinkIds(manoeuvre: Manoeuvre) = {
+  private def intermediateLinkIds(manoeuvre: Manoeuvre) : Option[Long] = {
     manoeuvre.elements.find(_.elementType == ElementTypes.IntermediateElement).map(_.sourceLinkId)
   }
 
@@ -211,7 +213,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre) = {
+  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
+    if(!isValid(manoeuvre, roadlinks))
+      throw new InvalidParameterException("Invalid 'manouevre")
+
     withDynTransaction {
       dao.createManoeuvre(userName, manoeuvre)
     }
@@ -223,13 +228,13 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  def getSourceRoadLinkIdById(id: Long) = {
+  def getSourceRoadLinkIdById(id: Long) : Long = {
     withDynTransaction {
       dao.getSourceRoadLinkIdById(id)
     }
   }
 
-  def find(id: Long) = {
+  def find(id: Long) : Option[Manoeuvre] = {
     withDynTransaction {
       dao.find(id)
     }

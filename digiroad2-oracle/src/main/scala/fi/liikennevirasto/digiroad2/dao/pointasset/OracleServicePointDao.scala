@@ -85,6 +85,10 @@ object OracleServicePointDao {
     getWithFilter("")
   }
 
+  def getById(id: Long): Set[ServicePoint] = {
+    getWithFilter(s"a.id = $id")
+  }
+
   def getByMunicipality(municipalityNumber: Int): Set[ServicePoint] = {
     getWithFilter(s"a.municipality_code = $municipalityNumber")
   }
