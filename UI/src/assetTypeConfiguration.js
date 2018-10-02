@@ -67,7 +67,7 @@
           showUnit: true
         },
         label: new MassLimitationsLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -91,7 +91,7 @@
           showUnit: true
         },
         label: new MassLimitationsLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -115,7 +115,7 @@
           showUnit: true
         },
         label: new MassLimitationsLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -139,7 +139,7 @@
           showUnit: true
         },
         label: new MassLimitationsLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -162,7 +162,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -185,7 +185,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -209,7 +209,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -675,7 +675,7 @@
           disabled: 'Tuntematon'
         },
         label: new TRSpeedLimitAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         style: new TRSpeedLimitStyle(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy()
       }
