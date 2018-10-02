@@ -5,14 +5,17 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao._
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -173,18 +176,28 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
       val createdId = ServiceWithDao.separate(assetId, Some(propertyData2), Some(propertyData3), "unittest", (i, a) => Unit)
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId(1))).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
+
+      createdId.length should be (2)
+
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
+      val createdLimit1 = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.last)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
       oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
-      oldLimit.value should be (Some(propertyData2))
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.sideCode should be (SideCode.BothDirections.value)
+      oldLimit.expired should be (true)
+      oldLimit.modifiedBy should be (None)
 
       createdLimit.linkId should be (388562360)
-      createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
-      createdLimit.value should be (Some(propertyData3))
-      createdLimit.createdBy should be (Some("unittest"))
+      createdLimit.sideCode should be (SideCode.TowardsDigitizing.value)
+      createdLimit.value should be (Some(propertyData2))
+      createdLimit.createdBy should be (Some("test"))
+      createdLimit.modifiedBy should be (Some("unittest"))
+
+      createdLimit1.linkId should be (388562360)
+      createdLimit1.sideCode should be (SideCode.AgainstDigitizing.value)
+      createdLimit1.value should be (Some(propertyData3))
+      createdLimit1.createdBy should be (Some("test"))
     }
   }
 
@@ -206,21 +219,23 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
 
-      val createdId = ServiceWithDao.separate(assetId, None, Some(propertyData3), "unittest", (i, a) => Unit).filter(_ != assetId).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId)).head
+      val createdId = ServiceWithDao.separate(assetId, None, Some(propertyData3), "unittest", (i, a) => Unit)
+      createdId.length should be (1)
+
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
       oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
+      oldLimit.sideCode should be (SideCode.BothDirections.value)
       oldLimit.expired should be (true)
-      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.modifiedBy should be (None)
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
       createdLimit.value should be (Some(propertyData3))
       createdLimit.expired should be (false)
-      createdLimit.createdBy should be (Some("unittest"))
-    }
+      createdLimit.createdBy should be (Some("test"))
+      createdLimit.modifiedBy should be (Some("unittest"))    }
   }
 
   test("Separate with empty value against digitization") {
@@ -275,23 +290,24 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
 
       val ids = ServiceWithDao.split(assetId, 2.0, Some(propertyData2), Some(propertyData3), "unittest", (i, a) => Unit)
 
-      val createdId = ids(1)
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.head)).head
+      ids.length should be(2)
 
-      oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.BothDirections.value)
-      oldLimit.value should be (Some(propertyData2))
-      oldLimit.modifiedBy should be (Some("unittest"))
-      oldLimit.startMeasure should be (2.0)
-      oldLimit.endMeasure should be (10.0)
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.head)).head
+      val createdLimit1 = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.last)).head
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.BothDirections.value)
-      createdLimit.value should be (Some(propertyData3))
-      createdLimit.createdBy should be (Some("unittest"))
-      createdLimit.startMeasure should be (0.0)
-      createdLimit.endMeasure should be (2.0)
+      createdLimit.value should be (Some(propertyData2))
+      createdLimit.modifiedBy should be (Some("unittest"))
+      createdLimit.startMeasure should be (2.0)
+      createdLimit.endMeasure should be (10.0)
+
+      createdLimit1.linkId should be (388562360)
+      createdLimit1.sideCode should be (SideCode.BothDirections.value)
+      createdLimit1.value should be (Some(propertyData3))
+      createdLimit1.createdBy should be (Some("test"))
+      createdLimit1.startMeasure should be (0.0)
+      createdLimit1.endMeasure should be (2.0)
     }
   }
 
@@ -320,7 +336,7 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("get unVerified linear assets") {
-    when(mockMunicipalityDao.getMunicipalityNameByCode(235)).thenReturn("Kauniainen")
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
       runWithRollback {
         val (propId1, propId2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
 
@@ -351,8 +367,9 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
         1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
 
-    when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
-    when(mockMunicipalityDao.getMunicipalityNameByCode(92)).thenReturn("Vantaa")
+    val municipalitiesInfo = List(MunicipalityInfo(91, 9, "Helsinki"), MunicipalityInfo(92, 9, "Vantaa"))
+    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfo)
+
     runWithRollback {
       val (propId1, propId2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
 
@@ -430,4 +447,158 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  case class TestAssetInfo(newLinearAsset: NewLinearAsset, typeId: Int)
+  test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
+
+    val careClassValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("hoitoluokat_talvihoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(20))),
+      DynamicProperty("hoitoluokat_viherhoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(3)))
+    )))
+
+    val carryingCapacityValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("kevatkantavuus", "integer", false, Seq(DynamicPropertyValue(0))),
+      DynamicProperty("routivuuskerroin", "single_choice", false, Seq(DynamicPropertyValue(40))),
+      DynamicProperty("mittauspaiva", "date", false, Seq(DynamicPropertyValue("11.9.2018")))
+    )))
+
+    val pavedRoadValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue(1)))
+    )))
+
+    val massTransitLaneValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("public_validity_period", "time_period", false, Seq(DynamicPropertyValue(Map("days" -> 1,
+        "startHour" -> 2,
+        "endHour" -> 10,
+        "startMinute" -> 10,
+        "endMinute" -> 20))))
+    )))
+
+    val damagedByThawValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("kelirikko", "numbere", false, Seq(DynamicPropertyValue(10)))
+    )))
+
+    val assetsInfo = Seq(
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, pavedRoadValue, SideCode.AgainstDigitizing.value, 0, None), PavedRoad.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId))
+
+    runWithRollback {
+      assetsInfo.foreach(testSideCodeAdjustment)
+    }
+  }
+
+  def testSideCodeAdjustment(assetInfo: TestAssetInfo) {
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+    val id = ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "sideCode_adjust").head
+    val original = ServiceWithDao.getPersistedAssetsByIds(assetInfo.typeId, Set(id)).head
+
+    val changeSet =
+      ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)))
+
+    ServiceWithDao.updateChangeSet(changeSet)
+    val expiredAsset = mVLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id)).head
+    val newAsset = ServiceWithDao.getPersistedAssetsByLinkIds(assetInfo.typeId, Seq(original.linkId))
+    withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
+      newAsset.size should be(1)
+      val asset = newAsset.head
+      asset.startMeasure should be(original.startMeasure)
+      asset.endMeasure should be(original.endMeasure)
+      asset.createdBy should not be original.createdBy
+      asset.startMeasure should be(original.startMeasure)
+      asset.sideCode should be(SideCode.BothDirections.value)
+      asset.value.get.asInstanceOf[DynamicValue].value.properties.map { propVal =>
+        original.value.get.asInstanceOf[DynamicValue].value.properties.contains(propVal) should be (true)
+      }
+      asset.expired should be(false)
+      expiredAsset.expired should be(true)
+    }
+  }
+
+
+  test("Adjust projected asset with creation"){
+    val careClassValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("hoitoluokat_talvihoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(20))),
+      DynamicProperty("hoitoluokat_viherhoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(3)))
+    )))
+
+    val carryingCapacityValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("kevatkantavuus", "integer", false, Seq(DynamicPropertyValue(0))),
+      DynamicProperty("routivuuskerroin", "single_choice", false, Seq(DynamicPropertyValue(40))),
+      DynamicProperty("mittauspaiva", "date", false, Seq(DynamicPropertyValue("11.9.2018")))
+    )))
+
+
+
+    val massTransitLaneValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("public_validity_period", "time_period", false, Seq(DynamicPropertyValue(Map("days" -> 1,
+        "startHour" -> 2,
+        "endHour" -> 10,
+        "startMinute" -> 10,
+        "endMinute" -> 20))))
+    )))
+
+    val damagedByThawValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("kelirikko", "numbere", false, Seq(DynamicPropertyValue(10)))
+    )))
+
+    val assetsInfo = Seq(
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId)
+        )
+
+      assetsInfo.zipWithIndex.foreach(adjustProjectedAssetWithCreation)
+  }
+
+  def adjustProjectedAssetWithCreation(assetInfoCount: (TestAssetInfo, Int)) : Unit = {
+    val assetInfo = assetInfoCount._1
+    val count = assetInfoCount._2 + 1
+    val oldLinkId = 5000
+    val newLinkId = 6000
+    val municipalityCode = 444
+    val functionalClass = 1
+    val geom = List(Point(0, 0), Point(300, 0))
+    val len = GeometryUtils.geometryLength(geom)
+
+    val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+    val changeInfo = Seq(
+      ChangeInfo(Some(oldLinkId), Some(newLinkId), 1204467577, 1, Some(0), Some(150), Some(100), Some(200), 1461970812000L))
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "KX1", 0).head
+
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
+      ServiceWithDao.getByMunicipality(assetInfo.typeId, municipalityCode)
+
+      withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
+        verify(mockEventBus, times(count))
+          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
+
+        val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
+        verify(mockEventBus, times(count)).publish(org.mockito.ArgumentMatchers.eq("dynamicAsset:saveProjectedAssets"), captor.capture())
+
+        val toBeComparedProperties = assetInfo.newLinearAsset.value.asInstanceOf[DynamicValue].value.properties
+        val projectedAssets = captor.getValue
+        projectedAssets.length should be(1)
+        val projectedAsset = projectedAssets.head
+        projectedAsset.id should be(0)
+        projectedAsset.linkId should be(6000)
+        projectedAsset.value.get.asInstanceOf[DynamicValue].value.properties.foreach { property =>
+          val existingProperty = toBeComparedProperties.find(p => p.publicId == property.publicId)
+          existingProperty.get.values.forall { value =>
+            toBeComparedProperties.asInstanceOf[Seq[DynamicProperty]].exists(prop => prop.values.contains(value))
+          }
+        }
+      }
+    }
+  }
 }

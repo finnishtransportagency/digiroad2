@@ -116,7 +116,7 @@
   };
 
   root.MassTransitStopForm = {
-    initialize: function (backend) {
+    initialize: function (backend, feedbackCollection) {
       var enumeratedPropertyValues = null;
       var readOnly = true;
       poistaSelected = false;
@@ -125,6 +125,8 @@
       var isTerminalBusStop = false;
       var roadAddressInfoLabel;
       var authorizationPolicy = new MassTransitStopAuthorizationPolicy();
+      new FeedbackDataTool(feedbackCollection, 'massTransitStop', authorizationPolicy);
+
       var MStopDeletebutton = function(readOnly) {
 
         var removalForm = $('<div class="checkbox"> <label>Poista<input type="checkbox" id = "removebox"></label></div>');
@@ -179,8 +181,8 @@
 
           var header = $('<header/>');
 
-          if (_.isNumber(selectedMassTransitStopModel.get('nationalId'))) {
-            header.append('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.get('nationalId') + '</span>');
+          if (_.isNumber(selectedMassTransitStopModel.getByProperty('nationalId'))) {
+            header.append('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.getByProperty('nationalId') + '</span>');
           } else if (isTerminalBusStop) {
             header.append('<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
           } else {
@@ -194,13 +196,13 @@
       var getStreetView = function() {
         var model = selectedMassTransitStopModel;
         var render = function() {
-          var wgs84 = proj4('EPSG:3067', 'WGS84', [model.get('lon'), model.get('lat')]);
-          var heading= (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90);
+          var wgs84 = proj4('EPSG:3067', 'WGS84', [model.getByProperty('lon'), model.getByProperty('lat')]);
+          var heading= (model.getByProperty('validityDirection') === validitydirections.oppositeDirection ? model.getByProperty('bearing') - 90 : model.getByProperty('bearing') + 90);
           return $(streetViewTemplates(wgs84[0],wgs84[1],heading)(
             {
             wgs84X: wgs84[0],
             wgs84Y: wgs84[1],
-            heading: (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90)
+            heading: (model.getByProperty('validityDirection') === validitydirections.oppositeDirection ? model.getByProperty('bearing') - 90 : model.getByProperty('bearing') + 90)
           })).addClass('street-view');
         };
 
@@ -681,7 +683,7 @@
 
         return [{
           propertyType: 'notification',
-          enabled: selectedMassTransitStopModel.get('floating'),
+          enabled: selectedMassTransitStopModel.getByProperty('floating'),
           text: text
         }];
       };
@@ -872,6 +874,7 @@
       eventbus.on('terminalBusStop:selected', function(value) {
         isTerminalBusStop = value;
       });
+
       backend.getEnumeratedPropertyValues();
     }
   };

@@ -1,0 +1,1 @@
+alter table feedback drop column receiver;

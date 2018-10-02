@@ -1,17 +1,24 @@
 package fi.liikennevirasto.digiroad2.user
 
+import fi.liikennevirasto.digiroad2.Point
+import java.sql.Date
+import java.time.LocalDate
+
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset._
 
 case class Configuration(
-                        zoom: Option[Long] = None,
+                        zoom: Option[Int] = None,
                         east: Option[Long] = None,
                         north: Option[Long] = None,
                         municipalityNumber: Option[Int]  = None,
                         authorizedMunicipalities: Set[Int] = Set(),
                         authorizedAreas: Set[Int] = Set(),
-                        roles: Set[String] = Set()
+                        roles: Set[String] = Set(),
+                        lastNotificationDate: Option[String] = None,
+                        lastLoginDate: Option[String] = None
                         )
+
 case class User(id: Long, username: String, configuration: Configuration, name: Option[String] = None) {
   def hasWriteAccess() = !isViewer()
 
@@ -27,6 +34,7 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
     configuration.roles(Role.Operator)
   }
 
+  //Todo change to ELY Maintainer
   def isBusStopMaintainer(): Boolean = {
     configuration.roles(Role.BusStopMaintainer)
   }
@@ -56,11 +64,15 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
 }
 
 object Role {
+  // TODO note this role should be change in newuser.html too
   val Operator = "operator"
+  // TODO Could be deleted
   val Administrator = "administrator"
+  // TODO Rename to municipality Maintainer
   val Premium = "premium"
   val Viewer = "viewer"
   val ViiteUser = "viite"
+  //TODO change to ELY Maintainer and replace DBase
   val BusStopMaintainer = "busStopMaintainer"
   val ServiceRoadMaintainer = "serviceRoadMaintainer"
 }

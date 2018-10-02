@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
@@ -140,6 +140,23 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (enrichRoadLinksFromVVH(vvhRoadLinks), changeInfos)
   }
 
+  def getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality: Int, newTransaction: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    val fut = for{
+      changeInfos <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipality)
+      complementaryLinks <- vvhClient.complementaryData.fetchByMunicipalityF(municipality)
+      vvhRoadLinks <- vvhClient.roadLinkData.fetchByMunicipalityF(municipality)
+    } yield (changeInfos, complementaryLinks, vvhRoadLinks)
+
+    val (changeInfos, complementaryLinks, vvhRoadLinks)= Await.result(fut, Duration.Inf)
+    if (newTransaction)
+      withDynTransaction {
+        (enrichRoadLinksFromVVH(vvhRoadLinks ++ complementaryLinks, changeInfos), changeInfos)
+      }
+    else
+      (enrichRoadLinksFromVVH(vvhRoadLinks ++ complementaryLinks, changeInfos), changeInfos)
+  }
+
+
   /**
     * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
@@ -196,6 +213,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getRoadNodesFromVVHFuture(municipality: Int): Future[Seq[VVHRoadNodes]] = {
     Future(getRoadNodesByMunicipality(municipality))
   }
+
+  def getTinyRoadLinkFromVVH(municipality: Int): Seq[TinyRoadLink] = getCachedTinyRoadLinks(municipality)
 
   /**
     * This method returns road links by bounding box and municipalities.
@@ -1249,6 +1268,25 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
 
     vvhSerializer.readCachedGeometry(geometryFile).filterNot(r => getFeatureClass(r) == 12312)
+  }
+
+  protected def readCachedTinyRoadLinks(geometryFile: File): Seq[TinyRoadLink] = {
+    vvhSerializer.readCachedTinyRoadLinks(geometryFile)
+  }
+
+  private def getCachedTinyRoadLinks(municipalityCode: Int): Seq[TinyRoadLink] = {
+    val dir = getCacheDirectory
+    val cachedFiles = getCacheWithComplementaryFiles(municipalityCode, dir)
+    cachedFiles match {
+      case Some((geometryFile, _, complementaryFile)) =>
+        logger.info("Returning cached result")
+        readCachedTinyRoadLinks(geometryFile) ++ readCachedTinyRoadLinks(complementaryFile)
+      case _ =>
+        val (roadLinks, _ , complementaryRoadLink) = getCachedRoadLinks(municipalityCode)
+        (roadLinks ++ complementaryRoadLink).map { roadlink =>
+          TinyRoadLink(roadlink.linkId)
+        }
+    }
   }
 
   private def getCachedRoadLinks(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {

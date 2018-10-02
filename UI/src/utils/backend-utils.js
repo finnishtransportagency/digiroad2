@@ -288,28 +288,16 @@
       });
     }, 1000);
 
-    this.deleteLinearAssets = _.throttle(function(data, success, failure) {
-      if (data.typeId == 110) { // Pavement must be set to null value, not deleted
-        $.ajax({
-          contentType: "application/json",
-          type: "POST",
-          url: "api/linearassets",
-          data: JSON.stringify(data),
-          dataType: "json",
-          success: success,
-          error: failure
-        });
-      } else {
-        $.ajax({
-          contentType: "application/json",
-          type: "DELETE",
-          url: "api/linearassets",
-          data: JSON.stringify(data),
-          dataType: "json",
-          success: success,
-          error: failure
-        });
-      }
+    this.deleteLinearAssets = _.throttle(function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/linearassets",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
     }, 1000);
 
     this.splitLinearAssets = function(typeId, id, splitMeasure, createdValue, existingValue, success, failure) {
@@ -362,6 +350,10 @@
 
     this.getMassTransitStopByNationalId = function(nationalId, callback) {
       $.get('api/massTransitStops/' + nationalId, callback);
+    };
+
+    this.getMassTransitStopById = function(id, callback) {
+      $.get('api/massTransitStop/' + id, callback);
     };
 
     this.getUserRoles = function () {
@@ -503,6 +495,10 @@
       };
     });
 
+    this.userNotificationInfo = function() {
+      return $.get('api/userNotification');
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
@@ -555,15 +551,27 @@
       });
     };
 
-    this.sendFeedback = function (data, successCallback, errorCallback) {
+    this.sendFeedbackApplication = function (data, successCallback, errorCallback) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/feedback",
+        url: "api/feedbackApplication",
         data: data,
         dataType: "json",
         success: successCallback,
         error: errorCallback
+        });
+    };
+
+    this.sendFeedbackData = function (data, successCallback, errorCallback) {
+        $.ajax({
+            contentType: "application/json",
+            type: "POST",
+            url: "api/feedbackData",
+            data: data,
+            dataType: "json",
+            success: successCallback,
+            error: errorCallback
         });
     };
 
@@ -610,6 +618,10 @@
 
     this.getMassTransitStopByPassengerIdForSearch = function(passengerID) {
       return $.get('api/massTransitStops/passenger/' + passengerID);
+    };
+
+    this.getDashBoardInfoByMunicipality = function() {
+       return $.getJSON('api/dashBoardInfo');
     };
 
     function createCallbackRequestor(getParameters) {
@@ -781,5 +793,16 @@
       };
       };
 
+    this.updateUserConfigurationDefaultLocation = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/userConfiguration/defaultLocation",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
   };
 }(this));

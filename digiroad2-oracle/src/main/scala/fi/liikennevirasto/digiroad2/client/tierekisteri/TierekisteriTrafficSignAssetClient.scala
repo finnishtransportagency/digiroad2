@@ -21,6 +21,8 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   protected val trLMNUMERO = "LMNUMERO"
   protected val trLMTEKSTI = "LMTEKSTI"
   protected val trPUOLI = "PUOLI"
+  protected val trLIIKVAST = "LIIKVAST"
+  protected val wrongSideOfTheRoad = "1"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
@@ -29,17 +31,19 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
+    val roadSide: RoadSide = getFieldValue(data, trLIIKVAST) match {
+      case Some(sideInfo) if sideInfo == wrongSideOfTheRoad  =>
+        RoadSide.switch(convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown))
+      case _ =>
+        convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+    }
     Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
-
   }
 }
 class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriTrafficSignAssetClient(trEndPoint, trEnable, httpClient) {
 
-  private val trLIIKVAST = "LIIKVAST"
   private val trNOPRA506 = "NOPRA506"
-  private val wrongSideOfTheRoad = "1"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
@@ -63,4 +67,3 @@ class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Bool
       None
   }
 }
-
