@@ -63,6 +63,10 @@ class MassTransitStopDao {
     queryToPersistedMassTransitStops(queryFilter(query))
   }
 
+  def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {
+
+  }
+
   def fetchByRadius(position : Point, meters: Int, terminalIdOption: Option[Long] = None): Seq[PersistedMassTransitStop] = {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)

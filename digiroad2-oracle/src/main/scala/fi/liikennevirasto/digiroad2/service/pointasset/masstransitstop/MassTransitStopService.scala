@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
@@ -145,6 +146,10 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] = massTransitStopDao.fetchPointAssets(queryFilter)
 
+  override def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {
+    massTransitStopDao.fetchLightGeometry(queryFilter)
+  }
+
   override def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedAsset] = {
     withDynSession {
       val idsStr = ids.toSeq.mkString(",")
@@ -216,6 +221,10 @@ trait MassTransitStopService extends PointAssetOperations {
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedMassTransitStop] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
+  }
+
+  override protected def getLightGeometryByBoundingBox(bounds: BoundingRectangle): Seq[LightGeometry] = {
+    super.getLightGeometryByBoundingBox(bounds)
   }
 
   override def getNormalAndComplementaryById(id: Long, roadLink: RoadLink): Option[PersistedAsset] = {

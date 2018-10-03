@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.security.InvalidParameterException
-
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 
@@ -1412,6 +1411,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/pointassets/light") {
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    getLightGeometry(typeId)
+  }
+
+  private def getLightGeometry(typeId: Int) = {
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      val usedService = getPointAssetService(typeId)
+      val assets = usedService.getLightGeometryByBoundingBox(boundingRectangle)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
   get("/pedestrianCrossings/:id")(getPointAssetById(pedestrianCrossingService))
   get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
@@ -1623,6 +1638,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def getPointAssetService(typeId: Int): PointAssetOperations = {
+    typeId match {
+      case MassTransitStopAsset.typeId => massTransitStopService
+      case _ => throw new UnsupportedOperationException("Asset type not supported")
+    }
+  }
 
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()
