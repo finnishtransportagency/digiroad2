@@ -74,9 +74,9 @@ class MassTransitStopDao {
 
     val resultList = Q.queryNA[(Point, Option[LocalDate], Option[LocalDate])](queryFilter(query)).list
 
-    resultList.map { case (coordinate, validFrom, validTo) =>
+    resultList.map { case (point, validFrom, validTo) =>
       val validityPeriod = Some(constructValidityPeriod(validFrom, validTo))
-      LightGeometryMassTransitStop(coordinate, validityPeriod)
+      LightGeometryMassTransitStop(point.x, point.y, validityPeriod)
     }
   }
 

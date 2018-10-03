@@ -67,7 +67,8 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
 }
 
 trait LightGeometry {
-  val coordinate: Point
+  val lon: Double
+  val lat: Double
 }
 
 trait PointAssetOperations {

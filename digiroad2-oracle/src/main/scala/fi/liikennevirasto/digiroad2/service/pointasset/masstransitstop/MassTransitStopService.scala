@@ -41,7 +41,7 @@ case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, poi
                               created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                               roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean, terminalId: Option[Long])
 
-case class LightGeometryMassTransitStop(coordinate: Point, validityPeriod: Option[String]) extends LightGeometry
+case class LightGeometryMassTransitStop(lon: Double, lat: Double, validityPeriod: Option[String]) extends LightGeometry
 
 trait AbstractPublishInfo {
   val asset: Option[PersistedMassTransitStop]

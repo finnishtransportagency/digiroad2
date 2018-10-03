@@ -1412,15 +1412,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/pointassets/light") {
-    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    getLightGeometry(typeId)
+    val assetType = params.getOrElse("type", halt(BadRequest("Missing mandatory 'type' parameter")))
+    getLightGeometry(assetType)
   }
 
-  private def getLightGeometry(typeId: Int) = {
+  private def getLightGeometry(assetType: String) = {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val usedService = getPointAssetService(typeId)
+      val usedService = getPointAssetService(assetType)
       usedService.getLightGeometryByBoundingBox(boundingRectangle)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
@@ -1638,9 +1638,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getPointAssetService(typeId: Int): PointAssetOperations = {
-    typeId match {
-      case MassTransitStopAsset.typeId => massTransitStopService
+  private def getPointAssetService(assetType: String): PointAssetOperations = {
+    assetType match {
+      case MassTransitStopAsset.layerName => massTransitStopService
       case _ => throw new UnsupportedOperationException("Asset type not supported")
     }
   }
