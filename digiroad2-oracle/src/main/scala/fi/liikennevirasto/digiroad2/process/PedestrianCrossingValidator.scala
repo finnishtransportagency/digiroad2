@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.process
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PedestrianCrossings, Private, SideCode}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
@@ -16,51 +17,41 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.PedestrianCrossing)
 
-  override def filteredAssetByLinkIdAndDirection(roadLink: RoadLink, assets: Seq[AssetType], trafficSign: PersistedTrafficSign, distance: Double): Seq[AssetType] = {
-    val trafficSignPoint = Point(trafficSign.lon, trafficSign.lat)
-    val (first, _) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-    val areAdjacent = GeometryUtils.areAdjacent(trafficSignPoint, first)
-
-    def assetBetweenSignAndGeometryPoint(asset: AssetType): Boolean = {
-      if (areAdjacent) {
-        asset.mValue >= trafficSign.mValue
-      } else {
-        asset.mValue <= trafficSign.mValue
-      }
-    }
-
-    def assetDistance(assets: Seq[AssetType]): (AssetType, Double) = {
-      if (areAdjacent) {
-        val nearestAsset = assets.minBy(_.mValue)
-        (nearestAsset, nearestAsset.mValue)
-      } else {
-        val nearestAsset = assets.maxBy(_.mValue)
-        (nearestAsset, GeometryUtils.geometryLength(roadLink.geometry) - nearestAsset.mValue)
-      }
-    }
-
-    val assetOnLink = assets.filter(a => a.linkId == roadLink.linkId && assetBetweenSignAndGeometryPoint(a))
-    if (assetOnLink.nonEmpty && assetDistance(assetOnLink)._2 + distance <= radiusDistance) {
-      Seq(assetDistance(assets)._1)
-    } else
-      Seq()
-  }
-
-  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], trafficSignPoint: Point, distance: Double): Seq[AssetType] = {
-    def assetDistance(assets: Seq[AssetType]): (AssetType, Double) = {
+  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType] = {
+    def assetDistance(assets: Seq[AssetType]): Option[(AssetType, Double)] = {
       val (first, _) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-      if (GeometryUtils.areAdjacent(trafficSignPoint, first)) {
-        val nearestAsset = assets.minBy(_.mValue)
-        (nearestAsset, nearestAsset.mValue)
-      } else {
-        val nearestAsset = assets.maxBy(_.mValue)
-        (nearestAsset, GeometryUtils.geometryLength(roadLink.geometry) - nearestAsset.mValue)
+      val isAdjacente = GeometryUtils.areAdjacent(pointOfInterest, first)
+        trafficSign match {
+        case Some(traffic) =>
+          val filteredAsset = if(SideCode.apply(traffic.validityDirection) == TowardsDigitizing)
+            assets.filter(a => a.linkId == roadLink.linkId && a.mValue >= traffic.mValue)
+          else
+            assets.filter(a => a.linkId == roadLink.linkId && a.mValue <= traffic.mValue)
+
+          if (filteredAsset.nonEmpty) {
+            val nearestAsset = filteredAsset.minBy(asset => Math.abs(asset.mValue - traffic.mValue))
+            Some(nearestAsset, Math.abs(traffic.mValue - nearestAsset.mValue))
+          } else
+            None
+        case _ =>
+          val filteredAsset =  assets.filter(a => a.linkId == roadLink.linkId)
+          if (filteredAsset.nonEmpty) {
+            if(isAdjacente) {
+              val nearestAsset = filteredAsset.minBy(_.mValue)
+              Some(nearestAsset, nearestAsset.mValue)
+            }
+            else {
+              val nearestAsset = assets.filter(a => a.linkId == roadLink.linkId).maxBy(_.mValue)
+              Some(nearestAsset, GeometryUtils.geometryLength(roadLink.geometry) - nearestAsset.mValue)
+            }
+          } else
+            None
       }
     }
 
-    val assetOnLink = assets.filter(_.linkId == roadLink.linkId)
-    if (assetOnLink.nonEmpty && assetDistance(assetOnLink)._2 + distance <= radiusDistance) {
-      Seq(assetDistance(assets)._1)
+    val resultAssets = assetDistance(assets)
+    if (resultAssets.nonEmpty && resultAssets.get._2 + distance <= radiusDistance) {
+      Seq(resultAssets.get._1)
     } else
       Seq()
   }
@@ -68,7 +59,6 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
   override def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType] = {
     dao.fetchPedestrianCrossingByLinkIds(roadLink.map(_.linkId)).filterNot(_.floating)
   }
-
 
   override def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     //Since the Pedestrian Crossing asset doesn't have value or direction, if exist asset on this method return a empty Set
@@ -87,7 +77,7 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
           roadLinks.find(_.linkId == asset.linkId) match {
             case Some(roadLink) =>
                 val trafficSingsByRadius: Set[PersistedTrafficSign] =
-                splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), radiusDistance))
+                splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), radiusDistance) ++ trafficSignService.getTrafficSign(Seq(roadLink.linkId)))
                   .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
 

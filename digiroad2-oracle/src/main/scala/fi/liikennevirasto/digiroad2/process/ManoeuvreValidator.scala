@@ -25,7 +25,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double): Seq[AssetType] = {
+  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType] = {
     assets.filter {
       _.elements.filter(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).contains(roadLink.linkId)
     }

@@ -46,10 +46,7 @@ trait AssetServiceValidator {
 
   def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate]
   def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType]
-  def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], point: Point, distance: Double): Seq[AssetType]
-  def filteredAssetByLinkIdAndDirection(roadLink: RoadLink, assets: Seq[AssetType], trafficSign: PersistedTrafficSign, distance: Double): Seq[AssetType] = {
-    filteredAsset(roadLink, assets, Point(trafficSign.lon, trafficSign.lat), distance)
-  }
+  def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], point: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType]
 
   def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo) : Unit
 
@@ -112,7 +109,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(trafficSign.validityDirection)).head
 
     val assets = getAsset(roadLinks)
-    val filterAssets = filteredAssetByLinkIdAndDirection(trafficSignRoadLink, assets, trafficSign, 0)
+    val filterAssets = filteredAsset(trafficSignRoadLink, assets, pointOfInterest, 0, Some(trafficSign))
     if (filterAssets.isEmpty) {
       val distance = if(GeometryUtils.areAdjacent(pointOfInterest, first))
         GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry)
@@ -175,10 +172,10 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     println(DateTime.now())
 
     println("Fetching municipalities")
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
-      Queries.getMunicipalities
-    }
-
+//    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
+//      Queries.getMunicipalities
+//    }
+  val municipalities = Set(766)
     OracleDatabase.withDynTransaction {
       inaccurateAssetDAO.deleteAllInaccurateAssets(assetTypeInfo.typeId)
   }

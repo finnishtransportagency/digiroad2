@@ -22,7 +22,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
 
   val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.HazmatProhibitionA, TrafficSignType.HazmatProhibitionB, NoVehiclesWithDangerGoods)
 
-  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double): Seq[AssetType] = {
+  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType] = {
     def assetDistance(assets: Seq[AssetType]): (AssetType, Double) =  {
       val (first, _) = GeometryUtils.geometryEndpoints(roadLink.geometry)
       if(GeometryUtils.areAdjacent(pointOfInterest, first)) {

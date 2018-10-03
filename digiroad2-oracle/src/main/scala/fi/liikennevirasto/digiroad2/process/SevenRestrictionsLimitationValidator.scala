@@ -19,7 +19,7 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {true}
 
-  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double): Seq[AssetType] = {
+  override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType] = {
     def assetDistance(assets: Seq[AssetType]): (AssetType, Double) = {
       val (first, _) = GeometryUtils.geometryEndpoints(roadLink.geometry)
       if (GeometryUtils.areAdjacent(pointOfInterest, first)) {
