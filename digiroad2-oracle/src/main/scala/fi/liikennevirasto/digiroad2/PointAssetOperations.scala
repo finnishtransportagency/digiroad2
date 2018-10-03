@@ -66,13 +66,16 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val linkSource: LinkGeomSource
 }
 
+trait LightGeometry {
+  val coordinate: Point
+}
+
 trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
 
   case class FloatingPointAsset(id: Long, municipality: String, administrativeClass: String, floatingReason: Option[Long])
   case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
-  case class LightGeometry(coordinate: Point, validityPeriod: Option[String])
 
   def roadLinkService: RoadLinkService
   val idField = "id"
@@ -125,6 +128,14 @@ trait PointAssetOperations {
         }
       }
       assetsBeforeUpdate.map(_.asset)
+    }
+  }
+
+  def getLightGeometryByBoundingBox(bounds: BoundingRectangle): Seq[LightGeometry] = {
+    withDynSession {
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+      fetchLightGeometry(withFilter(filter))
     }
   }
 
@@ -274,14 +285,6 @@ trait PointAssetOperations {
     MassQuery.withIds(linkIds) { idTableName =>
       val filter = s"join $idTableName i on i.id = lp.link_id where a.asset_type_id = $typeId"
       fetchPointAssets(withFilter(filter))
-    }
-  }
-
-  def getLightGeometryByBoundingBox(bounds: BoundingRectangle): Seq[LightGeometry] = {
-    withDynSession {
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
-      val assetGeometry: Seq[LightGeometry] = fetchLightGeometry(withFilter(filter))
     }
   }
 

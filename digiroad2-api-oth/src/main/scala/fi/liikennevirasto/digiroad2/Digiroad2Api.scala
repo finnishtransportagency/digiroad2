@@ -1421,7 +1421,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       val usedService = getPointAssetService(typeId)
-      val assets = usedService.getLightGeometryByBoundingBox(boundingRectangle)
+      usedService.getLightGeometryByBoundingBox(boundingRectangle)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
