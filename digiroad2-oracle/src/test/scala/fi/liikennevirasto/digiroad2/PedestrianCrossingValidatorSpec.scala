@@ -15,6 +15,8 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import org.joda.time
+import org.joda.time.DateTime
 
 class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -48,10 +50,8 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
       when(pedestrianValidator.dao.fetchPedestrianCrossingByLinkIds(Seq(1001l,1002l, 1003l))).thenReturn(Seq())
 
       val result = pedestrianValidator.assetValidator(trafficSign)
-      withClue("assetName " + AssetTypeInfo.apply(typeId).toString) {
         result should have size 1
         result.head.linkId should be(Some(roadLink2.linkId))
-      }
 
       dynamicSession.rollback()
     }
@@ -68,9 +68,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
         )
 
       val result = pedestrianValidator.assetValidator(trafficSign)
-      withClue("assetName " + AssetTypeInfo.apply(typeId).toString) {
         result should have size 0
-      }
 
       dynamicSession.rollback()
     }
@@ -88,12 +86,141 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
         )
 
       val result = pedestrianValidator.assetValidator(trafficSign)
-      withClue("assetName " + AssetTypeInfo.apply(typeId).toString) {
         result should have size 1
         result.head.linkId should be (Some(roadLink2.linkId))
-      }
 
       dynamicSession.rollback()
     }
   }
+
+  test("Pedestrian crossing traffic filter nearest asset") {
+    OracleDatabase.withDynTransaction {
+
+
+      val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val assets = Seq(
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface))
+
+      val result = pedestrianValidator.filteredAsset(roadLink, assets, Point(0, 0.0), 0)
+      result should have size 1
+      result.head.id should be (1l)
+      result.head.mValue should be (5)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Pedestrian crossing traffic filter further asset") {
+    OracleDatabase.withDynTransaction {
+
+      val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val assets = Seq(
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface))
+
+      val result = pedestrianValidator.filteredAsset(roadLink, assets, Point(50, 0.0), 0)
+      result should have size 1
+      result.head.id should be (4l)
+      result.head.mValue should be (40)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Pedestrian crossing traffic (AgainstDigitizing) in roadLink filter nearest asset TowardDigitalization") {
+    OracleDatabase.withDynTransaction {
+
+      val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val assets = Seq(
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface))
+
+      val propTrafficSign = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.PedestrianCrossing.value.toString))))
+      val trafficSign = PersistedTrafficSign(1, 1001l, 0, 25, 25, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+
+      val result = pedestrianValidator.filteredAsset(roadLink, assets, Point(0.0, 0.0), 0, Some(trafficSign))
+      result should have size 1
+      result.head.id should be (2l)
+      result.head.mValue should be (10)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Pedestrian crossing traffic (TowardsDigitizing) in roadLink filter nearest asset AgainstDigitizing") {
+    OracleDatabase.withDynTransaction {
+
+      val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val assets = Seq(
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface))
+
+      val propTrafficSign = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.PedestrianCrossing.value.toString))))
+      val trafficSign = PersistedTrafficSign(1, 1001l, 0, 25, 25, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+
+      val result = pedestrianValidator.filteredAsset(roadLink, assets, Point(0, 0.0), 0, Some(trafficSign))
+      result should have size 1
+      result.head.id should be (3l)
+      result.head.mValue should be (30)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Pedestrian crossing traffic (AgainstDigitizing) in roadLink filter nearest asset AgainstDigitizing") {
+    OracleDatabase.withDynTransaction {
+
+      val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val assets = Seq(
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface))
+
+      val propTrafficSign = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.PedestrianCrossing.value.toString))))
+      val trafficSign = PersistedTrafficSign(1, 1001l, 0, 25, 25, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+
+      val result = pedestrianValidator.filteredAsset(roadLink, assets, Point(50.0, 0.0), 0, Some(trafficSign))
+      result should have size 1
+      result.head.id should be (2l)
+      result.head.mValue should be (10)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Pedestrian crossing traffic (TowardsDigitizing) in roadLink filter nearest asset TowardDigitalization") {
+    OracleDatabase.withDynTransaction {
+
+      val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val assets = Seq(
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, LinkGeomSource.NormalLinkInterface))
+
+      val propTrafficSign = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.PedestrianCrossing.value.toString))))
+      val trafficSign = PersistedTrafficSign(1, 1001l, 0, 25, 25, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+
+      val result = pedestrianValidator.filteredAsset(roadLink, assets, Point(0, 0.0), 0, Some(trafficSign))
+      result should have size 1
+      result.head.id should be (3l)
+      result.head.mValue should be (30)
+
+      dynamicSession.rollback()
+    }
+  }
+
+
+
+
 }
