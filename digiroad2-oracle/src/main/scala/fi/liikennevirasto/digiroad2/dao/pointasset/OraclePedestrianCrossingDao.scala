@@ -8,9 +8,10 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
+
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery}
+import slick.jdbc._
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
 case class PedestrianCrossing(id: Long, linkId: Long,
@@ -22,6 +23,7 @@ case class PedestrianCrossing(id: Long, linkId: Long,
                               createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None,
+                              expired: Boolean = false,
                               linkSource: LinkGeomSource) extends PersistedPointAsset
 
 
@@ -101,12 +103,12 @@ object OraclePedestrianCrossingDao {
     val query =
       """
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
-        pos.link_source
+        case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query)/* + " and (a.valid_to > sysdate or a.valid_to is null)"*/
     StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
   }
 
@@ -124,8 +126,34 @@ object OraclePedestrianCrossingDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
+      val expired = r.nextBoolean()
 
-      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
+      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
     }
   }
+
+//  def fetchChangesByFilter(sinceDate: DateTime,untilDate: DateTime, queryFilter: String => SQLInterpolation): Seq[PedestrianCrossing] = {
+//    queryFilter("""select a.id, pos.link_id, pos.start_measure
+//    from asset a
+//    join asset_link al on a.id = al.asset_id
+//    join lrm_position pos on al.position_id = pos.id""").as[PedestrianCrossing].list
+
+//    val query =
+//      sql"""
+//        #$baseSelect
+//        where floating = 0
+//        and (
+//          (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
+//          or
+//          (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
+//          or
+//          (a.created_date > $sinceDate and a.created_date <= $untilDate)
+//        )
+//      """.as[(Long, Long, Double)].list
+
+
+//    Seq()
+////    val queryWithFilter = queryFilter(query)
+////    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
+//  }
 }

@@ -234,6 +234,7 @@ object Asset {
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
   val DatePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
   val DateTimePropertyFormatMs = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss,SSS")
+  val DateTimeSimplifiedFormat = DateTimeFormat.forPattern("yyyyMMddHHmm")
 }
 
 abstract class AbstractProperty {

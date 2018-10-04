@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.pointasset.PedestrianCrossing
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
@@ -39,6 +40,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
+      case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until))
     }
   }
 
@@ -133,6 +135,33 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> linearAsset.modifiedBy,
                 "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
+              )
+          )
+        }
+    )
+
+  //After include another point Asset should be replace PedestrianCrossing by PersistedPointAsset,
+  // pay special attention to created and modified fields on masstransitStop extends
+  private def pointAssetsToGeoJson(since: DateTime, changedPointAssets: Seq[PedestrianCrossing]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        changedPointAssets.map { pointAsset =>
+          Map(
+            "type" -> "Feature",
+            "id" -> pointAsset.id,
+            "geometry" -> Map(
+              "type" -> "LineString",
+              "coordinates" -> Map("x" -> pointAsset.lon, "y" -> pointAsset.lat)
+            ),
+            "properties" ->
+              Map(
+                "endMeasure" -> pointAsset.mValue,
+                "createdBy" -> pointAsset.createdBy,
+                "modifiedAt" -> pointAsset.modifiedAt.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> pointAsset.createdAt.map(DateTimePropertyFormat.print(_)),
+                "modifiedBy" -> pointAsset.modifiedBy,
+                "changeType" -> extractChangeType(since, pointAsset.expired, pointAsset.createdAt)
               )
           )
         }
