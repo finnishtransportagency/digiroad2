@@ -734,14 +734,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var extent = map.getView().calculateExtent(map.getSize());
     var center = map.getView().getCenter();
     var zoomLvl = zoomlevels.getViewZoom(map);
-    clusterView = zoomLvl <= clusterZoomLvl;
+    clusterView = isExperimental && zoomLvl <= clusterZoomLvl;
 
     eventbus.once('roadLinks:fetched', function () {
       var roadLinks = roadCollection.getAll();
       roadLayer.drawRoadLinks(roadLinks, zoomlevels.getViewZoom(map));
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
     });
-    if(clusterView && isExperimental){
+    if(clusterView){
       massTransitStopsCollection.fetchLightAssets({ bbox: extent, layerName: layerName}).then(function(assets){
         renderClusters(assets);
       });
