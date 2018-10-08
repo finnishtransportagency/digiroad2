@@ -100,7 +100,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     dragControl.set('name', 'translate_massTransitStop');
 
     var translateSelectedAsset = function(event) {
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(),event.coordinate[0], event.coordinate[1]);
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(),event.coordinate[0], event.coordinate[1]);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: event.coordinate[0], y: event.coordinate[1]});
 
@@ -109,7 +109,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     };
 
     var translateEndedAsset = function(event){
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(),event.coordinate[0], event.coordinate[1]);
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(),event.coordinate[0], event.coordinate[1]);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: event.coordinate[0], y: event.coordinate[1]});
 
@@ -371,7 +371,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var createNewAsset = function(coordinate, placement, stopTypes) {
     var default_asset_direction = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
-    var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), coordinate.x, coordinate.y);
+    var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), coordinate.x, coordinate.y);
     if(nearestLine.end && nearestLine.start){
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, coordinate);
       var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
@@ -557,7 +557,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         },
         closeCallback: function(){
           //Moves the stop to the original position
-          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), originalCoordinates.lon, originalCoordinates.lat);
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), originalCoordinates.lon, originalCoordinates.lat);
           var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
           doMovement(event, angle, nearestLine, originalCoordinates);
           roadLayer.clearSelection();

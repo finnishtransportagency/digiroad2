@@ -294,7 +294,7 @@
     };
 
     var getRoadLinkDirection = function(){
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), currentAsset.payload.lon, currentAsset.payload.lat);
       var linkId = nearestLine.linkId;
       if (!currentAsset.linkId)
         currentAsset.linkId = linkId;
@@ -407,7 +407,7 @@
 
     var get = function() {
       if (exists()) {
-          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), currentAsset.payload.lon, currentAsset.payload.lat);
           var linkId = nearestLine.linkId;
           if (!currentAsset.linkId)
               currentAsset.linkId = linkId;

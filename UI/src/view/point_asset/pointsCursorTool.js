@@ -33,7 +33,7 @@
     };
 
     var updateByPosition = function(mousePoint) {
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), mousePoint[0], mousePoint[1]);
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), mousePoint[0], mousePoint[1]);
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: mousePoint[0], y:mousePoint[1] });
       moveTo(projectionOnNearestLine.x, projectionOnNearestLine.y);
     };
