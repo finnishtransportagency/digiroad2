@@ -82,7 +82,7 @@ class OracleAssetDao {
          join ASSET_LINK AL on AL.ASSET_ID = A.ID
          join LRM_POSITION lrm on lrm.ID = AL.POSITION_ID
          join  #$idTableName i on i.id = lrm.link_id
-         where A.ASSET_TYPE_ID = $typeId""".as[Long].list
+         where A.ASSET_TYPE_ID = $typeId AND (A.valid_to IS NULL OR A.valid_to > SYSDATE ) """.as[Long].list
     }
   }
 
