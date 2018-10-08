@@ -345,7 +345,7 @@ object AssetTypeInfo {
     values.find(_.toString == stringValue).getOrElse(UnknownAssetTypeId)
   }
 }
-case object MassTransitStopAsset extends AssetTypeInfo { val typeId = 10; def geometryType = "point"; val label = "MassTransitStop"; val layerName = "massTransitStops"}
+case object MassTransitStopAsset extends AssetTypeInfo { val typeId = 10; def geometryType = "point"; val label = "MassTransitStop"; val layerName = "massTransitStop"}
 case object SpeedLimitAsset extends AssetTypeInfo { val typeId = 20; def geometryType = "linear"; val label = "SpeedLimit"; val layerName = "speedLimits"}
 case object TotalWeightLimit extends AssetTypeInfo { val typeId = 30; def geometryType = "linear"; val label = "TotalWeightLimit" ; val layerName = "totalWeightLimit"}
 case object TrailerTruckWeightLimit extends AssetTypeInfo { val typeId = 40; def geometryType = "linear"; val label = "TrailerTruckWeightLimit"; val layerName = "trailerTruckWeightLimit" }

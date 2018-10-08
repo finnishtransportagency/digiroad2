@@ -808,7 +808,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
     val minVisibleZoom = 2
-    val maxZoom = 10
+    val maxZoom = 8
 
     zoom >= minVisibleZoom && zoom < maxZoom match {
       case true =>
@@ -823,7 +823,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
     val minVisibleZoom = 2
-    val maxZoom = 10
+    val maxZoom = 8
 
     zoom >= minVisibleZoom && zoom < maxZoom match {
       case true =>

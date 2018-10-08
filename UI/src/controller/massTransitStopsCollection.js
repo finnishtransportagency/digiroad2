@@ -39,6 +39,12 @@
       verificationCollection.fetch(mapMoveEvent.bbox, mapMoveEvent.center, massTransitStopTypeId, true);
     };
 
+    var fetchLightAssets = function(mapMoveEvent) {
+      return backend.getLightAssetsWithCallback(mapMoveEvent.bbox, mapMoveEvent.layerName).then(function(backendAssets) {
+        return backendAssets;
+      });
+    };
+
     var getAllTerminalNearestStops = function(properties) {
         return _.map(
             _.flatten(
@@ -87,6 +93,7 @@
         });
       },
       refreshAssets: refreshAssets,
+      fetchLightAssets: fetchLightAssets,
       insertAssetsFromGroup: function(assetGroup) {
         _.each(assetGroup, function(asset) {
           asset.data = _.merge(asset.data, {originalLon: asset.data.lon, originalLat: asset.data.lat } );

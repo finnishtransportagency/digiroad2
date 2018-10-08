@@ -358,7 +358,6 @@
       startListeningExtraEvents();
       vectorLayer.setVisible(true);
       roadAddressInfoPopup.start();
-      me.refreshView();
       me.show(map);
     }
 

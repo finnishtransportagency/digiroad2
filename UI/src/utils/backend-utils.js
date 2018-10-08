@@ -127,6 +127,12 @@
       };
     });
 
+    this.getLightAssetsWithCallback = latestResponseRequestor(function(boundingBox, type) {
+      return {
+        url: 'api/pointassets/light?type=' + type + '&bbox=' + boundingBox
+      };
+    });
+
     this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
       return {
         url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
