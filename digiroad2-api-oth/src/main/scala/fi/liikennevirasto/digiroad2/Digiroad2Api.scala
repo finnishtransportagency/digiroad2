@@ -272,7 +272,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
       a.linkId match {
         case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
-        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId)
+        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
       }
       massTransitStopService.deleteMassTransitStopData(assetId)
     }
@@ -1317,10 +1317,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserMunicipalityAccessByMunicipality(user)(road.municipalityCode)
   }
 
-  private def validateUserMunicipalityAccessByLinkId(user: User, linkId: Long): Unit = {
-    val road = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
-    if(!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
-      halt(Unauthorized("User not authorized"))
+  private def validateUserMunicipalityAccessByLinkId(user: User, linkId: Long, municipality: Int): Unit = {
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId) match {
+      case Some(road) =>
+        if (!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
+          halt(Unauthorized("User not authorized"))
+      case _ =>
+        //when link id for asset not found
+        validateUserMunicipalityAccessByMunicipality(user)(municipality)
+    }
   }
 
   private def validateUserRights(existingAssets: Seq[PersistedLinearAsset], newLinearAssets: Seq[NewLinearAsset], user: User, typeId: Int) : Unit = {
@@ -1581,7 +1586,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     service.getPersistedAssetsByIds(Set(id)).headOption.foreach{ a =>
       a.linkId match {
         case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
-        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId)
+        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
       }
     }
     service.expire(id, user.username)
