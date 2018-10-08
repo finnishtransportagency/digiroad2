@@ -4,7 +4,7 @@ UPDATE
 SET
 	NAME_FI = 'Nopeusrajoitus päättyy',
 	MODIFIED_DATE = SYSDATE,
-	MODIFIED_BY = 'db_migration_v183'
+	MODIFIED_BY = 'db_migration_v184'
 WHERE
 	id = (SELECT ID FROM ENUMERATED_VALUE WHERE NAME_FI = 'Nopeusrajoitus Päättyy');
 
@@ -14,7 +14,7 @@ UPDATE
 SET
 	NAME_FI = 'Taajama päättyy',
 	MODIFIED_DATE = SYSDATE,
-	MODIFIED_BY = 'db_migration_v183'
+	MODIFIED_BY = 'db_migration_v184'
 WHERE
 	id = (SELECT ID FROM ENUMERATED_VALUE WHERE NAME_FI = 'Taajama Päättyy');
 
@@ -24,7 +24,7 @@ UPDATE
 SET
 	NAME_FI = 'Suurin sallittu pituus',
 	MODIFIED_DATE = SYSDATE,
-	MODIFIED_BY = 'db_migration_v183'
+	MODIFIED_BY = 'db_migration_v184'
 WHERE
 	id = (SELECT ID FROM ENUMERATED_VALUE WHERE NAME_FI = 'Suurin Sallittu Pituus');
 
@@ -34,7 +34,7 @@ UPDATE
 SET
 	NAME_FI = 'Vasemmalle kääntyminen kielletty',
 	MODIFIED_DATE = SYSDATE,
-	MODIFIED_BY = 'db_migration_v183'
+	MODIFIED_BY = 'db_migration_v184'
 WHERE
 	id = (SELECT ID FROM ENUMERATED_VALUE WHERE NAME_FI = 'Vasemmalle Kääntyminen Kielletty');
 
@@ -44,7 +44,7 @@ UPDATE
 SET
 	NAME_FI = 'Oikealle kääntyminen kielletty',
 	MODIFIED_DATE = SYSDATE,
-	MODIFIED_BY = 'db_migration_v183'
+	MODIFIED_BY = 'db_migration_v184'
 WHERE
 	id = (SELECT ID FROM ENUMERATED_VALUE WHERE NAME_FI = 'Oikealle Kääntyminen Kielletty');
 
@@ -54,7 +54,7 @@ UPDATE
 SET
 	NAME_FI = 'U-käännös kielletty',
 	MODIFIED_DATE = SYSDATE,
-	MODIFIED_BY = 'db_migration_v183'
+	MODIFIED_BY = 'db_migration_v184'
 WHERE
 	id = (SELECT ID FROM ENUMERATED_VALUE WHERE NAME_FI = 'U-Käännös Kielletty');
 
@@ -64,6 +64,6 @@ UPDATE
 SET
 	NAME_FI = 'Moottorikäyttöisellä ajoneuvolla ajo kielletty',
 	MODIFIED_DATE = SYSDATE,
-	MODIFIED_BY = 'db_migration_v183'
+	MODIFIED_BY = 'db_migration_v184'
 WHERE
 	id = (SELECT ID FROM ENUMERATED_VALUE WHERE NAME_FI = 'Moottorikäyttöisellä ajoveuvolla ajo kielletty');
