@@ -28,7 +28,7 @@ trait DigiroadServer {
     context.setContextPath(contextPath)
     context.setParentLoaderPriority(true)
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
-    context.addServlet(classOf[NLSProxyServlet], "/maasto/*")
+    context.addServlet(classOf[OAGProxyServlet], "/maasto/*")
     context.addServlet(classOf[VioniceProxyServlet], "/vionice/*")
     context.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     context.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
@@ -71,6 +71,22 @@ trait DigiroadServer {
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     appContext.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
     appContext
+  }
+}
+
+class OAGProxyServlet extends ProxyServlet {
+
+  def regex = "/(digiroad)/(maasto)/(wmts)".r
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
+    val url = "http://oag.liikennevirasto.fi/rasteripalvelu-mml" +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
+    logger.info("OAGProxyServlet->rewriteURI "+ url)
+    java.net.URI.create(url)
+  }
+
+  override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
 
