@@ -670,9 +670,10 @@
 
         var forms = new AvailableForms();
 
-        me.initialize = function(assetTypeConfiguration){
+        me.initialize = function(assetTypeConfiguration, feedbackModel){
             var rootElement = $('#feature-attributes');
             _assetTypeConfiguration = assetTypeConfiguration;
+            new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
           var updateStatusForMassButton = function(element) {
             if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
