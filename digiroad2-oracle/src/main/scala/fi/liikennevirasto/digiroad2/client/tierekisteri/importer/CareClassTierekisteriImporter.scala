@@ -55,9 +55,11 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
       roadNumbers.foreach {
         roadNumber =>
           //Get all the existing road address for the road number
-          val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+          val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
+          val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
           val sectionAssets = getAllTierekisteriAddressSections(roadNumber)
-          val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, roadAddresses)
+          val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+          val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, mappedRoadAddresses, mappedRoadLinks)
           val groupedByLinkId = roadAddressInfo.flatten.groupBy(_._1.linkId)
           groupedByLinkId.foreach{link => splitAndCreateAssets(link._2)}
       }
@@ -89,6 +91,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
           }
 
           val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+          val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
 
           //Creates the assets on top of the expired sections
           expiredSections.foreach {
@@ -96,7 +99,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
               val sectionAssets: Seq[(AddressSection, TierekisteriAssetData)] = {
                 trAssetTypeClients.flatMap(client => client.fetchActiveAssetData(roadNumber, roadPart).map(_.asInstanceOf[TierekisteriAssetData])).flatMap(x => splitTrAssetsBySections(x))
               }
-              val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, mappedRoadAddresses)
+              val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, mappedRoadAddresses, mappedRoadLinks)
               val groupedByLinkId = roadAddressInfo.flatten.groupBy(_._1.linkId)
               groupedByLinkId.foreach{link => splitAndCreateAssets(link._2)}
           }
@@ -104,9 +107,9 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
     }
   }
 
-  def getAllRoadAddressMeasures(sectionAssets: Seq[(AddressSection, TierekisteriAssetData)], existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]]) = {
+  def getAllRoadAddressMeasures(sectionAssets: Seq[(AddressSection, TierekisteriAssetData)], existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]) = {
     sectionAssets.map { section =>
-      val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section._1)
+      val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section._1, mappedRoadLinks)
       roadAddressLink.flatMap { case (ra, roadlink) =>
         calculateMeasures(ra, section._1).map { measures =>
           (roadlink.get, measures, section._2)
