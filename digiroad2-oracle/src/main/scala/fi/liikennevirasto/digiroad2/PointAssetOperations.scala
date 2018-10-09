@@ -136,7 +136,7 @@ trait PointAssetOperations {
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
-      fetchLightGeometry(withFilter(filter))
+      fetchLightGeometry(withValidAssets(filter))
     }
   }
 
@@ -338,6 +338,10 @@ trait PointAssetOperations {
 
   protected def withMunicipality(municipalityCode: Int)(query: String): String = {
     withFilter(s"where a.asset_type_id = $typeId and a.municipality_code = $municipalityCode")(query)
+  }
+
+  protected def withValidAssets(filter: String)(query: String): String = {
+    withFilter(s"$filter and (a.valid_to is null or a.valid_to > sysdate) and a.valid_from < sysdate")(query)
   }
 
   protected def withFloatingUpdate[T <: FloatingAsset](toPointAsset: PersistedAsset => (T, Option[FloatingReason]))
