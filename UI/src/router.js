@@ -328,12 +328,10 @@
       },
 
       heightLimitErrorsWorkList: function () {
-        var typeId = _(models.linearAssets).find({ layerName: 'heightLimit' }).typeId;
         eventbus.trigger('workList:select', 'heightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('heightLimit')));
       },
 
       lengthLimitErrorsWorkList: function(){
-        var typeId = _(models.linearAssets).find({ layerName: 'lengthLimit' }).typeId;
         eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('lengthLimit')));
       },
 
@@ -400,40 +398,40 @@
         speedLimitCentering('speedLimit', id);
       },
 
-      hazardousMaterialTransportProhibitionErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('hazardousMaterialTransportProhibition', id, linkId);
+      hazardousMaterialTransportProhibitionErrors: function (idType , linkId) {
+        linearAssetMapCenterAndZoom('hazardousMaterialTransportProhibition', idType , linkId);
       },
 
-      manoeuvreErrors: function (id, linkId) {
+      manoeuvreErrors: function (idType , linkId) {
         manoeuvreMapCenterAndZoom(linkId);
       },
 
-      heightLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('heightLimit', id, linkId);
+      heightLimitErrors: function (idType , linkId) {
+        linearAssetMapCenterAndZoom('heightLimit', idType, linkId);
       },
 
-      bogieWeightErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('bogieWeightLimit', id, linkId);
+      bogieWeightErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('bogieWeightLimit', idType, linkId);
       },
 
-      axleWeightLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('axleWeightLimit', id, linkId);
+      axleWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('axleWeightLimit', idType, linkId);
       },
 
-      lengthLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('lengthLimit', id, linkId);
+      lengthLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('lengthLimit', idType, linkId);
       },
 
-      totalWeightLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('totalWeightLimit', id, linkId);
+      totalWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('totalWeightLimit', idType, linkId);
       },
 
-      trailerTruckWeightLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('trailerTruckWeightLimit', id, linkId);
+      trailerTruckWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('trailerTruckWeightLimit', idTypev, linkId);
       },
 
-      widthLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('widthLimit', id, linkId);
+      widthLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('widthLimit', idType, linkId);
       },
 
       maintenanceRoad: function (id) {

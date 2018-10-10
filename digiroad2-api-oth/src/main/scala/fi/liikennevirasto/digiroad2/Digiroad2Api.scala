@@ -1186,9 +1186,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     user.isOperator() match {
       case true =>
-        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId)
+        manoeuvreService.getInaccurateRecords()
       case false =>
-        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId, municipalityCode, Set(Municipality))
+        manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
     }
   }
 

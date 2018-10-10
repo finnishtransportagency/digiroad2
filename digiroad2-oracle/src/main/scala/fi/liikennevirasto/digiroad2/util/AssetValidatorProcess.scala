@@ -141,7 +141,7 @@ object AssetValidatorProcess {
       "totalWeightLimit" -> totalWeightLimitValidator,
       "trailerTruckWeight" -> trailerTruckWeightLimitValidator,
       "axleWeightLimit" -> axleWeightLimitValidator,
-      "bogieWeightLimt" -> bogieWeightLimitValidator,
+      "bogieWeightLimit" -> bogieWeightLimitValidator,
       "widthLimit" -> widthLimitValidator,
       "lengthLimit" -> lengthLimitValidator
   )
