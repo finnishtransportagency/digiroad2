@@ -31,11 +31,15 @@
 
     this.getSignType = function (sign) {};
 
-    me.getLabelProperty = function (sign, counter) {
-
-      var labelProperty = _.find(me.getPropertiesConfiguration(), function(properties) {
+    this.getLabel = function(sign){
+      return _.find(me.getPropertiesConfiguration(), function(properties) {
         return _.includes(properties.signValue, me.getSignType(sign));
       });
+    };
+
+    me.getLabelProperty = function (sign, counter) {
+
+      var labelProperty = me.getLabel(sign);
 
       function findImage() {
         return labelProperty && labelProperty.image ? labelProperty.image : 'images/traffic-signs/badValue.png';

@@ -34,64 +34,14 @@
       ];
     };
 
-    me.getLabelProperty = function (sign, counter) {
-
-      var labelProperty = _.find(me.getPropertiesConfiguration(), function(properties) {
+    me.getLabel = function(sign){
+     return _.find(me.getPropertiesConfiguration(), function(properties) {
         var includesSign = _.includes(properties.signValue, me.getSignType(sign));
         if(properties.typeExtension)
           return includesSign && properties.typeExtension === getSignExtensionType(sign);
         else
           return includesSign;
       });
-
-      function findImage() {
-        return labelProperty && labelProperty.image ? labelProperty.image : 'images/traffic-signs/badValue.png';
-      }
-
-      function getTextOffsetX(){
-        return labelProperty && labelProperty.offsetX ? labelProperty.offsetX :  0;
-      }
-
-      function getTextOffsetY(){
-        var offsetY =  labelProperty && labelProperty.offsetY ? labelProperty.offsetY :  1;
-        return parseInt(''+ getHeight() / 2) + offsetY;
-      }
-
-      function getValidation(){
-        return labelProperty && labelProperty.validation ? labelProperty.validation.call(sign) : false ;
-      }
-
-      function getValue(){
-        return labelProperty && labelProperty.convertion ? labelProperty.convertion.call(sign) : sign.value;
-      }
-
-      function getAdditionalInfo(){
-        return labelProperty && labelProperty.additionalInfo ? labelProperty.additionalInfo.call(sign) : '';
-      }
-
-      function getUnit() {
-        return labelProperty && labelProperty.unit ? labelProperty.unit.call(sign) : '';
-      }
-
-      function getMaxLength() {
-        return labelProperty && labelProperty.maxLabelLength ? labelProperty.maxLabelLength : 20;
-      }
-
-      function getHeight() {
-        return labelProperty && labelProperty.height ? labelProperty.height : 35;
-      }
-
-      return {
-        findImage: findImage,
-        getTextOffsetX: getTextOffsetX,
-        getTextOffsetY: getTextOffsetY,
-        getValidation: getValidation,
-        getValue : getValue,
-        getUnit : getUnit,
-        getAdditionalInfo: getAdditionalInfo,
-        getMaxLength: getMaxLength,
-        getHeight: getHeight
-      };
     };
 
     var validateText = function () { return true;};
