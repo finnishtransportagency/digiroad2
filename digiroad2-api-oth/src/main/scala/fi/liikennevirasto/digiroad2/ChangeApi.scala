@@ -140,32 +140,52 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
         }
     )
 
-  //After include another point Asset should be replace PedestrianCrossing by PersistedPointAsset,
-  // pay special attention to created and modified fields on masstransitStop extends
-  private def pointAssetsToGeoJson(since: DateTime, changedPointAssets: Seq[PedestrianCrossing]) =
+  private def pointAssetsToGeoJson(since: DateTime, changedPointAssets: Seq[ChangedPointAsset]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        changedPointAssets.map { pointAsset =>
+        changedPointAssets.map {  case ChangedPointAsset(pointAsset, link) =>
+         val point = GeometryUtils.calculatePointFromLinearReference(link.geometry, pointAsset.mValue).getOrElse(Point(pointAsset.lon, pointAsset.lat))
           Map(
             "type" -> "Feature",
             "id" -> pointAsset.id,
             "geometry" -> Map(
-              "type" -> "LineString",
-              "coordinates" -> Map("x" -> pointAsset.lon, "y" -> pointAsset.lat)
+              "type" -> "Point",
+              "coordinates" -> Seq(point.x, point.y, point.z)
             ),
             "properties" ->
-              Map(
-                "endMeasure" -> pointAsset.mValue,
-                "createdBy" -> pointAsset.createdBy,
-                "modifiedAt" -> pointAsset.modifiedAt.map(DateTimePropertyFormat.print(_)),
-                "createdAt" -> pointAsset.createdAt.map(DateTimePropertyFormat.print(_)),
-                "modifiedBy" -> pointAsset.modifiedBy,
-                "changeType" -> extractChangeType(since, pointAsset.expired, pointAsset.createdAt)
-              )
+              (Map(
+                "link" -> Map(
+                  "type" -> "Feature",
+                  "id" -> link.linkId,
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
+                  )
+                ),
+                "sideCode" -> SideCode.BothDirections.value)
+                ++ assetProperties(pointAsset, since))
           )
         }
     )
+
+
+  def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = {
+    val point = pointAsset.asInstanceOf[PedestrianCrossing]
+   Map(
+    "endMeasure" -> point.mValue,
+    "createdBy" -> point.createdBy,
+    "modifiedAt" -> point.modifiedAt.map(DateTimePropertyFormat.print(_)),
+    "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
+    "modifiedBy" -> point.modifiedBy,
+    "changeType" -> extractChangeType(since, point.expired, point.createdAt)
+   )
+  }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {

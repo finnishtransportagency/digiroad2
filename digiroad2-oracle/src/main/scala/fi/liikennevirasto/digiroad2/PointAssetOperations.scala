@@ -23,6 +23,8 @@ sealed trait FloatingReason {
   def value: Int
 }
 
+case class ChangedPointAsset(pointAsset: PersistedPointAsset, link: RoadLink)
+
 object FloatingReason{
   val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue, TrafficDirectionNotMatch, TerminalChildless)
 
@@ -66,8 +68,6 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val vvhTimeStamp: Long
   val linkSource: LinkGeomSource
 }
-
-case class ChangedPointAsset(linearAsset: PersistedPointAsset, link: RoadLink)
 
 trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
