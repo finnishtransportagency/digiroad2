@@ -114,7 +114,7 @@
         text: new ol.style.Text({
           text: me.textStyle(trafficSign),
           fill: new ol.style.Fill({
-            color: '#000000'
+            color: trafficSign.textColor ?  trafficSign.textColor : '#000000'
           }),
           font: '12px sans-serif',
           offsetX: me.getLabelProperty(trafficSign).getTextOffsetX(),

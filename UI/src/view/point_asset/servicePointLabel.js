@@ -142,19 +142,5 @@
         return {value: getDefaultText(service.serviceType), type: service.serviceType, typeExtension: service.typeExtension, textColor: getDefaultColorText(service.serviceType)};
       });
     };
-
-    me.getStyle = function (trafficSign, position) {
-      return [me.backgroundStyle(trafficSign, position), new ol.style.Style({
-        text: new ol.style.Text({
-          text: this.textStyle(trafficSign),
-          fill: new ol.style.Fill({
-            color: trafficSign.textColor
-          }),
-          font: '12px sans-serif',
-          offsetX: me.getLabelProperty(trafficSign).getTextOffsetX(),
-          offsetY: me.getLabelProperty(trafficSign).getTextOffsetY() - position.y
-        })
-      })];
-    };
   };
 })(this);
