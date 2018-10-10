@@ -67,17 +67,6 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
   }
 
   override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
-    def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
-      try {
-        insertInaccurate(id, assetType, municipalityCode, adminClass)
-      } catch {
-        case ex: SQLIntegrityConstraintViolationException =>
-          print("duplicate key inserted ")
-        case e: Exception => print("duplicate key inserted ")
-          throw new RuntimeException("SQL exception " + e.getMessage)
-      }
-    }
-
     if (assetInfo.ids.toSeq.nonEmpty) {
       withDynTransaction {
 
