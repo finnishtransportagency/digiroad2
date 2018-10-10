@@ -5,9 +5,6 @@
 
     this.getRoadsForPointAssets = function() {
       return _.chain(me.roadLinks())
-        .filter(function(roadLink) {
-          return roadLink.getData().administrativeClass !== "Unknown";
-        })
         .map(function(roadLink) {
           return roadLink.getData();
         })
