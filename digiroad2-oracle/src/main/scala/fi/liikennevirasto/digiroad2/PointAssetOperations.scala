@@ -67,6 +67,8 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val linkSource: LinkGeomSource
 }
 
+case class ChangedPointAsset(linearAsset: PersistedPointAsset, link: RoadLink)
+
 trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
@@ -94,7 +96,7 @@ trait PointAssetOperations {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
   }
-  def getChanged(since: DateTime, until: DateTime): Seq[PersistedAsset] = { throw new UnsupportedOperationException()}
+  def getChanged(since: DateTime, until: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException()}
 
   protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
                        adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {

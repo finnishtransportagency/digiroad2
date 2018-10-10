@@ -105,7 +105,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     }
   }
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[PersistedAsset] = {
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
@@ -114,9 +114,14 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
       s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or "+
       s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
 
-    withDynSession {
+    val assets = withDynSession {
       fetchPointAssets(withFilter(filter))
     }
+
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+
+    assets.map { asset =>
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
   }
 }
 
