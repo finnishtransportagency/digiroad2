@@ -248,8 +248,8 @@ object ProhibitionClass {
   case object ArticulatedVehicle extends ProhibitionClass { def prohibitionType = 13;  def typeDescription = "ArticulatedVehicle"; def rosatteType = "CarWithTrailer";}
   case object TractorFarmVehicle extends ProhibitionClass { def prohibitionType = 14;  def typeDescription = "TractorFarmVehicle"; def rosatteType = "FarmVehicle";}
   case object OversizedTransport extends ProhibitionClass { def prohibitionType = 28;  def typeDescription = "OversizedTransport"; def rosatteType = "";}
-  case object DrivingInServicePurpose extends ProhibitionClass { def prohibitionType = 28;  def typeDescription = "DrivingInServicePurpose"; def rosatteType = "DeliveryTruck + EmergencyVehicle + FacilityVehicle + MailVehicle";}
-  case object DrivingToALot extends ProhibitionClass { def prohibitionType = 28;  def typeDescription = "DrivingToALot"; def rosatteType = "ResidentialVehicle";}
+  case object DrivingInServicePurpose extends ProhibitionClass { def prohibitionType = 21;  def typeDescription = "DrivingInServicePurpose"; def rosatteType = "DeliveryTruck + EmergencyVehicle + FacilityVehicle + MailVehicle";}
+  case object DrivingToALot extends ProhibitionClass { def prohibitionType = 22;  def typeDescription = "DrivingToALot"; def rosatteType = "ResidentialVehicle";}
   case object Unknown extends ProhibitionClass { def prohibitionType = 99;  def typeDescription = "Unknown"; ; def rosatteType = "";}
 }
 
