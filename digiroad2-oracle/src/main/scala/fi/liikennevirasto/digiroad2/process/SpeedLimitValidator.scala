@@ -22,17 +22,6 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
         speedLimit =>
           println(s"Proncessing traffic sign ${trafficSign.id} at speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
 
-          val hasSameDirection =
-            speedLimit.sideCode match {
-              case SideCode.TowardsDigitizing | SideCode.AgainstDigitizing =>
-                trafficSign.validityDirection == speedLimit.sideCode.value
-              case _ =>
-                if (roadLink.trafficDirection == TrafficDirection.BothDirections)
-                  true
-                else
-                  TrafficDirection.toSideCode(roadLink.trafficDirection) == SideCode.apply(trafficSign.validityDirection)
-            }
-
           val hasSameSpeedLimitValue =
             speedLimit.value match {
               case Some(NumericValue(speedLimitValue)) =>
@@ -43,10 +32,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
               case _ => false
             }
 
-          (hasSameDirection, hasSameSpeedLimitValue) match {
-            case (true, true) => Seq((speedLimit, true))
-            case (_, _) => Seq((speedLimit, false))
-          }
+          validateSpeedLimitDirectionAndValue(hasSameDirection(speedLimit, trafficSign, roadLink), hasSameSpeedLimitValue, speedLimit)
       }
 
     if (validatorValues.exists(_._2 == true)) Seq() else validatorValues.map(_._1)
@@ -58,17 +44,6 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
         speedLimit =>
           println(s"Proncessing traffic sign ${trafficSign.id} at speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
 
-          val hasSameDirection =
-            speedLimit.sideCode match {
-              case SideCode.TowardsDigitizing | SideCode.AgainstDigitizing =>
-                trafficSign.validityDirection == speedLimit.sideCode.value
-              case _ =>
-                if (roadLink.trafficDirection == TrafficDirection.BothDirections)
-                  true
-                else
-                  TrafficDirection.toSideCode(roadLink.trafficDirection) == SideCode.apply(trafficSign.validityDirection)
-            }
-
           val hasSameSpeedLimitValue =
             speedLimit.value match {
               case Some(NumericValue(speedLimitValue)) =>
@@ -76,10 +51,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
               case _ => false
             }
 
-          (hasSameDirection, hasSameSpeedLimitValue) match {
-            case (true, true) => Seq((speedLimit, true))
-            case (_, _) => Seq((speedLimit, false))
-          }
+          validateSpeedLimitDirectionAndValue(hasSameDirection(speedLimit, trafficSign, roadLink), hasSameSpeedLimitValue, speedLimit)
       }
 
     if (validatorValues.exists(_._2 == true)) Seq() else validatorValues.map(_._1)
@@ -90,17 +62,6 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
       speedLimits.flatMap {
         speedLimit =>
           println(s"Proncessing traffic sign ${trafficSign.id} at speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
-
-          val hasSameDirection =
-            speedLimit.sideCode match {
-              case SideCode.TowardsDigitizing | SideCode.AgainstDigitizing =>
-                trafficSign.validityDirection == speedLimit.sideCode.value
-              case _ =>
-                if (roadLink.trafficDirection == TrafficDirection.BothDirections)
-                  true
-                else
-                  TrafficDirection.toSideCode(roadLink.trafficDirection) == SideCode.apply(trafficSign.validityDirection)
-            }
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
@@ -114,10 +75,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
               case _ => false
             }
 
-          (hasSameDirection, hasSameSpeedLimitValue) match {
-            case (true, true) => Seq((speedLimit, true))
-            case (_, _) => Seq((speedLimit, false))
-          }
+          validateSpeedLimitDirectionAndValue(hasSameDirection(speedLimit, trafficSign, roadLink), hasSameSpeedLimitValue, speedLimit)
       }
 
     if (validatorValues.exists(_._2 == true)) validatorValues.map(_._1) else Seq()
@@ -129,17 +87,6 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
         speedLimit =>
           println(s"Proncessing traffic sign ${trafficSign.id} at speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
 
-          val hasSameDirection =
-            speedLimit.sideCode match {
-              case SideCode.TowardsDigitizing | SideCode.AgainstDigitizing =>
-                trafficSign.validityDirection == speedLimit.sideCode.value
-              case _ =>
-                if (roadLink.trafficDirection == TrafficDirection.BothDirections)
-                  true
-                else
-                  TrafficDirection.toSideCode(roadLink.trafficDirection) == SideCode.apply(trafficSign.validityDirection)
-            }
-
           val hasSameSpeedLimitValue =
             speedLimit.value match {
               case Some(NumericValue(speedLimitValue)) =>
@@ -147,10 +94,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
               case _ => false
             }
 
-          (hasSameDirection, hasSameSpeedLimitValue) match {
-            case (true, true) => Seq((speedLimit, true))
-            case (_, _) => Seq((speedLimit, false))
-          }
+          validateSpeedLimitDirectionAndValue(hasSameDirection(speedLimit, trafficSign, roadLink), hasSameSpeedLimitValue, speedLimit)
       }
 
     if (validatorValues.exists(_._2 == true)) validatorValues.map(_._1) else Seq()
@@ -187,4 +131,24 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
+
+  private def hasSameDirection(speedLimit: SpeedLimit, trafficSign: PersistedTrafficSign, roadLink: RoadLink): Boolean = {
+    speedLimit.sideCode match {
+      case SideCode.TowardsDigitizing | SideCode.AgainstDigitizing =>
+        trafficSign.validityDirection == speedLimit.sideCode.value
+      case _ =>
+        if (roadLink.trafficDirection == TrafficDirection.BothDirections)
+          true
+        else
+          TrafficDirection.toSideCode(roadLink.trafficDirection) == SideCode.apply(trafficSign.validityDirection)
+    }
+  }
+
+  private def validateSpeedLimitDirectionAndValue(sameDirection: Boolean, sameValue: Boolean, speedLimit: SpeedLimit): Seq[(SpeedLimit, Boolean)] = {
+    (sameDirection, sameValue) match {
+      case (true, true) => Seq((speedLimit, true))
+      case (_, _) => Seq((speedLimit, false))
+    }
+  }
+
 }
