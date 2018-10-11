@@ -71,5 +71,6 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
           OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
       }
+    println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
   }
 }
