@@ -15,6 +15,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
@@ -69,6 +70,24 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val linkSource: LinkGeomSource
 }
 
+trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
+  val id: Long
+  val lon: Double
+  val lat: Double
+  val municipalityCode: Int
+  val linkId: Long
+  val mValue: Double
+  val floating: Boolean
+  val vvhTimeStamp: Long
+  val createdBy: Option[String]
+  val createdAt: Option[DateTime]
+  val modifiedBy: Option[String]
+  val modifiedAt: Option[DateTime]
+  val expired: Boolean
+  val linkSource: LinkGeomSource
+}
+
+
 trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
@@ -87,6 +106,7 @@ trait PointAssetOperations {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
+  def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
   def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long
@@ -96,7 +116,27 @@ trait PointAssetOperations {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
   }
-  def getChanged(since: DateTime, until: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException()}
+
+  def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = { throw new UnsupportedOperationException("Not Supported Method") }
+
+  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
+    val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
+    val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
+
+    val filter = s"where a.asset_type_id = $typeId and floating = 0 and (" +
+      s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
+      s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or "+
+      s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
+
+    val assets = withDynSession {
+      fetchPointAssets(withFilter(filter))
+    }
+
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+
+    assets.map { asset =>
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
+  }
 
   protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
                        adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {

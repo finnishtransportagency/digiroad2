@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, Persis
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import org.joda.time.DateTime
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
@@ -238,6 +239,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
@@ -370,4 +373,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case _ => assets
     }
   }
+
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }

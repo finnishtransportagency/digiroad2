@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.{PersistedPoint, PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -22,23 +22,32 @@ case class Obstacle(id: Long, linkId: Long,
                     createdAt: Option[DateTime] = None,
                     modifiedBy: Option[String] = None,
                     modifiedAt: Option[DateTime] = None,
-                    linkSource: LinkGeomSource) extends PersistedPointAsset
+                    expired: Boolean = false,
+                    linkSource: LinkGeomSource) extends PersistedPoint
 
 object OracleObstacleDao {
+
+  private def query() = {
+    """
+      select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by,
+      a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
+      from asset a
+      join asset_link al on a.id = al.asset_id
+      join lrm_position pos on al.position_id = pos.id
+      join property p on p.asset_type_id = a.asset_type_id
+      left join single_choice_value scv on scv.asset_id = a.id
+      left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
+    """
+  }
+
+  def fetchByFilterWithExpired(queryFilter: String => String): Seq[Obstacle] = {
+    val queryWithFilter = queryFilter(query())
+    StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
+  }
+
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String): Seq[Obstacle] = {
-    val query =
-      """
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by,
-        a.modified_date, pos.link_source
-        from asset a
-        join asset_link al on a.id = al.asset_id
-        join lrm_position pos on al.position_id = pos.id
-        join property p on p.asset_type_id = a.asset_type_id
-        left join single_choice_value scv on scv.asset_id = a.id
-        left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
-      """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
     StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
   }
 
@@ -56,9 +65,10 @@ object OracleObstacleDao {
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expired = r.nextBoolean()
       val linkSource = r.nextInt()
 
-      Obstacle(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime, LinkGeomSource(linkSource))
+      Obstacle(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
     }
   }
 

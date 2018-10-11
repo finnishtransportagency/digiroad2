@@ -44,6 +44,10 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
   override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[HeightLimit] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }
 
 
