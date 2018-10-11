@@ -49,7 +49,7 @@ UPDATE asset
                                    )
   WHERE id = 600032;
 
-insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600033,200,'dr2_test_data',235);
+insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,CREATED_DATE,MUNICIPALITY_CODE) values (600033,200,'dr2_test_data',add_months(sysdate, -1),235);
 INSERT INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (70000007, null, 12345, 100.000, 100.000, null);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600033, 70000007);
 UPDATE asset
