@@ -68,9 +68,9 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
         point =>
           val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),
             getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
-          println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
           OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
       }
+    println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
   }
 }
