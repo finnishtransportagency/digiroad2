@@ -1363,7 +1363,7 @@ object DataFixture {
         asset =>
           println(s"Analyzing Traffic Sign with => Id: ${asset.id}, LinkID: ${asset.linkId}")
 
-          val signType = asset.propertyData.find(_.publicId == trafficSignService.typePublicId).get.values.head.propertyValue.toInt
+          val signType = trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.propertyValue.toInt
           val groupType = Some(TrafficSignTypeGroup.apply(signType))
           val signLinkId = asset.linkId
           val signDirection = asset.validityDirection
@@ -1371,7 +1371,7 @@ object DataFixture {
           OracleDatabase.withDynTransaction {
             val trafficSignsInRadius = trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
               ts =>
-                ts.propertyData.find(_.publicId == trafficSignService.typePublicId).get.values.head.propertyValue.toInt == signType
+                trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt == signType
                   && ts.linkId == signLinkId && ts.validityDirection == signDirection
             )
 

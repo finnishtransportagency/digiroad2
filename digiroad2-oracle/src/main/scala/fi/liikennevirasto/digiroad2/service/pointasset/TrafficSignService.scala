@@ -370,13 +370,13 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
-    val signToCreateType = asset.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt
+    val signToCreateType = getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt
     val signToCreateDirection = asset.validityDirection
     val groupType = Some(TrafficSignTypeGroup.apply(signToCreateType))
 
     val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
       ts =>
-        ts.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt == signToCreateType
+        getTrafficSignsProperties(ts, typePublicId).get.propertyValue.toInt == signToCreateType
           && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
     )
 
@@ -396,5 +396,13 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def getLatestModifiedAsset(trafficSigns: Seq[PersistedTrafficSign]): PersistedTrafficSign = {
     trafficSigns.maxBy { ts => ts.modifiedAt.getOrElse(ts.createdAt.get) }
+  }
+
+  def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  }
+
+  def getTrafficSignsProperties(trafficSign: IncomingTrafficSign, property: String) : Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 }

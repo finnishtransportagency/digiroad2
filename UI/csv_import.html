@@ -11,11 +11,10 @@
     <script type="text/javascript">
       getMunicipalities();
 
-      var deleteCheckbox = "input[id='deleteCheckbox']";
       var municipalities;
 
       function isToDelete() {
-        if ($(deleteCheckbox).is(':checked')) {
+        if ($('#deleteCheckbox').is(':checked')) {
           $(".municipalities").show();
           $('.btn.btn-primary.btn-lg').prop('disabled', true);
         } else {
@@ -24,9 +23,8 @@
         }
       }
 
-      function hasValue() {
-        var municipalitiesSelectedSize = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option').length;
-        var disableStatus = municipalitiesSelectedSize >= 1 ? false : true;
+      function uploadButtonDisable() {
+        var disableStatus = _.isEmpty($('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option'));
         $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
       }
 
@@ -59,7 +57,7 @@
       }
 
       function confSubmit(form) {
-        if ($(deleteCheckbox).is(':checked')) {
+        if ($('#deleteCheckbox').is(':checked')) {
           new GenericConfirmPopup('Haluatko varmasti poistaa kaikki jo aiemmin kunnan alueelle lisätyt liikennemerkit?', {
             successCallback: function () {
               var optionValues = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option');
@@ -142,17 +140,17 @@
 
                     <div class="form-group municipalities" disabled="disabled">
                         <div class="row">
-                            <div class="col-xs-5" ondblclick="hasValue()">
+                            <div class="col-xs-5" ondblclick="uploadButtonDisable()">
                                 <select id="municipalities_search" class="form-control" multiple="multiple">
                                 </select>
                             </div>
 
-                            <div class="col-xs-2" onclick="hasValue()">
+                            <div class="col-xs-2" onclick="uploadButtonDisable()">
                                 <button type="button" id="municipalities_search_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary"> > </button>
                                 <button type="button" id="municipalities_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary"> < </button>
                             </div>
 
-                            <div class="col-xs-5" ondblclick="hasValue()">
+                            <div class="col-xs-5" ondblclick="uploadButtonDisable()">
                                 <select name="municipalityNumbers" id="municipalities_search_to" class="form-control" multiple="multiple"></select>
                             </div>
                         </div>
@@ -178,7 +176,7 @@
   };
   $('#asset-selection').on('change', function () {
     $('.btn.btn-primary.btn-lg').prop('disabled', !$(this).val());
-    $(deleteCheckbox).prop('disabled', !$(this).val());
+    $('#deleteCheckbox').prop('disabled', !$(this).val());
     if($(this).val() === 'trafficsigns'){
       $('#csvImportPoistaCheckbox').show();
     } else {

@@ -1437,9 +1437,12 @@ val userNotificationService: UserNotificationService = Digiroad2Context.userNoti
 
   get("/municipalities/byUser") {
     val userAuthorizedMunicipalities = userProvider.getCurrentUser().configuration.authorizedMunicipalities
-    municipalityService.getMunicipalities.filter(m => userAuthorizedMunicipalities.contains(m._1)).map { municipality =>
-      Map("id" -> municipality._1,
-        "name" -> municipality._2)
+    municipalityService.getMunicipalities.filter(m => userAuthorizedMunicipalities.contains(m._1)).map {
+      case (id, name) =>
+        Map(
+          "id" -> id,
+          "name" -> name
+        )
     }
   }
 
