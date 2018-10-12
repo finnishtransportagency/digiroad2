@@ -129,7 +129,7 @@ trait PointAssetOperations {
       s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
 
     val assets = withDynSession {
-      fetchPointAssets(withFilter(filter))
+      fetchPointAssetsWithExpired(withFilter(filter))
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
