@@ -16,6 +16,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
 
@@ -330,6 +331,22 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.obstacleType should equal(1)
+    }
+  }
+
+  test("Get obstacles changes") {
+    runWithRollback {
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val (id, id1, id2) = (service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke_1", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke_2", roadLink))
+
+      val changes = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.now())
+      changes.length should be(3)
+
+      service.expire(id)
+
+      val changesAfterExpire = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.now())
+      changesAfterExpire.length should be(3)
+
     }
   }
 }
