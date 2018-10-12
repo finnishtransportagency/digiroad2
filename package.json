@@ -31,7 +31,7 @@
     "moment": "2.22.1",
     "multiselect-two-sides": "2.5.0",
     "jquery-validation": "^1.17.0",
-    "openlayers": "3.20.1",
+    "ol": "5.2.0",
     "pikaday": "1.7.0",
     "proj4": "^2.4.4",
     "requirejs": "2.3.5",
