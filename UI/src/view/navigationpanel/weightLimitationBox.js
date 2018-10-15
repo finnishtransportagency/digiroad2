@@ -42,7 +42,6 @@
       return element;
     };
 
-    this.element =  this.renderTemplate();
     this.show = show;
     this.hide = hide;
   };

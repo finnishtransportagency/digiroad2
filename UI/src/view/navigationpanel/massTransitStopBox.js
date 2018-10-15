@@ -183,7 +183,7 @@
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
     };
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       me.eventHandler();
       bindDOMEventHandlers();
@@ -194,7 +194,6 @@
         .hide();
     };
 
-    this.element =  this.renderTemplate();
     this.show = show;
     this.hide = hide;
   };

@@ -66,7 +66,7 @@
       me.getHide();
     }
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       $(me.expanded).find('.checkbox').find('input[type=checkbox]').change(trafficSignHandler);
       me.eventHandler();
@@ -94,7 +94,6 @@
       }
     };
 
-    this.element = this.renderTemplate();
     this.show = show;
     this.hide = hide;
   };

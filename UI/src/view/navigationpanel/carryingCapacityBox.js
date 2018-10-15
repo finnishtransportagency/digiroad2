@@ -49,7 +49,7 @@
         legend('spring-carrying-capacity', springCarryingCapacityValues.concat(withoutValue)) + '</div>';
     };
 
-      this.renderTemplate = function () {
+      this.template = function () {
           this.expanded = me.elements().expanded;
           $(me.expanded).find('input[type=radio][name=labelingRadioButton-'+ me.className() + ']').change(labelingHandler);
           me.eventHandler();
@@ -116,7 +116,6 @@
       return element;
     };
 
-    this.element =  this.renderTemplate();
     this.show = show;
     this.hide = hide;
   };

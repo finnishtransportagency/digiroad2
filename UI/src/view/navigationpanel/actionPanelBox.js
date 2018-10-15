@@ -80,7 +80,7 @@
       }
     };
 
-    this.renderTemplate = function () {};
+    this.template = function () {};
     this.header = function () {};
     this.title = undefined;
     this.layerName = undefined;

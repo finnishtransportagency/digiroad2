@@ -71,7 +71,7 @@
     }
 
     this.title = 'Kääntymisrajoitus';
-    this.element = element;
+    this.template = function() { return element;};
     this.show =  show;
     this.hide = hide;
   };

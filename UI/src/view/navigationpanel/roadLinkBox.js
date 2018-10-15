@@ -253,7 +253,7 @@
       element.hide();
     }
 
-    this.element = element;
+    this.template = function() { return element;};
     this.title = title;
     this.layerName = 'linkProperty';
     this.show = show;

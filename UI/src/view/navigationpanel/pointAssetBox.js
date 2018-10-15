@@ -84,7 +84,7 @@
       me.getElement().hide();
     }
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       me.eventHandler();
       return me.getElement()
@@ -104,7 +104,6 @@
       return hide();
     };
 
-    this.element =  this.renderTemplate();
     this.show = show;
     this.hide = hide;
   };

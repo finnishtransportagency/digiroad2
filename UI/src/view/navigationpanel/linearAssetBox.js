@@ -61,7 +61,7 @@
 
     var element = $('<div class="panel-group simple-limit ' + assetConfig.className + 's"/>');
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       me.eventHandler();
       return me.getElement()
@@ -86,7 +86,6 @@
       return element;
     };
 
-      // this.element = this.renderTemplate();
       this.show = show;
       this.hide = hide;
   };
