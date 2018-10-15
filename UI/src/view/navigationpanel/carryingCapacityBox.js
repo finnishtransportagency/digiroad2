@@ -70,7 +70,6 @@
         }
     };
 
-
     this.radioButton = function () {
       return [
         '  <div class="panel-section">' +
@@ -117,13 +116,9 @@
       return element;
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.element =  this.renderTemplate();
+    this.show = show;
+    this.hide = hide;
   };
 })(this);
 

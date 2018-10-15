@@ -156,7 +156,7 @@
     };
 
     this.panel = function () {
-      return [ '<div class="panel ' + me.layerName() +'">',
+      return [ '<div class="panel ' + me.layerName +'">',
         '  <header class="panel-header expanded">',
         me.header() ,
         '  </header>'
@@ -197,13 +197,9 @@
       return element;
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.element =  this.renderTemplate();
+    this.show = show;
+    this.hide = hide;
   };
 })(this);
 

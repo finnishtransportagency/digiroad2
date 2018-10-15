@@ -94,13 +94,9 @@
       }
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.element = this.renderTemplate();
+    this.show = show;
+    this.hide = hide;
   };
 })(this);
 

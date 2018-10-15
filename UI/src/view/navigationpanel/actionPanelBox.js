@@ -3,7 +3,6 @@
     var me = this;
     var authorizationPolicy = new AuthorizationPolicy();
 
-
     this.selectToolIcon = '<img src="images/select-tool.svg"/>';
     this.cutToolIcon = '<img src="images/cut-tool.svg"/>';
     this.addToolIcon = '<img src="images/add-tool.svg"/>';
@@ -83,8 +82,8 @@
 
     this.renderTemplate = function () {};
     this.header = function () {};
-    this.title = function () {};
-    this.layerName = function () {};
+    this.title = undefined;
+    this.layerName = undefined;
     this.labeling = function () {};
     this.checkboxPanel = function () {};
     this.predicate = function () {};
@@ -108,7 +107,7 @@
     };
 
     this.panel = function () {
-      return [ '<div class="panel ' + me.layerName() +'">',
+      return [ '<div class="panel ' + me.layerName +'">',
                '  <header class="panel-header expanded">',
                 me.header() ,
                '  </header>',

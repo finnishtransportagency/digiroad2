@@ -7,13 +7,9 @@
       return assetConfig.title + (assetConfig.editControlLabels.showUnit ? ' ('+assetConfig.unit+')': '');
     };
 
-    this.title = function () {
-      return assetConfig.title;
-    };
+    this.title = assetConfig.title;
 
-    this.layerName = function () {
-      return assetConfig.layerName;
-    };
+    this.layerName = assetConfig.layerName;
 
     this.legendName = function () {
       return 'limit';
@@ -90,12 +86,8 @@
       return element;
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+      // this.element = this.renderTemplate();
+      this.show = show;
+      this.hide = hide;
   };
 })(this);
