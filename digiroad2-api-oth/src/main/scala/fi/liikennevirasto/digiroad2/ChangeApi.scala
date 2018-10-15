@@ -3,9 +3,10 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.PedestrianCrossing
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
@@ -40,8 +41,9 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
-      case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until))
-      case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until))
+      case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until), pointAssetProperties)
+      case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until), pointAssetProperties)
+      case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChanged(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until), pointAssetTrafficSignProperties)
     }
   }
 
@@ -141,7 +143,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
         }
     )
 
-  private def pointAssetsToGeoJson(since: DateTime, changedPointAssets: Seq[ChangedPointAsset]) =
+  private def pointAssetsToGeoJson(since: DateTime, changedPointAssets: Seq[ChangedPointAsset], dynamicPointAssetProperties: (PersistedPointAsset, DateTime) => Map[String, Any]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
@@ -170,7 +172,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                   )
                 ),
                 "sideCode" -> SideCode.BothDirections.value)
-                ++ pointAssetProperties(pointAsset, since))
+                ++ dynamicPointAssetProperties(pointAsset, since))
           )
         }
     )
@@ -186,6 +188,20 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     "modifiedBy" -> point.modifiedBy,
     "changeType" -> extractChangeType(since, point.expired, point.createdAt)
    )
+  }
+
+  def pointAssetTrafficSignProperties(pointAsset: PersistedPointAsset, since: DateTime): Map[String, Any] = {
+    val point = pointAsset.asInstanceOf[PersistedTrafficSign]
+    Map(
+      "endMeasure" -> point.mValue,
+      "createdBy" -> point.createdBy,
+      "modifiedAt" -> point.modifiedAt.map(DateTimePropertyFormat.print(_)),
+      "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
+      "modifiedBy" -> point.modifiedBy,
+      "changeType" -> extractChangeType(since, point.expired, point.createdAt),
+      "type" -> trafficSignService.getTrafficSignsProperties(point, trafficSignService.typePublicId).get.propertyValue.toInt,
+      "sideCode" -> point.validityDirection
+    )
   }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
