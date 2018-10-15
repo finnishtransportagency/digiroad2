@@ -69,7 +69,6 @@ class MassTransitStopDao {
         select a.geometry, a.valid_from, a.valid_to
         from asset a
           join asset_link al on a.id = al.asset_id
-          join lrm_position lrm on al.position_id = lrm.id
       """
 
     val resultList = Q.queryNA[(Point, Option[LocalDate], Option[LocalDate])](queryFilter(query)).list
