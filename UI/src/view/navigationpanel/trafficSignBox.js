@@ -39,13 +39,13 @@
         '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="additionalPanels" type="checkbox" /> Lisakilvet</label>' +
+        '     <label><input name="additionalPanels" type="checkbox" /> Lisäkilvet</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="mandatorySigns" type="checkbox" /> Maaraysmerkit</label>' +
+        '     <label><input name="mandatorySigns" type="checkbox" /> Määräysmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus- ja vaistamismerkit</label>' +
+        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus- ja väistämismerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
         '     <label><input name="informationSigns" type="checkbox" /> Opastusmerkit</label>' +

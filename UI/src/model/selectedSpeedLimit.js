@@ -65,6 +65,7 @@
         value: value
       };
       backend.updateSpeedLimits(payload, function() {
+        dirty = false;
         eventbus.trigger('speedLimits:massUpdateSucceeded', selection.length);
       }, function() {
         eventbus.trigger('speedLimits:massUpdateFailed', selection.length);
@@ -141,7 +142,6 @@
     this.getSpeedLimitById = function(id) {
       return collection.getById(id);
     };
-
     var cancelCreation = function() {
       eventbus.trigger('speedLimit:unselect', self);
       if (isSeparated) {
@@ -160,6 +160,17 @@
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
+    };
+
+    var massDeselect = function () {
+      selection = [];
+      collection.setSelection(null);
+      dirty = false;
+      eventbus.trigger('speedLimit:massUpdateUnselected');
+    };
+
+    this.deselectMultiple = function() {
+      massDeselect();
     };
 
     this.cancel = function() {
@@ -221,6 +232,12 @@
         dirty = true;
         eventbus.trigger('speedLimit:valueChanged', self);
       }
+    };
+
+    this.setMassValue = function(value) {
+      var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
+      selection = collection.replaceSegments(selection, newGroup);
+      eventbus.trigger('speedLimit:valueChanged', self);
     };
 
     this.setAValue = function(value) {

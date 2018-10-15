@@ -49,9 +49,9 @@ object TrafficSignType {
     EndProhibitionOfOvertaking, NoWidthExceeding, MaxHeightExceeding, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding,
     WRightBend, WLeftBend, WSeveralBendsRight, WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, TelematicSpeedLimit, FreeWidth, FreeHeight,
     HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat, TimeLimit, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee,
-    ObligatoryUseOfParkingDisc, AdditionalPanelWithText, DrivingInServicePurposesAllowed, BusLane, BusLaneEnds, TramLane, BusStopForLocalTraffic, BusStopForLongDistanceTraffic,
-    TramStop, TaxiStation, CompulsoryFootPath, CompulsoryCycleTrack, CombinedCycleTrackAndFootPath, ParallelCycleTrackAndFootPath, DirectionToBeFollowed3, DirectionToBeFollowed4,
-    DirectionToBeFollowed5, CompulsoryRoundabout, PassThisSide, DividerOfTraffic, TaxiStationZoneBeginning, StandingPlaceForTaxi, RoadNarrows, TwoWayTraffic, SwingBridge,
+    ObligatoryUseOfParkingDisc, AdditionalPanelWithText, DrivingInServicePurposesAllowed, BusLane, BusLaneEnds, TramLane, BusStopForLocalTraffic,
+    TramStop, TaxiStation, CompulsoryFootPath, CompulsoryCycleTrack, CombinedCycleTrackAndFootPath, DirectionToBeFollowed3,
+    CompulsoryRoundabout, PassThisSide, TaxiStationZoneBeginning, StandingPlaceForTaxi, RoadNarrows, TwoWayTraffic, SwingBridge,
     RoadWorks, SlipperyRoad, PedestrianCrossingWarningSign, Cyclists, IntersectionWithEqualRoads, LightSignals, TramwayLine, FallingRocks, CrossWind, PriorityRoad, EndOfPriority,
     PriorityOverOncomingTraffic, PriorityForOncomingTraffic, GiveWay, Stop, ParkingLot, OneWayRoad, Motorway, MotorwayEnds, ResidentialZone, EndOfResidentialZone, PedestrianZone,
     EndOfPedestrianZone, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped,
@@ -128,19 +128,14 @@ object TrafficSignType {
   case object BusLaneEnds extends TrafficSignType { def value = 64;  def group = TrafficSignTypeGroup.RegulatorySigns; }
   case object TramLane extends TrafficSignType { def value = 65;  def group = TrafficSignTypeGroup.RegulatorySigns; }
   case object BusStopForLocalTraffic extends TrafficSignType { def value = 66;  def group = TrafficSignTypeGroup.RegulatorySigns; }
-  case object BusStopForLongDistanceTraffic extends TrafficSignType { def value = 67;  def group = TrafficSignTypeGroup.RegulatorySigns; }
   case object TramStop extends TrafficSignType { def value = 68;  def group = TrafficSignTypeGroup.RegulatorySigns; }
   case object TaxiStation extends TrafficSignType { def value = 69;  def group = TrafficSignTypeGroup.RegulatorySigns; }
   case object CompulsoryFootPath extends TrafficSignType { def value = 70;  def group = TrafficSignTypeGroup.MandatorySigns; }
   case object CompulsoryCycleTrack extends TrafficSignType { def value = 71;  def group = TrafficSignTypeGroup.MandatorySigns; }
   case object CombinedCycleTrackAndFootPath extends TrafficSignType { def value = 72;  def group = TrafficSignTypeGroup.MandatorySigns; }
-  case object ParallelCycleTrackAndFootPath extends TrafficSignType { def value = 73;  def group = TrafficSignTypeGroup.MandatorySigns; }
   case object DirectionToBeFollowed3 extends TrafficSignType { def value = 74;  def group = TrafficSignTypeGroup.MandatorySigns; }
-  case object DirectionToBeFollowed4 extends TrafficSignType { def value = 75;  def group = TrafficSignTypeGroup.MandatorySigns; }
-  case object DirectionToBeFollowed5 extends TrafficSignType { def value = 76;  def group = TrafficSignTypeGroup.MandatorySigns; }
   case object CompulsoryRoundabout extends TrafficSignType { def value = 77;  def group = TrafficSignTypeGroup.MandatorySigns; }
   case object PassThisSide extends TrafficSignType { def value = 78;  def group = TrafficSignTypeGroup.MandatorySigns; }
-  case object DividerOfTraffic extends TrafficSignType { def value = 79;  def group = TrafficSignTypeGroup.MandatorySigns; }
   case object TaxiStationZoneBeginning extends TrafficSignType { def value = 80;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
   case object StandingPlaceForTaxi extends TrafficSignType { def value = 81;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
   case object RoadNarrows extends TrafficSignType { def value = 82; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
@@ -178,7 +173,7 @@ object TrafficSignType {
   case object NoThroughRoadRight extends TrafficSignType { def value = 114; def group = TrafficSignTypeGroup.InformationSigns; }
   case object SymbolOfMotorway extends TrafficSignType { def value = 115; def group = TrafficSignTypeGroup.InformationSigns; }
   case object Parking extends TrafficSignType { def value = 116; def group = TrafficSignTypeGroup.InformationSigns; }
-  case object ItineraryForIndicatedVehicleCategory extends TrafficSignType { def value = 117;  def trafficSignType = TrafficSignType.ItineraryForIndicatedVehicleCategory; def group = TrafficSignTypeGroup.InformationSigns; }
+  case object ItineraryForIndicatedVehicleCategory extends TrafficSignType { def value = 117; def group = TrafficSignTypeGroup.InformationSigns; }
   case object ItineraryForPedestrians extends TrafficSignType { def value = 118; def group = TrafficSignTypeGroup.InformationSigns; }
   case object ItineraryForHandicapped extends TrafficSignType { def value = 119; def group = TrafficSignTypeGroup.InformationSigns; }
   case object LocationSignForTouristService extends TrafficSignType { def value = 120; def group = TrafficSignTypeGroup.ServiceSigns; }
@@ -209,6 +204,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
+  private val counterPublicId = "counter"
+  private val counterDisplayValue = "Merkkien määrä"
+  private val batchProcessName = "batch_process_trafficSigns"
+  private val groupingDistance = 2
 
   private val additionalInfoTypeGroups =
     Set(
@@ -263,7 +262,23 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds)
-    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    val result = super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toInt == TrafficSignType.PedestrianCrossing.value)
+
+    sortCrossings(pc, Seq()) ++ others
+  }
+
+  def sortCrossings(sorted: Seq[PersistedAsset], result: Seq[PersistedAsset]): Seq[PersistedAsset] = {
+    val centerSignOpt = sorted.headOption
+    if(centerSignOpt.nonEmpty) {
+      val centerSign = centerSignOpt.get
+      val (inProximity, outsiders) = sorted.tail.partition(sign => centerSign.linkId == sign.linkId && centerSign.validityDirection == sign.validityDirection && GeometryUtils.withinTolerance(Seq(Point(centerSign.lon, centerSign.lat)), Seq(Point(sign.lon, sign.lat)), tolerance = groupingDistance))
+      val counterProp = Property(0, counterPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue((1 + inProximity.size).toString, Some(counterDisplayValue))))
+      val withCounter = centerSign.copy(propertyData = centerSign.propertyData ++ Seq(counterProp))
+      sortCrossings(outsiders, result ++ Seq(withCounter))
+    } else {
+      result
+    }
   }
 
   private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {

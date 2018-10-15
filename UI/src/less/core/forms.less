@@ -122,6 +122,10 @@ input[type="checkbox"]:focus {
   margin-bottom: @input-margin;
 }
 
+.dynamic-form {
+  margin-bottom: @input-margin;
+}
+
 .form-list {
   display: inline-flex;
   margin-bottom: @input-margin;
@@ -280,6 +284,10 @@ input[type="checkbox"] {
 
 .form-horizontal {
   .form-group {
+    .clearfix();
+  }
+
+  .dynamic-form {
     .clearfix();
   }
 

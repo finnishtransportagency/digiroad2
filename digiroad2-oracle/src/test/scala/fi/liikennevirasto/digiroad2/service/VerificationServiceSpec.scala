@@ -2,17 +2,17 @@ package fi.liikennevirasto.digiroad2.service
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.dao.VerificationDao
+import fi.liikennevirasto.digiroad2.dao.{Queries, VerificationDao}
+import fi.liikennevirasto.digiroad2.linearasset.TinyRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
+import org.mockito.Mockito._
 
 class VerificationServiceSpec extends FunSuite with Matchers {
-
   val mockVerificationService = MockitoSugar.mock[VerificationService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -37,7 +37,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
            values ($id, 235, 30, (sysdate - interval '1' year), 'testuser')""".execute
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
-           values ($id+1, 235, 40, (sysdate - interval '23' month), 'testuser')""".execute
+           values ($id+1, 235, 40, add_months(sysdate, -23), 'testuser')""".execute
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
            values ($id+2, 235, 50, (sysdate - interval '2' year), 'testuser')""".execute
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
@@ -55,6 +55,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
     }
   }
+
 
   test("get asset verification"){
     runWithRollback {
@@ -79,7 +80,6 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       newVerification.head.counter should be (None)
     }
   }
-
 
   test("remove asset type verification") {
     runWithRollback {
@@ -126,6 +126,54 @@ class VerificationServiceSpec extends FunSuite with Matchers {
         ServiceWithDao.setAssetTypeVerification(235, Set(150), "testuser")
       }
       thrown.getMessage should be("Asset type not allowed")
+    }
+  }
+
+  test("get critical asset types info"){
+    runWithRollback {
+      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id, 235, 10, (sysdate - interval '1' year), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+1, 235, 20, add_months(sysdate, -23), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+2, 235, 30, (sysdate - interval '2' year), 'testuser')""".execute
+      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
+           values ($id+3, 235, 190, sysdate, 'testuser')""".execute
+
+      val verificationInfo = ServiceWithDao.getCriticalAssetTypesByMunicipality(235)
+      verificationInfo should have size 5
+      verificationInfo.filter(info => Set(10,20,30,190,380).contains(info.assetTypeCode)) should have size 5
+      verificationInfo.filter(_.municipalityCode == 235) should have size 5
+      verificationInfo.filter(_.verifiedBy.contains("testuser")) should have size 4
+    }
+  }
+
+  test("get assets Latests Modifications with one municipality") {
+    runWithRollback {
+
+      val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
+      when(mockRoadLinkService.getTinyRoadLinkFromVVH(235)).thenReturn(tinyRoadLinkMunicipality235)
+
+      val latestModificationInfoMunicipality = ServiceWithDao.getAssetLatestModifications(Set(235))
+      latestModificationInfoMunicipality should have size 3
+      latestModificationInfoMunicipality.head.assetTypeCode should be(70)
+      latestModificationInfoMunicipality.last.assetTypeCode should be(100)
+    }
+  }
+
+  test("get assets Latests Modifications for Ely user with two municipalities"){
+    runWithRollback {
+      val tinyRoadLinkMunicipality100 = Seq( TinyRoadLink(2000), TinyRoadLink(4000), TinyRoadLink(6000))
+      val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
+
+      when(mockRoadLinkService.getTinyRoadLinkFromVVH(235)).thenReturn(tinyRoadLinkMunicipality235)
+      when(mockRoadLinkService.getTinyRoadLinkFromVVH(100)).thenReturn(tinyRoadLinkMunicipality100)
+
+      val latestModificationInfo = ServiceWithDao.getAssetLatestModifications(Set(100, 235))
+      latestModificationInfo should have size 4
+      latestModificationInfo.head.assetTypeCode should be (90)
+      latestModificationInfo.last.assetTypeCode should be (30)
     }
   }
 }

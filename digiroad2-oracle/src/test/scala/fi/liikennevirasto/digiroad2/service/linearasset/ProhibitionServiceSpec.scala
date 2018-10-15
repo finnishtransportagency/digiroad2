@@ -189,7 +189,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       oldProhibition.linkId should be (388562360)
       oldProhibition.sideCode should be (SideCode.TowardsDigitizing.value)
       oldProhibition.value should be (Some(prohibitionA))
-      oldProhibition.modifiedBy should be (Some("unittest"))
+      oldProhibition.modifiedBy should be (None)
 
       createdProhibition.linkId should be (388562360)
       createdProhibition.sideCode should be (SideCode.AgainstDigitizing.value)
@@ -214,7 +214,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       oldProhibition.linkId should be (388562360)
       oldProhibition.sideCode should be (SideCode.BothDirections.value)
       oldProhibition.value should be (Some(prohibitionA))
-      oldProhibition.modifiedBy should be (Some("unittest"))
+      oldProhibition.modifiedBy should be (None)
       oldProhibition.startMeasure should be (0.0)
       oldProhibition.endMeasure should be (6.0)
 
@@ -318,8 +318,15 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should not create prohibitions on actor update") {
+  test("Create prohibitions on actor update when exist sideCode adjustment") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+
     val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -334,6 +341,11 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val assetTypeId = 190
     val vvhTimeStamp = 14440000
+
+    val roadLinkWithLinkSource = RoadLink(
+      oldLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
     OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
@@ -364,19 +376,21 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
       val changeSet = projectedProhibitions.foldLeft(ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) {
         case (acc, proj) =>
-          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedVVHChanges=acc.adjustedVVHChanges, adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode))))
+          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedVVHChanges=acc.adjustedVVHChanges, adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode), original.typeId)))
       }
 
       service.updateChangeSet(changeSet)
       val all = service.dao.fetchProhibitionsByIds(assetTypeId, Set(asset1,asset2,asset3), false)
-      all.size should be (3)
-      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
-      persisted.size should be (1)
-      val head = persisted.head
-      head.id should be (original.id)
-      head.startMeasure should be (0.1)
-      head.endMeasure should be (10.1)
-      head.expired should be (false)
+      all.size should be (2)
+      val persisted = service.dao.fetchProhibitionsByLinkIds(assetTypeId, Seq(oldLinkId1), includeFloating = false)
+      persisted.size should be (2)
+      persisted.exists(_.id == asset2) should be (true)
+      persisted.exists(_.id == asset1) should be (false)
+      val newAsset = persisted.find(_.id !== asset2).get
+      newAsset.id should not be original.id
+      newAsset.startMeasure should be (0.1)
+      newAsset.endMeasure should be (10.1)
+      newAsset.expired should be (false)
 
       dynamicSession.rollback()
     }
@@ -517,7 +531,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       service.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
+        .publish("prohibition:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("prohibition:saveProjectedProhibition"), captor.capture())
