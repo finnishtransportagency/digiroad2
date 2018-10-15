@@ -18,7 +18,7 @@
         });
       };
 
-      return geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), selectedAsset.getCoordinates().lon, selectedAsset.getCoordinates().lat);
+      return geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), selectedAsset.getCoordinates().lon, selectedAsset.getCoordinates().lat);
     };
 
 

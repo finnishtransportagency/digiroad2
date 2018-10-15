@@ -25,7 +25,9 @@
             layers: []
         }, options);
 
-        var dragBoxInteraction = new ol.interaction.DragBox({
+      var layerName = settings.layerName ? settings.layerName : layer.get('name');
+
+      var dragBoxInteraction = new ol.interaction.DragBox({
             condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) && settings.enableBoxSelect(); }
         });
 
@@ -88,16 +90,16 @@
         });
 
         drawInteraction.on('drawend', function(evt){
-            evt.preventDefault();
-            var polygonGeometry = evt.feature.getGeometry();
-            var features =  layer.getSource().getFeatures();
-            var selected = _.filter(features, function(feature) {
-                return _.some(feature.getGeometry().getCoordinates(), function(coordinate) {
-                    return polygonGeometry.intersectsCoordinate(coordinate);
-                });
-              });
-            var selectedProperties = _.map(selected, function(select) { return select.getProperties(); });
-            settings.onInteractionEnd(selectedProperties);
+          evt.preventDefault();
+          var polygon = evt.feature.getGeometry();
+          var features = layer.getSource().getFeatures();
+          var selectedProperties = _.map(_.filter(features, function(feature){
+            return GeometryUtils.polygonIntersect(polygon, feature.getGeometry());
+          }), function(selectedFeature){
+            return selectedFeature.getProperties();
+          });
+
+          settings.onInteractionEnd(selectedProperties);
         });
 
         selectInteraction.on('select',  function(evt){
@@ -165,8 +167,8 @@
         };
 
         var activate = function() {
+          if(applicationModel.getSelectedLayer() === layerName) {
             enabled = true;
-
             if(!initialized){
                 map.addInteraction(selectInteraction);
                 map.addInteraction(multiSelectInteraction);
@@ -180,6 +182,7 @@
                 });
             });
             toggleDragBox();
+          }
         };
 
         var deactivate = function() {
@@ -195,7 +198,7 @@
         var activePolygon = function(){
             isPolygonActive = true;
             isRectangleActive = false;
-            map.removeInteraction(drawSquare);
+            destroyDrawInteractions(); //there can be multiple interactions active if switching between the tools
             map.addInteraction(selectInteraction);
             map.addInteraction(drawInteraction);
         };
@@ -203,7 +206,7 @@
         var activeRectangle = function(){
             isRectangleActive = true;
             isPolygonActive = false;
-            map.removeInteraction(drawInteraction);
+            destroyDrawInteractions();
             map.addInteraction(selectInteraction);
             map.addInteraction(drawSquare);
         };
@@ -256,6 +259,13 @@
                 if(!(interaction instanceof ol.interaction.DragZoom) && (interaction instanceof ol.interaction.DragBox) || (interaction instanceof ol.interaction.Draw))
                     map.removeInteraction(interaction);
             });
+        };
+
+        var destroyDrawInteractions = function () {
+          _.each(map.getInteractions().getArray(), function (interaction) {
+            if(interaction instanceof ol.interaction.Draw)
+              map.removeInteraction(interaction);
+          });
         };
 
         function drawStyle() {

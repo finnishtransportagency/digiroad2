@@ -63,7 +63,9 @@
 
     this.toolSelection = new me.ToolSelection([
       new me.Tool('Select', me.selectToolIcon, selectedSpeedLimit),
-      new me.Tool('Cut', me.cutToolIcon, selectedSpeedLimit)
+      new me.Tool('Cut', me.cutToolIcon, selectedSpeedLimit),
+      new me.Tool('Rectangle',  me.rectangleToolIcon, selectedSpeedLimit),
+      new me.Tool('Polygon',  me.polygonToolIcon, selectedSpeedLimit)
     ]);
 
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);

@@ -1,9 +1,9 @@
 (function (root) {
-root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
+root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition);
+  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection);
 
   function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
@@ -13,7 +13,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var layerName = pointAsset.layerName;
     var localizedTexts = pointAsset.formLabels;
     var authorizationPolicy = pointAsset.authorizationPolicy;
-
+    new FeedbackDataTool(feedbackCollection, layerName, authorizationPolicy);
 
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
       if(event.assetType == typeId)
@@ -165,11 +165,17 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       selectedAsset.set({ services: newServices });
     });
 
-    rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select').on('change input', function (event) {
+    rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input', function (event) {
       var eventTarget = $(event.currentTarget);
       var propertyPublicId = eventTarget.attr('id');
       var propertyValue = $(event.currentTarget).val();
       selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
+    });
+
+    rootElement.find('.form-traffic-sign select#main-trafficSigns_type').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      $('.form-traffic-sign select#trafficSigns_type').html(singleChoiceSubType(collection, $(event.currentTarget).val()));
+      selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-traffic-sign select#trafficSigns_type').val());
     });
 
     rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
@@ -298,7 +304,8 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var propertyOrdering = [
       'trafficSigns_type',
       'trafficSigns_value',
-      'trafficSigns_info'];
+      'trafficSigns_info',
+      'counter'];
 
     return _.sortBy(properties, function(property) {
       return _.indexOf(propertyOrdering, property.publicId);
@@ -317,34 +324,71 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       '    </div>';
   };
 
+
+  var singleChoiceSubType = function (collection, mainType, property) {
+    var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+    var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
+    var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
+    var groups =  collection.getGroup(signTypes);
+
+    var subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
+      return $('<option>',
+        {
+          value: group.propertyValue,
+          selected: propertyValue == group.propertyValue,
+          text: group.propertyDisplayValue
+        }
+      )[0].outerHTML;
+    }).join('');
+
+    return '<div class="form-group editable form-traffic-sign">' +
+      '      <label class="control-label"> ALITYYPPI</label>' +
+      '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
+      '      <select class="form-control" style="display:none" id="trafficSigns_type">  ' +
+      subTypesTrafficSigns +
+      '      </select></div>';
+  };
+
+
   var singleChoiceHandler = function (property, collection) {
     var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
-    var propertyDisplayValue = (property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
     var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
 
     var groups =  collection.getGroup(signTypes);
     var groupKeys = Object.keys(groups);
-    var trafficSigns = _.map(groupKeys, function (label) {
-      return $('<optgroup label =  "'+ label +'" >'.concat(
 
-        _.map(groups[label], function(group){
-          return $('<option>',
-            { value: group.propertyValue,
-              selected: propertyValue == group.propertyValue,
-              text: group.propertyDisplayValue}
-          )[0].outerHTML; }))
+    var mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
 
-      )[0].outerHTML;}).join('');
+    var counter = 0;
+    var mainTypesTrafficSigns = _.map(groupKeys, function (label) {
+      return $('<option>',
+        { selected: counter === mainTypeDefaultValue,
+          value: counter++,
+          text: label}
+          )[0].outerHTML; }).join('');
 
     return '' +
       '    <div class="form-group editable form-traffic-sign">' +
       '      <label class="control-label">' + property.localizedName + '</label>' +
-      '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
-      '      <select class="form-control" style="display:none" id="' + property.publicId + '">  ' +
-      trafficSigns +
+      '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
+      '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+      mainTypesTrafficSigns +
       '      </select>' +
+      '    </div>' +
+      singleChoiceSubType( collection, mainTypeDefaultValue, property );
+  };
+
+  var readOnlyHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
+
+    return '' +
+      '    <div class="form-group editable form-traffic-sign">' +
+      '        <label class="control-label">' + displayValue + '</label>' +
+      '        <p class="form-control-static">' + propertyValue + '</p>' +
       '    </div>';
   };
+
 
   function renderValueElement(asset, collection) {
     if (asset.obstacleType) {
@@ -429,6 +473,9 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
         if (propertyType === "single_choice")
           return singleChoiceHandler(feature, collection);
 
+        if (propertyType === "read_only_number")
+          return readOnlyHandler(feature);
+
       }), function(prev, curr) { return prev + curr; }, '');
 
       if(asset.validityDirection)
@@ -467,14 +514,17 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       '      </select>' +
       '    </div>' +
       serviceTypeExtensionElements(service, serviceTypeExtensions) +
+      '<div>' +
       '    <label class="control-label">Palvelun nimi</label>' +
-      '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
+      '    <p class="form-control-static">' + (service.name || '–') + '</p> '+
       '    <input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
+      '</div><div>' +
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
+      '</div><div>' +
       (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
-      '  </div>' +
+      '</div></div>' +
       '</li>';
   }
 
@@ -504,12 +554,12 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       }).join('');
       var currentExtensionType = _.find(extensions, {value: service.typeExtension});
       return '' +
-        '<label class="control-label">Tarkenne</label>' +
+        '<div><label class="control-label">Tarkenne</label>' +
         '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '–') + '</p>' +
         '<select class="form-control select-service-type-extension" style="display:none" data-service-id="' + service.id + '">  ' +
         '  <option disabled selected>Lisää tarkenne</option>' +
         extensionOptions +
-        '</select>';
+        '</select></div>';
     } else {
       return '';
     }

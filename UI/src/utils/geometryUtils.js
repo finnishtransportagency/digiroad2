@@ -125,6 +125,47 @@
     return Math.atan2(vector.x, vector.y);
   };
 
+  root.polygonIntersect = function(polygon, geometry){
+    var intersectionFrequency = 0.5; //in meters, split the distance in segments and check if each coordinate intersects the polygon
+    if(geometry instanceof ol.geom.Point){
+      var point = _.head(geometry.getCoordinates());
+      return polygon.intersectsCoordinate([point.x, point.y]);
+    }
+
+    if(geometry instanceof ol.geom.LineString)
+    {
+      if(!polygon.intersectsExtent(geometry.getExtent()))
+        return false;
+
+      if(_.some(geometry.getCoordinates(), function(coordinate) {
+        return polygon.intersectsCoordinate(coordinate);
+      }))
+        return true;
+
+      return _.some(_.zip(geometry.getCoordinates(), _.tail(geometry.getCoordinates())), function(coordinates) {
+        var startCoordinate = coordinates[0];
+        var endCoordinate = coordinates[1];
+
+        if(!endCoordinate)
+          return false;
+
+        var totalDistance = distanceOfPoints(startCoordinate, endCoordinate);
+        var stride = parseInt(totalDistance / intersectionFrequency, 10);
+
+        var xDistance = endCoordinate[0] - startCoordinate[0];
+        var yDistance = endCoordinate[1] - startCoordinate[1];
+        var xOffset = xDistance / stride;
+        var yOffset = yDistance / stride;
+
+        return _.some(_.range(stride-1), function(index){
+          var current = index+1;
+          return polygon.intersectsCoordinate([startCoordinate[0] + (current * xOffset), startCoordinate[1] + (current * yOffset)]);
+        });
+      });
+    }
+    throw new Error("Geometry not supported");
+  };
+
   root.calculateMidpointOfLineString = function (lineString) {
     var length = lineString.getLength();
     var vertices = lineString.getCoordinates();

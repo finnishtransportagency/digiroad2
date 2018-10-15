@@ -1,15 +1,23 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import java.util.NoSuchElementException
-
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.joda.time.DateTime
 
 
-class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, dao: OracleLinearAssetDao) extends LinearAssetService(roadLinkServiceImpl, eventBusImpl){
+class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetService(roadLinkServiceImpl, eventBusImpl){
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def municipalityDao: MunicipalityDao = new MunicipalityDao
+  override def eventBus: DigiroadEventBus = eventBusImpl
+  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def polygonTools: PolygonTools = new PolygonTools()
+  override def assetDao: OracleAssetDao = new OracleAssetDao
 
   override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
     withDynTransaction {
@@ -23,38 +31,45 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
       }
     }
   }
-  override def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int], informationSource: Option[Int] = None): Option[Long] = {
-    val measure = measures.getOrElse(throw new NoSuchElementException("Missing measures from asset."))
 
-    //Get Old Asset
-    val oldAsset =
-      valueToUpdate match {
+  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
+    if (ids.isEmpty)
+      return ids
+
+    val updatedAssets = ids.flatMap { id =>
+      val oldLinearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val measure = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
+
+      value match {
         case NumericValue(intValue) =>
-          dao.fetchLinearAssetsByIds(Set(assetId), valuePropertyId).head
-        case TextualValue(textValue) =>
-          dao.fetchAssetsWithTextualValuesByIds(Set(assetId), valuePropertyId).head
-        case _ => return None
-      }
+          if (intValue == 0 && measures.nonEmpty) {
+            dao.updateExpiration(id)
 
-    if ((measure.startMeasure == oldAsset.startMeasure) && (measure.endMeasure == oldAsset.endMeasure) && oldAsset.value.contains(valueToUpdate) && vvhTimeStamp.contains(oldAsset.vvhTimeStamp))
-      return Some(assetId)
-
-    //Expire the old asset
-    dao.updateExpiration(assetId, expired = true, username)
-    val roadlink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, false)
-        if (valueToUpdate.toJson == 0){
-          Seq(Measures(oldAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldAsset.endMeasure)).map {
-            m =>
-              if (m.endMeasure - m.startMeasure > 0.01)
-                createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-                  m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadlink, true, oldAsset.createdBy,
-                  Some(oldAsset.createdDateTime.getOrElse(DateTime.now())), verifiedBy = oldAsset.verifiedBy, informationSource = None)
+            Seq(Measures(oldLinearAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldLinearAsset.endMeasure)).flatMap {
+              m =>
+                if (m.endMeasure - m.startMeasure > 0.01)
+                  Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue(1), sideCode.getOrElse(oldLinearAsset.sideCode), m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), verifiedBy = oldLinearAsset.verifiedBy, informationSource = None))
+                else
+                  None
+            }
           }
-          Some(0L)
-        }else{
-          Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-            measure, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadlink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())), informationSource = None))
-        }
+          else  {
+            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, value, sideCode.getOrElse(oldLinearAsset.sideCode),
+             measure, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), informationSource = None))
+          }
+        case _ => Some(id)
+      }
+    }
+    if(updatedAssets.isEmpty)
+      ids.foreach(dao.updateExpiration(_, true, username))
 
+    updatedAssets
+  }
+
+  override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
+    withDynTransaction {
+      updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
+    }
   }
 }

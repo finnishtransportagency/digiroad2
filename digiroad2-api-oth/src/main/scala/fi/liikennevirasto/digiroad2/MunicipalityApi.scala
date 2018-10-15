@@ -2,13 +2,10 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
 import org.joda.time.DateTime
@@ -23,7 +20,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val roadLinkService: RoadLinkService,
                       val linearAssetService: LinearAssetService,
                       val speedLimitService: SpeedLimitService,
-                      val pavingService: PavingService,
+                      val pavedRoadService: PavedRoadService,
                       val roadWidthService: RoadWidthService,
                       val manoeuvreService: ManoeuvreService,
                       val assetService: AssetService,
@@ -35,6 +32,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
+
+  val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService
 
   val Maximum7Restrictions = Set(TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId,
     HeightLimit.typeId, LengthLimit.typeId, WidthLimit.typeId)
@@ -74,7 +73,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
       case LitRoad.typeId | MassTransitLane.typeId  => onOffLinearAssetService
-      case PavedRoad.typeId => pavingService
+      case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
       case _ => linearAssetService
     }
@@ -89,16 +88,24 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
+  private def getValue(typeId: Int, x : NewAssetValues) : Value = {
+    if (isDynamic(typeId)) {
+      val propertiesDB = assetPropertyService.getProperties(typeId).head
+      DynamicValue(DynamicAssetValue(Seq(DynamicProperty(propertiesDB.publicId, propertiesDB.propertyType, propertiesDB.required, Seq(DynamicPropertyValue(x.properties.map(_.value).head))))))
+    } else
+      NumericValue(x.properties.map(_.value).head.toInt)
+  }
+
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
     AssetTypeInfo.apply(typeId).geometryType match {
-      case "linear" => value.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure.getOrElse(0), NumericValue(x.properties.map(_.value).head.toInt), x.sideCode.getOrElse(SideCode.BothDirections.value) , x.geometryTimestamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), None))
+      case "linear" => value.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure.getOrElse(0), getValue(typeId, x), x.sideCode.getOrElse(SideCode.BothDirections.value), x.geometryTimestamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), None))
       case _ => Seq.empty[NewLinearAsset]
     }
   }
 
   private def extractLinearAsset(typeId: Int, value: JValue) = {
     value.extractOpt[NewAssetValues].map { v =>
-      NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure.getOrElse(0), NumericValue(v.properties.map(_.value).head.toInt), v.sideCode.getOrElse(SideCode.BothDirections.value), v.geometryTimestamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), None)
+      NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure.getOrElse(0), getValue(typeId, v), v.sideCode.getOrElse(SideCode.BothDirections.value), v.geometryTimestamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), None)
     }.get
   }
 
@@ -178,7 +185,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateSideCodes(Seq(newAsset))
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
-    val updatedId = usedService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
+    val updatedId = usedService.update(Seq(oldAsset.id), newAsset.value, user.username, Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode), Some(Measures(newAsset.startMeasure, newAsset.endMeasure)))
     updatedId match {
       case Seq(0L) => Seq.empty
       case _ => getLinearAssetsAndRoadLinks(assetTypeId, updatedId.toSet)
@@ -260,7 +267,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     newSpeedLimitAssets.foreach{
       newAsset => validateMeasuresOnAssets(Set(newAsset.startMeasure, newAsset.endMeasure), newAsset.linkId)
     }
-    val assetsIds = speedLimitService.create(newSpeedLimitAssets, assetTypeId, user.username, 0, (_, _) => Unit)
+    val assetsIds = speedLimitService.createMultiple(newSpeedLimitAssets, assetTypeId, user.username, 0, (_, _) => Unit)
     getSpeedLimitsAndRoadLinks(assetsIds.toSet)
   }
 
@@ -455,6 +462,53 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     linearAssetsAndRoadLink.map ( linearAssets => linearAssetToApi(linearAssets))
   }
 
+  def dynamicPieceWiseAssetToApi(linearAssetsAndRoadLink: (PieceWiseLinearAsset, RoadLink)): Map[String, Any] = {
+    val (linearAsset, roadLink) = linearAssetsAndRoadLink
+    Map("id" -> linearAsset.id,
+      "properties" -> Seq(Map("value" -> (linearAsset.value match {
+        case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty =>
+          dynamicTypeProperty.values.map(_.value)}.headOption
+        case _ => Some(PavementClass.Unknown.value)})
+        , "name" -> getAssetNameProp(linearAsset.typeId).head)),
+      "linkId" -> linearAsset.linkId,
+      "startMeasure" -> linearAsset.startMeasure,
+      "endMeasure" -> linearAsset.endMeasure,
+      "sideCode" -> linearAsset.sideCode,
+      "modifiedAt" -> linearAsset.modifiedDateTime,
+      "createdAt" -> linearAsset.createdDateTime,
+      "geometryTimestamp" -> linearAsset.vvhTimeStamp,
+      "municipalityCode" -> roadLink.municipalityCode
+    )
+  }
+
+  def dynamicPieceWiseAssetsToApi(linearAssetsAndRoadLink: Seq[(PieceWiseLinearAsset, RoadLink)]): Seq[Map[String, Any]] = {
+    linearAssetsAndRoadLink.map ( linearAssets => dynamicPieceWiseAssetToApi(linearAssets))
+  }
+
+  def dynamicAssetToApi(linearAssetsAndRoadLink: (PersistedLinearAsset, RoadLink)): Map[String, Any] = {
+    val (linearAsset, roadLink) = linearAssetsAndRoadLink
+    Map("id" -> linearAsset.id,
+      "properties" ->
+        Seq(Map("value" -> (linearAsset.value match {
+          case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty =>
+                dynamicTypeProperty.values.map(_.value)}.headOption
+          case _ => Some(PavementClass.Unknown.value)})
+    , "name" -> getAssetNameProp(linearAsset.typeId).head)),
+      "linkId" -> linearAsset.linkId,
+      "startMeasure" -> linearAsset.startMeasure,
+      "endMeasure" -> linearAsset.endMeasure,
+      "sideCode" -> linearAsset.sideCode,
+      "modifiedAt" -> linearAsset.modifiedDateTime,
+      "createdAt" -> linearAsset.createdDateTime,
+      "geometryTimestamp" -> linearAsset.vvhTimeStamp,
+      "municipalityCode" -> roadLink.municipalityCode
+    )
+  }
+
+  def dynamicAssetsToApi(linearAssetsAndRoadLink: Seq[(PersistedLinearAsset, RoadLink)]): Seq[Map[String, Any]] = {
+    linearAssetsAndRoadLink.map ( linearAssets => dynamicAssetToApi(linearAssets))
+  }
+
   def speedLimitAssetToApi(speedLimitsAndRoadLink: (SpeedLimit, RoadLink)): Map[String, Any] = {
     val (speedLimit, roadLink) = speedLimitsAndRoadLink
     Map("id" -> speedLimit.id,
@@ -539,7 +593,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case LengthLimit.typeId => Seq("value")
       case WidthLimit.typeId => Seq("value")
       case RoadWidth.typeId => Seq("value")
-      case PavedRoad.typeId => Seq("hasPavement")
+      case PavedRoad.typeId => Seq("value")
       case NumberOfLanes.typeId => Seq("value")
       case MassTransitLane.typeId => Seq("hasLane")
       case RailwayCrossings.typeId  => Seq("safetyEquipment", "name", "railwayCrossingId")
@@ -574,14 +628,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Not allow " + notAllowed + " on this type of asset"))
   }
 
-  def extractPropertyValue(key: String, properties: Seq[AssetProperties], transformation: ( (String, Seq[String])=> Any)):  Any = {
+  def extractPropertyValue(key: String, properties: Seq[AssetProperties], transformation: (String, Seq[String]) => Any):  Any = {
     val values = properties.filter { property => property.name == key }.map(_.value)
     transformation(key, values)
   }
 
   def propertyValuesToString(key: String, values: Seq[String]): String = { values.mkString }
 
-  def extractProperty(key: String, properties: Seq[AssetProperties], transformation: ( (String, Seq[String])=> Any)):  Any = {
+  def extractProperty(key: String, properties: Seq[AssetProperties], transformation: (String, Seq[String]) => Any):  Any = {
     extractPropertyValue(key, properties, transformation)
   }
 
@@ -608,8 +662,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         }
 
         case PavedRoad.typeId => extractPropertyValue(getAssetNameProp(assetTypeId).head, prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
-          if (!Seq(0, 1).contains(value))
-            halt(BadRequest(s"The property values for the property with name hasPavement are not valid."))
+          if (!Seq(1, 2, 10, 20, 30, 40, 50).contains(value))
+            halt(BadRequest(s"The property values for the property with name value are not valid."))
         }
         case MassTransitLane.typeId => extractPropertyValue(getAssetNameProp(assetTypeId).head, prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
           if (!Seq(0, 1).contains(value))
@@ -632,7 +686,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             if (!Seq(1,2,3,4,5).contains(value))
               halt(BadRequest(s"The property values for the property with name safetyEquipment is not valid."))
           }
-
         case TrafficLights.typeId  => extractPropertyValue(getAssetNameProp(assetTypeId).head, prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
           if (!Seq(0,1).contains(value))
             halt(BadRequest(s"The property values for the property with name hasTrafficLight are not valid."))
@@ -778,11 +831,22 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case _ =>
         val assetTypeId = getAssetTypeId(assetTypeName)
         AssetTypeInfo.apply(assetTypeId).geometryType match {
-          case "linear" => linearPieceWiseAssetsToApi(getLinearAssetsByMunicipality(municipalityCode, assetTypeId))
+          case "linear" =>
+            if(isDynamic(assetTypeId)) {
+              dynamicPieceWiseAssetsToApi(getLinearAssetsByMunicipality(municipalityCode, assetTypeId))
+            } else {
+              linearPieceWiseAssetsToApi(getLinearAssetsByMunicipality(municipalityCode, assetTypeId))
+            }
           case "point" => pointAssetsToApi(getPointAssetsByMunicipality(municipalityCode, assetTypeId), assetTypeId)
           case _ =>
         }
     }
+  }
+
+  private def isDynamic(assetId: Int): Boolean = {
+    val dynamicAssetType = Seq(PavedRoad.typeId)
+
+    dynamicAssetType.contains(assetId)
   }
 
   get("/:assetType/:assetId") {
@@ -798,8 +862,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case _ =>
         val assetTypeId = getAssetTypeId(assetTypeName)
         AssetTypeInfo.apply(assetTypeId).geometryType match {
-          case "linear" => getLinearAssetsAndRoadLinks(assetTypeId, Set(assetId))
-            linearAssetToApi(getLinearAssetsAndRoadLinks(assetTypeId, Set(assetId)).headOption.getOrElse(halt(NotFound("Asset not found"))))
+          case "linear" =>
+            if(isDynamic(assetTypeId)) {
+              dynamicAssetToApi(getLinearAssetsAndRoadLinks(assetTypeId, Set(assetId)).headOption.getOrElse(halt(NotFound("Asset not found"))))
+            } else {
+              linearAssetToApi(getLinearAssetsAndRoadLinks(assetTypeId, Set(assetId)).headOption.getOrElse(halt(NotFound("Asset not found"))))
+            }
           case "point" => pointAssetToApi(getPointAssetById(assetTypeId, assetId), assetTypeId)
           case _ =>
         }
@@ -838,10 +906,15 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
             if (assetTypeId == SpeedLimitAsset.typeId) {
               val asset = createSpeedLimitAssets(assetTypeId, parsedBody)
-              if(asset.nonEmpty) speedLimitAssetsToApi(asset) else halt(InternalServerError("Asset not Updated"))
+              if (asset.nonEmpty) speedLimitAssetsToApi(asset) else halt(InternalServerError("Asset not Updated"))
             } else {
               val asset = createLinearAssets(assetTypeId, parsedBody, linkIds)
-              if(asset.nonEmpty) linearAssetToApi(asset.head) else halt(InternalServerError("Asset not Updated"))
+
+              if(isDynamic(assetTypeId)) {
+                if (asset.nonEmpty) dynamicAssetsToApi(asset) else halt(InternalServerError("Asset not Updated"))
+              } else {
+                if (asset.nonEmpty) linearAssetsToApi(asset) else halt(InternalServerError("Asset not Updated"))
+              }
             }
 
           case "point" =>
@@ -881,7 +954,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             if (assetTypeId == SpeedLimitAsset.typeId) speedLimitAssetToApi(updateSpeedLimitAsset(assetId, parsedBody, linkId))
             else{
               val asset = updateLinearAsset(assetTypeId, assetId, parsedBody, linkId)
-              if (asset.nonEmpty) linearAssetToApi(asset.head) else halt(InternalServerError("Asset not Updated"))
+              if(isDynamic(assetTypeId)) {
+                if (asset.nonEmpty) dynamicAssetToApi(asset.head) else halt(InternalServerError("Asset not Updated"))
+              } else {
+                if (asset.nonEmpty) linearAssetToApi(asset.head) else halt(InternalServerError("Asset not Updated"))
+              }
             }
           case "point" => pointAssetToApi(updatePointAssets(parsedBody, assetTypeId, assetId), assetTypeId)
           case _ =>

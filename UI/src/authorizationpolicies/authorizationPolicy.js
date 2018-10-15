@@ -46,7 +46,7 @@
     };
 
     this.filterRoadLinks = function(roadLink){
-      return (me.isMunicipalityMaintainer() && roadLink.administrativeClass != 'State' && me.hasRightsInMunicipality(roadLink.municipalityCode)) || (me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode)) || me.isOperator();
+      return (me.isMunicipalityMaintainer() && roadLink.administrativeClass !== 'State' && me.hasRightsInMunicipality(roadLink.municipalityCode)) || (me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode)) || me.isOperator();
     };
 
     this.editModeAccess = function() {

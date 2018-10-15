@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetServi
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -55,8 +56,10 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
         roadNumber =>
           //Get all the existing road address for the road number
           val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
+          val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
           val sectionAssets = getAllTierekisteriAddressSections(roadNumber)
-          val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, roadAddresses)
+          val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+          val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, mappedRoadAddresses, mappedRoadLinks)
           val groupedByLinkId = roadAddressInfo.flatten.groupBy(_._1.linkId)
           groupedByLinkId.foreach{link => splitAndCreateAssets(link._2)}
       }
@@ -87,13 +90,16 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
               }
           }
 
+          val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+          val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+
           //Creates the assets on top of the expired sections
           expiredSections.foreach {
             roadPart =>
               val sectionAssets: Seq[(AddressSection, TierekisteriAssetData)] = {
                 trAssetTypeClients.flatMap(client => client.fetchActiveAssetData(roadNumber, roadPart).map(_.asInstanceOf[TierekisteriAssetData])).flatMap(x => splitTrAssetsBySections(x))
               }
-              val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, roadAddresses)
+              val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, mappedRoadAddresses, mappedRoadLinks)
               val groupedByLinkId = roadAddressInfo.flatten.groupBy(_._1.linkId)
               groupedByLinkId.foreach{link => splitAndCreateAssets(link._2)}
           }
@@ -101,9 +107,9 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
     }
   }
 
-  def getAllRoadAddressMeasures(sectionAssets: Seq[(AddressSection, TierekisteriAssetData)], existingRoadAddresses: Seq[ViiteRoadAddress]) = {
+  def getAllRoadAddressMeasures(sectionAssets: Seq[(AddressSection, TierekisteriAssetData)], existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]) = {
     sectionAssets.map { section =>
-      val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section._1)
+      val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section._1, mappedRoadLinks)
       roadAddressLink.flatMap { case (ra, roadlink) =>
         calculateMeasures(ra, section._1).map { measures =>
           (roadlink.get, measures, section._2)
@@ -128,11 +134,15 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
     trAsset.flatMap(splitTrAssetsBySections)
   }
 
+  def  roundMeasure(measure: Double) : Double = {
+    Math.round(measure * 1000).toDouble/1000
+  }
+
   def splitAndCreateAssets(roadAddressInfo: Seq[(VVHRoadlink, Measures, TierekisteriAssetData)]) = {
 
     val splitMeasures = roadAddressInfo.flatMap {
       case (_, measures, _) =>
-        Seq(measures.startMeasure, measures.endMeasure)
+        Seq(roundMeasure(measures.startMeasure), roundMeasure(measures.endMeasure))
     }.distinct.sorted
 
     val sectionMeasures = splitMeasures.zip(splitMeasures.tail).map(x => Measures(x._1, x._2))
@@ -147,7 +157,13 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
       }
       val assetId = service.dao.createLinearAsset(typeId, roadAddressInfo.head._1.linkId, false, SideCode.BothDirections.value, segment, "batch_process_" + assetName,
         vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadAddressInfo.head._1.linkSource.value))
-      trAssets.foreach{asset => insertSingleChoiceProperty(assetId, Queries.getPropertyIdByPublicId(asset._2), asset._1).execute}
+
+      trAssets.distinct.foreach{
+        asset =>
+          val enumeratedId = Queries.getPropertyIdByPublicId(asset._2)
+          println(s"Add property to asset $assetId with value ${asset._1}, public id ${asset._2} and enumerated Id $enumeratedId")
+          insertSingleChoiceProperty(assetId, enumeratedId, asset._1).execute
+      }
       println(s"Created OTH $assetName assets for ${roadAddressInfo.head._1.linkId} from TR data with assetId $assetId")
     }
   }

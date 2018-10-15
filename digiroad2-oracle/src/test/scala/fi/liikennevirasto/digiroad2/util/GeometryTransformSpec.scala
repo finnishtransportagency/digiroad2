@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.RoadAddressesService
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 class GeometryTransformSpec extends FunSuite with Matchers {
   val mockRoadAddressesService = MockitoSugar.mock[RoadAddressesService]

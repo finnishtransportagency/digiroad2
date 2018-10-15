@@ -22,7 +22,7 @@ import org.json4s.jackson.Serialization.write
 import org.mockito.AdditionalAnswers
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
 import scala.concurrent.Promise
@@ -156,14 +156,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testServicePointService = new ServicePointService
   val testMaintenanceRoadServiceService = new MaintenanceService(mockRoadLinkService, new DummyEventBus)
   val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new MassLimitationDao)
-  val testPavingService = new PavingService(mockRoadLinkService, new DummyEventBus)
+  val testPavedRoadService = new PavedRoadService(mockRoadLinkService, new DummyEventBus)
   val testRoadWidthService = new RoadWidthService(mockRoadLinkService, new DummyEventBus)
   val testNumericValueService = new NumericValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testProhibitionService = new ProhibitionService(mockRoadLinkService, new DummyEventBus)
   val testTextValueService = new TextValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
   
   addServlet(new Digiroad2Api(mockRoadLinkService, mockRoadAddressService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
-    testPavingService, testRoadWidthService), "/*")
+    testPavedRoadService, testRoadWidthService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("provide header to indicate session still active", Tag("db")) {
