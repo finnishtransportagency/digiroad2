@@ -170,8 +170,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                     "type" -> link.linkType.value,
                     "length" -> link.length
                   )
-                ),
-                "sideCode" -> SideCode.BothDirections.value)
+                ))
                 ++ dynamicPointAssetProperties(pointAsset, since))
           )
         }
@@ -186,7 +185,8 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     "modifiedAt" -> point.modifiedAt.map(DateTimePropertyFormat.print(_)),
     "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
     "modifiedBy" -> point.modifiedBy,
-    "changeType" -> extractChangeType(since, point.expired, point.createdAt)
+    "changeType" -> extractChangeType(since, point.expired, point.createdAt),
+    "sideCode" -> SideCode.BothDirections.value
    )
   }
 
@@ -199,7 +199,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
       "modifiedBy" -> point.modifiedBy,
       "changeType" -> extractChangeType(since, point.expired, point.createdAt),
-      "type" -> trafficSignService.getTrafficSignsProperties(point, trafficSignService.typePublicId).get.propertyValue.toInt,
+      "typeValue" -> trafficSignService.getTrafficSignsProperties(point, trafficSignService.typePublicId).get.propertyValue.toInt,
       "sideCode" -> point.validityDirection
     )
   }
