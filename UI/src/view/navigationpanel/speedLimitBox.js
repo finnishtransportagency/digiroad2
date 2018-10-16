@@ -8,13 +8,9 @@
       return 'Nopeusrajoitukset';
     };
 
-    this.title = function (){
-      return 'Nopeusrajoitus';
-    };
+    this.title = 'Nopeusrajoitus';
 
-    this.layerName = function () {
-      return 'speedLimit';
-    };
+    this.layerName = 'speedLimit';
 
     this.legendName = function () {
       return 'linear-asset-legend speed-limit';
