@@ -181,7 +181,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   def pointAssetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = {
     val point = pointAsset.asInstanceOf[PersistedPoint]
    Map(
-    "endMeasure" -> point.mValue,
+    "mValue" -> point.mValue,
     "createdBy" -> point.createdBy,
     "modifiedAt" -> point.modifiedAt.map(DateTimePropertyFormat.print(_)),
     "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
@@ -193,7 +193,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   def pointAssetTrafficSignProperties(pointAsset: PersistedPointAsset, since: DateTime): Map[String, Any] = {
     val point = pointAsset.asInstanceOf[PersistedTrafficSign]
     Map(
-      "endMeasure" -> point.mValue,
+      "mValue" -> point.mValue,
       "createdBy" -> point.createdBy,
       "modifiedAt" -> point.modifiedAt.map(DateTimePropertyFormat.print(_)),
       "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
