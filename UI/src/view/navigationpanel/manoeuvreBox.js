@@ -1,6 +1,6 @@
 (function(root) {
   root.ManoeuvreBox = function() {
-    var layerName = 'manoeuvre';
+    this.layerName = 'manoeuvre';
     var authorizationPolicy = new AuthorizationPolicy();
     var values = ['Ei kääntymisrajoitusta', 'Kääntymisrajoituksen lähde', 'Kääntymisrajoituksen lähde, useampi', 'Kääntymisrajoituksen välilinkki', 'Kääntymisrajoituksen välilinkki, useampi', 'Kääntymisrajoituksen kohde', 'Kääntymisrajoituksen kohde, useampi', 'Kääntymisrajoituksen lähde ja kohde'];
     var manoeuvreLegendTemplate = _.map(values, function(value, idx) {
@@ -51,8 +51,6 @@
       });
     };
 
-
-
     bindExternalEventHandlers();
 
     var element = $('<div class="panel-group manoeuvres-limit manoeuvres"/>')
@@ -72,13 +70,10 @@
       element.hide();
     }
 
-    return {
-      title: 'Kääntymisrajoitus',
-      layerName: layerName,
-      element: element,
-      show: show,
-      hide: hide
-    };
+    this.title = 'Kääntymisrajoitus';
+    this.template = function() { return element;};
+    this.show =  show;
+    this.hide = hide;
   };
 })(this);
 

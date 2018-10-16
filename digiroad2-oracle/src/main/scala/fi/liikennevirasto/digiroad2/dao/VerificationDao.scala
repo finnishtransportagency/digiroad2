@@ -95,10 +95,10 @@ class VerificationDao {
                       ELSE NULL
                 END) AS counting
                 FROM municipality m
-                JOIN asset_type atype ON atype.verifiable = 1 and atype.id = $assetTypeCode
-                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id
+                JOIN asset_type atype ON atype.id = $assetTypeCode
+                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id and (mv.valid_to is null or mv.valid_to > sysdate) AND mv.asset_type_id = atype.id
                 LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID
-                WHERE  m.id = $municipalityCode and (mv.valid_to is null or mv.valid_to > sysdate) AND mv.asset_type_id = atype.id
+                WHERE  m.id = $municipalityCode
                 GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),

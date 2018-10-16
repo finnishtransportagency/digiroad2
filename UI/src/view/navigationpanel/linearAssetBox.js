@@ -7,13 +7,9 @@
       return assetConfig.title + (assetConfig.editControlLabels.showUnit ? ' ('+assetConfig.unit+')': '');
     };
 
-    this.title = function () {
-      return assetConfig.title;
-    };
+    this.title = assetConfig.title;
 
-    this.layerName = function () {
-      return assetConfig.layerName;
-    };
+    this.layerName = assetConfig.layerName;
 
     this.legendName = function () {
       return 'limit';
@@ -65,7 +61,7 @@
 
     var element = $('<div class="panel-group simple-limit ' + assetConfig.className + 's"/>');
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       me.eventHandler();
       return me.getElement()
@@ -90,12 +86,7 @@
       return element;
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+      this.show = show;
+      this.hide = hide;
   };
 })(this);
