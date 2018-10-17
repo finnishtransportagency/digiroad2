@@ -17,6 +17,7 @@ import org.joda.time.DateTime
 case class AssetWithMeasures (roadLink: Option[VVHRoadlink], measures: Measures, assetData: TierekisteriAssetData)
 
 class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
+  final private val DefaultEpsilon = 0.001
 
   lazy val service: DynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService, eventbus)
   lazy val dao: DynamicLinearAssetDao = new DynamicLinearAssetDao
@@ -150,7 +151,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
     sectionMeasures.foreach{ segment =>
       val trAssets = roadAddressInfo.filter {
         case (_, assetMeasures, _) =>
-          assetMeasures.startMeasure - 0.001 <= segment.startMeasure && assetMeasures.endMeasure + 0.001 >= segment.endMeasure && assetMeasures.endMeasure != assetMeasures.startMeasure
+          assetMeasures.startMeasure - DefaultEpsilon <= segment.startMeasure && assetMeasures.endMeasure + DefaultEpsilon >= segment.endMeasure && assetMeasures.endMeasure != assetMeasures.startMeasure
       }map{
         case(_, _, trAsset) =>
           getAssetValue(trAsset)
