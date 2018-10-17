@@ -703,4 +703,35 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       }
     }
   }
+
+  test("Timestamp of the asset is bigger than the vvhChange, should not update asset"){
+    val roadLinks = Seq(RoadLink(1000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2))))
+    val service = createService()
+
+    val assets = Seq(PersistedLinearAsset(1, 1000, 1, Some(propertyData), 0, 10, None, None, None, None, false, PavedRoad.typeId, 1461970812000L, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    runWithRollback {
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (expiredIds, updated) = service.getPavedRoadAssetChanges(assets, roadLinks, changeInfo, PavedRoad.typeId.toLong)
+      expiredIds.size should be(0)
+      updated.size should be(0)
+    }
+  }
+
+  test("Timestamp of the asset is lower than the vvhChange, should not update asset"){
+    val roadLinks = Seq(RoadLink(1000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2))))
+    val service = createService()
+
+    val assets = Seq(PersistedLinearAsset(1, 1000, 1, Some(propertyData), 0, 10, None, None, None, None, false, PavedRoad.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    runWithRollback {
+      val changeInfo = createChangeInfo(roadLinks, 11L)
+      val (expiredIds, updated) = service.getPavedRoadAssetChanges(assets, roadLinks, changeInfo, PavedRoad.typeId.toLong)
+      expiredIds.size should be(0)
+      updated.foreach { assetUpdated =>
+        assetUpdated.vvhTimeStamp should be(11L)
+        assetUpdated.modifiedBy should be(Some)
+      }
+    }
+  }
 }
