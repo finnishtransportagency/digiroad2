@@ -342,7 +342,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       val closestLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
       val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
       if (vvhRoad.isEmpty || vvhRoad.size > 1) {
-        val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), 0, None)
+        val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), SideCode.Unknown.value, None)
         createFloating(asset, userProvider.getCurrentUser().username, municipality)
       }
       else {
