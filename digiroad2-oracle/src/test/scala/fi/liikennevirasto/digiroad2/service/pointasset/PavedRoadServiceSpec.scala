@@ -730,7 +730,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       expiredIds.size should be(0)
       updated.foreach { assetUpdated =>
         assetUpdated.vvhTimeStamp should be(11L)
-        assetUpdated.modifiedBy should be(Some)
       }
     }
   }
