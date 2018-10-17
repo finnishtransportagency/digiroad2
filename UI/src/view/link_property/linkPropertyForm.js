@@ -119,7 +119,7 @@
         '<div class="wrapper read-only">' +
           '<div class="form form-horizontal form-dark">' +
             '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedAt %> / <%- modifiedBy %></p>' +
             '</div>' +
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +

@@ -52,18 +52,22 @@
       return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
     };
 
+    var informationLog = function (date, username) {
+      return date ? (date + ' / ' + username) : ' '+ username;
+    };
+
     var header = '<header>' + title() +'</header>';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark linear-asset">' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + createdBy + createdDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n:' + informationLog(createdDateTime, createdBy)+ '</p>' +
                '</div>' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Muokattu viimeksi:' + informationLog(modifiedDateTime, modifiedBy) + '</p>' +
                '</div>' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedSpeedLimit.count() + '</p>' +
+                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä:' + selectedSpeedLimit.count() + '</p>' +
                '</div>' +
                limitValueButtons() +
                separatorButton() +

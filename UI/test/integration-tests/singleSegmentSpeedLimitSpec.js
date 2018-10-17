@@ -166,9 +166,9 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         });
         it('it updates the modified and created fields', function() {
           testHelpers.selectSpeedLimit(openLayersMap, speedLimitId, true);
-          expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator 10.09.2014 13:36:57');
+          expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: 10.09.2014 13:36:57 / creator');
           var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.includes($(e).text(), 'Muokattu viimeksi'); });
-          expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
+          expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: 10.09.2014 13:36:58 / modifier');
         });
       });
     });

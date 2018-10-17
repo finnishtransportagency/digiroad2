@@ -864,9 +864,9 @@
 
         function createBodyElement(selectedAsset) {
             var info = {
-                modifiedBy :  selectedAsset.getModifiedBy() || '-',
-                modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + selectedAsset.getModifiedDateTime(): '-',
-                createdBy : selectedAsset.getCreatedBy() || '-',
+                modifiedBy :  selectedAsset.getModifiedBy() || '',
+                modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + selectedAsset.getModifiedDateTime(): '',
+                createdBy : selectedAsset.getCreatedBy() || '',
                 createdDate : selectedAsset.getCreatedDateTime() ? ' ' + selectedAsset.getCreatedDateTime(): '',
                 verifiedBy : selectedAsset.getVerifiedBy(),
                 verifiedDateTime : selectedAsset.getVerifiedDateTime()
@@ -889,14 +889,18 @@
 
             };
 
+            var informationLog = function (date, username) {
+              return date ? (date + ' / ' + username) : '-';
+            };
+
             var body = $('<header>' + title() + '<div class="linear-asset-header form-controls"></div></header>' +
                 '<div class="wrapper read-only">' +
                 '   <div class="form form-horizontal form-dark asset-factory">' +
                 '     <div class="form-group">' +
-                '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + info.createdBy + info.createdDate + '</p>' +
+                '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(info.createdDate, info.createdBy)+ '</p>' +
                 '     </div>' +
                 '     <div class="form-group">' +
-                '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + info.modifiedBy + info.modifiedDate + '</p>' +
+                '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
                 '     </div>' +
                 verifiedFields() +
                 '     <div class="form-group">' +

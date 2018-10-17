@@ -224,10 +224,10 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
         '  <div class="form form-horizontal form-dark form-pointasset">' +
         renderFloatingNotification(asset.floating, localizedTexts) +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
+        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(asset.createdAt, asset.createdBy) + '</p>' +
         '    </div>' +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
+        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
         '    </div>' +
         renderValueElement(asset, collection) +
         '    <div class="form-group form-group delete">' +
@@ -564,6 +564,10 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       return '';
     }
   }
+
+  var informationLog = function (date, username) {
+    return date ? (date + ' / ' + username) : '-';
+  };
 
   function renderButtons() {
     return '' +
