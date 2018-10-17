@@ -83,7 +83,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }.toSeq
   }
 
-  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) : Unit = {
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) : Set[Int] = {
     withDynTransaction{
       assetTypeIds.map { assetType =>
         dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
