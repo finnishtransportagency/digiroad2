@@ -13,7 +13,7 @@
       if (selectedSpeedLimit.isUnknown() || selectedSpeedLimit.isSplit()) {
         return '<span>Uusi nopeusrajoitus</span>';
       } else if (selectedSpeedLimit.count() == 1) {
-        return '<span>Segmentin ID: ' + selectedSpeedLimit.getId() + '</span>';
+        return '<span>Kohteen ID: ' + selectedSpeedLimit.getId() + '</span>';
       } else {
         return '<span>Nopeusrajoitus</span>';
       }

@@ -885,7 +885,7 @@
                         '<span class="edit-mode-title" style="display: block">' + _assetTypeConfiguration.newTitle + '</span>';
                 }
                 return selectedAsset.count() === 1 ?
-                    '<span>Segmentin ID: ' + selectedAsset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
+                    '<span>Kohteen ID: ' + selectedAsset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
 
             };
 

@@ -94,7 +94,7 @@
             '<span class="edit-mode-title">' + newTitle + '</span>';
       } else {
         if (selectedLinearAsset.count() === 1) {
-          return '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
+          return '<span>Kohteen ID: ' + selectedLinearAsset.getId() + '</span>';
         } else {
           return '<span>' + title + '</span>';
         }

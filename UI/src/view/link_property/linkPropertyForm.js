@@ -114,7 +114,7 @@
     var template = function(options) {
       return _.template('' +
         '<header>' +
-          title() + buttons +
+          title() +
         '</header>' +
         '<div class="wrapper read-only">' +
           '<div class="form form-horizontal form-dark">' +

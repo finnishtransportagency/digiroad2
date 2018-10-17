@@ -13,7 +13,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
       expect(feature.getProperties().value).to.equal(limitValue);
     });
     expect($('#feature-attributes .speed-limit :selected')).to.contain(limitValue.toString());
-    expect($('#feature-attributes header span')).to.have.text("Segmentin ID: " + speedLimitId);
+    expect($('#feature-attributes header span')).to.have.text("Kohteen ID: " + speedLimitId);
   };
 
   describe('when loading application with speed limit data', function() {
@@ -33,7 +33,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id, true);
       });
       it('it displays speed limit segment ID in asset form', function() {
-        expect($('#feature-attributes header span')).to.have.text('Segmentin ID: 1123812');
+        expect($('#feature-attributes header span')).to.have.text('Kohteen ID: 1123812');
       });
       it('it displays speed limit creator', function() {
         expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator');
@@ -48,7 +48,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
           $('.pzbDiv-plus').click();
         });
         it('maintains speed limit selection', function() {
-          expect($('#feature-attributes header span')).to.have.text('Segmentin ID: 1123812');
+          expect($('#feature-attributes header span')).to.have.text('Kohteen ID: 1123812');
         });
       });
 
