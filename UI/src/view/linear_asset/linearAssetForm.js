@@ -87,8 +87,7 @@
     var buttons = [(isVerifiable && !_.isNull(selectedLinearAsset.getId()) && selectedLinearAsset.count() === 1) ? '<button class="verify btn btn-primary">Merkitse tarkistetuksi</button>' : '',
                    '<button class="save btn btn-primary" disabled> Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-    var topButtons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
-                      '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
+
     var generateTitle = function() {
       if (selectedLinearAsset.isUnknown() || selectedLinearAsset.isSplit()) {
         return '<span class="read-only-title">' + title + '</span>' +
@@ -132,7 +131,7 @@
       '</div>' : '';
     };
 
-    var header = '<header>' + generateTitle() + '<div class="linear-asset form-controls">' + topButtons + '</div></header>';
+    var header = '<header>' + generateTitle() + '</header>';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark linear-asset">' +

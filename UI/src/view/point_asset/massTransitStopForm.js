@@ -201,8 +201,6 @@
         function busStopHeader(asset) {
           var buttons = $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
             .append(new ValidationErrorLabel().element)
-            .append(new SaveButton(isTerminalBusStop).element)
-            .append(new CancelButton().element);
 
           var header = $('<header/>');
 

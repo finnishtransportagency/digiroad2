@@ -71,7 +71,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-    var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
+    var header = '<header><span>' + title + '</span></header>';
     var form = renderAssetFormElements(selectedAsset, localizedTexts, collection);
     var footer = '<footer>' + renderButtons() + '</footer>';
 

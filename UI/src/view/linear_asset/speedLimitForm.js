@@ -52,7 +52,7 @@
       return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
     };
 
-    var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
+    var header = '<header>' + title() +'</header>';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark linear-asset">' +

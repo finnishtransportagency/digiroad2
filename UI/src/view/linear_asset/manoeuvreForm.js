@@ -28,7 +28,6 @@
     var templateWithHeaderAndFooter = '' +
       '<header>' +
         '<span>Linkin LINK ID: <%= linkId %></span>' +
-        saveAndCancelButtons +
       '</header>' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark form-manoeuvre">' +
