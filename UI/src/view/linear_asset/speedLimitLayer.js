@@ -20,7 +20,7 @@ window.SpeedLimitLayer = function(params) {
   this.deactivateSelection = function() {
     selectToolControl.deactivate();
   };
-  this.minZoomForContent = zoomlevels.minZoomForAssets;
+  this.minZoomForContent = params.isExperimental ? zoomlevels.oneKmZoomLvl: zoomlevels.minZoomForRoadLinks;
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
   };

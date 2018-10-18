@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.security.InvalidParameterException
-
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 
@@ -809,7 +808,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
     val minVisibleZoom = 2
-    val maxZoom = 10
+    val maxZoom = 8
 
     zoom >= minVisibleZoom && zoom < maxZoom match {
       case true =>
@@ -824,7 +823,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
     val minVisibleZoom = 2
-    val maxZoom = 10
+    val maxZoom = 8
 
     zoom >= minVisibleZoom && zoom < maxZoom match {
       case true =>
@@ -1417,6 +1416,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/pointassets/light") {
+    val assetType = params.getOrElse("type", halt(BadRequest("Missing mandatory 'type' parameter")))
+    getLightGeometry(assetType)
+  }
+
+  private def getLightGeometry(assetType: String) = {
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      val usedService = getPointAssetService(assetType)
+      usedService.getLightGeometryByBoundingBox(boundingRectangle)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
   get("/pedestrianCrossings/:id")(getPointAssetById(pedestrianCrossingService))
   get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
@@ -1639,6 +1654,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def getPointAssetService(assetType: String): PointAssetOperations = {
+    assetType match {
+      case MassTransitStopAsset.layerName => massTransitStopService
+      case _ => throw new UnsupportedOperationException("Asset type not supported")
+    }
+  }
 
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()

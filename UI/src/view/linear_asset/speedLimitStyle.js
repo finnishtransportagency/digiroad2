@@ -16,6 +16,7 @@
 
     var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
     var overlayStyleRules = [
+      overlayStyleRule(8, { stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
       overlayStyleRule(9, { stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
       overlayStyleRule(10, { stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 3,  lineDash: [1,10] }}),
       overlayStyleRule(11, { stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 5,  lineDash: [1,15] }}),
@@ -27,6 +28,7 @@
 
     var oneWayOverlayStyleRule = _.partial(createZoomAndTypeDependentOneWayRule, 'overlay');
     var oneWayOverlayStyleRules = [
+      oneWayOverlayStyleRule(8, { stroke: {lineDash: [1,6] }}),
       oneWayOverlayStyleRule(9, { stroke: {lineDash: [1,6] }}),
       oneWayOverlayStyleRule(10, { stroke: {lineDash: [1,10] }}),
       oneWayOverlayStyleRule(11, { stroke: {lineDash: [1,10] }}),
@@ -37,6 +39,7 @@
     ];
 
     var validityDirectionStyleRules = [
+      createZoomDependentOneWayRule(8, { stroke: {width: 2 }}),
       createZoomDependentOneWayRule(9, { stroke: {width: 2 }}),
       createZoomDependentOneWayRule(10, { stroke: {width: 4 }}),
       createZoomDependentOneWayRule(11, { stroke: {width: 4 }}),
@@ -60,7 +63,7 @@
     ];
 
     var speedLimitFeatureSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3}, pointRadius: 0 ,icon: {scale: 0.8}}),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).use({ stroke: {width: 3}, pointRadius: 0 ,icon: {scale: 0.8}}),
       new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5}, pointRadius: 10 ,icon: {scale: 1}}),
       new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 7}, pointRadius: 14 ,icon: {scale: 1.3}}),
       new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10}, pointRadius: 16 ,icon: {scale: 1.6}}),
@@ -123,7 +126,7 @@
     ];
 
     var speedLimitFeatureSizeRulesHistory = [
-        new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3}}),
+        new StyleRule().where('zoomLevel').isIn([8 ,9]).use({ stroke: {width: 3}}),
         new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5}}),
         new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 7}}),
         new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10}}),

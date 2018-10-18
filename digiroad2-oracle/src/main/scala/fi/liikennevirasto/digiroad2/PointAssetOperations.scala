@@ -66,6 +66,11 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val linkSource: LinkGeomSource
 }
 
+trait LightGeometry {
+  val lon: Double
+  val lat: Double
+}
+
 trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
@@ -89,6 +94,7 @@ trait PointAssetOperations {
   def update(id:Long, updatedAsset: IncomingAsset, roadLink: RoadLink, username: String): Long
   def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
+  def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
@@ -123,6 +129,14 @@ trait PointAssetOperations {
         }
       }
       assetsBeforeUpdate.map(_.asset)
+    }
+  }
+
+  def getLightGeometryByBoundingBox(bounds: BoundingRectangle): Seq[LightGeometry] = {
+    withDynSession {
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+      fetchLightGeometry(withValidAssets(filter))
     }
   }
 
@@ -329,6 +343,10 @@ trait PointAssetOperations {
 
   protected def withMunicipality(municipalityCode: Int)(query: String): String = {
     withFilter(s"where a.asset_type_id = $typeId and a.municipality_code = $municipalityCode")(query)
+  }
+
+  protected def withValidAssets(filter: String)(query: String): String = {
+    withFilter(s"$filter and (a.valid_to is null or a.valid_to > sysdate) and a.valid_from < sysdate")(query)
   }
 
   protected def withFloatingUpdate[T <: FloatingAsset](toPointAsset: PersistedAsset => (T, Option[FloatingReason]))
