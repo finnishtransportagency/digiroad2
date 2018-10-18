@@ -215,6 +215,26 @@ object PavementClass {
   case object Unknown extends PavementClass { def value = 99;  def typeDescription = "Unknown";}
 }
 
+/**
+  * Values for AnimalWarningTypes types enumeration
+  */
+sealed trait AnimalWarnings {
+  def value: Int
+  def typeDescription: String
+}
+object AnimalWarnings {
+  val values = Set(MooseWarningArea, MooseFence, DeerWarningArea, Unknown)
+
+  def apply(value: Int): AnimalWarnings = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object MooseWarningArea extends AnimalWarnings { def value = 1; def typeDescription = "Moose Warning Area";}
+  case object MooseFence extends AnimalWarnings { def value = 2; def typeDescription = "Moose Fence";}
+  case object DeerWarningArea extends AnimalWarnings { def value = 3; def typeDescription = "Deer Warning Area";}
+  case object Unknown extends AnimalWarnings { def value = 99;  def typeDescription = "Unknown";}
+}
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]
