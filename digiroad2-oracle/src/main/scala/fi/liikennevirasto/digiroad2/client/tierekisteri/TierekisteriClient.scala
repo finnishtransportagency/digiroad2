@@ -60,9 +60,14 @@ object TRTrafficSignType {
     SymbolOfMotorway, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped, LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, StandingAndParkingProhibited,
     ParkingProhibited, ParkingProhibitedZone, EndOfParkingProhibitedZone, AlternativeParkingOddDays, Parking)
 
-  def apply(value: Int): TRTrafficSignType = {
+  def apply(value: Int): TRTrafficSignType= {
     values.find(_.value == value).getOrElse(Unknown)
   }
+
+  def apply(trafficSignType: TrafficSignType): Int = {
+    values.find(_.trafficSignType == trafficSignType).get.value
+  }
+
   case object TelematicSpeedLimit extends TRTrafficSignType { def value = 0; def trafficSignType = TrafficSignType.TelematicSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq() }
   case object SpeedLimit extends TRTrafficSignType { def value = 361; def trafficSignType = TrafficSignType.SpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq("CSVimport") }
   case object EndSpeedLimit extends TRTrafficSignType { def value = 362; def trafficSignType = TrafficSignType.EndSpeedLimit; def group = TrafficSignTypeGroup.SpeedLimits; def source = Seq("CSVimport") }
