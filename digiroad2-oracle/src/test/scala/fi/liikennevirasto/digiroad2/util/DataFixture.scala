@@ -86,7 +86,7 @@ object DataFixture {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider, eventbus)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
@@ -95,6 +95,10 @@ object DataFixture {
 
   lazy val roadAddressService: RoadAddressesService = {
     new RoadAddressesService(viiteClient)
+  }
+
+  lazy val manoeuvreService: ManoeuvreService = {
+    new ManoeuvreService(roadLinkService)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
@@ -1399,6 +1403,45 @@ object DataFixture {
     }
   }
 
+  def createManoeuvresUsingTrafficSigns(): Unit = {
+    //Get All Municipalities
+    println(s"Obtaining Municipalities")
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+
+      println(s"Obtaining all traffic Signs with turning restriction for municipality $municipality")
+      //Get All Traffic Signs with traffic restriction
+      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality)
+
+      println(s"Obtaining all Road Links for Municipality: $municipality")
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      println(s"End of roadLinks fetch for Municipality: $municipality")
+
+      println("Start processing traffic signs, to create manoeuvres")
+      trafficSigns.foreach(ts =>
+        try {
+          roadLinks.find(_.linkId == ts.linkId) match {
+            case Some(roadLink) =>
+              manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(ts, roadLink))
+              println(s"manoeuvre created for traffic sign with id: ${ts.id}")
+            case _ =>
+              println(s"No roadLink available to create manouvre")
+              println(s"Asset id ${ts.id} did not generate a manoeuvre ")
+          }
+        }catch {
+          case ex: ManoeuvreCreationException => {
+            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
+          }
+        }
+      )
+    }
+  }
+
+
   def removeExistingTrafficSignsDuplicates(): Unit = {
     println("\nStarting removing of traffic signs duplicates")
     println(DateTime.now())
@@ -1549,6 +1592,8 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("update_municipalities") =>
         updateMunicipalities()
+      case Some("create_manoeuvres_using_traffic_signs") =>
+        createManoeuvresUsingTrafficSigns()
       case Some("remove_existing_trafficSigns_duplicates") =>
         removeExistingTrafficSignsDuplicates()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
@@ -1560,7 +1605,8 @@ object DataFixture {
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
-        " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates")
+        " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
+        " create_manoeuvres_using_traffic_signs")
     }
   }
 }

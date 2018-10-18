@@ -778,13 +778,14 @@ trait LinearAssetOperations {
     }
   }
 
-  def updateVerifiedInfo(ids: Set[Long], userName: String, type_id: Int): Unit = {
+  def updateVerifiedInfo(ids: Set[Long], userName: String, type_id: Int): Set[Long] = {
     withDynTransaction {
       getVerifiedBy(userName, type_id) match {
         case Some(user) => dao.updateVerifiedInfo(ids, user)
         case _ =>
       }
     }
+    ids
   }
 
   def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[MunicipalityInfo] = {

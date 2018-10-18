@@ -1,17 +1,22 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimpleProperty}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimpleProperty, State}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreProvider, ManoeuvreService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService, TrafficSignTypeGroup}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
 class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOperations {
+
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
+  lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService)
+
   override def typeId: Int = 300
   override def assetName = "trafficSigns"
   override type TierekisteriClientType = TierekisteriTrafficSignAssetClient
@@ -68,9 +73,29 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
         point =>
           val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),
             getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
-          OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
+
+          val newId =  OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+
+          roadLinkService.getRoadLinkAndComplementaryFromVVH(vvhRoadlink.linkId, newTransaction = false).map{
+            link =>
+              if (trafficSignService.belongsToTurnRestriction(trafficSign)) {
+                println(s"Creating manoeuvre on linkId: ${vvhRoadlink.linkId} from import traffic sign with id $newId" )
+                try {
+                  manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(trafficSignService.getPersistedAssetsByIdsWithoutTransaction(Set(newId)).head, link), newTransaction = false)
+                }catch {
+                  case e: ManoeuvreCreationException =>
+                    println("Manoeuvre creation error: " + e.response.mkString(" "))
+                }
+              }
+              newId
+          }
       }
     println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
+  }
+
+  protected override def expireAssets(linkIds: Seq[Long]): Unit = {
+    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds)
+    trafficSignsIds.foreach( sign => trafficSignService.expireAssetWithoutTransaction(sign, "batch_process_trafficSigns"))
   }
 }

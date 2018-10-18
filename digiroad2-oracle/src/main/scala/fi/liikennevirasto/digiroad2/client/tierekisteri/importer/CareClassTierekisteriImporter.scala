@@ -17,6 +17,7 @@ import org.joda.time.DateTime
 case class AssetWithMeasures (roadLink: Option[VVHRoadlink], measures: Measures, assetData: TierekisteriAssetData)
 
 class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
+  final private val DefaultEpsilon = 0.001
 
   lazy val service: DynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService, eventbus)
   lazy val dao: DynamicLinearAssetDao = new DynamicLinearAssetDao
@@ -50,19 +51,19 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
 
     val roadNumbers = getAllViiteRoadNumbers
 
-    withDynTransaction {
 
-      roadNumbers.foreach {
-        roadNumber =>
-          //Get all the existing road address for the road number
-          val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
-          val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-          val sectionAssets = getAllTierekisteriAddressSections(roadNumber)
-          val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
-          val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, mappedRoadAddresses, mappedRoadLinks)
-          val groupedByLinkId = roadAddressInfo.flatten.groupBy(_._1.linkId)
+    roadNumbers.foreach {
+      roadNumber =>
+        //Get all the existing road address for the road number
+        val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
+        val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+        val sectionAssets = getAllTierekisteriAddressSections(roadNumber)
+        val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+        val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, mappedRoadAddresses, mappedRoadLinks)
+        val groupedByLinkId = roadAddressInfo.flatten.groupBy(_._1.linkId)
+        withDynTransaction {
           groupedByLinkId.foreach{link => splitAndCreateAssets(link._2)}
-      }
+        }
     }
   }
 
@@ -150,7 +151,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
     sectionMeasures.foreach{ segment =>
       val trAssets = roadAddressInfo.filter {
         case (_, assetMeasures, _) =>
-          assetMeasures.startMeasure <= segment.startMeasure && assetMeasures.endMeasure >= segment.endMeasure && assetMeasures.endMeasure != assetMeasures.startMeasure//check values which are equal
+          assetMeasures.startMeasure - DefaultEpsilon <= segment.startMeasure && assetMeasures.endMeasure + DefaultEpsilon >= segment.endMeasure && assetMeasures.endMeasure != assetMeasures.startMeasure
       }map{
         case(_, _, trAsset) =>
           getAssetValue(trAsset)

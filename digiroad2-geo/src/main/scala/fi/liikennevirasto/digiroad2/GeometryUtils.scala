@@ -342,7 +342,7 @@ object GeometryUtils {
     geometry.size match {
       case 0 | 1 => throw new IllegalArgumentException("Geometry had less than 2 points")
       case 2 =>
-        val (p1, p2) = (geometry.head, geometry.last)
+        val (p1, p2) = (geometry.last, geometry.head)
         Vector3d(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
       case _ =>
         lastSegmentDirection(geometry.tail)
@@ -391,6 +391,24 @@ object GeometryUtils {
     else {
       Some(heading(truncateGeometry3D(geometry, Math.max(0.0, mValue-.1), Math.min(len, mValue+.1))))
     }
+  }
+
+  def connectionPoint(geometries: Seq[Seq[Point]], epsilon: Double = DefaultEpsilon): Option[Point] = {
+    def getAdjacent(point: Point): Boolean = geometries.tail.forall(geometry => areAdjacent(geometry, point, epsilon))
+
+    geometries.size match {
+      case 0 => None
+      case _ =>
+        val (head, last) = geometryEndpoints(geometries.head)
+        getAdjacent(head) match {
+          case true => Some(head)
+          case false => Some(last)
+        }
+    }
+  }
+
+  def connectionPoint(geometries: Seq[Seq[Point]]): Option[Point] = {
+    connectionPoint(geometries, DefaultEpsilon)
   }
 
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)

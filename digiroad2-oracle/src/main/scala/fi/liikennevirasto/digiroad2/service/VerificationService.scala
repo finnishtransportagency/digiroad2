@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import slick.util.iter.Empty
 
 case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean = false, counter: Option[Int] = None)
 case class LatestModificationInfo(assetTypeCode: Int, modifiedBy: Option[String], modifiedDate: Option[DateTime])
@@ -66,8 +67,9 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       None
   }
 
-  def getAssetVerificationInfo(typeId: Int, municipality: Int): Option[VerificationInfo] = {
+  def getAssetVerificationInfo(typeId: Int, municipality: Int): VerificationInfo = {
     getAssetVerification(municipality, typeId).headOption
+      .getOrElse( throw new IllegalArgumentException("Asset type or municipality Code not found"))
   }
 
   def setAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], username: String): Seq[Long] = {
@@ -81,7 +83,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }.toSeq
   }
 
-  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) : Unit = {
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) : Set[Int] = {
     withDynTransaction{
       assetTypeIds.map { assetType =>
         dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
