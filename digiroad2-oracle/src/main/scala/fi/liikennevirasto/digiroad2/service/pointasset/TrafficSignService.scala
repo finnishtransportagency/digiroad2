@@ -236,11 +236,11 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def createWithoutTransaction(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     val id = OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
-  if (belongsToTurnRestriction(asset)) {
-  eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIdsWithoutTransaction(Set(id)).head, roadLink))
-}
-  id
-}
+    if (belongsToTurnRestriction(asset)) {
+      eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIdsWithoutTransaction(Set(id)).head, roadLink))
+    }
+    id
+  }
 
   def belongsToTurnRestriction(asset: IncomingTrafficSign)  = {
     val turnRestrictionsGroup =  Seq(TrafficSignType.NoUTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoLeftTurn)
@@ -392,7 +392,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
             val newAsset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
             checkDuplicates(newAsset) match {
               case Some(existingAsset) =>
-                updateWithoutTransaction(existingAsset.id, newAsset, link.geometry, link.municipalityCode, userProvider.getCurrentUser().username, link.linkSource, None, None)
+                updateWithoutTransaction(existingAsset.id, newAsset, link, userProvider.getCurrentUser().username, None, None)
               case _ =>
                 createWithoutTransaction(newAsset, userProvider.getCurrentUser().username, link)
             }
