@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadAddressesService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
@@ -1442,6 +1442,60 @@ object DataFixture {
   }
 
 
+  def removeExistingTrafficSignsDuplicates(): Unit = {
+    println("\nStarting removing of traffic signs duplicates")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("")
+      println(s"Fetching Traffic Signs for Municipality: $municipality")
+
+      val existingAssets = trafficSignService.getByMunicipality(municipality)
+      println("")
+      println(s"Number of existing assets: ${existingAssets.length}")
+      println("")
+
+      existingAssets.foreach {
+        asset =>
+          println(s"Analyzing Traffic Sign with => Id: ${asset.id}, LinkID: ${asset.linkId}")
+
+          val signType = trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.propertyValue.toInt
+          val groupType = Some(TrafficSignTypeGroup.apply(signType))
+          val signLinkId = asset.linkId
+          val signDirection = asset.validityDirection
+
+          OracleDatabase.withDynTransaction {
+            val trafficSignsInRadius = trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
+              ts =>
+                trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt == signType
+                  && ts.linkId == signLinkId && ts.validityDirection == signDirection
+            )
+
+            if (trafficSignsInRadius.size > 1) {
+              val latestModifiedAsset = trafficSignService.getLatestModifiedAsset(trafficSignsInRadius)
+
+              println("")
+              println(s"Cleaning duplicates in 10 Meters")
+              trafficSignsInRadius.filterNot(_.id == latestModifiedAsset.id).foreach {
+                tsToDelete =>
+                  trafficSignService.expireWithoutTransaction(tsToDelete.id, "batch_deleteDuplicateTrafficSigns")
+                  println(s"TrafficSign with Id: ${tsToDelete.id} and LinkId: ${tsToDelete.linkId} expired!")
+              }
+              println("")
+            }
+          }
+      }
+    }
+    println("")
+    println("Complete at time: " + DateTime.now())
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1540,6 +1594,8 @@ object DataFixture {
         updateMunicipalities()
       case Some("create_manoeuvres_using_traffic_signs") =>
         createManoeuvresUsingTrafficSigns()
+      case Some("remove_existing_trafficSigns_duplicates") =>
+        removeExistingTrafficSignsDuplicates()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1549,7 +1605,8 @@ object DataFixture {
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
-        " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | create_manoeuvres_using_traffic_signs")
+        " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
+        " create_manoeuvres_using_traffic_signs")
     }
   }
 }

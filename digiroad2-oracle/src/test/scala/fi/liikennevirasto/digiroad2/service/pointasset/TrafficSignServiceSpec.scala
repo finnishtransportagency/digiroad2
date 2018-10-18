@@ -469,4 +469,26 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assetsOnLinkId2_vd2.head.propertyData.filter(_.id == 0).head.values.head.propertyValue.toInt should be (1)
     }
   }
+
+  test("Prevent the creations of duplicated signs") {
+    runWithRollback {
+      val originalTrafficSignId = service.createFromCoordinates(5, 4, TRTrafficSignType.NoPedestrians, None, Some(false), TrafficDirection.UnknownDirection, None, Some("Original Traffic Sign!"))
+      val assetsInRadius = service.getTrafficSignByRadius(Point(5, 4), 10, None)
+      assetsInRadius.size should be(1)
+      val assetO = assetsInRadius.head
+      assetO.id should be(originalTrafficSignId)
+      assetO.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be("24")
+      assetO.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be("Original Traffic Sign!")
+
+
+      val duplicatedTrafficSignId = service.createFromCoordinates(6, 4, TRTrafficSignType.NoPedestrians, None, Some(false), TrafficDirection.UnknownDirection, None, Some("Non Duplicated Traffic Sign!"))
+      val assetsInRadius2 = service.getTrafficSignByRadius(Point(5, 4), 10, None)
+      assetsInRadius2.size should be(1)
+      val assetD = assetsInRadius2.head
+      assetD.id should be(duplicatedTrafficSignId)
+      assetD.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be("24")
+      assetD.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be("Non Duplicated Traffic Sign!")
+    }
+
+  }
 }

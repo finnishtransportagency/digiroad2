@@ -11,8 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.Digiroad2Context
-import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, MaintenanceService}
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
@@ -153,39 +152,43 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val twoSided = getPropertyValue(trafficSignAttributes, "twoSided").toString match { case "Kaksipuoleinen" => true case _ => false }
     val lon = getPropertyValue(trafficSignAttributes, "lon").asInstanceOf[BigDecimal].toLong
     val lat = getPropertyValue(trafficSignAttributes, "lat").asInstanceOf[BigDecimal].toLong
-    val additionalInfo = Some(getPropertyValue(trafficSignAttributes, "additionalInfo").toString())
+    val additionalInfo = Some(getPropertyValue(trafficSignAttributes, "additionalInfo").toString)
 
-    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided), TrafficDirection.apply(trafficDirection), bearing, additionalInfo)
+    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided),
+      TrafficDirection.apply(trafficDirection), bearing, additionalInfo)
   }
 
-
-  def importTrafficSigns(inputStream: InputStream): ImportResult = {
+  def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Seq[Int]): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
-      val csvRow = row.map( r =>(r._1.toLowerCase, r._2))
-      val missingParameters = findMissingParameters(csvRow)
-      val (malformedParameters, properties) = assetRowToProperties(csvRow)
 
-      if (missingParameters.nonEmpty || malformedParameters.nonEmpty) {
-        result.copy(
-          incompleteAssets = missingParameters match {
-            case Nil => result.incompleteAssets
-            case parameters => IncompleteAsset(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteAssets
-          },
-          malformedAssets = malformedParameters match {
-            case Nil => result.malformedAssets
-            case parameters => MalformedAsset(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedAssets
-          })
+    withDynTransaction{
+      trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire.toSet)
+      csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
+        val csvRow = row.map( r =>(r._1.toLowerCase, r._2))
+        val missingParameters = findMissingParameters(csvRow)
+        val (malformedParameters, properties) = assetRowToProperties(csvRow)
 
-      } else {
+        if (missingParameters.nonEmpty || malformedParameters.nonEmpty) {
+          result.copy(
+            incompleteAssets = missingParameters match {
+              case Nil => result.incompleteAssets
+              case parameters =>
+                IncompleteAsset(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteAssets
+            },
+            malformedAssets = malformedParameters match {
+              case Nil => result.malformedAssets
+              case parameters =>
+                MalformedAsset(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedAssets
+            })
+        } else {
           val parsedRow = CsvAssetRow(properties = properties)
           createTrafficSigns(parsedRow)
           result
+        }
       }
-
     }
   }
 }
