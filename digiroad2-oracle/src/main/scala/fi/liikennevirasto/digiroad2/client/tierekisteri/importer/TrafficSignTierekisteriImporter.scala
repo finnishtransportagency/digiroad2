@@ -63,14 +63,16 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
   }
 
   protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
-    if(TRTrafficSignType.apply(trAssetData.assetType.value).source.contains("TRimport"))
-      GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+    if (TRTrafficSignType.apply(trAssetData.assetType.value).source.contains("TRimport")) {
+      GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map {
         point =>
           val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),
             getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
           OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+
+          println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
       }
-    println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
+    }
   }
 }
