@@ -136,7 +136,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 10.0, 388553075),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 10.0, 388553075), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -155,7 +155,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, 388553075),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, 388553075), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)

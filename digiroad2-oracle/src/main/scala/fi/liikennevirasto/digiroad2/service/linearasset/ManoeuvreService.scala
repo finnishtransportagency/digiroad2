@@ -2,18 +2,23 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime], modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String)
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
-case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long])
+case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
+case class ManoeuvreProvider(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink)
+class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
 object ElementTypes {
   val FirstElement = 1
@@ -22,7 +27,7 @@ object ElementTypes {
 }
 
 class ManoeuvreService(roadLinkService: RoadLinkService) {
-
+  val logger = LoggerFactory.getLogger(getClass)
   def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -214,17 +219,28 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   }
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
-    if(!isValid(manoeuvre, roadlinks))
-      throw new InvalidParameterException("Invalid 'manouevre")
-
     withDynTransaction {
-      dao.createManoeuvre(userName, manoeuvre)
+      createWithoutTransaction(userName, manoeuvre, roadlinks)
     }
+  }
+
+  def createWithoutTransaction(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
+    if(!isValid(manoeuvre, roadlinks))
+      throw new InvalidParameterException("Invalid 'manoeuvre")
+
+    dao.createManoeuvre(userName, manoeuvre)
   }
 
   def deleteManoeuvre(s: String, id: Long): Long = {
     withDynTransaction {
       dao.deleteManoeuvre(s, id)
+    }
+  }
+
+  def deleteManoeuvreFromSign(id: Long): Long = {
+    logger.info("expiring manoeuvre")
+    withDynTransaction {
+      dao.deleteManoeuvreByTrafficSign(id)
     }
   }
 
@@ -240,4 +256,90 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+  private def createManoeuvreFromTrafficSign(manouvreProvider: ManoeuvreProvider): Option[Long] = {
+    logger.info("creating manoeuvre from traffic sign")
+    val tsLinkId = manouvreProvider.trafficSign.linkId
+    val tsDirection = manouvreProvider.trafficSign.validityDirection
+
+    if (tsLinkId != manouvreProvider.sourceRoadLink.linkId)
+      throw new ManoeuvreCreationException(Set("Wrong roadlink"))
+
+    if (SideCode(tsDirection) == SideCode.BothDirections)
+      throw new ManoeuvreCreationException(Set("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections"))
+
+    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(manouvreProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ManoeuvreCreationException(Set("Connection Point not valid")))
+
+    val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint)
+    val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
+
+    val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
+      val tsType = TrafficSignType(prop.propertyValue.toInt)
+
+      tsType match {
+
+        case TrafficSignType.NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
+
+        case TrafficSignType.NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(manoeuvreInit.last, adjacents)
+
+        case TrafficSignType.NoUTurn => {
+          val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
+          val (int, newAdjacents, _)= recursiveGetAdjacent(firstLeftMost.linkId, getOpositePoint(firstLeftMost.geometry, adjacentConnectPoint))
+          (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
+        }
+        case _ => Seq.empty[RoadLink]
+      }
+    }.getOrElse(Seq.empty[RoadLink])
+
+    if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
+      throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
+    else
+      Some(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
+
+  }
+
+  def createManoeuvreBasedOnTrafficSign(manouvreProvider: ManoeuvreProvider, newTransaction: Boolean = true): Option[Long] = {
+    if(newTransaction) {
+      withDynTransaction {
+        createManoeuvreFromTrafficSign(manouvreProvider)
+      }
+    }
+    else
+      createManoeuvreFromTrafficSign(manouvreProvider)
+  }
+
+  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  }
+
+  private def getOpositePoint(geometry: Seq[Point], point: Point) = {
+    val (headPoint, lastPoint) = GeometryUtils.geometryEndpoints(geometry)
+    if(GeometryUtils.areAdjacent(headPoint, point))
+      lastPoint
+    else
+      headPoint
+  }
+
+  private def recursiveGetAdjacent(linkId: Long, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): (Seq[RoadLink], Seq[RoadLink], Point) = {
+
+    val adjacents = roadLinkService.getAdjacent(linkId, Seq(point), newTransaction = false)
+    if (adjacents.isEmpty)
+      throw new ManoeuvreCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
+
+    if(adjacents.size == 1 && numberOfConnections == 3)
+      throw new ManoeuvreCreationException(Set("No turn found, manoeuvre not created"))
+
+    if (adjacents.size == 1  && roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).nonEmpty) {
+      recursiveGetAdjacent(adjacents.head.linkId, getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
+    } else {
+      (intermediants, adjacents, point)
+    }
+  }
+
+  private def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
+    dao.countExistings(sourceId, destId, elementType)
+  }
+
+  private def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int): Boolean  = {
+    countExistings(sourceId, destLinkId, elementType) == 0
+  }
 }

@@ -3,15 +3,17 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.getClass
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePointMassLimitationDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service._
@@ -165,6 +167,23 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
   }
 }
 
+case class ManoeuvreUpdater[A, B](manoeuvreProvider: ManoeuvreService) extends Actor {
+
+  val logger = LoggerFactory.getLogger(getClass)
+
+  def receive = {
+    case x: Long => manoeuvreProvider.deleteManoeuvreFromSign(x.asInstanceOf[Long])
+    case x: ManoeuvreProvider =>
+      try {
+        manoeuvreProvider.createManoeuvreBasedOnTrafficSign(x.asInstanceOf[ManoeuvreProvider])
+      }catch {
+        case e: ManoeuvreCreationException =>
+          logger.error("Manoeuvre creation error: " + e.response.mkString(" "))
+      }
+    case _ => println("Manoeuvre not created")
+  }
+}
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -238,6 +257,10 @@ object Digiroad2Context {
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
+
+  val manoeuvreUpdater = system.actorOf(Props(classOf[ManoeuvreUpdater[Int, ManoeuvreProvider]], manoeuvreService), name ="manoeuvreUpdater" )
+  eventbus.subscribe(manoeuvreUpdater, "manoeuvre:expire")
+  eventbus.subscribe(manoeuvreUpdater,"manoeuvre:create")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -385,7 +408,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider, eventbus)
   }
 
   lazy val manoeuvreService = {

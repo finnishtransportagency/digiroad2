@@ -100,7 +100,8 @@ class WidthLimitServiceSpec extends FunSuite with Matchers {
       beforeUpdate.modifiedAt should equal(None)
       beforeUpdate.reason should equal(WidthLimitReason.HalfPortal)
 
-      an[UnsupportedOperationException] should be thrownBy service.update(id = 600080, IncomingWidthLimit(100, 0, 123, 20, WidthLimitReason.Abutment, 0, Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(123, linkGeometry, 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
+      an[UnsupportedOperationException] should be thrownBy service.update(id = 600080, IncomingWidthLimit(100, 0, 123, 20, WidthLimitReason.Abutment, 0, Some(0)), roadLink, "test")
     }
   }
 }
