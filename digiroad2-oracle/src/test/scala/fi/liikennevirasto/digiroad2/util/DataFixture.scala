@@ -1447,12 +1447,11 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-//    val municipalities: Seq[Int] =
-//      OracleDatabase.withDynSession {
-//        Queries.getMunicipalities
-//      }
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
-    val municipalities = Seq(235)
     municipalities.foreach { municipality =>
       println("")
       println(s"Fetching Traffic Signs for Municipality: $municipality")
