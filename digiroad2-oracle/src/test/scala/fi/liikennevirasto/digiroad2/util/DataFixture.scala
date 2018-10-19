@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -1442,17 +1442,17 @@ object DataFixture {
     }
   }
 
-
   def removeExistingTrafficSignsDuplicates(): Unit = {
     println("\nStarting removing of traffic signs duplicates")
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
+//    val municipalities: Seq[Int] =
+//      OracleDatabase.withDynSession {
+//        Queries.getMunicipalities
+//      }
 
+    val municipalities = Seq(235)
     municipalities.foreach { municipality =>
       println("")
       println(s"Fetching Traffic Signs for Municipality: $municipality")
@@ -1462,39 +1462,30 @@ object DataFixture {
       println(s"Number of existing assets: ${existingAssets.length}")
       println("")
 
-      existingAssets.foreach {
-        asset =>
-          println(s"Analyzing Traffic Sign with => Id: ${asset.id}, LinkID: ${asset.linkId}")
+      val groupedAssets = existingAssets.groupBy(_.linkId)
 
-          val signType = trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.propertyValue.toInt
-          val groupType = Some(TrafficSignTypeGroup.apply(signType))
-          val signLinkId = asset.linkId
-          val signDirection = asset.validityDirection
+      existingAssets.foreach { sign =>
+        OracleDatabase.withDynTransaction {
+          val trafficSignsInRadius = trafficSignService.getTrafficSignsByDistance(sign, groupedAssets, 10)
 
-          OracleDatabase.withDynTransaction {
-            val trafficSignsInRadius = trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
-              ts =>
-                trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt == signType
-                  && ts.linkId == signLinkId && ts.validityDirection == signDirection
-            )
+          if (trafficSignsInRadius.size > 1) {
+            val latestModifiedAsset = trafficSignService.getLatestModifiedAsset(trafficSignsInRadius)
 
-            if (trafficSignsInRadius.size > 1) {
-              val latestModifiedAsset = trafficSignService.getLatestModifiedAsset(trafficSignsInRadius)
+            println("")
+            println(s"Cleaning duplicates in 10 Meters")
+            val assetsToExpire = trafficSignsInRadius.filterNot(_.id == latestModifiedAsset.id)
 
-              println("")
-              println(s"Cleaning duplicates in 10 Meters")
-              trafficSignsInRadius.filterNot(_.id == latestModifiedAsset.id).foreach {
-                tsToDelete =>
-                  trafficSignService.expireWithoutTransaction(tsToDelete.id, "batch_deleteDuplicateTrafficSigns")
-                  println(s"TrafficSign with Id: ${tsToDelete.id} and LinkId: ${tsToDelete.linkId} expired!")
-              }
-              println("")
+            trafficSignService.expireWithoutTransaction(assetsToExpire.map(_.id), "batch_deleteDuplicateTrafficSigns")
+            assetsToExpire.foreach { tsToDelete =>
+              println(s"TrafficSign with Id: ${tsToDelete.id} and LinkId: ${tsToDelete.linkId} expired!")
             }
+            println("")
           }
+        }
       }
+      println("")
+      println("Complete at time: " + DateTime.now())
     }
-    println("")
-    println("Complete at time: " + DateTime.now())
   }
 
   def main(args:Array[String]) : Unit = {

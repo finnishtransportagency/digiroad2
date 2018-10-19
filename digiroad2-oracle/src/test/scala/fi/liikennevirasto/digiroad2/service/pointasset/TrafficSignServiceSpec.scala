@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
@@ -490,5 +491,30 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assetD.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be("Non Duplicated Traffic Sign!")
     }
 
+  }
+
+  test("get by distance with same roadLink, trafficType and Direction") {
+      val speedLimitProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.SpeedLimit.value.toString))))
+      val speedLimitZoneProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.SpeedLimitZone.value.toString))))
+      val trafficSigns = Seq(
+        PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
+        PersistedTrafficSign(2, 1002l, 4, 0, 4, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
+        PersistedTrafficSign(3, 1002l, 12, 0, 12, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
+        PersistedTrafficSign(4, 1002l, 2, 9, 12, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
+        PersistedTrafficSign(5, 1002l, 5, 0, 5, false, 0, 235, speedLimitZoneProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
+        PersistedTrafficSign(6, 1003l, 4, 0, 4, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
+        PersistedTrafficSign(7, 1002l, 4, 0, 4, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+      )
+
+    val groupedAssets = trafficSigns.groupBy(_.linkId)
+    val result = service.getTrafficSignsByDistance(trafficSigns.find(_.id == 1).get, groupedAssets, 10)
+    result should have size 3
+    result.exists(_.id == 1) should be (true)
+    result.exists(_.id == 2) should be (true)
+    result.exists(_.id == 3) should be (false) //more than 10 meter
+    result.exists(_.id == 4) should be (true)
+    result.exists(_.id == 5) should be (false) //different sign type
+    result.exists(_.id == 6) should be (false) //different linkId
+    result.exists(_.id == 7) should be (false) //different direction
   }
 }
