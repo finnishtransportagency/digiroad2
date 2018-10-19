@@ -109,7 +109,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
               PavedRoad.typeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
-              (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
+              (a.value.isEmpty || a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
             ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=a.value,
               startMeasure=0.0, endMeasure=roadlink.length, informationSource = Some(MmlNls)))
         else
