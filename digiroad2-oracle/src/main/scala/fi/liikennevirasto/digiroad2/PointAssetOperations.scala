@@ -315,6 +315,17 @@ trait PointAssetOperations {
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }
 
+  def expireWithoutTransaction(ids: Seq[Long], username: String) = {
+    val expireAsset = dynamicSession.prepareStatement("update asset set valid_to = sysdate, modified_by = ? where id = ?")
+
+    ids.foreach { id =>
+      expireAsset.setString(1, username)
+      expireAsset.setLong(2, id)
+      expireAsset.executeUpdate()
+      expireAsset.close()
+    }
+  }
+
   protected def convertPersistedAsset[T](setFloating: (PersistedAsset, Boolean) => T,
                                          roadLinkByLinkId: Long => Option[RoadLinkLike])
                                         (persistedStop: PersistedAsset): (T, Option[FloatingReason]) = {
