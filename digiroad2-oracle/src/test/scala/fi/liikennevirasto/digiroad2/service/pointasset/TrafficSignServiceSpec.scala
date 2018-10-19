@@ -499,7 +499,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val trafficSigns = Seq(
         PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
         PersistedTrafficSign(2, 1002l, 4, 0, 4, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
-        PersistedTrafficSign(3, 1002l, 12, 0, 12, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
+        PersistedTrafficSign(3, 1002l, 12.1, 0, 12, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
         PersistedTrafficSign(4, 1002l, 2, 9, 12, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
         PersistedTrafficSign(5, 1002l, 5, 0, 5, false, 0, 235, speedLimitZoneProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
         PersistedTrafficSign(6, 1003l, 4, 0, 4, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),

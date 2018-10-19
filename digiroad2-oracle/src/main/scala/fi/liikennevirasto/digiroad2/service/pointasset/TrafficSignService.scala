@@ -483,7 +483,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     sameLinkAssets.filter{ ts =>
       (getTrafficSignsProperties(ts, typePublicId).get.propertyValue.toInt == getTrafficSignsProperties(sign, typePublicId).get.propertyValue.toInt) &&
         ts.validityDirection == sign.validityDirection &&
-        GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(ts.lon, ts.lat))) < distance
+        GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(ts.lon, ts.lat))) <= distance
     }
   }
 }
