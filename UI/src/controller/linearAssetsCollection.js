@@ -138,11 +138,13 @@
 
     this.replaceCreatedSplit = function(selection, newSegment) {
       splitLinearAssets.created = newSegment;
+      separatedLimit.A = newSegment;
       return newSegment;
     };
 
     this.replaceExistingSplit = function(selection, existingSegment) {
       splitLinearAssets.existing = existingSegment;
+      separatedLimit.B = existingSegment;
       return existingSegment;
     };
 
