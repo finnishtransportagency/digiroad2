@@ -873,9 +873,9 @@
             };
 
             var verifiedFields = function() {
-                return (selectedAsset.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
+                return (_assetTypeConfiguration.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
                     '<div class="form-group">' +
-                    '   <p class="form-control-static asset-log-info">Tarkistettu: ' + info.verifiedBy + ' ' + info.verifiedDateTime + '</p>' +
+                    '   <p class="form-control-static asset-log-info">Tarkistettu: ' +  info.verifiedDateTime + ' / ' + info.verifiedBy + '</p>' +
                     '</div>' : '';
             };
 
