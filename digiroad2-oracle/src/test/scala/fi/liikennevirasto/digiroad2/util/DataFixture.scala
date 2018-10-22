@@ -1464,16 +1464,15 @@ object DataFixture {
       val groupedAssets = existingAssets.groupBy(_.linkId)
 
       existingAssets.foreach { sign =>
-        OracleDatabase.withDynTransaction {
-          val trafficSignsInRadius = trafficSignService.getTrafficSignsByDistance(sign, groupedAssets, 10)
+        val trafficSignsInRadius = trafficSignService.getTrafficSignsByDistance(sign, groupedAssets, 10)
 
-          if (trafficSignsInRadius.size > 1) {
+        if (trafficSignsInRadius.size > 1) {
+          OracleDatabase.withDynTransaction {
             val latestModifiedAsset = trafficSignService.getLatestModifiedAsset(trafficSignsInRadius)
 
             println("")
             println(s"Cleaning duplicates in 10 Meters")
             val assetsToExpire = trafficSignsInRadius.filterNot(_.id == latestModifiedAsset.id)
-
             trafficSignService.expireWithoutTransaction(assetsToExpire.map(_.id), "batch_deleteDuplicateTrafficSigns")
             assetsToExpire.foreach { tsToDelete =>
               println(s"TrafficSign with Id: ${tsToDelete.id} and LinkId: ${tsToDelete.linkId} expired!")
