@@ -1464,6 +1464,7 @@ object DataFixture {
       val groupedAssets = existingAssets.groupBy(_.linkId)
 
       existingAssets.foreach { sign =>
+        println(s"Analyzing Traffic Sign with => Id: ${sign.id}, LinkID: ${sign.linkId}")
         val trafficSignsInRadius = trafficSignService.getTrafficSignsByDistance(sign, groupedAssets, 10)
 
         if (trafficSignsInRadius.size > 1) {
@@ -1472,10 +1473,10 @@ object DataFixture {
 
             println("")
             println(s"Cleaning duplicates in 10 Meters")
-            val assetsToExpire = trafficSignsInRadius.filterNot(_.id == latestModifiedAsset.id)
-            trafficSignService.expireWithoutTransaction(assetsToExpire.map(_.id), "batch_deleteDuplicateTrafficSigns")
-            assetsToExpire.foreach { tsToDelete =>
-              println(s"TrafficSign with Id: ${tsToDelete.id} and LinkId: ${tsToDelete.linkId} expired!")
+            trafficSignsInRadius.filterNot(_.id == latestModifiedAsset.id).foreach {
+              tsToDelete =>
+                trafficSignService.expireWithoutTransaction(tsToDelete.id, "batch_deleteDuplicateTrafficSigns")
+                println(s"TrafficSign with Id: ${tsToDelete.id} and LinkId: ${tsToDelete.linkId} expired!")
             }
             println("")
           }
