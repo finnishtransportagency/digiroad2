@@ -28,7 +28,6 @@ class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporter
     val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
       measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), informationSource = Some(RoadRegistry.value))
 
-    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
     insertSingleChoiceProperty(assetId, Queries.getPropertyIdByPublicId(animalWarningPropertyId), trAssetData.animalWarningValue.value.toLong).execute
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
   }
