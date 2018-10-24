@@ -394,7 +394,8 @@
         style : new WinterSpeedLimitStyle(),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        label: new WinterSpeedLimitLabel()
       },
       {
         typeId: assetType.prohibition,

@@ -62,7 +62,6 @@
         };
     };
 
-
     root.TRSpeedLimitAssetLabel = function () {
       LinearAssetLabel.call(this);
       var me = this;
@@ -70,8 +69,8 @@
       var backgroundStyle = function (value) {
         return new ol.style.Style({
           image: new ol.style.Icon(({
-            src: getImageConfiguration(value).image,
-            scale : getImageConfiguration(value).scale
+            src: me.getImageConfiguration(value).image,
+            scale : me.getImageConfiguration(value).scale
           }))
         });
       };
@@ -93,7 +92,7 @@
         return value && value >= 20 && value <= 120;
       };
 
-      var getImageConfiguration = function (value) {
+      this.getImageConfiguration = function (value) {
 
         var imagesConfig = [
           {range : [{min: 60, max: 70}, {min: 120, max: 121}] , image: 'images/speed-limits/blueCircle.svg', scale: 1.6 },
@@ -121,6 +120,30 @@
       };
 
     };
+
+  root.WinterSpeedLimitLabel = function(){
+    TRSpeedLimitAssetLabel.call(this);
+
+    this.getImageConfiguration = function (value) {
+
+      var imagesConfig = [
+        {value : 100 , image: 'images/speed-limits/100.svg', scale: 1.6 },
+        {value : 80  , image: 'images/speed-limits/80.svg', scale: 1.6  },
+        {value : 70 , image: 'images/speed-limits/70.svg', scale: 1.6  },
+        {value : 60 , image: 'images/speed-limits/60.svg', scale: 1.6 }
+      ];
+
+      var config = imagesConfig.find ( function(configuration) {
+        return configuration.value === value;
+      });
+
+      if(config)
+        return config;
+
+      return {image: 'images/warningLabel.png', scale: 1};
+    };
+  };
+
 
 
   root.LinearAssetLabelMultiValues = function(){
