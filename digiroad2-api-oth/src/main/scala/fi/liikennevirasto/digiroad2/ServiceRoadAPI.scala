@@ -9,11 +9,14 @@ import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkService: RoadLinkService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkService: RoadLinkService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
 
   override def baseAuth: String = "serviceRoad."
   override val realm: String = "Service Road API"
+
+  protected val applicationDescription = "Service Road API "
 
   val MAX_BOUNDING_BOX = 100000000
 
@@ -23,14 +26,28 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     basicAuth
   }
 
-  get("/huoltotiet"){
+  val getServiceRoadByBoundingBox =
+    (apiOperation[List[Map[String, Any]]]("getServiceRoadByBoundingBox")
+      tags "Service Road API By Bounding Box"
+      summary "Returns all Huoltotie assets inside bounding box. Can be used to get all assets on the UI map area."
+      parameter queryParam[Int]("boundingBox").description("The boundingBox to search"))
+
+  get("/huoltotiet", operation(getServiceRoadByBoundingBox)){
     contentType = formats("json")
     val bbox = params.get("boundingBox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     createGeoJson(maintenanceService.getAllByBoundingBox(bbox))
   }
 
-  get("/huoltotiet/:areaId"){
+  val getServiceRoadByAreaId =
+    (apiOperation[List[Map[String, Any]]]("getServiceRoadByAreaId")
+      tags "Service Road API By Area ID"
+      summary "Returns all Huoltotie assets inside service area."
+      description "URL -> /digiroad/api/livi/huoltotiet/{serviceAreaId} /n Service areas are a polygonal area defined in OTH. /n ServiceAreaId is an integer between 1-12. /n Example: https://extranet.liikennevirasto.fi/digiroad/api/livi/huoltotiet/10"
+      parameter queryParam[Int]("areaId").description("The area id to search"))
+
+
+  get("/huoltotiet/:areaId", operation(getServiceRoadByAreaId)){
     contentType = formats("json")
     var areaId = params("areaId")
     val maintenanceAssets = maintenanceService.getActiveMaintenanceRoadByPolygon(areaId.toInt)

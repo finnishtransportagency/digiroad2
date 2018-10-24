@@ -12,6 +12,7 @@ import org.joda.time.DateTime
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 case class NewAssetValues(linkId: Long, startMeasure: Double, endMeasure: Option[Double], properties: Seq[AssetProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
 case class NewManoeuvreValues(linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], properties: Seq[ManoeuvreProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
@@ -27,11 +28,13 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val obstacleService: ObstacleService,
                       val pedestrianCrossingService: PedestrianCrossingService,
                       val railwayCrossingService: RailwayCrossingService,
-                      val trafficLightService: TrafficLightService
-                     ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+                      val trafficLightService: TrafficLightService,
+                      implicit val swagger: Swagger
+                     ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
+  protected val applicationDescription = "Municipality API "
 
   val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService
 

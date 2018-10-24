@@ -9,9 +9,11 @@ import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 
-class ChangeApi extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
+  protected val applicationDescription = "Change API "
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
