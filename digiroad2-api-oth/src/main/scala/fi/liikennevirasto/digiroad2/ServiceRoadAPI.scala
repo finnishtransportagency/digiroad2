@@ -28,9 +28,15 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   val getServiceRoadByBoundingBox =
     (apiOperation[List[Map[String, Any]]]("getServiceRoadByBoundingBox")
-      tags "Service Road API By Bounding Box"
+      tags "Service Road API (Huoltotie API)"
       summary "Returns all Huoltotie assets inside bounding box. Can be used to get all assets on the UI map area."
-      parameter queryParam[Int]("boundingBox").description("The boundingBox to search"))
+      parameter queryParam[Int]("boundingBox").description("The bounding box is used to search assets inside him, is defined with coordinates of top left and bottom right corner.")
+      description
+      "Bounding box is defined with coordinates of top left and bottom right corner \n" +
+        "URL: /digiroad/api/livi/huoltotiet/?boundingBox={x1},{y1},{x2},{y2} \n" +
+        "Example: \n https://extranet.liikennevirasto.fi/digiroad/api/livi/huoltotiet?boundingBox=399559.02383961395,6856819.997802734,401097.02383961395,6858507.997802734"
+      )
+
 
   get("/huoltotiet", operation(getServiceRoadByBoundingBox)){
     contentType = formats("json")
@@ -41,10 +47,16 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   val getServiceRoadByAreaId =
     (apiOperation[List[Map[String, Any]]]("getServiceRoadByAreaId")
-      tags "Service Road API By Area ID"
+      tags "Service Road API (Huoltotie API)"
       summary "Returns all Huoltotie assets inside service area."
-      description "URL -> /digiroad/api/livi/huoltotiet/{serviceAreaId} /n Service areas are a polygonal area defined in OTH. /n ServiceAreaId is an integer between 1-12. /n Example: https://extranet.liikennevirasto.fi/digiroad/api/livi/huoltotiet/10"
-      parameter queryParam[Int]("areaId").description("The area id to search"))
+      parameter queryParam[Int]("areaId").description("The area id to search assets inside him.")
+      description
+      "Service areas are a polygonal area defined in OTH. \n" +
+        "ServiceAreaId is an integer between 1-12. \n" +
+        "URL: /digiroad/api/livi/huoltotiet/{serviceAreaId} \n" +
+        "Example: \n https://extranet.liikennevirasto.fi/digiroad/api/livi/huoltotiet/10"
+      )
+
 
 
   get("/huoltotiet/:areaId", operation(getServiceRoadByAreaId)){

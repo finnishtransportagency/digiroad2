@@ -817,7 +817,20 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
   }
 
-  get("/:assetType") {
+  val getAssetsByMunicipalityCode =
+    (apiOperation[List[Map[String, Any]]]("getAssetsByMunicipalityCode")
+      .parameters(
+        queryParam[Int]("municipalityCode").description("Municipality Code when we will execute the search by specific asset type"),
+        pathParam[String]("assetType").description("Asset type name to get in a specific municipality")
+      )
+      tags "Municipality API"
+      summary "Lists all assets of an asset type on the municipality code."
+      authorizations "Contact your service provider for more information"
+      description
+      "Example URL: /api/municipality/lighting?municipalityCode=235"
+      )
+
+  get("/:assetType", operation(getAssetsByMunicipalityCode)) {
     contentType = formats("json")
 
     val municipalityCode = params.get("municipalityCode").getOrElse(halt(BadRequest("Missing municipality code."))).toInt
