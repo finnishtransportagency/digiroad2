@@ -152,22 +152,22 @@
     this.eventHandler = function(){
       $(me.expanded).find('#complementaryLinkCheckBox').on('change', function (event) {
         if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger(me.layerName() + '-complementaryLinks:show');
+          eventbus.trigger(me.layerName + '-complementaryLinks:show');
         } else {
           if (applicationModel.isDirty()) {
             $(event.currentTarget).prop('checked', true);
             new Confirm();
           } else {
-            eventbus.trigger(me.layerName() +'-complementaryLinks:hide');
+            eventbus.trigger(me.layerName +'-complementaryLinks:hide');
           }
         }
       });
 
       $(me.expanded).find('#trafficSignsCheckbox').on('change', function (event) {
         if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger(me.layerName() + '-readOnlyTrafficSigns:show');
+          eventbus.trigger(me.layerName + '-readOnlyTrafficSigns:show');
         } else {
-          eventbus.trigger(me.layerName() + '-readOnlyTrafficSigns:hide');
+          eventbus.trigger(me.layerName + '-readOnlyTrafficSigns:hide');
         }
       });
     };
