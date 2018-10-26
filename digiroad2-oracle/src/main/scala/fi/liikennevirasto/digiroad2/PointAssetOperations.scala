@@ -37,6 +37,7 @@ object FloatingReason{
   case object NoReferencePointForMValue extends FloatingReason { def value = 5 }
   case object TrafficDirectionNotMatch extends FloatingReason { def value = 6 }
   case object TerminalChildless extends FloatingReason { def value = 7 }
+  case object TerminatedRoad extends FloatingReason { def value = 8 }
 }
 
 trait IncomingPointAsset {

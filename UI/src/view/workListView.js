@@ -1,6 +1,7 @@
 (function (root) {
   root.WorkListView = function(){
     var me = this;
+    var warningIcon = '<img src="images/warningLabel.png" title="Pysäkki sijaitsee lakkautetulla tiellä"/>';
     this.initialize = function() {
       me.bindEvents();
       $(window).on('hashchange', this.showApp);
@@ -31,11 +32,14 @@
       var tableHeaderRow = function(headerName) {
         return $('<caption/>').html(headerName);
       };
-      var tableContentRows = function(Ids) {
-        return _.map(Ids, function(item) {
-          return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item) : idLink(item)));
+
+      var tableContentRows = function(assetsInfo) {
+        return _.map(assetsInfo, function(item) {
+          var image = item.floatingReason === 8 ?   warningIcon : '';
+          return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item) : idLink(item))).append($('<td/>').append(image));
         });
       };
+
       var idLink = function(id) {
         var link = '#' + layerName + '/' + id;
         return $('<a class="work-list-item"/>').attr('href', link).html(link);
@@ -50,12 +54,12 @@
           workListItem.append(floatingValidator);
         return workListItem;
       };
-      var tableForGroupingValues = function(values, Ids, count) {
-        if (!Ids || Ids.length === 0) return '';
+      var tableForGroupingValues = function(values, assetsInfo, count) {
+        if (!assetsInfo || assetsInfo.length === 0) return '';
         var countString = count ? ' (' + count + ' kpl)' : '';
         return $('<table><tbody>').addClass('table')
           .append(tableHeaderRow(values + countString))
-          .append(tableContentRows(Ids))
+          .append(tableContentRows(assetsInfo))
           .append('</tbody></table>');
       };
 
