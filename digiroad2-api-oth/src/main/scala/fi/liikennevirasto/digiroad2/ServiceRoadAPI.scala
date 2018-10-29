@@ -11,6 +11,32 @@ import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
+case class serviceRoadApiResponseOnGetExample(`type`: String, geometry: geometryFields, properties: propertiesFields)
+case class geometryFields(`type`: String, coordinates: Seq[Seq[(Double, Double, Double)]])
+case class propertiesFields(
+                             id: Long,
+                             areaId: Int,
+                             linkId: Int,
+                             mmlId: Int,
+                             verticalLevel: Int,
+                             startMeasure: Double,
+                             endMeasure: Double,
+                             modifiedAt: DateTime,
+                             modifiedBy: String,
+                             access: Int,
+                             accessDesc: String,
+                             maintainer: Int,
+                             maintainerDesc: String,
+                             maintainerName: String,
+                             person: String,
+                             address: String,
+                             zipCode: String,
+                             city: String,
+                             phone1: String,
+                             phone2: String,
+                             addInfo: String
+                           )
+
 class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkService: RoadLinkService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
 
   override def baseAuth: String = "serviceRoad."
@@ -27,7 +53,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
   }
 
   val getServiceRoadByBoundingBox =
-    (apiOperation[List[Map[String, Any]]]("getServiceRoadByBoundingBox")
+    (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByBoundingBox")
       tags "Service Road API (Huoltotie API)"
       summary "Returns all Huoltotie assets inside bounding box. Can be used to get all assets on the UI map area."
       parameter queryParam[Int]("boundingBox").description("The bounding box is used to search assets inside him, is defined with coordinates of top left and bottom right corner.")
@@ -46,7 +72,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
   }
 
   val getServiceRoadByAreaId =
-    (apiOperation[List[Map[String, Any]]]("getServiceRoadByAreaId")
+    (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByAreaId")
       tags "Service Road API (Huoltotie API)"
       summary "Returns all Huoltotie assets inside service area."
       parameter queryParam[Int]("areaId").description("The area id to search assets inside him.")
