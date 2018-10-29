@@ -1,7 +1,7 @@
 (function(root) {
     root.ManoeuvreStyle = function(roadLayer) {
         var zoomLevelRules = [
-            new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 1 }}),
+            new StyleRule().where('zoomLevel').isIn([8 ,9]).use({ stroke: {width: 1 }}),
             new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 3 }}),
             new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 5 }}),
             new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 8 }}),
@@ -16,7 +16,7 @@
             new StyleRule().where('type').is('intermediate').use({ stroke: { color: '#11bb00', opacity: 1 }}),
             new StyleRule().where('type').is('sourceDestination').use({ stroke:{ color: '#000000', opacity: 1}}),
 
-            new StyleRule().where('type').is('normal').and('zoomLevel').is(9).use({ stroke: {width: 2 }}),
+            new StyleRule().where('type').is('normal').and('zoomLevel').isIn([8 ,9]).use({ stroke: {width: 2 }}),
             new StyleRule().where('type').is('normal').and('zoomLevel').is(10).use({ stroke: {width: 5 }}),
             new StyleRule().where('type').is('normal').and('zoomLevel').is(11).use({ stroke: {width: 7 }}),
             new StyleRule().where('type').is('normal').and('zoomLevel').is(12).use({ stroke: {width: 10 }}),
@@ -39,7 +39,7 @@
 
 
         var signSizeRules = [
-            new StyleRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
+            new StyleRule().where('zoomLevel', roadLayer.uiState).isIn([8 ,9]).use({ pointRadius: 0 }),
             new StyleRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 10 }),
             new StyleRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 12 }),
             new StyleRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 13 }),
@@ -57,7 +57,7 @@
         defaultStyleProvider.addRules(zoomLevelRules);
         defaultStyleProvider.addRules(featureTypeRules);
         defaultStyleProvider.addRules([
-            new StyleRule().where('zoomLevel').is(9).use({ pointRadius: 0 }),
+            new StyleRule().where('zoomLevel').isIn([8 ,9]).use({ pointRadius: 0 }),
             new StyleRule().where('zoomLevel').is(10).use({ pointRadius: 10 }),
             new StyleRule().where('zoomLevel').is(11).use({ pointRadius: 12 }),
             new StyleRule().where('zoomLevel').is(12).use({ pointRadius: 13 }),

@@ -97,7 +97,9 @@
     }
   };
 
-  var bindEvents = function(selectedSpeedLimit) {
+  var bindEvents = function(selectedSpeedLimit, feedbackCollection) {
+    new FeedbackDataTool(feedbackCollection, 'speedLimit', authorizationPolicy);
+
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -155,8 +157,8 @@
   }
 
   root.SpeedLimitForm = {
-    initialize: function(selectedSpeedLimit) {
-      bindEvents(selectedSpeedLimit);
+    initialize: function(selectedSpeedLimit, feedbackCollection) {
+      bindEvents(selectedSpeedLimit, feedbackCollection);
     }
   };
 })(this);

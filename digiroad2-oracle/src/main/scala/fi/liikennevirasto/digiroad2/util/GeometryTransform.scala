@@ -63,6 +63,14 @@ object RoadSide {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def switch(side: RoadSide) = {
+    side match {
+      case Right => Left
+      case Left => Right
+      case _ => side
+    }
+  }
+
   case object Right extends RoadSide { def value = 1 }
   case object Left extends RoadSide { def value = 2 }
   case object Between extends RoadSide { def value = 3 }

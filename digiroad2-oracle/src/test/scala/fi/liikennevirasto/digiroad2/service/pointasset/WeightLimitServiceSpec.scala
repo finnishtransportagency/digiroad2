@@ -111,7 +111,8 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      an[UnsupportedOperationException] should be thrownBy weightLimitService.update(id = 600076, IncomingWeightLimit(100, 0, 123, 20, 0, Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(123, linkGeometry, 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
+      an[UnsupportedOperationException] should be thrownBy weightLimitService.update(id = 600076, IncomingWeightLimit(100, 0, 123, 20, 0, Some(0)), roadLink, "test")
     }
   }
 
@@ -178,7 +179,8 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      an[UnsupportedOperationException] should be thrownBy axleWeightLimitService.update(id = 600077, IncomingAxleWeightLimit(100, 0, 123, 20, 0, Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(123, linkGeometry, 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
+      an[UnsupportedOperationException] should be thrownBy axleWeightLimitService.update(id = 600077, IncomingAxleWeightLimit(100, 0, 123, 20, 0, Some(0)), roadLink, "test")
     }
   }
 
@@ -244,7 +246,8 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      an[UnsupportedOperationException] should be thrownBy bogieWeightLimitService.update(id = 600078, IncomingBogieWeightLimit(100, 0, 123, 20, 0, Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(123, linkGeometry, 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
+      an[UnsupportedOperationException] should be thrownBy bogieWeightLimitService.update(id = 600078, IncomingBogieWeightLimit(100, 0, 123, 20, 0, Some(0)), roadLink, "test")
     }
   }
 
@@ -310,7 +313,8 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      an[UnsupportedOperationException] should be thrownBy trailerTruckWeightLimitService.update(id = 600079, IncomingTrailerTruckWeightLimit(100, 0, 123, 20, 0, Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(123, linkGeometry, 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
+      an[UnsupportedOperationException] should be thrownBy trailerTruckWeightLimitService.update(id = 600079, IncomingTrailerTruckWeightLimit(100, 0, 123, 20, 0, Some(0)), roadLink, "test")
     }
   }
 }

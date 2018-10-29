@@ -49,7 +49,7 @@
         legend('spring-carrying-capacity', springCarryingCapacityValues.concat(withoutValue)) + '</div>';
     };
 
-      this.renderTemplate = function () {
+      this.template = function () {
           this.expanded = me.elements().expanded;
           $(me.expanded).find('input[type=radio][name=labelingRadioButton-'+ me.className() + ']').change(labelingHandler);
           me.eventHandler();
@@ -69,7 +69,6 @@
           eventbus.trigger(assetConfig.singleElementEventCategory + ':spring-carrying-capacity', false);
         }
     };
-
 
     this.radioButton = function () {
       return [
@@ -117,13 +116,8 @@
       return element;
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.show = show;
+    this.hide = hide;
   };
 })(this);
 

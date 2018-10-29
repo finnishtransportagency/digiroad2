@@ -33,7 +33,7 @@
 
     function set(asset) {
       dirty = true;
-      _.merge(current, asset, function(a, b) {
+      _.mergeWith(current, asset, function(a, b) {
         if (_.isArray(a)) { return b; }
       });
       eventbus.trigger(assetName + ':changed');
@@ -85,10 +85,12 @@
       eventbus.trigger(assetName + ':saving');
       current = _.omit(current, 'geometry');
       if (current.toBeDeleted) {
+        eventbus.trigger(endPointName + ':deleted', current);
         backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
       } else if (isNew()) {
         backend.createPointAsset(current, endPointName).done(done).fail(fail);
       } else {
+        eventbus.trigger(endPointName + ':updated', current);
         backend.updatePointAsset(current, endPointName).done(done).fail(fail);
       }
 

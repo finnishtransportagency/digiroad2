@@ -16,10 +16,6 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-
-import scala.slick.jdbc.{StaticQuery => Q}
 
 object LinearAssetTypes {
   val TotalWeightLimits = 30
@@ -27,7 +23,7 @@ object LinearAssetTypes {
   val AxleWeightLimits = 50
   val BogieWeightLimits = 60
   val ProhibitionAssetTypeId = 190
-  val PavingAssetTypeId = 110
+  val PavedRoadAssetTypeId = 110
   val RoadWidthAssetTypeId = 120
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
@@ -79,6 +75,12 @@ trait LinearAssetOperations {
         Some(road.linkSource.value)
       case _ => None
     }
+  }
+
+  def validateMinDistance(measure1: Double, measure2: Double): Boolean = {
+    val minDistanceAllow = 0.01
+    val (maxMeasure, minMeasure) = (math.max(measure1, measure2), math.min(measure1, measure2))
+    (maxMeasure - minMeasure) > minDistanceAllow
   }
 
   /**
@@ -242,7 +244,7 @@ trait LinearAssetOperations {
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                adjustedMValues = Seq.empty[MValueAdjustment],
-                               adjustedVVHChanges =  Seq.empty[VVHChangesAdjustment],
+                               adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                                adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
@@ -256,10 +258,13 @@ trait LinearAssetOperations {
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
+    publish(eventBus, changeSet, projectedAssets)
+    filledTopology
+  }
+
+  def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, projectedAssets: Seq[PersistedLinearAsset]) {
     eventBus.publish("linearAssets:update", changeSet)
     eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filter(_.id == 0L))
-
-    filledTopology
   }
 
   /**
@@ -358,6 +363,7 @@ trait LinearAssetOperations {
       case ChangeType.LengthenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
            ChangeType.ReplacedNewPart =>
         projectAssetsConditionally(change, linearAssets, testAssetOutdated, useOldId=false)
+      //TODO check if it is OK, this ChangeType.ReplacedNewPart never used
       case ChangeType.LengthenedNewPart | ChangeType.ReplacedNewPart =>
         projectAssetsConditionally(change, linearAssets, testAssetsContainSegment, useOldId=true)
       case _ =>
@@ -424,11 +430,12 @@ trait LinearAssetOperations {
     * @param typeId
     * @param since
     * @param until
+    * @param withAutoAdjust
     * @return Changed linear assets
     */
-  def getChanged(typeId: Int, since: DateTime, until: DateTime): Seq[ChangedLinearAsset] = {
+  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dao.getLinearAssetsChangedSince(typeId, since, until)
+      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
@@ -468,7 +475,7 @@ trait LinearAssetOperations {
     if (ids.nonEmpty)
       logger.info("Expiring ids " + ids.mkString(", "))
     withDynTransaction {
-      ids.foreach(dao.updateExpiration(_, expired = true, username))
+      ids.foreach(dao.updateExpiration(_, true, username))
       ids
     }
   }
@@ -476,25 +483,13 @@ trait LinearAssetOperations {
   /**
     * Saves updated linear asset from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
+  def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, username)
+      updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
     }
   }
 
-  def updateWithTimeStamp(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
-    withDynTransaction {
-      updateWithoutTransaction(ids, value, username, None, vvhTimeStamp, sideCode)
-    }
-  }
-
-  def updateWithNewMeasures(ids: Seq[Long], value: Value, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long] = None , sideCode: Option[Int] = None): Seq[Long] = {
-    withDynTransaction {
-      updateWithoutTransaction(ids, value, username, measures, vvhTimeStamp, sideCode)
-    }
-  }
-
-  def expireAsset(typeId: Int, id: Long, username: String, expired : Boolean) = {
+  def expireAsset(typeId: Int, id: Long, username: String, expired : Boolean): Option[Long] = {
     withDynTransaction {
       dao.updateExpiration(id, expired, username)
     }
@@ -612,30 +607,6 @@ trait LinearAssetOperations {
   }
 
   /**
-    * Updates start and end measures after geometry change in VVH. Used by Digiroad2Context.LinearAssetUpdater actor.
-    */
-  def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
-    if (adjustments.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + adjustments.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
-    }
-  }
-
-  /**
-    * Updates side codes. Used by Digiroad2Context.LinearAssetUpdater actor.
-    */
-  def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
-      }
-    }
-  }
-
-  /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
@@ -653,21 +624,16 @@ trait LinearAssetOperations {
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).
-        getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
-      val newIdsToReturn = existingValue match {
-        case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username, Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)))
-      }
+      dao.updateExpiration(id)
 
-      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
-        Some(roadLink)))
-
-      newIdsToReturn ++ Seq(createdIdOption).flatten
+      val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink),fromUpdate = true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
+      val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
+      Seq(existingId, createdId).flatten
     }
   }
 
@@ -698,15 +664,26 @@ trait LinearAssetOperations {
         dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
       }
 
-      changeSet.adjustedSideCodes.foreach { adjustment =>
-        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
-      }
-
       val ids = changeSet.expiredAssetIds.toSeq
       if (ids.nonEmpty)
         logger.info("Expiring ids " + ids.mkString(", "))
       ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
+
+      if (changeSet.adjustedSideCodes.nonEmpty)
+        logger.info("Saving SideCode adjustments for asset/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.assetId).mkString(", "))
+
+      changeSet.adjustedSideCodes.foreach { adjustment =>
+        adjustedSideCode(adjustment)
+      }
     }
+  }
+
+  def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
+      val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId)).head
+
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, true )
+      createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 
   /**
@@ -718,34 +695,35 @@ trait LinearAssetOperations {
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
-      val newExistingIdsToReturn = valueTowardsDigitization match {
-        case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
-      }
+      dao.updateExpiration(id)
 
-      dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
+      val(newId1, newId2) =
+        (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)),
+          valueAgainstDigitization.map( createWithoutTransaction(existing.typeId, existing.linkId, _,  SideCode.AgainstDigitizing.value,  Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)))
 
-      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp,
-        Some(roadLink)))
-
-      newExistingIdsToReturn ++ created
+      Seq(newId1, newId2).flatten
     }
   }
 
-  protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Seq[Long] = {
+  protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
-    val assetTypeId = assetDao.getAssetTypeId(ids)
-    val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
-
     ids.flatMap { id =>
-      val typeId = assetTypeById(id)
+      val oldLinearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
+      val newMeasures = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
+      val newSideCode = sideCode.getOrElse(oldLinearAsset.sideCode)
+      val roadLink = vvhClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
       value match {
         case NumericValue(intValue) =>
-          updateValueByExpiration(id, NumericValue(intValue), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
-        case _ =>
-          Some(id)
+          if ((validateMinDistance(newMeasures.startMeasure, oldLinearAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) || newSideCode != oldLinearAsset.sideCode) {
+            dao.updateExpiration(id)
+            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue.apply(intValue), newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldLinearAsset.verifiedBy, informationSource = informationSource))
+          }
+          else
+            dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, username)
+        case _ => Some(id)
       }
     }
   }
@@ -754,7 +732,7 @@ trait LinearAssetOperations {
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -802,13 +780,14 @@ trait LinearAssetOperations {
     }
   }
 
-  def updateVerifiedInfo(ids: Set[Long], userName: String, type_id: Int): Unit = {
+  def updateVerifiedInfo(ids: Set[Long], userName: String, type_id: Int): Set[Long] = {
     withDynTransaction {
       getVerifiedBy(userName, type_id) match {
         case Some(user) => dao.updateVerifiedInfo(ids, user)
         case _ =>
       }
     }
+    ids
   }
 
   def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[MunicipalityInfo] = {

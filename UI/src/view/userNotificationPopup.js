@@ -71,7 +71,7 @@ window.UserNotificationPopup = function(models) {
   };
 
   var renderDialog = function(notifications) {
-    $('#work-list').append(me.createNotificationPopUp(notifications)).show();
+    $('#update-notification').append(me.createNotificationPopUp(notifications)).show();
 
     $('.confirm-modal .cancel').on('click', function() {
       options.closeCallback();

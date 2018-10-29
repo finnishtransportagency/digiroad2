@@ -1,9 +1,11 @@
 (function(root) {
   root.AssetTypeConfiguration = function () {
 
+    var oneKmZoomLvl = 8;
+
     var assetType = {
       massTransitStop: 10,
-      speedLimits: 20,
+      speedLimit: 20,
       totalWeightLimit: 30,
       trailerTruckWeightLimit: 40,
       axleWeightLimit: 50,
@@ -13,8 +15,8 @@
       widthLimit: 90,
       litRoad: 100,
       pavedRoad: 110,
-      width: 120,
-      damagedByThaw: 130,
+      roadWidth: 120,
+      roadDamagedByThaw: 130,
       numberOfLanes: 140,
       massTransitLane: 160,
       trafficVolume: 170,
@@ -67,12 +69,13 @@
           showUnit: true
         },
         label: new MassLimitationsLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.trailerTruckWeightLimit,
@@ -92,12 +95,13 @@
           showUnit: true
         },
         label: new MassLimitationsLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.axleWeightLimit,
@@ -117,12 +121,13 @@
           showUnit: true
         },
         label: new MassLimitationsLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.bogieWeightLimit,
@@ -142,12 +147,13 @@
           showUnit: true
         },
         label: new MassLimitationsLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.heightLimit,
@@ -166,12 +172,13 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.lengthLimit,
@@ -190,12 +197,13 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.widthLimit,
@@ -215,12 +223,13 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.litRoad,
@@ -241,10 +250,11 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
-        typeId: assetType.damagedByThaw,
+        typeId: assetType.roadDamagedByThaw,
         defaultValue: 1,
         singleElementEventCategory: 'roadDamagedByThaw',
         multiElementEventCategory: 'roadsDamagedByThaw',
@@ -268,10 +278,11 @@
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
-        typeId: assetType.width,
+        typeId: assetType.roadWidth,
         singleElementEventCategory: 'roadWidth',
         multiElementEventCategory: 'roadWidth',
         layerName: 'roadWidth',
@@ -291,11 +302,11 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.pavedRoad,
-        defaultValue: 1,
         singleElementEventCategory: 'pavedRoad',
         multiElementEventCategory: 'pavedRoads',
         layerName: 'pavedRoad',
@@ -311,8 +322,28 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
+        style: new PavedRoadStyle(),
+        form: new DynamicAssetForm({
+            fields : [
+              {
+                label: 'Paallysteluokka', type: 'single_choice', publicId: "paallysteluokka", defaultValue: "99",
+                values: [
+                  {id: 99, label: 'Päällystetty, tyyppi tuntematon'},
+                  {id: 1, label: 'Betoni'},
+                  {id: 2, label: 'Kivi'},
+                  {id: 10, label: 'Kovat asfalttibetonit'},
+                  {id: 20, label: 'Pehmeät asfalttibetonit'},
+                  {id: 30, label: 'Soratien pintaus'},
+                  {id: 40, label: 'Sorakulutuskerros'},
+                  {id: 50, label: 'Muut pinnoitteet'}
+                ]
+              }
+            ]
+          }
+        ),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.trafficVolume,
@@ -334,7 +365,8 @@
         label: new LinearAssetLabel(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.massTransitLane,
@@ -360,7 +392,8 @@
           fields: [
             {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1}
           ]
-        })
+        }),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.winterSpeedLimit,
@@ -383,7 +416,8 @@
         style : new WinterSpeedLimitStyle(),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.prohibition,
@@ -403,7 +437,8 @@
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -425,7 +460,7 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
-        hasTrafficSignReadOnlyLayer: true
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.europeanRoads,
@@ -446,7 +481,8 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.exitNumbers,
@@ -467,7 +503,8 @@
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.maintenanceRoad,
@@ -513,7 +550,8 @@
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.numberOfLanes,
@@ -535,7 +573,8 @@
         isVerifiable: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
             typeId: assetType.careClass,
@@ -596,7 +635,8 @@
             authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
             layer: CareClassLayer,
             style: new CareClassStyle(),
-            collection: CareClassCollection
+            collection: CareClassCollection,
+            minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.carryingCapacity,
@@ -644,7 +684,8 @@
             },
             {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
           ]
-        })
+        }),
+        minZoomForContent: oneKmZoomLvl
       }
     ];
 
@@ -666,9 +707,10 @@
           disabled: 'Tuntematon'
         },
         label: new TRSpeedLimitAssetLabel(),
-        hasTrafficSignReadOnlyLayer: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         style: new TRSpeedLimitStyle(),
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy()
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       }
     ];
 
@@ -689,7 +731,7 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
-        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        authorizationPolicy: new PointStateRoadAuthorizationPolicy()
       },
       {
         typeId: assetType.obstacles,
@@ -708,7 +750,8 @@
           newAssetLabel: 'esterakennelma'
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        roadCollection: ObstaclesRoadCollection
       },
       {
         typeId: assetType.railwayCrossings,
@@ -885,143 +928,28 @@
     ];
 
     var assetTypeInfo = [
-      {
-        typeId: assetType.massTransitStop,
-        title: 'Joukkoliikenteen pysäkki'
-      },
-      {
-        typeId: assetType.speedLimits,
-        title: 'Nopeusrajoitus'
-      },
-      {
-        typeId: assetType.totalWeightLimit,
-        title: 'Suurin sallittu massa'
-      },
-      {
-        typeId: assetType.trailerTruckWeightLimit,
-        title: 'Yhdistelmän suurin sallittu massa'
-      },
-      {
-        typeId: assetType.axleWeightLimit,
-        title: 'Suurin sallittu akselimassa'
-      },
-      {
-        typeId: assetType.bogieWeightLimit,
-        title: 'Suurin sallittu telimassa'
-      },
-      {
-        typeId: assetType.heightLimit,
-        title: 'Suurin sallittu korkeus'
-      },
-      {
-        typeId: assetType.lengthLimit,
-        title: 'Suurin sallittu pituus'
-      },
-      {
-        typeId: assetType.widthLimit,
-        title: 'Suurin sallittu leveys'
-      },
-      {
-        typeId: assetType.litRoad,
-        title: 'Valaistus'
-      },
-      {
-        typeId: assetType.damagedByThaw,
-        title: 'Kelirikko'
-      },
-      {
-        typeId: assetType.width,
-        title: 'Leveys'
-      },
-      {
-        typeId: assetType.congestionTendency,
-        title: 'Ruuhkaantumisherkkyys'
-      },
-      {
-        typeId: assetType.pavedRoad,
-        title: 'Päällyste'
-      },
-      {
-        typeId: assetType.trafficVolume,
-        title: 'Liikennemäärä'
-      },
-      {
-        typeId: assetType.massTransitLane,
-        title: 'Joukkoliikennekaista'
-      },
-      {
-        typeId: assetType.winterSpeedLimit,
-        title: 'Talvinopeusrajoitus'
-      },
-      {
-        typeId: assetType.prohibition,
-        title: 'Ajoneuvokohtaiset rajoitukset'
-      },
-      {
-        typeId: assetType.hazardousMaterialTransportProhibition,
-        title: 'VAK-rajoitus'
-      },
-      {
-        typeId: assetType.europeanRoads,
-        title: 'Eurooppatienumero'
-      },
-      {
-        typeId: assetType.exitNumbers,
-        title: 'Liittymänumero'
-      },
-      {
-        typeId: assetType.maintenanceRoad,
-        title: 'Rautateiden huoltotie'
-      },
-      {
-        typeId: assetType.numberOfLanes,
-        title: 'Kaistojen lukumäärä'
-      },
-      {
-        typeId: assetType.pedestrianCrossings,
-        title: 'Suojatie'
-      },
-      {
-        typeId: assetType.obstacles,
-        title: 'Esterakennelma'
-      },
-      {
-        typeId: assetType.railwayCrossings,
-        title: 'Rautatien tasoristeys'
-      },
-      {
-        typeId: assetType.directionalTrafficSigns,
-        title: 'Opastustaulu'
-      },
-      {
-        typeId: assetType.servicePoints,
-        title: 'Palvelupiste'
-      },
-      {
-        typeId: assetType.trafficLights,
-        title: 'Liikennevalo'
-      },
-      {
-        typeId: assetType.trafficSigns,
-        title: 'Liikennemerkit'
-      },
-      {
-        typeId: assetType.trHeightLimits,
-        title: 'TR suurin sallittu korkeus'
-      },
-      {
-        typeId: assetType.trWidthLimits,
-        title: 'TR suurin sallittu leveys'
-      },
-      {
-        typeId: assetType.manoeuvre,
-        title: 'Kääntymisrajoitus'
-      }
+        {
+            typeId: assetType.massTransitStop,
+            title: 'Joukkoliikenteen pysäkki'
+        },
+        {
+            typeId: assetType.speedLimit,
+            title: 'Nopeusrajoitus'
+        },
+        {
+            typeId: assetType.manoeuvre,
+            title: 'Kääntymisrajoitus'
+        },
+        {
+            typeId: assetType.trWeightLimits,
+            title: 'TR painorajoitukset'
+        }
     ];
 
     return {
       assetTypes : assetType,
-      assetTypeInfo: assetTypeInfo,
+      assetTypeInfo: assetTypeInfo.concat( _.map(linearAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); }),
+                                           _.map(pointAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); })),
       linearAssetsConfig : linearAssetSpecs,
       experimentalAssetsConfig : experimentalLinearAssetSpecs,
       pointAssetsConfig : pointAssetSpecs,

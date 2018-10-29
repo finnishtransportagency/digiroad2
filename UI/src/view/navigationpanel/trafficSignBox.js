@@ -8,6 +8,7 @@
         me.panel(),
         me.labeling(),
         me.checkboxPanel(),
+        me.bindExternalEventHandlers(),
         ' </div>',
         '</div>']
         .join(''))  };
@@ -39,13 +40,13 @@
         '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="additionalPanels" type="checkbox" /> Lisakilvet</label>' +
+        '     <label><input name="additionalPanels" type="checkbox" /> Lisäkilvet</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="mandatorySigns" type="checkbox" /> Maaraysmerkit</label>' +
+        '     <label><input name="mandatorySigns" type="checkbox" /> Määräysmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus- ja vaistamismerkit</label>' +
+        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus- ja väistämismerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
         '     <label><input name="informationSigns" type="checkbox" /> Opastusmerkit</label>' +
@@ -66,7 +67,7 @@
       me.getHide();
     }
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       $(me.expanded).find('.checkbox').find('input[type=checkbox]').change(trafficSignHandler);
       me.eventHandler();
@@ -94,13 +95,8 @@
       }
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.show = show;
+    this.hide = hide;
   };
 })(this);
 

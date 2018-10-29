@@ -1,9 +1,9 @@
 (function (root) {
-root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
+root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection) {
   var me = this;
   me.enumeratedPropertyValues = null;
 
-  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition);
+  bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition, feedbackCollection);
 
   function bindEvents(pointAsset, roadCollection, applicationModel, backend, saveCondition) {
     var rootElement = $('#feature-attributes');
@@ -13,7 +13,7 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var layerName = pointAsset.layerName;
     var localizedTexts = pointAsset.formLabels;
     var authorizationPolicy = pointAsset.authorizationPolicy;
-
+    new FeedbackDataTool(feedbackCollection, layerName, authorizationPolicy);
 
     eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
       if(event.assetType == typeId)
@@ -304,7 +304,8 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
     var propertyOrdering = [
       'trafficSigns_type',
       'trafficSigns_value',
-      'trafficSigns_info'];
+      'trafficSigns_info',
+      'counter'];
 
     return _.sortBy(properties, function(property) {
       return _.indexOf(propertyOrdering, property.publicId);
@@ -376,6 +377,18 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       '    </div>' +
       singleChoiceSubType( collection, mainTypeDefaultValue, property );
   };
+
+  var readOnlyHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
+
+    return '' +
+      '    <div class="form-group editable form-traffic-sign">' +
+      '        <label class="control-label">' + displayValue + '</label>' +
+      '        <p class="form-control-static">' + propertyValue + '</p>' +
+      '    </div>';
+  };
+
 
   function renderValueElement(asset, collection) {
     if (asset.obstacleType) {
@@ -460,6 +473,9 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
         if (propertyType === "single_choice")
           return singleChoiceHandler(feature, collection);
 
+        if (propertyType === "read_only_number")
+          return readOnlyHandler(feature);
+
       }), function(prev, curr) { return prev + curr; }, '');
 
       if(asset.validityDirection)
@@ -498,14 +514,17 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       '      </select>' +
       '    </div>' +
       serviceTypeExtensionElements(service, serviceTypeExtensions) +
+      '<div>' +
       '    <label class="control-label">Palvelun nimi</label>' +
-      '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
+      '    <p class="form-control-static">' + (service.name || '–') + '</p> '+
       '    <input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
+      '</div><div>' +
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
+      '</div><div>' +
       (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
-      '  </div>' +
+      '</div></div>' +
       '</li>';
   }
 
@@ -535,12 +554,12 @@ root.PointAssetForm = function(pointAsset, roadCollection, applicationModel, bac
       }).join('');
       var currentExtensionType = _.find(extensions, {value: service.typeExtension});
       return '' +
-        '<label class="control-label">Tarkenne</label>' +
+        '<div><label class="control-label">Tarkenne</label>' +
         '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '–') + '</p>' +
         '<select class="form-control select-service-type-extension" style="display:none" data-service-id="' + service.id + '">  ' +
         '  <option disabled selected>Lisää tarkenne</option>' +
         extensionOptions +
-        '</select>';
+        '</select></div>';
     } else {
       return '';
     }

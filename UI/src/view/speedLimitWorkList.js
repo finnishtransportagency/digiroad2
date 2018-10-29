@@ -10,7 +10,6 @@
     var municipalityName;
     var authorizationPolicy = new AuthorizationPolicy();
 
-
     this.bindEvents = function () {
       eventbus.on('municipalities:select', function(listP) {
         $('.container').hide();
@@ -56,7 +55,7 @@
         });
 
       };
-      return $('<table id="tableData"/>').append(tableContentRows(municipalityValues));
+      return $('<table id="tableData"><tbody>').append(tableContentRows(municipalityValues)).append('</tbody></table>');
     };
 
     this.workListItemTable = function(workListItems, layerName, municipalityId) {

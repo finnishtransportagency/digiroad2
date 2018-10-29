@@ -138,7 +138,7 @@
       };
   };
 
-  root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel, roadAddressInfoPopup) {
+  root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel, roadAddressInfoPopup, isExperimental) {
     var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -146,8 +146,7 @@
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     var isComplementaryActive = false;
     var extraEventListener = _.extend({running: false}, eventbus);
-
-    this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
+    this.minZoomForContent = isExperimental ? zoomlevels.oneKmZoomLvl: zoomlevels.minZoomForRoadLinks;
 
     var historyLayer = new RoadHistoryLayer(map, roadCollection);
     var linkPropertyHistoryLayerStyles = LinkPropertyLayerStyles(historyLayer);
@@ -217,7 +216,8 @@
           return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});
       },
       onInteractionEnd: onInteractionEnd,
-      onSelect: selectRoadLink
+      onSelect: selectRoadLink,
+      layerName : layerName
     });
 
     this.activateSelection = function() {
