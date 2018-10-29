@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri
 
+import fi.liikennevirasto.digiroad2.asset.TrafficSignTypeGroup
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType.{SpeedLimit, SpeedLimitZone, UrbanArea}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import org.apache.http.impl.client.CloseableHttpClient
 

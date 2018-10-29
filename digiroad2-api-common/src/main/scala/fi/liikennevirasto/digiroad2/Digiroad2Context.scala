@@ -167,6 +167,13 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
   }
 }
 
+class ProhibitionSave(prohibitionProvider: ProhibitionService) extends Actor {
+  def receive = {
+    case x: ProhibitionProvider => prohibitionProvider.createProhibitionBasedOnTrafficSign(x.asInstanceOf[ProhibitionProvider])
+    case _ => println("Prohibition not created")
+  }
+}
+
 case class ManoeuvreUpdater[A, B](manoeuvreProvider: ManoeuvreService) extends Actor {
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -257,6 +264,9 @@ object Digiroad2Context {
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
+
+  val prohibition = system.actorOf(Props(classOf[ProhibitionSave], prohibitionService), name = "prohibitionSave")
+  eventbus.subscribe(prohibition,"prohibition:create")
 
   val manoeuvreUpdater = system.actorOf(Props(classOf[ManoeuvreUpdater[Int, ManoeuvreProvider]], manoeuvreService), name ="manoeuvreUpdater" )
   eventbus.subscribe(manoeuvreUpdater, "manoeuvre:expire")

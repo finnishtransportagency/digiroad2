@@ -3,13 +3,12 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import java.security.InvalidParameterException
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode, TrafficSignType}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
