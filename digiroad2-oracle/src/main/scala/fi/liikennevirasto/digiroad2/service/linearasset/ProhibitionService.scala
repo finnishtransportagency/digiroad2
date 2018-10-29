@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
@@ -276,9 +277,30 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     val prohibitionValue = Prohibitions(Seq(ProhibitionValue(prohibitionType.value, Set.empty, Set.empty)))
 
-    val ids = roadLinks.map { roadLink =>
-        createWithoutTransaction(Prohibition.typeId, roadLink.linkId, prohibitionValue, BothDirections.value, Measures(prohibitionProvider.trafficSign.mValue, roadLink.length),
-          "automatic_procees_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink))
+
+    val ids = (roadLinks ++ Seq(prohibitionProvider.sourceRoadLink)).map { roadLink =>
+
+
+      val (startMeasure, endMeasure): (Double, Double) =  roadLink.trafficDirection match {
+        case TowardsDigitizing  if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId => (prohibitionProvider.trafficSign.mValue, roadLink.length)
+        case TowardsDigitizing  => (0, roadLink.length)
+        case AgainstDigitizing  if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId => (roadLink.length, prohibitionProvider.trafficSign.mValue)
+        case AgainstDigitizing  => (roadLink.length , 0)
+        case TrafficDirection.BothDirections if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId  => SideCode(tsDirection) match {
+          case SideCode.TowardsDigitizing => (prohibitionProvider.trafficSign.mValue, roadLink.length)
+          case SideCode.AgainstDigitizing => (0,  prohibitionProvider.trafficSign.mValue)
+          case _ => (0,0)
+        }
+        case TrafficDirection.BothDirections => SideCode(tsDirection) match {
+          case SideCode.TowardsDigitizing => (roadLink.length, 0)
+          case SideCode.AgainstDigitizing => (0,  roadLink.length)
+          case _ => (0,0)
+        }
+        case _ => (0,0)
+      }
+
+      createWithoutTransaction(Prohibition.typeId, roadLink.linkId, prohibitionValue, BothDirections.value, Measures(startMeasure, endMeasure),
+        "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink))
     }
 
 
@@ -342,7 +364,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 //    if(adjacents.size == 1 && numberOfConnections == 3)
 //      throw new ProhibitionCreationException(Set("No turn found, manoeuvre not created"))
 
-    val nextAdjacents = roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false)
+    val nextAdjacents = roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).filter(_.attributes.get("ROADNAME_FI").toString == roadNameSource)
     if (adjacents.size == 1  && nextAdjacents.exists(_.attributes.get("ROADNAME_FI").toString == roadNameSource)) {
       recursiveGetAdjacent(adjacents.head, getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
     } else {
