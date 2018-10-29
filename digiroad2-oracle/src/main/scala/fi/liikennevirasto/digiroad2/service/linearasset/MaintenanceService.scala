@@ -244,10 +244,13 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   /**
     * Returns Maintenance assets by asset type and asset ids.
     */
-  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
+  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    if(newTransaction)
+      withDynTransaction {
+        maintenanceDAO.fetchMaintenancesByIds(MaintenanceRoadAsset.typeId, ids)
+      }
+    else
       maintenanceDAO.fetchMaintenancesByIds(MaintenanceRoadAsset.typeId, ids)
-    }
   }
 
   def getPersistedAssetsByLinkIds(linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
