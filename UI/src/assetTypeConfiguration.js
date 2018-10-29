@@ -460,7 +460,9 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        readOnlyLayer: TrafficSignReadOnlyLayer
+
       },
       {
         typeId: assetType.europeanRoads,
