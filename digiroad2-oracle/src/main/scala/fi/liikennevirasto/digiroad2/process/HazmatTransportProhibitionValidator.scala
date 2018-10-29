@@ -50,7 +50,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
 
   override def verifyAsset(prohibitions: Seq[PersistedLinearAsset], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     prohibitions.flatMap{ prohibition =>
-      TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
 
         case TrafficSignType.HazmatProhibitionA => if(!comparingProhibitionValue(prohibition, 24))
           Seq(Inaccurate(Some(prohibition.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
@@ -81,7 +81,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
 
               val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
               }.toSet
 

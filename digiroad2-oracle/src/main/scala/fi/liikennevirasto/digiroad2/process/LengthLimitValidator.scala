@@ -10,9 +10,9 @@ class LengthLimitValidator extends SevenRestrictionsLimitationValidator {
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaximumLength)
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
-    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+    TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case TrafficSignType.MaximumLength =>
-        getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
+        trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset)
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }

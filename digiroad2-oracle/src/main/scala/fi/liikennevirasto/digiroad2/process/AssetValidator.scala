@@ -137,11 +137,6 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     }.toSet
   }
 
-  //TODO move this method to a generic place, same in speedLimit Validation
-  def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
-  }
-
   protected def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
     try {
       insertInaccurate(id, assetType, municipalityCode, adminClass)
@@ -183,7 +178,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
       municipality =>
         println(s"Start process for municipality $municipality")
         val trafficSigns = trafficSignService.getByMunicipalityExcludeByAdminClass(municipality, Private).filterNot(_.floating)
-          .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+          .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
         splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
