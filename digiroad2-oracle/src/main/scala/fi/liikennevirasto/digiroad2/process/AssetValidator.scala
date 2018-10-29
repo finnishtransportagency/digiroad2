@@ -33,7 +33,7 @@ trait AssetServiceValidator {
   }
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 
   type AssetType
