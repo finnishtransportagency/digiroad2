@@ -269,10 +269,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
   }
 
-  def getByMunicipality(municipality: Int, administrativeClass: AdministrativeClass): Seq[PersistedAsset] = {
-    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    val mapRoadLinks = roadLinks.filterNot(_.administrativeClass == administrativeClass).map(l => l.linkId -> l).toMap
-    getByMunicipality(municipality, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+  def getByMunicipalityExcludeByAdminClass(municipalityCode: Int, filterAdministrativeClass: AdministrativeClass): Seq[PersistedAsset] = {
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
+    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    val assets = getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    val filterRoadLinks = mapRoadLinks.filterNot(_._2.administrativeClass == filterAdministrativeClass)
+    assets.filter{a => filterRoadLinks.get(a.linkId).nonEmpty}
   }
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {

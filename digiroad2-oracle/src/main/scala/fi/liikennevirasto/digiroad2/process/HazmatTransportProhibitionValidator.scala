@@ -79,28 +79,20 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
               val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
               val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
 
-              val trafficSings: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
+              val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
                   .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
               }.toSet
 
-              val allLinkIds = assetInfo.newLinkIds ++ trafficSings.map(_.linkId)
+              val allLinkIds = assetInfo.newLinkIds ++ trafficSigns.map(_.linkId)
 
               inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.ids)
               if(allLinkIds.nonEmpty)
-                inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds ++ trafficSings.map(_.linkId) ,assetTypeInfo.typeId)
+                inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds ++ trafficSigns.map(_.linkId) ,assetTypeInfo.typeId)
 
-              trafficSings.foreach { trafficSign =>
-                assetValidator(trafficSign).foreach {
-                  inaccurate =>
-                    (inaccurate.assetId, inaccurate.linkId) match {
-                      case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                      case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                      case _ => None
-                    }
-                }
-              }
+              trafficSigns.foreach(validateAndInsert)
+
             case _ =>
           }
         }
