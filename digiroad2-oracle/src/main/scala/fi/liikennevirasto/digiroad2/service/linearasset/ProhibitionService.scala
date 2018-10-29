@@ -1,10 +1,12 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, InformationSource, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -12,6 +14,9 @@ import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+
+case class ProhibitionProvider(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink)
+class ProhibitionCreationException(val response: Set[String]) extends RuntimeException {}
 
 class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -249,4 +254,107 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, true )
     createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
+
+
+  private def createProhibitionFromTrafficSign(prohibitionProvider: ProhibitionProvider): Seq[Long] = {
+    logger.info("creating prohibition from traffic sign")
+    val tsLinkId = prohibitionProvider.trafficSign.linkId
+    val tsDirection = prohibitionProvider.trafficSign.validityDirection
+
+    if (tsLinkId != prohibitionProvider.sourceRoadLink.linkId)
+      throw new ProhibitionCreationException(Set("Wrong roadlink"))
+
+    if (SideCode(tsDirection) == SideCode.BothDirections)
+      throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
+
+    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(prohibitionProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
+
+    val (roadLinks, adjacentConnectPoint) = recursiveGetAdjacent(prohibitionProvider.sourceRoadLink, connectionPoint)
+
+    val trafficSignType = getTrafficSignsProperties(prohibitionProvider.trafficSign, "trafficSigns_type").map { prop => TrafficSignType(prop.propertyValue.toInt) }.get
+    val prohibitionType = ProhibitionClass.apply(trafficSignType)
+
+    val prohibitionValue = Prohibitions(Seq(ProhibitionValue(prohibitionType.value, Set.empty, Set.empty)))
+
+    val ids = roadLinks.map { roadLink =>
+        createWithoutTransaction(Prohibition.typeId, roadLink.linkId, prohibitionValue, BothDirections.value, Measures(prohibitionProvider.trafficSign.mValue, roadLink.length),
+          "automatic_procees_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink))
+    }
+
+
+    ids
+//    val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(prohibitionProvider.sourceRoadLink, connectionPoint)
+//    val roadLinksProhibitions = prohibitionProvider.sourceRoadLink +: intermediates
+//
+//    val roadLinks = getTrafficSignsProperties(prohibitionProvider.trafficSign, "trafficSigns_type").map { prop =>
+//      val tsType = TrafficSignType(prop.propertyValue.toInt)
+//      tsType match {
+//        case TrafficSignType.ClosedToAllVehicles | TrafficSignType.NoPowerDrivenVehicles |
+//             TrafficSignType.NoLorriesAndVans | TrafficSignType.NoVehicleCombinations |
+//             TrafficSignType.NoAgriculturalVehicles | TrafficSignType.NoMotorCycles |
+//             TrafficSignType.NoMotorSledges | TrafficSignType.NoBuses |
+//             TrafficSignType.NoMopeds | TrafficSignType.NoCyclesOrMopeds |
+//             TrafficSignType.NoPedestrians | TrafficSignType.NoPedestriansCyclesMopeds |
+//             TrafficSignType.NoRidersOnHorseback =>  roadLinkService.pickForwardMost(roadLinksProhibitions.last, adjacents)
+//        case _ => Seq.empty[RoadLink]
+//      }
+//    }.getOrElse(Seq.empty[RoadLink])
+
+//    createWithoutTransaction(Prohibition.typeId,  oldAsset.linkId, prohibitions, sideCode.getOrElse(oldAsset.sideCode),
+//      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
+
+//    if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
+//      throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
+//    else
+//      Some(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
+//    None
+  }
+
+  def createProhibitionBasedOnTrafficSign(prohibitionProvider: ProhibitionProvider, newTransaction: Boolean = true): Seq[Long] = {
+    if(newTransaction) {
+      withDynTransaction {
+        createProhibitionFromTrafficSign(prohibitionProvider)
+      }
+    }
+    else
+      createProhibitionFromTrafficSign(prohibitionProvider)
+  }
+
+  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  }
+
+  private def getOpositePoint(geometry: Seq[Point], point: Point) = {
+    val (headPoint, lastPoint) = GeometryUtils.geometryEndpoints(geometry)
+    if(GeometryUtils.areAdjacent(headPoint, point))
+      lastPoint
+    else
+      headPoint
+  }
+
+  private def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): (Seq[RoadLink], Point) = {
+
+    val roadNameSource= sourceRoadLink.attributes.get("ROADNAME_FI").toString
+    val adjacents = roadLinkService.getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filterNot(_.attributes.get("ROADNAME_FI").toString != roadNameSource)
+//    if (adjacents.isEmpty)
+//      throw new ProhibitionCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
+//
+//    if(adjacents.size == 1 && numberOfConnections == 3)
+//      throw new ProhibitionCreationException(Set("No turn found, manoeuvre not created"))
+
+    val nextAdjacents = roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false)
+    if (adjacents.size == 1  && nextAdjacents.exists(_.attributes.get("ROADNAME_FI").toString == roadNameSource)) {
+      recursiveGetAdjacent(adjacents.head, getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
+    } else {
+      (intermediants++adjacents, point)
+    }
+  }
+
+//  private def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
+//    dao.countExistings(sourceId, destId, elementType)
+//  }
+//
+//  private def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int): Boolean  = {
+//    countExistings(sourceId, destLinkId, elementType) == 0
+//  }
 }
