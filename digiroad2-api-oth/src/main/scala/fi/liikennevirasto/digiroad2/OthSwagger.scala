@@ -5,8 +5,8 @@ import org.scalatra.swagger.{ApiInfo, NativeSwaggerBase, Swagger}
 
 class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with NativeSwaggerBase
 
-object OthApiInfo extends ApiInfo(title = "OTH API",
-  description = "Docs for OTH API",
+object OthApiInfo extends ApiInfo(title = "OTH API DOCUMENTATION",
+  description = "Documentations for all OTH APIs",
   termsOfServiceUrl = "",
   contact = "",
   license = "",

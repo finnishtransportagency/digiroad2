@@ -21,7 +21,22 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     contentType = formats("json")
   }
 
-  get("/:assetType") {
+  //Description of Api entry point to get assets changes by asset type and between two dates
+  val getChangesOfAssetsByType =
+    (apiOperation[Long]("getChangesOfAssetsByType")
+      .parameters(
+        queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
+        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset."),
+        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presense of records modified by vvh_generated and not modified yet on the response. The value is False by default").optional,
+        pathParam[String]("assetType").description("Asset type name to get the changes")
+      )
+      tags "Change API"
+      summary "List all changes per assets type between two specific dates."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: api/changes/bogie_weight_limits?since=2018-04-12T04:00Z&until=2018-04-16T15:00Z"
+      )
+
+  get("/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
