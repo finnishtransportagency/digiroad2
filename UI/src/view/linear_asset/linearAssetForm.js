@@ -69,7 +69,6 @@
     }
 
     eventbus.on('layer:selected', function(layer) {
-      var workListLink;
       if(layerName === layer){
         if(isVerifiable){
           renderLinktoWorkList(layer);
