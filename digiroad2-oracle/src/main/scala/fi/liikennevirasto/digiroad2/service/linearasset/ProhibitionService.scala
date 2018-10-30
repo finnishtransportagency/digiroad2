@@ -274,9 +274,9 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     logger.info("End of fetch for adjacents")
 
     val trafficSignType = getTrafficSignsProperties(prohibitionProvider.trafficSign, "trafficSigns_type").map { prop => TrafficSignType(prop.propertyValue.toInt) }.get
-    val prohibitionType = ProhibitionClass.apply(trafficSignType)
+    val prohibitionType = ProhibitionClass.fromTrafficSign(trafficSignType)
 
-    val prohibitionValue = Prohibitions(Seq(ProhibitionValue(prohibitionType.value, Set.empty, Set.empty)))
+    val prohibitionValue = Prohibitions(prohibitionType.value.map({value =>ProhibitionValue(value, Set.empty, Set.empty)}))
 
     val ids = (roadLinks ++ Seq(prohibitionProvider.sourceRoadLink)).map { roadLink =>
       val (startMeasure, endMeasure): (Double, Double) =  roadLink.trafficDirection match {

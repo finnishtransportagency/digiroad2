@@ -15,10 +15,6 @@ import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-//
-//sealed trait TrafficSignTypeGroup {
-//  def value: Int
-//}
 
 class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
 

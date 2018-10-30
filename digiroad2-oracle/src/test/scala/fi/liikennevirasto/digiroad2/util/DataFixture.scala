@@ -11,13 +11,13 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PersistedTrafficSign}
-import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadAddressesService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, IncomingTrafficSign, ObstacleService, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
@@ -27,6 +27,8 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import slick.jdbc.{StaticQuery => Q}
+
+import scala.collection.mutable.ListBuffer
 
 
 object DataFixture {
@@ -1487,6 +1489,93 @@ object DataFixture {
     }
   }
 
+  def createTrafficSignsUsingLinearAssets(): Unit = {
+
+    def getPointOfInterest(first: Point, last: Point, trafficDirection: TrafficDirection): Seq[Point] = {
+      trafficDirection match {
+        case TrafficDirection.TowardsDigitizing => Seq(last)
+        case TrafficDirection.AgainstDigitizing => Seq(first)
+        case _ => Seq(first, last)
+      }
+    }
+
+    def setTrafficSignInfo(roadLink: RoadLink, asset: PersistedLinearAsset, oppositePoint: Point): (Seq[IncomingTrafficSign], RoadLink) = {
+      val (start, end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+      val (mValue, validityDirection) = if (oppositePoint == start) (asset.startMeasure, SideCode.TowardsDigitizing.value) else (asset.endMeasure, SideCode.AgainstDigitizing.value)
+      val assetValue: Seq[Int] = asset.value.get.asInstanceOf[Prohibitions].prohibitions.map(_.typeId)
+      val position = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).head
+
+      val angle = if (oppositePoint == start) {
+        val middle = roadLink.geometry.tail.head
+        Math.tan((start.x - middle.x) / (start.y - middle.y)) * (180 / Math.PI)
+      } else {
+        val middle = roadLink.geometry.init.last
+        Math.tan((end.x - middle.x) / (end.y - middle.y)) * (180 / Math.PI)
+      }
+
+      val ang : Int = if(angle < 0) (angle + 360).toInt else angle.toInt
+
+      val bearing = trafficSignService.getAssetBearing(validityDirection, roadLink.geometry)
+      val propertiesData = ProhibitionClass.toTrafficSign(assetValue.to[ListBuffer]).map {
+        trafficValue =>
+            SimpleProperty(trafficSignService.typePublicId, Seq(PropertyValue(trafficValue.toString)))}
+
+      (propertiesData.map { propertyData => IncomingTrafficSign(position.x, position.y, asset.linkId, Set(propertyData), validityDirection, Some(ang))}, roadLink)
+    }
+
+    println("\nStarting create traffic signs using Linear Asset")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    //    val municipalities: Seq[Int] =
+    //      OracleDatabase.withDynSession {
+    //        Queries.getMunicipalities
+    //      }
+    val municipalities: Seq[Int] = Seq(766)
+
+    municipalities.foreach { municipality =>
+      val roadLinks: Map[Long, Seq[RoadLink]] = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).groupBy(_.linkId)
+      /*.filter(a => Seq(5361898, 5361912, 5361929, 5361928, 5361896).contains(a.linkId))*/
+      val existingAssets = withDynTransaction {
+        oracleLinearAssetDao.fetchProhibitionsByLinkIds(Prohibition.typeId, roadLinks.keySet.toSeq, false)
+      }
+
+      val trafficSignsToCreate = existingAssets.flatMap { currentAsset =>
+        val roadLink = roadLinks(currentAsset.linkId).head
+        val (start, end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+        val pointOfInterest = getPointOfInterest(start, end, roadLink.trafficDirection)
+        val adjacentRoadLink = roadLinkService.getAdjacent(currentAsset.linkId)
+
+        pointOfInterest.map { point =>
+          val filteredAdjacentRoadLink = adjacentRoadLink.filter(link => GeometryUtils.areAdjacent(link.geometry, point)).groupBy(_.linkId)
+
+          val unMatchedLinkId = filteredAdjacentRoadLink.keySet.diff(roadLinks.keySet)
+          val unMatchedAssets = if (unMatchedLinkId.nonEmpty) {
+            withDynTransaction {
+              oracleLinearAssetDao.fetchProhibitionsByLinkIds(Prohibition.typeId, unMatchedLinkId.toSeq, false)
+            }
+          } else Seq()
+
+          if (filteredAdjacentRoadLink.isEmpty ||
+            existingAssets.exists { asset => filteredAdjacentRoadLink.keySet.contains(asset.linkId) && asset.value == currentAsset.value } ||
+            unMatchedAssets.nonEmpty)
+            Seq()
+          else
+            Seq(setTrafficSignInfo(roadLinks(currentAsset.linkId).head, currentAsset, point))
+        }
+      }.flatten
+
+      trafficSignsToCreate.foreach { case (trafficSigns, roadLink) =>
+        trafficSigns.map {trafficSign =>
+          println("traffic ->  type: " + trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId) + " linkId: " + trafficSign.linkId + " position: " + trafficSign.lon + ", " + trafficSign.lat)
+          trafficSignService.create(trafficSign, "batch_create_assets", roadLink)
+        }
+      }
+      println("")
+      println("Complete at time: " + DateTime.now())
+    }
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1587,6 +1676,8 @@ object DataFixture {
         createManoeuvresUsingTrafficSigns()
       case Some("remove_existing_trafficSigns_duplicates") =>
         removeExistingTrafficSignsDuplicates()
+      case Some("create_traffic_signs_using_linear_assets") =>
+        createTrafficSignsUsingLinearAssets()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1597,7 +1688,7 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs")
+        " create_manoeuvres_using_traffic_signs | create_traffic_signs_using_linear_assets")
     }
   }
 }
