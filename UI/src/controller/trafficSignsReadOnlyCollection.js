@@ -13,7 +13,8 @@
       bogieWeightLimit: false,
       heightLimit: false,
       lengthLimit: false,
-      widthLimit: false
+      widthLimit: false,
+      prohibition: false
     };
 
     var trafficSignValues = {
@@ -25,7 +26,8 @@
       bogieWeightLimit: {values : [32, 33, 34, 35]},
       heightLimit: {values : [31]},
       lengthLimit: {values : [8]},
-      widthLimit: {values : [30]}
+      widthLimit: {values : [30]},
+      prohibition: {values: [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26]}
     };
 
     this.getGroup = function(signTypes){
