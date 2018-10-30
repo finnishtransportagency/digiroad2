@@ -112,15 +112,15 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
     val (seg1, seg2) = if (GeometryUtils.areAdjacent(nextRoadLink.geometry, prevFirst)) {
       if (GeometryUtils.areAdjacent(prevFirst, nextFirst)) {
-        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry.reverse), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry))
+        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry))
       } else {
-        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry.reverse), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry.reverse))
+        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry), GeometryUtils.lastSegmentDirection(nextRoadLink.geometry))
       }
     } else {
       if (GeometryUtils.areAdjacent(prevLast, nextFirst)) {
-        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry))
+        (GeometryUtils.firstSegmentDirection(prevRoadLink.geometry), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry))
       } else {
-        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry.reverse))
+        (GeometryUtils.firstSegmentDirection(prevRoadLink.geometry), GeometryUtils.lastSegmentDirection(nextRoadLink.geometry))
       }
     }
     seg1.angleXYWithNegativeValues(seg2)
