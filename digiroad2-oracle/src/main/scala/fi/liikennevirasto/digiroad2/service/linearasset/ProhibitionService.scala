@@ -258,7 +258,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
 
   private def createProhibitionFromTrafficSign(prohibitionProvider: ProhibitionProvider): Seq[Long] = {
-    logger.info("creating prohibition from traffic sign")
+    logger.info("Creating prohibition from traffic sign")
     val tsLinkId = prohibitionProvider.trafficSign.linkId
     val tsDirection = prohibitionProvider.trafficSign.validityDirection
 
@@ -270,44 +270,37 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(prohibitionProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
 
-    val (roadLinks, adjacentConnectPoint) = recursiveGetAdjacent(prohibitionProvider.sourceRoadLink, connectionPoint)
+    val roadLinks = recursiveGetAdjacent(prohibitionProvider.sourceRoadLink, connectionPoint)
+    logger.info("End of fetch for adjacents")
 
     val trafficSignType = getTrafficSignsProperties(prohibitionProvider.trafficSign, "trafficSigns_type").map { prop => TrafficSignType(prop.propertyValue.toInt) }.get
     val prohibitionType = ProhibitionClass.apply(trafficSignType)
 
     val prohibitionValue = Prohibitions(Seq(ProhibitionValue(prohibitionType.value, Set.empty, Set.empty)))
 
-
     val ids = (roadLinks ++ Seq(prohibitionProvider.sourceRoadLink)).map { roadLink =>
-
-
       val (startMeasure, endMeasure): (Double, Double) =  roadLink.trafficDirection match {
         case TowardsDigitizing  if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId => (prohibitionProvider.trafficSign.mValue, roadLink.length)
         case TowardsDigitizing  => (0, roadLink.length)
-        case AgainstDigitizing  if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId => (roadLink.length, prohibitionProvider.trafficSign.mValue)
-        case AgainstDigitizing  => (roadLink.length , 0)
+        case AgainstDigitizing  if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId => (prohibitionProvider.trafficSign.mValue, roadLink.length)
+        case AgainstDigitizing  => (0,  roadLink.length)
         case TrafficDirection.BothDirections if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId  => SideCode(tsDirection) match {
           case SideCode.TowardsDigitizing => (prohibitionProvider.trafficSign.mValue, roadLink.length)
           case SideCode.AgainstDigitizing => (0,  prohibitionProvider.trafficSign.mValue)
           case _ => (0,0)
         }
-        case TrafficDirection.BothDirections => SideCode(tsDirection) match {
-          case SideCode.TowardsDigitizing => (roadLink.length, 0)
-          case SideCode.AgainstDigitizing => (0,  roadLink.length)
-          case _ => (0,0)
-        }
+        case TrafficDirection.BothDirections => (0,  roadLink.length)
         case _ => (0,0)
       }
 
-      createWithoutTransaction(Prohibition.typeId, roadLink.linkId, prohibitionValue, BothDirections.value, Measures(startMeasure, endMeasure),
+      val assetId =  createWithoutTransaction(Prohibition.typeId, roadLink.linkId, prohibitionValue, BothDirections.value, Measures(startMeasure, endMeasure),
         "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink))
+
+      logger.info(s"Prohibition created with id: $assetId")
+      assetId
     }
 
-
     ids
-//    val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(prohibitionProvider.sourceRoadLink, connectionPoint)
-//    val roadLinksProhibitions = prohibitionProvider.sourceRoadLink +: intermediates
-//
 //    val roadLinks = getTrafficSignsProperties(prohibitionProvider.trafficSign, "trafficSigns_type").map { prop =>
 //      val tsType = TrafficSignType(prop.propertyValue.toInt)
 //      tsType match {
@@ -322,14 +315,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 //      }
 //    }.getOrElse(Seq.empty[RoadLink])
 
-//    createWithoutTransaction(Prohibition.typeId,  oldAsset.linkId, prohibitions, sideCode.getOrElse(oldAsset.sideCode),
-//      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
-
-//    if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
-//      throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
-//    else
-//      Some(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
-//    None
   }
 
   def createProhibitionBasedOnTrafficSign(prohibitionProvider: ProhibitionProvider, newTransaction: Boolean = true): Seq[Long] = {
@@ -354,29 +339,16 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       headPoint
   }
 
-  private def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): (Seq[RoadLink], Point) = {
+  private def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): Seq[RoadLink] = {
 
     val roadNameSource= sourceRoadLink.attributes.get("ROADNAME_FI").toString
     val adjacents = roadLinkService.getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filterNot(_.attributes.get("ROADNAME_FI").toString != roadNameSource)
-//    if (adjacents.isEmpty)
-//      throw new ProhibitionCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
-//
-//    if(adjacents.size == 1 && numberOfConnections == 3)
-//      throw new ProhibitionCreationException(Set("No turn found, manoeuvre not created"))
 
     val nextAdjacents = roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).filter(_.attributes.get("ROADNAME_FI").toString == roadNameSource)
     if (adjacents.size == 1  && nextAdjacents.exists(_.attributes.get("ROADNAME_FI").toString == roadNameSource)) {
       recursiveGetAdjacent(adjacents.head, getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
     } else {
-      (intermediants++adjacents, point)
+      intermediants ++ adjacents
     }
   }
-
-//  private def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
-//    dao.countExistings(sourceId, destId, elementType)
-//  }
-//
-//  private def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int): Boolean  = {
-//    countExistings(sourceId, destLinkId, elementType) == 0
-//  }
 }
