@@ -17,6 +17,7 @@
     },
     minZoomForAssets: 10,
     minZoomForRoadLinks: 10,
-    maxZoomLevel: 12
+    maxZoomLevel: 12,
+    oneKmZoomLvl: 8
   };
 })();

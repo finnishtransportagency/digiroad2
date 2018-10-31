@@ -133,7 +133,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   changeSet.droppedAssetIds should be(Set())
 }
 
-test("should not drop adjusted short speed limit") {
+  test("should not drop adjusted short speed limit") {
     val topology = Seq(
       roadLink(1, Seq(Point(0.0, 0.0), Point(1.0, 0.0))))
     val speedLimits = Map(
@@ -153,7 +153,7 @@ test("should not drop adjusted short speed limit") {
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     changeSet.adjustedSideCodes should have size 1
-    changeSet.adjustedSideCodes.head should be(SideCodeAdjustment(1, SideCode.BothDirections))
+    changeSet.adjustedSideCodes.head should be(SideCodeAdjustment(1, SideCode.BothDirections, SpeedLimitAsset.typeId))
   }
 
   test("adjust one-way speed limits on one-way road link into two-way speed limits") {
@@ -166,7 +166,7 @@ test("should not drop adjusted short speed limit") {
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections, SideCode.BothDirections))
     changeSet.adjustedSideCodes should have size 2
-    changeSet.adjustedSideCodes.toSet should be(Set(SideCodeAdjustment(1, SideCode.BothDirections), SideCodeAdjustment(2, SideCode.BothDirections)))
+    changeSet.adjustedSideCodes.toSet should be(Set(SideCodeAdjustment(1, SideCode.BothDirections, SpeedLimitAsset.typeId), SideCodeAdjustment(2, SideCode.BothDirections, SpeedLimitAsset.typeId)))
   }
 
   test("merge speed limits with same value on shared road link") {

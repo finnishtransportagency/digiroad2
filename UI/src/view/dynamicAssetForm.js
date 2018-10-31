@@ -670,9 +670,10 @@
 
         var forms = new AvailableForms();
 
-        me.initialize = function(assetTypeConfiguration){
+        me.initialize = function(assetTypeConfiguration, feedbackModel){
             var rootElement = $('#feature-attributes');
             _assetTypeConfiguration = assetTypeConfiguration;
+            new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
           var updateStatusForMassButton = function(element) {
             if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
@@ -837,6 +838,7 @@
                     setValueFn({ properties: [] });
                 }
                 formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                eventbus.trigger("radio-trigger-dirty");
             });
 
             formGroup.append(toggleElement);
@@ -983,6 +985,10 @@
             updateStatus(element);
 
             eventbus.on(events('valueChanged'), function() {
+                updateStatus(element);
+            });
+
+            eventbus.on('radio-trigger-dirty', function() {
                 updateStatus(element);
             });
 

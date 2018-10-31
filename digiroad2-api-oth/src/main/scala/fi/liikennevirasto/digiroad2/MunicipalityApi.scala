@@ -216,7 +216,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateMeasures(Set(pointAsset.mValue), pointAsset.linkId)
     val link = roadLinkService.getRoadLinkAndComplementaryFromVVH(pointAsset.linkId).getOrElse(throw new NoSuchElementException(s"Roadlink with ${pointAsset.linkId} does not exist"))
     val incomingAsset = service.toIncomingAsset(pointAsset, link)
-    val updatedAsset = service.update(assetId, incomingAsset.get, link.geometry, link.municipalityCode, user.username, link.linkSource)
+    val updatedAsset = service.update(assetId, incomingAsset.get, link, user.username)
     getPointAssetById(typeId, updatedAsset)
   }
 
@@ -271,23 +271,26 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     getSpeedLimitsAndRoadLinks(assetsIds.toSet)
   }
 
+  private def getLinkIds(manoeuvres: Seq[NewManoeuvreValues]): Seq[Long] = {
+    manoeuvres.map(_.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("sourceLinkId not found"))))++
+      manoeuvres.flatMap(_.properties.find(_.name == "elements").map(_.value.asInstanceOf[Seq[BigInt]].map(_.toLong)).getOrElse(Seq())) ++
+      manoeuvres.map(_.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("destLinkId not found"))))
+  }
+
   def createManoeuvreAssets(parsedBody: JValue): Seq[(Manoeuvre, Seq[RoadLink])] = {
     val manoeuvreIds = parsedBody.extractOpt[Seq[NewManoeuvreValues]].map { manoeuvres =>
 
-      validateManoeuvrePropForCreate(manoeuvres)
+      val roadLinks = roadLinkService.getRoadsLinksFromVVH(getLinkIds(manoeuvres).toSet)
+      validateManoeuvrePropForCreate(manoeuvres, roadLinks)
 
       manoeuvres.map {manoeuvre =>
+        val linkIds = getLinkIds(Seq(manoeuvre))
         manoeuvreService.createManoeuvre(user.username,
           NewManoeuvre(
             convertValidityPeriod(manoeuvre.properties.find(_.name == "validityPeriods")).getOrElse(Seq()).toSet,
             manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt)).getOrElse(Seq()),
-            manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString),
-            Seq(manoeuvre.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).get) ++
-            (manoeuvre.properties.find(_.name == "elements").map(_.value) match {
-              case Some(value) => value.asInstanceOf[Seq[BigInt]].map(_.toLong)
-              case _ => Seq() }) ++
-            Seq(manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).get)
-          )
+            manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString), linkIds, None),
+         roadLinks.filter(road => linkIds.contains(road.linkId))
         )
       }
     }.get
@@ -607,6 +610,13 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     roadLinks
   }
 
+  private def linkIdValidation(linkIds: Set[Long], roadLinks: Seq[RoadLink]) : Unit  = {
+    linkIds.foreach { linkId =>
+      roadLinks.find(road => road.linkId == linkId && road.administrativeClass != State).
+        getOrElse(halt(UnprocessableEntity(s"Link id: $linkId is not valid, doesn't exist or have an administrative class 'State'.")))
+    }
+  }
+
   private def validateJsonField(fieldsNotAllowed: Seq[String], body: Seq[JObject] ): Unit = {
     val notAllowed = StringBuilder.newBuilder
 
@@ -698,19 +708,13 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  private def validateManoeuvrePropForCreate(manoeuvres: Seq[NewManoeuvreValues]):Unit = {
-    def getAllLinkIds(manoeuvres: Seq[NewManoeuvreValues]): Seq[Long] = {
-      manoeuvres.map(_.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("sourceLinkId not found"))))++
-        manoeuvres.flatMap(_.properties.find(_.name == "elements").map(_.value.asInstanceOf[Seq[BigInt]].map(_.toLong)).getOrElse(Seq())) ++
-        manoeuvres.map(_.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("destLinkId not found"))))
-    }
+  private def validateManoeuvrePropForCreate(manoeuvres: Seq[NewManoeuvreValues], roadLinks: Seq[RoadLink]):Unit = {
 
-    val roadLinks = linkIdValidation(getAllLinkIds(manoeuvres).toSet)
+
+    linkIdValidation(getLinkIds(manoeuvres).toSet, roadLinks)
     //validate all LinkIds
     manoeuvres.foreach { manoeuvre =>
       val destLinkId = manoeuvre.properties.find(_.name == "destLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("destLinkId not found")))
-      val linkIdAll = Seq(manoeuvre.properties.find(_.name == "sourceLinkId").map(_.value.asInstanceOf[BigInt].toLong).getOrElse(halt(NotFound("sourceLinkId not found")))) ++
-      manoeuvre.properties.find(_.name == "elements").map(_.value.asInstanceOf[Seq[BigInt]].map(_.toLong)).getOrElse(Seq()) ++ Seq(destLinkId)
 
       manoeuvre.startMeasure match {
         case Some(measure) =>

@@ -256,10 +256,13 @@ trait LinearAssetOperations {
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
+    publish(eventBus, changeSet, projectedAssets)
+    filledTopology
+  }
+
+  def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, projectedAssets: Seq[PersistedLinearAsset]) {
     eventBus.publish("linearAssets:update", changeSet)
     eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filter(_.id == 0L))
-
-    filledTopology
   }
 
   /**
@@ -407,10 +410,13 @@ trait LinearAssetOperations {
   /**
     * Returns linear assets by asset type and asset ids. Used by Digiroad2Api /linearassets POST and /linearassets DELETE endpoints.
     */
-  def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
+  def getPersistedAssetsByIds(typeId: Int, ids: Set[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    if(newTransaction)
+      withDynTransaction {
+        dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
+      }
+    else
       dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
-    }
   }
 
   def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
@@ -484,10 +490,13 @@ trait LinearAssetOperations {
     }
   }
 
-  def expireAsset(typeId: Int, id: Long, username: String, expired : Boolean): Option[Long] = {
-    withDynTransaction {
+  def expireAsset(typeId: Int, id: Long, username: String, expired : Boolean, newTransaction: Boolean = true): Option[Long] = {
+    if (newTransaction)
+      withDynTransaction {
+        dao.updateExpiration(id, expired, username)
+      }
+    else
       dao.updateExpiration(id, expired, username)
-    }
   }
 
   /**
@@ -602,30 +611,6 @@ trait LinearAssetOperations {
   }
 
   /**
-    * Updates start and end measures after geometry change in VVH. Used by Digiroad2Context.LinearAssetUpdater actor.
-    */
-  def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
-    if (adjustments.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + adjustments.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
-    }
-  }
-
-  /**
-    * Updates side codes. Used by Digiroad2Context.LinearAssetUpdater actor.
-    */
-  def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
-      }
-    }
-  }
-
-  /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
@@ -683,15 +668,25 @@ trait LinearAssetOperations {
         dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
       }
 
-      changeSet.adjustedSideCodes.foreach { adjustment =>
-        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
-      }
-
       val ids = changeSet.expiredAssetIds.toSeq
       if (ids.nonEmpty)
         logger.info("Expiring ids " + ids.mkString(", "))
       ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
+
+      if (changeSet.adjustedSideCodes.nonEmpty)
+        logger.info("Saving SideCode adjustments for asset/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.assetId).mkString(", "))
+
+      changeSet.adjustedSideCodes.foreach { adjustment =>
+        adjustedSideCode(adjustment)
+      }
     }
+  }
+
+  def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
+      val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).head
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
+      createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 
   /**
@@ -788,13 +783,14 @@ trait LinearAssetOperations {
     }
   }
 
-  def updateVerifiedInfo(ids: Set[Long], userName: String, type_id: Int): Unit = {
+  def updateVerifiedInfo(ids: Set[Long], userName: String, type_id: Int): Set[Long] = {
     withDynTransaction {
       getVerifiedBy(userName, type_id) match {
         case Some(user) => dao.updateVerifiedInfo(ids, user)
         case _ =>
       }
     }
+    ids
   }
 
   def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[MunicipalityInfo] = {

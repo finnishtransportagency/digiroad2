@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{LightGeometryMassTransitStop, MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
 import org.joda.time.{DateTime, Interval, LocalDate}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
@@ -61,6 +61,22 @@ class MassTransitStopDao {
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
       """
     queryToPersistedMassTransitStops(queryFilter(query))
+  }
+
+  def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometryMassTransitStop] = {
+    val query =
+      """
+        select a.geometry, a.valid_from, a.valid_to
+        from asset a
+          join asset_link al on a.id = al.asset_id
+      """
+
+    val resultList = Q.queryNA[(Point, Option[LocalDate], Option[LocalDate])](queryFilter(query)).list
+
+    resultList.map { case (point, validFrom, validTo) =>
+      val validityPeriod = Some(constructValidityPeriod(validFrom, validTo))
+      LightGeometryMassTransitStop(point.x, point.y, validityPeriod)
+    }
   }
 
   def fetchByRadius(position : Point, meters: Int, terminalIdOption: Option[Long] = None): Seq[PersistedMassTransitStop] = {

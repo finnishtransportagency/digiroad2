@@ -31,10 +31,6 @@
       }).join('') + '</div>';
     };
 
-    this.predicate = function () {
-      return assetConfig.authorizationPolicy.editModeAccess();
-    };
-
     var element = $('<div class="panel-group paved-roads"/>');
 
     function show() {
@@ -54,13 +50,9 @@
       return element;
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.show = show;
+    this.hide = hide;
+
   };
 })(this);
 
