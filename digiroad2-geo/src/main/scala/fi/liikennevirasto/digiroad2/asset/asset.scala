@@ -389,7 +389,7 @@ object TrafficSignType {
 
 
 sealed trait ProhibitionClass {
-  val value: Seq[Int]
+  val values: Seq[Int]
   def trafficSign: TrafficSignType
 }
 object ProhibitionClass {
@@ -397,44 +397,41 @@ object ProhibitionClass {
                    NoMopeds, NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback, Unknown)
 
   def apply(value: Int): ProhibitionClass = {
-    values.find(_.value.contains(value)).getOrElse(Unknown)
+    values.find(_.values.contains(value)).getOrElse(Unknown)
   }
-
   def fromTrafficSign(trafficSign: TrafficSignType): ProhibitionClass = {
     values.find(_.trafficSign.equals(trafficSign)).getOrElse(Unknown)
   }
 
   def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[Int] = {
     prohibitionValue.map { a =>
-      if (prohibitionValue.intersect(NoCyclesOrMopeds.value).size == NoCyclesOrMopeds.value.size) {
-        prohibitionValue --= NoCyclesOrMopeds.value
+      if (prohibitionValue.intersect(NoCyclesOrMopeds.values).size == NoCyclesOrMopeds.values.size) {
+        prohibitionValue --= NoCyclesOrMopeds.values
         NoCyclesOrMopeds.trafficSign.value
       }
-      if (prohibitionValue.intersect(NoPedestriansCyclesMopeds.value).size == NoPedestriansCyclesMopeds.value.size) {
-        prohibitionValue --= NoPedestriansCyclesMopeds.value
+      if (prohibitionValue.intersect(NoPedestriansCyclesMopeds.values).size == NoPedestriansCyclesMopeds.values.size) {
+        prohibitionValue --= NoPedestriansCyclesMopeds.values
         NoCyclesOrMopeds.trafficSign.value
       }
       ProhibitionClass.apply(a).trafficSign.value
     }.filterNot( _ == 99)
   }
 
-  case object ClosedToAllVehicles extends ProhibitionClass { val value = Seq(3); def trafficSign = TrafficSignType.ClosedToAllVehicles;}
-  case object NoPowerDrivenVehicles extends ProhibitionClass { val value = Seq(2); def trafficSign = TrafficSignType.NoPowerDrivenVehicles;}
-  case object NoLorriesAndVans extends ProhibitionClass { val value = Seq(6, 4); def trafficSign = TrafficSignType.NoLorriesAndVans;}
-  case object NoVehicleCombinations extends ProhibitionClass { val value = Seq(13); def trafficSign = TrafficSignType.NoVehicleCombinations;}
-  case object NoAgriculturalVehicles extends ProhibitionClass { val value = Seq(14); def trafficSign = TrafficSignType.NoAgriculturalVehicles;}
-  case object NoMotorCycles extends ProhibitionClass { val value = Seq(9); def trafficSign = TrafficSignType.NoMotorCycles;}
-  case object NoMotorSledges extends ProhibitionClass { val value = Seq(27); def trafficSign = TrafficSignType.NoMotorSledges;}
-  case object NoBuses extends ProhibitionClass { val value = Seq(5);  def trafficSign = TrafficSignType.NoBuses;}
-  case object NoMopeds extends ProhibitionClass { val value = Seq(10);  def trafficSign = TrafficSignType.NoMopeds;}
-  case object NoCyclesOrMopeds extends ProhibitionClass { val value = Seq(10, 11); def trafficSign = TrafficSignType.NoCyclesOrMopeds;}
-  case object NoPedestrians extends ProhibitionClass { val value = Seq(12); def trafficSign = TrafficSignType.NoPedestrians;}
-  case object NoPedestriansCyclesMopeds extends ProhibitionClass { val value = Seq(10, 11, 12);  def trafficSign = TrafficSignType.NoPedestriansCyclesMopeds;}
-  case object NoRidersOnHorseback extends ProhibitionClass { val value = Seq(26);  def trafficSign = TrafficSignType.NoRidersOnHorseback;}
-  case object Unknown extends ProhibitionClass { val value = Seq(99);  def trafficSign = TrafficSignType.Unknown;}
+  case object ClosedToAllVehicles extends ProhibitionClass { val values = Seq(3); def trafficSign = TrafficSignType.ClosedToAllVehicles;}
+  case object NoPowerDrivenVehicles extends ProhibitionClass { val values = Seq(2); def trafficSign = TrafficSignType.NoPowerDrivenVehicles;}
+  case object NoLorriesAndVans extends ProhibitionClass { val values = Seq(6, 4); def trafficSign = TrafficSignType.NoLorriesAndVans;}
+  case object NoVehicleCombinations extends ProhibitionClass { val values = Seq(13); def trafficSign = TrafficSignType.NoVehicleCombinations;}
+  case object NoAgriculturalVehicles extends ProhibitionClass { val values = Seq(14); def trafficSign = TrafficSignType.NoAgriculturalVehicles;}
+  case object NoMotorCycles extends ProhibitionClass { val values = Seq(9); def trafficSign = TrafficSignType.NoMotorCycles;}
+  case object NoMotorSledges extends ProhibitionClass { val values = Seq(27); def trafficSign = TrafficSignType.NoMotorSledges;}
+  case object NoBuses extends ProhibitionClass { val values = Seq(5);  def trafficSign = TrafficSignType.NoBuses;}
+  case object NoMopeds extends ProhibitionClass { val values = Seq(10);  def trafficSign = TrafficSignType.NoMopeds;}
+  case object NoCyclesOrMopeds extends ProhibitionClass { val values = Seq(10, 11); def trafficSign = TrafficSignType.NoCyclesOrMopeds;}
+  case object NoPedestrians extends ProhibitionClass { val values = Seq(12); def trafficSign = TrafficSignType.NoPedestrians;}
+  case object NoPedestriansCyclesMopeds extends ProhibitionClass { val values = Seq(10, 11, 12);  def trafficSign = TrafficSignType.NoPedestriansCyclesMopeds;}
+  case object NoRidersOnHorseback extends ProhibitionClass { val values = Seq(26);  def trafficSign = TrafficSignType.NoRidersOnHorseback;}
+  case object Unknown extends ProhibitionClass { val values = Seq(99);  def trafficSign = TrafficSignType.Unknown;}
 }
-
-
 
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
