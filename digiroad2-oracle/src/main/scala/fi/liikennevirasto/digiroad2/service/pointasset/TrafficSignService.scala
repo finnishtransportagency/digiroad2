@@ -69,7 +69,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     if (belongsToTurnRestriction(asset)) {
       eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIdsWithoutTransaction(Set(id)).head, roadLink))
     }
-    eventBus.publish("prohibition:create", ProhibitionProvider(getPersistedAssetsByIdsWithoutTransaction(Set(id)).head, roadLink))
+//    eventBus.publish("prohibition:create", ProhibitionProvider(getPersistedAssetsByIdsWithoutTransaction(Set(id)).head, roadLink))
     id
   }
 
@@ -294,6 +294,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     expireWithoutTransaction(id)
     eventBus.publish("manoeuvre:expire", id)
     id
+  }
+
+  def expire(linkIds: Set[Long], username: String, newTransaction: Boolean = true) = {
+    if(newTransaction)
+    withDynSession {
+      OracleTrafficSignDao.expire(linkIds, username)
+    } else
+      OracleTrafficSignDao.expire(linkIds, username)
   }
 
   def getLatestModifiedAsset(trafficSigns: Seq[PersistedTrafficSign]): PersistedTrafficSign = {

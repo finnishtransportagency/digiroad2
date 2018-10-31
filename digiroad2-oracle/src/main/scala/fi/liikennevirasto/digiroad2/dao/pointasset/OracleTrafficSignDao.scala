@@ -8,11 +8,11 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign}
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -352,6 +352,23 @@ object OracleTrafficSignDao {
         }
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
+  }
+
+  def expire(linkIds: Set[Long], username: String): Unit = {
+    MassQuery.withIds(linkIds) { idTableName =>
+      sqlu"""
+         update asset set valid_to = sysdate - 1/86400 where id in (
+          select a.id
+          from asset a
+          join asset_link al on al.asset_id = a.id
+          join lrm_position lrm on lrm.id = al.position_id
+          join  #$idTableName i on i.id = lrm.link_id
+          where a.asset_type_id = ${TrafficSigns.typeId}
+          AND (a.valid_to IS NULL OR a.valid_to > SYSDATE )
+          AND a.created_by = $username
+         )
+      """.execute
     }
   }
 }

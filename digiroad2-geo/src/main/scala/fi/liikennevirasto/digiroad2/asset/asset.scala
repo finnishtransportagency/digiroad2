@@ -397,24 +397,26 @@ object ProhibitionClass {
                    NoMopeds, NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback, Unknown)
 
   def apply(value: Int): ProhibitionClass = {
-    values.find(_.values.contains(value)).getOrElse(Unknown)
+    val filtered = values.filter(_.values.contains(value))
+    if(filtered.isEmpty) Unknown else filtered.minBy(_.values.size)
   }
+
   def fromTrafficSign(trafficSign: TrafficSignType): ProhibitionClass = {
     values.find(_.trafficSign.equals(trafficSign)).getOrElse(Unknown)
   }
 
-  def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[Int] = {
-    prohibitionValue.map { a =>
-      if (prohibitionValue.intersect(NoCyclesOrMopeds.values).size == NoCyclesOrMopeds.values.size) {
+  def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[TrafficSignType] = {
+
+      (if (prohibitionValue.intersect(NoCyclesOrMopeds.values).size == NoCyclesOrMopeds.values.size) {
         prohibitionValue --= NoCyclesOrMopeds.values
-        NoCyclesOrMopeds.trafficSign.value
-      }
-      if (prohibitionValue.intersect(NoPedestriansCyclesMopeds.values).size == NoPedestriansCyclesMopeds.values.size) {
+        Seq(NoCyclesOrMopeds.trafficSign)
+      } else Seq()) ++
+      (if (prohibitionValue.intersect(NoPedestriansCyclesMopeds.values).size == NoPedestriansCyclesMopeds.values.size) {
         prohibitionValue --= NoPedestriansCyclesMopeds.values
-        NoCyclesOrMopeds.trafficSign.value
-      }
-      ProhibitionClass.apply(a).trafficSign.value
-    }.filterNot( _ == 99)
+        Seq(NoPedestriansCyclesMopeds.trafficSign)
+      } else Seq()) ++ prohibitionValue.map { a =>
+      ProhibitionClass.apply(a).trafficSign
+    }
   }
 
   case object ClosedToAllVehicles extends ProhibitionClass { val values = Seq(3); def trafficSign = TrafficSignType.ClosedToAllVehicles;}
