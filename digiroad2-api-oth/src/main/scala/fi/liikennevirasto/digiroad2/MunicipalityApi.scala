@@ -1008,6 +1008,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   val updateAssetOnMunicipalityById =
     (apiOperation[ExampleItemResponseOnUpdate]("updateAssetOnMunicipalityById")
       .parameters(
+        pathParam[String]("assetId").description("Id of the asset to be deleted"),
+        pathParam[String]("assetType").description("Asset type name to delete"),
         bodyParam[ExampleItemRequestOnUpdate]("UpdateAsset")
           .description(
             "Parameter: linkId / Type: number / Mandatory: yes / Description: The road link identifier\n" +
@@ -1078,7 +1080,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     (apiOperation[Long]("deleteAssetOnMunicipalityById")
       .parameters(
         pathParam[String]("assetId").description("Id of the asset to be deleted"),
-        pathParam[String]("assetType").description("Asset type name to delete")
+        pathParam[String]("assetTypeName").description("Asset type name to delete")
       )
       .responseMessages(
         ResponseMessage(401, "The authentication parameters are missing or are incorrect"),

@@ -614,7 +614,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   val getAssetsByTypeMunicipality =
     (apiOperation[Long]("getAssetsByTypeMunicipality")
       .parameters(
-        queryParam[Int]("municipalityCode").description("Municipality Code when we will execute the search by specific asset type"),
+        queryParam[Int]("municipality").description("Municipality Code when we will execute the search by specific asset type"),
         pathParam[String]("assetType").description("Asset type name to get all assets")
       )
       tags "Integration API (Kalpa API)"
