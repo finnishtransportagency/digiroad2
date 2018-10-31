@@ -1141,34 +1141,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }).getOrElse(Nil)
   }
 
-
-//  def getAdjacent(sourceRoadLink: Option[RoadLink], sourcePoints: Seq[Point], newTransaction: Boolean = true): Seq[RoadLink] = {
-//    val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
-//    sourceLinkGeometryOption.map(sourceLinkGeometry => {
-//      val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
-//      val delta: Vector3d = Vector3d(0.1, 0.1, 0)
-//      val bounds = BoundingRectangle(sourceLinkEndpoints._1 - delta, sourceLinkEndpoints._1 + delta)
-//      val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
-//      val roadLinks = getRoadLinksFromVVHByBounds(bounds, bounds2, newTransaction)
-//      roadLinks.filterNot(_.linkId == sourceRoadLink.map(_.linkId))
-//        .filter(roadLink => roadLink.isCarTrafficRoad)
-//        .filter(roadLink => {
-//          val targetLinkGeometry = roadLink.geometry
-//          GeometryUtils.areAdjacent(sourceLinkGeometry, targetLinkGeometry)
-//        })
-//        .filter(roadlink => {
-//          val pointDirections = getRoadLinkStartDirectionPoints(roadlink)
-//          sourcePoints.exists(sourcePoint => pointDirections.contains(sourcePoint))
-//        })
-//        .filter( roadLink => {
-//          val roadName = roadLink.attributes.get("ROADNAME_FI")
-//          val actualRoadName = sourceRoadLink.map(_.attributes).get("ROADNAME_FI")
-//          roadName.equals(actualRoadName)
-//      })
-//    }).getOrElse(Nil)
-//  }
-
-
   def pickRightMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
     val cPoint =  getConnectionPoint(lastLink, candidates)
     val forward = getGeometryLastSegmentVector(cPoint, lastLink)
