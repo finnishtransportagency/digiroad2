@@ -8,7 +8,7 @@ VALUES (user_notification_seq.nextval, 'Regione expetenda vituperatoribus mei no
 
 
 INSERT INTO USER_NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
-VALUES ( user_notification_seq.nextval, (sysdate - interval '1' month ),
+VALUES ( user_notification_seq.nextval, add_months(sysdate,-1),
 'Pri te mediocrem adipiscing, est ea lobortis quaestio electram. Mea in dissentias reformidans signiferumque, no eam melius tincidunt. At nam.',
 '<p>Mea facete efficiantur ei, vix an dicat interesset! Laudem consectetuer concludaturque has an? Ius at dicant libris vituperata. His ' ||
 'suavitate comprehensam ea? Ea diam nominati theophrastus vel, mea eleifend forensibus cu, consul delenit interpretaris vim no.<//p><p>Eirmod ' ||
