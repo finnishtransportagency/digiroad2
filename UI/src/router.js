@@ -58,7 +58,7 @@
       backend.getPointAssetById(id, layerName).then(function (result) {
         mapCenterAndZoom(result.lon, result.lat, 12);
 
-        asset.selectedLinearAsset.open(result);
+        asset.selectedPointAsset.open(result);
       });
     };
 
