@@ -929,12 +929,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   val createAssetOnMunicipality =
     (apiOperation[List[ExampleItemResponseOnCreate]]("createAssetOnMunicipality")
       .parameters(
-        pathParam[String]("assetType").description("Asset type name to get"),
+        pathParam[String]("assetType").description("Asset type name"),
         bodyParam[List[ExampleItemRequestOnCreate]]("NewAsset")
           .description(
             "Parameter: linkId / Type: number / Mandatory: yes / Description: The road link identifier\n" +
               "Parameter: startMeasure / Type: number / Mandatory: yes / Description: The start measure in meters, starting counting from the beginning of the road. \n" +
-              "Parameter: endMeasure / Type: number / Mandatory: no (for point assets), yes (ifor linear assets) / Description: The end measure in meters, starting counting from the beginning of the road. \n" +
+              "Parameter: endMeasure / Type: number / Mandatory: no (for point assets), yes (for linear assets) / Description: The end measure in meters, starting counting from the beginning of the road. \n" +
               "Parameter: sideCode / Type: number / Mandatory: yes / Description: The side code of the asset (see: Side Codes) Note: Side code not allowed on manoeuvre. \n" +
               "Parameter: name / Type: string / Mandatory: yes / Description: The name that identifies the property (Ex: lighting) \n" +
               "Parameter: value / Type: Any / Mandatory: yes / Description: The value or values of the specified property. The type depends on the asset."
@@ -1008,8 +1008,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   val updateAssetOnMunicipalityById =
     (apiOperation[ExampleItemResponseOnUpdate]("updateAssetOnMunicipalityById")
       .parameters(
-        pathParam[String]("assetId").description("Id of the asset to be deleted"),
-        pathParam[String]("assetType").description("Asset type name to delete"),
+        pathParam[String]("assetId").description("Id of the asset to be updated"),
+        pathParam[String]("assetType").description("Asset type name"),
         bodyParam[ExampleItemRequestOnUpdate]("UpdateAsset")
           .description(
             "Parameter: linkId / Type: number / Mandatory: yes / Description: The road link identifier\n" +
