@@ -401,7 +401,7 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        isExperimental: isExperimental
        }),
-       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection, trafficSignReadOnlyLayer('manoeuvre'))
+       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }) )
 
     }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers);
 
