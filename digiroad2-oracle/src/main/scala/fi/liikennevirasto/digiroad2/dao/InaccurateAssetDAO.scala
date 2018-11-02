@@ -68,11 +68,7 @@ class InaccurateAssetDAO {
   def deleteInaccurateAssetById(assetId: Long) = {
     sqlu"""delete from inaccurate_asset where asset_id= $assetId""".execute
   }
-
-  def deleteInaccurateLinkId(linkId: Long) = {
-    sqlu"""delete from inaccurate_asset where link_id= $linkId""".execute
-  }
-
+  
   def deleteAllInaccurateAssets(typeId: Int) = {
     sqlu"""delete from inaccurate_asset
           where asset_type_id = $typeId""".execute

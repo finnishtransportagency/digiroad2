@@ -91,27 +91,18 @@ object AssetValidatorProcess {
   def verifyInaccurateSpeedLimits(): Unit = {
     println("Start inaccurate SpeedLimit verification\n")
     println(DateTime.now())
-    println("")
-
-    val polygonTools: PolygonTools = new PolygonTools()
     val dao = new OracleSpeedLimitDao(null, null)
 
     //Expire all inaccuratedAssets
     OracleDatabase.withDynTransaction {
       inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
-    }
 
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
+      //Get All Municipalities
+      val municipalities: Seq[Int] = Queries.getMunicipalities
 
-    municipalities.foreach { municipality =>
-      println("Working on... municipality -> " + municipality)
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
-
-      OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println("Working on... municipality -> " + municipality)
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
         val speedLimitsByLinkId = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet)).groupBy(_.linkId)
 
         val inaccurateAssets = speedLimitsByLinkId.flatMap {
@@ -124,7 +115,6 @@ object AssetValidatorProcess {
                 (inaccurateAsset, roadLink.administrativeClass)
             }
         }
-
         inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
           inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
         }
