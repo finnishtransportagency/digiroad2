@@ -260,25 +260,39 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getTrafficSignsWithTrafficRestrictions( municipality: Int, newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
-    val enumeratedValueIds = getRestrictionsEnumeratedValues(newTransaction)
+  def getTrafficSignsWithTrafficRestrictions( municipality: Int, enumeratedValueIds: Boolean => Seq[Long], newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
+    val enumeratedValues = enumeratedValueIds(newTransaction)
     if(newTransaction)
         withDynSession {
-          OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValueIds, municipality)
+          OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValues, municipality)
         }
     else {
-      OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValueIds, municipality)
+      OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValues, municipality)
     }
   }
 
 
-  private def getRestrictionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
+  def getRestrictionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction)
       withDynSession {
         OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
       }
     else {
       OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn))
+    }
+  }
+
+  def getProhibitionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
+    val trafficSignValues = Seq(TrafficSignType.ClosedToAllVehicles, TrafficSignType.NoPowerDrivenVehicles, TrafficSignType.NoLorriesAndVans, TrafficSignType.NoVehicleCombinations,
+      TrafficSignType.NoAgriculturalVehicles, TrafficSignType.NoMotorCycles, TrafficSignType.NoMotorSledges, TrafficSignType.NoBuses, TrafficSignType.NoMopeds,
+      TrafficSignType.NoCyclesOrMopeds, TrafficSignType.NoPedestrians, TrafficSignType.NoPedestriansCyclesMopeds, TrafficSignType.NoRidersOnHorseback)
+
+    if(newTransaction)
+      withDynSession {
+        OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
+      }
+    else {
+      OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
     }
   }
 

@@ -101,6 +101,10 @@ object DataFixture {
     new ManoeuvreService(roadLinkService)
   }
 
+  lazy val prohibitionService: ProhibitionService = {
+    new ProhibitionService(roadLinkService, eventbus)
+  }
+
   lazy val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -1416,7 +1420,7 @@ object DataFixture {
 
       println(s"Obtaining all traffic Signs with turning restriction for municipality $municipality")
       //Get All Traffic Signs with traffic restriction
-      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality)
+      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality, trafficSignService.getRestrictionsEnumeratedValues)
 
       println(s"Obtaining all Road Links for Municipality: $municipality")
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
@@ -1527,10 +1531,10 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-    }
+        val municipalities: Seq[Int] =
+          OracleDatabase.withDynSession {
+            Queries.getMunicipalities
+          }
 
     municipalities.foreach { municipality =>
       val roadLinks: Map[Long, Seq[RoadLink]] = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).groupBy(_.linkId)
@@ -1573,6 +1577,45 @@ object DataFixture {
       }
       println("")
       println("Complete at time: " + DateTime.now())
+    }
+  }
+
+
+  def createProhibitionsUsingTrafficSigns(): Unit = {
+    //Get All Municipalities
+    println(s"Obtaining Municipalities")
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+
+      println(s"Obtaining all traffic Signs with restriction for municipality $municipality")
+      //Get All Traffic Signs with traffic restriction
+      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality, trafficSignService.getProhibitionsEnumeratedValues)
+
+      println(s"Obtaining all Road Links for Municipality: $municipality")
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      println(s"End of roadLinks fetch for Municipality: $municipality")
+
+      println("Start processing traffic signs, to create prohibition")
+      trafficSigns.foreach(ts =>
+        try {
+          roadLinks.find(_.linkId == ts.linkId) match {
+            case Some(roadLink) =>
+              prohibitionService.createProhibitionBasedOnTrafficSign(ProhibitionProvider(ts, roadLink))
+              println(s"prohibition created for traffic sign with id: ${ts.id}")
+            case _ =>
+              println(s"No roadLink available to create prohibition")
+              println(s"Asset id ${ts.id} did not generate a prohibition ")
+          }
+        }catch {
+          case ex: ProhibitionCreationException => {
+            println(s"""creation of prohibition on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
+          }
+        }
+      )
     }
   }
 
@@ -1678,6 +1721,8 @@ object DataFixture {
         removeExistingTrafficSignsDuplicates()
       case Some("create_traffic_signs_using_linear_assets") =>
         createTrafficSignsUsingLinearAssets()
+      case Some("create_prohibitions_using_traffic_signs") =>
+        createProhibitionsUsingTrafficSigns()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1688,7 +1733,7 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs | create_traffic_signs_using_linear_assets")
+        " create_manoeuvres_using_traffic_signs | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs")
     }
   }
 }
