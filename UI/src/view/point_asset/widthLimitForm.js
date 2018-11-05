@@ -22,7 +22,7 @@
       { value:7, label: 'Maatuki'},
       { value:8, label: 'Liikennevalopylväs'},
       { value:9, label: 'Muu alikulkueste'},
-      { value:99, label: 'El tietoa'}
+      { value:99, label: 'Ei tietoa'}
     ];
 
     this.renderValueElement = function(asset) {
