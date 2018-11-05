@@ -875,7 +875,7 @@
             var verifiedFields = function() {
                 return (_assetTypeConfiguration.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
                     '<div class="form-group">' +
-                    '   <p class="form-control-static asset-log-info">Tarkistettu: ' +  info.verifiedDateTime + ' / ' + info.verifiedBy + '</p>' +
+                    '   <p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(info.verifiedDateTime, info.verifiedBy) + '</p>' +
                     '</div>' : '';
             };
 
