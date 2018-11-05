@@ -127,7 +127,7 @@
 
     var verifiedFields = function() {
       return (isVerifiable && verifiedBy && verifiedDateTime) ? '<div class="form-group">' +
-      '<p class="form-control-static asset-log-info">Tarkistettu: ' + verifiedDateTime  +  ' / ' + verifiedBy + '</p>' +
+      '<p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(verifiedDateTime, verifiedBy) + '</p>' +
       '</div>' : '';
     };
 
