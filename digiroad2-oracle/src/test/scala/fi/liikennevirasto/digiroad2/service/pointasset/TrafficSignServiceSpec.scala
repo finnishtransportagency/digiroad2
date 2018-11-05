@@ -398,7 +398,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val asset = trService.getPersistedAssetsByIds(Set(id)).head
 
-      verify(mockEventBus, times(1)).publish("manoeuvre:create", ManoeuvreProvider(asset, roadLink))
+      verify(mockEventBus, times(1)).publish("manoeuvre:create", TrafficSignCreateAsset(asset, roadLink))
     }
   }
 
