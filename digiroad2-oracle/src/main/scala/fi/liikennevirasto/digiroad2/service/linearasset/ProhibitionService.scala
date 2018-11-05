@@ -305,7 +305,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 //    else Seq.empty
 //  }
 
-  def createProhibitionBasedOnTrafficSign(provider: TrafficSignProvider, newTransaction: Boolean = true): Seq[Long] = {
+  def createBasedOnTrafficSign(provider: TrafficSignProvider, newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction) {
       withDynTransaction {
         createProhibitionFromTrafficSign(provider)

@@ -43,6 +43,7 @@ object LinearAssetTypes {
 
 case class ChangedLinearAsset(linearAsset: PieceWiseLinearAsset, link: RoadLink)
 case class Measures(startMeasure: Double, endMeasure: Double)
+class AssetCreationException(val response: Set[String]) extends RuntimeException {}
 
 trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)

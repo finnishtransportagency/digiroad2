@@ -1431,7 +1431,7 @@ object DataFixture {
         try {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
-              manoeuvreService.createManoeuvreBasedOnTrafficSign(TrafficSignCreateAsset(ts, roadLink))
+              manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(ts, roadLink))
               println(s"manoeuvre created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create manouvre")
@@ -1604,7 +1604,7 @@ object DataFixture {
         try {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
-              prohibitionService.createProhibitionBasedOnTrafficSign(TrafficSignCreateAsset(ts, roadLink))
+              prohibitionService.createBasedOnTrafficSign(TrafficSignCreateAsset(ts, roadLink))
               println(s"prohibition created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create prohibition")

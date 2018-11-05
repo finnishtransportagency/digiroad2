@@ -625,7 +625,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
       val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
       prohibitions.length should be (3)
 
@@ -659,7 +659,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
       prohibitionIds.length should be(0)
     }
   }
@@ -686,7 +686,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
       val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
       prohibitions.length should be (2)
 

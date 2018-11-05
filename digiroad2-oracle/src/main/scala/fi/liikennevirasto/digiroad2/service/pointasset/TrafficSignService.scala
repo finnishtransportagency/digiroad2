@@ -317,7 +317,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def expireAssetWithoutTransaction(id: Long, username: String): Long = {
     expireWithoutTransaction(id)
-    eventBus.publish("assetOperations", TrafficSignProviderService(expiredId = Some(id)))
+//    eventBus.publish("assetOperations", TrafficSignProviderService(expiredId = Some(id)))
     id
   }
 

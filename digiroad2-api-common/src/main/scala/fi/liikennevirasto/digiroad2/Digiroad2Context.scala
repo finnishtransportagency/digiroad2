@@ -168,7 +168,7 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
 class ProhibitionSave(prohibitionProvider: ProhibitionService) extends Actor {
   def receive = {
     case x: TrafficSignProvider =>
-      prohibitionProvider.createProhibitionBasedOnTrafficSign(x)
+      prohibitionProvider.createBasedOnTrafficSign(x)
     case _ => println("Prohibition not created")
   }
 }
@@ -235,7 +235,7 @@ case class ManoeuvreSave(manoeuvreService: ManoeuvreService) extends Actor {
   def receive = {
     case x: TrafficSignProvider =>
       try {
-        manoeuvreService.createManoeuvreBasedOnTrafficSign(x)
+        manoeuvreService.createBasedOnTrafficSign(x)
       }catch {
         case e: ManoeuvreCreationException =>
           logger.error("Manoeuvre creation error: " + e.response.mkString(" "))

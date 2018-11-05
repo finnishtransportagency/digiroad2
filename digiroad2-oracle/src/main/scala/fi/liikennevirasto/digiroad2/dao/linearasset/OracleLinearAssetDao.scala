@@ -563,7 +563,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     sqlu"""
              update asset
              set valid_to = sysdate, modified_date = sysdate, modified_by = $username
-             where traffic_sign_id = $trafficSignId
+             where traffic_sign_id = $trafficSignId and created_by = 'automatic_trafficSign_generated'
           """.execute
     trafficSignId
   }

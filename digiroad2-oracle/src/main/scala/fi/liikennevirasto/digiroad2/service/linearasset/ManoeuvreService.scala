@@ -17,7 +17,6 @@ case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods:
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
-class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
 object ElementTypes {
   val FirstElement = 1
@@ -255,7 +254,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def createManoeuvreFromTrafficSign(manouvreProvider: TrafficSignProvider): Option[Long] = {
+  private def createManoeuvreFromTrafficSign(manouvreProvider: TrafficSignProvider): Seq[Long] = {
     logger.info("creating manoeuvre from traffic sign")
     val tsLinkId = manouvreProvider.trafficSign.linkId
     val tsDirection = manouvreProvider.trafficSign.validityDirection
@@ -292,11 +291,11 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
       throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
     else
-      Some(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
+      Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
 
   }
 
-  def createManoeuvreBasedOnTrafficSign(manouvreProvider: TrafficSignProvider, newTransaction: Boolean = true): Option[Long] = {
+  def createBasedOnTrafficSign(manouvreProvider: TrafficSignProvider, newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction) {
       withDynTransaction {
         createManoeuvreFromTrafficSign(manouvreProvider)
