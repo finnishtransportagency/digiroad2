@@ -183,27 +183,49 @@ class ProhibitionExpire(prohibitionService: ProhibitionService) extends Actor {
 class TrafficSignChangesAssets(trafficSignService: TrafficSignService) extends Actor {
   def receive = {
     case x: TrafficSignProviderService =>
+//      (x.expiredId, x.trafficSignInfo) match {
+//        case (Some(id), Some(trafficSignInfo)) =>  //update
+      //        trafficSignService.getPersistedAssetsByIds(Set(trafficSignInfo.id)).headOption match {
+      //      case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
+      //        assetTypeInfo =>
+      //          trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":update", TrafficSignCreateAsset(trafficSign, trafficSignProviderCreate.roadLink))}
+      //      case _ => println("Asset not created")
+      //    }
+//      }
+//        case (_ ,Some(trafficSignInfo)) => //create
+//        trafficSignService.getPersistedAssetsByIds(Set(trafficSignInfo.id)).headOption match {
+//      case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
+//        assetTypeInfo =>
+//          trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":create", TrafficSignCreateAsset(trafficSign, trafficSignProviderCreate.roadLink))}
+//      case _ => println("Asset not created")
+//    }
+//    case _ => //None
+//        case (Some(id) , _) => //expire
+// trafficSignService.getTrafficType(expireId) match {
+//          case Some(trafficSignType) => TrafficSignType.linkedWith(trafficSignType).foreach( assetTypeInfo=>
+//            trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":expire", expireId))
+//          case _ => //None
+//          }
+//      }
+      x.expiredId match {
+        case Some(expireId) => trafficSignService.getTrafficType(expireId) match {
+          case Some(trafficSignType) => TrafficSignType.linkedWith(trafficSignType).foreach( assetTypeInfo=>
+            trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":expire", expireId))
+          case _ => //None
+          }
+        case _ => println("Asset not expired")
+      }
+
       x.trafficSignInfo match {
         case Some(trafficSignProviderCreate) => trafficSignService.getPersistedAssetsByIds(Set(trafficSignProviderCreate.id)).headOption match {
           case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
             assetTypeInfo =>
               trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":create", TrafficSignCreateAsset(trafficSign, trafficSignProviderCreate.roadLink))}
-          case _ =>
+          case _ => println("Asset not created")
         }
-        case _ => println("Asset not created")
-      }
-
-      x.expiredId match {
-        case Some(expireId) => trafficSignService.getPersistedAssetsByIds(Set(expireId)).headOption match {
-          case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
-            assetTypeInfo =>
-              trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":expire", expireId)}
-          case _ =>
-        }
-        case _ => println("Asset not expired")
+        case _ => //None
       }
   }
-
 }
 
 case class ManoeuvreSave(manoeuvreService: ManoeuvreService) extends Actor {

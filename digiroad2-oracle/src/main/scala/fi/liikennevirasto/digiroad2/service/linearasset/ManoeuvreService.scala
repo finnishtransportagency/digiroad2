@@ -306,6 +306,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       createManoeuvreFromTrafficSign(manouvreProvider)
   }
 
+  //TODO remove this method and use the one that exist on trafficService
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
