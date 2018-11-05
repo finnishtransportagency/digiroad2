@@ -435,7 +435,7 @@ trait MassTransitStopService extends PointAssetOperations {
   def getByMunicipality(municipalityCode: Int, withEnrich: Boolean): Seq[PersistedAsset] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(roadLink => roadLink.linkId -> roadLink).toMap
-    val assets = super.getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
+    val assets = super.getByMunicipality(mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject), withMunicipality(municipalityCode))
 
     if(withEnrich)
       withDynSession{
