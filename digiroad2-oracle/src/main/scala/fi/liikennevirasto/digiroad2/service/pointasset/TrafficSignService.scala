@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.{asset, _}
 import fi.liikennevirasto.digiroad2.asset._
@@ -9,11 +10,19 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreProvider, ProhibitionProvider}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
 
+case class TrafficSignProviderCreate(id: Long, roadLink: RoadLink)
+
+trait TrafficSignProvider {
+  val trafficSign: PersistedTrafficSign
+  val sourceRoadLink: RoadLink
+}
+case class TrafficSignCreateAsset(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink) extends TrafficSignProvider
+
+case class TrafficSignProviderService(trafficSignInfo: Option[TrafficSignProviderCreate] = None, expiredId: Option[Long] = None)
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
 class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
@@ -66,14 +75,17 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def createWithoutTransaction(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     val id = OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
-    if (belongsToTurnRestriction(asset)) {
-      eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIdsWithoutTransaction(Set(id)).head, roadLink))
-    }
-//    eventBus.publish("prohibition:create", ProhibitionProvider(getPersistedAssetsByIdsWithoutTransaction(Set(id)).head, roadLink))
+
+    eventBus.publish("assetOperations", TrafficSignProviderService(Some(TrafficSignProviderCreate(id, roadLink))))
     id
   }
 
-  def belongsToTurnRestriction(asset: IncomingTrafficSign)  = {
+  def belongsToTurnRestriction(asset: IncomingTrafficSign) : Boolean  = {
+    TrafficSignType.linkedWith(getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt).map {
+      assetType => assetType.layerName
+    }
+
+
     val turnRestrictionsGroup =  Seq(TrafficSignType.NoUTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoLeftTurn)
     turnRestrictionsGroup.contains(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.headOption.map(t => TrafficSignType(t.propertyValue.toInt)).get)
   }
@@ -100,11 +112,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case old if old.bearing != updatedAsset.bearing || (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) || old.validityDirection != updatedAsset.validityDirection =>
         expireWithoutTransaction(id)
         val newId = OracleTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
-        if(belongsToTurnRestriction(updatedAsset)) {
-          println(s"Creating manoeuvre on linkId: ${roadLink.linkId} from import traffic sign with id $newId" )
-          eventBus.publish("manoeuvre:expire", id)
-          eventBus.publish("manoeuvre:create", ManoeuvreProvider(getPersistedAssetsByIdsWithoutTransaction(Set(newId)).head, roadLink))
-        }
+
+        eventBus.publish("assetOperations", TrafficSignProviderService(Some(TrafficSignProviderCreate(newId, roadLink)), Some(id)))
         newId
       case _ =>
         OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
@@ -300,13 +309,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     withDynSession {
       expireWithoutTransaction(id, username)
     }
-    eventBus.publish("manoeuvre:expire", id)
+    eventBus.publish("assetOperations", TrafficSignProviderService(expiredId = Some(id)))
     id
   }
 
+
   def expireAssetWithoutTransaction(id: Long, username: String): Long = {
     expireWithoutTransaction(id)
-    eventBus.publish("manoeuvre:expire", id)
+    eventBus.publish("assetOperations", TrafficSignProviderService(expiredId = Some(id)))
     id
   }
 

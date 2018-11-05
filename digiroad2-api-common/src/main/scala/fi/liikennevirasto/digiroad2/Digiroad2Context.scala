@@ -3,9 +3,8 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.Digiroad2Context.getClass
+import fi.liikennevirasto.digiroad2.asset.TrafficSignType
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -75,7 +74,6 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
     linearAssetService.updateChangeSet(changeSet)
   }
 }
-
 
 class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extends Actor {
   def receive = {
@@ -169,25 +167,65 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
 
 class ProhibitionSave(prohibitionProvider: ProhibitionService) extends Actor {
   def receive = {
-    case x: ProhibitionProvider => prohibitionProvider.createProhibitionBasedOnTrafficSign(x.asInstanceOf[ProhibitionProvider])
+    case x: TrafficSignProvider =>
+      prohibitionProvider.createProhibitionBasedOnTrafficSign(x)
     case _ => println("Prohibition not created")
   }
 }
 
-case class ManoeuvreUpdater[A, B](manoeuvreProvider: ManoeuvreService) extends Actor {
+class ProhibitionExpire(prohibitionService: ProhibitionService) extends Actor {
+  def receive = {
+    case x: Long => prohibitionService.deleteFromSign(x.asInstanceOf[Long])
+    case _ => println("Prohibition not created")
+  }
+}
+
+class TrafficSignChangesAssets(trafficSignService: TrafficSignService) extends Actor {
+  def receive = {
+    case x: TrafficSignProviderService =>
+      x.trafficSignInfo match {
+        case Some(trafficSignProviderCreate) => trafficSignService.getPersistedAssetsByIds(Set(trafficSignProviderCreate.id)).headOption match {
+          case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
+            assetTypeInfo =>
+              trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":create", TrafficSignCreateAsset(trafficSign, trafficSignProviderCreate.roadLink))}
+          case _ =>
+        }
+        case _ => println("Asset not created")
+      }
+
+      x.expiredId match {
+        case Some(expireId) => trafficSignService.getPersistedAssetsByIds(Set(expireId)).headOption match {
+          case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
+            assetTypeInfo =>
+              trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":expire", expireId)}
+          case _ =>
+        }
+        case _ => println("Asset not expired")
+      }
+  }
+
+}
+
+case class ManoeuvreSave(manoeuvreService: ManoeuvreService) extends Actor {
 
   val logger = LoggerFactory.getLogger(getClass)
 
   def receive = {
-    case x: Long => manoeuvreProvider.deleteManoeuvreFromSign(x.asInstanceOf[Long])
-    case x: ManoeuvreProvider =>
+    case x: TrafficSignProvider =>
       try {
-        manoeuvreProvider.createManoeuvreBasedOnTrafficSign(x.asInstanceOf[ManoeuvreProvider])
+        manoeuvreService.createManoeuvreBasedOnTrafficSign(x)
       }catch {
         case e: ManoeuvreCreationException =>
           logger.error("Manoeuvre creation error: " + e.response.mkString(" "))
       }
     case _ => println("Manoeuvre not created")
+  }
+}
+
+case class ManoeuvreExpire(manoeuvreService: ManoeuvreService) extends Actor {
+  def receive = {
+    case x: Long => manoeuvreService.deleteManoeuvreFromSign(x.asInstanceOf[Long])
+    case _ => println("Manoeuvre not expired")
   }
 }
 
@@ -202,11 +240,12 @@ object Digiroad2Context {
   }
   lazy val revisionInfo: Properties = {
     val props = new Properties()
-      props.load(getClass.getResourceAsStream("/revision.properties"))
+    props.load(getClass.getResourceAsStream("/revision.properties"))
     props
   }
 
   val system = ActorSystem("Digiroad2")
+
   import system.dispatcher
 
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
@@ -265,12 +304,21 @@ object Digiroad2Context {
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
-  val prohibition = system.actorOf(Props(classOf[ProhibitionSave], prohibitionService), name = "prohibitionSave")
-  eventbus.subscribe(prohibition,"prohibition:create")
+  val prohibitionSave = system.actorOf(Props(classOf[ProhibitionSave], prohibitionService), name = "prohibitionSave")
+  eventbus.subscribe(prohibitionSave, "prohibition:create")
 
-  val manoeuvreUpdater = system.actorOf(Props(classOf[ManoeuvreUpdater[Int, ManoeuvreProvider]], manoeuvreService), name ="manoeuvreUpdater" )
-  eventbus.subscribe(manoeuvreUpdater, "manoeuvre:expire")
-  eventbus.subscribe(manoeuvreUpdater,"manoeuvre:create")
+  val prohibitionExpire = system.actorOf(Props(classOf[ProhibitionExpire], prohibitionService), name = "prohibitionExpire")
+  eventbus.subscribe(prohibitionExpire, "prohibition:expire")
+
+  val manoeuvreSave = system.actorOf(Props(classOf[ManoeuvreSave], manoeuvreService), name ="manoeuvreSave" )
+  eventbus.subscribe(manoeuvreSave, "manoeuvre:create")
+
+  val manoeuvreExpire = system.actorOf(Props(classOf[ManoeuvreExpire], manoeuvreService), name ="manoeuvreExpire" )
+  eventbus.subscribe(manoeuvreExpire, "manoeuvre:expire")
+
+  val trafficSignChangesAssets = system.actorOf(Props(classOf[TrafficSignChangesAssets], trafficSignService), name ="trafficSignChangesAssets" )
+  eventbus.subscribe(trafficSignChangesAssets, "assetOperations")
+
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean

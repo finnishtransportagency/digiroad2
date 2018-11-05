@@ -558,6 +558,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
+  def deleteByTrafficSign(trafficSignId: Long) : Long = {
+    val username = "automatic_trafficSign_deleted"
+    sqlu"""
+             update asset
+             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+             where traffic_sign_id = $trafficSignId
+          """.execute
+    trafficSignId
+  }
+
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */

@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignProvider
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -16,7 +17,6 @@ case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods:
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long])
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
-case class ManoeuvreProvider(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink)
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
 object ElementTypes {
@@ -255,7 +255,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def createManoeuvreFromTrafficSign(manouvreProvider: ManoeuvreProvider): Option[Long] = {
+  private def createManoeuvreFromTrafficSign(manouvreProvider: TrafficSignProvider): Option[Long] = {
     logger.info("creating manoeuvre from traffic sign")
     val tsLinkId = manouvreProvider.trafficSign.linkId
     val tsDirection = manouvreProvider.trafficSign.validityDirection
@@ -296,7 +296,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   }
 
-  def createManoeuvreBasedOnTrafficSign(manouvreProvider: ManoeuvreProvider, newTransaction: Boolean = true): Option[Long] = {
+  def createManoeuvreBasedOnTrafficSign(manouvreProvider: TrafficSignProvider, newTransaction: Boolean = true): Option[Long] = {
     if(newTransaction) {
       withDynTransaction {
         createManoeuvreFromTrafficSign(manouvreProvider)

@@ -7,8 +7,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreProvider, ManoeuvreService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignCreateAsset, TrafficSignProviderCreate, TrafficSignService}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -82,7 +82,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
               if (trafficSignService.belongsToTurnRestriction(trafficSign)) {
                 println(s"Creating manoeuvre on linkId: ${vvhRoadlink.linkId} from import traffic sign with id $newId" )
                 try {
-                  manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(trafficSignService.getPersistedAssetsByIdsWithoutTransaction(Set(newId)).head, link), newTransaction = false)
+                  manoeuvreService.createManoeuvreBasedOnTrafficSign(TrafficSignCreateAsset(trafficSignService.getPersistedAssetsByIdsWithoutTransaction(Set(newId)).head, link), newTransaction = false)
                 }catch {
                   case e: ManoeuvreCreationException =>
                     println("Manoeuvre creation error: " + e.response.mkString(" "))

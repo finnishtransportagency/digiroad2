@@ -795,6 +795,13 @@ trait LinearAssetOperations {
   }
 
   def validateAssetValue(value: Option[Value]): Unit = {}
+
+  def deleteFromSign(id: Long): Long = {
+    logger.info("expiring asset")
+    withDynTransaction {
+      dao.deleteByTrafficSign(id)
+    }
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
