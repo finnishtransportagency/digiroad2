@@ -260,12 +260,12 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     val tsDirection = manouvreProvider.trafficSign.validityDirection
 
     if (tsLinkId != manouvreProvider.sourceRoadLink.linkId)
-      throw new ManoeuvreCreationException(Set("Wrong roadlink"))
+      throw new AssetCreationException(Set("Wrong roadlink"))
 
     if (SideCode(tsDirection) == SideCode.BothDirections)
-      throw new ManoeuvreCreationException(Set("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections"))
+      throw new AssetCreationException(Set("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections"))
 
-    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(manouvreProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ManoeuvreCreationException(Set("Connection Point not valid")))
+    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(manouvreProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new AssetCreationException(Set("Connection Point not valid")))
 
     val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint)
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
@@ -289,7 +289,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }.getOrElse(Seq.empty[RoadLink])
 
     if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
-      throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
+      throw new AssetCreationException(Set("Manoeuvre creation not valid"))
     else
       Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
 
@@ -322,10 +322,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     val adjacents = roadLinkService.getAdjacent(linkId, Seq(point), newTransaction = false)
     if (adjacents.isEmpty)
-      throw new ManoeuvreCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
+      throw new AssetCreationException(Set("No adjecents found for that link id, the manoeuvre will not be created"))
 
     if(adjacents.size == 1 && numberOfConnections == 3)
-      throw new ManoeuvreCreationException(Set("No turn found, manoeuvre not created"))
+      throw new AssetCreationException(Set("No turn found, manoeuvre not created"))
 
     if (adjacents.size == 1  && roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).nonEmpty) {
       recursiveGetAdjacent(adjacents.head.linkId, getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
