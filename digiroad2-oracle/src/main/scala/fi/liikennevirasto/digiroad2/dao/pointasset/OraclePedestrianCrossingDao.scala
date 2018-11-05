@@ -108,7 +108,7 @@ object OraclePedestrianCrossingDao {
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
       """
-    val queryWithFilter = queryFilter(query)/* + " and (a.valid_to > sysdate or a.valid_to is null)"*/
+    val queryWithFilter = queryFilter(query)
     StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
   }
 
@@ -131,29 +131,4 @@ object OraclePedestrianCrossingDao {
       PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
     }
   }
-
-//  def fetchChangesByFilter(sinceDate: DateTime,untilDate: DateTime, queryFilter: String => SQLInterpolation): Seq[PedestrianCrossing] = {
-//    queryFilter("""select a.id, pos.link_id, pos.start_measure
-//    from asset a
-//    join asset_link al on a.id = al.asset_id
-//    join lrm_position pos on al.position_id = pos.id""").as[PedestrianCrossing].list
-
-//    val query =
-//      sql"""
-//        #$baseSelect
-//        where floating = 0
-//        and (
-//          (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
-//          or
-//          (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
-//          or
-//          (a.created_date > $sinceDate and a.created_date <= $untilDate)
-//        )
-//      """.as[(Long, Long, Double)].list
-
-
-//    Seq()
-////    val queryWithFilter = queryFilter(query)
-////    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
-//  }
 }
