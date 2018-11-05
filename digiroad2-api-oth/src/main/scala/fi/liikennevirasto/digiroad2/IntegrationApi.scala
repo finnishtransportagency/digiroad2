@@ -581,7 +581,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       .parameters(
         queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
         queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset.").optional,
-        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presense of records modified by vvh_generated and not modified yet on the response. The value is True by default.")optional,
+        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presense of records modified by vvh_generated and not modified yet on the response. The value is True by default.").optional,
         pathParam[String]("assetType").description("Asset type name to get the changes")
       )
       tags "Integration API (Kalpa API)"
@@ -614,7 +614,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   val getAssetsByTypeMunicipality =
     (apiOperation[Long]("getAssetsByTypeMunicipality")
       .parameters(
-        queryParam[Int]("municipality").description("Municipality Code when we will execute the search by specific asset type"),
+        queryParam[Int]("municipality").description("Municipality Code where we will execute the search by specific asset type"),
         pathParam[String]("assetType").description("Asset type name to get all assets")
       )
       tags "Integration API (Kalpa API)"

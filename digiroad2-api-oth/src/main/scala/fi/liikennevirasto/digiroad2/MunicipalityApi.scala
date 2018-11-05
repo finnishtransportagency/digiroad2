@@ -831,7 +831,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   val getAssetsByMunicipalityCode =
     (apiOperation[List[ExampleItemResponseOnGet]]("getAssetsByMunicipalityCode")
       .parameters(
-        queryParam[Int]("municipalityCode").description("Municipality Code when we will execute the search by specific asset type"),
+        queryParam[Int]("municipalityCode").description("Municipality Code where we will execute the search by specific asset type"),
         pathParam[String]("assetType").description("Asset type name to get in a specific municipality")
       )
       .responseMessages(
@@ -885,7 +885,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   val getAssetById =
     (apiOperation[ExampleItemResponseOnGet]("getAssetById")
       .parameters(
-        pathParam[String]("assetId").description("Id of the asset to be catched"),
+        pathParam[String]("assetId").description("Id of the asset to be fetch"),
         pathParam[String]("assetType").description("Asset type name to get")
       )
       .responseMessages(
@@ -1080,7 +1080,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     (apiOperation[Long]("deleteAssetOnMunicipalityById")
       .parameters(
         pathParam[String]("assetId").description("Id of the asset to be deleted"),
-        pathParam[String]("assetTypeName").description("Asset type name to delete")
+        pathParam[String]("assetTypeName").description("Asset type name")
       )
       .responseMessages(
         ResponseMessage(401, "The authentication parameters are missing or are incorrect"),
