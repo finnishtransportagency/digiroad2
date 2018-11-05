@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, GeometryUtils, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, GeometryUtils}
 import fi.liikennevirasto.digiroad2.asset.{TrafficSignType, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignCreateAsset, TrafficSignProviderCreate, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignCreateAsset, TrafficSignService}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -17,7 +17,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
   lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService)
-  lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService,  new DummyEventBus)
+  lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService, eventbus)
 
   override def typeId: Int = 300
   override def assetName = "trafficSigns"
@@ -82,10 +82,9 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
           roadLinkService.getRoadLinkAndComplementaryFromVVH(vvhRoadlink.linkId, newTransaction = false).map{
             link =>
               TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, typePublicId).get.propertyValue.toInt).foreach { assetTypeInfo =>
-                println(s"Creating  ${assetTypeInfo.layerName} on linkId: ${vvhRoadlink.linkId} from import traffic sign with id $newId")
+                println(s"Creating ${assetTypeInfo.layerName} on linkId: ${vvhRoadlink.linkId} from import traffic sign with id $newId")
                 try {
                   createAssetBased(assetTypeInfo.typeId, newId, link)
-
                 } catch {
                   case e: AssetCreationException =>
                     println(s"${assetTypeInfo.layerName} creation error: " + e.response.mkString(" "))

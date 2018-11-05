@@ -1438,7 +1438,7 @@ object DataFixture {
               println(s"Asset id ${ts.id} did not generate a manoeuvre ")
           }
         }catch {
-          case ex: ManoeuvreCreationException => {
+          case ex: AssetCreationException => {
             println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
           }
         }

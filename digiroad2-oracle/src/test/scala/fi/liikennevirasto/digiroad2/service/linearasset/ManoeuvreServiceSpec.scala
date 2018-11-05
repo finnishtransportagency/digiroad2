@@ -302,7 +302,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(assets, sourceRoadLink), false).get
+      val manoeuvreId = manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(assets, sourceRoadLink), false).head
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
@@ -314,7 +314,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Should throw exception for empty adjacents return"){
     runWithRollback{
-      intercept[ManoeuvreCreationException] {
+      intercept[AssetCreationException] {
         val sourceRoadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
         val properties = Set(
           SimpleProperty("trafficSigns_type", List(PropertyValue("10"))))
@@ -324,14 +324,14 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
         val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 3, None), testUser.username, sourceRoadLink)
         val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-        manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(assets, sourceRoadLink), false).get
+        manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(assets, sourceRoadLink), false).head
       }
     }
   }
 
   test("Should throw exception for traffic sign with both directions"){
     runWithRollback{
-      intercept[ManoeuvreCreationException] {
+      intercept[AssetCreationException] {
         val sourceRoadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
         val properties = Set(
           SimpleProperty("trafficSigns_type", List(PropertyValue("10"))))
@@ -341,7 +341,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
         val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 1, None), testUser.username, sourceRoadLink)
         val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-        manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(assets, sourceRoadLink), false).get
+        manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(assets, sourceRoadLink), false).head
       }
     }
   }
@@ -366,7 +366,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(assets, sourceRoadLink), false).get
+      val manoeuvreId = manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(assets, sourceRoadLink), false).head
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)

@@ -237,7 +237,7 @@ case class ManoeuvreSave(manoeuvreService: ManoeuvreService) extends Actor {
       try {
         manoeuvreService.createBasedOnTrafficSign(x)
       }catch {
-        case e: ManoeuvreCreationException =>
+        case e: AssetCreationException =>
           logger.error("Manoeuvre creation error: " + e.response.mkString(" "))
       }
     case _ => println("Manoeuvre not created")
