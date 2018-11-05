@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturda
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignCreateAsset, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
@@ -625,7 +625,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(ProhibitionProvider(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
       val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
       prohibitions.length should be (3)
 
@@ -659,7 +659,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(ProhibitionProvider(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
       prohibitionIds.length should be(0)
     }
   }
@@ -686,7 +686,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(ProhibitionProvider(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createProhibitionBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
       val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
       prohibitions.length should be (2)
 
