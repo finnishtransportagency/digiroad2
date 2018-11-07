@@ -57,6 +57,19 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     trafficSignId
   }
 
+  def deleteManoeuvreByTrafficSign(filter: String) = {
+    val username = "automatic_trafficSign_deleted"
+    sqlu"""
+             update manoeuvre
+             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+             where traffic_sign_id in (
+              select a.id
+              from asset a
+              $filter)
+          """.execute
+
+  }
+
   def expireManoeuvre(id: Long) = {
     sqlu"""
              update manoeuvre

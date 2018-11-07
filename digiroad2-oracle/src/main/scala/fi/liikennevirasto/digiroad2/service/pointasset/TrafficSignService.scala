@@ -80,16 +80,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     id
   }
 
-  def belongsToTurnRestriction(asset: IncomingTrafficSign) : Boolean  = {
-    TrafficSignType.linkedWith(getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt).map {
-      assetType => assetType.layerName
-    }
-
-
-    val turnRestrictionsGroup =  Seq(TrafficSignType.NoUTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoLeftTurn)
-    turnRestrictionsGroup.contains(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.headOption.map(t => TrafficSignType(t.propertyValue.toInt)).get)
-  }
-
   def createFloating(asset: IncomingTrafficSign, username: String, municipality: Int): Long = {
     withDynTransaction {
       createFloatingWithoutTransaction(asset, username, municipality)
@@ -314,10 +304,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     id
   }
 
+  def expireAssetsByMunicipality(municipality: Int) : Unit = {
+    OracleTrafficSignDao.expireAssetsByMunicipality(municipality)
+  }
 
   def expireAssetWithoutTransaction(id: Long, username: String): Long = {
     expireWithoutTransaction(id)
-//    eventBus.publish("assetOperations", TrafficSignProviderService(expiredId = Some(id)))
     id
   }
 

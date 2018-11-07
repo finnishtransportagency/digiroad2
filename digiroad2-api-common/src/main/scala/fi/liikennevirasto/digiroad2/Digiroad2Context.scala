@@ -175,7 +175,7 @@ class ProhibitionSave(prohibitionProvider: ProhibitionService) extends Actor {
 
 class ProhibitionExpire(prohibitionService: ProhibitionService) extends Actor {
   def receive = {
-    case x: Long => prohibitionService.deleteFromSign(x.asInstanceOf[Long])
+    case x: Long => prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(x.asInstanceOf[Long]))
     case _ => println("Prohibition not created")
   }
 }
@@ -183,37 +183,13 @@ class ProhibitionExpire(prohibitionService: ProhibitionService) extends Actor {
 class TrafficSignChangesAssets(trafficSignService: TrafficSignService) extends Actor {
   def receive = {
     case x: TrafficSignProviderService =>
-//      (x.expiredId, x.trafficSignInfo) match {
-//        case (Some(id), Some(trafficSignInfo)) =>  //update
-      //        trafficSignService.getPersistedAssetsByIds(Set(trafficSignInfo.id)).headOption match {
-      //      case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
-      //        assetTypeInfo =>
-      //          trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":update", TrafficSignCreateAsset(trafficSign, trafficSignProviderCreate.roadLink))}
-      //      case _ => println("Asset not created")
-      //    }
-//      }
-//        case (_ ,Some(trafficSignInfo)) => //create
-//        trafficSignService.getPersistedAssetsByIds(Set(trafficSignInfo.id)).headOption match {
-//      case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
-//        assetTypeInfo =>
-//          trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":create", TrafficSignCreateAsset(trafficSign, trafficSignProviderCreate.roadLink))}
-//      case _ => println("Asset not created")
-//    }
-//    case _ => //None
-//        case (Some(id) , _) => //expire
-// trafficSignService.getTrafficType(expireId) match {
-//          case Some(trafficSignType) => TrafficSignType.linkedWith(trafficSignType).foreach( assetTypeInfo=>
-//            trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":expire", expireId))
-//          case _ => //None
-//          }
-//      }
       x.expiredId match {
         case Some(expireId) => trafficSignService.getTrafficType(expireId) match {
           case Some(trafficSignType) => TrafficSignType.linkedWith(trafficSignType).foreach( assetTypeInfo=>
             trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":expire", expireId))
-          case _ => //None
+          case _ => println("Asset not expired")
           }
-        case _ => println("Asset not expired")
+        case _ => //None
       }
 
       x.trafficSignInfo match {
@@ -340,7 +316,6 @@ object Digiroad2Context {
 
   val trafficSignChangesAssets = system.actorOf(Props(classOf[TrafficSignChangesAssets], trafficSignService), name ="trafficSignChangesAssets" )
   eventbus.subscribe(trafficSignChangesAssets, "assetOperations")
-
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean

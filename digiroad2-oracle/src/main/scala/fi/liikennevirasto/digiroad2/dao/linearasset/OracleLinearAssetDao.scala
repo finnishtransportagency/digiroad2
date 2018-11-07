@@ -558,16 +558,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-  def deleteByTrafficSign(trafficSignId: Long) : Long = {
-    val username = "automatic_trafficSign_deleted"
-    sqlu"""
-             update asset
-             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
-             where traffic_sign_id = $trafficSignId and created_by = 'automatic_trafficSign_generated'
-          """.execute
-    trafficSignId
-  }
-
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
@@ -583,8 +573,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       verifiedDateFromUpdate match {
         case Some(value) => sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, traffic_sign_id)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, $verifiedDateFromUpdate, $informationSource, $trafficSignId)
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, $verifiedDateFromUpdate, $informationSource)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
@@ -595,8 +585,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     """.execute
         case None => sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, traffic_sign_id)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, #$verifiedDate, $informationSource, $trafficSignId)
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, #$verifiedDate, $informationSource)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
@@ -620,7 +610,15 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       select * from dual
         """.execute
     }
+
+    if(trafficSignId.nonEmpty)
+      insertConnectedAsset(id, trafficSignId.get)
+
     id
+  }
+
+  def insertConnectedAsset(id: Long, connected_id : Long) : Int = {
+    sqlu"""into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".first
   }
 
   /**
@@ -774,6 +772,20 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           and (a.verified_date is NULL OR MONTHS_BETWEEN(sysdate, a.verified_date) > $TwoYears)
           and a.floating = 0
       """.as[(Long, Long)].list
+  }
+
+  def deleteByTrafficSign(queryFilter: String => String) : Unit = {
+    val username = "automatic_trafficSign_deleted"
+    val query = s"""
+          update asset a
+          set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+          where exists ( select 1
+          from connected_asset con
+          join asset aux on aux.id = con.connected_asset_id
+          where a.id = aux.id
+          and aux.asset_type_id = #${TrafficSigns.typeId})
+          """
+    Q.updateNA(queryFilter(query))
   }
 }
 

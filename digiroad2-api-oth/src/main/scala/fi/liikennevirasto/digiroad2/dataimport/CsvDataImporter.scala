@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.Digiroad2Context
-import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
+import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, ManoeuvreService, Measures, ProhibitionService}
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
@@ -64,6 +64,9 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
 
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService
+
+  lazy val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService
+  lazy val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService
 
   private val longValueFieldMappings = Map(
     "koordinaatti x" -> "lon",
@@ -158,6 +161,14 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       TrafficDirection.apply(trafficDirection), bearing, additionalInfo)
   }
 
+  def expireAssetsByMunicipality(municipalitiesToExpire: Seq[Int]) = {
+    municipalitiesToExpire.foreach { municipality =>
+      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withMunicipality(municipality), false)
+      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withMunicipality(municipality))
+      trafficSignService.expireAssetsByMunicipality(municipality)
+    }
+  }
+
   def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Seq[Int]): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
@@ -165,7 +176,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     })
 
     withDynTransaction{
-      trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire.toSet)
+      expireAssetsByMunicipality(municipalitiesToExpire)
       csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
         val csvRow = row.map( r =>(r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)

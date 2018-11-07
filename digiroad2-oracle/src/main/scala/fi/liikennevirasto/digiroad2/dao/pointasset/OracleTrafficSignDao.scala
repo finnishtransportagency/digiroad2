@@ -381,4 +381,12 @@ object OracleTrafficSignDao {
          where a.asset_type_id = ${TrafficSigns.typeId} and a.id = $id
     """.as[Int].firstOption
   }
+
+  def expireAssetsByMunicipality(municipality: Int) = {
+      sqlu"""
+        update asset set valid_to = sysdate - 1/86400
+        where asset_type_id = ${TrafficSigns.typeId}
+        and created_by != 'batch_process_trafficSigns'
+        and municipality_code = #$municipality""".execute
+  }
 }

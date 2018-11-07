@@ -302,8 +302,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       }
       ids
     }
-//    else Seq.empty
-//  }
 
   def createBasedOnTrafficSign(provider: TrafficSignProvider, newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction) {

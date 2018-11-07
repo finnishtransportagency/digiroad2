@@ -242,6 +242,15 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+  def deleteManoeuvreFromSign(filter: String): Unit = {
+    logger.info("expiring manoeuvre")
+      dao.deleteManoeuvreByTrafficSign(filter)
+  }
+
+  def withMunicipality(municipality: Int) : String = {
+    s"a.municipality_code = $municipality"
+  }
+
   def getSourceRoadLinkIdById(id: Long) : Long = {
     withDynTransaction {
       dao.getSourceRoadLinkIdById(id)

@@ -79,7 +79,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
           val newId =  OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
 
-          roadLinkService.getRoadLinkAndComplementaryFromVVH(vvhRoadlink.linkId, newTransaction = false).map{
+          roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).map{
             link =>
               TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, typePublicId).get.propertyValue.toInt).foreach { assetTypeInfo =>
                 println(s"Creating ${assetTypeInfo.layerName} on linkId: ${vvhRoadlink.linkId} from import traffic sign with id $newId")
@@ -100,7 +100,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds)
     trafficSignsIds.foreach { sign =>
       trafficSignService.expireAssetWithoutTransaction(sign, "batch_process_trafficSigns")
-      prohibitionService.deleteFromSign(sign)
+      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(sign))
       manoeuvreService.deleteManoeuvreFromSign(sign)
     }
   }
