@@ -9,15 +9,14 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignCreateAsset, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
 class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOperations {
-
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
   lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService)
   lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService, eventbus)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus, manoeuvreService, prohibitionService)
 
   override def typeId: Int = 300
   override def assetName = "trafficSigns"
@@ -79,19 +78,11 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
           val newId =  OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
 
-          roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).map{
-            link =>
-              TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, typePublicId).get.propertyValue.toInt).foreach { assetTypeInfo =>
-                println(s"Creating ${assetTypeInfo.layerName} on linkId: ${vvhRoadlink.linkId} from import traffic sign with id $newId")
-                try {
-                  createAssetBased(assetTypeInfo.typeId, newId, link)
-                } catch {
-                  case e: AssetCreationException =>
-                    println(s"${assetTypeInfo.layerName} creation error: " + e.response.mkString(" "))
-                }
-              }
-              newId
+          roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
+            val signType = trafficSignService.getTrafficSignsProperties(trafficSign, typePublicId).get.propertyValue.toInt
+            trafficSignService.trafficSignsCreateAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink))
           }
+          newId
       }
     println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
   }
@@ -100,16 +91,10 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds)
     trafficSignsIds.foreach { sign =>
       trafficSignService.expireAssetWithoutTransaction(sign, "batch_process_trafficSigns")
-      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(sign))
-      manoeuvreService.deleteManoeuvreFromSign(sign)
-    }
-  }
 
-  private def createAssetBased(assetType: Int, newId: Long, roadLink: RoadLink):Seq[Long] = {
-    assetType match {
-      case Prohibition.typeId => prohibitionService.createBasedOnTrafficSign(TrafficSignCreateAsset(trafficSignService.getPersistedAssetsByIdsWithoutTransaction(Set(newId)).head, roadLink), newTransaction = false)
-      case Manoeuvres.typeId => manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(trafficSignService.getPersistedAssetsByIdsWithoutTransaction(Set(newId)).head, roadLink), newTransaction = false)
-      case _ => throw new UnsupportedOperationException("Asset property type: " + assetType + " not supported")
+
     }
+    manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds.toSet))
+    prohibitionService.deleteAssetBasedOnSign(prohibitionService.withIds(trafficSignsIds.toSet))
   }
 }

@@ -38,9 +38,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   lazy val userProvider: UserProvider = {
     Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
+  lazy val manoeuvreService = {
+    new ManoeuvreService(roadLinkService)
+  }
+
+  lazy val prohibitionService: ProhibitionService = {
+    new ProhibitionService(roadLinkService, eventbus)
+  }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, userProvider, eventbus, manoeuvreService, prohibitionService)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {

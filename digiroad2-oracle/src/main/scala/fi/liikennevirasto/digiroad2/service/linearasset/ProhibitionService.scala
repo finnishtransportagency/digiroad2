@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignProvider
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -255,47 +255,39 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 
-//  private def shouldCreateProhibition(trafficSign: PersistedTrafficSign): Boolean = {
-//    val prohibitionsGroup =  Seq(TrafficSignType.ClosedToAllVehicles, TrafficSignType.NoPowerDrivenVehicles, TrafficSignType.NoLorriesAndVans, TrafficSignType.NoVehicleCombinations,
-//      TrafficSignType.NoAgriculturalVehicles, TrafficSignType.NoMotorCycles, TrafficSignType.NoMotorSledges, TrafficSignType.NoBuses, TrafficSignType.NoMopeds,
-//      TrafficSignType.NoCyclesOrMopeds, TrafficSignType.NoPedestrians, TrafficSignType.NoPedestriansCyclesMopeds, TrafficSignType.NoRidersOnHorseback)
-//
-//    prohibitionsGroup.contains(trafficSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.headOption.map(t => TrafficSignType(t.propertyValue.toInt)).get)
-//
-//  }
-  private def createProhibitionFromTrafficSign(prohibitionProvider: TrafficSignProvider): Seq[Long] = {
-//    if(shouldCreateProhibition(prohibitionProvider.trafficSign)) {
-      logger.info("Creating prohibition from traffic sign")
-      val tsLinkId = prohibitionProvider.trafficSign.linkId
-      val tsDirection = prohibitionProvider.trafficSign.validityDirection
 
-      if (tsLinkId != prohibitionProvider.sourceRoadLink.linkId)
+  private def createProhibitionFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
+      logger.info("Creating prohibition from traffic sign")
+      val tsLinkId = trafficSignInfo.linkId
+      val tsDirection = trafficSignInfo.validityDirection
+
+      if (tsLinkId != trafficSignInfo.roadLink.linkId)
         throw new ProhibitionCreationException(Set("Wrong roadlink"))
 
       if (SideCode(tsDirection) == SideCode.BothDirections)
         throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
 
-      val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(prohibitionProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
+      val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
 
-      val roadLinks = recursiveGetAdjacent(prohibitionProvider.sourceRoadLink, connectionPoint)
+      val roadLinks = recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
       logger.info("End of fetch for adjacents")
 
-      val trafficSignType = getTrafficSignsProperties(prohibitionProvider.trafficSign, "trafficSigns_type").map { prop => TrafficSignType(prop.propertyValue.toInt) }.get
+      val trafficSignType = TrafficSignType.apply(trafficSignInfo.signType)
       val prohibitionType = ProhibitionClass.fromTrafficSign(trafficSignType)
 
       val prohibitionValue = prohibitionType.values.map { value =>
         ProhibitionValue(value, Set.empty, Set.empty)
       }
 
-      val ids = (roadLinks ++ Seq(prohibitionProvider.sourceRoadLink)).map { roadLink =>
+      val ids = (roadLinks ++ Seq(trafficSignInfo.roadLink)).map { roadLink =>
         val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
-          case SideCode.TowardsDigitizing if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId => (prohibitionProvider.trafficSign.mValue, roadLink.length)
-          case SideCode.AgainstDigitizing if roadLink.linkId == prohibitionProvider.sourceRoadLink.linkId => (0, prohibitionProvider.trafficSign.mValue)
+          case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
+          case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
           case _ => (0, roadLink.length)
 
         }
         val assetId = createWithoutTransaction(Prohibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
-          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(prohibitionProvider.trafficSign.id) )
+          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id) )
 
         logger.info(s"Prohibition created with id: $assetId")
         assetId
@@ -303,14 +295,14 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       ids
     }
 
-  def createBasedOnTrafficSign(provider: TrafficSignProvider, newTransaction: Boolean = true): Seq[Long] = {
+  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction) {
       withDynTransaction {
-        createProhibitionFromTrafficSign(provider)
+        createProhibitionFromTrafficSign(trafficSignInfo)
       }
     }
     else
-      createProhibitionFromTrafficSign(provider)
+      createProhibitionFromTrafficSign(trafficSignInfo)
   }
 
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {

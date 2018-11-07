@@ -85,8 +85,16 @@ object DataFixture {
     new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
   }
 
+  lazy val manoeuvreService: ManoeuvreService = {
+    new ManoeuvreService(roadLinkService)
+  }
+
+  lazy val prohibitionService: ProhibitionService = {
+    new ProhibitionService(roadLinkService, eventbus)
+  }
+
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, userProvider, eventbus, manoeuvreService, prohibitionService)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
@@ -95,14 +103,6 @@ object DataFixture {
 
   lazy val roadAddressService: RoadAddressesService = {
     new RoadAddressesService(viiteClient)
-  }
-
-  lazy val manoeuvreService: ManoeuvreService = {
-    new ManoeuvreService(roadLinkService)
-  }
-
-  lazy val prohibitionService: ProhibitionService = {
-    new ProhibitionService(roadLinkService, eventbus)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
@@ -1431,7 +1431,8 @@ object DataFixture {
         try {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
-              manoeuvreService.createBasedOnTrafficSign(TrafficSignCreateAsset(ts, roadLink))
+              val trafficType = trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt
+              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
               println(s"manoeuvre created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create manouvre")
@@ -1604,7 +1605,8 @@ object DataFixture {
         try {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
-              prohibitionService.createBasedOnTrafficSign(TrafficSignCreateAsset(ts, roadLink))
+              val trafficType = trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt
+              prohibitionService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
               println(s"prohibition created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create prohibition")

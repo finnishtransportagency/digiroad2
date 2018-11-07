@@ -244,7 +244,6 @@ object TrafficSignTypeGroup {
 sealed trait TrafficSignType {
   def value: Int
   def group: TrafficSignTypeGroup
-  def linkedWith: Seq[AssetTypeInfo]
 }
 
 object TrafficSignType {
@@ -267,130 +266,137 @@ object TrafficSignType {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
-  def linkedWith(intValue: Int) : Seq[AssetTypeInfo] = {
-    TrafficSignType.apply(intValue).linkedWith
+  def belongsToManoeuvre(intValue: Int) : Boolean = {
+    val trafficSigns = Seq(NoLeftTurn, NoRightTurn, NoUTurn)
+    trafficSigns.contains(TrafficSignType.apply(intValue))
   }
 
-  case object SpeedLimit extends TrafficSignType { def value = 1;  def group = TrafficSignTypeGroup.SpeedLimits; def linkedWith = Seq(); }
-  case object EndSpeedLimit extends TrafficSignType { def value = 2;  def group = TrafficSignTypeGroup.SpeedLimits; def linkedWith = Seq(); }
-  case object SpeedLimitZone extends TrafficSignType { def value = 3;  def group = TrafficSignTypeGroup.SpeedLimits; def linkedWith = Seq(); }
-  case object EndSpeedLimitZone extends TrafficSignType { def value = 4;  def group = TrafficSignTypeGroup.SpeedLimits; def linkedWith = Seq(); }
-  case object UrbanArea extends TrafficSignType { def value = 5;  def group = TrafficSignTypeGroup.SpeedLimits; def linkedWith = Seq(); }
-  case object EndUrbanArea extends TrafficSignType { def value = 6;  def group = TrafficSignTypeGroup.SpeedLimits; def linkedWith = Seq(); }
-  case object PedestrianCrossing extends TrafficSignType { def value = 7;  def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object MaximumLength extends TrafficSignType { def value = 8;  def group = TrafficSignTypeGroup.MaximumRestrictions; def linkedWith = Seq(); }
-  case object Warning extends TrafficSignType { def value = 9;  def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object NoLeftTurn extends TrafficSignType { def value = 10;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Manoeuvres); }
-  case object NoRightTurn extends TrafficSignType { def value = 11;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Manoeuvres); }
-  case object NoUTurn extends TrafficSignType { def value = 12;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Manoeuvres); }
-  case object ClosedToAllVehicles extends TrafficSignType { def value = 13;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoPowerDrivenVehicles extends TrafficSignType { def value = 14;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoLorriesAndVans extends TrafficSignType { def value = 15;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoVehicleCombinations extends TrafficSignType { def value = 16;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoAgriculturalVehicles extends TrafficSignType { def value = 17;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoMotorCycles extends TrafficSignType { def value = 18;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoMotorSledges extends TrafficSignType { def value = 19;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoVehiclesWithDangerGoods extends TrafficSignType { def value = 20;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object NoBuses extends TrafficSignType { def value = 21;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoMopeds extends TrafficSignType { def value = 22;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoCyclesOrMopeds extends TrafficSignType { def value = 23;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoPedestrians extends TrafficSignType { def value = 24;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoPedestriansCyclesMopeds extends TrafficSignType { def value = 25;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoRidersOnHorseback extends TrafficSignType { def value = 26;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(Prohibition); }
-  case object NoEntry extends TrafficSignType { def value = 27;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object OvertakingProhibited extends TrafficSignType { def value = 28;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object EndProhibitionOfOvertaking extends TrafficSignType { def value = 29;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object NoWidthExceeding extends TrafficSignType { def value = 30;  def group = TrafficSignTypeGroup.MaximumRestrictions; def linkedWith = Seq(); }
-  case object MaxHeightExceeding extends TrafficSignType { def value = 31;  def group = TrafficSignTypeGroup.MaximumRestrictions; def linkedWith = Seq(); }
-  case object MaxLadenExceeding extends TrafficSignType { def value = 32;  def group = TrafficSignTypeGroup.MaximumRestrictions; def linkedWith = Seq(); }
-  case object MaxMassCombineVehiclesExceeding extends TrafficSignType { def value = 33;  def group = TrafficSignTypeGroup.MaximumRestrictions; def linkedWith = Seq(); }
-  case object MaxTonsOneAxleExceeding extends TrafficSignType { def value = 34;  def group = TrafficSignTypeGroup.MaximumRestrictions; def linkedWith = Seq(); }
-  case object MaxTonsOnBogieExceeding extends TrafficSignType { def value = 35;  def group = TrafficSignTypeGroup.MaximumRestrictions; def linkedWith = Seq(); }
-  case object WRightBend extends TrafficSignType { def value = 36;  def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object WLeftBend extends TrafficSignType { def value = 37;  def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object WSeveralBendsRight extends TrafficSignType { def value = 38;  def group = TrafficSignTypeGroup.GeneralWarningSigns ; def linkedWith = Seq(); }
-  case object WSeveralBendsLeft extends TrafficSignType { def value = 39;  def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object WDangerousDescent extends TrafficSignType { def value = 40;  def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object WSteepAscent extends TrafficSignType { def value = 41;  def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object WUnevenRoad extends TrafficSignType { def value = 42;  def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object WChildren extends TrafficSignType { def value = 43;  def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object TelematicSpeedLimit extends TrafficSignType { def value = 44;  def group = TrafficSignTypeGroup.SpeedLimits; def linkedWith = Seq(); }
-  case object FreeWidth extends TrafficSignType { def value = 45;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object FreeHeight extends TrafficSignType { def value = 46;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object HazmatProhibitionA extends TrafficSignType { def value = 47;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object HazmatProhibitionB extends TrafficSignType { def value = 48;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object ValidMonFri extends TrafficSignType { def value = 49;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object ValidSat extends TrafficSignType { def value = 50;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object TimeLimit extends TrafficSignType { def value = 51;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object PassengerCar extends TrafficSignType { def value = 52;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object Bus extends TrafficSignType { def value = 53;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object Lorry extends TrafficSignType { def value = 54;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object Van extends TrafficSignType { def value = 55;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object VehicleForHandicapped extends TrafficSignType { def value = 56;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object MotorCycle extends TrafficSignType { def value = 57;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object Cycle extends TrafficSignType { def value = 58;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object ParkingAgainstFee extends TrafficSignType { def value = 59;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object ObligatoryUseOfParkingDisc extends TrafficSignType { def value = 60;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object AdditionalPanelWithText extends TrafficSignType { def value = 61;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object DrivingInServicePurposesAllowed extends TrafficSignType { def value = 62;  def group = TrafficSignTypeGroup.AdditionalPanels; def linkedWith = Seq(); }
-  case object BusLane extends TrafficSignType { def value = 63;  def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object BusLaneEnds extends TrafficSignType { def value = 64;  def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object TramLane extends TrafficSignType { def value = 65;  def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object BusStopForLocalTraffic extends TrafficSignType { def value = 66;  def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object TramStop extends TrafficSignType { def value = 68;  def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object TaxiStation extends TrafficSignType { def value = 69;  def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object CompulsoryFootPath extends TrafficSignType { def value = 70;  def group = TrafficSignTypeGroup.MandatorySigns; def linkedWith = Seq(); }
-  case object CompulsoryCycleTrack extends TrafficSignType { def value = 71;  def group = TrafficSignTypeGroup.MandatorySigns; def linkedWith = Seq(); }
-  case object CombinedCycleTrackAndFootPath extends TrafficSignType { def value = 72;  def group = TrafficSignTypeGroup.MandatorySigns; def linkedWith = Seq(); }
-  case object DirectionToBeFollowed3 extends TrafficSignType { def value = 74;  def group = TrafficSignTypeGroup.MandatorySigns; def linkedWith = Seq(); }
-  case object CompulsoryRoundabout extends TrafficSignType { def value = 77;  def group = TrafficSignTypeGroup.MandatorySigns; def linkedWith = Seq(); }
-  case object PassThisSide extends TrafficSignType { def value = 78;  def group = TrafficSignTypeGroup.MandatorySigns; def linkedWith = Seq(); }
-  case object TaxiStationZoneBeginning extends TrafficSignType { def value = 80;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object StandingPlaceForTaxi extends TrafficSignType { def value = 81;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object RoadNarrows extends TrafficSignType { def value = 82; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object TwoWayTraffic extends TrafficSignType { def value = 83; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object SwingBridge extends TrafficSignType { def value = 84; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object RoadWorks extends TrafficSignType { def value = 85; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object SlipperyRoad extends TrafficSignType { def value = 86; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object PedestrianCrossingWarningSign extends TrafficSignType { def value = 87; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object Cyclists extends TrafficSignType { def value = 88; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object IntersectionWithEqualRoads extends TrafficSignType { def value = 89; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object LightSignals extends TrafficSignType { def value = 90; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object TramwayLine extends TrafficSignType { def value = 91; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object FallingRocks extends TrafficSignType { def value = 92; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object CrossWind extends TrafficSignType { def value = 93; def group = TrafficSignTypeGroup.GeneralWarningSigns; def linkedWith = Seq(); }
-  case object PriorityRoad extends TrafficSignType { def value = 94; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def linkedWith = Seq(); }
-  case object EndOfPriority extends TrafficSignType { def value = 95; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def linkedWith = Seq(); }
-  case object PriorityOverOncomingTraffic extends TrafficSignType { def value = 96; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def linkedWith = Seq(); }
-  case object PriorityForOncomingTraffic extends TrafficSignType { def value = 97; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def linkedWith = Seq(); }
-  case object GiveWay extends TrafficSignType { def value = 98; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def linkedWith = Seq(); }
-  case object Stop extends TrafficSignType { def value = 99; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns; def linkedWith = Seq(); }
-  case object StandingAndParkingProhibited extends TrafficSignType { def value = 100; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object ParkingProhibited extends TrafficSignType { def value = 101; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object ParkingProhibitedZone extends TrafficSignType { def value = 102; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object EndOfParkingProhibitedZone extends TrafficSignType { def value = 103; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object AlternativeParkingOddDays extends TrafficSignType { def value = 104; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; def linkedWith = Seq(); }
-  case object ParkingLot extends TrafficSignType { def value = 105; def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object OneWayRoad extends TrafficSignType { def value = 106; def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object Motorway extends TrafficSignType { def value = 107; def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object MotorwayEnds extends TrafficSignType { def value = 108; def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object ResidentialZone extends TrafficSignType { def value = 109; def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object EndOfResidentialZone extends TrafficSignType { def value = 110; def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object PedestrianZone extends TrafficSignType { def value = 111; def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object EndOfPedestrianZone extends TrafficSignType { def value = 112; def group = TrafficSignTypeGroup.RegulatorySigns; def linkedWith = Seq(); }
-  case object NoThroughRoad extends TrafficSignType { def value = 113; def group = TrafficSignTypeGroup.InformationSigns; def linkedWith = Seq(); }
-  case object NoThroughRoadRight extends TrafficSignType { def value = 114; def group = TrafficSignTypeGroup.InformationSigns; def linkedWith = Seq(); }
-  case object SymbolOfMotorway extends TrafficSignType { def value = 115; def group = TrafficSignTypeGroup.InformationSigns; def linkedWith = Seq(); }
-  case object Parking extends TrafficSignType { def value = 116; def group = TrafficSignTypeGroup.InformationSigns; def linkedWith = Seq(); }
-  case object ItineraryForIndicatedVehicleCategory extends TrafficSignType { def value = 117; def group = TrafficSignTypeGroup.InformationSigns; def linkedWith = Seq(); }
-  case object ItineraryForPedestrians extends TrafficSignType { def value = 118; def group = TrafficSignTypeGroup.InformationSigns; def linkedWith = Seq(); }
-  case object ItineraryForHandicapped extends TrafficSignType { def value = 119; def group = TrafficSignTypeGroup.InformationSigns; def linkedWith = Seq(); }
-  case object LocationSignForTouristService extends TrafficSignType { def value = 120; def group = TrafficSignTypeGroup.ServiceSigns; def linkedWith = Seq(); }
-  case object FirstAid extends TrafficSignType { def value = 121; def group = TrafficSignTypeGroup.ServiceSigns; def linkedWith = Seq(); }
-  case object FillingStation extends TrafficSignType { def value = 122; def group = TrafficSignTypeGroup.ServiceSigns; def linkedWith = Seq(); }
-  case object Restaurant extends TrafficSignType { def value = 123; def group = TrafficSignTypeGroup.ServiceSigns; def linkedWith = Seq(); }
-  case object PublicLavatory extends TrafficSignType { def value = 124; def group = TrafficSignTypeGroup.ServiceSigns; def linkedWith = Seq(); }
-  case object Unknown extends TrafficSignType { def value = 999;  def group = TrafficSignTypeGroup.Unknown; def linkedWith = Seq(); }
+  def belongsToProhibition(intValue: Int) : Boolean = {
+    val trafficSigns = Seq(ClosedToAllVehicles,  NoPowerDrivenVehicles,  NoLorriesAndVans,  NoVehicleCombinations,  NoAgriculturalVehicles,  NoMotorCycles,  NoMotorSledges,
+      NoBuses,  NoMopeds,  NoCyclesOrMopeds,  NoPedestrians,  NoPedestriansCyclesMopeds,  NoRidersOnHorseback)
+    trafficSigns.contains(TrafficSignType.apply(intValue))
+  }
+
+  case object SpeedLimit extends TrafficSignType { def value = 1;  def group = TrafficSignTypeGroup.SpeedLimits;  }
+  case object EndSpeedLimit extends TrafficSignType { def value = 2;  def group = TrafficSignTypeGroup.SpeedLimits;  }
+  case object SpeedLimitZone extends TrafficSignType { def value = 3;  def group = TrafficSignTypeGroup.SpeedLimits;  }
+  case object EndSpeedLimitZone extends TrafficSignType { def value = 4;  def group = TrafficSignTypeGroup.SpeedLimits;  }
+  case object UrbanArea extends TrafficSignType { def value = 5;  def group = TrafficSignTypeGroup.SpeedLimits;  }
+  case object EndUrbanArea extends TrafficSignType { def value = 6;  def group = TrafficSignTypeGroup.SpeedLimits;  }
+  case object PedestrianCrossing extends TrafficSignType { def value = 7;  def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object MaximumLength extends TrafficSignType { def value = 8;  def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object Warning extends TrafficSignType { def value = 9;  def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object NoLeftTurn extends TrafficSignType { def value = 10;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoRightTurn extends TrafficSignType { def value = 11;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoUTurn extends TrafficSignType { def value = 12;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object ClosedToAllVehicles extends TrafficSignType { def value = 13;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoPowerDrivenVehicles extends TrafficSignType { def value = 14;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoLorriesAndVans extends TrafficSignType { def value = 15;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoVehicleCombinations extends TrafficSignType { def value = 16;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoAgriculturalVehicles extends TrafficSignType { def value = 17;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoMotorCycles extends TrafficSignType { def value = 18;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoMotorSledges extends TrafficSignType { def value = 19;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoVehiclesWithDangerGoods extends TrafficSignType { def value = 20;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoBuses extends TrafficSignType { def value = 21;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoMopeds extends TrafficSignType { def value = 22;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoCyclesOrMopeds extends TrafficSignType { def value = 23;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoPedestrians extends TrafficSignType { def value = 24;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoPedestriansCyclesMopeds extends TrafficSignType { def value = 25;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoRidersOnHorseback extends TrafficSignType { def value = 26;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoEntry extends TrafficSignType { def value = 27;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object OvertakingProhibited extends TrafficSignType { def value = 28;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object EndProhibitionOfOvertaking extends TrafficSignType { def value = 29;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object NoWidthExceeding extends TrafficSignType { def value = 30;  def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxHeightExceeding extends TrafficSignType { def value = 31;  def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxLadenExceeding extends TrafficSignType { def value = 32;  def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxMassCombineVehiclesExceeding extends TrafficSignType { def value = 33;  def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxTonsOneAxleExceeding extends TrafficSignType { def value = 34;  def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object MaxTonsOnBogieExceeding extends TrafficSignType { def value = 35;  def group = TrafficSignTypeGroup.MaximumRestrictions;  }
+  case object WRightBend extends TrafficSignType { def value = 36;  def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object WLeftBend extends TrafficSignType { def value = 37;  def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object WSeveralBendsRight extends TrafficSignType { def value = 38;  def group = TrafficSignTypeGroup.GeneralWarningSigns ;  }
+  case object WSeveralBendsLeft extends TrafficSignType { def value = 39;  def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object WDangerousDescent extends TrafficSignType { def value = 40;  def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object WSteepAscent extends TrafficSignType { def value = 41;  def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object WUnevenRoad extends TrafficSignType { def value = 42;  def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object WChildren extends TrafficSignType { def value = 43;  def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object TelematicSpeedLimit extends TrafficSignType { def value = 44;  def group = TrafficSignTypeGroup.SpeedLimits;  }
+  case object FreeWidth extends TrafficSignType { def value = 45;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object FreeHeight extends TrafficSignType { def value = 46;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object HazmatProhibitionA extends TrafficSignType { def value = 47;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object HazmatProhibitionB extends TrafficSignType { def value = 48;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object ValidMonFri extends TrafficSignType { def value = 49;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object ValidSat extends TrafficSignType { def value = 50;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object TimeLimit extends TrafficSignType { def value = 51;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object PassengerCar extends TrafficSignType { def value = 52;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object Bus extends TrafficSignType { def value = 53;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object Lorry extends TrafficSignType { def value = 54;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object Van extends TrafficSignType { def value = 55;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object VehicleForHandicapped extends TrafficSignType { def value = 56;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object MotorCycle extends TrafficSignType { def value = 57;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object Cycle extends TrafficSignType { def value = 58;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object ParkingAgainstFee extends TrafficSignType { def value = 59;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object ObligatoryUseOfParkingDisc extends TrafficSignType { def value = 60;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object AdditionalPanelWithText extends TrafficSignType { def value = 61;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object DrivingInServicePurposesAllowed extends TrafficSignType { def value = 62;  def group = TrafficSignTypeGroup.AdditionalPanels;  }
+  case object BusLane extends TrafficSignType { def value = 63;  def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object BusLaneEnds extends TrafficSignType { def value = 64;  def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object TramLane extends TrafficSignType { def value = 65;  def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object BusStopForLocalTraffic extends TrafficSignType { def value = 66;  def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object TramStop extends TrafficSignType { def value = 68;  def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object TaxiStation extends TrafficSignType { def value = 69;  def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object CompulsoryFootPath extends TrafficSignType { def value = 70;  def group = TrafficSignTypeGroup.MandatorySigns;  }
+  case object CompulsoryCycleTrack extends TrafficSignType { def value = 71;  def group = TrafficSignTypeGroup.MandatorySigns;  }
+  case object CombinedCycleTrackAndFootPath extends TrafficSignType { def value = 72;  def group = TrafficSignTypeGroup.MandatorySigns;  }
+  case object DirectionToBeFollowed3 extends TrafficSignType { def value = 74;  def group = TrafficSignTypeGroup.MandatorySigns;  }
+  case object CompulsoryRoundabout extends TrafficSignType { def value = 77;  def group = TrafficSignTypeGroup.MandatorySigns;  }
+  case object PassThisSide extends TrafficSignType { def value = 78;  def group = TrafficSignTypeGroup.MandatorySigns;  }
+  case object TaxiStationZoneBeginning extends TrafficSignType { def value = 80;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object StandingPlaceForTaxi extends TrafficSignType { def value = 81;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object RoadNarrows extends TrafficSignType { def value = 82; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object TwoWayTraffic extends TrafficSignType { def value = 83; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object SwingBridge extends TrafficSignType { def value = 84; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object RoadWorks extends TrafficSignType { def value = 85; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object SlipperyRoad extends TrafficSignType { def value = 86; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object PedestrianCrossingWarningSign extends TrafficSignType { def value = 87; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object Cyclists extends TrafficSignType { def value = 88; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object IntersectionWithEqualRoads extends TrafficSignType { def value = 89; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object LightSignals extends TrafficSignType { def value = 90; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object TramwayLine extends TrafficSignType { def value = 91; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object FallingRocks extends TrafficSignType { def value = 92; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object CrossWind extends TrafficSignType { def value = 93; def group = TrafficSignTypeGroup.GeneralWarningSigns;  }
+  case object PriorityRoad extends TrafficSignType { def value = 94; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns;  }
+  case object EndOfPriority extends TrafficSignType { def value = 95; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns;  }
+  case object PriorityOverOncomingTraffic extends TrafficSignType { def value = 96; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns;  }
+  case object PriorityForOncomingTraffic extends TrafficSignType { def value = 97; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns;  }
+  case object GiveWay extends TrafficSignType { def value = 98; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns;  }
+  case object Stop extends TrafficSignType { def value = 99; def group = TrafficSignTypeGroup.PriorityAndGiveWaySigns;  }
+  case object StandingAndParkingProhibited extends TrafficSignType { def value = 100; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object ParkingProhibited extends TrafficSignType { def value = 101; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object ParkingProhibitedZone extends TrafficSignType { def value = 102; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object EndOfParkingProhibitedZone extends TrafficSignType { def value = 103; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object AlternativeParkingOddDays extends TrafficSignType { def value = 104; def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions;  }
+  case object ParkingLot extends TrafficSignType { def value = 105; def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object OneWayRoad extends TrafficSignType { def value = 106; def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object Motorway extends TrafficSignType { def value = 107; def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object MotorwayEnds extends TrafficSignType { def value = 108; def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object ResidentialZone extends TrafficSignType { def value = 109; def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object EndOfResidentialZone extends TrafficSignType { def value = 110; def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object PedestrianZone extends TrafficSignType { def value = 111; def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object EndOfPedestrianZone extends TrafficSignType { def value = 112; def group = TrafficSignTypeGroup.RegulatorySigns;  }
+  case object NoThroughRoad extends TrafficSignType { def value = 113; def group = TrafficSignTypeGroup.InformationSigns;  }
+  case object NoThroughRoadRight extends TrafficSignType { def value = 114; def group = TrafficSignTypeGroup.InformationSigns;  }
+  case object SymbolOfMotorway extends TrafficSignType { def value = 115; def group = TrafficSignTypeGroup.InformationSigns;  }
+  case object Parking extends TrafficSignType { def value = 116; def group = TrafficSignTypeGroup.InformationSigns;  }
+  case object ItineraryForIndicatedVehicleCategory extends TrafficSignType { def value = 117; def group = TrafficSignTypeGroup.InformationSigns;  }
+  case object ItineraryForPedestrians extends TrafficSignType { def value = 118; def group = TrafficSignTypeGroup.InformationSigns;  }
+  case object ItineraryForHandicapped extends TrafficSignType { def value = 119; def group = TrafficSignTypeGroup.InformationSigns;  }
+  case object LocationSignForTouristService extends TrafficSignType { def value = 120; def group = TrafficSignTypeGroup.ServiceSigns;  }
+  case object FirstAid extends TrafficSignType { def value = 121; def group = TrafficSignTypeGroup.ServiceSigns;  }
+  case object FillingStation extends TrafficSignType { def value = 122; def group = TrafficSignTypeGroup.ServiceSigns;  }
+  case object Restaurant extends TrafficSignType { def value = 123; def group = TrafficSignTypeGroup.ServiceSigns;  }
+  case object PublicLavatory extends TrafficSignType { def value = 124; def group = TrafficSignTypeGroup.ServiceSigns;  }
+  case object Unknown extends TrafficSignType { def value = 999;  def group = TrafficSignTypeGroup.Unknown;  }
 }
 
 

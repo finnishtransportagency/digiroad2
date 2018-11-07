@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturda
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignCreateAsset, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
@@ -48,11 +48,8 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
+  val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
 
-  val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus) {
-    override def withDynTransaction[T](f: => T): T = f
-    override def withDynSession[T](f: => T): T = f
-  }
 
   object ServiceWithDao extends ProhibitionService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -608,12 +605,18 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
         override def withDynTransaction[T](f: => T): T = f
         override def vvhClient: VVHClient = mockVVHClient
       }
+
+      val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus, mockManoeuvreService, service) {
+        override def withDynTransaction[T](f: => T): T = f
+        override def withDynSession[T](f: => T): T = f
+      }
+
       val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100.0))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink = RoadLink(1001, Seq(Point(0, 100), Point(0, 250)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 250))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink1 =  RoadLink(1002, Seq(Point(0, 250), Point(0, 500)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val properties = Set(
-        SimpleProperty("trafficSigns_type", List(PropertyValue("13"))))
+        SimpleProperty("trafficSigns_type", List(PropertyValue(TrafficSignType.ClosedToAllVehicles.value.toString))))
 
       when(mockRoadLinkService.getRoadLinkEndDirectionPoints(any[RoadLink], any[Option[Int]])).thenReturn(Seq(Point(0, 100)))
 
@@ -625,7 +628,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, TrafficSignType.ClosedToAllVehicles.value , asset.mValue, sourceRoadLink), false)
       val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
       prohibitions.length should be (3)
 
@@ -647,19 +650,24 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
         override def withDynTransaction[T](f: => T): T = f
-
         override def vvhClient: VVHClient = mockVVHClient
       }
+
+      val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus, mockManoeuvreService, service) {
+        override def withDynTransaction[T](f: => T): T = f
+        override def withDynSession[T](f: => T): T = f
+      }
+
       val sourceRoadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100.0))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val properties = Set(
-        SimpleProperty("trafficSigns_type", List(PropertyValue("10"))))
+        SimpleProperty("trafficSigns_type", List(PropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
 
       when(mockRoadLinkService.getAdjacent(1002, Seq(Point(0, 500)), false)).thenReturn(Seq.empty)
 
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, TrafficSignType.NoLeftTurn.value , asset.mValue, sourceRoadLink), false)
       prohibitionIds.length should be(0)
     }
   }
@@ -670,12 +678,18 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
         override def withDynTransaction[T](f: => T): T = f
         override def vvhClient: VVHClient = mockVVHClient
       }
+
+      val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus, mockManoeuvreService, service) {
+        override def withDynTransaction[T](f: => T): T = f
+        override def withDynSession[T](f: => T): T = f
+      }
+
       val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100.0))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI"->"RoadName_fi"))
       val roadLink = RoadLink(1001, Seq(Point(0, 100), Point(0, 250)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 250))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI"->"RoadName_fi"))
       val roadLink1 =  RoadLink(1002, Seq(Point(0, 250), Point(0, 500)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI"->"RoadName"))
 
       val properties = Set(
-        SimpleProperty("trafficSigns_type", List(PropertyValue("13"))))
+        SimpleProperty("trafficSigns_type", List(PropertyValue( TrafficSignType.ClosedToAllVehicles.value.toString))))
 
       when(mockRoadLinkService.getRoadLinkEndDirectionPoints(any[RoadLink], any[Option[Int]])).thenReturn(Seq(Point(0, 100)))
 
@@ -686,7 +700,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignCreateAsset(asset, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, TrafficSignType.ClosedToAllVehicles.value , asset.mValue, sourceRoadLink), false)
       val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
       prohibitions.length should be (2)
 

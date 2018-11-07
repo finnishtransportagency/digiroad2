@@ -4,13 +4,12 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.asset.TrafficSignType
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePointMassLimitationDao, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -165,65 +164,26 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
   }
 }
 
-class ProhibitionSave(prohibitionProvider: ProhibitionService) extends Actor {
+class TrafficSignCreateAssets(trafficSignService: TrafficSignService) extends Actor {
   def receive = {
-    case x: TrafficSignProvider =>
-      prohibitionProvider.createBasedOnTrafficSign(x)
-    case _ => println("Prohibition not created")
+    case x: TrafficSignProvider => trafficSignService.getPersistedAssetsByIds(Set(x.id)).headOption match {
+      case Some(trSign) =>
+        val trafficType = trafficSignService.getTrafficSignsProperties(trSign, trafficSignService.typePublicId).get.propertyValue.toInt
+        trafficSignService.trafficSignsCreateAssets(TrafficSignInfo(trSign.id, trSign.linkId, trSign.validityDirection, trafficType, trSign.mValue, x.roadLink))
+      case _ => println("Nonexistent traffic Sign")
+    }
+    case _ => println("trafficSignCreateAssets: Received unknown message")
   }
 }
 
-class ProhibitionExpire(prohibitionService: ProhibitionService) extends Actor {
-  def receive = {
-    case x: Long => prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(x.asInstanceOf[Long]))
-    case _ => println("Prohibition not created")
-  }
-}
 
-class TrafficSignChangesAssets(trafficSignService: TrafficSignService) extends Actor {
+class TrafficSignExpireAssets(trafficSignService: TrafficSignService) extends Actor {
   def receive = {
-    case x: TrafficSignProviderService =>
-      x.expiredId match {
-        case Some(expireId) => trafficSignService.getTrafficType(expireId) match {
-          case Some(trafficSignType) => TrafficSignType.linkedWith(trafficSignType).foreach( assetTypeInfo=>
-            trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":expire", expireId))
-          case _ => println("Asset not expired")
-          }
-        case _ => //None
+    case x: Long => trafficSignService.getTrafficType(x) match {
+      case Some(trafficType) => trafficSignService.trafficSignsDeleteAssets(x, trafficType)
+      case _ => println("Nonexistent traffic Sign Type")
       }
-
-      x.trafficSignInfo match {
-        case Some(trafficSignProviderCreate) => trafficSignService.getPersistedAssetsByIds(Set(trafficSignProviderCreate.id)).headOption match {
-          case Some(trafficSign) => TrafficSignType.linkedWith(trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt).foreach {
-            assetTypeInfo =>
-              trafficSignService.eventBus.publish(assetTypeInfo.layerName + ":create", TrafficSignCreateAsset(trafficSign, trafficSignProviderCreate.roadLink))}
-          case _ => println("Asset not created")
-        }
-        case _ => //None
-      }
-  }
-}
-
-case class ManoeuvreSave(manoeuvreService: ManoeuvreService) extends Actor {
-
-  val logger = LoggerFactory.getLogger(getClass)
-
-  def receive = {
-    case x: TrafficSignProvider =>
-      try {
-        manoeuvreService.createBasedOnTrafficSign(x)
-      }catch {
-        case e: AssetCreationException =>
-          logger.error("Manoeuvre creation error: " + e.response.mkString(" "))
-      }
-    case _ => println("Manoeuvre not created")
-  }
-}
-
-case class ManoeuvreExpire(manoeuvreService: ManoeuvreService) extends Actor {
-  def receive = {
-    case x: Long => manoeuvreService.deleteManoeuvreFromSign(x.asInstanceOf[Long])
-    case _ => println("Manoeuvre not expired")
+    case _ => println("trafficSignExpireAssets: Received unknown message")
   }
 }
 
@@ -302,20 +262,11 @@ object Digiroad2Context {
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
-  val prohibitionSave = system.actorOf(Props(classOf[ProhibitionSave], prohibitionService), name = "prohibitionSave")
-  eventbus.subscribe(prohibitionSave, "prohibition:create")
+  val trafficSignExpire = system.actorOf(Props(classOf[TrafficSignExpireAssets], trafficSignService), name ="trafficSignExpire" )
+  eventbus.subscribe(trafficSignExpire, "trafficSign:expire")
 
-  val prohibitionExpire = system.actorOf(Props(classOf[ProhibitionExpire], prohibitionService), name = "prohibitionExpire")
-  eventbus.subscribe(prohibitionExpire, "prohibition:expire")
-
-  val manoeuvreSave = system.actorOf(Props(classOf[ManoeuvreSave], manoeuvreService), name ="manoeuvreSave" )
-  eventbus.subscribe(manoeuvreSave, "manoeuvre:create")
-
-  val manoeuvreExpire = system.actorOf(Props(classOf[ManoeuvreExpire], manoeuvreService), name ="manoeuvreExpire" )
-  eventbus.subscribe(manoeuvreExpire, "manoeuvre:expire")
-
-  val trafficSignChangesAssets = system.actorOf(Props(classOf[TrafficSignChangesAssets], trafficSignService), name ="trafficSignChangesAssets" )
-  eventbus.subscribe(trafficSignChangesAssets, "assetOperations")
+  val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignService), name ="trafficSignCreate" )
+  eventbus.subscribe(trafficSignCreate, "trafficSign:create")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -463,7 +414,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, userProvider, eventbus, manoeuvreService, prohibitionService)
   }
 
   lazy val manoeuvreService = {

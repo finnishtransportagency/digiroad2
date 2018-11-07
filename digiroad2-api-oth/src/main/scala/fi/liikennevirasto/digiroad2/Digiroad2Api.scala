@@ -1548,21 +1548,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
-  get("/municipalities/byUser") {
-    val userAuthorizedMunicipalities = userProvider.getCurrentUser().configuration.authorizedMunicipalities
-    municipalityService.getMunicipalities.filter(m => userAuthorizedMunicipalities.contains(m._1)).map {
-      case (id, name) =>
-        Map(
-          "id" -> id,
-          "name" -> name
-        )
-    }
-  }
+//  get("/municipalities/byUser") {
+//    val user = userProvider.getCurrentUser()
+//    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+//    municipalityService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
+//      case (id, name) =>
+//        Map(
+//          "id" -> id,
+//          "name" -> name
+//        )
+//    }
+//  }
 
-  get("/municipalities/unverified") {
+  get("/municipalities/byUser") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-    linearAssetService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
+    municipalityService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
       Map("id" -> municipality.id,
         "name" -> municipality.name)
     }

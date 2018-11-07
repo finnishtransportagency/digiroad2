@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignProvider
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -251,6 +251,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     s"a.municipality_code = $municipality"
   }
 
+  def withIds(ids: Set[Long]) : String = {
+    s"a.id in (${ids.mkString(",")})"
+  }
+
   def getSourceRoadLinkIdById(id: Long) : Long = {
     withDynTransaction {
       dao.getSourceRoadLinkIdById(id)
@@ -263,60 +267,53 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def createManoeuvreFromTrafficSign(manouvreProvider: TrafficSignProvider): Seq[Long] = {
+  private def createManoeuvreFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
     logger.info("creating manoeuvre from traffic sign")
-    val tsLinkId = manouvreProvider.trafficSign.linkId
-    val tsDirection = manouvreProvider.trafficSign.validityDirection
+    val tsLinkId = trafficSignInfo.linkId
+    val tsDirection = trafficSignInfo.validityDirection
 
-    if (tsLinkId != manouvreProvider.sourceRoadLink.linkId)
+    if (tsLinkId != trafficSignInfo.roadLink.linkId)
       throw new AssetCreationException(Set("Wrong roadlink"))
 
     if (SideCode(tsDirection) == SideCode.BothDirections)
       throw new AssetCreationException(Set("Isn't possible to create a manoeuvre based on a traffic sign with BothDirections"))
 
-    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(manouvreProvider.sourceRoadLink, Some(tsDirection)).headOption.getOrElse(throw new AssetCreationException(Set("Connection Point not valid")))
+    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new AssetCreationException(Set("Connection Point not valid")))
 
     val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint)
-    val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
+    val manoeuvreInit = trafficSignInfo.roadLink +: intermediates
 
-    val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
-      val tsType = TrafficSignType(prop.propertyValue.toInt)
-
-      tsType match {
+    val roadLinks =
+        TrafficSignType(trafficSignInfo.signType) match {
 
         case TrafficSignType.NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
 
         case TrafficSignType.NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(manoeuvreInit.last, adjacents)
 
-        case TrafficSignType.NoUTurn => {
+        case TrafficSignType.NoUTurn =>
           val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
           val (int, newAdjacents, _)= recursiveGetAdjacent(firstLeftMost.linkId, getOpositePoint(firstLeftMost.geometry, adjacentConnectPoint))
           (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
-        }
+
         case _ => Seq.empty[RoadLink]
       }
-    }.getOrElse(Seq.empty[RoadLink])
 
-    if(!validateManoeuvre(manouvreProvider.sourceRoadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
+
+    if(!validateManoeuvre(trafficSignInfo.roadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
       throw new AssetCreationException(Set("Manoeuvre creation not valid"))
     else
-      Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(manouvreProvider.trafficSign.id)), roadLinks))
+      Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSignInfo.id)), roadLinks))
 
   }
 
-  def createBasedOnTrafficSign(manouvreProvider: TrafficSignProvider, newTransaction: Boolean = true): Seq[Long] = {
+  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction) {
       withDynTransaction {
-        createManoeuvreFromTrafficSign(manouvreProvider)
+        createManoeuvreFromTrafficSign(trafficSignInfo)
       }
     }
     else
-      createManoeuvreFromTrafficSign(manouvreProvider)
-  }
-
-  //TODO remove this method and use the one that exist on trafficService
-  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+      createManoeuvreFromTrafficSign(trafficSignInfo)
   }
 
   private def getOpositePoint(geometry: Seq[Point], point: Point) = {
