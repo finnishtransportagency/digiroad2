@@ -444,7 +444,7 @@
     });
 
     this.getUnverifiedMunicipalities = function() {
-      return $.getJSON('api/municipalities/unverified');
+      return $.getJSON('api/municipalities/byUser');
     };
 
     this.getMunicipalitiesWithUnknowns = function(){

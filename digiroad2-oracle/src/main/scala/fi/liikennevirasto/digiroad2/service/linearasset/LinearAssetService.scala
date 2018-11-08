@@ -793,12 +793,6 @@ trait LinearAssetOperations {
     ids
   }
 
-  def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[MunicipalityInfo] = {
-    withDynSession {
-      municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
-    }
-  }
-
   def validateAssetValue(value: Option[Value]): Unit = {}
 }
 
