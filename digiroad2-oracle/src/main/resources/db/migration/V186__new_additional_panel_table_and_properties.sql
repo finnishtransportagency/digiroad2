@@ -6,7 +6,7 @@ CREATE TABLE additional_panel(
 	traffic_sign_value number,
 	traffic_sign_info varchar(128),
 	form_position number not null
-)
+);
 
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 VALUES (primary_key_seq.nextval,'Lisäkilpi','db_migration_v186', sysdate);
