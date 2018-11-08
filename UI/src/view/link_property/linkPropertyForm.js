@@ -23,6 +23,18 @@
       TowardsDigitizing: 'Digitointisuuntaan'
     };
 
+    var accessRightIds = [
+      [1, 'Tieto toimitettu, rajoituksia'],
+      [2, 'Tieto toimitettu, ei rajoituksia'],
+      [3, 'Ei toimitettu']
+    ];
+
+    var localizedAccessRightIds = {
+      DeliveredWithRestrictions:  'Tieto toimitettu, rajoituksia',
+      DeliveredWithoutRestrictions: 'Tieto toimitettu, ei rajoituksia',
+      NotDelivered: 'Ei toimitettu'
+    };
+
     var linkTypes = [
       [1, 'Moottoritie'],
       [2, 'Moniajoratainen tie'],
@@ -85,21 +97,26 @@
       return linkSource && linkSource[1];
     };
 
+    var getAccessRight = function(accessRight) {
+      var localizedAccessRightIds = _.find(accessRightIds, function(x) { return x[0] === accessRight; });
+      return localizedAccessRightIds && localizedAccessRightIds[1];
+    };
+
     var checkIfMultiSelection = function(mmlId){
-      if(selectedLinkProperty.count() == 1){
+      if(selectedLinkProperty.count() === 1){
         return mmlId;
       }
     };
 
     var staticField = function(labelText, dataField) {
       return '<div class="form-group">' +
-               '<label class="control-label">' + labelText + '</label>' +
-               '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
-             '</div>';
+        '<label class="control-label">' + labelText + '</label>' +
+        '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+        '</div>';
     };
 
     var title = function() {
-      if (selectedLinkProperty.count() == 1) {
+      if (selectedLinkProperty.count() === 1) {
         return '<span>Linkin ID: ' + _.head(selectedLinkProperty.get()).linkId + '</span>';
       } else {
         return '<span>Ominaisuustiedot</span>';
@@ -108,9 +125,11 @@
 
     var buttons =
       '<div class="link-properties form-controls">' +
-        '<button class="save btn btn-primary" disabled>Tallenna</button>' +
-        '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+      '<button class="save btn btn-primary" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
+
+
     var template = function(options) {
       return _.template('' +
         '<header>' +
@@ -138,7 +157,7 @@
               '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
               '<select class="form-control traffic-direction" style="display: none"><%= trafficDirectionOptionTags %></select>' +
               '<label class="control-label">Tielinkin tyyppi</label>' +
-              '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
+              '<p class="form-control-static"><%- localizedAccessRightIds %></p>' +
               '<select class="form-control link-types" style="display: none"><%= linkTypesOptionTags %></select>' +
             '</div>' +
             staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
@@ -155,6 +174,19 @@
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
             staticField('MML ID', 'mmlId') +
             staticField('Linkin tila', 'constructionType') +
+            '<div class="form-group editable private-road" style="display: none">' +
+              '<div class="form-group editable">' +
+                '<label class="control-label">Tiekunnan nimi</label>' +
+                '<input type="text" class="form-control private-road-association" id="private_road_association" style="display: none">' +
+              '</div>' +
+              '<div class="form-group editable">' +
+                '<label class="control-label">Lisätieto </label>' +
+                '<input type="text" class="form-control additional-info" id="additional_info" style="display: none">' +
+              '</div>' +
+              '<label class="control-label">Käyttöoikeustunnus</label>' +
+              '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
+              '<select class="form-control access-right" style="display: none"><%= accessRightIdsOptionTags %></select>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
@@ -165,7 +197,7 @@
       if(notRendered) {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
-            '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
+          '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
           '</div>');
       }
     };
@@ -180,77 +212,117 @@
       }
     };
 
-    function controlAdministrativeClasses(administrativeClass) {
-      $("#adminClass").prop('disabled', administrativeClass == 'State');
+    var controlAdministrativeClasses = function(administrativeClass) {
+      $("#adminClass").prop('disabled', administrativeClass === 'State');
       $("#adminClass").find("option[value = State ]").prop('disabled', true);
-    }
+    };
 
-    function controlAdministrativeClassesOnToggle(selectedLinkProperty) {
+    var controlAdministrativeClassesOnToggle = function(selectedLinkProperty) {
       var disabled = !_.isEmpty(_.filter(selectedLinkProperty.get(), function (link) {
         return link.administrativeClass === "State";
       }));
       $("#adminClass").prop('disabled', disabled);
       $("#adminClass").find("option[value = State ]").prop('disabled', true);
-    }
+    };
 
-    function validateAdministrativeClass(selectedLinkProperty, authorizationPolicy){
+    var validateAdministrativeClass = function(selectedLinkProperty, authorizationPolicy){
       var selectedAssets = _.filter(selectedLinkProperty.get(), function (selected) {
         return !authorizationPolicy.formEditModeAccess(selected);
       });
       return !_.isEmpty(selectedAssets);
-    }
+    };
+
+    var showAccessRightsOnForm = function (linkProperty) {
+      return linkProperty.administrativeClass === 'Private';
+    };
+
+    var validadeSelectedAccessRight = function(selectedLinkProperty){
+     return !_.isEmpty(_.filter(selectedLinkProperty.get(), function (link) {
+        return link.administrativeClass === "Private";
+      }));
+    };
+
+    var constructLinkProperty = function(linkProperty) {
+      return  _.assign ( {}, linkProperty, {
+        modifiedBy : linkProperty.modifiedBy || '-',
+        modifiedAt : linkProperty.modifiedAt || '' ,
+        roadNameFi : linkProperty.roadNameFi || '',
+        roadNameSe : linkProperty.roadNameSe || '',
+        roadNameSm : linkProperty.roadNameSm || '',
+        roadNumber : linkProperty.roadNumber || '',
+        roadPartNumber : linkProperty.roadPartNumber || '',
+        localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
+        localizedAdministrativeClass : localizedAdministrativeClasses[linkProperty.administrativeClass] || 'Tuntematon',
+        localizedAccessRightIds: localizedAccessRightIds[linkProperty.accessRight] || 'Tuntematon',
+        localizedTrafficDirection : localizedTrafficDirections[linkProperty.trafficDirection] || 'Tuntematon',
+        localizedLinkTypes : getLocalizedLinkType(linkProperty.linkType) || 'Tuntematon',
+        addressNumbersRight : addressNumberString(linkProperty.minAddressNumberRight, linkProperty.maxAddressNumberRight),
+        addressNumbersLeft : addressNumberString(linkProperty.minAddressNumberLeft, linkProperty.maxAddressNumberLeft),
+        track : isNaN(parseFloat(linkProperty.track)) ? '' : linkProperty.track,
+        startAddrMValue : isNaN(parseFloat(linkProperty.startAddrMValue)) ? '' : linkProperty.startAddrMValue,
+        endAddrMValue : isNaN(parseFloat(linkProperty.endAddrMValue)) ? '' : linkProperty.endAddrMValue,
+        verticalLevel : getVerticalLevelType(linkProperty.verticalLevel) || '',
+        constructionType : getConstructionType(linkProperty.constructionType) || '',
+        linkSource : getLinkSource(linkProperty.linkSource) || '',
+        mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
+        accessRight: getAccessRight(linkProperty.accessRight) || 'Tuntematon',
+        privateRoadAssociation: linkProperty.privateRoadAssociation || '-',
+        additionalInfo:  linkProperty.additionalInfo || '-'
+      });
+    };
 
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
+
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
+        rootElement.find('input').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
+        rootElement.find('.editable.private-road').toggle(validadeSelectedAccessRight(selectedLinkProperty));
       };
-      eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-        linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
-        linkProperties.modifiedAt = linkProperties.modifiedAt || '';
-        linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';
-        linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
-        linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
-        linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection] || 'Tuntematon';
-        linkProperties.roadNameFi = linkProperties.roadNameFi || '';
-        linkProperties.roadNameSe = linkProperties.roadNameSe || '';
-        linkProperties.roadNameSm = linkProperties.roadNameSm || '';
-        linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
-        linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
-        linkProperties.roadNumber = linkProperties.roadNumber || '';
-        linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
-        linkProperties.track = isNaN(parseFloat(linkProperties.track)) ? '' : linkProperties.track;
-        linkProperties.startAddrMValue = isNaN(parseFloat(linkProperties.startAddrMValue)) ? '' : linkProperties.startAddrMValue;
-        linkProperties.endAddrMValue = isNaN(parseFloat(linkProperties.endAddrMValue)) ? '' : linkProperties.endAddrMValue;
-        linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
-        linkProperties.constructionType = getConstructionType(linkProperties.constructionType) || '';
-        linkProperties.linkSource = getLinkSource(linkProperties.linkSource) || '';
-        linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
+
+      eventbus.on('linkProperties:selected linkProperties:cancelled', function(properties) {
+        var linkProperty = constructLinkProperty(properties);
+
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
-          var selected = key === linkProperties.trafficDirection ? " selected" : "";
+          var selected = key === linkProperty.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
         }).join('');
+
         var functionalClassOptionTags = _.map(functionalClasses, function(value) {
-          var selected = value == linkProperties.functionalClass ? " selected" : "";
+          var selected = value === linkProperty.functionalClass ? " selected" : "";
           return '<option value="' + value + '"' + selected + '>' + value + '</option>';
         }).join('');
+
         var linkTypesOptionTags = _.map(linkTypes, function(value) {
-          var selected = value[0] == linkProperties.linkType ? " selected" : "";
+          var selected = value[0] === linkProperty.linkType ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
+
         var administrativeClassOptionTags = _.map(administrativeClasses, function(value) {
-          var selected = value[0] == linkProperties.administrativeClass ? " selected" : "";
+          var selected = value[0] === linkProperty.administrativeClass ? " selected" : "";
+          return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>' ;
+        }).join('');
+
+        //TODO: check when backend is done
+        var accessRightIdsOptionTags = _.map( accessRightIds, function(value) {
+          var selected = value[0] === linkProperty.accessRight ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>' ;
         }).join('');
 
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
-        var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-                                    functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-                                    linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags),
-                                    administrativeClassOptionTags : defaultUnknownOptionTag.concat(administrativeClassOptionTags)}};
-        rootElement.html(template(options)(linkProperties));
+
+        var options =  {  imports: {
+            trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+            functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+            linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags),
+            administrativeClassOptionTags : defaultUnknownOptionTag.concat(administrativeClassOptionTags),
+            accessRightIdsOptionTags: defaultUnknownOptionTag.concat(accessRightIdsOptionTags)}
+        };
+
+        rootElement.html(template(options)(linkProperty));
+
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
@@ -263,24 +335,31 @@
         rootElement.find('.administrative-class').change(function(event) {
           selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
         });
+        rootElement.find('.access-right').change(function(event) {
+          selectedLinkProperty.setAccessRight($(event.currentTarget).find(':selected').attr('value'));
+        });
+        rootElement.find('.private-road-association').keyup(function(event) {
+          selectedLinkProperty.setPrivateRoadAssociation($(event.currentTarget).val());
+        });
+        rootElement.find('.additional-info').keyup(function(event) {
+          selectedLinkProperty.setAdditionalInfo($(event.currentTarget).val());
+        });
+
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || applicationModel.isReadOnly());
-        controlAdministrativeClasses(linkProperties.administrativeClass);
+        controlAdministrativeClasses(linkProperty.administrativeClass);
       });
+
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
       });
+
       eventbus.on('linkProperties:unselected', function() {
         rootElement.empty();
       });
+
       eventbus.on('application:readOnly', function(readOnly){
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || readOnly);
         controlAdministrativeClassesOnToggle(selectedLinkProperty);
-      });
-      rootElement.on('click', '.link-properties button.save', function() {
-        selectedLinkProperty.save();
-      });
-      rootElement.on('click', '.link-properties button.cancel', function() {
-        selectedLinkProperty.cancel();
       });
 
       eventbus.on('layer:selected', function(layerName) {
@@ -292,8 +371,15 @@
           $('#incomplete-links-link').parent().remove();
         }
       });
-    };
 
+      rootElement.on('click', '.link-properties button.save', function() {
+        selectedLinkProperty.save();
+      });
+
+      rootElement.on('click', '.link-properties button.cancel', function() {
+        selectedLinkProperty.cancel();
+      });
+    };
     bindEvents();
   };
 })(this);
