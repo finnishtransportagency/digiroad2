@@ -97,8 +97,8 @@
       return linkSource && linkSource[1];
     };
 
-    var getAccessRight = function(accessRight) {
-      var localizedAccessRightIds = _.find(accessRightIds, function(x) { return x[0] === accessRight; });
+    var getAccessRight = function(accessRightId) {
+      var localizedAccessRightIds = _.find(accessRightIds, function(x) { return x[0] === accessRightId; });
       return localizedAccessRightIds && localizedAccessRightIds[1];
     };
 
@@ -185,7 +185,7 @@
               '</div>' +
               '<label class="control-label">Käyttöoikeustunnus</label>' +
               '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
-              '<select class="form-control access-right" style="display: none"><%= accessRightIdsOptionTags %></select>' +
+              '<select class="form-control access-right-id" style="display: none"><%= accessRightIdsOptionTags %></select>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -253,7 +253,7 @@
         roadPartNumber : linkProperty.roadPartNumber || '',
         localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
         localizedAdministrativeClass : localizedAdministrativeClasses[linkProperty.administrativeClass] || 'Tuntematon',
-        localizedAccessRightIds: localizedAccessRightIds[linkProperty.accessRight] || 'Tuntematon',
+        localizedAccessRightIds: localizedAccessRightIds[linkProperty.accessRightID] || 'Tuntematon',
         localizedTrafficDirection : localizedTrafficDirections[linkProperty.trafficDirection] || 'Tuntematon',
         localizedLinkTypes : getLocalizedLinkType(linkProperty.linkType) || 'Tuntematon',
         addressNumbersRight : addressNumberString(linkProperty.minAddressNumberRight, linkProperty.maxAddressNumberRight),
@@ -265,7 +265,7 @@
         constructionType : getConstructionType(linkProperty.constructionType) || '',
         linkSource : getLinkSource(linkProperty.linkSource) || '',
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
-        accessRight: getAccessRight(linkProperty.accessRight) || 'Tuntematon',
+        accessRightID: getAccessRight(linkProperty.accessRightID) || 'Tuntematon',
         privateRoadAssociation: linkProperty.privateRoadAssociation || '-',
         additionalInfo:  linkProperty.additionalInfo || '-'
       });
@@ -307,7 +307,7 @@
 
         //TODO: check when backend is done
         var accessRightIdsOptionTags = _.map( accessRightIds, function(value) {
-          var selected = value[0] === linkProperty.accessRight ? " selected" : "";
+          var selected = value[0] === linkProperty.accessRightID ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>' ;
         }).join('');
 
@@ -335,7 +335,7 @@
         rootElement.find('.administrative-class').change(function(event) {
           selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
         });
-        rootElement.find('.access-right').change(function(event) {
+        rootElement.find('.access-right-id').change(function(event) {
           selectedLinkProperty.setAccessRight($(event.currentTarget).find(':selected').attr('value'));
         });
         rootElement.find('.private-road-association').keyup(function(event) {
