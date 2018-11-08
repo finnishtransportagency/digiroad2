@@ -177,14 +177,16 @@
             '<div class="form-group editable private-road" style="display: none">' +
               '<div class="form-group editable">' +
                 '<label class="control-label">Tiekunnan nimi</label>' +
-                '<input type="text" class="form-control private-road-association" id="private_road_association" style="display: none">' +
+                '<p class="form-control-static"><%- additionalInfo %></p>' +
+                '<input type="text" class="form-control private-road-association" id="private_road_association" style="display: none" value="<%- additionalInfo %>">' +
               '</div>' +
               '<div class="form-group editable">' +
                 '<label class="control-label">Lisätieto </label>' +
-                '<input type="text" class="form-control additional-info" id="additional_info" style="display: none">' +
-              '</div>' +
+                '<p class="form-control-static"><%- privateRoadAssociation %></p>' +
+                '<input type="text" class="form-control additional-info" id="additional_info" style="display: none" value="<%- privateRoadAssociation %>">' +
+                '</div>' +
               '<label class="control-label">Käyttöoikeustunnus</label>' +
-              '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
+              '<p class="form-control-static"><%- localizedAccessRightIds %></p>' +
               '<select class="form-control access-right-id" style="display: none"><%= accessRightIdsOptionTags %></select>' +
             '</div>' +
           '</div>' +
@@ -253,7 +255,7 @@
         roadPartNumber : linkProperty.roadPartNumber || '',
         localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
         localizedAdministrativeClass : localizedAdministrativeClasses[linkProperty.administrativeClass] || 'Tuntematon',
-        localizedAccessRightIds: localizedAccessRightIds[linkProperty.accessRightID] || 'Tuntematon',
+        localizedAccessRightIds: getAccessRight(parseInt(linkProperty.accessRightID)) || 'Tuntematon',
         localizedTrafficDirection : localizedTrafficDirections[linkProperty.trafficDirection] || 'Tuntematon',
         localizedLinkTypes : getLocalizedLinkType(linkProperty.linkType) || 'Tuntematon',
         addressNumbersRight : addressNumberString(linkProperty.minAddressNumberRight, linkProperty.maxAddressNumberRight),
@@ -265,9 +267,9 @@
         constructionType : getConstructionType(linkProperty.constructionType) || '',
         linkSource : getLinkSource(linkProperty.linkSource) || '',
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
-        accessRightID: getAccessRight(linkProperty.accessRightID) || 'Tuntematon',
-        privateRoadAssociation: linkProperty.privateRoadAssociation || '-',
-        additionalInfo:  linkProperty.additionalInfo || '-'
+        accessRightID: !isNaN(parseInt(linkProperty.accessRightID)) ? parseInt(linkProperty.accessRightID) : '',
+        privateRoadAssociation: linkProperty.privateRoadAssociation || '',
+        additionalInfo:  linkProperty.additionalInfo || ''
       });
     };
 
@@ -311,6 +313,9 @@
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>' ;
         }).join('');
 
+        var privateRoadAssociationValueTag = linkProperty.privateRoadAssociation;
+        var additionalInfoValueTag = linkProperty.additionalInfo;
+
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
 
         var options =  {  imports: {
@@ -318,7 +323,9 @@
             functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
             linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags),
             administrativeClassOptionTags : defaultUnknownOptionTag.concat(administrativeClassOptionTags),
-            accessRightIdsOptionTags: defaultUnknownOptionTag.concat(accessRightIdsOptionTags)}
+            accessRightIdsOptionTags: defaultUnknownOptionTag.concat(accessRightIdsOptionTags),
+            privateRoadAssociationValueTag: defaultUnknownOptionTag.concat(privateRoadAssociationValueTag),
+            additionalInfoValueTag: defaultUnknownOptionTag.concat(additionalInfoValueTag)}
         };
 
         rootElement.html(template(options)(linkProperty));

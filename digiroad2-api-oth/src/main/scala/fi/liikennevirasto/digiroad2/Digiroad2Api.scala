@@ -579,7 +579,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "linkSource" -> roadLink.linkSource.value,
       "track" -> extractIntValue(roadLink, "VIITE_TRACK"),
       "startAddrMValue" -> extractLongValue(roadLink, "VIITE_START_ADDR"),
-      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR")
+      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR"),
+      "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
+      "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
+      "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")
     )
   }
 
