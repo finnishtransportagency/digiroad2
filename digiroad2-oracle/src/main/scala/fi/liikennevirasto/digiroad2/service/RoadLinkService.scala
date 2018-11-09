@@ -707,8 +707,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     if (oldAdditionalInfo.isEmpty && linkProperty.additionalInfo.nonEmpty) {
       LinkAttributesDao.insertOrUpdateAttributeValue("insert", linkProperty, username.getOrElse(""), additionalInfoPublicId, linkProperty.additionalInfo.get.value)
-    } else if (oldAdditionalInfo.getOrElse("") != linkProperty.additionalInfo.get.value) {
-      LinkAttributesDao.insertOrUpdateAttributeValue("update", linkProperty, username.getOrElse(""), additionalInfoPublicId, linkProperty.additionalInfo.get.value)
+    } else if (oldAdditionalInfo.getOrElse("") != linkProperty.additionalInfo.getOrElse(AdditionalInformation.NotDelivered).value) {
+      LinkAttributesDao.insertOrUpdateAttributeValue("update", linkProperty, username.getOrElse(""), additionalInfoPublicId, linkProperty.additionalInfo.getOrElse(AdditionalInformation.NotDelivered).value)
     }
 
     if (oldAccessRightID.isEmpty && linkProperty.accessRightID.nonEmpty) {
