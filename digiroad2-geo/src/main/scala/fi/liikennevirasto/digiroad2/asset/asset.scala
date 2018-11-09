@@ -271,11 +271,37 @@ abstract class AbstractProperty {
   def values: Seq[PropertyValue]
 }
 
+abstract class AbstractTrafficSignProperty {
+  def publicId: String
+  def values: Seq[AssetPropertyValue]
+}
+
+abstract class AssetPropertyValue {
+  def propertyValue: Any
+}
+
+sealed trait PointAssetValue {
+  def toJson: Any
+}
+
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue]) extends AbstractProperty
+case class SimpleTrafficSignProperty(publicId: String, values: Seq[TrafficSignPropertyValue]) extends AbstractTrafficSignProperty
 case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
-case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
+case class TrafficSignProperty(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[TrafficSignPropertyValue], numCharacterMax: Option[Int] = None) extends AbstractTrafficSignProperty
+case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends AssetPropertyValue
+case class TrafficSignPropertyValue(propertyValue: PointAssetValue, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends AssetPropertyValue
+
+case class AdditionalPropertyValue(value: AdditionalPanelValue) extends PointAssetValue {
+  override def toJson: Any = value
+}
+
+case class TextPropertyValue(value: String) extends PointAssetValue {
+  override def toJson: Any = value
+}
+
+case class AdditionalPanelValue(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int)
 case class DynamicPropertyValue(value: Any)
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
@@ -338,6 +364,7 @@ object PropertyTypes {
   val Number = "number"
   val IntegerProp = "integer"
   val TimePeriod = "time_period"
+  val AdditionalPanel = "additional_panel_type"
 }
 
 object MassTransitStopValidityPeriod {
