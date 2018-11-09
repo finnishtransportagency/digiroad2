@@ -287,7 +287,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds)
     val result = super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
-    val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.toString.toInt == TrafficSignType.PedestrianCrossing.value)
+    val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value.toInt == TrafficSignType.PedestrianCrossing.value)
 
     sortCrossings(pc, Seq()) ++ others
   }
@@ -445,7 +445,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup]): Seq[PersistedTrafficSign] = {
     val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
     optGroupType match {
-      case Some(groupType) => assets.filter(asset => TrafficSignTypeGroup.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.toString.toInt) == groupType)
+      case Some(groupType) => assets.filter(asset => TrafficSignTypeGroup.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value.toInt) == groupType)
       case _ => assets
     }
   }

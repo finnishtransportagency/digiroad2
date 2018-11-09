@@ -119,9 +119,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       asset.mValue should be(2)
       asset.floating should be(false)
       asset.municipalityCode should be(235)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("80")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("Additional Info for test")
       asset.createdBy should be(Some(testUser.username))
       asset.createdAt shouldBe defined
     }
@@ -141,9 +141,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       service.update(trafficSign.id, updated, roadLink, "unit_test")
       val updatedTrafficSign = service.getById(600073).get
 
-      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("2")
-      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("90")
-      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Updated Additional Info for test")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("2")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("90")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("Updated Additional Info for test")
       updatedTrafficSign.id should equal(updatedTrafficSign.id)
       updatedTrafficSign.modifiedBy should equal(Some("unit_test"))
       updatedTrafficSign.modifiedAt shouldBe defined
@@ -178,9 +178,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       updatedAsset.createdAt should equal (oldAsset.createdAt)
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.modifiedAt.isDefined should equal(true)
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("2")
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("60")
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("2")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("60")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("Additional Info for test")
     }
   }
 
@@ -208,9 +208,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       updatedAsset.lat should be (asset.lat)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("2")
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("60")
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for update test")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("2")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("60")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("Additional Info for update test")
     }
   }
 
@@ -222,8 +222,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("100")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("100")
       asset.validityDirection should be (TowardsDigitizing.value)
       asset.bearing.get should be (45)
     }
@@ -237,8 +237,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("100")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("100")
       asset.validityDirection should be (AgainstDigitizing.value)
     }
   }
@@ -251,8 +251,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("100")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("100")
       asset.validityDirection should be (TowardsDigitizing.value)
       asset.bearing.get should be (45)
     }
@@ -266,8 +266,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("100")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("100")
       asset.validityDirection should be(AgainstDigitizing.value)
     }
   }
@@ -279,7 +279,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("7")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("7")
       asset.validityDirection should be(BothDirections.value)
 
     }
@@ -292,8 +292,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("45")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Info Test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("45")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("Info Test")
       asset.validityDirection should be(AgainstDigitizing.value)
     }
   }
@@ -321,9 +321,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       asset.mValue should be(20)
       asset.floating should be(false)
       asset.municipalityCode should be(235)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("80")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("Additional Info for test")
       asset.createdBy should be(Some(testUser.username))
       asset.createdAt shouldBe defined
     }
@@ -349,9 +349,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
 
       val asset = assets.head
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("80")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be ("Additional Info for test")
     }
   }
 
@@ -465,9 +465,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val signGroupOnLinkId1 = assetsOnLinkId1_vd1.sortBy(_.lat).lift(1).head
 
-      signGroupOnLinkId1.propertyData.filter(_.id == 0).head.values.head.propertyValue.toString.toInt should be (2)
-      assetsOnLinkId2_vd1.head.propertyData.filter(_.id == 0).head.values.head.propertyValue.toString.toInt should be (2)
-      assetsOnLinkId2_vd2.head.propertyData.filter(_.id == 0).head.values.head.propertyValue.toString.toInt should be (1)
+      signGroupOnLinkId1.propertyData.filter(_.id == 0).head.values.head.propertyValue.asInstanceOf[TextPropertyValue].value.toInt should be (2)
+      assetsOnLinkId2_vd1.head.propertyData.filter(_.id == 0).head.values.head.propertyValue.asInstanceOf[TextPropertyValue].value.toInt should be (2)
+      assetsOnLinkId2_vd2.head.propertyData.filter(_.id == 0).head.values.head.propertyValue.asInstanceOf[TextPropertyValue].value.toInt should be (1)
     }
   }
 
@@ -478,8 +478,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assetsInRadius.size should be(1)
       val assetO = assetsInRadius.head
       assetO.id should be(originalTrafficSignId)
-      assetO.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be("24")
-      assetO.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be("Original Traffic Sign!")
+      assetO.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be("24")
+      assetO.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be("Original Traffic Sign!")
 
 
       val duplicatedTrafficSignId = service.createFromCoordinates(6, 4, TRTrafficSignType.NoPedestrians, None, Some(false), TrafficDirection.UnknownDirection, None, Some("Non Duplicated Traffic Sign!"))
@@ -487,8 +487,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assetsInRadius2.size should be(1)
       val assetD = assetsInRadius2.head
       assetD.id should be(duplicatedTrafficSignId)
-      assetD.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be("24")
-      assetD.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be("Non Duplicated Traffic Sign!")
+      assetD.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be("24")
+      assetD.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue.asInstanceOf[TextPropertyValue].value should be("Non Duplicated Traffic Sign!")
     }
 
   }
