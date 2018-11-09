@@ -319,9 +319,16 @@ object OracleTrafficSignDao {
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
         values = rows.map(assetRow =>
-          TrafficSignPropertyValue(
-            TextPropertyValue(assetRow.property.propertyValue),
-            Option(assetRow.property.propertyDisplayValue))
+          assetRow.property.propertyType match {
+            case SingleChoice | Text | LongText =>
+              TrafficSignPropertyValue(
+                TextPropertyValue(assetRow.property.propertyValue),
+                Option(assetRow.property.propertyDisplayValue))
+            case AdditionalPanel =>
+              TrafficSignPropertyValue(
+                AdditionalPropertyValue(AdditionalPanelValue(assetRow.additionalPanel.panelType, assetRow.additionalPanel.panelInfo, assetRow.additionalPanel.panelValue, assetRow.additionalPanel.formPosition)),
+                Option(assetRow.property.propertyDisplayValue))
+          }
         ).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
   }
