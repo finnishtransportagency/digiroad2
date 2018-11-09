@@ -426,7 +426,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
-    val signToCreateType = getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toString.toInt
+    val signToCreateType = getTrafficSignsProperties(asset, typePublicId).get.propertyValue.asInstanceOf[TextPropertyValue].value.toInt
     val signToCreateDirection = asset.validityDirection
     val groupType = Some(TrafficSignTypeGroup.apply(signToCreateType))
 
