@@ -575,7 +575,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
           "value" ->trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue).getOrElse(""),
-          "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)),
+          "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toString.toInt)),
           "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
           "additionalInformation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue).getOrElse("")
       )

@@ -105,9 +105,9 @@ object MassTransitStopOperations {
 
     propertyValueOption match {
       case None => None
-      case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
-      case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
-        Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
+      case Some(propertyValue) if propertyValue.propertyValue.toString.isEmpty => None
+      case Some(propertyValue) if propertyValue.propertyValue.toString.nonEmpty =>
+        Some(AdministrativeClass.apply(propertyValue.propertyValue.toString.toInt))
     }
   }
 

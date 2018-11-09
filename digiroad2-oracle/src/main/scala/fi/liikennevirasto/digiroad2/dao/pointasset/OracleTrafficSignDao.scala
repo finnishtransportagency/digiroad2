@@ -19,7 +19,7 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 mValue: Double, floating: Boolean,
                                 vvhTimeStamp: Long,
                                 municipalityCode: Int,
-                                propertyData: Seq[Property],
+                                propertyData: Seq[TrafficSignProperty],
                                 createdBy: Option[String] = None,
                                 createdAt: Option[DateTime] = None,
                                 modifiedBy: Option[String] = None,
@@ -97,7 +97,7 @@ object OracleTrafficSignDao {
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head
-      val properties: Seq[Property] = assetRowToProperty(signRows)
+      val properties: Seq[TrafficSignProperty] = assetRowToProperty(signRows)
 
       id -> PersistedTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
@@ -302,23 +302,23 @@ object OracleTrafficSignDao {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("trafficSigns_info").first
   }
 
-  def assetRowToProperty(assetRows: Iterable[TrafficSignRow]): Seq[Property] = {
+  def assetRowToProperty(assetRows: Iterable[TrafficSignRow]): Seq[TrafficSignProperty] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
-      Property(
+      TrafficSignProperty(
         id = key,
         publicId = row.property.publicId,
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
         values = rows.map(assetRow =>
-          PropertyValue(
-            assetRow.property.propertyValue,
+          TrafficSignPropertyValue(
+            TextPropertyValue(assetRow.property.propertyValue),
             Option(assetRow.property.propertyDisplayValue))
         ).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
   }
 
-  private def propertyWithTypeAndId(property: SimpleProperty): Tuple3[String, Option[Long], SimpleProperty] = {
+  private def propertyWithTypeAndId(property: SimpleTrafficSignProperty): Tuple3[String, Option[Long], SimpleTrafficSignProperty] = {
     val propertyId = StaticQuery.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
@@ -331,24 +331,24 @@ object OracleTrafficSignDao {
     StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
-  private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
+  private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[TrafficSignPropertyValue]) {
     propertyType match {
       case Text | LongText => {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
+          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue.toString).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
+          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue.toString).execute
         }
       }
       case SingleChoice => {
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toString.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toString.toLong).execute
         }
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
