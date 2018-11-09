@@ -346,17 +346,17 @@ object OracleTrafficSignDao {
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue.toString).execute
+          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue.toString).execute
+          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value).execute
         }
       }
       case SingleChoice => {
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toString.toLong).execute
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toString.toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value.toLong).execute
         }
       }
       case AdditionalPanel =>

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import java.security.InvalidParameterException
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, TrafficSignPropertyValue, PropertyValue, SideCode}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
@@ -273,7 +273,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
     val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
-      val tsType = TrafficSignType(prop.propertyValue.toString.toInt)
+      val tsType = TrafficSignType(prop.propertyValue.asInstanceOf[TextPropertyValue].value.toInt)
 
       tsType match {
 
