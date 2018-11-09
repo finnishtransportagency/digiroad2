@@ -308,7 +308,7 @@ object RoadLinkDAO{
 
     def insertOrUpdateAttributeValue(daoAction: String, linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
       if (daoAction == "insert") {
-        sqlu"""insert into #$table (id, link_id, name, `value`, created_by )
+        sqlu"""insert into #$table (id, link_id, name, value, created_by )
                    select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username
                    from dual""".execute
       } else {
@@ -330,6 +330,15 @@ object RoadLinkDAO{
 
     def getVVHValue(vvhRoadLink: VVHRoadlink) = {
       throw new UnsupportedOperationException("Method getVVHValue is not supported for Link Attributes class")
+    }
+
+    override def expireValues(linkId: Long, username: Option[String]) = {
+      sqlu"""update #$table
+                 set valid_to = SYSDATE - 1,
+                     modified_by = $username
+                 where link_id = $linkId
+                    and (valid_to is null or valid_to > sysdate)
+        """.execute
     }
   }
 }
