@@ -432,7 +432,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
     val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
       ts =>
-        getTrafficSignsProperties(ts, typePublicId).get.propertyValue.toString.toInt == signToCreateType
+        getTrafficSignsProperties(ts, typePublicId).get.propertyValue.asInstanceOf[TextPropertyValue].value.toInt == signToCreateType
           && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
     )
 
@@ -502,7 +502,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     val sameLinkAssets = groupedAssets.getOrElse(sign.linkId, Seq())
 
     sameLinkAssets.filter{ ts =>
-      (getTrafficSignsProperties(ts, typePublicId).get.propertyValue.toString.toInt == getTrafficSignsProperties(sign, typePublicId).get.propertyValue.toString.toInt) &&
+      (getTrafficSignsProperties(ts, typePublicId).get.propertyValue.asInstanceOf[TextPropertyValue].value.toInt == getTrafficSignsProperties(sign, typePublicId).get.propertyValue.asInstanceOf[TextPropertyValue].value.toInt) &&
         ts.validityDirection == sign.validityDirection &&
         GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(ts.lon, ts.lat))) <= distance
     }

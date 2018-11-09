@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.asset.{TrafficSignPropertyValue, PropertyValue, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit}
@@ -26,7 +26,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
             speedLimit.value match {
               case Some(NumericValue(speedLimitValue)) =>
                 getTrafficSignsProperties(trafficSign, "trafficSigns_value") match {
-                  case Some(trafficSignValue) if trafficSignValue.propertyValue == speedLimitValue.toString => true
+                  case Some(trafficSignValue) if trafficSignValue.propertyValue.asInstanceOf[TextPropertyValue].value == speedLimitValue.toString => true
                   case _ => false
                 }
               case _ => false
@@ -68,7 +68,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
               case Some(NumericValue(speedLimitValue)) =>
                 getTrafficSignsProperties(trafficSign, "trafficSigns_value") match {
                   case Some(trafficSignValue)
-                    if trafficSignValue.propertyValue.toString.toInt == speedLimitValue
+                    if trafficSignValue.propertyValue.asInstanceOf[TextPropertyValue].value.toInt == speedLimitValue
                       || (speedLimitValue != startUrbanAreaSpeedLimit && speedLimitValue != endUrbanAreaSpeedLimit) => true
                   case _ => false
                 }
@@ -102,7 +102,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
   def checkSpeedLimitUsingTrafficSign(trafficSigns: Seq[PersistedTrafficSign], roadLink: RoadLink, speedLimits: Seq[SpeedLimit]): Seq[SpeedLimit] = {
     trafficSigns.flatMap { trafficSign =>
-      val trafficSignType = TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toString.toInt)
+      val trafficSignType = TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.asInstanceOf[TextPropertyValue].value.toInt)
 
       val speedLimitInRadiusDistance =
         speedLimits.filter(
