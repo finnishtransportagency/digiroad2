@@ -1548,17 +1548,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
-//  get("/municipalities/byUser") {
-//    val user = userProvider.getCurrentUser()
-//    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-//    municipalityService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
-//      case (id, name) =>
-//        Map(
-//          "id" -> id,
-//          "name" -> name
-//        )
-//    }
-//  }
 
   get("/municipalities/byUser") {
     val user = userProvider.getCurrentUser()

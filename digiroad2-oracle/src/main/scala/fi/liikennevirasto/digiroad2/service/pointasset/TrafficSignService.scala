@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -191,38 +192,33 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def createFromCoordinates(lon: Long, lat: Long, trafficSignType: TRTrafficSignType, value: Option[Int],
                             twoSided: Option[Boolean], trafficDirection: TrafficDirection, bearing: Option[Int],
-                            additionalInfo: Option[String]): Long = {
+                            additionalInfo: Option[String], roadLinks: Seq[VVHRoadlink]): Long = {
 
-    val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon, lat))
-    if (roadLinks.nonEmpty) {
-      val closestLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
+      val closestLink: VVHRoadlink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
       val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
 
-        if (vvhRoad.isEmpty || vvhRoad.size > 1) {
-          val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), SideCode.Unknown.value, None)
-          createFloatingWithoutTransaction(asset, userProvider.getCurrentUser().username, municipality)
-        }
-        else {
-          roadLinkService.getRoadLinkFromVVH(closestLink.linkId, false).map { link =>
-            val validityDirection =
-              bearing match {
-                case Some(assetBearing) if twoSided.getOrElse(false) => BothDirections.value
-                case Some(assetBearing) => getAssetValidityDirection(assetBearing)
-                case None if twoSided.getOrElse(false) => BothDirections.value
-                case _ => getTrafficSignValidityDirection(Point(lon, lat), link.geometry)
-              }
-            val newAsset = IncomingTrafficSign(lon, lat, link.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(link.geometry)))
-            checkDuplicates(newAsset) match {
-              case Some(existingAsset) =>
-                updateWithoutTransaction(existingAsset.id, newAsset, link, userProvider.getCurrentUser().username, None, None)
-              case _ =>
-                createWithoutTransaction(newAsset, userProvider.getCurrentUser().username, link)
+      if (vvhRoad.isEmpty || vvhRoad.size > 1) {
+        val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), SideCode.Unknown.value, None)
+        createFloatingWithoutTransaction(asset, userProvider.getCurrentUser().username, municipality)
+      }
+      else {
+        roadLinkService.enrichRoadLinksFromVVH(Seq(closestLink)).map { roadLink =>
+          val validityDirection =
+            bearing match {
+              case Some(assetBearing) if twoSided.getOrElse(false) => BothDirections.value
+              case Some(assetBearing) => getAssetValidityDirection(assetBearing)
+              case None if twoSided.getOrElse(false) => BothDirections.value
+              case _ => getTrafficSignValidityDirection(Point(lon, lat), roadLink.geometry)
             }
-          }.getOrElse(0L)
+          val newAsset = IncomingTrafficSign(lon, lat, roadLink.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(roadLink.geometry)))
+          checkDuplicates(newAsset) match {
+            case Some(existingAsset) =>
+              updateWithoutTransaction(existingAsset.id, newAsset, roadLink, userProvider.getCurrentUser().username, None, None)
+            case _ =>
+              createWithoutTransaction(newAsset, userProvider.getCurrentUser().username, roadLink)
+          }
         }
-    } else {
-      0L
-    }
+      }.head
   }
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
@@ -237,7 +233,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
           && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
     )
 
-    if (trafficSignsInRadius.size >= 1) {
+    if (trafficSignsInRadius.nonEmpty) {
       return Some(getLatestModifiedAsset(trafficSignsInRadius))
     }
     None
@@ -312,11 +308,11 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       OracleTrafficSignDao.expire(linkIds, username)
   }
 
-  def getTrafficType(id: Long) : Option[Int] = {
-    withDynSession {
-      OracleTrafficSignDao.getTrafficSignType(id)
-    }
-  }
+//  def getTrafficType(id: Long) : Option[Int] = {
+//    withDynSession {
+//      OracleTrafficSignDao.getTrafficSignType(id)
+//    }
+//  }
 
   def getLatestModifiedAsset(trafficSigns: Seq[PersistedTrafficSign]): PersistedTrafficSign = {
     trafficSigns.maxBy { ts => ts.modifiedAt.getOrElse(ts.createdAt.get) }
@@ -357,5 +353,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     else if (TrafficSignType.belongsToProhibition(trafficSignType)) {
       prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(id))
     }
+  }
+
+  override def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) : Unit = {
+    OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
   }
 }
