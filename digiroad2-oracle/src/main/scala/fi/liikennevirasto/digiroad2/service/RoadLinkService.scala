@@ -18,6 +18,7 @@ import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{Track, VVHRoadLinkHistoryProcessor, VVHSerializer}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
@@ -32,7 +33,9 @@ import scala.concurrent.{Await, Future}
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
-case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection, administrativeClass: AdministrativeClass)
+case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection,
+                          administrativeClass: AdministrativeClass, privateRoadAssociation: Option[String] = None, additionalInfo: Option[String] = None,
+                          accessRightID: String = "")
 
 sealed trait RoadLinkType {
   def value: Int
@@ -570,6 +573,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         if (linkProperty.functionalClass != FunctionalClass.Unknown) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, vvhRoadLink, None, None)
         if (linkProperty.linkType != UnknownLinkType) setLinkProperty(RoadLinkDAO.LinkType, linkProperty, username, vvhRoadLink, None, None)
         if (linkProperty.administrativeClass != State && vvhRoadLink.administrativeClass != State) setLinkProperty(RoadLinkDAO.AdministrativeClass, linkProperty, username, vvhRoadLink, None, None)
+        if (linkProperty.administrativeClass == Private) setLinkAttributes(RoadLinkDAO.LinkAttributes, linkProperty, username, vvhRoadLink, None, None)
         val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
         if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
           removeIncompleteness(linkProperty.linkId)
@@ -662,6 +666,39 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       row._1 ->(td, fc, lt, ac)
     }
     ).toMap
+  }
+
+  protected def setLinkAttributes(propertyName: String, linkProperty: LinkProperties, username: Option[String],
+                                  vvhRoadLink: VVHRoadlink, latestModifiedAt: Option[String],
+                                  latestModifiedBy: Option[String]) = {
+
+    val privateRoadAssociationPublicId = "private_road_association"
+    val additionalInfoPublicId = "additional_info"
+    val accessRightIDPublicId = "access_right_id"
+
+    val linkAttributesInfo = LinkAttributesDao.getExistingValues(linkProperty.linkId)
+
+    val oldPrivateRoadAssociation = linkAttributesInfo.get(privateRoadAssociationPublicId)
+    val oldAdditionalInfo = linkAttributesInfo.get(additionalInfoPublicId)
+    val oldAccessRightID = linkAttributesInfo.get(accessRightIDPublicId)
+
+    if (oldPrivateRoadAssociation.isEmpty && linkProperty.privateRoadAssociation.nonEmpty) {
+      LinkAttributesDao.insertOrUpdateAttributeValue("insert", linkProperty, username.getOrElse(""), privateRoadAssociationPublicId, linkProperty.privateRoadAssociation.get)
+    } else if (oldPrivateRoadAssociation != linkProperty.privateRoadAssociation) {
+      LinkAttributesDao.insertOrUpdateAttributeValue("update", linkProperty, username.getOrElse(""), privateRoadAssociationPublicId, linkProperty.privateRoadAssociation.get)
+    }
+
+    if (oldAdditionalInfo.isEmpty && linkProperty.additionalInfo.nonEmpty) {
+      LinkAttributesDao.insertOrUpdateAttributeValue("insert", linkProperty, username.getOrElse(""), additionalInfoPublicId, linkProperty.additionalInfo.get)
+    } else if (oldAdditionalInfo != linkProperty.additionalInfo) {
+      LinkAttributesDao.insertOrUpdateAttributeValue("update", linkProperty, username.getOrElse(""), additionalInfoPublicId, linkProperty.additionalInfo.get)
+    }
+
+    if (oldAccessRightID.isEmpty) {
+      LinkAttributesDao.insertOrUpdateAttributeValue("insert", linkProperty, username.getOrElse(""), accessRightIDPublicId, linkProperty.accessRightID)
+    } else if (oldAccessRightID.get != linkProperty.accessRightID) {
+      LinkAttributesDao.insertOrUpdateAttributeValue("update", linkProperty, username.getOrElse(""), accessRightIDPublicId, linkProperty.accessRightID)
+    }
   }
 
   private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(Long, Option[(String, String)])] = {
@@ -1028,10 +1065,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
                                   administrativeClassRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
                                   roadLinkAttributesByLinkId: Map[RoadLinkId, RoadLinkAtributes]) {
 
-    def roadLinkAttributesValues(linkId: Long) = {
+    def roadLinkAttributesValues(linkId: Long): Map[String, String] = {
       roadLinkAttributesByLinkId.get(linkId) match {
-        case Some(attributesList) => attributesList.toMap
-        case _ => Map()
+        case Some(attributes) => attributes.toMap
+        case _ => Map.empty[String, String]
       }
     }
 
