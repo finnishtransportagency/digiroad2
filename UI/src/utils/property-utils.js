@@ -11,7 +11,7 @@
       return _.chain(getPropertyValues(name, selectedAsset))
         .flatten()
         .map(function (values) {
-          return values.propertyValue;
+          return values.propertyValue.value;
         })
         .first()
         .value();

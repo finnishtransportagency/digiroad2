@@ -217,11 +217,11 @@
       me.getValue = function (asset) {
         if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
           return;
-        var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : '';
-        var additionalInfo = getProperty(asset, "trafficSigns_info") ? getProperty(asset, "trafficSigns_info").propertyValue : '';
+        var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue.value : '';
+        var additionalInfo = getProperty(asset, "trafficSigns_info") ? getProperty(asset, "trafficSigns_info").propertyValue.value : '';
         return {
           value: value,
-          type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue),
+          type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue.value),
           additionalInfo: additionalInfo
         };
       };

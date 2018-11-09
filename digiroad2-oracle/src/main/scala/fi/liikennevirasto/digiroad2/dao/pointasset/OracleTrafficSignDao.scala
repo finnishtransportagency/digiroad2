@@ -96,7 +96,7 @@ object OracleTrafficSignDao {
 
   private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
     val rows = StaticQuery.queryNA[TrafficSignRow](query).iterator.toSeq
-    val rows2 = rows.toArray.groupBy(_.id)
+    val rows2 = rows.toArray.groupBy(_.id) //remove
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head
@@ -327,7 +327,7 @@ object OracleTrafficSignDao {
             case AdditionalPanel =>
               TrafficSignPropertyValue(
                 AdditionalPropertyValue(AdditionalPanelValue(assetRow.additionalPanel.panelType, assetRow.additionalPanel.panelInfo, assetRow.additionalPanel.panelValue, assetRow.additionalPanel.formPosition)),
-                Option(assetRow.property.propertyDisplayValue))
+                Option("default value"))
           }
         ).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
@@ -367,6 +367,10 @@ object OracleTrafficSignDao {
         }
       }
       case AdditionalPanel =>
+        deleteAdditionalPanelProperty(assetId).execute
+        propertyValues.foreach{value =>
+          insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanelValue]).execute
+        }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
   }
