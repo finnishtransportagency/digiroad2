@@ -15,7 +15,6 @@ import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
 
-case class TrafficSignProvider(id: Long, roadLink: RoadLink)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink)
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
@@ -70,7 +69,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     val id = OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
 
-    eventBus.publish("trafficSignCreate", TrafficSignProvider(id, roadLink))
+    eventBus.publish("trafficSign:create", TrafficSignInfo(id, asset.linkId, asset.validityDirection, getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt, mValue, roadLink))
     id
   }
 
@@ -96,7 +95,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case old if old.bearing != updatedAsset.bearing || (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) || old.validityDirection != updatedAsset.validityDirection =>
         expireWithoutTransaction(id)
         val newId = OracleTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
-        eventBus.publish("trafficSignUpdate", ((newId, roadLink), id))
+        eventBus.publish("trafficSign:update", ((newId, roadLink), id))
         newId
       case _ =>
         OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
@@ -287,20 +286,23 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     withDynSession {
       expireWithoutTransaction(id, username)
     }
-    eventBus.publish("trafficSignExpire", id)
+    eventBus.publish("trafficSign:expire", id)
     id
   }
 
-  def expireAssetsByMunicipality(municipality: Int) : Unit = {
-    OracleTrafficSignDao.expireAssetsByMunicipality(municipality)
+  def expireAssetWithoutTransaction(filter: String => String, username: Option[String]): Unit = {
+    OracleTrafficSignDao.expireWithoutTransaction(filter, username)
   }
 
-  def expireAssetWithoutTransaction(id: Long, username: String): Long = {
-    expireWithoutTransaction(id)
-    id
+  def withIds(ids: Set[Long])(query: String): String = {
+    query + s" and id in (${ids.mkString(",")})"
   }
 
-  def expire(linkIds: Set[Long], username: String, newTransaction: Boolean = true) = {
+  def withMunicipalities(municipalities: Set[Int])(query: String): String = {
+    query + s" and created_by != 'batch_process_trafficSigns' and municipality_code in (${municipalities.mkString(",")})"
+  }
+
+  def expire(linkIds: Set[Long], username: String, newTransaction: Boolean = true) : Unit = {
     if(newTransaction)
     withDynSession {
       OracleTrafficSignDao.expire(linkIds, username)
@@ -308,11 +310,11 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       OracleTrafficSignDao.expire(linkIds, username)
   }
 
-//  def getTrafficType(id: Long) : Option[Int] = {
-//    withDynSession {
-//      OracleTrafficSignDao.getTrafficSignType(id)
-//    }
-//  }
+  def getTrafficType(id: Long) : Option[Int] = {
+    withDynSession {
+      OracleTrafficSignDao.getTrafficSignType(id)
+    }
+  }
 
   def getLatestModifiedAsset(trafficSigns: Seq[PersistedTrafficSign]): PersistedTrafficSign = {
     trafficSigns.maxBy { ts => ts.modifiedAt.getOrElse(ts.createdAt.get) }
@@ -336,26 +338,23 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo): Unit = {
+  def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
 
     if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
-      manoeuvreService.createBasedOnTrafficSign(trafficSignInfo)
+      manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
     }
     else if (TrafficSignType.belongsToProhibition(trafficSignInfo.signType)) {
-      prohibitionService.createBasedOnTrafficSign(trafficSignInfo)
+      prohibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
     }
   }
 
   def trafficSignsDeleteAssets(id: Long, trafficSignType: Int): Unit = {
+    val username = Some("automatic_trafficSign_deleted")
     if (TrafficSignType.belongsToManoeuvre(trafficSignType)) {
-      manoeuvreService.deleteManoeuvreFromSign(id)
+      manoeuvreService.deleteManoeuvreFromSign(withIds(Set(id)), username)
     }
     else if (TrafficSignType.belongsToProhibition(trafficSignType)) {
-      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(id))
+      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(id), username)
     }
-  }
-
-  override def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) : Unit = {
-    OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
   }
 }

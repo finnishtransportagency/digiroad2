@@ -793,27 +793,27 @@ trait LinearAssetOperations {
   def validateAssetValue(value: Option[Value]): Unit = {}
 
 
-  def deleteAssetBasedOnSign(filter: String => String, withTransaction: Boolean = true) : Unit = {
+  def deleteAssetBasedOnSign(filter: String => String, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
     logger.info("expiring asset")
     if (withTransaction) {
       withDynTransaction {
-        dao.deleteByTrafficSign(filter)
+        dao.deleteByTrafficSign(filter, username)
       }
     }
     else
-      dao.deleteByTrafficSign(filter)
+      dao.deleteByTrafficSign(filter, username)
   }
 
   def withId(id: Long)(query: String): String = {
-    query + s" and aux.id = $id"
+    query + s" and a.id = $id"
   }
 
   def withIds(ids: Set[Long])(query: String): String = {
-    query + s" and aux.id in ${ids.mkString(",")})"
+    query + s" and a.id in (${ids.mkString(",")})"
   }
 
-  def withMunicipality(municipality: Int)(query: String): String = {
-    query + s" and aux.municipality_code = $municipality and aux.created_by != 'batch_process_trafficSigns'"
+  def withMunicipalities(municipalities: Set[Int])(query: String): String = {
+    query + s" and a.municipality_code in (${municipalities.mkString(",")}) and a.created_by != 'batch_process_trafficSigns'"
   }
 }
 

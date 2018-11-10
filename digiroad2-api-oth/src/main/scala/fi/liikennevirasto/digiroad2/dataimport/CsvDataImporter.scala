@@ -144,7 +144,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
         }else
           result
       } else {
-          if (longValueFieldMappings.contains(key)) {
+        if (longValueFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (codeValueFieldMappings.contains(key)) {
@@ -174,11 +174,11 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       TrafficDirection.apply(trafficDirection), bearing, additionalInfo, roadLinks)
   }
 
-  def expireAssetsByMunicipality(municipalitiesToExpire: Set[Int]) = {
-    municipalitiesToExpire.foreach { municipality =>
-      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withMunicipality(municipality), false)
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withMunicipality(municipality))
-      trafficSignService.expireAssetsByMunicipality(municipality)
+  def expireAssetsByMunicipality(municipalities: Set[Int]): Unit = {
+    if (municipalities.nonEmpty) {
+      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withMunicipalities(municipalities), withTransaction = false)
+      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withMunicipalities(municipalities), withTransaction = false)
+      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withMunicipalities(municipalities), None)
     }
   }
 
@@ -223,6 +223,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
   }
 }
+
 class RoadLinkCsvImporter extends CsvDataImporterOperations {
 
   case class NonUpdatedLink(linkId: Long, csvRow: String)

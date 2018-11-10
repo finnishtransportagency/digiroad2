@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.TrafficSigns
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
@@ -57,17 +57,17 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     trafficSignId
   }
 
-  def deleteManoeuvreByTrafficSign(filter: String) = {
-    val username = "automatic_trafficSign_deleted"
-    sqlu"""
-             update manoeuvre
-             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+  def deleteManoeuvreByTrafficSign(queryFilter: String => String, username: Option[String]) : Unit = {
+    val modified = username match { case Some(user) => s", modified_by = '$user',  modified_date = sysdate" case _ => ""}
+    val query = s"""
+          update manoeuvre
+             set valid_to = sysdate $modified
              where traffic_sign_id in (
-              select a.id
+             select a.id
               from asset a
-              $filter)
-          """.execute
-
+              where a.asset_type_id = ${TrafficSigns.typeId}
+          """
+    Q.updateNA(queryFilter(query) + ")").execute
   }
 
   def expireManoeuvre(id: Long) = {

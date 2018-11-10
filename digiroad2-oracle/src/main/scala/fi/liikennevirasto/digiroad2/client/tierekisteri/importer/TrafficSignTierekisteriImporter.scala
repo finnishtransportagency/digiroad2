@@ -80,7 +80,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
           roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
             val signType = trafficSignService.getTrafficSignsProperties(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignService.trafficSignsCreateAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink))
+            trafficSignService.trafficSignsCreateAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink), false)
           }
           newId
       }
@@ -88,13 +88,12 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
   }
 
   protected override def expireAssets(linkIds: Seq[Long]): Unit = {
-    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds)
-    trafficSignsIds.foreach { sign =>
-      trafficSignService.expireAssetWithoutTransaction(sign, "batch_process_trafficSigns")
+    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds).toSet
 
-
+    if(trafficSignsIds.nonEmpty) {
+      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
+      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
+      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withIds(trafficSignsIds), withTransaction = false)
     }
-    manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds.toSet))
-    prohibitionService.deleteAssetBasedOnSign(prohibitionService.withIds(trafficSignsIds.toSet))
   }
 }

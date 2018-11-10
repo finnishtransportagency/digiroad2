@@ -618,7 +618,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def insertConnectedAsset(id: Long, connected_id : Long) : Int = {
-    sqlu"""into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".first
+    sqlu"""insert into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".first
   }
 
   /**
@@ -774,18 +774,18 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       """.as[(Long, Long)].list
   }
 
-  def deleteByTrafficSign(queryFilter: String => String) : Unit = {
-    val username = "automatic_trafficSign_deleted"
+  def deleteByTrafficSign(queryFilter: String => String, username: Option[String]) : Unit = {
+    val modifiedBy = username match { case Some(user) => s", modified_by = '$user' " case _ => ""}
     val query = s"""
-          update asset a
-          set valid_to = sysdate, modified_date = sysdate, modified_by = $username
-          where exists ( select 1
-          from connected_asset con
-          join asset aux on aux.id = con.connected_asset_id
-          where a.id = aux.id
-          and aux.asset_type_id = #${TrafficSigns.typeId})
+          update asset aux
+          set valid_to = sysdate, modified_date = sysdate  $modifiedBy
+          Where (aux.valid_to IS NULL OR aux.valid_to > SYSDATE )
+          and exists ( select 1
+                       from connected_asset con
+                       join asset a on a.id = con.connected_asset_id
+                       where aux.id = con.asset_id
+                       and a.asset_type_id = ${TrafficSigns.typeId}
           """
-    Q.updateNA(queryFilter(query))
+    Q.updateNA(queryFilter(query) + ")").execute
   }
 }
-

@@ -166,12 +166,7 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
 
 class TrafficSignCreateAssets(trafficSignService: TrafficSignService) extends Actor {
   def receive = {
-    case x: TrafficSignProvider => trafficSignService.getPersistedAssetsByIds(Set(x.id)).headOption match {
-      case Some(trSign) =>
-        val trafficType = trafficSignService.getTrafficSignsProperties(trSign, trafficSignService.typePublicId).get.propertyValue.toInt
-        trafficSignService.trafficSignsCreateAssets(TrafficSignInfo(trSign.id, trSign.linkId, trSign.validityDirection, trafficType, trSign.mValue, x.roadLink))
-      case _ => println("Nonexistent traffic Sign")
-    }
+    case x: TrafficSignInfo => trafficSignService.trafficSignsCreateAssets(x)
     case _ => println("trafficSignCreateAssets: Received unknown message")
   }
 }
