@@ -38,7 +38,7 @@
     };
 
     var getValue = function(current) {
-      return _.head(_.find(current.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue.value;
+      return _.head(_.find(current.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
     };
 
     this.getGroup = function(signTypes){
@@ -61,7 +61,7 @@
         var existingValue = _.head(_.find(asset.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values);
         if(!existingValue)
           return false;
-        return _.includes(getTrafficSignsToShow(), parseInt(existingValue.propertyValue.value));
+        return _.includes(getTrafficSignsToShow(), parseInt(existingValue.propertyValue));
       });
     };
 
@@ -96,7 +96,7 @@
 
       if (isTurningRestriction(current)) {
         var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
-        var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue.value;
+        var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
 
         //if traffic type changes, should be relevant to Manoeuvres
         if (oldTrafficSignTypeValue !== getValue(current))

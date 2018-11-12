@@ -73,7 +73,7 @@
     };
 
     var textHandler = function (property) {
-      var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue.value;
+      var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
       return '' +
         '    <div class="form-group editable form-traffic-sign">' +
         '        <label class="control-label">' + property.localizedName + '</label>' +
@@ -83,7 +83,7 @@
     };
 
     var singleChoiceSubType = function (collection, mainType, property) {
-      var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue.value;
+      var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
       var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
       var groups =  collection.getGroup(signTypes);
@@ -91,8 +91,8 @@
       var subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
         return $('<option>',
           {
-            value: group.propertyValue.value,
-            selected: propertyValue == group.propertyValue.value,
+            value: group.propertyValue,
+            selected: propertyValue == group.propertyValue,
             text: group.propertyDisplayValue
           }
         )[0].outerHTML;
@@ -107,13 +107,13 @@
     };
 
     var singleChoiceHandler = function (property, collection) {
-      var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue.value;
+      var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
 
       var groups =  collection.getGroup(signTypes);
       var groupKeys = Object.keys(groups);
 
-      var mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue.value == propertyValue;});}), true);
+      var mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
 
       var counter = 0;
       var mainTypesTrafficSigns = _.map(groupKeys, function (label) {
@@ -135,7 +135,7 @@
     };
 
     var readOnlyHandler = function (property) {
-      var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue.value;
+      var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
       var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
 
       return '' +
