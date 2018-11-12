@@ -316,7 +316,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Should throw exception for empty adjacents return"){
     runWithRollback{
-      intercept[AssetCreationException] {
+      intercept[ManoeuvreCreationException] {
         val sourceRoadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
         val properties = Set(
           SimpleProperty("trafficSigns_type", List(PropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
@@ -333,7 +333,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Should throw exception for traffic sign with both directions"){
     runWithRollback{
-      intercept[AssetCreationException] {
+      intercept[ManoeuvreCreationException] {
         val sourceRoadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
         val properties = Set(
           SimpleProperty("trafficSigns_type", List(PropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
