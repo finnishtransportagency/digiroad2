@@ -324,9 +324,9 @@ object OracleTrafficSignDao {
               TrafficSignPropertyValue(
                 TextPropertyValue(assetRow.property.propertyValue),
                 Option(assetRow.property.propertyDisplayValue))
-            case AdditionalPanel =>
+            case AdditionalPanelType =>
               TrafficSignPropertyValue(
-                AdditionalPropertyValue(AdditionalPanelValue(assetRow.additionalPanel.panelType, assetRow.additionalPanel.panelInfo, assetRow.additionalPanel.panelValue, assetRow.additionalPanel.formPosition)),
+                AdditionalPanel(AdditionalPanelValue(assetRow.additionalPanel.panelType, assetRow.additionalPanel.panelInfo, assetRow.additionalPanel.panelValue, assetRow.additionalPanel.formPosition)),
                 Option("default value"))
           }
         ).filter(_.propertyDisplayValue.isDefined).toSeq)
@@ -366,7 +366,7 @@ object OracleTrafficSignDao {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value.toLong).execute
         }
       }
-      case AdditionalPanel =>
+      case AdditionalPanelType =>
         deleteAdditionalPanelProperty(assetId).execute
         propertyValues.foreach{value =>
           insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanelValue]).execute

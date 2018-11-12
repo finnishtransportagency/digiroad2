@@ -293,7 +293,7 @@ case class TrafficSignProperty(id: Long, publicId: String, propertyType: String,
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends AssetPropertyValue
 case class TrafficSignPropertyValue(propertyValue: PointAssetValue, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends AssetPropertyValue
 
-case class AdditionalPropertyValue(value: AdditionalPanelValue) extends PointAssetValue {
+case class AdditionalPanel(value: AdditionalPanelValue) extends PointAssetValue {
   override def toJson: Any = value
 }
 
@@ -364,7 +364,7 @@ object PropertyTypes {
   val Number = "number"
   val IntegerProp = "integer"
   val TimePeriod = "time_period"
-  val AdditionalPanel = "additional_panel_type"
+  val AdditionalPanelType = "additional_panel_type"
 }
 
 object MassTransitStopValidityPeriod {
