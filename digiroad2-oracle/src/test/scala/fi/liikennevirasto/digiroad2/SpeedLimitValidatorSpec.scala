@@ -21,12 +21,12 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
   val validator = new SpeedLimitValidator(mockTrafficSignService)
-  val simpleProp50 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("5")))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("50")))))
-  val simpleProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("1")))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("70")))))
-  val speedLimitEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("2")))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("70")))))
-  val urbanAreaEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("6")))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("70")))))
-  val speedLimitAreaEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("4")))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("70")))))
-  val simpleProp80 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("1")))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TrafficSignPropertyValue(TextPropertyValue("80")))))
+  val simpleProp50 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("5"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("50"))))
+  val simpleProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("1"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
+  val speedLimitEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("2"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
+  val urbanAreaEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("6"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
+  val speedLimitAreaEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("4"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
+  val simpleProp80 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("1"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("80"))))
 
   test("get inaccurate SpeedLimit when speed limit traffic sign value is different of the speed limit value") {
     val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))

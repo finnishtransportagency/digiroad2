@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.json4s.JsonAST.JValue
 import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
@@ -134,12 +135,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ac: AdministrativeClass => JString(ac.toString)
   }))
 
-  case object TrafficSignSerializer extends CustomSerializer[PointAssetValue](format => ({
-    case JString(tpv) => TextPropertyValue(tpv.toString)
-  }, {
-    case tv: TextPropertyValue => JString(tv.value)
-    case apv: AdditionalPanelValue => JString("default value from api")
-  }))
+  case object TrafficSignSerializer extends CustomSerializer[SimpleTrafficSignProperty](format =>
+    ({
+      case jsonObj: JObject =>
+        val publicId = (jsonObj \ "publicId").extract[String]
+        val propertyValue: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanelValue]].getOrElse(Seq()))
+
+        SimpleTrafficSignProperty(publicId, propertyValue)
+    },
+      {
+        case tv : SimpleTrafficSignProperty => Extraction.decompose(tv)
+      }))
 
   protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer + TrafficSignSerializer
 
@@ -1639,10 +1645,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
-//    val asset1 = extractPointAssetValue(parsedBody \ "asset")
 
     val parsed = parsedBody \ "asset"
-
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
 
     roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId).map{

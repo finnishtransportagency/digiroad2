@@ -273,7 +273,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
     val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
-      val tsType = TrafficSignType(prop.propertyValue.asInstanceOf[TextPropertyValue].value.toInt)
+      val tsType = TrafficSignType(prop.asInstanceOf[TextPropertyValue].propertyValue.toInt)
 
       tsType match {
 
@@ -307,7 +307,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       createManoeuvreFromTrafficSign(manouvreProvider)
   }
 
-  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[TrafficSignPropertyValue] = {
+  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PointAssetValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 

@@ -212,7 +212,7 @@ object Queries {
   def insertAdditionalPanelProperty(assetId: Long, value: AdditionalPanelValue) = {
     val id = Sequences.nextPrimaryKeySeqValue
     sqlu"""
-    INSERT INTO additional_panel (id, assetId ,property_id, additional_sign_type, additional_sign_value, additional_sign_info, form_position)
+    INSERT INTO additional_panel (id, asset_id ,property_id, additional_sign_type, additional_sign_value, additional_sign_info, form_position)
     VALUES ($id, $assetId, (select id from property where public_id='additional_panel'), ${value.panelType}, ${value.panelValue}, ${value.panelInfo}, ${value.formPosition})
     """
   }
@@ -222,8 +222,6 @@ object Queries {
     DELETE FROM additional_panel where asset_id = $assetId
     """
   }
-
-
 
   def existsSingleChoiceProperty =
     "select asset_id from single_choice_value where asset_id = ? and property_id = ?"

@@ -34,10 +34,10 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
   private def generateProperties(trAssetData: TierekisteriAssetData) = {
     val trafficType = trAssetData.assetType.trafficSignType
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TrafficSignPropertyValue(TextPropertyValue(trafficType.value.toString))))
+    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.value.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
-      case true => SimpleTrafficSignProperty(infoPublicId, Seq(TrafficSignPropertyValue(TextPropertyValue(trAssetData.assetValue))))
-      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TrafficSignPropertyValue(TextPropertyValue(trAssetData.assetValue))))
+      case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
+      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
     }
 
     Set(typeProperty, valueProperty)

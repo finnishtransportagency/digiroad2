@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
 import org.joda.time.DateTime
@@ -321,15 +321,11 @@ object OracleTrafficSignDao {
         values = rows.map(assetRow =>
           assetRow.property.propertyType match {
             case SingleChoice | Text | LongText =>
-              TrafficSignPropertyValue(
-                TextPropertyValue(assetRow.property.propertyValue),
-                Option(assetRow.property.propertyDisplayValue))
+                TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue))
             case AdditionalPanelType =>
-              TrafficSignPropertyValue(
-                AdditionalPanel(AdditionalPanelValue(assetRow.additionalPanel.panelType, assetRow.additionalPanel.panelInfo, assetRow.additionalPanel.panelValue, assetRow.additionalPanel.formPosition)),
-                Option("default value"))
+                AdditionalPanelValue(assetRow.additionalPanel.panelType, assetRow.additionalPanel.panelInfo, assetRow.additionalPanel.panelValue, assetRow.additionalPanel.formPosition)
           }
-        ).filter(_.propertyDisplayValue.isDefined).toSeq)
+        ).toSeq)
     }.toSeq
   }
 
@@ -346,24 +342,24 @@ object OracleTrafficSignDao {
     StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
-  private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[TrafficSignPropertyValue]) {
+  private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
       case Text | LongText => {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value).execute
+          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value).execute
+          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
         }
       }
       case SingleChoice => {
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value.toLong).execute
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.asInstanceOf[TextPropertyValue].value.toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
         }
       }
       case AdditionalPanelType =>
