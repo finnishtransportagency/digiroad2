@@ -86,7 +86,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def getAllTierekisteriAddressSectionsTest(roadNumber: Long, roadPart: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
     def getAllTierekisteriHistoryAddressSectionTest(roadNumber: Long, lastExecution: DateTime) = super.getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime)
 
-    override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress]): Unit = {
+    override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = {
 
     }
   }
@@ -235,8 +235,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       createObject
     }
 
-    def createAssetTest(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress]) =
-      super.createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress])
+    def createAssetTest(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]) =
+      super.createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink])
   }
 
   test("test createPoint main method") {
@@ -255,7 +255,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
     when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
-    pointImporterOperations.createAssetTest(section, trAssetData.asInstanceOf[pointImporterOperations.TierekisteriAssetData], Seq(roadAddress))
+    pointImporterOperations.createAssetTest(section, trAssetData.asInstanceOf[pointImporterOperations.TierekisteriAssetData], Seq(roadAddress).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track)), Seq(vvhRoadLink))
 
     pointImporterOperations.getCreatedValues.foreach { case (viiteRoadAddress, roadLink, mValue, tierekisteriAssetData ) =>
       viiteRoadAddress should be (roadAddress)

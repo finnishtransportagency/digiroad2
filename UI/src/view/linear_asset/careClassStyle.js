@@ -56,7 +56,7 @@
     ];
 
     var careClassSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 3}, pointRadius: 0}),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).use({stroke: {width: 3}, pointRadius: 0}),
       new StyleRule().where('zoomLevel').is(10).use({stroke: {width: 5}, pointRadius: 10}),
       new StyleRule().where('zoomLevel').is(11).use({stroke: {width: 7}, pointRadius: 14}),
       new StyleRule().where('zoomLevel').is(12).use({stroke: {width: 10}, pointRadius: 16}),
@@ -66,7 +66,7 @@
     ];
 
     var greenCareClassImageSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).and('noGreenCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 0.8}}),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).and('noGreenCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 0.8}}),
       new StyleRule().where('zoomLevel').is(10).and('noGreenCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 1}}),
       new StyleRule().where('zoomLevel').is(11).and('noGreenCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 1.3}}),
       new StyleRule().where('zoomLevel').is(12).and('noGreenCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 1.6}}),
@@ -76,7 +76,7 @@
     ];
 
     var winterCareClassImageSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).and('noWinterCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 0.8}}),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).and('noWinterCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 0.8}}),
       new StyleRule().where('zoomLevel').is(10).and('noWinterCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 1}}),
       new StyleRule().where('zoomLevel').is(11).and('noWinterCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 1.3}}),
       new StyleRule().where('zoomLevel').is(12).and('noWinterCare').is(true).and('type').isNot('unknown').use({ icon: {scale: 1.6}}),
@@ -86,7 +86,7 @@
     ];
 
     var overlayStyleRules = [
-      new StyleRule().where('type').is('overlay').and('zoomLevel').is(9).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').isIn([8 ,9]).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(10).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 3,  lineDash: [1,10] }}),
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(11).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 5,  lineDash: [1,15] }}),
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(12).and('expired').is(false).use({ stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 8,  lineDash: [1,22] }}),
@@ -112,15 +112,21 @@
       });
     };
 
+    var featureTypeRules = [
+      new StyleRule().where('type').is('cutter').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
+    ];
+
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(winterCareClassImageSizeRules);
     me.browsingStyleProvider.addRules(winterCareClassRules);
     me.browsingStyleProvider.addRules(careClassSizeRules);
     me.browsingStyleProvider.addRules(overlayStyleRules);
+    me.browsingStyleProvider.addRules(featureTypeRules);
 
     me.greenCareStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.greenCareStyle.addRules(greenCareClassRules);
     me.greenCareStyle.addRules(careClassSizeRules);
     me.greenCareStyle.addRules(greenCareClassImageSizeRules);
+    me.greenCareStyle.addRules(featureTypeRules);
   };
 })(this);

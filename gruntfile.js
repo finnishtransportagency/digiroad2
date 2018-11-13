@@ -92,11 +92,10 @@ module.exports = function(grunt) {
                 },
                 {
                     context: '/maasto',
-                    host: 'karttamoottori.maanmittauslaitos.fi',
+                    host: 'oag.liikennevirasto.fi',
                     https: false,
                     changeOrigin: true,
-                    xforward: false,
-                    headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+                    xforward: false
                 },
                 {
                     context: '/vionice',

@@ -450,5 +450,41 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       captor.getValue.adjustedVVHChanges should have size 0
     }
   }
+
+  test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
+    val newLinearAsset = NewLinearAsset(1l, 0, 10, NumericValue(2), SideCode.AgainstDigitizing.value, 0, None)
+
+    OracleDatabase.withDynTransaction {
+      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+      val id = ServiceWithDao.create(Seq(newLinearAsset), RoadWidth.typeId, "sideCode_adjust").head
+      val original = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
+
+      val changeSet =
+        ChangeSet(droppedAssetIds = Set.empty[Long],
+          expiredAssetIds = Set.empty[Long],
+          adjustedMValues = Seq.empty[MValueAdjustment],
+          adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+          adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)))
+
+      ServiceWithDao.updateChangeSet(changeSet)
+      val expiredAsset = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
+      val newAsset = ServiceWithDao.dao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, Seq(original.linkId), LinearAssetTypes.numericValuePropertyId)
+
+        newAsset.size should be(1)
+        val asset = newAsset.head
+        asset.startMeasure should be(original.startMeasure)
+        asset.endMeasure should be(original.endMeasure)
+        asset.createdBy should not be original.createdBy
+        asset.startMeasure should be(original.startMeasure)
+        asset.sideCode should be(SideCode.BothDirections.value)
+        asset.value should be(original.value)
+        asset.expired should be(false)
+        expiredAsset.expired should be(true)
+
+      dynamicSession.rollback()
+    }
+  }
+
+
 }
 

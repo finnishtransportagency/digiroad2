@@ -4,16 +4,16 @@
 
     var me = this;
 
-    function isElyMaintainerOrOperator(municipalityCode) {
+    this.isElyMaintainerOrOperator = function(municipalityCode) {
       return (me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
-    }
+    };
 
     /**
      * tietojen ylläpitäjä = bus stop maintainer. Return false if user is not operator/busStopMaintainer, meaning that maintainer cannot be changed to ELY-keskus in form unless authorized.
     * */
     this.reduceChoices = function(stopProperty) {
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
-      return stopProperty.publicId == 'tietojen_yllapitaja' && !isElyMaintainerOrOperator(municipalityCode);
+      return stopProperty.publicId == 'tietojen_yllapitaja' && !me.isElyMaintainerOrOperator(municipalityCode);
     };
 
     /**
@@ -21,7 +21,7 @@
     * */
     this.isActiveTrStopWithoutPermission = function(isExpired, isTrStop) {
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
-      return !isExpired && isTrStop && !isElyMaintainerOrOperator(municipalityCode);
+      return !isExpired && isTrStop && !me.isElyMaintainerOrOperator(municipalityCode);
     };
 
     /** Rules:
@@ -50,9 +50,14 @@
             return value.propertyValue;
           }), "2");
 
+      var hasLivi = _.find(properties, function(property) {
+          return property.publicId === 'yllapitajan_koodi'; });
+
+      var liviCondition = typeof hasLivi != 'undefined' && typeof hasLivi.values != 'undefined' &&  !_.isEmpty(hasLivi.values);
+
       var hasAccess = this.assetSpecificAccess();
 
-      eventbus.trigger('application:controlledTR',condition);
+      eventbus.trigger('application:controlledTR', (condition && liviCondition));
       /**boolean inverted because it is used for 'isReadOnly' in mass transit stop form*/
       return !hasAccess;
     };

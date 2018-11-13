@@ -1,5 +1,5 @@
 (function(application) {
-  application.start = function(customBackend, withTileMaps, isExperimental) {
+  application.start = function(customBackend, withTileMaps, isExperimental, clusterDistance) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
@@ -34,13 +34,15 @@
     });
 
     var pointAssets = _.map(assetConfiguration.pointAssetsConfig, function(spec) {
+      var rCollection = spec.roadCollection ? new spec.roadCollection(backend) :  roadCollection;
       var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
-      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
+      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName,  rCollection);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
         selectedPointAsset: selectedPointAsset,
-        authorizationPolicy: authorizationPolicy
+        authorizationPolicy: authorizationPolicy,
+        roadCollection: rCollection
       });
     });
 
@@ -123,6 +125,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
+    new InaccurateWorkList().initialize();
     new UserNotificationPopup(models.userNotificationCollection).initialize();
 
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
@@ -131,15 +134,15 @@
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration);
+        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
       });
     });
   };
 
-  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration) {
+  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedServicePoint = getSelectedPointAsset(pointAssets, 'servicePoints');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
@@ -259,7 +262,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration) {
+  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance) {
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -296,7 +299,7 @@
     _.forEach(pointAssets, function(pointAsset ) {
     new PointAssetForm(
        pointAsset,
-       roadCollection,
+       pointAsset.roadCollection,
        applicationModel,
        backend,
        pointAsset.saveCondition || function() {return true;},
@@ -311,16 +314,6 @@
        );
     });
 
-    var trafficSignReadOnlyLayer = function(layerName){
-      return new TrafficSignReadOnlyLayer({
-        layerName: layerName,
-        style: new PointAssetStyle('trafficSigns'),
-        collection: new TrafficSignsReadOnlyCollection(backend, 'trafficSigns', true),
-        assetLabel: new TrafficSignLabel(9),
-        assetGrouping: new AssetGrouping(9),
-        map: map
-      });
-    };
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
       var parameters ={
@@ -338,11 +331,12 @@
        assetLabel: asset.label,
        roadAddressInfoPopup: roadAddressInfoPopup,
        authorizationPolicy: asset.authorizationPolicy,
-       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
+       readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
        massLimitation: asset.editControlLabels.massLimitations,
        typeId: asset.typeId,
-       isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed
+       isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed,
+       minZoomForContent: asset.minZoomForContent,
+       isExperimental: isExperimental
       };
       acc[asset.layerName] = asset.layer ? new asset.layer(parameters) : new LinearAssetLayer(parameters);
       return acc;
@@ -353,7 +347,7 @@
      acc[asset.layerName] = new PointAssetLayer({
        roadLayer: roadLayer,
        application: applicationModel,
-       roadCollection: models.roadCollection,
+       roadCollection: asset.roadCollection,
        collection: asset.collection,
        map: map,
        selectedAsset: asset.selectedPointAsset,
@@ -365,8 +359,6 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
-       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName),
        authorizationPolicy: asset.authorizationPolicy
      });
      return acc;
@@ -388,7 +380,6 @@
         roadAddressInfoPopup: roadAddressInfoPopup,
         allowGrouping: asset.allowGrouping,
         assetGrouping: new AssetGrouping(asset.groupingDistance),
-        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
         authorizationPolicy: asset.authorizationPolicy,
         assetTypeIds: asset.typeIds
       });
@@ -397,19 +388,20 @@
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup),
-       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(36), roadLayer, roadAddressInfoPopup),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup, isExperimental),
+       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(36), roadLayer, roadAddressInfoPopup, isExperimental, clusterDistance),
        speedLimit: new SpeedLimitLayer({
        map: map,
        application: applicationModel,
        collection: models.speedLimitsCollection,
        selectedSpeedLimit: models.selectedSpeedLimit,
-       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer('speedLimit'),
+       readOnlyLayer: new TrafficSignReadOnlyLayer({ layerName: 'speedLimit', map: map, backend: backend }),
        style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer,
-       roadAddressInfoPopup: roadAddressInfoPopup
+       roadAddressInfoPopup: roadAddressInfoPopup,
+       isExperimental: isExperimental
        }),
-       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
+       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }) )
 
     }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers);
 

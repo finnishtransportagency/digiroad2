@@ -13,19 +13,23 @@
       bogieWeightLimit: false,
       heightLimit: false,
       lengthLimit: false,
-      widthLimit: false
+      widthLimit: false,
+      hazardousMaterialTransportProhibition: false,
+      manoeuvre: false
     };
 
     var trafficSignValues = {
       speedLimit: { values : [1, 2, 3, 4, 5, 6]},
       trSpeedLimits: { values : [1, 2, 3, 4, 5, 6]},
-      totalWeightLimit: {values : [32]},
-      trailerTruckWeightLimit: {values : [33]},
-      axleWeightLimit:{values : [34]},
-      bogieWeightLimit: {values : [35]},
+      totalWeightLimit: {values : [32, 33, 34, 35]},
+      trailerTruckWeightLimit: {values : [32, 33, 34, 35]},
+      axleWeightLimit:{values : [32, 33, 34, 35]},
+      bogieWeightLimit: {values : [32, 33, 34, 35]},
       heightLimit: {values : [31]},
       lengthLimit: {values : [8]},
-      widthLimit: {values : [30]}
+      widthLimit: {values : [30]},
+      hazardousMaterialTransportProhibition: {values : [47, 48]},
+      manoeuvre: {values: [10, 11, 12]}
     };
 
     this.getGroup = function(signTypes){

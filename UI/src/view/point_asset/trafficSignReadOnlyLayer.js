@@ -1,12 +1,12 @@
 (function (root) {
   root.TrafficSignReadOnlyLayer = function(params) {
     var allowGrouping = true,
-      parentLayerName = params.layerName,
-      style = params.style,
-      assetLabel = params.assetLabel,
-      collection = params.collection,
-      assetGrouping = params.assetGrouping,
-      map = params.map;
+        parentLayerName = params.layerName,
+        style = new PointAssetStyle('trafficSigns'),
+        assetLabel = new TrafficSignLabel(),
+        collection = new TrafficSignsReadOnlyCollection(params.backend, 'trafficSigns', true),
+        assetGrouping = new AssetGrouping(9),
+        map = params.map;
 
     var me = this;
     var minZoomForContent = zoomlevels.minZoomForAssets;
@@ -27,7 +27,9 @@
       axleWeightLimit: false,
       bogieWeightLimit: false,
       heightLimit: false,
-      lengthLimit: false
+      lengthLimit: false,
+      hazardousMaterialTransportProhibition: false,
+      manoeuvre: false
     };
 
     var setLayerToShow = function(layerName, isShowing){

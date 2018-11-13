@@ -8,8 +8,8 @@
         function (result) {
           notifications = result;
             var sortedNotifications = _.reverse(_.sortBy(result, function (notification) {
-            return new Date(notification.createdDate);
-          }));
+              return new Date(notification.createdDate.replace( /(\d{2}).(\d{2}).(\d{4})/, "$2/$1/$3"));
+            }));
 
           if (_.some(result, function (item) { return item.unRead; }))
             eventbus.trigger('userNotification:fetched', sortedNotifications) ;
@@ -19,7 +19,7 @@
 
     this.fetchAll = function() {
       return _.reverse(_.sortBy(notifications, function (notification) {
-        return new Date(notification.createdDate);
+        return new Date(notification.createdDate.replace( /(\d{2}).(\d{2}).(\d{4})/, "$2/$1/$3"));
       }));
     };
 

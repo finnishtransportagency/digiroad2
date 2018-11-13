@@ -90,6 +90,12 @@
       });
     };
 
+    var getByLinkId = function(linkId) {
+      return _.flatten(manoeuvres).find(function (manoeuvre) {
+        return manoeuvre.linkId === linkId;
+      });
+    };
+
     /**
      * Updates model after form changes.
      *
@@ -171,13 +177,7 @@
         });
 
         if (targetLink) {
-
-          var previousAdjacentLinks = [];
-
-          _.each(manoeuvre.linkIds, function(item){
-            if(item != linkId)
-              previousAdjacentLinks = previousAdjacentLinks.concat(_.map(roadlinkAdjacents[item], 'linkId'));
-          });
+          var previousAdjacentLinks = manoeuvre.linkIds.concat(_.map(roadlinkAdjacents[_.last(_.initial( manoeuvre.linkIds))], 'linkId'));
 
           var nextAdjacentLinks = _.filter(targetLink.adjacentLinks, function(item){
             //Remove from adjacents the previous adjacents links, all links from the chain and
@@ -676,6 +676,7 @@
       getFirstTargetRoadLinksBySourceLinkId: getFirstTargetRoadLinksBySourceLinkId,
       getNextTargetRoadLinksBySourceLinkId: getNextTargetRoadLinksBySourceLinkId,
       get: get,
+      getByLinkId: getByLinkId,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
       addLink: addLink,

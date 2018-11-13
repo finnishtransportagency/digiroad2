@@ -7,7 +7,7 @@ window.SpeedLimitLayer = function(params) {
       style = params.style,
       layerName = 'speedLimit',
       roadAddressInfoPopup= params.roadAddressInfoPopup,
-      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
+      trafficSignReadOnlyLayer = params.readOnlyLayer;
   var isActive = false;
   var isActiveTrafficSigns = false;
   var extraEventListener = _.extend({running: false}, eventbus);
@@ -20,7 +20,7 @@ window.SpeedLimitLayer = function(params) {
   this.deactivateSelection = function() {
     selectToolControl.deactivate();
   };
-  this.minZoomForContent = zoomlevels.minZoomForAssets;
+  this.minZoomForContent = params.isExperimental ? zoomlevels.oneKmZoomLvl: zoomlevels.minZoomForRoadLinks;
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
   };

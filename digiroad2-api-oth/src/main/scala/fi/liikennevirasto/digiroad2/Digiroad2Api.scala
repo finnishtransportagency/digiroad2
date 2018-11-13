@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
+import java.security.InvalidParameterException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -27,7 +28,6 @@ import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
@@ -59,6 +59,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val pavedRoadService: PavedRoadService,
                    val roadWidthService: RoadWidthService,
                    val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
+                   val hazmatTransportProhibitionService: HazmatTransportProhibitionService = Digiroad2Context.hazmatTransportProhibitionService,
                    val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
                    val numericValueLinearAssetService: NumericValueLinearAssetService = Digiroad2Context.numericValueLinearAssetService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
@@ -75,8 +76,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
                    val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
+                   val linearTotalWeightLimitService: LinearTotalWeightLimitService = Digiroad2Context.linearTotalWeightLimitService,
+                   val linearAxleWeightLimitService: LinearAxleWeightLimitService = Digiroad2Context.linearAxleWeightLimitService,
+                   val linearBogieWeightLimitService: LinearBogieWeightLimitService = Digiroad2Context.linearBogieWeightLimitService,
+                   val linearHeightLimitService: LinearHeightLimitService = Digiroad2Context.linearHeightLimitService,
+                   val linearLengthLimitService: LinearLengthLimitService = Digiroad2Context.linearLengthLimitService,
+                   val linearTrailerTruckWeightLimitService: LinearTrailerTruckWeightLimitService = Digiroad2Context.linearTrailerTruckWeightLimitService,
+                   val linearWidthLimitService: LinearWidthLimitService = Digiroad2Context.linearWidthLimitService,
                    val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService,
-                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)  extends ScalatraServlet
+                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
+  extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication {
@@ -189,14 +198,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val location = userPreferences match {
       case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3)
-      case _ if user.configuration.authorizedMunicipalities.isEmpty || user.configuration.authorizedAreas.isEmpty => None
       case _ =>
-        if(user.isMunicipalityMaintainer())
+        if(user.isMunicipalityMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty )
           getStartUpParameters(user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality)
         else {
-          if (user.isServiceRoadMaintainer())
+          if (user.isServiceRoadMaintainer() && user.configuration.authorizedAreas.nonEmpty)
             getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
-          else if (user.isBusStopMaintainer()) //case ely maintainer
+          else if (user.isBusStopMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty) //case ely maintainer
             getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
           else
             None
@@ -271,7 +279,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
       a.linkId match {
         case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
-        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId)
+        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
       }
       massTransitStopService.deleteMassTransitStopData(assetId)
     }
@@ -808,7 +816,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
     val minVisibleZoom = 2
-    val maxZoom = 10
+    val maxZoom = 8
 
     zoom >= minVisibleZoom && zoom < maxZoom match {
       case true =>
@@ -823,7 +831,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
     val minVisibleZoom = 2
-    val maxZoom = 10
+    val maxZoom = 8
 
     zoom >= minVisibleZoom && zoom < maxZoom match {
       case true =>
@@ -1247,6 +1255,33 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/manoeuvre/inaccurates") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
+
+    user.isOperator() match {
+      case true =>
+        manoeuvreService.getInaccurateRecords()
+      case false =>
+        manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
+    }
+  }
+
+  get("/inaccurates") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    user.isOperator() match {
+      case true =>
+        getLinearAssetService(typeId).getInaccurateRecords(typeId)
+      case false =>
+        getLinearAssetService(typeId).getInaccurateRecords(typeId, municipalityCode, Set(Municipality))
+    }
+  }
+
+
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
@@ -1316,10 +1351,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserMunicipalityAccessByMunicipality(user)(road.municipalityCode)
   }
 
-  private def validateUserMunicipalityAccessByLinkId(user: User, linkId: Long): Unit = {
-    val road = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
-    if(!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
-      halt(Unauthorized("User not authorized"))
+  private def validateUserMunicipalityAccessByLinkId(user: User, linkId: Long, municipality: Int): Unit = {
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId) match {
+      case Some(road) =>
+        if (!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
+          halt(Unauthorized("User not authorized"))
+      case _ =>
+        //when link id for asset not found
+        validateUserMunicipalityAccessByMunicipality(user)(municipality)
+    }
   }
 
   private def validateUserRights(existingAssets: Seq[PersistedLinearAsset], newLinearAssets: Seq[NewLinearAsset], user: User, typeId: Int) : Unit = {
@@ -1374,14 +1414,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
 
       val linkIds = manoeuvres.flatMap(_.linkIds)
-      val roadlinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet)
+      val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet)
 
-      roadlinks.foreach{rl => validateUserMunicipalityAccessByMunicipality(user)(rl.municipalityCode)}
+      roadLinks.foreach{rl => validateUserMunicipalityAccessByMunicipality(user)(rl.municipalityCode)}
 
-      if(!manoeuvreService.isValid(manoeuvre, roadlinks))
-        halt(BadRequest("Invalid 'manouevre'"))
-
-      manoeuvreService.createManoeuvre(user.username, manoeuvre)
+      try {
+        manoeuvreService.createManoeuvre(user.username, manoeuvre, roadLinks)
+      } catch {
+        case err: InvalidParameterException => halt(BadRequest(err.getMessage))
+      }
     }
     Created(manoeuvreIds)
   }
@@ -1407,6 +1448,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
       validateMunicipalityAccessByLinkId(user, sourceRoadLinkId)
       manoeuvreService.updateManoeuvre(user.username, id, updates, None)
+    }
+  }
+
+  get("/pointassets/light") {
+    val assetType = params.getOrElse("type", halt(BadRequest("Missing mandatory 'type' parameter")))
+    getLightGeometry(assetType)
+  }
+
+  private def getLightGeometry(assetType: String) = {
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      val usedService = getPointAssetService(assetType)
+      usedService.getLightGeometryByBoundingBox(boundingRectangle)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
 
@@ -1526,6 +1583,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
+  get("/municipalities/byUser") {
+    val userAuthorizedMunicipalities = userProvider.getCurrentUser().configuration.authorizedMunicipalities
+    municipalityService.getMunicipalities.filter(m => userAuthorizedMunicipalities.contains(m._1)).map {
+      case (id, name) =>
+        Map(
+          "id" -> id,
+          "name" -> name
+        )
+    }
+  }
+
   get("/municipalities/unverified") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
@@ -1579,7 +1647,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     service.getPersistedAssetsByIds(Set(id)).headOption.foreach{ a =>
       a.linkId match {
         case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
-        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId)
+        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
       }
     }
     service.expire(id, user.username)
@@ -1593,7 +1661,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) =>
         validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
-        service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username, link.linkSource)
+        service.update(id, updatedAsset, link, user.username)
     }
   }
 
@@ -1614,13 +1682,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
-      case HazmatTransportProhibition.typeId => prohibitionService
+      case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
       case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+      case HeightLimitInfo.typeId => linearHeightLimitService
+      case LengthLimit.typeId => linearLengthLimitService
+      case WidthLimitInfo.typeId => linearWidthLimitService
+      case TotalWeightLimit.typeId => linearTotalWeightLimitService
+      case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
+      case AxleWeightLimit.typeId => linearAxleWeightLimitService
+      case BogieWeightLimit.typeId => linearBogieWeightLimitService
       case _ => linearAssetService
     }
   }
 
+  private def getPointAssetService(assetType: String): PointAssetOperations = {
+    assetType match {
+      case MassTransitStopAsset.layerName => massTransitStopService
+      case _ => throw new UnsupportedOperationException("Asset type not supported")
+    }
+  }
 
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()

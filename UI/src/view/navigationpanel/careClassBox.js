@@ -99,7 +99,7 @@
     };
 
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       $(me.expanded).find('input[type=radio][name=labelRadio]').change(function() {
         if(applicationModel.isDirty()){
@@ -156,7 +156,7 @@
     };
 
     this.panel = function () {
-      return [ '<div class="panel ' + me.layerName() +'">',
+      return [ '<div class="panel ' + me.layerName +'">',
         '  <header class="panel-header expanded">',
         me.header() ,
         '  </header>'
@@ -197,13 +197,8 @@
       return element;
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.show = show;
+    this.hide = hide;
   };
 })(this);
 

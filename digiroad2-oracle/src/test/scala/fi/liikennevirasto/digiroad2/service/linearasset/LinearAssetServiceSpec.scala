@@ -1,12 +1,11 @@
 
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -43,8 +42,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
-  when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
@@ -61,6 +58,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     override def assetDao: OracleAssetDao = mockAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+    override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
   object ServiceWithDao extends LinearAssetOperations {
@@ -74,52 +72,10 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     override def assetDao: OracleAssetDao = mockAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+    override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
-
-
-  test("Create new linear asset") {
-    runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
-      newAssets.length should be(1)
-      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
-      asset.value should be (Some(NumericValue(1000)))
-      asset.expired should be (false)
-      mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360l), newTransaction = false).head.linkSource.value should be (1)
-    }
-  }
-
-  test("Create new linear asset with verified info") {
-    runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
-      newAssets.length should be(1)
-      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
-      asset.value should be (Some(NumericValue(1000)))
-      asset.expired should be (false)
-      asset.verifiedBy.get should be ("testuser")
-      asset.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-    }
-  }
-
-  test("Create new linear asset without informationSource") {
-    runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, NumericValue(1000), 1, 0, None)), 30, "testuser")
-      newAssets.length should be(1)
-      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
-      asset.informationSource should be (None)
-    }
-  }
-
-  test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
-    val linearAssets = PassThroughService.getByBoundingBox(30, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
-    linearAssets should have size 1
-    linearAssets.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
-    linearAssets.map(_.linkId) should be(Seq(1))
-    linearAssets.map(_.value) should be(Seq(Some(NumericValue(40000))))
-    verify(mockEventBus, times(1))
-      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil, Nil, Set.empty[Long]))
-  }
 
   test("Separate linear asset") {
     val typeId = 140
@@ -129,7 +85,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
       val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i, _) => Unit)
-      
+
       createdId.length should be(2)
 
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
@@ -607,9 +563,17 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should not create new assets on update") {
+  test("Create new assets on update when exist sideCode adjustmen") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new LinearAssetService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -617,6 +581,13 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val oldLinkId2 = 1235
     val assetTypeId = 100
     val vvhTimeStamp = 14440000
+
+    val roadLinkWithLinkSource = RoadLink(
+      oldLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+
+
     OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
@@ -638,20 +609,74 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val changeSet = projectedLinearAssets.foldLeft(ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) {
         case (acc, proj) =>
-          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode))))
+          acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode), original.typeId)))
       }
 
       service.updateChangeSet(changeSet)
       val all = service.dao.fetchLinearAssetsByLinkIds(assetTypeId, Seq(oldLinkId1, oldLinkId2), "mittarajoitus")
       all.size should be (3)
-      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
-      persisted.size should be (1)
-      val head = persisted.head
-      head.id should be (original.id)
-      head.startMeasure should be (0.1)
-      head.endMeasure should be (10.1)
-      head.expired should be (false)
+      val persisted = service.getPersistedAssetsByLinkIds(assetTypeId, Seq(oldLinkId1))
+      persisted.size should be (2)
+      persisted.exists(_.id == asset2) should be (true)
+      persisted.exists(_.id == asset1) should be (false)
+      val newAsset = persisted.find(_.id !== asset2).get
+      newAsset.id should not be original.id
+      newAsset.startMeasure should be (0.1)
+      newAsset.endMeasure should be (10.1)
+      newAsset.expired should be (false)
+
       dynamicSession.rollback()
+    }
+  }
+
+  case class TestAssetInfo(newLinearAsset: NewLinearAsset, typeId: Int)
+  test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
+
+    val assetsInfo = Seq(
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(2), SideCode.AgainstDigitizing.value, 0, None), NumberOfLanes.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1000), SideCode.AgainstDigitizing.value, 0, None), TotalWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1200), SideCode.AgainstDigitizing.value, 0, None), TrailerTruckWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1100), SideCode.AgainstDigitizing.value, 0, None), AxleWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(2000), SideCode.AgainstDigitizing.value, 0, None), BogieWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(400), SideCode.AgainstDigitizing.value, 0, None), HeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(200), SideCode.AgainstDigitizing.value, 0, None), LengthLimit.typeId),
+      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(300), SideCode.AgainstDigitizing.value, 0, None), WidthLimit.typeId))
+
+    OracleDatabase.withDynTransaction {
+      assetsInfo.foreach(testSideCodeAdjustment)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  def testSideCodeAdjustment(assetInfo: TestAssetInfo) {
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+    val id = ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "sideCode_adjust").head
+    val original = ServiceWithDao.getPersistedAssetsByIds(assetInfo.typeId, Set(id)).head
+
+    val changeSet =
+      ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)))
+
+    when(mockAssetDao.getAssetTypeId(Seq(id))).thenReturn(Seq((id, assetInfo.typeId)))
+
+    ServiceWithDao.updateChangeSet(changeSet)
+    val expiredAsset = ServiceWithDao.getPersistedAssetsByIds(assetInfo.typeId, Set(id)).head
+    val newAsset = ServiceWithDao.dao.fetchLinearAssetsByLinkIds(assetInfo.typeId, Seq(original.linkId), "mittarajoitus")
+    withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
+      newAsset.size should be(1)
+      val asset = newAsset.head
+      asset.startMeasure should be(original.startMeasure)
+      asset.endMeasure should be(original.endMeasure)
+      asset.createdBy should not be original.createdBy
+      asset.startMeasure should be(original.startMeasure)
+      asset.sideCode should be(SideCode.BothDirections.value)
+      asset.value should be(original.value)
+      asset.expired should be(false)
+      expiredAsset.expired should be(true)
     }
   }
 
@@ -880,7 +905,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val changeInfo = Seq(
       ChangeInfo(Some(oldLinkId), Some(newLinkId), 1204467577, 1, Some(0), Some(150), Some(100), Some(200), 1461970812000L))
 
-
     OracleDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""DELETE FROM asset_link WHERE position_id in (SELECT id FROM lrm_position where link_id = $oldLinkId)""".execute
@@ -905,77 +929,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
         proj.linkId should be (6000)
       }
       dynamicSession.rollback()
-    }
-  }
-  test("Update verified info") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    OracleDatabase.withDynTransaction {
-      val assetNotVerified = service.dao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus")
-      service.updateVerifiedInfo(Set(11111), "test", 30)
-      val verifiedAsset = service.dao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus")
-      assetNotVerified.find(_.id == 11111).flatMap(_.verifiedBy) should be(None)
-      verifiedAsset.find(_.id == 11111).flatMap(_.verifiedBy) should be(Some("test"))
-      verifiedAsset.find(_.id == 11111).flatMap(_.verifiedDate).get.toString("yyyy-MM-dd") should be(DateTime.now().toString("yyyy-MM-dd"))
-
-      dynamicSession.rollback()
-    }
-  }
-
-  test("get unVerified linear assets") {
-    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
-      runWithRollback {
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, NumericValue(800), 1, 0, None)), 40, "testuser")
-
-      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set())
-      unVerifiedAssets.keys.head should be ("Kauniainen")
-      unVerifiedAssets.flatMap(_._2).keys.head should be ("Municipality")
-      unVerifiedAssets.flatMap(_._2).values.head should be (newAssets1)
-    }
-  }
-
-  test("get unVerified linear assets only for specific municipalities") {
-    val roadLink = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
-      RoadLink(2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-        1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(92)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
-      RoadLink(3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-        1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
-
-    val municipalitiesInfo = List(MunicipalityInfo(91, 9, "Helsinki"), MunicipalityInfo(92, 9, "Vantaa"))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
-    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfo)
-
-    runWithRollback {
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(2, 0, 60, NumericValue(800), 1, 0, None)), 40, "dr1_conversion")
-      val newAssets3 = ServiceWithDao.create(Seq(NewLinearAsset(3, 0, 30, NumericValue(100), 1, 0, None)), 40, "dr1_conversion")
-
-      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set(91,92))
-      unVerifiedAssets.keys.size should be (2)
-      unVerifiedAssets.keys.forall(List("Vantaa", "Helsinki").contains) should be (true)
-      unVerifiedAssets.filter(_._1 == "Vantaa").flatMap(_._2).keys.head should be ("Municipality")
-      unVerifiedAssets.filter(_._1 == "Vantaa").flatMap(_._2).values.head should be (newAssets2)
-      unVerifiedAssets.filter(_._1 == "Helsinki").flatMap(_._2).keys.head should be ("Municipality")
-      unVerifiedAssets.filter(_._1 == "Helsinki").flatMap(_._2).values.head should be (newAssets1)
-    }
-  }
-
-  test("should not get administrative class 'State'") {
-    val roadLink = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State,
-      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
-    when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(Set(91))).thenReturn(List(MunicipalityInfo(91, 9, "Helsinki")))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
-
-    runWithRollback {
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
-
-      val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set(91))
-      unVerifiedAssets should be(empty)
     }
   }
 }

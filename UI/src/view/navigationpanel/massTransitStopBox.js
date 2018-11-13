@@ -37,13 +37,9 @@
         '  </div>'].join('');
     };
 
-    this.title = function (){
-      return 'Joukkoliikenteen pysäkki';
-    };
+    this.title = 'Joukkoliikenteen pysäkki';
 
-    this.layerName = function () {
-      return 'massTransitStop';
-    };
+    this.layerName = 'massTransitStop';
 
     this.labeling = function () {
       var roadTypePanel =  [
@@ -187,7 +183,7 @@
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
     };
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       me.eventHandler();
       bindDOMEventHandlers();
@@ -198,12 +194,7 @@
         .hide();
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.show = show;
+    this.hide = hide;
   };
 })(this);
