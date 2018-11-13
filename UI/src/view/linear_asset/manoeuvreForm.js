@@ -545,6 +545,18 @@
       rootElement.on('click', '.manoeuvres button.cancel', function() {
         selectedManoeuvreSource.cancel();
       });
+
+      var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
+        $('#information-content').append('' +
+          '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
+          '<a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a>' +
+          '</div>');
+      };
+
+      eventbus.on('layer:selected', function(layer) {
+        if(layer === 'manoeuvre')
+          renderInaccurateWorkList(layer);
+      });
     };
 
     bindEvents();

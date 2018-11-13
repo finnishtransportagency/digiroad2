@@ -341,6 +341,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipalityAndGroup(municipalityCode, assetTypes))
   }
 
+  def getByMunicipalityExcludeByAdminClass(municipalityCode: Int, filterAdministrativeClass: AdministrativeClass): Seq[PersistedAsset] = {
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
+    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    val assets = getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipality(municipalityCode))
+    val filterRoadLinks = mapRoadLinks.filterNot(_._2.administrativeClass == filterAdministrativeClass)
+    assets.filter{a => filterRoadLinks.get(a.linkId).nonEmpty}
+  }
+
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
@@ -442,12 +450,16 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     None
   }
 
-  def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup]): Seq[PersistedTrafficSign] = {
+  def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup] = None): Seq[PersistedTrafficSign] = {
     val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
     optGroupType match {
       case Some(groupType) => assets.filter(asset => TrafficSignTypeGroup.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.toInt) == groupType)
       case _ => assets
     }
+  }
+
+  def getTrafficSign(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+    OracleTrafficSignDao.fetchByLinkId(linkIds)
   }
 
   def getTrafficSignsWithTrafficRestrictions( municipality: Int, newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {

@@ -92,6 +92,11 @@ object OracleTrafficSignDao {
                 where p.ASSET_TYPE_ID = 300 and p.PUBLIC_ID = 'trafficSigns_type' and ev.VALUE in (#${values.mkString(",")}) """.as[Long].list
   }
 
+  def fetchByLinkId(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+    val filter = s"Where a.asset_type_id = 300 and lp.link_id in (${linkIds.mkString(",")})"
+    fetchByFilter(query => query + filter)
+  }
+
   private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
     val rows = StaticQuery.queryNA[TrafficSignRow](query).iterator.toSeq
 

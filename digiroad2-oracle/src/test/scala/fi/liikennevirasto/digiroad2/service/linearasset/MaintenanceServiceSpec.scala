@@ -58,19 +58,6 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val maintenanceDao = new OracleMaintenanceDao(mockVVHClient, mockRoadLinkService)
 
-  object PassThroughService extends LinearAssetOperations {
-    override def withDynTransaction[T](f: => T): T = f
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = mockLinearAssetDao
-    override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
-    override def polygonTools: PolygonTools = mockPolygonTools
-    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
-
-    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-  }
-
   object ServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
@@ -81,8 +68,8 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def maintenanceDAO: OracleMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
+    override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
-
 
   object MaintenanceServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -94,12 +81,13 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def maintenanceDAO: OracleMaintenanceDao = mockMaintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: OracleAssetDao = mockAssetDao
+    override def getInaccurateRecords(typeId: Int,municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
   val geomFact= new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("Create new maintenanceRoad") {
     val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")

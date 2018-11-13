@@ -2,12 +2,14 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, DigiroadEventBus}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode, AdministrativeClass, Manoeuvres}
+import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import org.joda.time.DateTime
@@ -20,15 +22,33 @@ case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], except
 case class ManoeuvreProvider(trafficSign: PersistedTrafficSign, sourceRoadLink: RoadLink)
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
+sealed trait ManoeuvreTurnRestrictionType {
+  def value: Int
+}
+object ManoeuvreTurnRestrictionType {
+  val values = Set(UTurn, LeftTurn, RightTurn, Unknown)
+
+  def apply(intValue: Int): ManoeuvreTurnRestrictionType = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object UTurn extends ManoeuvreTurnRestrictionType { def value = 1 }
+  case object LeftTurn extends ManoeuvreTurnRestrictionType { def value = 2 }
+  case object RightTurn extends ManoeuvreTurnRestrictionType { def value = 3 }
+  case object Unknown extends ManoeuvreTurnRestrictionType { def value = 99 }
+}
+
 object ElementTypes {
   val FirstElement = 1
   val IntermediateElement = 2
   val LastElement = 3
 }
 
-class ManoeuvreService(roadLinkService: RoadLinkService) {
+class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
+
   def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
+  def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
@@ -56,6 +76,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       dao.expireManoeuvre(oldManoeuvreId)
       manoeuvreUpdates.exceptions.foreach(dao.setManoeuvreExceptions(manoeuvreId))
       manoeuvreUpdates.validityPeriods.foreach(dao.setManoeuvreValidityPeriods(manoeuvreId))
+
+      eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(oldManoeuvreId), Set(manoeuvreId)))
       manoeuvreId
     }
   }
@@ -218,6 +240,16 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre) : Long = {
+    val manoeuvreId = withDynTransaction {
+      dao.createManoeuvre(userName, manoeuvre)
+    }
+
+    eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(manoeuvreId)))
+    manoeuvreId
+
+  }
+
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
     withDynTransaction {
       createWithoutTransaction(userName, manoeuvre, roadlinks)
@@ -232,9 +264,12 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   }
 
   def deleteManoeuvre(s: String, id: Long): Long = {
-    withDynTransaction {
+    val deletedId = withDynTransaction {
       dao.deleteManoeuvre(s, id)
     }
+
+    eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(deletedId)))
+    deletedId
   }
 
   def deleteManoeuvreFromSign(id: Long): Long = {
@@ -253,6 +288,17 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   def find(id: Long) : Option[Manoeuvre] = {
     withDynTransaction {
       dao.find(id)
+    }
+  }
+
+  def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
+    withDynTransaction {
+      inaccurateDAO.getInaccurateAsset(Manoeuvres.typeId, municipalities, adminClass)
+        .groupBy(_.municipality)
+        .mapValues {
+          _.groupBy(_.administrativeClass)
+            .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
+        }
     }
   }
 

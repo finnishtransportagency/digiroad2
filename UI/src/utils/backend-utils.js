@@ -197,6 +197,14 @@
       return $.getJSON('api/speedLimits/inaccurates');
     };
 
+    this.getInaccurateAssets = function(typeId) {
+      return $.getJSON('api/inaccurates?typeId=' + typeId);
+    };
+
+    this.getInaccurateManoeuvre = function () {
+      return $.getJSON('api/manoeuvre/inaccurates');
+    };
+
     this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox

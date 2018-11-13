@@ -87,7 +87,17 @@
         railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
         directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut',
         trafficSigns: 'Geometrian ulkopuolelle jääneet liikennemerkit',
-        maintenanceRoad: 'Tarkistamattomien huoltoteiden lista'
+
+        maintenanceRoad: 'Tarkistamattomien huoltoteiden lista',
+        hazardousMaterialTransportProhibitionErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'hazardousMaterialTransportProhibition'},
+        manoeuvreErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'manoeuvre'},
+        heightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'heightLimit'},
+        bogieWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'bogieWeightLimit'},
+        axleWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'axleWeightLimit'},
+        lengthLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'lengthLimit'},
+        totalWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'totalWeightLimit'},
+        trailerTruckWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'trailerTruckWeightLimit'},
+        widthLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'widthLimit'}
       };
 
       var sourceLayer = (layerInfo[layerName].SourceLayer) ? layerInfo[layerName].SourceLayer : layerName;

@@ -71,6 +71,7 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
@@ -96,6 +97,7 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
@@ -121,6 +123,7 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
@@ -146,6 +149,7 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
@@ -170,6 +174,7 @@
         label: new LinearAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -194,6 +199,7 @@
         label: new LinearAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -219,6 +225,7 @@
         label: new LinearAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -449,10 +456,13 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
+        hasInaccurate: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        readOnlyLayer: TrafficSignReadOnlyLayer
+
       },
       {
         typeId: assetType.europeanRoads,
@@ -568,7 +578,7 @@
         hasMunicipalityValidation: true,
         minZoomForContent: oneKmZoomLvl
       },
-        {
+      {
             typeId: assetType.careClass,
             singleElementEventCategory: 'careClass',
             multiElementEventCategory: 'careClasses',

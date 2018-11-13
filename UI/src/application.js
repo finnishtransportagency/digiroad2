@@ -125,6 +125,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
+    new InaccurateWorkList().initialize();
     new UserNotificationPopup(models.userNotificationCollection).initialize();
 
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
@@ -400,7 +401,7 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        isExperimental: isExperimental
        }),
-       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
+       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }) )
 
     }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers);
 
