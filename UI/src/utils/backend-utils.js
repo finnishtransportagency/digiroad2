@@ -201,6 +201,10 @@
       return $.getJSON('api/inaccurates?typeId=' + typeId);
     };
 
+    this.getInaccuratePointAssets = function() {
+      return $.getJSON('api/pedestrianCrossings/inaccurates');
+    };
+
     this.getInaccurateManoeuvre = function () {
       return $.getJSON('api/manoeuvre/inaccurates');
     };

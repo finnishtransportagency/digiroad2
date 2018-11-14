@@ -14,7 +14,9 @@
       assetLabel = params.assetLabel,
       allowGrouping = params.allowGrouping,
       assetGrouping = params.assetGrouping,
-      authorizationPolicy = params.authorizationPolicy;
+      authorizationPolicy = params.authorizationPolicy,
+      hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
+      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -56,6 +58,9 @@
       else {
         if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
           selectedAsset.close();
+          if(hasTrafficSignReadOnlyLayer){
+            trafficSignReadOnlyLayer.highLightLayer();
+          }
         }else{
           applySelection();
         }
@@ -155,8 +160,11 @@
         roadLayer.drawRoadLinks(roadCollection.getAll(), zoomlevels.getViewZoom(map));
          selectControl.activate();
       });
-      if(collection.complementaryIsActive())
+      if(collection.complementaryIsActive()) {
         roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
+        if (hasTrafficSignReadOnlyLayer)
+          trafficSignReadOnlyLayer.refreshView();
+      }
       else
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
       collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function(assets) {
@@ -176,6 +184,9 @@
             vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
           applySelection();
         }
+
+        if (hasTrafficSignReadOnlyLayer)
+          trafficSignReadOnlyLayer.refreshView();
       });
     };
 
@@ -274,6 +285,7 @@
 
     function handleCreationCancelled() {
       mapOverlay.hide();
+      unHighLightReadOnlyLayer();
       roadLayer.clearSelection();
       me.refreshView();
     }
@@ -350,6 +362,8 @@
     }
 
     function showWithComplementary() {
+      if(hasTrafficSignReadOnlyLayer)
+        trafficSignReadOnlyLayer.showTrafficSignsComplementary();
       collection.activeComplementary(true);
       me.refreshView();
     }
@@ -362,6 +376,8 @@
     }
 
     function hideComplementary() {
+      if(hasTrafficSignReadOnlyLayer)
+        trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
       collection.activeComplementary(false);
       selectedAsset.close();
       me.refreshView();
@@ -370,11 +386,25 @@
     function hide() {
       selectedAsset.close();
       vectorLayer.setVisible(false);
+      hideReadOnlyLayer();
       roadAddressInfoPopup.stop();
       stopListeningExtraEvents();
       me.stop();
       me.hide();
     }
+
+    var hideReadOnlyLayer = function(){
+      if(hasTrafficSignReadOnlyLayer){
+        trafficSignReadOnlyLayer.hide();
+        trafficSignReadOnlyLayer.removeLayerFeatures();
+      }
+    };
+
+    var unHighLightReadOnlyLayer = function(){
+      if(hasTrafficSignReadOnlyLayer){
+        trafficSignReadOnlyLayer.unHighLightLayer();
+      }
+    };
 
     function excludeRoadByAdminClass(roadCollection) {
       return _.filter(roadCollection, function (roads) {

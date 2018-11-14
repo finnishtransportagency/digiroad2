@@ -1,5 +1,4 @@
 (function(root) {
-
   root.WidthLimitLabel = function(groupingDistance){
     AssetLabel.call(this, this.MIN_DISTANCE);
     var me = this;

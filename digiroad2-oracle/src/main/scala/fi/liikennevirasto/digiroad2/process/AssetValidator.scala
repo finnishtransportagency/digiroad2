@@ -46,7 +46,7 @@ trait AssetServiceValidator {
 
   def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate]
   def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType]
-  def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], point: Point, distance: Double): Seq[AssetType]
+  def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], point: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType]
 
   def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo) : Unit
 
@@ -108,7 +108,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(trafficSign.validityDirection)).head
 
     val assets = getAsset(roadLinks)
-    val filterAssets = filteredAsset(trafficSignRoadLink, getAsset(roadLinks), point, 0)
+    val filterAssets = filteredAsset(trafficSignRoadLink, assets, pointOfInterest, 0, Some(trafficSign))
     if (filterAssets.isEmpty) {
       val distance = if(GeometryUtils.areAdjacent(pointOfInterest, first))
         GeometryUtils.calculateLinearReferenceFromPoint(point, trafficSignRoadLink.geometry)

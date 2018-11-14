@@ -15,7 +15,8 @@
       lengthLimit: false,
       widthLimit: false,
       hazardousMaterialTransportProhibition: false,
-      manoeuvre: false
+      manoeuvre: false ,
+      pedestrianCrossings: false
     };
 
     var trafficSignValues = {
@@ -29,7 +30,8 @@
       lengthLimit: {values : [8]},
       widthLimit: {values : [30]},
       hazardousMaterialTransportProhibition: {values : [47, 48]},
-      manoeuvre: {values: [10, 11, 12]}
+      manoeuvre: {values: [10, 11, 12]},
+      pedestrianCrossings: { values: [7] }
     };
 
     this.getGroup = function(signTypes){

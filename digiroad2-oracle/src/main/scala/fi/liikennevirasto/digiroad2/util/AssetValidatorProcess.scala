@@ -84,6 +84,10 @@ object AssetValidatorProcess {
     new SpeedLimitValidator(trafficSignService)
   }
 
+  lazy val pedestrianCrossingValidator: PedestrianCrossingValidator = {
+    new PedestrianCrossingValidator()
+  }
+
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
     new InaccurateAssetDAO()
   }
@@ -135,7 +139,8 @@ object AssetValidatorProcess {
       "axleWeightLimit" -> axleWeightLimitValidator,
       "bogieWeightLimit" -> bogieWeightLimitValidator,
       "widthLimit" -> widthLimitValidator,
-      "lengthLimit" -> lengthLimitValidator
+      "lengthLimit" -> lengthLimitValidator,
+      "pedestrianCrossing" -> pedestrianCrossingValidator
   )
 
   def main(args:Array[String]) : Unit = {

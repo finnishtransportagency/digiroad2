@@ -232,6 +232,13 @@ class ManoeuvreValidation(manoeuvreValidator: ManoeuvreValidator) extends Actor 
   }
 }
 
+class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCrossingValidator) extends Actor {
+  def receive = {
+    case x: AssetValidatorInfo => pedestrianCrossingValidation.reprocessRelevantTrafficSigns(x.asInstanceOf[AssetValidatorInfo])
+    case _ => println("pedestrianCrossingValidator: Received unknown message")
+  }
+}
+
 case class ManoeuvreUpdater[A, B](manoeuvreProvider: ManoeuvreService) extends Actor {
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -354,6 +361,9 @@ object Digiroad2Context {
 
   val manoeuvreVerifier = system.actorOf(Props(classOf[ManoeuvreValidation], manoeuvreValidator), name = "manoeuvreValidator")
   eventbus.subscribe(manoeuvreVerifier, "manoeuvre:Validator")
+
+  val pedestrianCrossingVerifier = system.actorOf(Props(classOf[PedestrianCrossingValidation], pedestrianCrossingValidator), name = "pedestrianCrossingValidator")
+  eventbus.subscribe(pedestrianCrossingVerifier, "pedestrianCrossing:Validator")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -513,7 +523,7 @@ object Digiroad2Context {
   }
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = {
-    new PedestrianCrossingService(roadLinkService)
+    new PedestrianCrossingService(roadLinkService, eventbus)
   }
 
   lazy val trafficLightService: TrafficLightService = {
@@ -608,6 +618,10 @@ object Digiroad2Context {
 
   lazy val manoeuvreValidator: ManoeuvreValidator = {
     new ManoeuvreValidator()
+  }
+
+  lazy val pedestrianCrossingValidator: PedestrianCrossingValidator = {
+    new PedestrianCrossingValidator()
   }
 
   val env = System.getProperty("env")
