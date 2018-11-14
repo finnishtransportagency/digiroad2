@@ -39,13 +39,7 @@
       return element;
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
-
+    this.show = show;
+    this.hide = hide;
   };
 })(this);

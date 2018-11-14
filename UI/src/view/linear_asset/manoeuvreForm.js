@@ -1,7 +1,8 @@
 (function (root) {
-  root.ManoeuvreForm = function(selectedManoeuvreSource) {
+  root.ManoeuvreForm = function(selectedManoeuvreSource, feedbackCollection) {
 
     var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
+    new FeedbackDataTool(feedbackCollection, 'manoeuvre', authorizationPolicy);
 
     /*
     * HTML Templates
@@ -170,6 +171,9 @@
 
       // Listen to road link selection on map
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
+        if(!_.isEmpty(roadLink.manoeuvres))
+          eventbus.trigger('manoeuvres:selectedAvailable');
+
         roadLink.modifiedBy = roadLink.modifiedBy || '-';
         roadLink.modifiedAt = roadLink.modifiedAt || '';
         rootElement.html(_.template(templateWithHeaderAndFooter)(roadLink));

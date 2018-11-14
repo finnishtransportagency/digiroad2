@@ -8,13 +8,9 @@
       return 'Nopeusrajoitukset';
     };
 
-    this.title = function (){
-      return 'Nopeusrajoitus';
-    };
+    this.title = 'Nopeusrajoitus';
 
-    this.layerName = function () {
-      return 'speedLimit';
-    };
+    this.layerName = 'speedLimit';
 
     this.legendName = function () {
       return 'linear-asset-legend speed-limit';
@@ -63,14 +59,16 @@
 
     this.toolSelection = new me.ToolSelection([
       new me.Tool('Select', me.selectToolIcon, selectedSpeedLimit),
-      new me.Tool('Cut', me.cutToolIcon, selectedSpeedLimit)
+      new me.Tool('Cut', me.cutToolIcon, selectedSpeedLimit),
+      new me.Tool('Rectangle',  me.rectangleToolIcon, selectedSpeedLimit),
+      new me.Tool('Polygon',  me.polygonToolIcon, selectedSpeedLimit)
     ]);
 
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
     var element = $('<div class="panel-group speed-limits"/>');
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       myEvents();
       return element
@@ -107,12 +105,7 @@
       });
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.show = show;
+    this.hide = hide;
   };
 })(this);

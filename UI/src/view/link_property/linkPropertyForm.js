@@ -1,7 +1,9 @@
 (function (root) {
-  root.LinkPropertyForm = function(selectedLinkProperty) {
+  root.LinkPropertyForm = function(selectedLinkProperty, feedbackCollection) {
+    var layer;
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+    new FeedbackDataTool(feedbackCollection, 'linkProperty', authorizationPolicy);
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -163,7 +165,7 @@
       if(notRendered) {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
-              '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
+            '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
           '</div>');
       }
     };
@@ -281,9 +283,9 @@
         selectedLinkProperty.cancel();
       });
 
-
-      eventbus.on('layer:selected', function(layer) {
-        if(layer === 'linkProperty') {
+      eventbus.on('layer:selected', function(layerName) {
+        layer = layerName;
+        if(layerName === 'linkProperty') {
           renderLinkToIncompleteLinks();
         }
         else {

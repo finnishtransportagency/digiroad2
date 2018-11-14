@@ -13,7 +13,7 @@
 
     var assetElementDiv = $('<div class="asset-type-container"></div>');
     assetControls.forEach(function(asset) {
-      assetElementDiv.append(asset.element);
+      assetElementDiv.append(asset.template());
     });
     navigationPanel.append(assetElementDiv);
 

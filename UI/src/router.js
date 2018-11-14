@@ -86,6 +86,14 @@
       });
     };
 
+    var pointAssetCentering = function (layerName, id,  model) {
+        applicationModel.selectLayer(layerName);
+        backend.getPointAssetById(id, layerName).then(function (result) {
+            mapCenterAndZoom(result.lon, result.lat, 12);
+            model.open(result);
+        });
+    };
+
     var linearAssetMapCenterAndZoom  = function (layerName, idType, id) {
       if(idType) {
         applicationModel.selectLayer(layerName);
@@ -145,6 +153,7 @@
 
       routes: {
         'massTransitStop/:id': 'massTransitStop',
+        'massTransitStops/:id': 'massTransitStopById',
         'asset/:id': 'massTransitStop',
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
@@ -161,19 +170,31 @@
         'widthLimitErrors(/:typeId)/:id': 'widthLimitErrors',
         'pedestrianCrossingsErrors(/:typeId)/:id': 'pedestrianCrossingsErrors',
 
+        'speedLimits/:id': 'speedLimitsById',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
         'obstacles/:id': 'obstacles',
         'railwayCrossings/:id': 'railwayCrossings',
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
+        'servicePoints/:id': 'servicePoints',
         'trafficSigns/:id': 'trafficSigns',
+        'trHeightLimits/:id': 'trHeightLimits',
+        'trWidthLimits/:id' : 'trWidthLimits',
+        'trWeightLimits/:id'  : 'trWeightLimits',
         'maintenanceRoad/:id': 'maintenanceRoad',
         'litRoad/:id': 'litRoad',
+        'roadDamagedByThaw/:id' : 'roadDamagedByThaw',
         'roadWidth/:id': 'roadWidth',
+        'pavedRoad/:id': 'pavedRoad',
+        'trafficVolume/:id': 'trafficVolume',
         'numberOfLanes/:id': 'numberOfLanes',
         'massTransitLanes/:id': 'massTransitLanes',
+        'winterSpeedLimits/:id': 'winterSpeedLimits',
+        'trSpeedLimits/:id': 'trSpeedLimits',
         'prohibition/:id': 'prohibition',
         'hazardousMaterialTransportProhibition/:id': 'hazardousMaterialTransportProhibition',
+        'europeanRoads/:id' : 'europeanRoads',
+        'exitNumbers/:id': 'exitNumbers',
         'totalWeightLimit/:id': 'totalWeightLimit',
         'trailerTruckWeightLimit/:id': 'trailerTruckWeightLimit',
         'axleWeightLimit/:id': 'axleWeightLimit',
@@ -181,6 +202,7 @@
         'heightLimit/:id': 'heightLimit',
         'lengthLimit/:id': 'lengthLimit',
         'widthLimit/:id': 'widthLimit',
+        'manoeuvres/:id': 'manoeuvres',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/speedLimit/state': 'speedLimitStateWorkList',
         'work-list/speedLimit/municipality(/:id)': 'speedLimitMunicipalitiesWorkList',
@@ -207,7 +229,8 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
-        'work-list/:layerName': 'unverifiedLinearAssetWorkList'
+        'work-list/:layerName': 'unverifiedLinearAssetWorkList',
+        ':layerName/linkId/:linkId': 'mapMoving'
       },
 
       massTransitStop: function (id) {
@@ -219,6 +242,16 @@
           mapCenterAndZoom(massTransitStop.lon, massTransitStop.lat, 12);
         });
       },
+
+      massTransitStopById: function (id) {
+        applicationModel.selectLayer('massTransitStop');
+        backend.getMassTransitStopById(id, function (massTransitStop) {
+          eventbus.once('massTransitStops:available', function () {
+            models.selectedMassTransitStopModel.changeById(id);
+          });
+          mapCenterAndZoom(massTransitStop.lon, massTransitStop.lat, 12);
+        });
+     },
 
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
@@ -270,51 +303,63 @@
         });
       },
 
+      speedLimitsById: function (id) {
+         speedLimitCentering('speedLimit', id);
+      },
+
+      manoeuvres: function(linkId){
+        applicationModel.selectLayer('manoeuvre');
+            backend.getRoadLinkByLinkId(linkId, function (response) {
+                if (response.success) {
+                    mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+                    eventbus.once('manoeuvres:fetched', function () {
+                        models.selectedManoeuvreSource.open(response.id);
+                    });
+                }
+            });
+      },
+
       pedestrianCrossings: function (id) {
-        applicationModel.selectLayer('pedestrianCrossings');
-        backend.getPointAssetById(id, 'pedestrianCrossings').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedPedestrianCrossing.open(result);
-        });
+        pointAssetCentering('pedestrianCrossings', id,  models.selectedPedestrianCrossing);
       },
 
       trafficLights: function (id) {
-        applicationModel.selectLayer('trafficLights');
-        backend.getPointAssetById(id, 'trafficLights').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedTrafficLight.open(result);
-        });
+        pointAssetCentering('trafficLights', id,  models.selectedTrafficLight);
       },
 
       trafficSigns: function (id) {
-        applicationModel.selectLayer('trafficSigns');
-        backend.getPointAssetById(id, 'trafficSigns').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedTrafficSign.open(result);
-        });
+        pointAssetCentering('trafficSigns', id,  models.selectedTrafficSign);
       },
 
       obstacles: function (id) {
-        applicationModel.selectLayer('obstacles');
-        backend.getPointAssetById(id, 'obstacles').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedObstacle.open(result);
-        });
+        pointAssetCentering('obstacles', id,  models.selectedObstacle);
       },
 
       railwayCrossings: function (id) {
-        applicationModel.selectLayer('railwayCrossings');
-        backend.getPointAssetById(id, 'railwayCrossings').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedRailwayCrossing.open(result);
-        });
+        pointAssetCentering('railwayCrossings', id,  models.selectedRailwayCrossing);
       },
 
       directionalTrafficSigns: function (id) {
-        applicationModel.selectLayer('directionalTrafficSigns');
-        backend.getPointAssetById(id, 'directionalTrafficSigns').then(function (result) {
-          mapCenterAndZoom(result.lon, result.lat, 12);
-          models.selectedDirectionalTrafficSign.open(result);
+        pointAssetCentering('directionalTrafficSigns', id,  models.selectedDirectionalTrafficSign);
+      },
+
+      servicePoints: function (id) {
+        pointAssetCentering('servicePoints', id,  models.selectedServicePoint);
+      },
+
+      trHeightLimits : function (id) {
+        pointAssetCentering('trHeightLimits', id,  models.selectedTrHeightLimits);
+      },
+
+      trWidthLimits:  function (id) {
+        pointAssetCentering('trWidthLimits', id,  models.selectedTrWidthLimits);
+      },
+
+      trWeightLimits: function (id) {
+        applicationModel.selectLayer('trWeightLimits');
+        backend.getPointAssetById(id, 'groupedPointAssets').then(function (result) {
+            mapCenterAndZoom(result[0].lon, result[0].lat, 12);
+            models.selectedGroupPointAsset.open(result[0]);
         });
       },
 
@@ -351,12 +396,10 @@
       },
 
       heightLimitErrorsWorkList: function () {
-        var typeId = _(models.linearAssets).find({ layerName: 'heightLimit' }).typeId;
         eventbus.trigger('workList:select', 'heightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('heightLimit')));
       },
 
       lengthLimitErrorsWorkList: function(){
-        var typeId = _(models.linearAssets).find({ layerName: 'lengthLimit' }).typeId;
         eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('lengthLimit')));
       },
 
@@ -427,40 +470,48 @@
         speedLimitCentering('speedLimit', id);
       },
 
-      hazardousMaterialTransportProhibitionErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('hazardousMaterialTransportProhibition', id, linkId);
+      hazardousMaterialTransportProhibitionErrors: function (idType , linkId) {
+        linearAssetMapCenterAndZoom('hazardousMaterialTransportProhibition', idType , linkId);
       },
 
-      manoeuvreErrors: function (id, linkId) {
+      manoeuvreErrors: function (idType , linkId) {
         manoeuvreMapCenterAndZoom(linkId);
       },
 
-      heightLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('heightLimit', id, linkId);
+      mapMoving: function (layerName, linkId) {
+        applicationModel.selectLayer(layerName);
+        backend.getRoadLinkByLinkId(linkId, function (response) {
+          if (response.success)
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+        });
       },
 
-      bogieWeightErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('bogieWeightLimit', id, linkId);
+      heightLimitErrors: function (idType , linkId) {
+        linearAssetMapCenterAndZoom('heightLimit', idType, linkId);
       },
 
-      axleWeightLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('axleWeightLimit', id, linkId);
+      bogieWeightErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('bogieWeightLimit', idType, linkId);
       },
 
-      lengthLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('lengthLimit', id, linkId);
+      axleWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('axleWeightLimit', idType, linkId);
       },
 
-      totalWeightLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('totalWeightLimit', id, linkId);
+      lengthLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('lengthLimit', idType, linkId);
       },
 
-      trailerTruckWeightLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('trailerTruckWeightLimit', id, linkId);
+      totalWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('totalWeightLimit', idType, linkId);
       },
 
-      widthLimitErrors: function (id, linkId) {
-        linearAssetMapCenterAndZoom('widthLimit', id, linkId);
+      trailerTruckWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('trailerTruckWeightLimit', idTypev, linkId);
+      },
+
+      widthLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('widthLimit', idType, linkId);
       },
 
       pedestrianCrossingsErrors: function (idType, id) {
@@ -475,8 +526,20 @@
         linearCentering('litRoad', id);
       },
 
+      roadDamagedByThaw:   function (id) {
+        linearCentering('roadDamagedByThaw', id);
+      },
+
       roadWidth: function (id) {
         linearCentering('roadWidth', id);
+      },
+
+      pavedRoad:  function (id) {
+        linearCentering('pavedRoad', id);
+      },
+
+      trafficVolume: function (id) {
+          linearCentering('trafficVolume', id);
       },
 
       numberOfLanes: function (id) {
@@ -487,12 +550,28 @@
         linearCentering('massTransitLanes', id);
       },
 
+      winterSpeedLimits: function (id) {
+        linearCentering('winterSpeedLimits', id);
+      },
+
+      trSpeedLimits:  function (id) {
+        linearCentering('trSpeedLimits', id);
+      },
+
       prohibition: function (id) {
         linearCentering('prohibition', id);
       },
 
       hazardousMaterialTransportProhibition: function (id) {
         linearCentering('hazardousMaterialTransportProhibition', id);
+      },
+
+      europeanRoads: function (id) {
+        linearCentering('europeanRoads', id);
+      },
+
+      exitNumbers: function (id) {
+        linearCentering('exitNumbers', id);
       },
 
       totalWeightLimit: function (id) {
@@ -560,5 +639,11 @@
     eventbus.on('layer:selected', function (layer) {
       router.navigate(layer);
     });
+
+    eventbus.on('roles:fetched', function(userInfo) {
+      if(_.includes(userInfo.roles, "serviceRoadMaintainer") && !_.includes(userInfo.roles, "busStopMaintainer"))
+          applicationModel.selectLayer('maintenanceRoad');
+    });
+
   };
 })(this);

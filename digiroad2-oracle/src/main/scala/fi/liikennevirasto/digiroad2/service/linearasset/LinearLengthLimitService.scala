@@ -20,9 +20,9 @@ class LinearLengthLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-  override def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
+  override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
     val outputIds = withDynTransaction {
-      updateWithoutTransaction(ids, value, username)
+      updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
     }
 
     eventBus.publish("lengthLimit:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))

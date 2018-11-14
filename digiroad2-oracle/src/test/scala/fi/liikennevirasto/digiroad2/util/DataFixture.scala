@@ -10,14 +10,14 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadAddressesService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
@@ -86,7 +86,7 @@ object DataFixture {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider, new DummyEventBus)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
@@ -95,6 +95,10 @@ object DataFixture {
 
   lazy val roadAddressService: RoadAddressesService = {
     new RoadAddressesService(viiteClient)
+  }
+
+  lazy val manoeuvreService: ManoeuvreService = {
+    new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
@@ -151,6 +155,10 @@ object DataFixture {
     new OracleAssetDao()
   }
 
+  lazy val dynamicLinearAssetDao : DynamicLinearAssetDao = {
+    new DynamicLinearAssetDao()
+  }
+
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
     if(property != null)
@@ -184,6 +192,7 @@ object DataFixture {
 
   def setUpTest() {
     migrateAll()
+    importMunicipalityCodes()
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",
@@ -205,7 +214,8 @@ object DataFixture {
       "kauniainen_railway_crossings.sql",
       "kauniainen_traffic_signs.sql",
       "kauniainen_maximum_x7_restrictions.sql",
-      "user_notification_examples.sql"
+      "user_notification_examples.sql",
+      "siilinjarvi_verificationService_test_data.sql"
     ))
   }
 
@@ -214,6 +224,15 @@ object DataFixture {
     println(DateTime.now())
     new MunicipalityCodeImporter().importMunicipalityCodes()
     println("Municipality code import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def updateMunicipalities() {
+    println("\nCommencing municipality update at time: ")
+    println(DateTime.now())
+    new MunicipalityCodeImporter().updateMunicipalityCodes()
+    println("Municipality update complete at time: ")
     println(DateTime.now())
     println("\n")
   }
@@ -1021,6 +1040,54 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+  def verifyInaccurateSpeedLimits(): Unit = {
+    println("Start inaccurate SpeedLimit verification\n")
+    println(DateTime.now())
+    println("")
+
+    val polygonTools: PolygonTools = new PolygonTools()
+    val dao = new OracleSpeedLimitDao(null, null)
+
+    //Expire all inaccuratedAssets
+    OracleDatabase.withDynTransaction {
+      inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
+    }
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("Working on... municipality -> " + municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
+
+      OracleDatabase.withDynTransaction {
+        val speedLimitsByLinkId = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet)).groupBy(_.linkId)
+
+        val inaccurateAssets = speedLimitsByLinkId.flatMap {
+          case (linkId, speedLimits) =>
+            val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkId)
+            val roadLink = roadLinks(linkId).head
+            speedLimitValidator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimits).map {
+              inaccurateAsset =>
+                println(s"Inaccurate asset ${inaccurateAsset.id} found ")
+                (inaccurateAsset, roadLink.administrativeClass)
+            }
+        }
+
+        inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
+          inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
+        }
+      }
+    }
+
+    println("")
+    println("Ended inaccurate SpeedLimit verification\n")
+    println(DateTime.now())
+  }
+
   def updateAreasOnAsset(): Unit = {
     println("\nStart Update areas on Asset at time ")
     println(DateTime.now())
@@ -1169,14 +1236,13 @@ object DataFixture {
     println("\n")
   }
 
-  def updateInformationSource(): Unit = {
 
-    def isKIdentifier(username: Option[String]): Boolean = {
-      username.exists(user => user.toLowerCase.startsWith("k")) ||
-        username.exists(user => user.toLowerCase.startsWith("lx")) ||
-        username.exists(user => user.toLowerCase.startsWith("a")) ||
-        username.exists(user => user.toLowerCase.startsWith("u"))
-    }
+  private def isKIdentifier(username: Option[String]): Boolean = {
+    val identifiers: Set[String] = Set("k", "lx", "a", "u")
+    username.exists(user => identifiers.exists(identifier => user.toLowerCase.startsWith(identifier)))
+  }
+
+  def updateInformationSource(): Unit = {
 
     println("\nUpdate Information Source for RoadWidth")
     println(DateTime.now())
@@ -1240,6 +1306,51 @@ object DataFixture {
   }
 
 
+  def updatePavedRoadInformationSource(): Unit = {
+
+    println("\nUpdate Information Source for Pavement")
+    println(DateTime.now())
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nWorking on... municipality -> " + municipality)
+      println("Fetching roadlinks")
+      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
+
+      OracleDatabase.withDynTransaction {
+
+        println("Fetching assets")
+        val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
+
+        println(s"Number of existing assets: ${existingAssets.length}")
+        println(s"Start updating assets with Information Source")
+
+        existingAssets.foreach { asset =>
+          if (asset.createdBy.contains("batch_process_pavedRoad") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
+            oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, RoadRegistry)
+          } else {
+            if (isKIdentifier(asset.createdBy) || isKIdentifier(asset.modifiedBy)) {
+              oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MunicipalityMaintenainer)
+            } else {
+              if (asset.createdBy.contains("vvh_generated") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
+                oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MmlNls)
+              } else
+                println(s"Asset with ${asset.id} not updated with Information Source")
+            }
+          }
+        }
+      }
+    }
+    println("Complete at time: " + DateTime.now())
+  }
+
   def updateTrafficDirectionRoundabouts(): Unit = {
     println("\nStart Update roundadbouts traffic direction ")
     println(DateTime.now())
@@ -1293,6 +1404,89 @@ object DataFixture {
     }
   }
 
+  def createManoeuvresUsingTrafficSigns(): Unit = {
+    //Get All Municipalities
+    println(s"Obtaining Municipalities")
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+
+      println(s"Obtaining all traffic Signs with turning restriction for municipality $municipality")
+      //Get All Traffic Signs with traffic restriction
+      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality)
+
+      println(s"Obtaining all Road Links for Municipality: $municipality")
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      println(s"End of roadLinks fetch for Municipality: $municipality")
+
+      println("Start processing traffic signs, to create manoeuvres")
+      trafficSigns.foreach(ts =>
+        try {
+          roadLinks.find(_.linkId == ts.linkId) match {
+            case Some(roadLink) =>
+              manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(ts, roadLink))
+              println(s"manoeuvre created for traffic sign with id: ${ts.id}")
+            case _ =>
+              println(s"No roadLink available to create manouvre")
+              println(s"Asset id ${ts.id} did not generate a manoeuvre ")
+          }
+        }catch {
+          case ex: ManoeuvreCreationException => {
+            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
+          }
+        }
+      )
+    }
+  }
+
+  def removeExistingTrafficSignsDuplicates(): Unit = {
+    println("\nStarting removing of traffic signs duplicates")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("")
+      println(s"Fetching Traffic Signs for Municipality: $municipality")
+
+      val existingAssets = trafficSignService.getByMunicipality(municipality)
+      println("")
+      println(s"Number of existing assets: ${existingAssets.length}")
+      println("")
+
+      val groupedAssets = existingAssets.groupBy(_.linkId)
+
+      existingAssets.foreach { sign =>
+        println(s"Analyzing Traffic Sign with => Id: ${sign.id}, LinkID: ${sign.linkId}")
+        val trafficSignsInRadius = trafficSignService.getTrafficSignsByDistance(sign, groupedAssets, 10)
+
+        if (trafficSignsInRadius.size > 1) {
+          OracleDatabase.withDynTransaction {
+            val latestModifiedAsset = trafficSignService.getLatestModifiedAsset(trafficSignsInRadius)
+
+            println("")
+            println(s"Cleaning duplicates in 10 Meters")
+            trafficSignsInRadius.filterNot(_.id == latestModifiedAsset.id).foreach {
+              tsToDelete =>
+                trafficSignService.expireWithoutTransaction(tsToDelete.id, "batch_deleteDuplicateTrafficSigns")
+                println(s"TrafficSign with Id: ${tsToDelete.id} and LinkId: ${tsToDelete.linkId} expired!")
+            }
+            println("")
+          }
+        }
+      }
+      println("")
+      println("Complete at time: " + DateTime.now())
+    }
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1316,7 +1510,6 @@ object DataFixture {
         setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
-        importMunicipalityCodes()
         TrafficSignTestData.createTestData
         ServicePointTestData.createTestData
       case Some("import_roadlink_data") =>
@@ -1380,8 +1573,18 @@ object DataFixture {
         updateOTHBusStopWithTRInfo()
       case Some("update_information_source_on_existing_assets") =>
         updateInformationSource()
+      case Some("update_information_source_on_paved_road_assets") =>
+        updatePavedRoadInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>
         updateTrafficDirectionRoundabouts()
+      case Some("import_municipality_codes") =>
+        importMunicipalityCodes()
+      case Some("update_municipalities") =>
+        updateMunicipalities()
+      case Some("create_manoeuvres_using_traffic_signs") =>
+        createManoeuvresUsingTrafficSigns()
+      case Some("remove_existing_trafficSigns_duplicates") =>
+        removeExistingTrafficSignsDuplicates()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1389,7 +1592,10 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links | verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts")
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
+        " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
+        " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
+        " create_manoeuvres_using_traffic_signs")
     }
   }
 }

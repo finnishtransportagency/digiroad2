@@ -86,10 +86,10 @@ case class Vector3d(x: Double, y: Double, z: Double) {
     Vector3d(x, y, 0.0)
   }
 
-  //TODO this method should disappear after merge with master, exist on Point
   def angleXYWithNegativeValues(that: Vector3d): Double = {
     Math.atan2(that.x * this.y - that.y * this.x, that.x * this.x + that.y * this.y)
   }
+
   def angleXY(that: Vector3d): Double = {
     val angle = angleXYWithNegativeValues(that)
     if(angle < 0)

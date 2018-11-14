@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  function bindEvents(linearAsset, formElements) {
+  function bindEvents(linearAsset, formElements, feedbackModel) {
 
     var selectedLinearAsset = linearAsset.selectedLinearAsset,
       eventCategory = linearAsset.singleElementEventCategory,
@@ -13,6 +13,8 @@
       layerName = linearAsset.layerName,
       isVerifiable = linearAsset.isVerifiable,
       hasInaccurate = linearAsset.hasInaccurate;
+      new FeedbackDataTool(feedbackModel, linearAsset.layerName, authorizationPolicy, eventCategory);
+
 
     var rootElement = $('#feature-attributes');
 
@@ -61,12 +63,12 @@
       rootElement.find('.edit-mode-title').toggle(!readOnly);
     }
 
+
     function events() {
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
     }
 
     eventbus.on('layer:selected', function(layer) {
-      var workListLink;
       if(layerName === layer){
         if(isVerifiable){
           renderLinktoWorkList(layer);

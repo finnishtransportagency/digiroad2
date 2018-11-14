@@ -53,9 +53,10 @@
       var tableForGroupingValues = function(values, Ids, count) {
         if (!Ids || Ids.length === 0) return '';
         var countString = count ? ' (' + count + ' kpl)' : '';
-        return $('<table/>').addClass('table')
+        return $('<table><tbody>').addClass('table')
           .append(tableHeaderRow(values + countString))
-          .append(tableContentRows(Ids));
+          .append(tableContentRows(Ids))
+          .append('</tbody></table>');
       };
 
       if(layerName === 'maintenanceRoad') {

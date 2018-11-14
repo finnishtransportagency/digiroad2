@@ -42,7 +42,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
         val manoeuvreTurnRestrictionType = getManoeuvreTurnRestrictionType(manoeuvre, roadLinks)
 
         val manoeuvreLinkId = manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)
-        TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+        TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
           case TrafficSignType.NoLeftTurn =>
             if (manoeuvreTurnRestrictionType != ManoeuvreTurnRestrictionType.LeftTurn)
               Seq(Inaccurate(None, manoeuvreLinkId, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
@@ -62,7 +62,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
     if(adjacentInfo.size == 1) {
       adjacentInfo
     } else
-    TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+    TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case TrafficSignType.NoLeftTurn | TrafficSignType.NoUTurn =>
         adjacentInfo.filter(_._1 == roadLinkService.pickLeftMost(previousInfo._2, adjacentInfo.map(_._1)))
       case TrafficSignType.NoRightTurn =>
@@ -112,15 +112,15 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
     val (seg1, seg2) = if (GeometryUtils.areAdjacent(nextRoadLink.geometry, prevFirst)) {
       if (GeometryUtils.areAdjacent(prevFirst, nextFirst)) {
-        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry.reverse), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry))
+        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry))
       } else {
-        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry.reverse), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry.reverse))
+        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry), GeometryUtils.lastSegmentDirection(nextRoadLink.geometry))
       }
     } else {
       if (GeometryUtils.areAdjacent(prevLast, nextFirst)) {
-        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry))
+        (GeometryUtils.firstSegmentDirection(prevRoadLink.geometry), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry))
       } else {
-        (GeometryUtils.lastSegmentDirection(prevRoadLink.geometry), GeometryUtils.firstSegmentDirection(nextRoadLink.geometry.reverse))
+        (GeometryUtils.firstSegmentDirection(prevRoadLink.geometry), GeometryUtils.lastSegmentDirection(nextRoadLink.geometry))
       }
     }
     seg1.angleXYWithNegativeValues(seg2)
@@ -149,23 +149,14 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
           val pointOfInterest : Point = if (GeometryUtils.areAdjacent(sourceFirst, secondFirst) || GeometryUtils.areAdjacent(sourceFirst, secondLast)) sourceLast else sourceFirst
 
-          val trafficSings =
+          val trafficSigns =
             splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(sourceLinkId)))
-              .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+              .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
               .filterNot(_.floating)
 
-          inaccurateAssetDAO.deleteInaccurateAssetByLinkIds((manoeuvre.map(_.linkId) ++ trafficSings.map(_.linkId) ++ assetInfo.newLinkIds).toSet  ,assetTypeInfo.typeId)
+          inaccurateAssetDAO.deleteInaccurateAssetByLinkIds((manoeuvre.map(_.linkId) ++ trafficSigns.map(_.linkId) ++ assetInfo.newLinkIds).toSet  ,assetTypeInfo.typeId)
 
-          trafficSings.foreach { trafficSign =>
-            assetValidator(trafficSign).foreach {
-              inaccurate =>
-                (inaccurate.assetId, inaccurate.linkId) match {
-                  case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                  case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                  case _ => None
-                }
-            }
-          }
+          trafficSigns.foreach(validateAndInsert)
         }
       }
     }

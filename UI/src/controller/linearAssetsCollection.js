@@ -136,6 +136,18 @@
       return collectionWithoutGroup.concat(_.map(groupWithoutSegment, function(s) { return [s]; })).concat([[newSegment]]);
     };
 
+    this.replaceCreatedSplit = function(selection, newSegment) {
+      splitLinearAssets.created = newSegment;
+      separatedLimit.A = newSegment;
+      return newSegment;
+    };
+
+    this.replaceExistingSplit = function(selection, existingSegment) {
+      splitLinearAssets.existing = existingSegment;
+      separatedLimit.B = existingSegment;
+      return existingSegment;
+    };
+
     this.replaceSegments = function(selection, newSegments) {
       if (splitLinearAssets.created) {
         splitLinearAssets.created.value = newSegments[0].value;

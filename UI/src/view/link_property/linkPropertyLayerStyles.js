@@ -17,7 +17,7 @@
     ];
 
     var zoomLevelRules = [
-      new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3 }, pointRadius: 0 }),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).use({ stroke: {width: 3 }, pointRadius: 0 }),
       new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5 }, pointRadius: 10 }),
       new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 8 }, pointRadius: 12 }),
       new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10 }, pointRadius: 13 }),
@@ -27,7 +27,7 @@
     ];
 
     var overlayRules = [
-      new StyleRule().where('type').is('overlay').and('zoomLevel').is(9).use({ stroke: {color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 6] } }),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').isIn([8 ,9]).use({ stroke: {color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 6] } }),
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(10).use({ stroke: {color: '#fff', lineCap: 'square', width: 3, lineDash: [1, 10] } }),
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(11).use({ stroke: {color: '#fff', lineCap: 'square', width: 5, lineDash: [1, 15] } }),
       new StyleRule().where('type').is('overlay').and('zoomLevel').isIn([12, 13]).use({ stroke: {color: '#fff', lineCap: 'square', width: 8, lineDash: [1, 22] } }),
@@ -36,10 +36,10 @@
 
     var linkTypeSizeRules = [
       new StyleRule().where('linkType').isIn([8, 9, 12, 21]).use({ stroke: { width: 6 } }),
-      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(10).use({ stroke: { width: 2 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: { width: 2 } }),
       new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: { width: 4 } }),
       new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).use({ stroke: {color: '#fff', lineCap: 'square', width: 4, lineDash: [1, 16] } }),
-      new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(10).use({ stroke: {color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 8] } }),
+      new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: {color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 8] } }),
       new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: {color: '#fff', lineCap: 'square', width: 2, lineDash: [1, 8] } })
     ];
 
@@ -108,7 +108,7 @@
     ];
 
     var zoomLevelHistoryRules = [
-      new StyleRule().where('zoomLevel').is(9).use({ stroke: { width: 1 },  pointRadius: 0 }),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).use({ stroke: { width: 1 },  pointRadius: 0 }),
       new StyleRule().where('zoomLevel').is(10).use({ stroke: { width: 2 }, pointRadius: 10 }),
       new StyleRule().where('zoomLevel').is(11).use({ stroke: { width: 4 }, pointRadius: 12 }),
       new StyleRule().where('zoomLevel').is(12).use({ stroke: { width: 5 }, pointRadius: 13 }),
@@ -127,7 +127,7 @@
     ];
 
     var overlayHistoryRules = [
-      new StyleRule().where('type').is('overlay').and('zoomLevel').is(9).use({ stroke: { color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 6] } }),
+      new StyleRule().where('type').is('overlay').and('zoomLevel').isIn([8 ,9]).use({ stroke: { color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 6] } }),
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(10).use({ stroke: { color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 10] } }),
       new StyleRule().where('type').is('overlay').and('zoomLevel').is(11).use({ stroke: { color: '#fff', lineCap: 'square', width: 2, lineDash: [1, 15] } }),
       new StyleRule().where('type').is('overlay').and('zoomLevel').isIn([12, 13]).use({ stroke: { color: '#fff', lineCap: 'square', width: 4, lineDash: [1, 22] } }),

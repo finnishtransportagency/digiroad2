@@ -50,7 +50,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
 
   override def verifyAsset(prohibitions: Seq[PersistedLinearAsset], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     prohibitions.flatMap{ prohibition =>
-      TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+      TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
 
         case TrafficSignType.HazmatProhibitionA => if(!comparingProhibitionValue(prohibition, 24))
           Seq(Inaccurate(Some(prohibition.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
@@ -67,17 +67,6 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
   }
 
   override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
-    def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
-      try {
-        insertInaccurate(id, assetType, municipalityCode, adminClass)
-      } catch {
-        case ex: SQLIntegrityConstraintViolationException =>
-          print("duplicate key inserted ")
-        case e: Exception => print("duplicate key inserted ")
-          throw new RuntimeException("SQL exception " + e.getMessage)
-      }
-    }
-
     if (assetInfo.ids.toSeq.nonEmpty) {
       withDynTransaction {
 
@@ -90,28 +79,20 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
               val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
               val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
 
-              val trafficSings: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
+              val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
               }.toSet
 
-              val allLinkIds = assetInfo.newLinkIds ++ trafficSings.map(_.linkId)
+              val allLinkIds = assetInfo.newLinkIds ++ trafficSigns.map(_.linkId)
 
               inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.ids)
               if(allLinkIds.nonEmpty)
-                inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds ++ trafficSings.map(_.linkId) ,assetTypeInfo.typeId)
+                inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(assetInfo.newLinkIds ++ trafficSigns.map(_.linkId) ,assetTypeInfo.typeId)
 
-              trafficSings.foreach { trafficSign =>
-                assetValidator(trafficSign).foreach {
-                  inaccurate =>
-                    (inaccurate.assetId, inaccurate.linkId) match {
-                      case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                      case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                      case _ => None
-                    }
-                }
-              }
+              trafficSigns.foreach(validateAndInsert)
+
             case _ =>
           }
         }

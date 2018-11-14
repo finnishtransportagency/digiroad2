@@ -57,9 +57,9 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     }
   }
 
-  override def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
+  override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
     val outputIds = withDynTransaction {
-      updateWithoutTransaction(ids, value, username)
+      updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
     }
 
     eventBus.publish("hazmatTransportProhibition:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))

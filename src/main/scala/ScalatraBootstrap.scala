@@ -21,7 +21,7 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.linearAssetService,
       Digiroad2Context.linearMassLimitationService,
       Digiroad2Context.maintenanceRoadService,
-      Digiroad2Context.pavingService,
+      Digiroad2Context.pavedRoadService,
       Digiroad2Context.roadWidthService
     ), "/api/*")
     context.mount(new SessionApi, "/api/auth/*")
@@ -36,7 +36,7 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.roadLinkService,
       Digiroad2Context.linearAssetService,
       Digiroad2Context.speedLimitService,
-      Digiroad2Context.pavingService,
+      Digiroad2Context.pavedRoadService,
       Digiroad2Context.roadWidthService,
       Digiroad2Context.manoeuvreService,
       Digiroad2Context.assetService,

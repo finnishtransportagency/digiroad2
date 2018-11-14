@@ -41,7 +41,7 @@ object AssetValidatorProcess {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider, new DummyEventBus)
   }
 
   lazy val manoeuvreServiceValidator: ManoeuvreValidator = {
@@ -95,45 +95,37 @@ object AssetValidatorProcess {
   def verifyInaccurateSpeedLimits(): Unit = {
     println("Start inaccurate SpeedLimit verification\n")
     println(DateTime.now())
-
     val dao = new OracleSpeedLimitDao(null, null)
 
     //Expire all inaccuratedAssets
     OracleDatabase.withDynTransaction {
       inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
-    }
 
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
+      //Get All Municipalities
+      val municipalities: Seq[Int] = Queries.getMunicipalities
 
-    municipalities.foreach { municipality =>
-      println("Working on... municipality -> " + municipality)
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
+      municipalities.foreach { municipality =>
+        println("Working on... municipality -> " + municipality)
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
+        val speedLimitsByLinkId = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet)).groupBy(_.linkId)
 
-      OracleDatabase.withDynTransaction {
-        val speedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet))
-        val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(speedLimits.map(_.linkId).toSet)
-
-        val inaccurateAssets =  speedLimits.flatMap{speedLimit =>
-          val roadLink = roadLinks.get(speedLimit.linkId).get.head
-          println(s"Proncessing speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
-          speedLimitValidator.checkInaccurateSpeedLimitValuesWithTrafficSigns(speedLimit, roadLink, trafficSigns.filter(_.linkId == speedLimit.linkId)) match {
-            case Some(inaccurateAsset) =>
-              println(s"Inaccurate asset ${inaccurateAsset.id} found ")
-              Some(inaccurateAsset, roadLink.administrativeClass)
-            case _ => None
-          }
+        val inaccurateAssets = speedLimitsByLinkId.flatMap {
+          case (linkId, speedLimits) =>
+            val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkId)
+            val roadLink = roadLinks(linkId).head
+            speedLimitValidator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimits).map {
+              inaccurateAsset =>
+                println(s"Inaccurate asset ${inaccurateAsset.id} found ")
+                (inaccurateAsset, roadLink.administrativeClass)
+            }
         }
-
         inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
           inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
         }
       }
     }
 
+    println("")
     println("Ended inaccurate SpeedLimit verification\n")
     println(DateTime.now())
   }
@@ -145,7 +137,7 @@ object AssetValidatorProcess {
       "totalWeightLimit" -> totalWeightLimitValidator,
       "trailerTruckWeight" -> trailerTruckWeightLimitValidator,
       "axleWeightLimit" -> axleWeightLimitValidator,
-      "bogieWeightLimt" -> bogieWeightLimitValidator,
+      "bogieWeightLimit" -> bogieWeightLimitValidator,
       "widthLimit" -> widthLimitValidator,
       "lengthLimit" -> lengthLimitValidator,
       "pedestrianCrossing" -> pedestrianCrossingValidator

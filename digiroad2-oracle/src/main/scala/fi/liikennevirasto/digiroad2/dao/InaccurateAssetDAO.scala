@@ -65,31 +65,10 @@ class InaccurateAssetDAO {
     }
   }
 
-  def getInaccurateByTypeId(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): List[(Long, String, Int, Long)] = {
-
-    val withAuthorizedMunicipalities =
-      if (municipalities.nonEmpty) s" and ia.municipality_code in (${municipalities.mkString(",")})"  else s""
-
-    val withAdminClassRestrictions =
-      if(adminClass.nonEmpty) s" and ia.administrative_class in (${adminClass.map(_.value).mkString(",")})" else s""
-
-    sql"""
-       select ia.asset_id, m.name_fi, ia.administrative_class, ia.link_id
-       from inaccurate_asset ia
-       left join municipality m on ia.municipality_code = m.id
-       where ia.asset_type_id = $typeId #$withAuthorizedMunicipalities #$withAdminClassRestrictions
-     """.as[(Long, String, Int, Long)].list
-  }
-
-
   def deleteInaccurateAssetById(assetId: Long) = {
     sqlu"""delete from inaccurate_asset where asset_id= $assetId""".execute
   }
-
-  def deleteInaccurateLinkId(linkId: Long) = {
-    sqlu"""delete from inaccurate_asset where link_id= $linkId""".execute
-  }
-
+  
   def deleteAllInaccurateAssets(typeId: Int) = {
     sqlu"""delete from inaccurate_asset
           where asset_type_id = $typeId""".execute

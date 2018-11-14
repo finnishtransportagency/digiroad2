@@ -56,9 +56,12 @@
 </div>
 
 <div id="work-list"></div>
+<div id="update-notification"></div>
+<div id="feedbackData" class="feedback-modal"></div>
 
 <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
 <script type="text/javascript" src="node_modules/jquery-migrate/dist/jquery-migrate.min.js"></script>
+<script type="text/javascript" src="node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
 <script type="text/javascript" src="node_modules/moment/min/moment.min.js"></script>
 <script type="text/javascript" src="node_modules/lodash/lodash.js"></script>
 <script type="text/javascript" src="node_modules/backbone/backbone.js"></script>
@@ -95,6 +98,7 @@
 <script type="text/javascript" src="src/view/mapView.js"></script>
 <script type="text/javascript" src="src/view/mapOverlay.js"></script>
 <script type="text/javascript" src="src/view/coordinatesDisplay.js"></script>
+<script type="text/javascript" src="src/view/defaultLocationButton.js"></script>
 <script type="text/javascript" src="src/view/scaleBar.js"></script>
 <script type="text/javascript" src="src/view/tileMapSelector.js"></script>
 <script type="text/javascript" src="src/view/point_asset/trafficSignToggle.js"></script>
@@ -114,6 +118,7 @@
 <script type="text/javascript" src="src/view/linear_asset/winterSpeedLimitStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/trSpeedLimitStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/serviceRoadStyle.js"></script>
+<script type="text/javascript" src="src/view/linear_asset/pavedRoadStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/carryingCapacityStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/speedLimitMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/manoeuvreStyle.js"></script>
@@ -144,6 +149,7 @@
 <script type="text/javascript" src="src/view/point_asset/massTransitMarker.js"></script>
 <script type="text/javascript" src="src/view/point_asset/massTransitStop.js"></script>
 <script type="text/javascript" src="src/router.js"></script>
+<script type="text/javascript" src="src/applicationState.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/editModeToggleButton.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/actionPanelBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/trafficSignBox.js"></script>
@@ -152,6 +158,7 @@
 <script type="text/javascript" src="src/view/navigationpanel/winterSpeedLimitBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/trSpeedLimitBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/serviceRoadBox.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/pavedRoadBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/linearAssetBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/pointAssetBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/manoeuvreBox.js"></script>
@@ -180,6 +187,7 @@
 <script type="text/javascript" src="src/controller/groupedPointAssetsCollection.js"></script>
 <script type="text/javascript" src="src/model/selectedPointAsset.js"></script>
 <script type="text/javascript" src="src/controller/roadCollection.js"></script>
+<script type="text/javascript" src="src/controller/obstaclesRoadCollection.js"></script>
 <script type="text/javascript" src="src/controller/careClassCollection.js"></script>
 <script type="text/javascript" src="src/model/selectedSpeedLimit.js"></script>
 <script type="text/javascript" src="src/model/selectedLinearAsset.js"></script>
@@ -187,7 +195,8 @@
 <script type="text/javascript" src="src/model/selectedManoeuvreSource.js"></script>
 <script type="text/javascript" src="src/model/linkPropertiesModel.js"></script>
 <script type="text/javascript" src="src/controller/manoeuvresCollection.js"></script>
-<script type="text/javascript" src="src/controller/FeedbackModel.js"></script>
+<script type="text/javascript" src="src/controller/feedbackModel.js"></script>
+<script type="text/javascript" src="src/controller/municipalitySituationCollection.js"></script>
 <script type="text/javascript" src="src/model/locationSearch.js"></script>
 <script type="text/javascript" src="src/model/selectedLinearAssetFactory.js"></script>
 <script type="text/javascript" src="src/view/confirm.js"></script>
@@ -198,7 +207,7 @@
 <script type="text/javascript" src="src/view/point_asset/massTransitStopForm.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/speedLimitForm.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/linearAssetForm.js"></script>
-<script type="text/javascript" src="src/view/FeedbackTool.js"></script>
+<script type="text/javascript" src="src/view/feedbackApplicationTool.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/piecewiseLinearAssetFormElements.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/prohibitionFormElements.js"></script>
 <script type="text/javascript" src="src/view/link_property/linkPropertyForm.js"></script>
@@ -225,6 +234,8 @@
 <script type="text/javascript" src="src/view/speedLimitWorkList.js"></script>
 <script type="text/javascript" src="src/view/inaccurateWorkList.js"></script>
 <script type="text/javascript" src="src/view/municipalityDisplay.js"></script>
+<script type="text/javascript" src="src/view/feedbackDataTool.js"></script>
+<script type="text/javascript" src="src/view/municipalitySituationPopup.js"></script>
 <script type="text/javascript" src="src/controller/assetsVerificationCollection.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'STAGING' -->

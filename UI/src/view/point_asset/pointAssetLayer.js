@@ -93,7 +93,7 @@
 
         function dragAlongNearestLink(feature) {
           if (selectedAsset.isSelected(feature.features.getArray()[0].getProperties())) {
-            var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), feature.coordinate[0], feature.coordinate[1]);
+            var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), feature.coordinate[0], feature.coordinate[1]);
             if (nearestLine) {
               var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: feature.coordinate[0], y: feature.coordinate[1]});
               roadLayer.selectRoadLink(roadCollection.getRoadLinkByLinkId(nearestLine.linkId).getData());
@@ -328,7 +328,7 @@
     function createNewAsset(coordinates) {
       var selectedLon = coordinates.x;
       var selectedLat = coordinates.y;
-      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), selectedLon, selectedLat);
+      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), selectedLon, selectedLat);
       if(nearestLine.end && nearestLine.start){
         var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
         var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
@@ -372,7 +372,6 @@
       startListeningExtraEvents();
       vectorLayer.setVisible(true);
       roadAddressInfoPopup.start();
-      me.refreshView();
       me.show(map);
     }
 

@@ -3,22 +3,24 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.Digiroad2Context.trailerTruckWeightLimitValidator
+import fi.liikennevirasto.digiroad2.Digiroad2Context.{trailerTruckWeightLimitValidator, getClass}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePointMassLimitationDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
 import fi.liikennevirasto.digiroad2.service._
-import fi.liikennevirasto.digiroad2.service.feedback.FeedbackApplicationService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearTotalWeightLimitService, _}
+import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -76,6 +78,21 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 }
 
+
+class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extends Actor {
+  def receive = {
+    case x: ChangeSet => dynamicAssetService.updateChangeSet(x)
+    case _            => println("DynamicAssetUpdater: Received unknown message")
+  }
+}
+
+class ProhibitionUpdater(prohibitionService: ProhibitionService) extends Actor {
+  def receive = {
+    case x: ChangeSet => prohibitionService.updateChangeSet(x)
+    case _            => println("ProhibitionUpdater: Received unknown message")
+  }
+}
+
 class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
   def receive = {
     case x: ChangeSet => persistRoadWidthChanges(x)
@@ -108,17 +125,25 @@ class RoadWidthSaveProjected[T](roadWidthProvider: RoadWidthService) extends Act
   }
 }
 
-class PavingSaveProjected[T](pavingProvider: PavingService) extends Actor {
+class PavedRoadSaveProjected[T](pavedRoadProvider: PavedRoadService) extends Actor {
   def receive = {
-    case x: Seq[T] => pavingProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
-    case _             => println("pavingSaveProjected: Received unknown message")
+    case x: Seq[T] => pavedRoadProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("pavedRoadSaveProjected: Received unknown message")
   }
 }
 
-class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Actor {
+class DynamicAssetSaveProjected[T](dynamicAssetProvider: DynamicLinearAssetService) extends Actor {
+  def receive = {
+    case x: Seq[T] => dynamicAssetProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("dynamicAssetSaveProjected: Received unknown message")
+  }
+}
+
+class SpeedLimitUpdater[A, B, C](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
     case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
     case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf[Seq[UnknownSpeedLimit]])
+    case x: ChangeSet => speedLimitProvider.updateChangeSet(x)
     case _      => println("speedLimitFiller: Received unknown message")
   }
 }
@@ -214,6 +239,24 @@ class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCross
   }
 }
 
+case class ManoeuvreUpdater[A, B](manoeuvreProvider: ManoeuvreService) extends Actor {
+
+  val logger = LoggerFactory.getLogger(getClass)
+
+  def receive = {
+    case x: Long => manoeuvreProvider.deleteManoeuvreFromSign(x.asInstanceOf[Long])
+    case x: ManoeuvreProvider =>
+      try {
+        manoeuvreProvider.createManoeuvreBasedOnTrafficSign(x.asInstanceOf[ManoeuvreProvider])
+      }catch {
+        case e: ManoeuvreCreationException =>
+          logger.error("Manoeuvre creation error: " + e.response.mkString(" "))
+      }
+    case _ => println("Manoeuvre not created")
+  }
+}
+
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -250,6 +293,12 @@ object Digiroad2Context {
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
+  val dynamicAssetUpdater = system.actorOf(Props(classOf[DynamicAssetUpdater], dynamicLinearAssetService), name = "dynamicAssetUpdater")
+  eventbus.subscribe(dynamicAssetUpdater, "dynamicAsset:update")
+
+  val prohibitionUpdater = system.actorOf(Props(classOf[ProhibitionUpdater], prohibitionService), name = "prohibitionUpdater")
+  eventbus.subscribe(prohibitionUpdater, "prohibition:update")
+
   val linearAssetSaveProjected = system.actorOf(Props(classOf[LinearAssetSaveProjected[PersistedLinearAsset]], linearAssetService), name = "linearAssetSaveProjected")
   eventbus.subscribe(linearAssetSaveProjected, "linearAssets:saveProjectedLinearAssets")
 
@@ -262,21 +311,29 @@ object Digiroad2Context {
   val roadWidthSaveProjected = system.actorOf(Props(classOf[RoadWidthSaveProjected[PersistedLinearAsset]], roadWidthService), name = "roadWidthSaveProjected")
   eventbus.subscribe(roadWidthSaveProjected, "RoadWidth:saveProjectedRoadWidth")
 
-  val pavingSaveProjected = system.actorOf(Props(classOf[PavingSaveProjected[PersistedLinearAsset]], pavingService), name = "pavingSaveProjected")
-  eventbus.subscribe(pavingSaveProjected, "paving:saveProjectedPaving")
+  val pavedRoadSaveProjected = system.actorOf(Props(classOf[PavedRoadSaveProjected[PersistedLinearAsset]], pavedRoadService), name = "pavedRoadSaveProjected")
+  eventbus.subscribe(pavedRoadSaveProjected, "pavedRoad:saveProjectedPavedRoad")
+
+  val dynamicAssetSaveProjected = system.actorOf(Props(classOf[DynamicAssetSaveProjected[PersistedLinearAsset]], dynamicLinearAssetService), name = "dynamicAssetSaveProjected")
+  eventbus.subscribe(dynamicAssetSaveProjected, "dynamicAsset:saveProjectedAssets")
 
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
 
-  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit]], speedLimitService), name = "speedLimitUpdater")
+  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]], speedLimitService), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
+  eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
+
+  val manoeuvreUpdater = system.actorOf(Props(classOf[ManoeuvreUpdater[Int, ManoeuvreProvider]], manoeuvreService), name ="manoeuvreUpdater" )
+  eventbus.subscribe(manoeuvreUpdater, "manoeuvre:expire")
+  eventbus.subscribe(manoeuvreUpdater,"manoeuvre:create")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
@@ -433,8 +490,8 @@ object Digiroad2Context {
     new MaintenanceService(roadLinkService, eventbus)
   }
 
-  lazy val pavingService: PavingService = {
-    new PavingService(roadLinkService, eventbus)
+  lazy val pavedRoadService: PavedRoadService = {
+    new PavedRoadService(roadLinkService, eventbus)
   }
 
   lazy val roadWidthService: RoadWidthService = {
@@ -446,7 +503,7 @@ object Digiroad2Context {
   }
 
   lazy val onOffLinearAssetService: OnOffLinearAssetService = {
-    new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
+    new OnOffLinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val prohibitionService: ProhibitionService = {
@@ -486,7 +543,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider)
+    new TrafficSignService(roadLinkService, userProvider, eventbus)
   }
 
   lazy val manoeuvreService = {
@@ -524,6 +581,8 @@ object Digiroad2Context {
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
+
+  lazy val dataFeedback : FeedbackDataService = new FeedbackDataService()
 
   lazy val hazmatTransportProhibitionValidator: HazmatTransportProhibitionValidator = {
     new HazmatTransportProhibitionValidator()

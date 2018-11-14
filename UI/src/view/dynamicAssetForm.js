@@ -58,7 +58,7 @@
         };
 
         me.viewModeRender = function (field, propertyValues) {
-            var value = _.first(propertyValues, function(propertyValue) { return propertyValue.value ; });
+            var value = _.head(propertyValues, function(propertyValue) { return propertyValue.value ; });
             var _value = value ? value.value : '-';
 
             return $('' +
@@ -77,7 +77,6 @@
 
             var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
             var value = properties.concat(currentPropertyValue);
-
             setValue({ properties: value});
         };
     };
@@ -88,7 +87,7 @@
         var className =  assetTypeConfiguration.className;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             me.element = $('' +
@@ -113,7 +112,7 @@
         var className = assetTypeConfiguration.className;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             me.element = $('' +
@@ -147,7 +146,7 @@
         };
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
@@ -175,7 +174,7 @@
         var me = this;
 
         me.editModeRender = function (fieldValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : '-';
             return $('' +
                 '<div class="form-group">' +
@@ -201,7 +200,7 @@
         };
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
@@ -232,7 +231,7 @@
         var className = assetTypeConfiguration.className;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var selectedValue = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var template =  _.template(
@@ -252,19 +251,19 @@
             me.getValue = function() {
                 return me.element.find(":selected").val();
             };
-
-            if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+            if (!isDisabled && me.hasDefaultValue() && !value){
+              me.setSelectedValue(setValue, getValue);
+            }
 
             me.element.find('select').on('change', function(){
-                me.setSelectedValue(setValue, getValue);
+              me.setSelectedValue(setValue, getValue);
             });
 
             return me.element;
         };
 
         me.viewModeRender = function (field, currentValue) {
-            var value = _.first(currentValue, function(values) { return values.value ; });
+            var value = _.head(currentValue, function(values) { return values.value ; });
             var _value = value ? value.value : '-';
 
             var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
@@ -284,7 +283,7 @@
         var me = this;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var checkedValue = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var template =  _.template(
@@ -345,7 +344,7 @@
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
 
-            var someValue = _.first(fieldValue, function(values) { return values.value ; });
+            var someValue = _.head(fieldValue, function(values) { return values.value ; });
             var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
 
             var addDatePickers = function (field, html) {
@@ -386,7 +385,7 @@
         var me = this;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
-            var value = _.first(fieldValue, function(values) { return values.value ; });
+            var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : "0";
 
             var checked = !!parseInt(_value) ? 'checked' : '';
@@ -607,7 +606,7 @@
         var me = this;
 
         me.viewModeRender = function (field, currentValue) {
-            var value = _.first(currentValue, function(values) { return values.value ; });
+            var value = _.head(currentValue, function(values) { return values.value ; });
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '-';
 
             var someValue = _.find(field.values, function(value) { return value.id.toString() === _value.toString() ; });
@@ -671,9 +670,10 @@
 
         var forms = new AvailableForms();
 
-        me.initialize = function(assetTypeConfiguration){
+        me.initialize = function(assetTypeConfiguration, feedbackModel){
             var rootElement = $('#feature-attributes');
             _assetTypeConfiguration = assetTypeConfiguration;
+            new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
           var updateStatusForMassButton = function(element) {
             if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
@@ -823,24 +823,22 @@
                 '  </div>' +
                 '</div>');
 
-      toggleElement.find('.radio input').on('change', function(event) {
-        var disabled = $(this).val() === 'disabled';
-        var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
-        input.prop('disabled', disabled);
+            toggleElement.find('.radio input').on('change', function(event) {
+                var disabled = $(this).val() === 'disabled';
+                var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+                input.prop('disabled', disabled);
 
                 if(disabled){
-                    removeValueFn();
-                    _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
+                  removeValueFn();
+                  _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
                   if(asset.value)
                     setValueFn(asset.value);
                   else
                     setValueFn({ properties: [] });
                 }
-
-        formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
-
-                eventbus.trigger(events('valueChanged'));
+                formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                eventbus.trigger("radio-trigger-dirty");
             });
 
             formGroup.append(toggleElement);
@@ -987,6 +985,10 @@
             updateStatus(element);
 
             eventbus.on(events('valueChanged'), function() {
+                updateStatus(element);
+            });
+
+            eventbus.on('radio-trigger-dirty', function() {
                 updateStatus(element);
             });
 

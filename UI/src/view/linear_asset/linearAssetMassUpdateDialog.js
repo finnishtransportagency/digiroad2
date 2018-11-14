@@ -38,7 +38,7 @@
         $('button.save').prop('disabled', 'disabled');
       }
     }
-    
+
     function removeValue() {
       currentValue = undefined;
       selectedLinearAsset.removeMultiValue();

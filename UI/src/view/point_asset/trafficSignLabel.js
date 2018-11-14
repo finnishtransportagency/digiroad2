@@ -1,11 +1,11 @@
 (function(root) {
 
-  root.TrafficSignLabel = function(groupingDistance) {
+  root.TrafficSignLabel = function() {
     AssetLabel.call(this, this.MIN_DISTANCE);
     var me = this;
     var stickPosition = {x: 0, y: 30 };
 
-    this.MIN_DISTANCE = groupingDistance;
+    this.MIN_DISTANCE = Math.pow(3, 2);
 
     var backgroundStyle = function (trafficSign, position) {
       return new ol.style.Style({
@@ -73,13 +73,13 @@
         {signValue: [41], image: 'images/traffic-signs/general-warning-signs/steepAscentSign.png'},
         {signValue: [42], image: 'images/traffic-signs/general-warning-signs/unevenRoadSign.png'},
         {signValue: [43], image: 'images/traffic-signs/general-warning-signs/childrenSign.png'},
-        {signValue: [45], image: 'images/traffic-signs/additional-panels/freeWidthSign.png', validation: validateAdditionalInfo, maxLabelLength: 11, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, height: 30},
-        {signValue: [46], image: 'images/traffic-signs/additional-panels/freeHeight.png', validation: validateAdditionalInfo, maxLabelLength: 10, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 1, height: 40},
+        {signValue: [45], image: 'images/traffic-signs/additional-panels/freeWidthSign.png', validation: validateAdditionalInfo, maxLabelLength: 11, additionalInfo: showAdditionalInfo, offsetX: 2, height: 30},
+        {signValue: [46], image: 'images/traffic-signs/additional-panels/freeHeight.png', validation: validateAdditionalInfo, maxLabelLength: 10, additionalInfo: showAdditionalInfo, offsetX: 1, height: 40},
         {signValue: [47], image: 'images/traffic-signs/additional-panels/hazmatProhibitionA.png', height: 27},
         {signValue: [48], image: 'images/traffic-signs/additional-panels/hazmatProhibitionB.png', height: 27},
-        {signValue: [49], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
-        {signValue: [50], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
-        {signValue: [51], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showHourMinAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [49], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, additionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [50], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, additionalInfo: showPeriodTimeAdditionalInfo, offsetX: 1, height: 30},
+        {signValue: [51], image: 'images/traffic-signs/additional-panels/defaultAdditionalPanelBox.png', validation: validateAdditionalInfo, maxLabelLength: 50, additionalInfo: showHourMinAdditionalInfo, offsetX: 1, height: 30},
         {signValue: [52], image: 'images/traffic-signs/additional-panels/passengerCar.png', height: 20},
         {signValue: [53], image: 'images/traffic-signs/additional-panels/bus.png', height: 20},
         {signValue: [54], image: 'images/traffic-signs/additional-panels/lorry.png', height: 20},
@@ -87,10 +87,10 @@
         {signValue: [56], image: 'images/traffic-signs/additional-panels/vehicleForHandicapped.png', height: 20},
         {signValue: [57], image: 'images/traffic-signs/additional-panels/motorCycle.png', height: 20},
         {signValue: [58], image: 'images/traffic-signs/additional-panels/cycle.png', height: 20},
-        {signValue: [59], image: 'images/traffic-signs/additional-panels/parkingAgainstFee.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showPeriodDayAdditionalInfo, offsetX: 12, height: 40},
-        {signValue: [60], image: 'images/traffic-signs/additional-panels/obligatoryUseOfParkingDisc.png', validation: validateAdditionalInfo, maxLabelLength: 50, isToShowAdditionalInfo: showHourMinAdditionalInfo, offsetX: 12, height: 33},
-        {signValue: [61], image: 'images/traffic-signs/additional-panels/additionalPanelWithText.png', validation: validateAdditionalInfo, maxLabelLength: 19, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 3,  height: 25},
-        {signValue: [62], image: 'images/traffic-signs/additional-panels/drivingInServicePurposesAllowed.png', validation: validateAdditionalInfo, maxLabelLength: 13, isToShowAdditionalInfo: isToShowAdditionalInfo, offsetX: 2, height: 28},
+        {signValue: [59], image: 'images/traffic-signs/additional-panels/parkingAgainstFee.png', validation: validateAdditionalInfo, maxLabelLength: 50, additionalInfo: showPeriodDayAdditionalInfo, offsetX: 12, height: 40},
+        {signValue: [60], image: 'images/traffic-signs/additional-panels/obligatoryUseOfParkingDisc.png', validation: validateAdditionalInfo, maxLabelLength: 50, additionalInfo: showHourMinAdditionalInfo, offsetX: 12, height: 33},
+        {signValue: [61], image: 'images/traffic-signs/additional-panels/additionalPanelWithText.png', validation: validateAdditionalInfo, maxLabelLength: 19, additionalInfo: showAdditionalInfo, offsetX: 3,  height: 25},
+        {signValue: [62], image: 'images/traffic-signs/additional-panels/drivingInServicePurposesAllowed.png', validation: validateAdditionalInfo, maxLabelLength: 13, additionalInfo: showAdditionalInfo, offsetX: 2, height: 28},
         {signValue: [63], image: 'images/traffic-signs/regulatory-signs/busLane.png'},
         {signValue: [64], image: 'images/traffic-signs/regulatory-signs/busLaneEnds.png'},
         {signValue: [65], image: 'images/traffic-signs/regulatory-signs/tramLane.png'},
@@ -178,7 +178,7 @@
       }
 
       function getAdditionalInfo(){
-        return labelProperty && labelProperty.isToShowAdditionalInfo ? labelProperty.isToShowAdditionalInfo.call(trafficSign) : '';
+        return labelProperty && labelProperty.additionalInfo ? labelProperty.additionalInfo.call(trafficSign) : '';
       }
 
       function getUnit() {
@@ -228,7 +228,7 @@
       return this.value / 100;
     };
 
-    var isToShowAdditionalInfo = function () {
+    var showAdditionalInfo = function () {
       return _.isEmpty(this.value) ? this.additionalInfo : '';
     };
 

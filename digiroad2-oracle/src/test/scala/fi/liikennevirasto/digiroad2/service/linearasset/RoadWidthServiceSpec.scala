@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, OracleLinearAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
@@ -359,6 +359,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   }
 
   test("update roadWidth and check if informationSource is Municipality Maintainer "){
+    when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(5000, 235, Seq(Point(0, 0), Point(100, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
     val service = createService()
     val toInsert = Seq(NewLinearAsset(5000, 0, 50, NumericValue(4000), BothDirections.value, 0, None), NewLinearAsset(5001, 0, 50, NumericValue(3000), BothDirections.value, 0, None))
@@ -378,7 +379,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   test("actor should update roadWidth measures even if MTKClass is not valid "){
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
+    class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
@@ -386,6 +387,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
         super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
     }
+    val service = new TestRoadWidthService
 
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(2))
     val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
@@ -402,7 +404,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
+      verify(service.eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
 
       newAsset should have size 1
       captor.getValue.expiredAssetIds  should have size 0
@@ -415,14 +417,15 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   test("actor should not update roadWidth measures if MTKClass is valid ") {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
+    class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
 
-      def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] =
+      def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
         super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
     }
+    val service = new TestRoadWidthService
 
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(12112))
     val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
@@ -439,7 +442,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
+      verify(service.eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
 
       newAsset should have size 1
       captor.getValue.expiredAssetIds should have size 1
@@ -447,5 +450,41 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       captor.getValue.adjustedVVHChanges should have size 0
     }
   }
+
+  test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
+    val newLinearAsset = NewLinearAsset(1l, 0, 10, NumericValue(2), SideCode.AgainstDigitizing.value, 0, None)
+
+    OracleDatabase.withDynTransaction {
+      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+      val id = ServiceWithDao.create(Seq(newLinearAsset), RoadWidth.typeId, "sideCode_adjust").head
+      val original = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
+
+      val changeSet =
+        ChangeSet(droppedAssetIds = Set.empty[Long],
+          expiredAssetIds = Set.empty[Long],
+          adjustedMValues = Seq.empty[MValueAdjustment],
+          adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+          adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)))
+
+      ServiceWithDao.updateChangeSet(changeSet)
+      val expiredAsset = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
+      val newAsset = ServiceWithDao.dao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, Seq(original.linkId), LinearAssetTypes.numericValuePropertyId)
+
+        newAsset.size should be(1)
+        val asset = newAsset.head
+        asset.startMeasure should be(original.startMeasure)
+        asset.endMeasure should be(original.endMeasure)
+        asset.createdBy should not be original.createdBy
+        asset.startMeasure should be(original.startMeasure)
+        asset.sideCode should be(SideCode.BothDirections.value)
+        asset.value should be(original.value)
+        asset.expired should be(false)
+        expiredAsset.expired should be(true)
+
+      dynamicSession.rollback()
+    }
+  }
+
+
 }
 

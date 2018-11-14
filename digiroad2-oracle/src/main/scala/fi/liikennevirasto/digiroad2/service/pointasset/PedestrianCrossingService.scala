@@ -18,13 +18,11 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   type IncomingAsset = IncomingPedestrianCrossing
   type PersistedAsset = PedestrianCrossing
 
-  lazy val dao: OraclePedestrianCrossingDao = new OraclePedestrianCrossingDao()
-
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
 
   override def typeId: Int = 200
 
-  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = dao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: PedestrianCrossing, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
@@ -43,29 +41,29 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     val pedestrianId =
       withDynTransaction {
-        dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        OraclePedestrianCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
       }
     pedestrianCrossingValidatorActor(Set(pedestrianId))
     pedestrianId
   }
 
-  override def update(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: IncomingPedestrianCrossing, roadLink: RoadLink, username: String): Long = {
     val pedestrianIdUpdated =
-      withDynTransaction {
-        updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource, None, None)
-      }
+    withDynTransaction {
+      updateWithoutTransaction(id, updatedAsset, roadLink, username, None, None)
+    }
     pedestrianCrossingValidatorActor(Set(id, pedestrianIdUpdated))
     pedestrianIdUpdated
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingPedestrianCrossing,roadLink: RoadLink, username: String, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry)
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        dao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), linkSource, old.createdBy, old.createdAt)
+        OraclePedestrianCrossingDao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        dao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), linkSource)
+        OraclePedestrianCrossingDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
     }
   }
 
@@ -80,14 +78,14 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     val updated = IncomingPedestrianCrossing(adjustment.lon, adjustment.lat, adjustment.linkId)
-    updateWithoutTransaction(adjustment.assetId, updated, roadLink.geometry, persistedAsset.municipalityCode, "vvh_generated",
-                             persistedAsset.linkSource, Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
+    updateWithoutTransaction(adjustment.assetId, updated, roadLink, "vvh_generated",
+                            Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipality(municipalityCode))
   }
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {

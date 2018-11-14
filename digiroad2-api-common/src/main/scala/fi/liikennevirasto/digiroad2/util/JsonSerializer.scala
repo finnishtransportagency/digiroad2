@@ -1,13 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.io.{File, FileReader, FileWriter}
+import java.io._
+import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 import java.nio.file.Files.copy
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, NodeType, VVHRoadNodes}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink, ValidityPeriodDayOfWeek}
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}
 import org.json4s._
@@ -18,6 +19,11 @@ class JsonSerializer extends VVHSerializer {
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
     TrackSerializer + PointSerializer
+
+  override def readCachedTinyRoadLinks(file: File): Seq[TinyRoadLink] = {
+    val json = new FileReader(file)
+    read[Seq[TinyRoadLink]](json)
+  }
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
     val json = new FileReader(file)
@@ -35,7 +41,7 @@ class JsonSerializer extends VVHSerializer {
   }
   override def writeCache(file: File, objects: Seq[Object]): Boolean = {
 
-    def writeObjects(objects: Seq[Object], fw: FileWriter): Unit = {
+    def writeObjects(objects: Seq[Object], fw: OutputStreamWriter): Unit = {
       if (objects.nonEmpty) {
         fw.write(write(objects.head))
         if (objects.tail.nonEmpty) {
@@ -48,7 +54,7 @@ class JsonSerializer extends VVHSerializer {
     val tmpFile = File.createTempFile("tmp", "cached")
     tmpFile.deleteOnExit()
 
-    val fw = new FileWriter(tmpFile)
+    val fw = new OutputStreamWriter(new FileOutputStream(tmpFile), StandardCharsets.UTF_8)
     fw.write("[")
     writeObjects(objects, fw)
     fw.write("]")

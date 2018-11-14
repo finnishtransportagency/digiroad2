@@ -33,7 +33,7 @@ trait AssetServiceValidator {
   }
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 
   type AssetType
@@ -99,7 +99,6 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     }
   }
 
-  //TODO needs to be refactor
   def assetValidator(trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val point = Point(trafficSign.lon, trafficSign.lat)
     val roadLinks = getLinkIdsByRadius(point).filterNot(_.administrativeClass == Private)
@@ -136,11 +135,6 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
         }
       }
     }.toSet
-  }
-
-  //TODO move this method to a generic place, same in speedLimit Validation
-  def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 
   protected def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
@@ -183,8 +177,8 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     municipalities.foreach{
       municipality =>
         println(s"Start process for municipality $municipality")
-        val trafficSigns = trafficSignService.getByMunicipality(municipality, Private).filterNot(_.floating)
-          .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+        val trafficSigns = trafficSignService.getByMunicipalityExcludeByAdminClass(municipality, Private).filterNot(_.floating)
+          .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
         splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
@@ -202,6 +196,17 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
                   }
               }
             }
+        }
+    }
+  }
+
+  protected def validateAndInsert(trafficSign: PersistedTrafficSign) = {
+    assetValidator(trafficSign).foreach {
+      inaccurate =>
+        (inaccurate.assetId, inaccurate.linkId) match {
+          case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+          case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+          case _ => None
         }
     }
   }

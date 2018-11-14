@@ -47,6 +47,16 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     id
   }
 
+  def deleteManoeuvreByTrafficSign(trafficSignId: Long) = {
+    val username = "automatic_trafficSign_deleted"
+    sqlu"""
+             update manoeuvre
+             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+             where traffic_sign_id = $trafficSignId
+          """.execute
+    trafficSignId
+  }
+
   def expireManoeuvre(id: Long) = {
     sqlu"""
              update manoeuvre
@@ -59,8 +69,8 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
     val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
     sqlu"""
-             insert into manoeuvre(id, type, created_date, created_by, additional_info)
-             values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo)
+             insert into manoeuvre(id, type, created_date, created_by, additional_info, traffic_sign_id)
+             values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo, ${manoeuvre.trafficSignId})
           """.execute
 
     val linkPairs = manoeuvre.linkIds.zip(manoeuvre.linkIds.tail)
@@ -298,5 +308,14 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     manoeuvresById
       .map(manoeuvreRowsToManoeuvre(manoeuvreExceptionsById, manoeuvreValidityPeriodsById))
       .toSeq
+  }
+
+  def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
+    sql"""
+         select COUNT(*)
+         from manoeuvre_element me
+         join MANOEUVRE m on m.ID = me.MANOEUVRE_ID
+         where me.LINK_ID = $sourceId and me.element_type = $elementType and me.DEST_LINK_ID = $destId and m.VALID_TO is null
+      """.as[Long].first
   }
 }

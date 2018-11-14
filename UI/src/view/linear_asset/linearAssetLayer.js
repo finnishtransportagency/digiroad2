@@ -12,14 +12,15 @@ root.LinearAssetLayer  = function(params) {
       assetLabel = params.assetLabel,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       massLimitation = params.massLimitation,
-      hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
-      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer,
+      trafficSignReadOnlyLayer = params.readOnlyLayer,
       isMultipleLinkSelectionAllowed = params.isMultipleLinkSelectionAllowed,
-      authorizationPolicy = params.authorizationPolicy;
+      authorizationPolicy = params.authorizationPolicy,
+      isExperimental = params.isExperimental,
+      minZoomForContent = params.minZoomForContent;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
-  me.minZoomForContent = zoomlevels.minZoomForAssets;
+  me.minZoomForContent = isExperimental && minZoomForContent ? minZoomForContent : zoomlevels.minZoomForAssets;
   var isComplementaryChecked = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -190,7 +191,7 @@ root.LinearAssetLayer  = function(params) {
       if (selectedLinearAsset.exists()) {
          selectedLinearAsset.close();
          readOnlyLayer.showLayer();
-        if(hasTrafficSignReadOnlyLayer){
+        if(trafficSignReadOnlyLayer){
           trafficSignReadOnlyLayer.highLightLayer();
         }
       }
@@ -402,7 +403,7 @@ root.LinearAssetLayer  = function(params) {
         eventbus.trigger('layer:linearAsset');
       });
     }
-    if(hasTrafficSignReadOnlyLayer){
+    if(trafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.refreshView();
     }
   };
@@ -541,13 +542,12 @@ root.LinearAssetLayer  = function(params) {
     startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
-    me.refreshView();
     roadAddressInfoPopup.start();
     me.show(map);
   };
 
   var showWithComplementary = function() {
-    if(hasTrafficSignReadOnlyLayer)
+    if(trafficSignReadOnlyLayer)
       trafficSignReadOnlyLayer.showTrafficSignsComplementary();
     isComplementaryChecked = true;
     readOnlyLayer.showWithComplementary();
@@ -555,7 +555,7 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var hideComplementary = function() {
-    if(hasTrafficSignReadOnlyLayer)
+    if(trafficSignReadOnlyLayer)
       trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
     selectToolControl.clear();
     selectedLinearAsset.close();
@@ -566,14 +566,14 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var hideReadOnlyLayer = function(){
-    if(hasTrafficSignReadOnlyLayer){
+    if(trafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.hide();
       trafficSignReadOnlyLayer.removeLayerFeatures();
   }
   };
 
   var unHighLightReadOnlyLayer = function(){
-    if(hasTrafficSignReadOnlyLayer){
+    if(trafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.unHighLightLayer();
     }
   };

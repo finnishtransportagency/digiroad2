@@ -98,9 +98,9 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.filter(_.id == 4l).map(_.linkId) should be(Seq(2l))
 
     changeSet.adjustedSideCodes should be(Seq(
-      SideCodeAdjustment(1l, SideCode.BothDirections),
-      SideCodeAdjustment(2l, SideCode.BothDirections),
-      SideCodeAdjustment(3l, SideCode.BothDirections)))
+      SideCodeAdjustment(1l, SideCode.BothDirections, PavedRoad.typeId),
+      SideCodeAdjustment(2l, SideCode.BothDirections, PavedRoad.typeId),
+      SideCodeAdjustment(3l, SideCode.BothDirections, PavedRoad.typeId)))
   }
 
   test("generate one-sided asset when two-way road link is half-covered") {

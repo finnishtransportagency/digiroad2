@@ -246,7 +246,7 @@
         });
       } else {
         currentAsset.payload.id = currentAsset.id;
-        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"] , ["osoite_suomeksi"], ["osoite_ruotsiksi"]);
+        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"] , ["osoite_suomeksi"], ["osoite_ruotsiksi"], ["trSave"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
         backend.updateAsset(currentAsset.id, payload, function (asset) {
@@ -294,7 +294,7 @@
     };
 
     var getRoadLinkDirection = function(){
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), currentAsset.payload.lon, currentAsset.payload.lat);
       var linkId = nearestLine.linkId;
       if (!currentAsset.linkId)
         currentAsset.linkId = linkId;
@@ -303,7 +303,7 @@
     };
 
     var switchDirection = function() {
-      var validityDirection = validitydirections.switchDirection(get('validityDirection'));
+      var validityDirection = validitydirections.switchDirection(getByProperty('validityDirection'));
       setProperty('vaikutussuunta', [{ propertyValue: validityDirection }]);
       currentAsset.payload.linkId = currentAsset.payload.linkId ? currentAsset.payload.linkId : currentAsset.linkId;
       currentAsset.payload.validityDirection = validityDirection;
@@ -321,6 +321,11 @@
       currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
       assetHasBeenModified = true;
       eventbus.trigger('assetPropertyValue:changed', { propertyData: propertyData, id: currentAsset.id });
+    };
+
+    var setAdditionalProperty = function(publicId, values) {
+      var propertyData = {publicId: publicId, values: values};
+      currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
     };
 
     var getCurrentAsset = function() {
@@ -355,6 +360,21 @@
       }
     };
 
+    var changeById = function(id) {
+      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.id !== id && !assetHasBeenModified;
+      if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
+        if (exists()) { close(); }
+        backend.getMassTransitStopById(id, function (asset, statusMessage, errorObject) {
+          if (errorObject !== undefined) {
+              if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
+                  eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
+              }
+          }
+          eventbus.trigger('asset:fetched', asset);
+        });
+      }
+    };
+
     var getId = function() {
       return currentAsset.id;
     };
@@ -379,9 +399,19 @@
       return getPropertyValue({ propertyData: getProperties() }, 'viimeinen_voimassaolopaiva');
     };
 
-    var get = function(key) {
+    var getByProperty = function(key) {
       if (exists()) {
         return currentAsset.payload[key];
+      }
+    };
+
+    var get = function() {
+      if (exists()) {
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var linkId = nearestLine.linkId;
+          if (!currentAsset.linkId)
+              currentAsset.linkId = linkId;
+          return currentAsset;
       }
     };
 
@@ -389,6 +419,12 @@
       if(_.isEmpty(currentAsset))
         return {};
       return roadCollection.getRoadLinkByLinkId(currentAsset.roadLinkId ? currentAsset.roadLinkId : currentAsset.linkId);
+    };
+
+    var getCurrentRoadLink = function(){
+      if(_.isEmpty(currentAsset))
+        return {};
+      return roadCollection.getRoadLinkByLinkId(currentAsset.payload.roadLinkId ? currentAsset.payload.roadLinkId : currentAsset.payload.linkId);
     };
 
     var deleteMassTransitStop = function (poistaSelected) {
@@ -493,6 +529,17 @@
       });
     }
 
+    function hasRoadAddress(properties) {
+      var stopRoadlink = getCurrentRoadLink();
+      if(stopRoadlink){
+        return !_.isUndefined(stopRoadlink.getData().roadNumber);
+      }
+      var roadNumber = _.find(properties, function(property){
+        return property.publicId === 'tie';
+      });
+      return !_.isUndefined(roadNumber) && !_.isEmpty(roadNumber.values);
+    }
+
     return {
       close: close,
       save: save,
@@ -502,11 +549,13 @@
       exists: exists,
       change: change,
       changeByExternalId: changeByNationalId,
+      changeById:changeById,
+      get: get,
       getId: getId,
       getName: getName,
       getDirection: getDirection,
       getFloatingReason: getFloatingReason,
-      get: get,
+      getByProperty: getByProperty,
       getProperties: getProperties,
       switchDirection: switchDirection,
       move: move,
@@ -527,7 +576,9 @@
       isRoadNameDif: isRoadNameDif,
       setRoadNameFields: setRoadNameFields,
       isTerminalChild: isTerminalChild,
-      getMunicipalityCode: getMunicipalityCode
+      getMunicipalityCode: getMunicipalityCode,
+      hasRoadAddress: hasRoadAddress,
+      setAdditionalProperty: setAdditionalProperty
     };
   };
 

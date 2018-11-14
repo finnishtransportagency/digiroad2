@@ -13,18 +13,18 @@
       });
     };
 
-    function hasValue(linearAsset) {
+    this.hasValue = function(linearAsset) {
       var id = linearAsset.id;
       var value = linearAsset.value;
       var nullOrUndefined = function(id){return _.isUndefined(id) || _.isNull(id);};
       var hasValueProperty = function(){return linearAsset.hasOwnProperty('value');};
 
       return (nullOrUndefined(id) && !_.isUndefined(value)) || (!nullOrUndefined(id) && !hasValueProperty()) ||  (!nullOrUndefined(id) && !_.isUndefined(value));
-    }
+    };
 
     this.getNewFeatureProperties = function(linearAssets){
       var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
-        var hasAsset = hasValue(linearAsset);
+        var hasAsset = me.hasValue(linearAsset);
         var type =  me.isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
         return _.merge({}, linearAsset, { hasAsset: hasAsset }, type);
       });
