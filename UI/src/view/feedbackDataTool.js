@@ -11,7 +11,7 @@
     }
 
     var allowFeedBack = function () {
-      return _.includes(['manoeuvre', 'linkProperty'], me.layerName) || applicationModel.getSelectedTool() === 'Select' && !_.isEmpty(me.collection.get().assetId);
+      return _.includes(['manoeuvre', 'linkProperty'], me.layerName) || applicationModel.getSelectedTool() === 'Select';
     };
 
     var renderFeedbackLink = function (enable) {
@@ -63,7 +63,7 @@
 
       eventbus.on('linkProperties:unselected manoeuvres:unselected speedLimit:unselect asset:closed closeFeedBackData', me.closeFeedback);
 
-      eventbus.on('linkProperties:selected linkProperties:cancelled manoeuvres:selectedAvailable speedLimit:selected speedLimit:cancelled asset:modified', me.initFeedback);
+      eventbus.on('linkProperties:selected linkProperties:cancelled manoeuvres:selectedAvailable speedLimit:selected speedLimit:cancelled asset:modified manoeuvres:selected', me.initFeedback);
 
       eventbus.on(events('selected', 'cancelled'), me.initFeedback);
 

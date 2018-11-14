@@ -206,7 +206,8 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
-        'work-list/:layerName': 'unverifiedLinearAssetWorkList'
+        'work-list/:layerName': 'unverifiedLinearAssetWorkList',
+        ':layerName/linkId/:linkId': 'mapMoving'
       },
 
       massTransitStop: function (id) {
@@ -448,6 +449,14 @@
 
       manoeuvreErrors: function (idType , linkId) {
         manoeuvreMapCenterAndZoom(linkId);
+      },
+
+      mapMoving: function (layerName, linkId) {
+        applicationModel.selectLayer(layerName);
+        backend.getRoadLinkByLinkId(linkId, function (response) {
+          if (response.success)
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+        });
       },
 
       heightLimitErrors: function (idType , linkId) {
