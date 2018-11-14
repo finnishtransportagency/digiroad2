@@ -3,7 +3,7 @@ CREATE TABLE additional_panel(
 	asset_id number references asset not null,
 	property_id references property not null,
 	additional_sign_type number not null,
-	additional_sign_value number,
+	additional_sign_value varchar(128),
 	additional_sign_info varchar(128),
 	form_position number not null
 );
