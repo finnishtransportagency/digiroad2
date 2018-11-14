@@ -9,6 +9,7 @@
       me.applicationModel = parameters.applicationModel;
       me.backend = parameters.backend;
       me.saveCondition = parameters.saveCondition;
+      me.feedbackCollection = parameters.feedbackCollection;
       me.bindEvents(parameters);
     };
 

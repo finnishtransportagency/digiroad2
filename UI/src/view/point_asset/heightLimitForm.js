@@ -9,9 +9,9 @@
       me.applicationModel = parameters.applicationModel;
       me.backend = parameters.backend;
       me.saveCondition = parameters.saveCondition;
+      me.feedbackCollection = parameters.feedbackCollection;
       me.bindEvents(parameters);
     };
-
 
     this.renderValueElement = function(asset) {
       if(asset.limit || asset.limit === 0){
