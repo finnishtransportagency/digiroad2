@@ -78,7 +78,7 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
             case Some(roadLink) =>
                 val trafficSingsByRadius: Set[PersistedTrafficSign] =
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), radiusDistance) ++ trafficSignService.getTrafficSign(Seq(roadLink.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
 
               val allLinkIds = assetInfo.newLinkIds ++ trafficSingsByRadius.map(_.linkId)
