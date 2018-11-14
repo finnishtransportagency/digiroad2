@@ -323,7 +323,7 @@ object OracleTrafficSignDao {
             case SingleChoice | Text | LongText =>
                 TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue))
             case AdditionalPanelType =>
-                AdditionalPanelValue(assetRow.additionalPanel.panelType, assetRow.additionalPanel.panelInfo, assetRow.additionalPanel.panelValue, assetRow.additionalPanel.formPosition)
+                AdditionalPanelValue(assetRow.additionalPanel.panelType, Option(assetRow.additionalPanel.panelInfo), Option(assetRow.additionalPanel.panelValue), assetRow.additionalPanel.formPosition)
           }
         ).toSeq)
     }.toSeq

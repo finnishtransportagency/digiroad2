@@ -64,6 +64,10 @@ object TrafficSignType {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def apply(trafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
+    values.filter(_.group == trafficSignTypeGroup).map(_.value)
+  }
+
   case object SpeedLimit extends TrafficSignType { def value = 1;  def group = TrafficSignTypeGroup.SpeedLimits; }
   case object EndSpeedLimit extends TrafficSignType { def value = 2;  def group = TrafficSignTypeGroup.SpeedLimits; }
   case object SpeedLimitZone extends TrafficSignType { def value = 3;  def group = TrafficSignTypeGroup.SpeedLimits; }
@@ -317,7 +321,24 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipality(municipalityCode))
+  }
+
+  def withMunicipalityAndGroup(municipalityCode: Int, trafficSignTypes: Set[Int])(query: String): String = {
+    withFilter(s"""where a.asset_type_id = $typeId and a.municipality_code = $municipalityCode
+                    and a.id in( select at.id
+                        from asset at
+                        join property p on at.asset_type_id = p.asset_type_id
+                        join single_choice_value scv on scv.asset_id = at.id and scv.property_id = p.id and p.property_type = 'single_choice'
+                        join enumerated_value ev on scv.enumerated_value_id = ev.id and ev.value in (${trafficSignTypes.mkString(",")}))""")(query)
+
+  }
+
+  def getByMunicipalityAndGroup(municipalityCode: Int, groupName: TrafficSignTypeGroup): Seq[PersistedAsset] = {
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
+    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    val assetTypes = TrafficSignType.apply(groupName)
+    getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipalityAndGroup(municipalityCode, assetTypes))
   }
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
@@ -475,6 +496,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def getTrafficSignsProperties(trafficSign: IncomingTrafficSign, property: String) : Option[PointAssetValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  }
+
+  def getAllTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Seq[PointAssetValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values
   }
 
   def getTrafficSignsByDistance(sign: PersistedAsset, groupedAssets: Map[Long, Seq[PersistedAsset]], distance: Int): Seq[PersistedTrafficSign]={
