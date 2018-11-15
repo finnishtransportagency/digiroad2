@@ -1,6 +1,6 @@
   CREATE TABLE additional_panel(
     id number,
-    asset_id number references asset,
+    asset_id number references asset not null,
     property_id references property not null,
     additional_sign_type varchar(32),
     additional_sign_value varchar(128),
