@@ -323,7 +323,7 @@ object OracleTrafficSignDao {
             case SingleChoice | Text | LongText =>
                 TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue))
             case AdditionalPanelType =>
-                AdditionalPanelValue(assetRow.additionalPanel.panelType, Option(assetRow.additionalPanel.panelInfo), Option(assetRow.additionalPanel.panelValue), assetRow.additionalPanel.formPosition)
+                AdditionalPanel(assetRow.additionalPanel.panelType, Option(assetRow.additionalPanel.panelInfo), Option(assetRow.additionalPanel.panelValue), assetRow.additionalPanel.formPosition)
           }
         ).toSeq)
     }.toSeq
@@ -363,9 +363,10 @@ object OracleTrafficSignDao {
         }
       }
       case AdditionalPanelType =>
+        if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
         deleteAdditionalPanelProperty(assetId).execute
         propertyValues.foreach{value =>
-          insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanelValue]).execute
+          insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

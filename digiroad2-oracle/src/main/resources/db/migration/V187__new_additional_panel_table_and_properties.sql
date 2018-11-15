@@ -6,6 +6,7 @@ CREATE TABLE additional_panel(
 	additional_sign_value varchar(128),
 	additional_sign_info varchar(128),
 	form_position number not null
+	check (form_position <= 3)
 );
 
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)

@@ -578,12 +578,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)),
           "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
           "additionalInformation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse("")),
-          "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllTrafficSignsProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanelValue]))
+          "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllTrafficSignsProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
      )
     }
   }
 
-  private def mapAdditionalPanels(panels: Seq[AdditionalPanelValue]): Seq[Map[String, Any]] = {
+  private def mapAdditionalPanels(panels: Seq[AdditionalPanel]): Seq[Map[String, Any]] = {
     panels.map{panel =>
       Map(
         "additional_panel_type" -> panel.panelType,

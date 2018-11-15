@@ -293,7 +293,7 @@ sealed trait PointAssetValue {
 }
 case class TrafficSignProperty(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractTrafficSignProperty
 
-case class AdditionalPanelValue(panelType: Int, panelInfo: Option[String], panelValue: Option[String], formPosition: Int) extends PointAssetValue {
+case class AdditionalPanel(panelType: Int, panelInfo: Option[String], panelValue: Option[String], formPosition: Int) extends PointAssetValue {
   override def toJson: Any = this
 }
 

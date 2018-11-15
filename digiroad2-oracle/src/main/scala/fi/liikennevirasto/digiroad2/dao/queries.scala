@@ -209,7 +209,7 @@ object Queries {
         where asset_id = $assetId and property_id = $propertyId
     """
 
-  def insertAdditionalPanelProperty(assetId: Long, value: AdditionalPanelValue) = {
+  def insertAdditionalPanelProperty(assetId: Long, value: AdditionalPanel) = {
     val id = Sequences.nextPrimaryKeySeqValue
     sqlu"""
     INSERT INTO additional_panel (id, asset_id ,property_id, additional_sign_type, additional_sign_value, additional_sign_info, form_position)

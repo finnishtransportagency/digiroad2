@@ -139,7 +139,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     ({
       case jsonObj: JObject =>
         val publicId = (jsonObj \ "publicId").extract[String]
-        val propertyValue: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanelValue]].getOrElse(Seq()))
+        val propertyValue: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
 
         SimpleTrafficSignProperty(publicId, propertyValue)
     },
