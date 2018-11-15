@@ -42,7 +42,7 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           modifiedBy: Option[String] = None,
                           modifiedAt: Option[DateTime] = None,
                           linkSource: LinkGeomSource,
-                          additionalPanel: AdditionalPanelRow)
+                          additionalPanel: Option[AdditionalPanelRow] = None)
 
 object OracleTrafficSignDao {
 
@@ -96,7 +96,6 @@ object OracleTrafficSignDao {
 
   private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
     val rows = StaticQuery.queryNA[TrafficSignRow](query).iterator.toSeq
-    val rows2 = rows.toArray.groupBy(_.id) //remove
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head
@@ -138,11 +137,14 @@ object OracleTrafficSignDao {
       val linkSource = r.nextInt()
       val bearing = r.nextIntOption()
       val validityDirection = r.nextInt()
-      val panelType = r.nextInt()
+      val optPanelType = r.nextIntOption()
       val panelValue = r.nextString()
       val panelInfo = r.nextString()
       val formPosition = r.nextInt()
-      val additionalPanel = new AdditionalPanelRow(publicId = propertyPublicId, propertyType = propertyType, panelType = panelType, panelInfo = panelInfo, panelValue = panelValue, formPosition = formPosition)
+      val additionalPanel = optPanelType match {
+        case Some(panelType) => Some(AdditionalPanelRow(propertyPublicId,  propertyType, panelType, panelInfo, panelValue, formPosition))
+        case _ => None
+      }
 
       TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel)
     }
@@ -318,16 +320,40 @@ object OracleTrafficSignDao {
         publicId = row.property.publicId,
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
-        values = rows.map(assetRow =>
+        values = rows.flatMap { assetRow =>
           assetRow.property.propertyType match {
             case SingleChoice | Text | LongText =>
-                TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue))
+              Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
             case AdditionalPanelType =>
-                AdditionalPanel(assetRow.additionalPanel.panelType, Option(assetRow.additionalPanel.panelInfo), Option(assetRow.additionalPanel.panelValue), assetRow.additionalPanel.formPosition)
+              assetRow.additionalPanel match {
+                case Some(panel) => Seq(AdditionalPanel(panel.panelType, Some(panel.panelValue), Some(panel.panelInfo), panel.formPosition))
+                case _ => Seq()
+              }
           }
-        ).toSeq)
+        }.toSeq)
     }.toSeq
   }
+////
+//  def assetRowToProperty(assetRows: Iterable[TrafficSignRow]): Seq[TrafficSignProperty] = {
+//    assetRows.groupBy(_.property.propertyId).foreach{ case (key, rows) =>
+//      val row = rows.head
+//
+//      var values : Seq[PointAssetValue] = rows.flatMap { assetRow =>
+//        assetRow.property.propertyType match {
+//          case SingleChoice | Text | LongText =>
+//            Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+//          case AdditionalPanelType =>
+//            assetRow.additionalPanel match {
+//              case Some(panel) => Seq(AdditionalPanel(panel.panelType, Some(panel.panelValue), Some(panel.panelInfo), panel.formPosition))
+//              case _ => Seq()
+//            }
+//        }
+//
+//      }.toSeq
+//    }
+//      Seq()
+//
+//  }
 
   private def propertyWithTypeAndId(property: SimpleTrafficSignProperty): Tuple3[String, Option[Long], SimpleTrafficSignProperty] = {
     val propertyId = StaticQuery.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
