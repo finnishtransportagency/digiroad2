@@ -1490,25 +1490,24 @@ object DataFixture {
   def updatePrivateRoads(): Unit = {
     println("\nStart of update private roads")
     println(DateTime.now())
-    OracleDatabase.withDynSession {
-      val assetTypes = Set(Prohibition.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId, HeightLimit.typeId, LengthLimit.typeId, WidthLimit.typeId)
+      val assetTypes = Set(Prohibition.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
       //Get All Municipalities
-      val municipalities: Seq[Int] = Queries.getMunicipalities
+      val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
 
       municipalities.foreach { municipality =>
         println(s"Obtaining all Road Links for Municipality: $municipality")
-        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass != Private)
-        val linkIds = roadLinks.map(_.linkId)
+        val roadLinksWithAssets =  OracleDatabase.withDynSession {
+          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
+          val linkIds = roadLinks.map(_.linkId)
 
-        val existingAssets = oracleLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
-        val roadLinksWithAssets = roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
-
+          val existingAssets = oracleLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
+          roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
+        }
         roadLinksWithAssets.foreach { roadLink =>
           val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
           roadLinkService.updateLinkProperties(linkProperty, Option("update_private_roadas_process"), (_, _) => {})
         }
       }
-    }
   }
 
   def main(args:Array[String]) : Unit = {

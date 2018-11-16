@@ -82,9 +82,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   val logger = LoggerFactory.getLogger(getClass)
 
   //Attributes names used on table "road_link_attributes"
-  val privateRoadAssociationPublicId = "private_road_association"
-  val additionalInfoPublicId = "additional_info"
-  val accessRightIDPublicId = "access_right_id"
+  val privateRoadAssociationPublicId = "PRIVATE_ROAD_ASSOCIATION"
+  val additionalInfoPublicId = "ADDITIONAL_INFO"
+  val accessRightIDPublicId = "ACCESS_RIGHT_ID"
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
