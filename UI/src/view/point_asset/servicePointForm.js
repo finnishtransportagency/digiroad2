@@ -94,7 +94,7 @@
       });
 
       eventbus.on('layer:selected', function() {
-        $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
+        $('.information-content .form[data-layer-name="' + layerName +'"]').remove();
       });
     };
 

@@ -547,10 +547,10 @@
       });
 
       var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
-        $('#information-content').append('' +
-          '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-          '<a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a>' +
-          '</div>');
+        $('ul[class=information-content]').append('' +
+          // '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
+          '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
+  //        '</div>');
       };
 
       eventbus.on('layer:selected', function(layer) {
