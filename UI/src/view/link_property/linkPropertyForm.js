@@ -164,7 +164,7 @@
     var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
       var notRendered = !$('#incomplete-links-link').length;
       if(notRendered) {
-        //$('ul[class=information-content]').empty();
+        $('ul[class=information-content]').empty();
         $('ul[class=information-content]').append('' +
             '<li><a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a></li>');
       }

@@ -90,11 +90,14 @@
       });
 
       eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
-        rootElement.empty();
+        rootElement.find('#feature-attributes-header').empty();
+        rootElement.find('#feature-attributes-form').empty();
+        rootElement.find('#feature-attributes-footer').empty();
       });
 
       eventbus.on('layer:selected', function() {
-        $('.information-content .form[data-layer-name="' + layerName +'"]').remove();
+        if(layerName === applicationModel.getSelectedLayer())
+        $('ul[class=information-content]').empty();
       });
     };
 

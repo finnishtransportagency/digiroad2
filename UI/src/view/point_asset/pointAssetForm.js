@@ -64,13 +64,11 @@ root.PointAssetForm = function() {
 
     eventbus.on('layer:selected', function(layer) {
       if (layer === layerName) {
+        $('ul[class=information-content]').empty();
         me.renderLinktoWorkList(layer, localizedTexts);
         if(parameters.pointAsset.hasInaccurate){
           renderInaccurateWorkList(layer);
         }
-      }
-      else {
-        $('.information-content .form[data-layer-name="' + layerName +'"]').remove();
       }
     });
   };

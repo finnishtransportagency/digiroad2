@@ -76,6 +76,7 @@
 
     eventbus.on('layer:selected', function(layer) {
       if(layerName === layer){
+        $('ul[class=information-content]').empty();
         if(isVerifiable){
           renderLinktoWorkList(layer);
         }
@@ -83,9 +84,6 @@
           renderInaccurateWorkList(layer);
         }
       }
-       else {
-        // $('ul[class=information-content]').empty();
-        }
     });
   }
 
@@ -189,12 +187,10 @@
       default:
         textName = "Vanhentuneiden kohteiden lista";
     }
-    // $('ul[class=information-content]').empty();
     $('ul[class=information-content]').append('<li><a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">' + textName + '</a></li>');
   };
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
-    // $('ul[class=information-content]').empty();
     $('ul[class=information-content]').append('<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
   };
 

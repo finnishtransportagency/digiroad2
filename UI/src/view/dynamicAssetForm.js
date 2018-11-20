@@ -697,18 +697,17 @@
             });
 
             eventbus.on('layer:selected', function(layer) {
-                if(_assetTypeConfiguration.isVerifiable && _assetTypeConfiguration.layerName === layer){
+                if(_assetTypeConfiguration.layerName === layer){
+                  $('ul[class=information-content]').empty();
+
+                  if(_assetTypeConfiguration.isVerifiable)
                     renderLinkToWorkList(layer);
-                }
-                else {
-                    $('.information-content .form[data-layer-name="' + _assetTypeConfiguration.layerName +'"]').remove();
                 }
             });
 
             eventbus.on('application:readOnly', function(){
                 if(_assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && _assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
                     var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
-                    // rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled ));
                   rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
                   rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
                   rootElement.find('#feature-attributes-footer').html(me.renderFooter(_assetTypeConfiguration.selectedLinearAsset));
@@ -945,19 +944,11 @@
                 '</div>'
 
             );
-
-
-            // body.find('.linear-asset-header').append( new SaveButton(_assetTypeConfiguration, formStructure).element).append(new CancelButton(_assetTypeConfiguration).element);
-            // body.find('.linear-asset-footer').append( new VerificationButton(_assetTypeConfiguration).element).append( new SaveButton(_assetTypeConfiguration, formStructure).element).append(new CancelButton(_assetTypeConfiguration).element);
-            // return body;
         }
 
         function toggleBodyElements(rootElement, isReadOnly) {
-            // rootElement.find('.form-controls').toggle(!isReadOnly);
             rootElement.find('.editable .form-control-static').toggle(isReadOnly);
             rootElement.find('.editable .edit-control-group').toggle(!isReadOnly);
-            // rootElement.find('.read-only-title').toggle(isReadOnly);
-            // rootElement.find('.edit-mode-title').toggle(!isReadOnly);
         }
 
         function generateClassName(sideCode) {
@@ -977,9 +968,6 @@
             //When both are deleted
             if(_.isEmpty(forms.getAllFields()))
                 return false;
-
-            if(forms.getFields('a').length !== forms.getFields('b').length)
-                return true;
 
       return _.some(forms.getFields('a'), function(fieldA){
         var propertyValueA = fieldA.getPropertyValue();
