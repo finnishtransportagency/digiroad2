@@ -141,7 +141,7 @@
     var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
     var setLinkType = _.partial(setLinkProperty, 'linkType');
     var setAdministrativeClass = _.partial(setLinkProperty, 'administrativeClass');
-    var setAccessRightId =  _.partial(setLinkProperty, 'accessRight');
+    var setAccessRightId =  _.partial(setLinkProperty, 'accessRightID');
     var setPrivateRoadAssociation =  _.partial(setLinkProperty, 'privateRoadAssociation');
     var setAdditionalInfo =  _.partial(setLinkProperty, 'additionalInfo');
 

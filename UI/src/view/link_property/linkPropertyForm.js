@@ -23,13 +23,13 @@
       TowardsDigitizing: 'Digitointisuuntaan'
     };
 
-    var accessRightIds = [
+    var additionalInfoIds = [
       [1, 'Tieto toimitettu, rajoituksia'],
       [2, 'Tieto toimitettu, ei rajoituksia'],
       [3, 'Ei toimitettu']
     ];
 
-    var localizedAccessRightIds = {
+    var localizedAdditionalInfoIds = {
       DeliveredWithRestrictions:  'Tieto toimitettu, rajoituksia',
       DeliveredWithoutRestrictions: 'Tieto toimitettu, ei rajoituksia',
       NotDelivered: 'Ei toimitettu'
@@ -97,9 +97,9 @@
       return linkSource && linkSource[1];
     };
 
-    var getAccessRight = function(accessRightId) {
-      var localizedAccessRightIds = _.find(accessRightIds, function(x) { return x[0] === accessRightId; });
-      return localizedAccessRightIds && localizedAccessRightIds[1];
+    var getAdditionalInfo = function(additionalInfoValue) {
+      var additionalInfo = _.find(additionalInfoIds, function(x) { return x[0] === additionalInfoValue; });
+      return additionalInfo && additionalInfo[1];
     };
 
     var checkIfMultiSelection = function(mmlId){
@@ -157,7 +157,7 @@
               '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
               '<select class="form-control traffic-direction" style="display: none"><%= trafficDirectionOptionTags %></select>' +
               '<label class="control-label">Tielinkin tyyppi</label>' +
-              '<p class="form-control-static"><%- localizedAccessRightIds %></p>' +
+              '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
               '<select class="form-control link-types" style="display: none"><%= linkTypesOptionTags %></select>' +
             '</div>' +
             staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
@@ -176,18 +176,18 @@
             staticField('Linkin tila', 'constructionType') +
             '<div class="form-group editable private-road" style="display: none">' +
               '<div class="form-group editable">' +
-                '<label class="control-label">Tiekunnan nimi</label>' +
-                '<p class="form-control-static"><%- additionalInfo %></p>' +
-                '<input type="text" class="form-control private-road-association" id="private_road_association" style="display: none" value="<%- additionalInfo %>">' +
+                '<label class="control-label">Käyttöoikeustunnus</label>' +
+                '<p class="form-control-static"><%- accessRightID %></p>' +
+                '<input type="text" class="form-control access-right-id"  style="display: none" value="<%- accessRightID %>">' +
               '</div>' +
               '<div class="form-group editable">' +
-                '<label class="control-label">Lisätieto </label>' +
+                '<label class="control-label">Tiekunnan nimi </label>' +
                 '<p class="form-control-static"><%- privateRoadAssociation %></p>' +
-                '<input type="text" class="form-control additional-info" id="additional_info" style="display: none" value="<%- privateRoadAssociation %>">' +
+                '<input type="text" class="form-control private-road-association" style="display: none" value="<%- privateRoadAssociation %>">' +
                 '</div>' +
-              '<label class="control-label">Käyttöoikeustunnus</label>' +
-              '<p class="form-control-static"><%- localizedAccessRightIds %></p>' +
-              '<select class="form-control access-right-id" style="display: none"><%= accessRightIdsOptionTags %></select>' +
+              '<label class="control-label">Lisätieto</label>' +
+              '<p class="form-control-static"><%- localizedAdditionalInfoIds %></p>' +
+              '<select class="form-control additional-info" style="display: none"><%= additionalInfoOptionTags %></select>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -255,7 +255,7 @@
         roadPartNumber : linkProperty.roadPartNumber || '',
         localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
         localizedAdministrativeClass : localizedAdministrativeClasses[linkProperty.administrativeClass] || 'Tuntematon',
-        localizedAccessRightIds: getAccessRight(parseInt(linkProperty.accessRightID)) || 'Tuntematon',
+        localizedAdditionalInfoIds: getAdditionalInfo(parseInt(linkProperty.additionalInfo)) || 'Tuntematon',
         localizedTrafficDirection : localizedTrafficDirections[linkProperty.trafficDirection] || 'Tuntematon',
         localizedLinkTypes : getLocalizedLinkType(linkProperty.linkType) || 'Tuntematon',
         addressNumbersRight : addressNumberString(linkProperty.minAddressNumberRight, linkProperty.maxAddressNumberRight),
@@ -267,9 +267,9 @@
         constructionType : getConstructionType(linkProperty.constructionType) || '',
         linkSource : getLinkSource(linkProperty.linkSource) || '',
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
-        accessRightID: !isNaN(parseInt(linkProperty.accessRightID)) ? parseInt(linkProperty.accessRightID) : '',
+        accessRightID: linkProperty.accessRightID || '',
         privateRoadAssociation: linkProperty.privateRoadAssociation || '',
-        additionalInfo:  linkProperty.additionalInfo || ''
+        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : ''
       });
     };
 
@@ -307,14 +307,13 @@
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>' ;
         }).join('');
 
-        //TODO: check when backend is done
-        var accessRightIdsOptionTags = _.map( accessRightIds, function(value) {
-          var selected = value[0] === linkProperty.accessRightID ? " selected" : "";
+        var additionalInfoOptionTags = _.map( additionalInfoIds, function(value) {
+          var selected = value[0] === linkProperty.additionalInfo ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>' ;
         }).join('');
 
         var privateRoadAssociationValueTag = linkProperty.privateRoadAssociation;
-        var additionalInfoValueTag = linkProperty.additionalInfo;
+        var additionalInfoValueTag = linkProperty.accessRightID;
 
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
 
@@ -323,7 +322,7 @@
             functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
             linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags),
             administrativeClassOptionTags : defaultUnknownOptionTag.concat(administrativeClassOptionTags),
-            accessRightIdsOptionTags: defaultUnknownOptionTag.concat(accessRightIdsOptionTags),
+            additionalInfoOptionTags: defaultUnknownOptionTag.concat(additionalInfoOptionTags),
             privateRoadAssociationValueTag: defaultUnknownOptionTag.concat(privateRoadAssociationValueTag),
             additionalInfoValueTag: defaultUnknownOptionTag.concat(additionalInfoValueTag)}
         };
@@ -342,14 +341,14 @@
         rootElement.find('.administrative-class').change(function(event) {
           selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
         });
-        rootElement.find('.access-right-id').change(function(event) {
-          selectedLinkProperty.setAccessRight($(event.currentTarget).find(':selected').attr('value'));
+        rootElement.find('.access-right-id').keyup(function(event) {
+          selectedLinkProperty.setAccessRightId($(event.currentTarget).val());
         });
         rootElement.find('.private-road-association').keyup(function(event) {
           selectedLinkProperty.setPrivateRoadAssociation($(event.currentTarget).val());
         });
-        rootElement.find('.additional-info').keyup(function(event) {
-          selectedLinkProperty.setAdditionalInfo($(event.currentTarget).val());
+        rootElement.find('.additional-info').change(function(event) {
+          selectedLinkProperty.setAdditionalInfo($(event.currentTarget).find(':selected').attr('value'));
         });
 
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || applicationModel.isReadOnly());

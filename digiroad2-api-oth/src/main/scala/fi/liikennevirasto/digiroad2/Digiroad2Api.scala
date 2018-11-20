@@ -134,7 +134,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ac: AdministrativeClass => JString(ac.toString)
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer
+  case object AdditionalInfoClassSerializer extends CustomSerializer[AdditionalInformation](format => ( {
+    case JString(additionalInfo) => AdditionalInformation(additionalInfo)
+  }, {
+    case ai: AdditionalInformation => JString(ai.toString)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer + AdditionalInfoClassSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
