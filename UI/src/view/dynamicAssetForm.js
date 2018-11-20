@@ -690,7 +690,6 @@
             });
 
             eventbus.on(events('unselect'), function() {
-                // rootElement.empty();
               rootElement.find('#feature-attributes-header').empty();
               rootElement.find('#feature-attributes-form').empty();
               rootElement.find('#feature-attributes-footer').empty();

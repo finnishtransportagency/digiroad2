@@ -80,8 +80,7 @@ root.PointAssetForm = function() {
     var header = '<span>' + title + '</span>' + renderButtons();
     var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection);
     var footer = renderButtons();
-
-    // rootElement.html(header + form + footer);
+    
     rootElement.find("#feature-attributes-header").html(header);
     rootElement.find("#feature-attributes-form").html(form);
     rootElement.find("#feature-attributes-footer").html(footer);
