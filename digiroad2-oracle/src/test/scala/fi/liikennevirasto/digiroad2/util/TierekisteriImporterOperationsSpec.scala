@@ -209,6 +209,16 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
   }
 
+  class TestTrafficSignTierekisteriImporter extends TrafficSignTierekisteriImporter {
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+    override val tierekisteriClient: TierekisteriTrafficSignAssetClient = mockTRTrafficSignsLimitClient
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
   case class TierekisteriAssetDataTest (roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, startAddressMValue: Long,
                                         endAddressMValue: Long, track: Track) extends TierekisteriAssetData
 
@@ -1500,5 +1510,31 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
         case _ => None
       }
     }
+  }
+
+  test("traffic sign converter"){
+    val traffic  = new TestTrafficSignTierekisteriImporter
+
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30t") should be ("30000")
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30T") should be ("30000")
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.t") should be ("30000")
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1t") should be ("30100")
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1tn") should be ("30100")
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1 tn") should be ("30100")
+
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30") should be ("30")
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30tt") should be ("30tt")
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "30tt") should be ("30tt")
+
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2 m") should be ("2.2")
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2,2 M") should be ("2.2")
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2") should be ("2.2")
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2 MM") should be ("2.2 MM")
+
+    traffic.converter(TRTrafficSignType.SpeedLimit, "100km\\h ") should be ("100")
+    traffic.converter(TRTrafficSignType.SpeedLimit, "100km\\h") should be ("100")
+    traffic.converter(TRTrafficSignType.SpeedLimit, "100KM\\H") should be ("100")
+    traffic.converter(TRTrafficSignType.SpeedLimit, "100kmh") should be ("100")
+    traffic.converter(TRTrafficSignType.SpeedLimit, "100") should be ("100")
   }
 }
