@@ -50,8 +50,8 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
       val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
       inaccurateAssetCreated.size == 5 should be(true)
-      inaccurateAssetCreated.map(_.assetId).contains(listSpeedLimit.head) should be (true)
-      inaccurateAssetCreated.map(_.assetId).contains(listSpeedLimit.last) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.head)) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.last)) should be (true)
 
       dynamicSession.rollback()
     }
@@ -68,8 +68,8 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
       val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID, authorizedMunicipalitiesList)
       inaccurateAssetCreated.size == 5 should be(true)
-      inaccurateAssetCreated.map(_.assetId).contains(listSpeedLimit.head) should be (true)
-      inaccurateAssetCreated.map(_.assetId).contains(listSpeedLimit.last) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.head)) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.last)) should be (true)
 
       dynamicSession.rollback()
     }
@@ -85,9 +85,8 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
       val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
       inaccurateAssetCreated.size == 10 should be(true)
-      inaccurateAssetCreated.map(_.assetId).contains(listSpeedLimit.head) should be (true)
-      inaccurateAssetCreated.map(_.assetId).contains(listSpeedLimit.last) should be (true)
-
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.head)) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.last)) should be (true)
 
       inaccurateAssetDao.deleteAllInaccurateAssets(speedLimitAssetTypeID)
       val inaccurateAssetDeleted = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
@@ -105,8 +104,8 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
       val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
       inaccurateAssetCreated.size == 10 should be(true)
-      inaccurateAssetCreated.map(_.assetId).contains(listSpeedLimit.head) should be (true)
-      inaccurateAssetCreated.map(_.assetId).contains(listSpeedLimit.last) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.head)) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.last)) should be (true)
 
 
       inaccurateAssetDao.deleteAllInaccurateAssets(speedLimitAssetTypeID)
