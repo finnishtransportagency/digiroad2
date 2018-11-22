@@ -1249,9 +1249,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     user.isOperator() match {
       case true =>
-        speedLimitService.getSpeedLimitsWithInaccurates()
+        speedLimitService.getInaccurateRecords()
       case false =>
-        speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
+        speedLimitService.getInaccurateRecords(municipalityCode, Set(Municipality))
     }
   }
 
