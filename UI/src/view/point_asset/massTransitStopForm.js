@@ -193,7 +193,7 @@
           var header;
 
           if (_.isNumber(selectedMassTransitStopModel.getByProperty('nationalId'))) {
-            header = $('' + '<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.getByProperty('nationalId') + '</span>');
+            header = $('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.getByProperty('nationalId') + '</span>');
           } else if (isTerminalBusStop) {
             header = $('' + '<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
           } else {
