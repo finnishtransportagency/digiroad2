@@ -73,6 +73,8 @@ root.PointAssetForm = function() {
     });
   };
 
+  this.renderValueElement = function(asset, collection) { return ''; };
+
   this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
     var id = selectedAsset.getId();
 
@@ -111,6 +113,8 @@ root.PointAssetForm = function() {
 
     this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
   };
+
+  this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){};
 
   this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection) {
     var asset = selectedAsset.get();

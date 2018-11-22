@@ -733,8 +733,8 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
-        hasTrafficSignReadOnlyLayer: true,
         hasInaccurate: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy()
       },
       {
