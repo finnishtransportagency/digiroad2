@@ -359,4 +359,14 @@ object OracleTrafficSignDao {
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
   }
+
+  def expireAssetsByMunicipality(municipalities: Set[Int]) : Unit = {
+    if (municipalities.nonEmpty) {
+      sqlu"""
+        update asset set valid_to = sysdate - 1/86400
+        where asset_type_id = ${TrafficSigns.typeId}
+        and created_by != 'batch_process_trafficSigns'
+        and municipality_code in (#${municipalities.mkString(",")})""".execute
+    }
+  }
 }
