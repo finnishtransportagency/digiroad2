@@ -126,7 +126,10 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val lat = getPropertyValue(parsedRow, "lat").asInstanceOf[BigDecimal].toLong
     val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon, lat))
 
-    if(roadLinks.isEmpty) {(List(s"Try to create in an unauthorized Municipality"), Seq())} else (List(), roadLinks)
+    if(roadLinks.isEmpty) {
+      (List(s"Try to create in an unauthorized Municipality"), Seq())
+    } else
+      (List(), roadLinks)
   }
 
   private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
