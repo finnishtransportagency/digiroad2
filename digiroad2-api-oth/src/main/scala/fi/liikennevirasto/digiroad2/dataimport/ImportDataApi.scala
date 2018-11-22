@@ -31,17 +31,24 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
           case municipalities => municipalities.map(_.toInt).toSet
         }
 
-        if (!(user.isOperator() || user.isMunicipalityMaintainer())) {halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))}
+        if (!(user.isOperator() || user.isMunicipalityMaintainer())) {
+          halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
+        }
 
-        if (user.isMunicipalityMaintainer() && municipalitiesToExpire.diff(user.configuration.authorizedMunicipalities).nonEmpty)
-            {halt(Forbidden(s"Puuttuvat muokkausoikeukset jossain listalla olevassa kunnassa: ${municipalitiesToExpire.mkString(",")}"))}
+        if (user.isMunicipalityMaintainer() && municipalitiesToExpire.diff(user.configuration.authorizedMunicipalities).nonEmpty) {
+          halt(Forbidden(s"Puuttuvat muokkausoikeukset jossain listalla olevassa kunnassa: ${municipalitiesToExpire.mkString(",")}"))
+        }
 
         importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
       case "maintenanceRoads" =>
-        if (!user.isOperator()) {halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))}
+        if (!user.isOperator()) {
+          halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+        }
         importMaintenanceRoads(csvFileInputStream)
       case _ =>
-        if (!user.isOperator()) {halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))}
+        if (!user.isOperator()) {
+          halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+        }
         importRoadLinks(csvFileInputStream)
     }
   }
