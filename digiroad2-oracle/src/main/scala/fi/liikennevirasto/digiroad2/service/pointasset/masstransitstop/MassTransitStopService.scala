@@ -234,7 +234,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val (persistedAsset, publishInfo, strategy) = withDynTransaction {
       val point = Point(asset.lon, asset.lat)
       val strategy = getStrategy(asset.properties.toSet, roadLink)
-      val newAsset = asset.copy(properties = excludeProperties(asset.properties))
+      val newAsset = asset.copy(properties = excludeProperties(asset.properties).toSeq)
       val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
       withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
 
@@ -294,65 +294,12 @@ trait MassTransitStopService extends PointAssetOperations {
       val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false).getOrElse(throw new NoSuchElementException)
 
       val (previousStrategy, currentStrategy) = getStrategy(properties, asset, roadLink)
+      val newProperties = excludeProperties(properties.toSeq)
 
       if (previousStrategy != currentStrategy)
         previousStrategy.undo(asset, properties, username)
 
-      val (persistedAsset, publishInfo) = currentStrategy.update(asset, optionalPosition, properties, username, municipalityValidation, roadLink)
-
-      val (enrichPersistedAsset, error) = currentStrategy.enrichBusStop(persistedAsset)
-      (currentStrategy, publishInfo, withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(enrichPersistedAsset))
-    }
-    currentStrategy.publishSaveEvent(publishInfo)
-    persistedAsset
-  }
-
-  def updateExistingById_(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): MassTransitStopWithProperties = {
-
-    val (currentStrategy, publishInfo, persistedAsset ) =  withDynTransaction {
-      val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
-
-      val linkId = optionalPosition match {
-        case Some(position) => position.linkId
-        case _ => asset.linkId
-      }
-      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false).getOrElse(throw new NoSuchElementException)
-
-      val (previousStrategy, currentStrategy) = getStrategy(properties, asset, roadLink)
-
-      val existingAssetId: Option[Long] =
-       if (previousStrategy != currentStrategy){
-         previousStrategy.undo(asset, properties, username)
-         Some(asset.id)
-       } else
-        Some(assetId)
-
-      //filter properties which are not saved in db
-      val newProperties = excludeProperties(properties.toSeq)
-
-      val (persistedAsset, publishInfo) = if(existingAssetId.isEmpty){
-        val props = MassTransitStopOperations.setPropertiesDefaultValues(newProperties, roadLink).toSet
-
-        if (MassTransitStopOperations.mixedStoptypes(props))
-          throw new IllegalArgumentException
-
-        municipalityValidation(asset.municipalityCode, roadLink.administrativeClass)
-
-        //Remove from common assets the side code property
-        val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
-          filterNot(prop => prop._1 == AssetPropertyConfiguration.ValidityDirectionId || prop._1 == AssetPropertyConfiguration.ValidToId)
-
-        val mergedProperties = (asset.propertyData.
-          filterNot(property => props.exists(_.publicId == property.publicId)).
-          map(property => SimpleProperty(property.publicId, property.values)) ++ props).
-          filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
-
-        val position = optionalPosition.getOrElse(Position(asset.lon, asset.lat, asset.linkId, None))
-        currentStrategy.create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
-          mergedProperties), username, Point(position.lon, position.lat), roadLink)
-      }else{
-        currentStrategy.update(asset, optionalPosition, newProperties.toSet, username, municipalityValidation, roadLink)
-      }
+      val (persistedAsset, publishInfo) = currentStrategy.update(asset, optionalPosition, newProperties, username, municipalityValidation, roadLink)
 
       val (enrichPersistedAsset, error) = currentStrategy.enrichBusStop(persistedAsset)
       (currentStrategy, publishInfo, withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(enrichPersistedAsset))
@@ -645,8 +592,8 @@ trait MassTransitStopService extends PointAssetOperations {
     updateAssetGeometry(adjustment.assetId, Point(adjustment.lon, adjustment.lat))
   }
 
-  private def excludeProperties(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
-    properties.filterNot(prop => AssetPropertyConfiguration.ExcludedProperties.contains(prop.publicId))
+  private def excludeProperties(properties: Seq[SimpleProperty]): Set[SimpleProperty] = {
+    properties.filterNot(prop => AssetPropertyConfiguration.ExcludedProperties.contains(prop.publicId)).toSet
   }
 }
 
