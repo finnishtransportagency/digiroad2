@@ -39,7 +39,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvHRoadlink1.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(vvHRoadlink1.map(toRoadLink).headOption)
   when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(vvHRoadlink2)
-  when(mockRoadLinkService.getRoadLinkFromVVH(1611400)).thenReturn(vvHRoadlink2.map(toRoadLink).headOption)
+  when(mockRoadLinkService.enrichRoadLinksFromVVH(vvHRoadlink2)).thenReturn(vvHRoadlink2.map(toRoadLink))
   when(mockUserProvider.getCurrentUser()).thenReturn(testUser)
 
   when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1191950690)).thenReturn(Seq(
