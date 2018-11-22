@@ -366,7 +366,8 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
-       authorizationPolicy: asset.authorizationPolicy
+       authorizationPolicy: asset.authorizationPolicy,
+       readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
      });
      return acc;
     }, {});
