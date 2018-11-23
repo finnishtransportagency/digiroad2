@@ -22,7 +22,9 @@
       setPropertyByPublicId: setPropertyByPublicId,
       getMunicipalityCode: getMunicipalityCode,
       getMunicipalityCodeByLinkId: getMunicipalityCodeByLinkId,
-      getCoordinates: getCoordinates
+      getCoordinates: getCoordinates,
+      setAdditionalPanels: setAdditionalPanels,
+      setAdditionalPanel: setAdditionalPanel
     };
 
     function place(asset) {
@@ -158,6 +160,25 @@
         }
       });
       eventbus.trigger(assetName + ':changed');
+    }
+
+    function setAdditionalPanels(panels) {
+      dirty = true;
+      _.map(current.propertyData, function (prop) {
+        if (prop.publicId === 'additional_panel') {
+          prop.values = panels;
+        }
+      });
+      eventbus.trigger('panels:changed');
+    }
+
+    function setAdditionalPanel(myobj) {
+      _.map(current.propertyData, function (prop) {
+        if (prop.publicId === 'additional_panel') {
+          var index = _.findIndex(prop.values, {formPosition: myobj.formPosition});
+          prop.values.splice(index, 1, myobj);
+        }
+      });
     }
   };
 })(this);

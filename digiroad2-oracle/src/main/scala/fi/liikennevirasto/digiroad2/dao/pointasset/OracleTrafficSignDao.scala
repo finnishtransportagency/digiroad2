@@ -142,7 +142,7 @@ object OracleTrafficSignDao {
       val panelInfo = r.nextString()
       val formPosition = r.nextInt()
       val additionalPanel = optPanelType match {
-        case Some(panelType) => Some(AdditionalPanelRow(propertyPublicId,  propertyType, panelType, panelInfo, panelValue, formPosition))
+        case Some(panelType) => Some(AdditionalPanelRow(propertyPublicId, propertyType, panelType, panelInfo, panelValue, formPosition))
         case _ => None
       }
 
