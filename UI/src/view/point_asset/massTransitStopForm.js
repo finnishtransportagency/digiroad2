@@ -156,6 +156,8 @@
       authorizationPolicy = new MassTransitStopAuthorizationPolicy();
       new FeedbackDataTool(feedbackCollection, 'massTransitStop', authorizationPolicy);
 
+      var rootElement = $('#feature-attributes');
+
       var MStopDeletebutton = function(readOnly) {
 
         var removalForm = $('<div class="checkbox"> <label>Poista<input type="checkbox" id = "removebox"></label></div>');
