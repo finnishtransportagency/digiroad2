@@ -169,7 +169,7 @@
           prop.values = panels;
         }
       });
-      eventbus.trigger('panels:changed');
+      eventbus.trigger(assetName + ':changed');
     }
 
     function setAdditionalPanel(myobj) {
@@ -179,6 +179,7 @@
           prop.values.splice(index, 1, myobj);
         }
       });
+      eventbus.trigger(assetName + ':changed');
     }
   };
 })(this);

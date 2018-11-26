@@ -2,6 +2,7 @@
   root.TrafficSignForm = function() {
     PointAssetForm.call(this);
     var me = this;
+    var defaultAdditionalPanelValue = null;
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
@@ -9,6 +10,7 @@
       me.applicationModel = parameters.applicationModel;
       me.backend = parameters.backend;
       me.saveCondition = parameters.saveCondition;
+      defaultAdditionalPanelValue = _.find(parameters.pointAsset.newAsset.propertyData, function(obj){return obj.publicId === 'additional_panel'}).defaultValue;
       me.bindEvents(parameters);
     };
 
@@ -16,11 +18,6 @@
       return _.find(properties, function(feature){
         return feature.publicId === publicId;
       });
-    };
-
-    var panelHandler = function(properties, collection) {
-      var panelProperties = getProperties(properties, "additional_panel");
-      return renderAdditionalPanels(panelProperties, collection);
     };
 
     this.renderValueElement = function(asset, collection) {
@@ -81,78 +78,65 @@
       });
 
       rootElement.find('#additional-panel-checkbox').on('change', function (event) {
-        var checked = $(event.currentTarget).prop('checked');
-        if(!checked)
+        if(!$(event.currentTarget).prop('checked'))
           $('.panel-group-container').remove();
         else {
-          $('.additional-panel-checkbox').after(renderAdditionalPanels({values:[{panelType:53, panelInfo : "", panelValue : "", formPosition : 1}]}, collection));
-          setAll();
+          $('.additional-panel-checkbox').after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection));
+          setAllPanels();
         }
-        rootElement.find('.remove-panel').on('click', function (event) {
-          removeSingle(event);
-          setAll(event);
-        });
-
-        rootElement.find('.form-traffic-sign-panel input[type=text]#panelValue, .form-traffic-sign-panel input[type=text]#panelInfo, .form-traffic-sign select').on('change input', function (event) {
-          setSingle(event);
-        });
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
-
-        rootElement.find('.add-panel').on('click', function () {
-          $(this).parent().after(renderAdditionalPanels({values:[{panelType:53, panelInfo : "", panelValue : "", formPosition : 1}]}, collection));
-          setAll();
-        });
-        toggleButtonVisibility();
+        bindPanelEvents();
       });
 
-      eventbus.on('panels:changed', function() {
+      rootElement.find('.form-traffic-sign-panel input[type=text]#panelValue, .form-traffic-sign-panel input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
+        setSinglePanel(event);
+      });
 
-        rootElement.find('.single-panel-container').remove();
-        $('.panel-group-container').replaceWith(panelHandler(selectedAsset.get().propertyData, collection));
+      rootElement.find('.remove-panel').on('click', function (event) {
+        removeSingle(event);
+        $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
+        bindPanelEvents();
+      });
 
-        rootElement.find('.remove-panel').on('click', function (event) {
-          removeSingle(event);
-          setAll();
-        });
-
-        rootElement.find('.form-traffic-sign-panel input[type=text]#panelValue, .form-traffic-sign-panel input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
-          setSingle(event);
-        });
-
-        rootElement.find('.add-panel').on('click', function () {
-          $(this).parent().after(renderAdditionalPanels({values:[{panelType:53, panelInfo : "", panelValue : "", formPosition : 1}]}, collection));
-          setAll();
-        });
-
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
-        toggleButtonVisibility();
+      rootElement.find('.add-panel').on('click', function (event) {
+        $(event.currentTarget).parent().after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection));
+        $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
+        bindPanelEvents();
       });
 
       var toggleButtonVisibility = function() {
         var cont = rootElement.find('.panel-group-container');
         var panels = cont.children().size();
-        if(panels === 1)
-          cont.find('.remove-panel').hide();
-        else if(panels === 3)
-          cont.find('.add-panel').attr("disabled", "disabled");
+
+        cont.find('.remove-panel').toggle(panels !== 1);
+        cont.find('.add-panel').prop("disabled", panels === 3);
       };
 
-      rootElement.find('.form-traffic-sign-panel input[type=text]#panelValue, .form-traffic-sign-panel input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
-        setSingle(event);
-      });
+      toggleButtonVisibility();
 
-      rootElement.find('.remove-panel').on('click', function (event) {
-        removeSingle(event);
-        setAll();
-      });
+      var bindPanelEvents = function(){
+        rootElement.find('.remove-panel').on('click', function (event) {
+          removeSingle(event);
+          $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
+          bindPanelEvents();
+        });
 
-      rootElement.find('.add-panel').on('click', function (event) {
-        $(event.currentTarget).parent().after(renderAdditionalPanels({values:[{panelType:53, panelInfo : "", panelValue : "", formPosition : 1}]}, collection));
-        setAll();
-      });
+        rootElement.find('.form-traffic-sign-panel input[type=text]#panelValue, .form-traffic-sign-panel input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
+          setSinglePanel(event);
+        });
 
-      var setAll = function() {
-          var mapped = $('.single-panel-container').map(function(index){
+        rootElement.find('.add-panel').on('click', function (event) {
+          $(event.currentTarget).parent().after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection));
+          $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
+          bindPanelEvents();
+        });
+
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
+
+        toggleButtonVisibility();
+      };
+
+      var setAllPanels = function() {
+          var allPanels = $('.single-panel-container').map(function(index){
             return {
               formPosition: (index + 1),
               panelType: parseInt($(this).find('#panelType').val()),
@@ -160,15 +144,16 @@
               panelInfo:  $(this).find('#panelInfo').val()
             };
           });
-          selectedAsset.setAdditionalPanels(mapped.toArray());
+          selectedAsset.setAdditionalPanels(allPanels.toArray());
+          return allPanels;
       };
 
-      var setSingle = function(event) {
+      var setSinglePanel = function(event) {
         var eventTarget = $(event.currentTarget);
-        var id = eventTarget.parent().parent().attr('id');
-        var container = $('.single-panel-container#'+id);
+        var panelId = eventTarget.parent().parent().attr('id');
+        var container = $('.single-panel-container#'+panelId);
         var panel = {
-          formPosition: parseInt(id),
+          formPosition: parseInt(panelId),
           panelType: parseInt(container.find('#panelType').val()),
           panelValue: container.find('#panelValue').val(),
           panelInfo:  container.find('#panelInfo').val()
@@ -177,9 +162,7 @@
       };
 
       var removeSingle = function(event) {
-        var eventTarget = $(event.currentTarget);
-        var id = eventTarget.prop('id');
-        $('.single-panel-container#'+ id).remove();
+        $('.single-panel-container#'+ $(event.currentTarget).prop('id')).remove();
       };
     };
 
@@ -287,19 +270,17 @@
     };
 
     var renderAdditionalPanels = function (property, collection) {
-
-      var panelContainer = $('<div class="panel-group-container"></div>');
-
-      var sortedProperties = _.map(property.values, function(prop) {
+      var sortedByProperties = _.map(property.values, function(prop) {
         return sortPanelKeys(prop);
       });
 
-      var sorted = _.sortBy(sortedProperties, function(o){
+      var sortedByFormPosition = _.sortBy(sortedByProperties, function(o){
         return o.formPosition;
       });
 
-      var components = _.flatMap(sorted, function(panel, index) {
+      var panelContainer = $('<div class="panel-group-container"></div>');
 
+      var components = _.flatMap(sortedByFormPosition, function(panel, index) {
         var body =
           $('<div class="single-panel-container" id='+ (index + 1)+'>' +
           Object.entries(panel).map(function (feature) {
@@ -338,12 +319,9 @@
       var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
       var groups =  collection.getGroup(signTypes);
       var panels = groups.Lisakilvet;
-      var grp = 1;
-
       var propertyDisplayValue = _.find(panels, function(panel){return panel.propertyValue == propertyValue.toString();}).propertyDisplayValue;
 
-
-      var subTypesTrafficSigns = _.map(_.map(groups)[grp], function (group) {
+      var subTypesTrafficSigns = _.map(_.map(panels, function (group) {
         return $('<option>',
           {
             value: group.propertyValue,
@@ -351,7 +329,7 @@
             text: group.propertyDisplayValue
           }
         )[0].outerHTML;
-      }).join('');
+      })).join('');
 
       return '<div class="form-group editable form-traffic-sign-panel">' +
         '      <label class="control-label"> ALITYYPPI</label>' +

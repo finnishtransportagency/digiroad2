@@ -78,7 +78,7 @@ root.PointAssetForm = function() {
 
     rootElement.html(header + form + footer);
 
-    rootElement.find('input[type="checkbox"]').on('change', function (event) {
+    rootElement.find('input[type="checkbox"]').not('#additional-panel-checkbox').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
       selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
     });
