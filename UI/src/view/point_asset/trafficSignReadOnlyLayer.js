@@ -28,7 +28,9 @@
       bogieWeightLimit: false,
       heightLimit: false,
       lengthLimit: false,
-      prohibition: false
+      prohibition: false,
+      hazardousMaterialTransportProhibition: false,
+      manoeuvre: false
     };
 
     var setLayerToShow = function(layerName, isShowing){

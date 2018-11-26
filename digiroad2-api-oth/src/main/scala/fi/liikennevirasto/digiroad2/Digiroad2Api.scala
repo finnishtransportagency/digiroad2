@@ -7,7 +7,7 @@ import java.time.LocalDate
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -28,7 +28,6 @@ import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
@@ -76,8 +75,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
                    val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
+                   val linearTotalWeightLimitService: LinearTotalWeightLimitService = Digiroad2Context.linearTotalWeightLimitService,
+                   val linearAxleWeightLimitService: LinearAxleWeightLimitService = Digiroad2Context.linearAxleWeightLimitService,
+                   val linearBogieWeightLimitService: LinearBogieWeightLimitService = Digiroad2Context.linearBogieWeightLimitService,
+                   val linearHeightLimitService: LinearHeightLimitService = Digiroad2Context.linearHeightLimitService,
+                   val linearLengthLimitService: LinearLengthLimitService = Digiroad2Context.linearLengthLimitService,
+                   val linearTrailerTruckWeightLimitService: LinearTrailerTruckWeightLimitService = Digiroad2Context.linearTrailerTruckWeightLimitService,
+                   val linearWidthLimitService: LinearWidthLimitService = Digiroad2Context.linearWidthLimitService,
                    val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService,
-                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)  extends ScalatraServlet
+                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
+  extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication {
@@ -1241,11 +1248,38 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     user.isOperator() match {
       case true =>
-        speedLimitService.getSpeedLimitsWithInaccurates()
+        speedLimitService.getInaccurateRecords()
       case false =>
-        speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
+        speedLimitService.getInaccurateRecords(municipalityCode, Set(Municipality))
     }
   }
+
+  get("/manoeuvre/inaccurates") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
+
+    user.isOperator() match {
+      case true =>
+        manoeuvreService.getInaccurateRecords()
+      case false =>
+        manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
+    }
+  }
+
+  get("/inaccurates") {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    user.isOperator() match {
+      case true =>
+        getLinearAssetService(typeId).getInaccurateRecords(typeId)
+      case false =>
+        getLinearAssetService(typeId).getInaccurateRecords(typeId, municipalityCode, Set(Municipality))
+    }
+  }
+
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
@@ -1435,6 +1469,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
   get("/pedestrianCrossings/:id")(getPointAssetById(pedestrianCrossingService))
   get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
+  get("/pedestrianCrossings/inaccurates")(getInaccuratesPointAssets(pedestrianCrossingService))
   delete("/pedestrianCrossings/:id")(deletePointAsset(pedestrianCrossingService))
   put("/pedestrianCrossings/:id")(updatePointAsset(pedestrianCrossingService))
   post("/pedestrianCrossings")(createNewPointAsset(pedestrianCrossingService))
@@ -1596,6 +1631,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     service.getFloatingAssets(includedMunicipalities)
   }
 
+  private def getInaccuratesPointAssets(service: PointAssetOperations): Map[String, Map[String, Any]] = {
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = user.configuration.authorizedMunicipalities
+    municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
+    user.isOperator() match {
+      case true =>
+        service.getInaccurateRecords(service.typeId)
+      case false =>
+        service.getInaccurateRecords(service.typeId, municipalityCode, Set(Municipality))
+    }
+  }
+
   private def deletePointAsset(service: PointAssetOperations): Long = {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
@@ -1637,9 +1684,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
       case Prohibition.typeId => prohibitionService
-      case HazmatTransportProhibition.typeId => prohibitionService
+      case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
       case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+      case HeightLimitInfo.typeId => linearHeightLimitService
+      case LengthLimit.typeId => linearLengthLimitService
+      case WidthLimitInfo.typeId => linearWidthLimitService
+      case TotalWeightLimit.typeId => linearTotalWeightLimitService
+      case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
+      case AxleWeightLimit.typeId => linearAxleWeightLimitService
+      case BogieWeightLimit.typeId => linearBogieWeightLimitService
       case _ => linearAssetService
     }
   }

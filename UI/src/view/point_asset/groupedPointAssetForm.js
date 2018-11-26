@@ -23,13 +23,15 @@
         });
 
         eventbus.on(layerName + ':unselected', function() {
-            rootElement.empty();
+          rootElement.find('#feature-attributes-header').empty();
+          rootElement.find('#feature-attributes-form').empty();
+          rootElement.find('#feature-attributes-footer').empty();
         });
     }
 
     function renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData, authorizationPolicy) {
         var title = localizedTexts.title;
-        var header = '<header><span>' + title + '</span></header>';
+        var header = '<span>' + title + '</span>';
         var form = '';
         var propertyData;
 
@@ -41,7 +43,10 @@
             form += renderAssetFormElements(selectedAsset, typeId, propertyData);
         });
 
-        rootElement.html(header + '<div class="wrapper">' + form + '</div>');
+        rootElement.find('#feature-attributes-header').html(header);
+        rootElement.find('#feature-attributes-form').html('<div class="wrapper">' + form + '</div>');
+        rootElement.find('#feature-attributes-footer').html('');
+        rootElement.find('.information-content').empty();
     }
 
     function renderAssetFormElements(selectedAsset, typeId, propertyData) {

@@ -129,7 +129,10 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val lat = getPropertyValue(parsedRow, "lat").asInstanceOf[BigDecimal].toLong
     val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon, lat))
 
-    if(roadLinks.isEmpty) {(List(s"Try to create in an unauthorized Municipality"), Seq())} else (List(), roadLinks)
+    if(roadLinks.isEmpty) {
+      (List(s"Try to create in an unauthorized Municipality"), Seq())
+    } else
+      (List(), roadLinks)
   }
 
   private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
@@ -174,14 +177,6 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       TrafficDirection.apply(trafficDirection), bearing, additionalInfo, roadLinks)
   }
 
-  def expireAssetsByMunicipality(municipalities: Set[Int]): Unit = {
-    if (municipalities.nonEmpty) {
-      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withMunicipalities(municipalities), withTransaction = false)
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withMunicipalities(municipalities), withTransaction = false)
-      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withMunicipalities(municipalities), None)
-    }
-  }
-
   def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Set[Int]): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
@@ -189,12 +184,14 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     })
 
     withDynTransaction{
-      expireAssetsByMunicipality(municipalitiesToExpire)
+      trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire)
       csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
         val csvRow = row.map( r =>(r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)
         val (malformedParameters, properties) = assetRowToProperties(csvRow)
-        val (notImportedParameters, roadLinks) = verifyData(CsvAssetRow(properties = properties))
+        val (notImportedParameters, roadLinks) = if(malformedParameters.isEmpty) {
+         verifyData(CsvAssetRow(properties = properties))
+        } else (List(), Seq())
 
         if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
           result.copy(

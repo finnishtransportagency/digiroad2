@@ -14,7 +14,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
 class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOperations {
-  lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService)
+  lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService, eventbus)
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus, manoeuvreService, prohibitionService)
 

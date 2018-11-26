@@ -238,7 +238,7 @@ input[type="checkbox"] {
 // Apply class to a `p` element to make any string of text align with labels in
 // a horizontal form layout.
 
-.form-control-static {
+.form-control-static, .form-control-static {
   margin: 0; // Remove default margin from `p`
 }
 
@@ -305,6 +305,7 @@ input[type="checkbox"] {
   .checkbox,
   .select,
   .form-control-static,
+  .form-control-readOnly,
   .choice-group {
     float: left;
   }
@@ -339,7 +340,7 @@ input[type="checkbox"] {
     float: left;
   }
 
-  .form-control-static {
+  .form-control-static, .form-control-readOnly {
     padding-top: (@line-height-modifier  + 1);
     padding-bottom: (@line-height-modifier + 1);
     line-height: @line-height-modifier * 3;

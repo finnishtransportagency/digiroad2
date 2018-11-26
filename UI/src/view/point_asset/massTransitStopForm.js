@@ -3,6 +3,8 @@
   var poistaSelected = false;
   var authorizationPolicy;
 
+  var rootElement = $("#feature-attributes");
+
   var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
@@ -127,7 +129,9 @@
 
   var CancelButton = function() {
     var element = $('<button />').prop('disabled', !selectedMassTransitStopModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
-      $("#feature-attributes").empty();
+      rootElement.find("#feature-attributes-header").empty();
+      rootElement.find("#feature-attributes-form").empty();
+      rootElement.find("#feature-attributes-footer").empty();
       selectedMassTransitStopModel.cancel();
     });
 
@@ -152,6 +156,8 @@
       authorizationPolicy = new MassTransitStopAuthorizationPolicy();
       new FeedbackDataTool(feedbackCollection, 'massTransitStop', authorizationPolicy);
 
+      var rootElement = $('#feature-attributes');
+
       var MStopDeletebutton = function(readOnly) {
 
         var removalForm = $('<div class="checkbox"> <label>Poista<input type="checkbox" id = "removebox"></label></div>');
@@ -165,8 +171,7 @@
 
       var renderAssetForm = function() {
         poistaSelected = false;
-        var container = $("#feature-attributes").empty();
-        var header = busStopHeader();
+
         readOnly = authorizationPolicy.formEditModeAccess();
         var wrapper;
         if(readOnly){
@@ -178,43 +183,37 @@
         wrapper.append(streetViewHandler.render())
           .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
 
-        var featureAttributesElement = container.append(header).append(wrapper);
+
+        var buttons = function(isTerminalBusStop) {
+          return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
+            .append(new ValidationErrorLabel().element)
+            .append(new SaveButton(isTerminalBusStop).element)
+            .append(new CancelButton().element);
+        };
+
+        function busStopHeader() {
+          var header;
+
+          if (_.isNumber(selectedMassTransitStopModel.getByProperty('nationalId'))) {
+            header = $('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.getByProperty('nationalId') + '</span>');
+          } else if (isTerminalBusStop) {
+            header = $('' + '<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
+          } else {
+            header = $('' + '<span>Uusi pys&auml;kki</span>');
+          }
+
+          return header.add(buttons(isTerminalBusStop));
+        }
+
+        rootElement.find("#feature-attributes-header").html(busStopHeader());
+        rootElement.find("#feature-attributes-form").html(wrapper);
+        rootElement.find("#feature-attributes-footer").html($('<div />').addClass('mass-transit-stop form-controls').append(buttons(isTerminalBusStop)));
         addDatePickers();
-
-        var saveBtn = new SaveButton(isTerminalBusStop);
-        var cancelBtn = new CancelButton();
-        var validationErrorLabel = new ValidationErrorLabel();
-
-        featureAttributesElement.append($('<footer />')
-            .addClass('mass-transit-stop')
-            .addClass('form-controls')
-            .append(validationErrorLabel.element)
-            .append(saveBtn.element)
-            .append(cancelBtn.element));
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
           wrapper.addClass('read-only');
           wrapper.removeClass('edit-mode');
-        }
-
-        function busStopHeader(asset) {
-          var buttons = $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
-            .append(new ValidationErrorLabel().element)
-            .append(new SaveButton(isTerminalBusStop).element)
-            .append(new CancelButton().element);
-
-          var header = $('<header/>');
-
-          if (_.isNumber(selectedMassTransitStopModel.getByProperty('nationalId'))) {
-            header.append('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.getByProperty('nationalId') + '</span>');
-          } else if (isTerminalBusStop) {
-            header.append('<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
-          } else {
-            header.append('<span>Uusi pys&auml;kki</span>');
-          }
-          header.append(buttons);
-          return header;
         }
       };
 
@@ -810,17 +809,17 @@
         '</div>');
 
       var closeAsset = function() {
-        $("#feature-attributes").html('');
+        rootElement.find("#feature-attributes-header").empty();
+        rootElement.find("#feature-attributes-form").empty();
+        rootElement.find("#feature-attributes-footer").empty();
         dateutil.removeDatePickersFromDom();
       };
 
       var renderLinktoWorkList = function renderLinktoWorkList() {
         var notRendered = !$('#asset-work-list-link').length;
         if(notRendered) {
-          $('#information-content').append('' +
-            '<div class="form form-horizontal">' +
-            '<a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a>' +
-            '</div>');
+          $('ul[class=information-content]').append('' +
+            '<li><a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a></li>');
         }
       };
 

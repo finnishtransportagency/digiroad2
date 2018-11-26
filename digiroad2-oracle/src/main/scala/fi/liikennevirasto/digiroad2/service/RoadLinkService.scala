@@ -1366,6 +1366,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     (roadLinks ++ complementaries, changes)
   }
 
+
+
   protected def readCachedGeometry(geometryFile: File): Seq[RoadLink] = {
     def getFeatureClass(roadLink: RoadLink): Int ={
       val mtkClass = roadLink.attributes("MTKCLASS")

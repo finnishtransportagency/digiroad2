@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.{asset, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -139,7 +138,32 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipality(municipalityCode))
+  }
+
+  def withMunicipalityAndGroup(municipalityCode: Int, trafficSignTypes: Set[Int])(query: String): String = {
+    withFilter(s"""where a.asset_type_id = $typeId and a.municipality_code = $municipalityCode
+                    and a.id in( select at.id
+                        from asset at
+                        join property p on at.asset_type_id = p.asset_type_id
+                        join single_choice_value scv on scv.asset_id = at.id and scv.property_id = p.id and p.property_type = 'single_choice'
+                        join enumerated_value ev on scv.enumerated_value_id = ev.id and ev.value in (${trafficSignTypes.mkString(",")}))""")(query)
+
+  }
+
+  def getByMunicipalityAndGroup(municipalityCode: Int, groupName: TrafficSignTypeGroup): Seq[PersistedAsset] = {
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
+    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    val assetTypes = TrafficSignType.apply(groupName)
+    getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipalityAndGroup(municipalityCode, assetTypes))
+  }
+
+  def getByMunicipalityExcludeByAdminClass(municipalityCode: Int, filterAdministrativeClass: AdministrativeClass): Seq[PersistedAsset] = {
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipalityCode)
+    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    val assets = getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipality(municipalityCode))
+    val filterRoadLinks = mapRoadLinks.filterNot(_._2.administrativeClass == filterAdministrativeClass)
+    assets.filter{a => filterRoadLinks.get(a.linkId).nonEmpty}
   }
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
@@ -238,12 +262,16 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     None
   }
 
-  def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup]): Seq[PersistedTrafficSign] = {
+  def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup] = None): Seq[PersistedTrafficSign] = {
     val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
     optGroupType match {
       case Some(groupType) => assets.filter(asset => TrafficSignTypeGroup.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue.toInt) == groupType)
       case _ => assets
     }
+  }
+
+  def getTrafficSign(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+    OracleTrafficSignDao.fetchByLinkId(linkIds)
   }
 
   def getTrafficSignsWithTrafficRestrictions( municipality: Int, enumeratedValueIds: Boolean => Seq[Long], newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
@@ -336,6 +364,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
         ts.validityDirection == sign.validityDirection &&
         GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(ts.lon, ts.lat))) <= distance
     }
+  }
+
+  override def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) : Unit = {
+    OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
   }
 
   def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {

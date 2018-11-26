@@ -8,17 +8,17 @@
     };
 
     function fetchLinearAssetEvent (asset, result) {
-    eventbus.once(asset.multiElementEventCategory + ':fetched', function() {
-      var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
-      if (linearAsset) {
-        asset.selectedLinearAsset.open(linearAsset, true);
-        applicationModel.setSelectedTool('Select');
-      }
-    });
-  }
+      eventbus.once(asset.multiElementEventCategory + ':fetched', function() {
+        var linearAsset = asset.selectedLinearAsset.getLinearAsset(result.id);
+        if (linearAsset) {
+          asset.selectedLinearAsset.open(linearAsset, true);
+          applicationModel.setSelectedTool('Select');
+        }
+      });
+    }
 
     function fetchSpeedLimitEvent (asset, result) {
-        eventbus.once('speedLimits:redrawed', function() {
+      eventbus.once('speedLimits:redrawed', function() {
         var speedLimit = asset.getSpeedLimitById(result.id);
         if (speedLimit) {
           eventbus.trigger('speedLimits:enableTrafficSigns');
@@ -41,14 +41,24 @@
           if(result.source === 1){
             fetchLinearAssetEvent(asset, result);
           }else if(result.source === 2) {
-             eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
+            eventbus.once(asset.multiElementEventCategory + ':fetched', function () {
               eventbus.trigger(layerName + ':activeComplementaryLayer');
               eventbus.trigger('complementaryLinks:show');
-               fetchLinearAssetEvent(asset, result);
-             });
+              fetchLinearAssetEvent(asset, result);
+            });
           }
           mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
         }
+      });
+    };
+
+    var pointCentering = function (layerName, id) {
+      applicationModel.selectLayer(layerName);
+      var asset = _(models.pointAssets).find({layerName: layerName});
+      backend.getPointAssetById(id, layerName).then(function (result) {
+        mapCenterAndZoom(result.lon, result.lat, 12);
+
+        asset.selectedPointAsset.open(result);
       });
     };
 
@@ -75,13 +85,51 @@
         }
       });
     };
-    
+
     var pointAssetCentering = function (layerName, id,  model) {
         applicationModel.selectLayer(layerName);
         backend.getPointAssetById(id, layerName).then(function (result) {
             mapCenterAndZoom(result.lon, result.lat, 12);
             model.open(result);
         });
+    };
+
+    var linearAssetMapCenterAndZoom  = function (layerName, idType, id) {
+      if(idType) {
+        applicationModel.selectLayer(layerName);
+        backend.getRoadLinkByLinkId(id, function (response) {
+          if (response.success)
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+        });
+      } else
+        linearCentering(layerName, id);
+    };
+
+    var pointAssetMapCenterAndZoom  = function (layerName, idType, id) {
+      if(idType) {
+        applicationModel.selectLayer(layerName);
+        backend.getRoadLinkByLinkId(id, function (response) {
+          if (response.success)
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+        });
+      } else
+        pointCentering(layerName, id);
+    };
+
+    var manoeuvreMapCenterAndZoom = function(linkId){
+      applicationModel.selectLayer('manoeuvre');
+
+      backend.getRoadLinkByLinkId(linkId, function (response) {
+        eventbus.once('manoeuvres:fetched', function () {
+          if (!_.isUndefined(models.selectedManoeuvreSource.getByLinkId(linkId)))
+            models.selectedManoeuvreSource.open(linkId);
+        });
+        mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+      });
+    };
+
+    var getLinearAssetType = function(layerName) {
+      return _(models.linearAssets).find({layerName: layerName}).typeId;
     };
 
     var Router = Backbone.Router.extend({
@@ -111,6 +159,17 @@
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'speedLimit/:linkId(/municipality/:municipalityId/:position)': 'speedLimit',
         'speedLimitErrors/:id': 'speedLimitErrors',
+        'hazardousMaterialTransportProhibitionErrors(/:typeId)/:id': 'hazardousMaterialTransportProhibitionErrors',
+        'manoeuvreErrors(/:typeId)/:id': 'manoeuvreErrors',
+        'heightLimitErrors(/:typeId)/:id': 'heightLimitErrors',
+        'bogieWeightErrors(/:typeId)/:id': 'bogieWeightErrors',
+        'axleWeightLimitErrors(/:typeId)/:id': 'axleWeightLimitErrors',
+        'lengthLimitErrors(/:typeId)/:id': 'lengthLimitErrors',
+        'totalWeightLimitErrors(/:typeId)/:id': 'totalWeightLimitErrors',
+        'trailerTruckWeightLimitErrors(/:typeId)/:id': 'trailerTruckWeightLimitErrors',
+        'widthLimitErrors(/:typeId)/:id': 'widthLimitErrors',
+        'pedestrianCrossingsErrors(/:typeId)/:id': 'pedestrianCrossingsErrors',
+
         'speedLimits/:id': 'speedLimitsById',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
@@ -145,9 +204,21 @@
         'widthLimit/:id': 'widthLimit',
         'manoeuvres/:id': 'manoeuvres',
         'work-list/speedLimit': 'speedLimitWorkList',
-        'work-list/speedLimit/state' : 'speedLimitStateWorkList',
-        'work-list/speedLimit/municipality(/:id)' : 'speedLimitMunicipalitiesWorkList',
+        'work-list/speedLimit/state': 'speedLimitStateWorkList',
+        'work-list/speedLimit/municipality(/:id)': 'speedLimitMunicipalitiesWorkList',
         'work-list/speedLimitErrors': 'speedLimitErrorsWorkList',
+
+        'work-list/hazardousMaterialTransportProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
+        'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList',
+        'work-list/heightLimitErrors': 'heightLimitErrorsWorkList',
+        'work-list/bogieWeightErrors': 'bogieWeightErrorsWorkList',
+        'work-list/lengthLimitErrors': 'lengthLimitErrorsWorkList',
+        'work-list/axleWeightLimitErrors': 'axleWeightLimitErrorsWorkList',
+        'work-list/totalWeightLimitErrors': 'totalWeightLimitErrorsWorkList',
+        'work-list/trailerTruckWeightLimitErrors': 'trailerTruckWeightLimitErrorsWorkList',
+        'work-list/widthLimitErrors': 'widthLimitErrorsWorkList',
+        'work-list/pedestrianCrossingsErrors': 'pedestrianCrossingsErrorsWorkList',
+
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
@@ -158,7 +229,8 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
-        'work-list/:layerName': 'unverifiedLinearAssetWorkList'
+        'work-list/:layerName': 'unverifiedLinearAssetWorkList',
+        ':layerName/linkId/:linkId': 'mapMoving'
       },
 
       massTransitStop: function (id) {
@@ -200,8 +272,7 @@
             }
             mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
           }
-          else
-          {
+          else {
             //TODO might be nice to show error message for user if roadlink  applied to #linkProperty/ url does not exist
           }
         });
@@ -316,6 +387,46 @@
         eventbus.trigger('workList:select', 'speedLimitErrors', backend.getSpeedLimitErrors());
       },
 
+      hazardousMaterialProhibitionErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'hazardousMaterialTransportProhibitionErrors', backend.getInaccurateAssets(getLinearAssetType('hazardousMaterialTransportProhibition')));
+      },
+
+      manoeuvreErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'manoeuvreErrors', backend.getInaccurateManoeuvre());
+      },
+
+      heightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'heightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('heightLimit')));
+      },
+
+      lengthLimitErrorsWorkList: function(){
+        eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('lengthLimit')));
+      },
+
+      bogieWeightErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'bogieWeightErrors', backend.getInaccurateAssets(getLinearAssetType('bogieWeight')));
+      },
+
+      axleWeightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'axleWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('axleWeightLimit')));
+      },
+
+      totalWeightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'totalWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('totalWeightLimit')));
+      },
+
+      trailerTruckWeightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'trailerTruckWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('trailerTruckWeightLimit')));
+      },
+
+      widthLimitErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'widthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('widthLimit')));
+      },
+
+      pedestrianCrossingsErrorsWorkList: function () {
+        eventbus.trigger('workList:select', 'pedestrianCrossingsErrors', backend.getInaccuratePointAssets());
+      },
+
       linkPropertyWorkList: function () {
         eventbus.trigger('workList:select', 'linkProperty', backend.getIncompleteLinks());
       },
@@ -357,6 +468,54 @@
 
       speedLimitErrors: function (id) {
         speedLimitCentering('speedLimit', id);
+      },
+
+      hazardousMaterialTransportProhibitionErrors: function (idType , linkId) {
+        linearAssetMapCenterAndZoom('hazardousMaterialTransportProhibition', idType , linkId);
+      },
+
+      manoeuvreErrors: function (idType , linkId) {
+        manoeuvreMapCenterAndZoom(linkId);
+      },
+
+      mapMoving: function (layerName, linkId) {
+        applicationModel.selectLayer(layerName);
+        backend.getRoadLinkByLinkId(linkId, function (response) {
+          if (response.success)
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
+        });
+      },
+
+      heightLimitErrors: function (idType , linkId) {
+        linearAssetMapCenterAndZoom('heightLimit', idType, linkId);
+      },
+
+      bogieWeightErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('bogieWeightLimit', idType, linkId);
+      },
+
+      axleWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('axleWeightLimit', idType, linkId);
+      },
+
+      lengthLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('lengthLimit', idType, linkId);
+      },
+
+      totalWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('totalWeightLimit', idType, linkId);
+      },
+
+      trailerTruckWeightLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('trailerTruckWeightLimit', idTypev, linkId);
+      },
+
+      widthLimitErrors: function (idType, linkId) {
+        linearAssetMapCenterAndZoom('widthLimit', idType, linkId);
+      },
+
+      pedestrianCrossingsErrors: function (idType, id) {
+        pointAssetMapCenterAndZoom('pedestrianCrossings', idType, id);
       },
 
       maintenanceRoad: function (id) {

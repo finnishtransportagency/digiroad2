@@ -92,6 +92,11 @@ object OracleTrafficSignDao {
                 where p.ASSET_TYPE_ID = 300 and p.PUBLIC_ID = 'trafficSigns_type' and ev.VALUE in (#${values.mkString(",")}) """.as[Long].list
   }
 
+  def fetchByLinkId(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+    val filter = s"Where a.asset_type_id = 300 and lp.link_id in (${linkIds.mkString(",")})"
+    fetchByFilter(query => query + filter)
+  }
+
   private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
     val rows = StaticQuery.queryNA[TrafficSignRow](query).iterator.toSeq
 
@@ -355,6 +360,16 @@ object OracleTrafficSignDao {
     }
   }
 
+  def expireAssetsByMunicipality(municipalities: Set[Int]) : Unit = {
+    if (municipalities.nonEmpty) {
+      sqlu"""
+        update asset set valid_to = sysdate - 1/86400
+        where asset_type_id = ${TrafficSigns.typeId}
+        and created_by != 'batch_process_trafficSigns'
+        and municipality_code in (#${municipalities.mkString(",")})""".execute
+    }
+  }
+
   def expire(linkIds: Set[Long], username: String): Unit = {
     MassQuery.withIds(linkIds) { idTableName =>
       sqlu"""
@@ -380,16 +395,6 @@ object OracleTrafficSignDao {
          left join enumerated_value ev on scv.enumerated_value_id = ev.id
          where a.asset_type_id = ${TrafficSigns.typeId} and a.id = $id
     """.as[Int].firstOption
-  }
-
-  def expireAssetsByMunicipalities(municipalities: Set[Int]) : Unit = {
-    if (municipalities.nonEmpty) {
-      sqlu"""
-        update asset set valid_to = sysdate - 1/86400
-        where asset_type_id = ${TrafficSigns.typeId}
-        and created_by != 'batch_process_trafficSigns'
-        and municipality_code in (#${municipalities.mkString(",")})""".execute
-    }
   }
 
   def expireWithoutTransaction(queryFilter: String => String, username: Option[String]) : Unit = {
