@@ -97,9 +97,9 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
 
       val propTrafficSign = Seq(
-        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
-        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
-        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
+        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -118,9 +118,9 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
-        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
-        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
+        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -139,9 +139,9 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMismatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
-        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("300"))),
-        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("300"))))
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("300"))),
+        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("300"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -161,9 +161,9 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMatchedAssetAfter50meter(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
-        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
-        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
+        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 12, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 

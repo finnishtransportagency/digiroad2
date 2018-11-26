@@ -42,7 +42,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
         val manoeuvreTurnRestrictionType = getManoeuvreTurnRestrictionType(manoeuvre, roadLinks)
 
         val manoeuvreLinkId = manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)
-        TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+        TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
           case TrafficSignType.NoLeftTurn =>
             if (manoeuvreTurnRestrictionType != ManoeuvreTurnRestrictionType.LeftTurn)
               Seq(Inaccurate(None, manoeuvreLinkId, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
@@ -62,7 +62,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
     if(adjacentInfo.size == 1) {
       adjacentInfo
     } else
-    TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+    TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
       case TrafficSignType.NoLeftTurn | TrafficSignType.NoUTurn =>
         adjacentInfo.filter(_._1 == roadLinkService.pickLeftMost(previousInfo._2, adjacentInfo.map(_._1)))
       case TrafficSignType.NoRightTurn =>
@@ -151,7 +151,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
           val trafficSigns =
             splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(sourceLinkId)))
-              .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+              .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
               .filterNot(_.floating)
 
           inaccurateAssetDAO.deleteInaccurateAssetByLinkIds((manoeuvre.map(_.linkId) ++ trafficSigns.map(_.linkId) ++ assetInfo.newLinkIds).toSet  ,assetTypeInfo.typeId)
