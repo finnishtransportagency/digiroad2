@@ -15,7 +15,7 @@ import org.joda.time.DateTime
 class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOperations {
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
-  lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService)
+  lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
 
   override def typeId: Int = 300
   override def assetName = "trafficSigns"

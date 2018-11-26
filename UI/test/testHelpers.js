@@ -28,7 +28,14 @@ define(['AssetsTestData',
           '<div class="crossHair crossHairHorizontal"></div>' +
         '</div>' +
         '<nav id="map-tools"></nav>' +
-        '<div id="feature-attributes"></div>'
+        '<div id="feature-attributes">' +
+        '<header id="feature-attributes-header"></header>' +
+        '<main id="feature-attributes-body">' +
+          '<article id="feature-attributes-form"></article>' +
+        '</main>' +
+        '<nav><ul class="information-content"></ul></nav>' +
+        '<footer id="feature-attributes-footer"></footer>' +
+        '</div>'
     );
   };
 

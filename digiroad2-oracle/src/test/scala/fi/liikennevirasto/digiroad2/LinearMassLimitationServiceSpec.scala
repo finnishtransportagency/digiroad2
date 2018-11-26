@@ -44,7 +44,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1002), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets2)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  test(" get assets with BothDirection split in TowardsDigitizing and AgainstDigitizing") {
+  test("get assets with BothDirection split in TowardsDigitizing and AgainstDigitizing") {
     val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao)
 
     runWithRollback {
@@ -69,7 +69,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test(" get max length geometry when the same asset is split on the same road link ") {
+  test("get max length geometry when the same asset is split on the same road link ") {
     val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao)
 
     runWithRollback {
@@ -93,7 +93,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test(" only create a list of mass Limitation for one sideCode (AgainstDigitizing) ") {
+  test("only create a list of mass Limitation for one sideCode (AgainstDigitizing) ") {
     val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao)
 
     runWithRollback {

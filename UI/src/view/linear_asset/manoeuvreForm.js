@@ -25,11 +25,12 @@
         '</ul>' +
         '</div>';
 
+
+    var header = '<span>Linkin LINK ID: <%= linkId %></span>' +  saveAndCancelButtons;
+
+    var footer =  saveAndCancelButtons;
+
     var templateWithHeaderAndFooter = '' +
-      '<header>' +
-        '<span>Linkin LINK ID: <%= linkId %></span>' +
-        saveAndCancelButtons +
-      '</header>' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark form-manoeuvre">' +
           '<div class="form-group">' +
@@ -38,8 +39,7 @@
           '<label>Kääntyminen kielletty linkeille</label>' +
           '<div></div>' +
         '</div>' +
-      '</div>' +
-      '<footer>' + saveAndCancelButtons + '</footer>';
+      '</div>';
 
     var manouvresViewModeTemplate = '' +
       '<div class="form-group manoeuvre">' +
@@ -176,7 +176,9 @@
 
         roadLink.modifiedBy = roadLink.modifiedBy || '-';
         roadLink.modifiedAt = roadLink.modifiedAt || '';
-        rootElement.html(_.template(templateWithHeaderAndFooter)(roadLink));
+        rootElement.find('#feature-attributes-header').html(_.template(header)(roadLink));
+        rootElement.find('#feature-attributes-form').html(_.template(templateWithHeaderAndFooter)(roadLink));
+        rootElement.find('#feature-attributes-footer').html(footer);
 
         // Create html elements for view mode
         _.each(roadLink.manoeuvres, function (manoeuvre) {
@@ -489,7 +491,9 @@
       });
 
       eventbus.on('manoeuvres:unselected', function() {
-        rootElement.empty();
+        rootElement.find('#feature-attributes-header').empty();
+        rootElement.find('#feature-attributes-form').empty();
+        rootElement.find('#feature-attributes-footer').empty();
       });
 
       eventbus.on('manoeuvres:saved', function() {
@@ -544,6 +548,18 @@
 
       rootElement.on('click', '.manoeuvres button.cancel', function() {
         selectedManoeuvreSource.cancel();
+      });
+
+      var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
+        $('ul[class=information-content]').empty();
+        $('ul[class=information-content]').append('' +
+          '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
+
+      };
+
+      eventbus.on('layer:selected', function(layer) {
+        if(layer === 'manoeuvre')
+          renderInaccurateWorkList(layer);
       });
     };
 
