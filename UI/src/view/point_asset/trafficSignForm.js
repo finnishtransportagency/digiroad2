@@ -11,7 +11,7 @@
       me.backend = parameters.backend;
       me.saveCondition = parameters.saveCondition;
       me.feedbackCollection = parameters.feedbackCollection;
-      defaultAdditionalPanelValue = _.find(parameters.pointAsset.newAsset.propertyData, function(obj){return obj.publicId === 'additional_panel'}).defaultValue;
+      defaultAdditionalPanelValue = _.find(parameters.pointAsset.newAsset.propertyData, function(obj){return obj.publicId === 'additional_panel';}).defaultValue;
       me.bindEvents(parameters);
     };
 
