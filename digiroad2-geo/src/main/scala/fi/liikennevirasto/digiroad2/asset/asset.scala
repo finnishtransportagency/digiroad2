@@ -417,8 +417,8 @@ object ProhibitionClass {
     if(filtered.isEmpty) Unknown else filtered.minBy(_.values.size)
   }
 
-  def fromTrafficSign(trafficSign: TrafficSignType): ProhibitionClass = {
-    values.find(_.trafficSign.equals(trafficSign)).getOrElse(Unknown)
+  def fromTrafficSign(trafficSign: TrafficSignType): Option[ProhibitionClass] = {
+    values.find(_.trafficSign.equals(trafficSign))
   }
 
   def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[TrafficSignType] = {

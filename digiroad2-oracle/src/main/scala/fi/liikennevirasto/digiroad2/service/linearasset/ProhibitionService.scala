@@ -257,43 +257,46 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
 
   private def createProhibitionFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
-      logger.info("Creating prohibition from traffic sign")
-      val tsLinkId = trafficSignInfo.linkId
-      val tsDirection = trafficSignInfo.validityDirection
+    logger.info("Creating prohibition from traffic sign")
+    val tsLinkId = trafficSignInfo.linkId
+    val tsDirection = trafficSignInfo.validityDirection
 
-      if (tsLinkId != trafficSignInfo.roadLink.linkId)
-        throw new ProhibitionCreationException(Set("Wrong roadlink"))
+    if (tsLinkId != trafficSignInfo.roadLink.linkId)
+      throw new ProhibitionCreationException(Set("Wrong roadlink"))
 
-      if (SideCode(tsDirection) == SideCode.BothDirections)
-        throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
+    if (SideCode(tsDirection) == SideCode.BothDirections)
+      throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
 
-      val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
+    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
 
-      val roadLinks = recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
-      logger.info("End of fetch for adjacents")
+    val roadLinks = recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
+    logger.info("End of fetch for adjacents")
 
-      val trafficSignType = TrafficSignType.apply(trafficSignInfo.signType)
-      val prohibitionType = ProhibitionClass.fromTrafficSign(trafficSignType)
+    val trafficSignType = TrafficSignType.apply(trafficSignInfo.signType)
 
-      val prohibitionValue = prohibitionType.values.map { value =>
-        ProhibitionValue(value, Set.empty, Set.empty)
-      }
-
-      val ids = (roadLinks ++ Seq(trafficSignInfo.roadLink)).map { roadLink =>
-        val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
-          case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
-          case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
-          case _ => (0, roadLink.length)
-
+    ProhibitionClass.fromTrafficSign(trafficSignType) match {
+      case Some(prohibitionType) =>
+        val prohibitionValue = prohibitionType.values.map { value =>
+          ProhibitionValue(value, Set.empty, Set.empty)
         }
-        val assetId = createWithoutTransaction(Prohibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
-          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id) )
 
-        logger.info(s"Prohibition created with id: $assetId")
-        assetId
-      }
-      ids
+        val ids = (roadLinks ++ Seq(trafficSignInfo.roadLink)).map { roadLink =>
+          val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
+            case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
+            case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
+            case _ => (0, roadLink.length)
+
+          }
+          val assetId = createWithoutTransaction(Prohibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
+            "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
+
+          logger.info(s"Prohibition created with id: $assetId")
+          assetId
+        }
+        ids
+      case _ => Seq()
     }
+  }
 
   def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction) {
