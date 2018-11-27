@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
 trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperations {

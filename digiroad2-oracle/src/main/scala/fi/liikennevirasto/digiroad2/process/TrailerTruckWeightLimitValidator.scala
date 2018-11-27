@@ -1,9 +1,8 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PropertyValue, TrailerTruckWeightLimit}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PropertyValue, TrailerTruckWeightLimit, TrafficSignType}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
 class TrailerTruckWeightLimitValidator extends SevenRestrictionsLimitationValidator{
   override def assetTypeInfo: AssetTypeInfo = TrailerTruckWeightLimit

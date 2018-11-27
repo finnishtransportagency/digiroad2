@@ -266,6 +266,10 @@ object TrafficSignType {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def apply(trafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
+    values.filter(_.group == trafficSignTypeGroup).map(_.value)
+  }
+
   def belongsToManoeuvre(intValue: Int) : Boolean = {
     val trafficSigns = Seq(NoLeftTurn, NoRightTurn, NoUTurn)
     trafficSigns.contains(TrafficSignType.apply(intValue))

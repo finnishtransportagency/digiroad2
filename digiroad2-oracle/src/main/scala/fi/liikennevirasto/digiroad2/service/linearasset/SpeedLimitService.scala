@@ -39,7 +39,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
   lazy val manoeuvreService = {
-    new ManoeuvreService(roadLinkService)
+    new ManoeuvreService(roadLinkService, eventbus)
   }
 
   lazy val prohibitionService: ProhibitionService = {

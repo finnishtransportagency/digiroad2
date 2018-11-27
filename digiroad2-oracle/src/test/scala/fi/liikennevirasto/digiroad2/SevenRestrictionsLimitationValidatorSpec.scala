@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.mockito.Mockito._

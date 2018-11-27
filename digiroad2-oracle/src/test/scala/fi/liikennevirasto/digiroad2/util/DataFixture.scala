@@ -86,7 +86,7 @@ object DataFixture {
   }
 
   lazy val manoeuvreService: ManoeuvreService = {
-    new ManoeuvreService(roadLinkService)
+    new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
 
   lazy val prohibitionService: ProhibitionService = {
@@ -94,7 +94,7 @@ object DataFixture {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, new DummyEventBus, eventbus, manoeuvreService, prohibitionService)
+    new TrafficSignService(roadLinkService, userProvider, eventbus, manoeuvreService, prohibitionService)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
@@ -103,10 +103,6 @@ object DataFixture {
 
   lazy val roadAddressService: RoadAddressesService = {
     new RoadAddressesService(viiteClient)
-  }
-
-  lazy val manoeuvreService: ManoeuvreService = {
-    new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {

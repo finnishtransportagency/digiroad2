@@ -366,7 +366,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  override def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) : Unit = {
+  def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) : Unit = {
     OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
   }
 

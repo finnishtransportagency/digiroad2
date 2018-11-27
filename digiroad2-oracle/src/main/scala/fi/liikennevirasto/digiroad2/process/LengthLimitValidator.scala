@@ -1,9 +1,8 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, LengthLimit, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, LengthLimit, PropertyValue, TrafficSignType}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
 class LengthLimitValidator extends SevenRestrictionsLimitationValidator {
   override def assetTypeInfo: AssetTypeInfo =  LengthLimit

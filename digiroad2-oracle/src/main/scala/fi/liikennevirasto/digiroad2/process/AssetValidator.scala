@@ -10,9 +10,9 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
 
@@ -32,8 +32,10 @@ trait AssetServiceValidator {
     Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  lazy val manoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
+  lazy val prohibitionService = new ProhibitionService(roadLinkService, eventbus)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus, manoeuvreService, prohibitionService)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 
   type AssetType
