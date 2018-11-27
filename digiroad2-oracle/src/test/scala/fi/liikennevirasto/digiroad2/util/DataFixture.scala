@@ -1487,6 +1487,43 @@ object DataFixture {
     }
   }
 
+  def addGeometryToLinearAssets(): Unit ={
+    println("\nStart process to add geometry on linear assets")
+    println(DateTime.now())
+
+    val assetTypes = Set(DamagedByThaw.typeId)
+    //Get All Municipalities
+    val municipalities: Seq[Int] =  OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach {
+      municipality =>
+
+        println(s"Obtaining all Road Links for Municipality: $municipality")
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipality)
+        println(s"End of roadLinks fetch for Municipality: $municipality")
+        OracleDatabase.withDynTransaction {
+          println("Fetching assets")
+          val assets = assetDao.getAssetsByTypesAndLinkId(assetTypes, roadLinks.map(_.linkId))
+          println(s"Number of fetched assets: ${assets.length}")
+          roadLinks.foreach {
+            roadLink =>
+              println(s"Begining of process for linkId ${roadLink.linkId}")
+              val assetsOnLink = assets.filter(_.linkId == roadLink.linkId)
+              assetsOnLink.foreach {
+                asset =>
+                  println(s"Calculating geometry of asset with id ${asset.id}")
+                  val geometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
+                  println(s"Updating asset with id ${asset.id}")
+                  assetDao.updateAssetsWithGeometry(asset, geometry.head, geometry.last)
+              }
+          }
+        }
+    }
+    println("Complete at time: " + DateTime.now())
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1585,6 +1622,8 @@ object DataFixture {
         createManoeuvresUsingTrafficSigns()
       case Some("remove_existing_trafficSigns_duplicates") =>
         removeExistingTrafficSignsDuplicates()
+      case Some("add_geometry_to_linear_assets") =>
+        addGeometryToLinearAssets()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
