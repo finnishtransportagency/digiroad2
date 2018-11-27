@@ -1496,7 +1496,7 @@ object DataFixture {
 
       municipalities.foreach { municipality =>
         println(s"Obtaining all Road Links for Municipality: $municipality")
-        val roadLinksWithAssets =  OracleDatabase.withDynSession {
+        val roadLinksWithAssets =  OracleDatabase.withDynTransaction {
           val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
           val linkIds = roadLinks.map(_.linkId)
 
@@ -1504,8 +1504,8 @@ object DataFixture {
           roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
         }
         roadLinksWithAssets.foreach { roadLink =>
-          val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
-          roadLinkService.updateLinkProperties(linkProperty, Option("update_private_roadas_process"), (_, _) => {})
+          val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass, Some(""), Some(AdditionalInformation.DeliveredWithRestrictions), Some(""))
+          roadLinkService.updateLinkProperties(linkProperty, Option("update_private_roads_process"), (_, _) => {})
         }
       }
   }

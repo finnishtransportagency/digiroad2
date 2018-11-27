@@ -306,13 +306,15 @@ object RoadLinkDAO{
       sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[(String, String)].list.toMap
     }
 
-    def insertOrUpdateAttributeValue(daoAction: String, linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
-      if (daoAction == "insert") {
-        sqlu"""insert into #$table (id, link_id, name, value, created_by )
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username
-                   from dual""".execute
-      } else {
-        sqlu"""
+
+    def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by )
+             select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username
+              from dual""".execute
+    }
+
+    def updateAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
+      sqlu"""
             update road_link_attributes set
               value = $value,
               modified_date = sysdate,
@@ -321,8 +323,19 @@ object RoadLinkDAO{
             	and name = $attributeName
             	and (valid_to is null or valid_to > sysdate)
           """.execute
-      }
     }
+
+    def expireAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String): Unit = {
+      sqlu"""
+            update road_link_attributes
+            set valid_to = sysdate,
+                modified_by = $username
+            where link_id = ${linkProperty.linkId}
+            	and name = $attributeName
+              and (valid_to is null or valid_to > sysdate)
+          """.execute
+    }
+
 
     def getValue(linkProperty: LinkProperties): Int = {
       throw new UnsupportedOperationException("Method getValue is not supported for Link Attributes class")

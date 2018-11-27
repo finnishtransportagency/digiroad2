@@ -26,7 +26,7 @@
     var additionalInfoIds = [
       [1, 'Tieto toimitettu, rajoituksia'],
       [2, 'Tieto toimitettu, ei rajoituksia'],
-      [3, 'Ei toimitettu']
+      [99, 'Ei toimitettu']
     ];
 
     var localizedAdditionalInfoIds = {
@@ -255,7 +255,7 @@
         roadPartNumber : linkProperty.roadPartNumber || '',
         localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
         localizedAdministrativeClass : localizedAdministrativeClasses[linkProperty.administrativeClass] || 'Tuntematon',
-        localizedAdditionalInfoIds: getAdditionalInfo(parseInt(linkProperty.additionalInfo)) || 'Tuntematon',
+        localizedAdditionalInfoIds: getAdditionalInfo(parseInt(linkProperty.additionalInfo)) || localizedAdditionalInfoIds.NotDelivered,
         localizedTrafficDirection : localizedTrafficDirections[linkProperty.trafficDirection] || 'Tuntematon',
         localizedLinkTypes : getLocalizedLinkType(linkProperty.linkType) || 'Tuntematon',
         addressNumbersRight : addressNumberString(linkProperty.minAddressNumberRight, linkProperty.maxAddressNumberRight),
@@ -269,7 +269,7 @@
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
         accessRightID: linkProperty.accessRightID || '',
         privateRoadAssociation: linkProperty.privateRoadAssociation || '',
-        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : ''
+        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 3 // Ei toimitettu
       });
     };
 
@@ -339,7 +339,11 @@
           selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         rootElement.find('.administrative-class').change(function(event) {
-          selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
+          var administrativeClass = $(event.currentTarget).find(':selected').attr('value');
+          selectedLinkProperty.setAdministrativeClass(administrativeClass);
+          if(administrativeClass === "Private") {
+            $(".private-road").css("display","block");
+          } else $(".private-road").css("display","none");
         });
         rootElement.find('.access-right-id').keyup(function(event) {
           selectedLinkProperty.setAccessRightId($(event.currentTarget).val());
