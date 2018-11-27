@@ -38,7 +38,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
-  val validator = new SpeedLimitValidator(mockTrafficSignService)
+  val validator = new SpeedLimitValidator(testTrafficSignService)
   val simpleProp50 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("5"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("50"))))
   val simpleProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("1"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
   val speedLimitEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("2"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
