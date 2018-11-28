@@ -773,7 +773,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets") {
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    getLinearAssets(typeId)
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val minVisibleZoom = 2
+    val maxZoom = 8
+    zoom >= minVisibleZoom && zoom < maxZoom match {
+      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId))
+      case false => getLinearAssets(typeId)
+    }
   }
 
   private def getLinearAssets(typeId: Int) = {

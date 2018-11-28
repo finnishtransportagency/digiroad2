@@ -1,5 +1,5 @@
 (function(root) {
-  root.Layer = function(layerName, roadLayer) {
+  root.Layer = function(layerName, roadLayer, highZoomLevel) {
     var me = this;
 
     var mapOverLinkMiddlePoints = function(links, transformation) {
@@ -45,7 +45,7 @@
     };
     this.displayConfirmMessage = function() { new Confirm(); };
     this.handleMapMoved = function(state) {
-      if (state.selectedLayer === layerName  && ( zoomlevels.shouldShowAssets(layerName,  state.zoom) || state.zoom >= me.minZoomForContent )) {
+      if (state.selectedLayer === layerName  && ( zoomlevels.shouldShowAssets(highZoomLevel,  state.zoom) || state.zoom >= me.minZoomForContent )) {
         if (!me.isStarted()) {
           me.start('moved');
         }

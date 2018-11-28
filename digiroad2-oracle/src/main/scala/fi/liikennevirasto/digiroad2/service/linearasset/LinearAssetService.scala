@@ -643,6 +643,13 @@ trait LinearAssetOperations {
     }
   }
 
+
+  def getByZoomLevel(typeId: Int) : Seq[Seq[PieceWiseLinearAsset]] = {
+    withDynTransaction {
+      Seq(dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId)))
+    }
+  }
+
   /**
     * Sets linear assets with no geometry as floating. Used by Used by Digiroad2Context.LinearAssetUpdater actor.
     */

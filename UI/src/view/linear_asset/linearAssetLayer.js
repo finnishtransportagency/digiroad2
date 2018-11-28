@@ -18,7 +18,7 @@ root.LinearAssetLayer  = function(params) {
       isExperimental = params.isExperimental,
       minZoomForContent = params.minZoomForContent;
 
-  Layer.call(this, layerName, roadLayer);
+  Layer.call(this, layerName, roadLayer, minZoomForContent);
   var me = this;
   me.minZoomForContent = isExperimental && minZoomForContent ? minZoomForContent : zoomlevels.minZoomForAssets;
   var isComplementaryChecked = false;

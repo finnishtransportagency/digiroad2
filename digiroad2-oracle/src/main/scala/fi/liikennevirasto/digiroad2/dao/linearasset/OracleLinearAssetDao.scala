@@ -1,15 +1,16 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{linearasset, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
-import org.joda.time.{DateTime}
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -125,6 +126,41 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
       PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate,
         linkSource, verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
+    }
+  }
+
+  implicit val getPiecewise = new GetResult[PieceWiseLinearAsset] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+      val sideCode = r.nextInt()
+      val value = r.nextIntOption().map(NumericValue)
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val createdBy = r.nextStringOption()
+      val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val modifiedBy = r.nextStringOption()
+      val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expired = r.nextBoolean()
+      val typeId = r.nextInt()
+      val vvhTimeStamp = r.nextLong()
+      val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = LinkGeomSource.apply(r.nextInt())
+      val verifiedBy = r.nextStringOption()
+      val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val informationSource = r.nextIntOption()
+      val startPoint_x = r.nextDouble()
+      val startPoint_y = r.nextDouble()
+      val endPoint_x = r.nextDouble()
+      val endPoint_y = r.nextDouble()
+      val administrativeClass = AdministrativeClass(r.nextInt())
+
+      val geometry = Seq(Point(startPoint_x, startPoint_y), Point(endPoint_x, endPoint_y))
+      PieceWiseLinearAsset(id, linkId, SideCode(sideCode), value, geometry, expired, startMeasure, endMeasure,
+                           geometry.toSet, modifiedBy, modifiedDate, createdBy, createdDate, typeId, SideCode.toTrafficDirection(SideCode(sideCode)), vvhTimeStamp,
+                           geomModifiedDate, linkSource, administrativeClass, verifiedBy = verifiedBy, verifiedDate = verifiedDate, informationSource = informationSource.map(info => InformationSource.apply(info)))
+
+
     }
   }
 
@@ -377,6 +413,25 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
       PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }
+  }
+
+  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String): Seq[PieceWiseLinearAsset] = {
+     sql"""
+         select a.id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
+                a.created_by, a.created_date, a.modified_by, a.modified_date,
+                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date,
+                a.information_source, t.X, t.Y, t2.X, t2.Y, ad.administrative_class
+           from asset a
+           join asset_link al on a.id = al.asset_id
+           join lrm_position pos on al.position_id = pos.id
+           cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t
+           cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t2
+           join property p on p.public_id = 'mittarajoitus'
+           left join administrative_class ad on pos.link_id = ad.link_id
+           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+           where a.floating = 0 and ad.valid_to is null and a.asset_type_id = #$assetTypeId"""
+      .as[PieceWiseLinearAsset].list
   }
 
   /**
