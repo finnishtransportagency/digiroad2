@@ -1438,7 +1438,7 @@ object DataFixture {
           case ex: ManoeuvreCreationException =>
             println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
           case ex: InvalidParameterException =>
-            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
+            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the Invalid Parameter exception ${ex.getMessage}""")
         }
       )
     }
