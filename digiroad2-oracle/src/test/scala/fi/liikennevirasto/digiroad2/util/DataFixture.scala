@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.security.InvalidParameterException
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
@@ -1434,9 +1435,10 @@ object DataFixture {
               println(s"Asset id ${ts.id} did not generate a manoeuvre ")
           }
         }catch {
-          case ex: ManoeuvreCreationException => {
+          case ex: ManoeuvreCreationException =>
             println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
-          }
+          case ex: InvalidParameterException =>
+            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the Invalid Parameter exception ${ex.getMessage}""")
         }
       )
     }
