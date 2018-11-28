@@ -1408,12 +1408,11 @@ object DataFixture {
   def createManoeuvresUsingTrafficSigns(): Unit = {
     //Get All Municipalities
     println(s"Obtaining Municipalities")
-//    val municipalities: Seq[Int] =
-//      OracleDatabase.withDynSession {
-//        Queries.getMunicipalities
-//      }
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
-    val municipalities = Seq(20)
     municipalities.foreach { municipality =>
 
       println(s"Obtaining all traffic Signs with turning restriction for municipality $municipality")
