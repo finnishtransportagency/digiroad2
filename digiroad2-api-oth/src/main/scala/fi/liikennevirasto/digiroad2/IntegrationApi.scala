@@ -594,9 +594,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   private def mapAdditionalPanels(panels: Seq[AdditionalPanel]): Seq[Map[String, Any]] = {
     panels.map{panel =>
       Map(
-        "additional_panel_type" -> panel.panelType,
-        "additional_panel_value" -> panel.panelValue.getOrElse(""),
-        "additional_panel_information" -> panel.panelInfo.getOrElse("")
+        "type" -> panel.panelType,
+        "value" -> panel.panelValue,
+        "information" -> panel.panelInfo
       )
     }
   }

@@ -143,11 +143,11 @@ object OracleTrafficSignDao {
       val bearing = r.nextIntOption()
       val validityDirection = r.nextInt()
       val optPanelType = r.nextIntOption()
-      val panelValue = r.nextString()
-      val panelInfo = r.nextString()
+      val panelValue = r.nextStringOption()
+      val panelInfo = r.nextStringOption()
       val formPosition = r.nextInt()
       val additionalPanel = optPanelType match {
-        case Some(panelType) => Some(AdditionalPanelRow(propertyPublicId, propertyType, panelType, panelInfo, panelValue, formPosition))
+        case Some(panelType) => Some(AdditionalPanelRow(propertyPublicId, propertyType, panelType, panelInfo.getOrElse(""), panelValue.getOrElse(""), formPosition))
         case _ => None
       }
 
@@ -331,34 +331,13 @@ object OracleTrafficSignDao {
               Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
             case AdditionalPanelType =>
               assetRow.additionalPanel match {
-                case Some(panel) => Seq(AdditionalPanel(panel.panelType, Some(panel.panelValue), Some(panel.panelInfo), panel.formPosition))
+                case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelValue, panel.panelInfo, panel.formPosition))
                 case _ => Seq()
               }
           }
         }.toSeq)
     }.toSeq
   }
-////
-//  def assetRowToProperty(assetRows: Iterable[TrafficSignRow]): Seq[TrafficSignProperty] = {
-//    assetRows.groupBy(_.property.propertyId).foreach{ case (key, rows) =>
-//      val row = rows.head
-//
-//      var values : Seq[PointAssetValue] = rows.flatMap { assetRow =>
-//        assetRow.property.propertyType match {
-//          case SingleChoice | Text | LongText =>
-//            Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
-//          case AdditionalPanelType =>
-//            assetRow.additionalPanel match {
-//              case Some(panel) => Seq(AdditionalPanel(panel.panelType, Some(panel.panelValue), Some(panel.panelInfo), panel.formPosition))
-//              case _ => Seq()
-//            }
-//        }
-//
-//      }.toSeq
-//    }
-//      Seq()
-//
-//  }
 
   private def propertyWithTypeAndId(property: SimpleTrafficSignProperty): Tuple3[String, Option[Long], SimpleTrafficSignProperty] = {
     val propertyId = StaticQuery.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
