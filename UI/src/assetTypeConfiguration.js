@@ -137,7 +137,7 @@
         title: 'Suurin sallittu telimassa',
         newTitle: 'Uusi suurin sallittu telimassa',
         className: 'bogie-weight-limit',
-        unit: 'kg',
+        unit: '',
         isSeparable: false,
         allowComplementaryLinks: true,
         editControlLabels: { title: 'Rajoitus',
@@ -153,7 +153,13 @@
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+        fields: [
+            {label: "2-akselisen telin rajoitus", type: 'number', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
+            {label: "3-akselisen telin rajoitus", type: 'number', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2}
+          ]
+        })
       },
       {
         typeId: assetType.heightLimit,
