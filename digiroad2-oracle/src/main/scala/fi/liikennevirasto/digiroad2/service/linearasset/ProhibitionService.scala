@@ -321,14 +321,20 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   private def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): Seq[RoadLink] = {
+    val (roadNamePublicId, roadNameSource) =
+      sourceRoadLink.attributes.get("ROADNAME_FI") match {
+        case Some(nameFi) =>
+          ("ROADNAME_FI", nameFi.toString)
+        case _ =>
+          ("ROADNAME_SE", sourceRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
+      }
 
-    val roadNameSource= sourceRoadLink.attributes.get("ROADNAME_FI").toString
-    val adjacents = roadLinkService.getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filterNot(_.attributes.get("ROADNAME_FI").toString != roadNameSource)
+    val adjacents = roadLinkService.getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filterNot(_.attributes.getOrElse(roadNamePublicId, "").toString != roadNameSource)
     if(adjacents.isEmpty)
       Seq.empty
     else {
-      val nextAdjacents = roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).filter(_.attributes.get("ROADNAME_FI").toString == roadNameSource)
-      if (adjacents.size == 1 && nextAdjacents.exists(_.attributes.get("ROADNAME_FI").toString == roadNameSource)) {
+      val nextAdjacents = roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).filter(_.attributes.getOrElse(roadNamePublicId, "").toString == roadNameSource)
+      if (adjacents.size == 1 && nextAdjacents.exists(_.attributes.getOrElse(roadNamePublicId, "").toString == roadNameSource)) {
         recursiveGetAdjacent(adjacents.head, getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
       } else {
         intermediants ++ adjacents
