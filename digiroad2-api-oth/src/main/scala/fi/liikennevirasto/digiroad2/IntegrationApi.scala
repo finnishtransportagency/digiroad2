@@ -242,14 +242,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case Prohibition.typeId => prohibitionService
         case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+        case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId  | BogieWeightLimit.typeId => dynamicLinearAssetService
         case HeightLimitInfo.typeId => linearHeightLimitService
-        case   LengthLimit.typeId => linearLengthLimitService
+        case LengthLimit.typeId => linearLengthLimitService
         case WidthLimitInfo.typeId => linearWidthLimitService
         case TotalWeightLimit.typeId => linearTotalWeightLimitService
         case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
         case AxleWeightLimit.typeId => linearAxleWeightLimitService
-        case BogieWeightLimit.typeId => linearBogieWeightLimitService
         case _ => linearAssetService
       }
     }
@@ -304,6 +303,32 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         }))
 
       defaultMultiValueLinearAssetsMap(massTransitLane) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  private def bogieWeightLimitsToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val bogieWeightLimits = getMultiValueLinearAssetByMunicipality(BogieWeightLimit.typeId, municipalityNumber)
+
+    bogieWeightLimits.map { bogieWeightLimit =>
+      val dynamicMultiValueLinearAssetsMap = bogieWeightLimit.value match {
+        case Some(DynamicValue(value)) =>
+          value.properties.flatMap { bogieWeightAxel =>
+            bogieWeightAxel.publicId match {
+              case "bogie_weight_2_axel" =>
+                bogieWeightAxel.values.map { v =>
+                  "twoAxelValue" -> v.value
+                }
+              case "bogie_weight_3_axel" =>
+                bogieWeightAxel.values.map { v =>
+                  "threeAxelValue" -> v.value
+                }
+              case _ => None
+            }
+          }
+        case _ => Map()
+      }
+
+      defaultMultiValueLinearAssetsMap(bogieWeightLimit) ++ dynamicMultiValueLinearAssetsMap
     }
   }
 
@@ -645,7 +670,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "total_weight_limits" => linearAssetsToApi(TotalWeightLimit.typeId, municipalityNumber)
         case "trailer_truck_weight_limits" => linearAssetsToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
         case "axle_weight_limits" => linearAssetsToApi(AxleWeightLimit.typeId, municipalityNumber)
-        case "bogie_weight_limits" => linearAssetsToApi(BogieWeightLimit.typeId, municipalityNumber)
+        case "bogie_weight_limits" => bogieWeightLimitsToApi(municipalityNumber)
         case "height_limits" => linearAssetsToApi(HeightLimitInfo.typeId, municipalityNumber)
         case "length_limits" => linearAssetsToApi(LengthLimit.typeId, municipalityNumber)
         case "width_limits" => linearAssetsToApi(WidthLimitInfo.typeId, municipalityNumber)

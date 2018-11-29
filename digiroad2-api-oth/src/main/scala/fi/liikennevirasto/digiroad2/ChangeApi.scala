@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
@@ -34,7 +35,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(TotalWeightLimit.typeId , since, until, withAdjust))
       case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withAdjust))
       case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withAdjust))
-      case "bogie_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withAdjust))
+      case "bogie_weight_limits"         => bogieWeightLimitsToGeoJson(since, dynamicLinearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withAdjust))
       case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(HeightLimit.typeId, since, until, withAdjust))
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
@@ -85,6 +86,78 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 "createdAt" -> speedLimit.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> speedLimit.modifiedBy,
                 "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime)
+              )
+          )
+        }
+    )
+
+  private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Seq[Map[String, Any]] = {
+    changedLinearAssets.map { case ChangedLinearAsset(linearAsset, _) =>
+      val dynamicMultiValueLinearAssetMap: Seq[(String, Any)] = linearAsset.value match {
+        case Some(DynamicValue(value)) =>
+          value.properties.flatMap { bogieWeightAxel =>
+            bogieWeightAxel.publicId match {
+              case "bogie_weight_2_axel" =>
+                bogieWeightAxel.values.map { v =>
+                  "twoAxelValue" -> v.value
+                }
+              case "bogie_weight_3_axel" =>
+                bogieWeightAxel.values.map { v =>
+                  "threeAxelValue" -> v.value
+                }
+              case _ => None
+            }
+          }
+        case _ => Seq()
+      }
+
+      dynamicLinearAssetsToGeoJson(since, changedLinearAssets, dynamicMultiValueLinearAssetMap)
+    }
+  }
+
+  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], values: Seq[(String, Any)]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        changedLinearAssets.map { case ChangedLinearAsset(linearAsset, link) =>
+          Map(
+            "type" -> "Feature",
+            "id" -> linearAsset.id,
+            "geometry" -> Map(
+              "type" -> "LineString",
+              "coordinates" -> linearAsset.geometry.map(p => Seq(p.x, p.y, p.z))
+            ),
+            "properties" ->
+              Map(
+                values.toMap,
+                "link" -> Map(
+                  "type" -> "Feature",
+                  "id" -> link.linkId,
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
+                  )
+                ),
+                "sideCode" -> (link.trafficDirection match {
+                  case TrafficDirection.AgainstDigitizing =>
+                    SideCode.AgainstDigitizing.value
+                  case TrafficDirection.TowardsDigitizing =>
+                    SideCode.TowardsDigitizing.value
+                  case _ =>
+                    linearAsset.sideCode.value
+                }),
+                "startMeasure" -> linearAsset.startMeasure,
+                "endMeasure" -> linearAsset.endMeasure,
+                "createdBy" -> linearAsset.createdBy,
+                "modifiedAt" -> linearAsset.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
+                "modifiedBy" -> linearAsset.modifiedBy,
+                "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
               )
           )
         }

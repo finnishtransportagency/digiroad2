@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
@@ -304,4 +304,49 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure),
           LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink))
     }
+
+  /**
+    * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
+    *
+    * @param typeId
+    * @param since
+    * @param until
+    * @param withAutoAdjust
+    * @return Changed linear assets
+    */
+  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+    val persistedLinearAssets = withDynTransaction {
+      dynamicLinearAssetDao.getDynamicLinearAssetsChangedSince(typeId, since, until, withAutoAdjust)
+    }
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+
+    persistedLinearAssets.flatMap { persistedLinearAsset =>
+      roadLinksWithoutWalkways.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
+        val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
+        val endPoints: Set[Point] =
+          try {
+            val ep = GeometryUtils.geometryEndpoints(points)
+            Set(ep._1, ep._2)
+          } catch {
+            case ex: NoSuchElementException =>
+              logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
+              val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
+              Set(wholeLinkPoints._1, wholeLinkPoints._2)
+          }
+        ChangedLinearAsset(
+          linearAsset = PieceWiseLinearAsset(
+            persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
+            persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
+            endPoints, persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
+            persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
+            persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate, persistedLinearAsset.linkSource, roadLink.administrativeClass,
+            verifiedBy = persistedLinearAsset.verifiedBy, verifiedDate = persistedLinearAsset.verifiedDate, informationSource = persistedLinearAsset.informationSource)
+          ,
+          link = roadLink
+        )
+      }
+    }
+  }
+
 }
