@@ -93,17 +93,17 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
 
   private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Seq[Map[String, Any]] = {
     changedLinearAssets.map { case ChangedLinearAsset(linearAsset, _) =>
-      val dynamicMultiValueLinearAssetMap: Seq[(String, Any)] = linearAsset.value match {
+      val dynamicMultiValueLinearAssetMap = linearAsset.value match {
         case Some(DynamicValue(value)) =>
           value.properties.flatMap { bogieWeightAxel =>
             bogieWeightAxel.publicId match {
               case "bogie_weight_2_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  "twoAxelValue" -> v.value
+                  Map("twoAxelValue" -> v.value)
                 }
               case "bogie_weight_3_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  "threeAxelValue" -> v.value
+                  Map("threeAxelValue" -> v.value)
                 }
               case _ => None
             }
@@ -115,7 +115,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     }
   }
 
-  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], values: Seq[(String, Any)]) =
+  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], values: Seq[Map[String, Any]]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
@@ -128,8 +128,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
               "coordinates" -> linearAsset.geometry.map(p => Seq(p.x, p.y, p.z))
             ),
             "properties" ->
-              Map(
-                values.toMap,
+              (Map(
                 "link" -> Map(
                   "type" -> "Feature",
                   "id" -> link.linkId,
@@ -158,7 +157,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> linearAsset.modifiedBy,
                 "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
-              )
+              ) ++ values),
           )
         }
     )
