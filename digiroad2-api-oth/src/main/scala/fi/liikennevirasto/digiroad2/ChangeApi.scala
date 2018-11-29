@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Value}
+import fi.liikennevirasto.digiroad2.linearasset.DynamicValue
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
@@ -93,17 +93,17 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
 
   private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Seq[Map[String, Any]] = {
     changedLinearAssets.map { case ChangedLinearAsset(linearAsset, _) =>
-      val dynamicMultiValueLinearAssetMap = linearAsset.value match {
+      val dynamicMultiValueLinearAssetMap: Seq[(String, Any)] = linearAsset.value match {
         case Some(DynamicValue(value)) =>
           value.properties.flatMap { bogieWeightAxel =>
             bogieWeightAxel.publicId match {
               case "bogie_weight_2_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  Map("twoAxelValue" -> v.value)
+                  "twoAxelValue" -> v.value
                 }
               case "bogie_weight_3_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  Map("threeAxelValue" -> v.value)
+                  "threeAxelValue" -> v.value
                 }
               case _ => None
             }
@@ -115,7 +115,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     }
   }
 
-  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], values: Seq[Map[String, Any]]) =
+  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], values: Seq[(String, Any)]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
       "features" ->
@@ -157,10 +157,11 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> linearAsset.modifiedBy,
                 "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
-              ) ++ values),
+              ) ++ values)
           )
         }
     )
+}
 
   private def linearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]) =
     Map(
