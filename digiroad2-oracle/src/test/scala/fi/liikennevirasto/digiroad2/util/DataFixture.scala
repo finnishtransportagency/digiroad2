@@ -1538,10 +1538,13 @@ object DataFixture {
           }
 
     municipalities.foreach { municipality =>
+      println(s"Starting create traffic signs for municipality $municipality")
       val roadLinks: Map[Long, Seq[RoadLink]] = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).groupBy(_.linkId)
 
       val existingAssets = withDynTransaction {
+        println(s"Expiring asset on municipaity $municipality")
         trafficSignService.expire(roadLinks.keySet, username, false)
+        println(s"Getting asset on municipaity $municipality")
         oracleLinearAssetDao.fetchProhibitionsByLinkIds(Prohibition.typeId, roadLinks.keySet.toSeq, false)
       }
 
@@ -1561,9 +1564,12 @@ object DataFixture {
             }
           } else Seq()
 
-          if (filteredAdjacentRoadLink.isEmpty ||
-            existingAssets.exists { asset => filteredAdjacentRoadLink.keySet.contains(asset.linkId) && asset.value == currentAsset.value } ||
-            unMatchedAssets.nonEmpty)
+          if ( unMatchedAssets.nonEmpty || Math.abs((currentAsset.endMeasure - currentAsset.startMeasure) - roadLink.length) < 0.01 &&
+            existingAssets.exists { asset =>
+            filteredAdjacentRoadLink.keySet.contains(asset.linkId) &&
+            asset.value == currentAsset.value &&
+            Math.abs((asset.endMeasure - asset.startMeasure) - filteredAdjacentRoadLink(asset.linkId).head.length) < 0.01
+          })
             Seq()
           else
             Seq(setTrafficSignInfo(roadLinks(currentAsset.linkId).head, currentAsset, point))
