@@ -29,7 +29,7 @@
       heightLimit: {values : [31]},
       lengthLimit: {values : [8]},
       widthLimit: {values : [30]},
-      hazardousMaterialTransportProhibition: {values : [47, 48]},
+      hazardousMaterialTransportProhibition: {values : [20]},
       manoeuvre: {values: [10, 11, 12]},
       pedestrianCrossings: { values: [7] }
     };
