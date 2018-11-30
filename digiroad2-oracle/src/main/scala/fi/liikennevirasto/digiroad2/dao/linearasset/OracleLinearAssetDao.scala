@@ -415,8 +415,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String): Seq[PieceWiseLinearAsset] = {
-     sql"""
+  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, linkSource: Option[LinkGeomSource] = None): Seq[PieceWiseLinearAsset] = {
+    val linkGeomCondition = linkSource match {
+      case Some(LinkGeomSource.NormalLinkInterface) => " and pos.link_source = 1"
+      case _ => ""
+    }
+    sql"""
          select a.id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
                 a.created_by, a.created_date, a.modified_by, a.modified_date,
                 case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
@@ -430,7 +434,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
            join property p on p.public_id = 'mittarajoitus'
            left join administrative_class ad on pos.link_id = ad.link_id
            left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
-           where a.floating = 0 and ad.valid_to is null and a.asset_type_id = #$assetTypeId"""
+           where a.floating = 0 and ad.valid_to is null and a.asset_type_id = #$assetTypeId #$linkGeomCondition"""
       .as[PieceWiseLinearAsset].list
   }
 

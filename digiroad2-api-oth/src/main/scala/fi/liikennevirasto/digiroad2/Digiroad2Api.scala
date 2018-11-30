@@ -774,10 +774,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/linearassets") {
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
-    val minVisibleZoom = 2
-    val maxZoom = 8
-    zoom >= minVisibleZoom && zoom < maxZoom match {
-      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId))
+    val minVisibleZoom = 8
+    val maxZoom = 9
+    zoom >= minVisibleZoom && zoom <= maxZoom match {
+      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId, Some(LinkGeomSource.NormalLinkInterface)))
       case false => getLinearAssets(typeId)
     }
   }
@@ -799,7 +799,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets/complementary"){
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    getLinearAssetsWithComplementary(typeId)
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val minVisibleZoom = 8
+    val maxZoom = 9
+    zoom >= minVisibleZoom && zoom <= maxZoom match {
+      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId))
+      case false => getLinearAssetsWithComplementary(typeId)
+    }
   }
 
   private def getLinearAssetsWithComplementary(typeId: Int) = {
