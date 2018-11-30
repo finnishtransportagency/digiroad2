@@ -79,8 +79,10 @@
       });
 
       rootElement.find('#additional-panel-checkbox').on('change', function (event) {
-        if(!$(event.currentTarget).prop('checked'))
+        if(!$(event.currentTarget).prop('checked')) {
           $('.panel-group-container').remove();
+          selectedAsset.setAdditionalPanels();
+        }
         else {
           $('.additional-panel-checkbox').after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection));
           setAllPanels();
@@ -295,7 +297,7 @@
               return panelTextHandler(feature);
           }).join(''));
 
-        var buttonDiv = $('<div class="form-group editable form-traffic-sign-panel traffic-panel-buttons">' + removeButton(index+1) + addButton(index+1) + '</div>');
+        var buttonDiv = $('<div class="form-group editable form-traffic-sign-panel traffic-panel-buttons">' + (sortedByFormPosition.length === 1 ? '' : removeButton(index+1)) + addButton(index+1) + '</div>');
 
         body.filter('.single-panel-container').append(buttonDiv);
 

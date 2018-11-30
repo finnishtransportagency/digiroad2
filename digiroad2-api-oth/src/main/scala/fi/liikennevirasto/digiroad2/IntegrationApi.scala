@@ -594,7 +594,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   private def mapAdditionalPanels(panels: Seq[AdditionalPanel]): Seq[Map[String, Any]] = {
     panels.map{panel =>
       Map(
-        "type" -> panel.panelType,
+        "type" -> TRTrafficSignType.apply(TrafficSignType.apply(panel.panelType)),
         "value" -> panel.panelValue,
         "information" -> panel.panelInfo
       )
