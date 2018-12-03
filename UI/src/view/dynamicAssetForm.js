@@ -701,6 +701,8 @@
 
                   if(_assetTypeConfiguration.isVerifiable)
                     renderLinkToWorkList(layer);
+                  if(_assetTypeConfiguration.hasInaccurate)
+                    renderInaccurateWorkList(layer);
                 }
             });
 
@@ -901,6 +903,11 @@
         function renderLinkToWorkList(layerName) {
             $('ul[class=information-content]').append('' +
                 '<li><a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</a></li>');
+        }
+
+        function renderInaccurateWorkList(layerName) {
+            $('ul[class=information-content]').append('' +
+                '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
         }
 
         function createSideCodeMarker(sideCode) {
