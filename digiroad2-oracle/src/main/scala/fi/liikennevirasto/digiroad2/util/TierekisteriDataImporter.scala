@@ -128,8 +128,24 @@ object TierekisteriDataImporter {
     new CarryingCapacityTierekisteriImporter()
   }
 
-  lazy val bogieImporter: BogieWeightImporter = {
-    new BogieWeightImporter()
+  lazy val bogieWeightLimitImporter: BogieWeightLimitImporter = {
+    new BogieWeightLimitImporter()
+  }
+
+  lazy val axleWeightLimitImporter: AxleWeightLimitImporter = {
+    new AxleWeightLimitImporter()
+  }
+
+  lazy val truckWeightLimitImporter: TruckWeightLimitImporter = {
+    new TruckWeightLimitImporter()
+  }
+
+  lazy val totalWeightLimitImporter: TotalWeightLimitImporter = {
+    new TotalWeightLimitImporter()
+  }
+
+  lazy val heightLimitImporter: HeightLimitImporter = {
+    new HeightLimitImporter()
   }
 
   def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
@@ -239,7 +255,11 @@ object TierekisteriDataImporter {
     "careClass" -> careClassTierekisteriImporter,
     "carryingCapacity" -> carryingCapacityTierekisteriImporter,
     "pedestrianCrossing" -> pedestrianCrossingTierekisteriImporter,
-    "BogieWeightImporter" -> bogieImporter
+    "bogieWeightConverterImporter" -> bogieWeightLimitImporter,
+    "axleWeightConverterImporter" -> axleWeightLimitImporter,
+    "totalWeightConverterImporter" -> totalWeightLimitImporter,
+    "trailerTruckWeightConverterImporter" -> truckWeightLimitImporter,
+    "heightLimitConverterImporter" -> heightLimitImporter
   )
 
   private def importAssets(tierekisteriAssetImporter: TierekisteriImporterOperations): Unit = {

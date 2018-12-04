@@ -61,6 +61,7 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
                        constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
+  def verticalLevel: Option[String] = attributes.get("VERTICALLEVEL ").map(_.toString)
   val vvhTimeStamp = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 

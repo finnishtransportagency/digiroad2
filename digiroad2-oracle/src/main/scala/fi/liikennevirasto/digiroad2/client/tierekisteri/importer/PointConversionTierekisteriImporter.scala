@@ -1,199 +1,192 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.asset.{BogieWeightLimit, SideCode, State}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetDataClient, TierekisteriHeightLimitAssetClient, TierekisteriWeightLimitAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
+import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, LinearAssetService, LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
-import org.joda.time.DateTime
 
-trait PointConversionTierekisteriImporter extends TierekisteriImporterOperations {
+trait PointConversionTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
+  lazy val dynamicLinearAssetService: DynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService, eventbus)
 
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   val tierekisteriClient: TierekisteriClientType
+  val radiusDistance = 50 //meter
 
   type TierekisteriClientType <: TierekisteriAssetDataClient
-  type TierekisteriAssetData = tierekisteriClient.TierekisteriType
 
-  protected def getRoadAddressSections(trAssetData: TierekisteriAssetData): Seq[(AddressSection, TierekisteriAssetData)] = {
-    super.splitTrAssetsBySections(trAssetData).map(_.asInstanceOf[(AddressSection, TierekisteriAssetData)])
-  }
+  val allowedVerticalLevel: Seq[Int]
 
-  protected def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
-    true
-  }
-
-  protected def getAllTierekisteriAddressSections(roadNumber: Long) = {
-    println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
-    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber).map(_.asInstanceOf[TierekisteriAssetData]).filter(filterTierekisteriAssets)
-
-    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
-    trAsset.flatMap(getRoadAddressSections)
-  }
-
-  protected def getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime) = {
-    println("\nFetch " + assetName + " History by Road Number " + roadNumber)
-    val trAsset = tierekisteriClient.fetchHistoryAssetData(roadNumber, Some(lastExecution)).map(_.asInstanceOf[TierekisteriAssetData]).filter(filterTierekisteriAssets)
-
-    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
-    trAsset.flatMap(getRoadAddressSections)
-  }
-
-  protected def getAllTierekisteriAddressSections(roadNumber: Long, roadPart: Long) = {
-    println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
-    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber, roadPart).map(_.asInstanceOf[TierekisteriAssetData]).filter(filterTierekisteriAssets)
-
-    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
-    trAsset.flatMap(getRoadAddressSections)
-  }
-
-  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
-
-  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit
-
-  def importAssets(): Unit = {
-    //Expire all asset in state roads in all the municipalities
-    //    val municipalities = getAllMunicipalities
-    //    municipalities.foreach { municipality =>
-    //      withDynTransaction{
-    //        expireAssets(municipality, Some(State))
-    //      }
-    //    }
-
-    val roadNumbers = Seq(140)
-
-    roadNumbers.foreach {
-      roadNumber =>
-        //Fetch asset from Tierekisteri and then generates the sections foreach returned asset
-        //For example if Tierekisteri returns
-        //One asset with start part = 2, end part = 5, start address = 10, end address 20
-        //We will generate the middle parts and return a AddressSection for each one
-        val trAddressSections = getAllTierekisteriAddressSections(roadNumber)
-
-        //Fetch all the existing road address from viite client
-        //If in the future this process get slow we can start using the returned sections
-        //from trAddressSections sequence so we reduce the amount returned
-        val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
-        val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
-
-        //For each section creates a new OTH asset
-        trAddressSections.foreach {
-          case (section, trAssetData) =>
-            withDynTransaction {
-              createAsset(section, trAssetData, mappedRoadAddresses, mappedRoadLinks)
-            }
-        }
+  def checkVerticalLevel(vvhRoadlink: VVHRoadlink): Boolean = {
+    vvhRoadlink.verticalLevel match {
+      case Some(vL) => allowedVerticalLevel.exists {
+        _.toString == vL
+      }
+      case _ => false
     }
   }
 
-  def updateAssets(lastExecution: DateTime): Unit = {
-    val roadNumbers = getAllViiteRoadNumbers
+  def getAdjacents(previousInfo: (Point, VVHRoadlink), roadLinks: Seq[VVHRoadlink]): Seq[(VVHRoadlink, (Point, Point))] = {
+    roadLinks.filter {
+      roadLink =>
+        GeometryUtils.areAdjacent(roadLink.geometry, previousInfo._1)
+    }.map { roadLink =>
+      val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+      val points = if (GeometryUtils.areAdjacent(first, previousInfo._1)) (first, last) else (last, first)
 
-    roadNumbers.foreach {
-      roadNumber =>
-        //Fetch asset changes from Tierekisteri and then generates the sections foreach returned asset change
-        //For example if Tierekisteri returns
-        //One asset with start part = 2, end part = 5, start address = 10, end address 20
-        //We will generate the middle parts and return a AddressSection for each one
-        val trHistoryAddressSections = getAllTierekisteriHistoryAddressSection(roadNumber, lastExecution)
-
-        if(trHistoryAddressSections.nonEmpty){
-          withDynTransaction {
-
-            val changedSections = trHistoryAddressSections
-            val changedRoadParts = changedSections.map(_._1.roadPartNumber).distinct
-            val changedRoadAddresses = roadAddressService.getAllByRoadNumberAndParts(roadNumber, changedRoadParts)
-
-            //Expire all the sections that have changes in tierekisteri
-            expireAssets(changedRoadAddresses.map(_.linkId))
-            val mappedChangedRoadAddresses = changedRoadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-            val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(changedRoadAddresses.map(ra => ra.linkId).toSet)
-            //Creates the assets on top of the expired sections
-            changedRoadParts.foreach{
-              roadPart =>
-                //Fetch asset from Tierekisteri and then generates the sections foreach returned asset
-                val trAddressSections = getAllTierekisteriAddressSections(roadNumber, roadPart)
-                trAddressSections.foreach {
-                  case (section, trAssetData) =>
-                    createAsset(section, trAssetData, mappedChangedRoadAddresses, mappedRoadLinks)
-                }
-            }
-          }
-        }
+      (roadLink, points)
     }
   }
-}
 
-trait WeightConversionTierekisteriImporter extends PointConversionTierekisteriImporter {
-  override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
-  override val tierekisteriClient = new TierekisteriWeightLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-    HttpClientBuilder.create().build())
+  def findRelevantRoadLink(previousInfo: (Point, VVHRoadlink), roadLinks: Seq[VVHRoadlink], distance: Double): Seq[(VVHRoadlink, Double)] = {
+    val filteredRoadLink = roadLinks.filterNot(_.linkId == previousInfo._2.linkId)
+    val adjacents = getAdjacents(previousInfo, filteredRoadLink)
+    if (adjacents.isEmpty || distance >= radiusDistance)
+      Seq()
+    else {
+      adjacents.flatMap { case (newRoadLink, (adjacentPoint, oppositePoint)) =>
+        if (checkVerticalLevel(newRoadLink))
+          Some(newRoadLink, distance)
+        else
+          findRelevantRoadLink((oppositePoint, newRoadLink), filteredRoadLink, distance + GeometryUtils.geometryLength(newRoadLink.geometry))
+      }
+    }
+  }
 
-  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = {
+  def findNearesRoadLink(ra: ViiteRoadAddress, section: AddressSection, roadLink: VVHRoadlink, mappedRoadLinks: Seq[VVHRoadlink]): Option[VVHRoadlink] = {
+    ra.addressMValueToLRM(section.startAddressMValue).map { mValue =>
+      val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+      Seq(first, last).flatMap { point =>
+        findRelevantRoadLink((point, roadLink), mappedRoadLinks, mValue)
+      }.minBy(_._2)._1
+    }
+  }
+
+  def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
+
+  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
 
     val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks)
 
-    //search for nearby bridges (level +1)
-
     roadAddressLink
-      .foreach { case (ra, roadlink) =>
-        calculateMeasures(ra, section).foreach {
-          measures =>
-            //            if (measures.endMeasure - measures.startMeasure > 0.01)
-            createLinearAsset(roadlink.get, ra, section, measures, trAssetData)
-        }
+      .foreach { case (ra, roadLink) =>
+        val measures = Measures(0, roadLink.get.length)
+        if (measures.endMeasure - measures.startMeasure > 0.01)
+
+          if (checkVerticalLevel(roadLink.get))
+            createLinearAsset(roadLink.get, ra, section, measures, trAssetData)
+          else {
+            val nearestRoadLink = findNearesRoadLink(ra, section, roadLink.get, mappedRoadLinks)
+            if (nearestRoadLink.nonEmpty)
+              createLinearAsset(roadLink.get, ra, section, measures, trAssetData)
+          }
       }
   }
 }
 
-trait HeightConversionTierekisteriImporter extends PointConversionTierekisteriImporter {
+  trait WeightConversionTierekisteriImporter extends PointConversionTierekisteriImporter {
+    override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
+    override val tierekisteriClient = new TierekisteriWeightLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+
+    override val allowedVerticalLevel: Seq[Int] = Seq(1,2,3,4)
+
+    def getValue(trAssetData: TierekisteriAssetData): Option[Int] = None
+
+    override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+      getValue(trAssetData).foreach { value =>
+        val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
+          measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
+
+        linearAssetService.dao.insertValue(assetId, LinearAssetTypes.europeanRoadPropertyId, value)
+        println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+      }
+    }
+  }
+
+  class TotalWeightLimitImporter extends WeightConversionTierekisteriImporter {
+
+    override protected def typeId : Int = TotalWeightLimit.typeId
+    override protected def assetName : String = TotalWeightLimit.label
+
+    override def getValue(trAssetData: TierekisteriAssetData): Option[Int] = {
+      trAssetData.totalWeight
+    }
+  }
+
+  class AxleWeightLimitImporter extends WeightConversionTierekisteriImporter {
+
+    override protected def typeId : Int = AxleWeightLimit.typeId
+    override protected def assetName : String = AxleWeightLimit.label
+
+    override def getValue(trAssetData: TierekisteriAssetData): Option[Int] = {
+      trAssetData.axleWeight
+    }
+  }
+
+  class TruckWeightLimitImporter extends WeightConversionTierekisteriImporter {
+
+    override protected def typeId : Int = TrailerTruckWeightLimit.typeId
+    override protected def assetName : String = TrailerTruckWeightLimit.label
+
+    override def getValue(trAssetData: TierekisteriAssetData): Option[Int] = {
+      trAssetData.trailerTruckWeight
+    }
+  }
+
+  class BogieWeightLimitImporter  extends WeightConversionTierekisteriImporter {
+
+    override protected def typeId : Int = BogieWeightLimit.typeId
+    override protected def assetName : String = BogieWeightLimit.label
+
+
+    override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+      val properties: Seq[DynamicProperty] =
+        Seq(trAssetData.bogieWeight.map { twoAxelValue =>
+          DynamicProperty("bogie_weight_2_axel", "number", false, Seq(DynamicPropertyValue(twoAxelValue)))
+        }, trAssetData.threeBogieWeight.map { threeAxelValue =>
+          DynamicProperty("bogie_weight_3_axel", "number", false, Seq(DynamicPropertyValue(threeAxelValue)))
+        }).flatten
+
+      if (properties.nonEmpty) {
+        val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
+          measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
+
+        dynamicLinearAssetService.dynamicLinearAssetDao.updateAssetProperties(typeId, properties)
+        println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+      }
+    }
+  }
+
+class HeightLimitImporter extends PointConversionTierekisteriImporter {
   override type TierekisteriClientType = TierekisteriHeightLimitAssetClient
   override val tierekisteriClient = new TierekisteriHeightLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = {
-    println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
+  override protected def typeId : Int = HeightLimit.typeId
+  override protected def assetName : String = HeightLimit.label
 
-    val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks)
-
-    //search for nearby underpasses (level -1)
-
-    roadAddressLink
-      .foreach { case (ra, roadlink) =>
-        calculateMeasures(ra, section).foreach {
-          measures =>
-            if (measures.endMeasure - measures.startMeasure > 0.01)
-              createLinearAsset(roadlink.get, ra, section, measures, trAssetData)
-        }
-      }
-  }
-}
-
-class BogieWeightImporter extends WeightConversionTierekisteriImporter {
-
-  override def typeId: Int = BogieWeightLimit.typeId
-  override def assetName = BogieWeightLimit.layerName
-
-  override protected def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
-    tierekisteriAssetData.bogieWeight.isDefined
-  }
+  override val allowedVerticalLevel : Seq[Int] = Seq(-1, -2, -3)
 
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.bogieWeight.get)
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.europeanRoadPropertyId, trAssetData.height )
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+    }
   }
-}
+
+
