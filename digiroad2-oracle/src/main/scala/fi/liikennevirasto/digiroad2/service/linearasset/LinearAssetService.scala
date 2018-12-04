@@ -77,6 +77,14 @@ trait LinearAssetOperations {
     }
   }
 
+  protected def getGeometry(roadLink: Option[RoadLinkLike]): Option[Seq[Point]] = {
+    roadLink match {
+      case Some(road) =>
+        Some(road.geometry)
+      case _ => None
+    }
+  }
+
   def validateMinDistance(measure1: Double, measure2: Double): Boolean = {
     val minDistanceAllow = 0.01
     val (maxMeasure, minMeasure) = (math.max(measure1, measure2), math.min(measure1, measure2))
@@ -550,11 +558,11 @@ trait LinearAssetOperations {
             case (Some(createdBy), Some(createdDateTime)) =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate)
+                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = getGeometry(roadLinks.find(_.linkId == linearAsset.linkId)))
             case _ =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
+                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), geometry = getGeometry(roadLinks.find(_.linkId == linearAsset.linkId)))
           }
 
         linearAsset.value match {
@@ -745,7 +753,7 @@ trait LinearAssetOperations {
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource, geometry = Some(roadLink.get.geometry))
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)

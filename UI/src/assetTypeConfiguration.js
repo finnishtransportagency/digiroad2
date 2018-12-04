@@ -278,8 +278,7 @@
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.roadWidth,
@@ -342,8 +341,7 @@
           }
         ),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.trafficVolume,
@@ -365,8 +363,7 @@
         label: new LinearAssetLabel(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         isVerifiable: true,
-        hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.massTransitLane,
@@ -392,8 +389,7 @@
           fields: [
             {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1}
           ]
-        }),
-        minZoomForContent: oneKmZoomLvl
+        })
       },
       {
         typeId: assetType.winterSpeedLimit,
@@ -416,8 +412,7 @@
         style : new WinterSpeedLimitStyle(),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        authorizationPolicy: new LinearAssetAuthorizationPolicy()
       },
       {
         typeId: assetType.prohibition,
@@ -437,8 +432,7 @@
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -460,7 +454,6 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl,
         readOnlyLayer: TrafficSignReadOnlyLayer
 
       },
@@ -483,8 +476,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
-        isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.exitNumbers,
@@ -505,8 +497,7 @@
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.maintenanceRoad,
@@ -552,8 +543,7 @@
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.numberOfLanes,
@@ -637,8 +627,7 @@
             authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
             layer: CareClassLayer,
             style: new CareClassStyle(),
-            collection: CareClassCollection,
-            minZoomForContent: oneKmZoomLvl
+            collection: CareClassCollection
       },
       {
         typeId: assetType.carryingCapacity,
@@ -686,8 +675,7 @@
             },
             {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
           ]
-        }),
-        minZoomForContent: oneKmZoomLvl
+        })
       }
     ];
 
@@ -711,8 +699,7 @@
         label: new TRSpeedLimitAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         style: new TRSpeedLimitStyle(),
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy()
       }
     ];
 

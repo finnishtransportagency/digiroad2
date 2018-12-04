@@ -45,7 +45,7 @@
     };
     this.displayConfirmMessage = function() { new Confirm(); };
     this.handleMapMoved = function(state) {
-      if (state.selectedLayer === layerName  && ( zoomlevels.shouldShowAssets(highZoomLevel,  state.zoom) || state.zoom >= me.minZoomForContent )) {
+      if (state.selectedLayer === layerName && state.zoom >= me.minZoomForContent ) {
         if (!me.isStarted()) {
           me.start('moved');
         }
