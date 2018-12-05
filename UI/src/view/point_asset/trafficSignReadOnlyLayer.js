@@ -86,6 +86,7 @@
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function (assets) {
         var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
         me.removeLayerFeatures();
+        me.highLightLayer();
         if(zoomlevels.getViewZoom(map) >= minZoomForContent){
           vectorLayer.getSource().addFeatures(features);
           vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
