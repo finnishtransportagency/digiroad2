@@ -424,7 +424,8 @@
     var getCurrentRoadLink = function(){
       if(_.isEmpty(currentAsset))
         return {};
-      return roadCollection.getRoadLinkByLinkId(currentAsset.payload.roadLinkId ? currentAsset.payload.roadLinkId : currentAsset.linkId);
+      var linkId = _.find([currentAsset.payload.roadLinkId, currentAsset.payload.linkId, currentAsset.linkId], function(id){return !_.isUndefined(id)});
+      return roadCollection.getRoadLinkByLinkId(linkId);
     };
 
     var deleteMassTransitStop = function (poistaSelected) {
