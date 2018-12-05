@@ -90,40 +90,24 @@
         bindPanelEvents();
       });
 
-      rootElement.find('.form-traffic-sign-panel input[type=text]#panelValue, .form-traffic-sign-panel input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
-        setSinglePanel(event);
-      });
+      bindPanelEvents();
 
-      rootElement.find('.remove-panel').on('click', function (event) {
-        removeSingle(event);
-        $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
-        bindPanelEvents();
-      });
-
-      rootElement.find('.add-panel').on('click', function (event) {
-        $(event.currentTarget).parent().after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection));
-        $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
-        bindPanelEvents();
-      });
-
-      var toggleButtonVisibility = function() {
+      function toggleButtonVisibility() {
         var cont = rootElement.find('.panel-group-container');
         var panels = cont.children().size();
 
         cont.find('.remove-panel').toggle(panels !== 1);
         cont.find('.add-panel').prop("disabled", panels === 3);
-      };
+      }
 
-      toggleButtonVisibility();
-
-      var bindPanelEvents = function(){
+      function bindPanelEvents(){
         rootElement.find('.remove-panel').on('click', function (event) {
           removeSingle(event);
           $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
           bindPanelEvents();
         });
 
-        rootElement.find('.form-traffic-sign-panel input[type=text]#panelValue, .form-traffic-sign-panel input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
+        rootElement.find('input[type=text]#panelValue, input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
           setSinglePanel(event);
         });
 
@@ -136,7 +120,7 @@
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
 
         toggleButtonVisibility();
-      };
+      }
 
       var setAllPanels = function() {
           var allPanels = $('.single-panel-container').map(function(index){

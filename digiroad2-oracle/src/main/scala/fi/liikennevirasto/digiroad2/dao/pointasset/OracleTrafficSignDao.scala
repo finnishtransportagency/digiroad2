@@ -327,13 +327,12 @@ object OracleTrafficSignDao {
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
           assetRow.property.propertyType match {
-            case SingleChoice | Text | LongText =>
-              Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
             case AdditionalPanelType =>
               assetRow.additionalPanel match {
                 case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelValue, panel.panelInfo, panel.formPosition))
                 case _ => Seq()
               }
+            case _ => Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
           }
         }.toSeq)
     }.toSeq
