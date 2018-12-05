@@ -424,7 +424,7 @@
     var getCurrentRoadLink = function(){
       if(_.isEmpty(currentAsset))
         return {};
-      return roadCollection.getRoadLinkByLinkId(currentAsset.payload.roadLinkId ? currentAsset.payload.roadLinkId : currentAsset.payload.linkId);
+      return roadCollection.getRoadLinkByLinkId(currentAsset.payload.roadLinkId ? currentAsset.payload.roadLinkId : currentAsset.linkId);
     };
 
     var deleteMassTransitStop = function (poistaSelected) {
@@ -529,8 +529,9 @@
       });
     }
 
-    function hasRoadAddress(properties) {
+    function hasRoadAddress() {
       var stopRoadlink = getCurrentRoadLink();
+      var properties = getProperties();
       if(stopRoadlink){
         return !_.isUndefined(stopRoadlink.getData().roadNumber);
       }

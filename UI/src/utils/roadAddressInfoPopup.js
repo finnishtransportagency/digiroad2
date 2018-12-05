@@ -84,7 +84,8 @@
         };
 
         var isStateRoad = function(roadData){
-          return (roadData.administrativeClass==1 || roadData.administrativeClass=='State');
+          // return (roadData.administrativeClass==1 || roadData.administrativeClass=='State');
+          return true;
         };
 
         map.addOverlay(overlay);

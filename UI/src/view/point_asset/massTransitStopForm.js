@@ -59,10 +59,10 @@
     }
   };
 
-  function optionalSave(properties) {
-    var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY(properties);
-    var hasRoadAddress = selectedMassTransitStopModel.hasRoadAddress(properties);
-    var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL(properties);
+  function optionalSave() {
+    var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY();
+    var hasRoadAddress = selectedMassTransitStopModel.hasRoadAddress();
+    var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL();
     return authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()  && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && isAdministratorHSL));
   }
 
@@ -77,7 +77,7 @@
           }
         });
       } else {
-        if(optionalSave(selectedMassTransitStopModel.getProperties())){
+        if(optionalSave()){
           new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
             successCallback: function () {
               selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
