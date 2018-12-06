@@ -19,7 +19,8 @@ case class IncomingService(serviceType: Int,
                            name: Option[String],
                            additionalInfo: Option[String],
                            typeExtension: Option[Int],
-                           parkingPlaceCount: Option[Int])
+                           parkingPlaceCount: Option[Int],
+                           isAuthorityData: Boolean = true)
 
 case class Service(id: Long,
                    assetId: Long,
@@ -27,7 +28,8 @@ case class Service(id: Long,
                    name: Option[String],
                    additionalInfo: Option[String],
                    typeExtension: Option[Int],
-                   parkingPlaceCount: Option[Int])
+                   parkingPlaceCount: Option[Int],
+                   isAuthorityData: Boolean = true)
 
 case class ServicePoint(id: Long,
                         lon: Double,
@@ -52,8 +54,8 @@ object OracleServicePointDao {
     servicePoint.services.foreach { service =>
       val serviceId = Sequences.nextPrimaryKeySeqValue
       sqlu"""
-        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT) values
-        ($serviceId, $servicePointId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount})
+        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data) values
+        ($serviceId, $servicePointId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData})
       """.execute
     }
     servicePointId
@@ -69,8 +71,8 @@ object OracleServicePointDao {
     updatedAsset.services.foreach { service =>
       val id = Sequences.nextPrimaryKeySeqValue
       sqlu"""
-        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT) values
-        ($id, $assetId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount})
+        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data) values
+        ($id, $assetId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData})
       """.execute
     }
     assetId
@@ -118,7 +120,7 @@ object OracleServicePointDao {
         Map.empty
       else
         StaticQuery.queryNA[Service](s"""
-          select ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION, PARKING_PLACE_COUNT
+          select ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data
           from SERVICE_POINT_VALUE
           where (ASSET_ID, ASSET_ID) in (${servicePoints.map(_.id).map({x => s"($x, $x)"}).mkString(",")})
         """).iterator.toSet.groupBy(_.assetId)
@@ -152,8 +154,9 @@ object OracleServicePointDao {
       val additionalInfo = r.nextStringOption()
       val typeExtension = r.nextIntOption()
       val parkingPlaceCount = r.nextIntOption()
+      val isAuthorityData = r.nextBoolean()
 
-      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount)
+      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount, isAuthorityData)
     }
   }
 

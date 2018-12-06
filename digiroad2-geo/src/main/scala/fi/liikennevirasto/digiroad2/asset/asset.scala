@@ -215,6 +215,36 @@ object PavementClass {
   case object Unknown extends PavementClass { def value = 99;  def typeDescription = "Unknown";}
 }
 
+
+sealed trait ServicePointsClass {
+  def value: Int
+  def isAuthorityData: Boolean
+}
+object ServicePointsClass {
+  val values = Set(Customs, BorderCrossing, RestArea, Airport, FerryTerminal, RailwayStation, ParkingArea, TerminalForLoadingCars,
+                  ParkingAreaBusesAndTrucks, ParkingGarage, BusStation, TaxiStation, ElectricCarChargingStation, Unknown)
+
+  def apply(value: Int): Boolean = {
+    values.find(_.value == value).getOrElse(Unknown).isAuthorityData
+  }
+
+  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true;}
+  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true;}
+  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true;}
+  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true;}
+  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true;}
+  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true;}
+  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true;}
+  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true;}
+  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true;}
+  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true;}
+  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true;}
+  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false;}
+  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false;}
+  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true;}
+}
+
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]

@@ -55,6 +55,7 @@
       var layerName = me.pointAsset.layerName;
       var localizedTexts = me.pointAsset.formLabels;
       var authorizationPolicy = me.pointAsset.authorizationPolicy;
+      new FeedbackDataTool(parameters.feedbackCollection, layerName, authorizationPolicy);
 
       eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
         if(event.assetType === typeId)
@@ -65,7 +66,7 @@
 
       eventbus.on('application:readOnly', function(readOnly) {
         if(me.applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
-          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || readOnly);
+          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || readOnly);
           if (isSingleService(selectedAsset)){
             rootElement.find('button.delete').hide();
           }

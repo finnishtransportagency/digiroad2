@@ -3,7 +3,7 @@
     var allowGrouping = true,
         parentLayerName = params.layerName,
         style = new PointAssetStyle('trafficSigns'),
-        assetLabel = new TrafficSignLabel(),
+        assetLabel = new TrafficSignLabel(9),
         collection = new TrafficSignsReadOnlyCollection(params.backend, 'trafficSigns', true),
         assetGrouping = new AssetGrouping(9),
         map = params.map;

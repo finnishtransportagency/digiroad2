@@ -79,10 +79,10 @@ root.PointAssetForm = function() {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-    var header = '<span>' + title + '</span>' + renderButtons();
+    var header = '<span>' + title + '</span>' + me.renderButtons();
     var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection);
-    var footer = renderButtons();
-    
+    var footer = me.renderButtons();
+
     rootElement.find("#feature-attributes-header").html(header);
     rootElement.find("#feature-attributes-form").html(form);
     rootElement.find("#feature-attributes-footer").html(footer);
@@ -151,13 +151,15 @@ root.PointAssetForm = function() {
     }
   };
 
-  function renderButtons() {
+  this.renderValueElement = function(asset, collection) { return ''; };
+
+  this.renderButtons = function() {
     return '' +
       '<div class="pointasset form-controls">' +
       '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
-  }
+  };
 
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +

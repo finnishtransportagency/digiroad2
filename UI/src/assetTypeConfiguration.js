@@ -805,15 +805,33 @@
         layerName: 'servicePoints',
         title: 'Palvelupiste',
         allowComplementaryLinks: false,
-        newAsset: { services: [] },
+        allowGrouping: true,
+        groupingDistance: Math.pow(3, 2),
+         newAsset: { services: [] },
         legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Palvelupiste'}
+          {symbolUrl: 'images/service_points/parkingGarage.png', label: 'Pysäköintitalo'},
+          {symbolUrl: 'images/service_points/parking.png', label: 'Pysäköintialue'},
+          {symbolUrl: 'images/service_points/railwayStation2.png', label: 'Merkittävä rautatieasema'},
+          {symbolUrl: 'images/service_points/railwayStation.png', label: 'Vähäisempi rautatieasema'},
+          {symbolUrl: 'images/service_points/subwayStation.png', label: 'Metroasema'},
+          {symbolUrl: 'images/service_points/busStation.png', label: 'Linja-autoasema'},
+          {symbolUrl: 'images/service_points/airport.png', label: 'Lentokenttä'},
+          {symbolUrl: 'images/service_points/ferry.png', label: 'Laivaterminaali'},
+          {symbolUrl: 'images/service_points/taxiStation.png', label: 'Taksiasema'},
+          {symbolUrl: 'images/service_points/picnicSite.png', label: 'Lepoalue'},
+          {symbolUrl: 'images/service_points/customsControl.png', label: 'Tulli'},
+          {symbolUrl: 'images/service_points/linearLabel_largeText_blue.png', label: 'Rajanylityspaikka'},
+          {symbolUrl: 'images/service_points/linearLabel_largeText_yellow_red.png', label: 'Autojen lastausterminaali'},
+          {symbolUrl: 'images/service_points/linearLabel_largeText_yellow_red.png', label: 'Linja- ja kuorma-autojen pysäköintialue'},
+          {symbolUrl: 'images/service_points/linearLabel_largeText_blue.png', label: 'Sähköautojen latauspiste'}
+
         ],
         formLabels: {
           singleFloatingAssetLabel: 'palvelupisteen',
           manyFloatingAssetsLabel: 'palvelupisteet',
           newAssetLabel: 'palvelupiste'
         },
+        label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
         hasMunicipalityValidation: true
