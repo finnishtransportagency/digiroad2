@@ -148,7 +148,9 @@
         {signValue: [121], image: 'images/traffic-signs/service-signs/firstAid.png'},
         {signValue: [122], image: 'images/traffic-signs/service-signs/fillingStation.png'},
         {signValue: [123], image: 'images/traffic-signs/service-signs/restaurant.png'},
-        {signValue: [124], image: 'images/traffic-signs/service-signs/publicLavatory.png'}
+        {signValue: [124], image: 'images/traffic-signs/service-signs/publicLavatory.png'},
+        {signValue: [125], image: 'images/traffic-signs/general-warning-signs/mooseWarning.png'},
+        {signValue: [126], image: 'images/traffic-signs/general-warning-signs/reindeerWarning.png'}
     ];
 
       var labelProperty = _.find(labelingProperties, function(properties) {

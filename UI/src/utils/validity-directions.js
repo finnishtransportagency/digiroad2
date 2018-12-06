@@ -3,9 +3,10 @@
     bothDirections: 1,
     sameDirection: 2,
     oppositeDirection: 3,
+    unknown: 99,
 
     switchDirection: function(validityDirection) {
-      var switchedDirections = { 1: 1, 2: 3, 3: 2 };
+      var switchedDirections = {1: 1, 2: 3, 3: 2, 99: 2};
       return switchedDirections[validityDirection];
     },
     calculateRotation: function(bearing, validityDirection) {

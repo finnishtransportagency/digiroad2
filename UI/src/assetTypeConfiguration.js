@@ -717,7 +717,8 @@
           newAssetLabel: 'esterakennelma'
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        roadCollection: ObstaclesRoadCollection
       },
       {
         typeId: assetType.railwayCrossings,

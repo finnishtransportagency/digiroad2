@@ -57,7 +57,7 @@ object TrafficSignType {
     PriorityOverOncomingTraffic, PriorityForOncomingTraffic, GiveWay, Stop, ParkingLot, OneWayRoad, Motorway, MotorwayEnds, ResidentialZone, EndOfResidentialZone, PedestrianZone,
     EndOfPedestrianZone, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped,
     LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, StandingAndParkingProhibited, ParkingProhibited, ParkingProhibitedZone,
-    EndOfParkingProhibitedZone, AlternativeParkingOddDays, Parking)
+    EndOfParkingProhibitedZone, AlternativeParkingOddDays, Parking, Moose, Reindeer)
 
   def apply(intValue: Int): TrafficSignType = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -182,6 +182,8 @@ object TrafficSignType {
   case object FillingStation extends TrafficSignType { def value = 122; def group = TrafficSignTypeGroup.ServiceSigns; }
   case object Restaurant extends TrafficSignType { def value = 123; def group = TrafficSignTypeGroup.ServiceSigns; }
   case object PublicLavatory extends TrafficSignType { def value = 124; def group = TrafficSignTypeGroup.ServiceSigns; }
+  case object Moose extends TrafficSignType { def value = 125; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object Reindeer extends TrafficSignType { def value = 126; def group = TrafficSignTypeGroup.GeneralWarningSigns; }
   case object Unknown extends TrafficSignType { def value = 999;  def group = TrafficSignTypeGroup.Unknown; }
 }
 
@@ -368,7 +370,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       val closestLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
       val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
       if (vvhRoad.isEmpty || vvhRoad.size > 1) {
-        val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), 0, None)
+        val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), SideCode.Unknown.value, None)
         createFloating(asset, userProvider.getCurrentUser().username, municipality)
       }
       else {

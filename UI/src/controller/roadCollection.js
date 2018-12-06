@@ -16,7 +16,7 @@
     };
 
     var setLinkProperty = function(name, value) {
-      if (value != data[name]) {
+      if (value !== data[name]) {
         data[name] = value;
       }
     };
@@ -57,18 +57,20 @@
   };
 
   root.RoadCollection = function(backend) {
-    var roadLinkGroups = [];
-    var roadLinkGroupsHistory = [];
-    var roadLinks = function() {
-      return _.flatten(roadLinkGroups);
+    this.roadLinkGroups = [];
+    this.roadLinkGroupsHistory = [];
+    var me = this;
+
+    this.roadLinks = function() {
+      return _.flatten(me.roadLinkGroups);
     };
 
     var roadLinksHistory = function() {
-      return _.flatten(roadLinkGroupsHistory);
+      return _.flatten(me.roadLinkGroupsHistory);
     };
 
     var getSelectedRoadLinks = function() {
-      return _.filter(roadLinks(), function(roadLink) {
+      return _.filter(me.roadLinks(), function(roadLink) {
         return roadLink.isSelected();
       });
     };
@@ -89,7 +91,7 @@
               return new RoadLinkModel(roadLink);
             });
           });
-          roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
+          me.roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
             return _.some(roadLinkGroup, function(roadLink) {
               _.includes(selectedIds, roadLink.getId());
             });
@@ -108,7 +110,7 @@
             return new RoadLinkModel(roadLink);
           });
         });
-        roadLinkGroupsHistory = _.reject(fetchedRoadLinkModels, function(roadLinkGroupHistory) {
+        me.roadLinkGroupsHistory = _.reject(fetchedRoadLinkModels, function(roadLinkGroupHistory) {
           return _.some(roadLinkGroupHistory, function(roadLink) {
             _.includes(selectedIds, roadLink.getId());
           });
@@ -127,7 +129,7 @@
             return new RoadLinkModel(roadLink);
           });
         });
-        roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
+        me.roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
           return _.some(roadLinkGroup, function(roadLink) {
             _.includes(selectedIds, roadLink.getId());
           });
@@ -136,10 +138,10 @@
       });
     };
 
-    this.getRoadsForMassTransitStops = function() {
-      return _.chain(roadLinks())
+    this.getRoadsForPointAssets = function() {
+      return _.chain(me.roadLinks())
         .filter(function(roadLink) {
-          return roadLink.isCarTrafficRoad() && (roadLink.getData().administrativeClass != "Unknown");
+          return roadLink.isCarTrafficRoad() && (roadLink.getData().administrativeClass !== "Unknown");
         })
         .map(function(roadLink) {
           return roadLink.getData();
@@ -148,11 +150,11 @@
     };
 
     this.getRoadLinkByLinkId = function (linkId) {
-      return _.find(_.flatten(roadLinkGroups), function(road) { return road.getId() === linkId; });
+      return _.find(_.flatten(me.roadLinkGroups), function(road) { return road.getId() === linkId; });
     };
 
     this.getAll = function() {
-      return _.map(roadLinks(), function(roadLink) {
+      return _.map(me.roadLinks(), function(roadLink) {
         return roadLink.getData();
       });
     };
@@ -165,12 +167,12 @@
 
     this.get = function(ids) {
       return _.map(ids, function(id) {
-        return _.find(roadLinks(), function(road) { return road.getId() === id; });
+        return _.find(me.roadLinks(), function(road) { return road.getId() === id; });
       });
     };
 
     this.getGroup = function(id) {
-      return _.find(roadLinkGroups, function(roadLinkGroup) {
+      return _.find(me.roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getId() === id;
         });
@@ -178,12 +180,12 @@
     };
 
     this.reset = function(){
-      roadLinkGroups = [];
-      roadLinkGroupsHistory = [];
+      me.roadLinkGroups = [];
+      me.roadLinkGroupsHistory = [];
     };
 
     this.resetHistory = function(){
-      roadLinkGroupsHistory = [];
+      me.roadLinkGroupsHistory = [];
     };
   };
 })(this);

@@ -239,7 +239,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case RoadWidth.typeId => roadWidthService
         case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case CareClass.typeId | DamagedByThaw.typeId  => dynamicLinearAssetService
+        case CareClass.typeId | DamagedByThaw.typeId | AnimalWarnings.typeId  => dynamicLinearAssetService
         case _ => linearAssetService
       }
     }
@@ -637,6 +637,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
         case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
+        case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

@@ -34,13 +34,15 @@
     });
 
     var pointAssets = _.map(assetConfiguration.pointAssetsConfig, function(spec) {
+      var rCollection = spec.roadCollection ? new spec.roadCollection(backend) :  roadCollection;
       var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
-      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
+      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName,  rCollection);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
         selectedPointAsset: selectedPointAsset,
-        authorizationPolicy: authorizationPolicy
+        authorizationPolicy: authorizationPolicy,
+        roadCollection: rCollection
       });
     });
 
@@ -296,7 +298,7 @@
     _.forEach(pointAssets, function(pointAsset ) {
     new PointAssetForm(
        pointAsset,
-       roadCollection,
+       pointAsset.roadCollection,
        applicationModel,
        backend,
        pointAsset.saveCondition || function() {return true;},
@@ -342,7 +344,7 @@
      acc[asset.layerName] = new PointAssetLayer({
        roadLayer: roadLayer,
        application: applicationModel,
-       roadCollection: models.roadCollection,
+       roadCollection: asset.roadCollection,
        collection: asset.collection,
        map: map,
        selectedAsset: asset.selectedPointAsset,

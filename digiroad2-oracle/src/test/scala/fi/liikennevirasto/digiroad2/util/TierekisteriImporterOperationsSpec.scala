@@ -42,6 +42,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockGreenCareClassAssetClient: TierekisteriGreenCareClassAssetClient = MockitoSugar.mock[TierekisteriGreenCareClassAssetClient]
   val mockWinterCareClassAssetClient: TierekisteriWinterCareClassAssetClient = MockitoSugar.mock[TierekisteriWinterCareClassAssetClient]
   val mockTRCarryingCapacityClient: TierekisteriCarryingCapacityAssetClient = MockitoSugar.mock[TierekisteriCarryingCapacityAssetClient]
+  val mockTRAnimalWarningsClient: TierekisteriAnimalWarningsAssetClient = MockitoSugar.mock[TierekisteriAnimalWarningsAssetClient]
 
   lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
     new RoadWidthTierekisteriImporter()
@@ -86,7 +87,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def getAllTierekisteriAddressSectionsTest(roadNumber: Long, roadPart: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
     def getAllTierekisteriHistoryAddressSectionTest(roadNumber: Long, lastExecution: DateTime) = super.getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime)
 
-    override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress]): Unit = {
+    override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = {
 
     }
   }
@@ -235,8 +236,18 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       createObject
     }
 
-    def createAssetTest(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress]) =
-      super.createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Seq[ViiteRoadAddress])
+    def createAssetTest(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]) =
+      super.createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink])
+  }
+
+  class TestAnimalWarningsOperations extends AnimalWarningsTierekisteriImporter {
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+    override val tierekisteriClient: TierekisteriAnimalWarningsAssetClient = mockTRAnimalWarningsClient
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+    override def withDynTransaction[T](f: => T): T = f
   }
 
   test("test createPoint main method") {
@@ -255,7 +266,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
     when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
-    pointImporterOperations.createAssetTest(section, trAssetData.asInstanceOf[pointImporterOperations.TierekisteriAssetData], Seq(roadAddress))
+    pointImporterOperations.createAssetTest(section, trAssetData.asInstanceOf[pointImporterOperations.TierekisteriAssetData], Seq(roadAddress).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track)), Seq(vvhRoadLink))
 
     pointImporterOperations.getCreatedValues.foreach { case (viiteRoadAddress, roadLink, mValue, tierekisteriAssetData ) =>
       viiteRoadAddress should be (roadAddress)
@@ -1499,6 +1510,84 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
           )
         case _ => None
       }
+    }
+  }
+
+  test("import assets (animalWarnings) from TR to OTH"){
+    TestTransactions.runWithRollback() {
+
+      val testAnimalWarnings = new TestAnimalWarningsOperations
+      val roadNumber = 4L
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val startAddressMValue = 0L
+      val endAddressMValue = 250L
+
+      val tr = TierekisteriAnimalWarningsData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, AnimalWarningsType.MooseWarningArea)
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+
+      when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockTRAnimalWarningsClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
+
+      testAnimalWarnings.importAssets()
+      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testAnimalWarnings.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
+
+      asset.linkId should be (5001)
+      asset.value should be (Some(NumericValue(1)))
+    }
+  }
+
+  test("update assets (animalWarnings) from TR to OTH"){
+    TestTransactions.runWithRollback() {
+
+      val testAnimalWarnings = new TestAnimalWarningsOperations
+      val roadNumber = 4L
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val startAddressMValue = 0L
+      val endAddressMValue = 250L
+
+      val starAddress = 0
+      val endAddress = 500
+
+      val startSection = 50
+      val endSection = 150
+
+      val starSectionHist = 100
+      val endSectionHist = 150
+
+      val tr = TierekisteriAnimalWarningsData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, AnimalWarningsType.MooseFence)
+      val trHist = TierekisteriAnimalWarningsData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, starSectionHist, endSectionHist, AnimalWarningsType.MooseFence)
+
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+
+      when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockTRAnimalWarningsClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockTRAnimalWarningsClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
+      when(mockTRAnimalWarningsClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
+      when(mockRoadAddressService.getAllByRoadNumberAndParts(any[Long], any[Seq[Long]])).thenReturn(Seq(ra))
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
+
+      testAnimalWarnings.importAssets()
+      val assetI = linearAssetDao.fetchLinearAssetsByLinkIds(testAnimalWarnings.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
+
+      testAnimalWarnings.updateAssets(DateTime.now())
+      val assetU = linearAssetDao.fetchLinearAssetsByLinkIds(testAnimalWarnings.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).filterNot(a => a.id == assetI.id).head
+
+      assetU.startMeasure should not be assetI.startMeasure
+      assetU.endMeasure should be (assetI.endMeasure)
     }
   }
 }

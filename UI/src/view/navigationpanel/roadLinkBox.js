@@ -253,12 +253,10 @@
       element.hide();
     }
 
-    return {
-      title: title,
-      layerName: 'linkProperty',
-      element: element,
-      show: show,
-      hide: hide
-    };
+    this.template = function() { return element;};
+    this.title = title;
+    this.layerName = 'linkProperty';
+    this.show = show;
+    this.hide = hide;
   };
 })(this);
