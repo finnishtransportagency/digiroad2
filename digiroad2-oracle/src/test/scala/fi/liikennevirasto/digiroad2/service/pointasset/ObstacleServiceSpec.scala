@@ -341,12 +341,12 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val (id, id1, id2) = (service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke_1", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke_2", roadLink))
 
-      val changes = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changes.length should be(3)
 
       service.expire(id)
 
-      val changesAfterExpire = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      val changesAfterExpire = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changesAfterExpire.length should be(3)
 
     }
@@ -394,7 +394,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
-      val changes = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changes.length should be(0)
     }
   }
