@@ -1,6 +1,7 @@
 (function(root) {
 
   var poistaSelected = false;
+  var authorizationPolicy;
 
   var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
@@ -56,6 +57,13 @@
     }
   };
 
+  function optionalSave(properties) {
+    var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY(properties);
+    var hasRoadAddress = selectedMassTransitStopModel.hasRoadAddress(properties);
+    var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL(properties);
+    return authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()  && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && isAdministratorHSL));
+  }
+
   var SaveButton = function(isTerminalActive) {
     var deleteMessage = isTerminalActive ? 'valitsemasi terminaalipysäkin' : 'pysäkin';
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
@@ -67,14 +75,31 @@
           }
         });
       } else {
-          if(selectedMassTransitStopModel.validateDirectionsForSave()){
-              selectedMassTransitStopModel.save();
-          }else{
-              new GenericConfirmPopup('Pysäkin vaikutussuunta on yksisuuntaisen tielinkin ajosuunnan vastainen. Pysäkkiä ei tallennettu.',
-                  {type: 'alert'});
-          }
+        if(optionalSave(selectedMassTransitStopModel.getProperties())){
+          new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
+            successCallback: function () {
+              selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
+              saveStop();
+            },
+            closeCallback: function () {
+              saveStop();
+            }
+          });
+        } else {
+          saveStop();
+        }
       }
     });
+
+    function saveStop() {
+      if(selectedMassTransitStopModel.validateDirectionsForSave()){
+        selectedMassTransitStopModel.save();
+      }else{
+        new GenericConfirmPopup('Pysäkin vaikutussuunta on yksisuuntaisen tielinkin ajosuunnan vastainen. Pysäkkiä ei tallennettu.',
+          {type: 'alert'});
+      }
+    }
+
     var updateStatus = function() {
       if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
         element.prop('disabled', false);
@@ -124,7 +149,7 @@
       var isTRMassTransitStop = false;
       var isTerminalBusStop = false;
       var roadAddressInfoLabel;
-      var authorizationPolicy = new MassTransitStopAuthorizationPolicy();
+      authorizationPolicy = new MassTransitStopAuthorizationPolicy();
       new FeedbackDataTool(feedbackCollection, 'massTransitStop', authorizationPolicy);
 
       var MStopDeletebutton = function(readOnly) {
@@ -635,7 +660,8 @@
           'liityntapysakoinnin_lisatiedot',
           'pysakin_omistaja',
           'palauteosoite',
-          'lisatiedot'];
+          'lisatiedot',
+          'trSave'];
 
         return _.sortBy(properties, function(property) {
           return _.indexOf(propertyOrdering, property.publicId);

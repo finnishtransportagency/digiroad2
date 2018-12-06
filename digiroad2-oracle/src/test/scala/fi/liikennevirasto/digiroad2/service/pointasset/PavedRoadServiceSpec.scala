@@ -240,7 +240,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val (expiredIds, updated) = service.getPavedRoadAssetChanges(Seq(unpaved1, unpaved2, unpaved3, unpaved4), roadLinks, changeInfo, PavedRoad.typeId)
     expiredIds should be (Set(2))
     updated.forall(_.vvhTimeStamp == 11L) should be (true)
-    //    updated.foreach(println)
     updated.forall(_.value.isDefined) should be (true)
     updated.exists(_.id == 1) should be (false)
 
@@ -640,7 +639,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       service.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
+        .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("pavedRoad:saveProjectedPavedRoad"), captor.capture())

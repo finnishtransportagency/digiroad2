@@ -12,8 +12,7 @@ root.LinearAssetLayer  = function(params) {
       assetLabel = params.assetLabel,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       massLimitation = params.massLimitation,
-      hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
-      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer,
+      trafficSignReadOnlyLayer = params.readOnlyLayer,
       isMultipleLinkSelectionAllowed = params.isMultipleLinkSelectionAllowed,
       authorizationPolicy = params.authorizationPolicy;
 
@@ -190,7 +189,7 @@ root.LinearAssetLayer  = function(params) {
       if (selectedLinearAsset.exists()) {
          selectedLinearAsset.close();
          readOnlyLayer.showLayer();
-        if(hasTrafficSignReadOnlyLayer){
+        if(trafficSignReadOnlyLayer){
           trafficSignReadOnlyLayer.highLightLayer();
         }
       }
@@ -402,7 +401,7 @@ root.LinearAssetLayer  = function(params) {
         eventbus.trigger('layer:linearAsset');
       });
     }
-    if(hasTrafficSignReadOnlyLayer){
+    if(trafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.refreshView();
     }
   };
@@ -547,7 +546,7 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var showWithComplementary = function() {
-    if(hasTrafficSignReadOnlyLayer)
+    if(trafficSignReadOnlyLayer)
       trafficSignReadOnlyLayer.showTrafficSignsComplementary();
     isComplementaryChecked = true;
     readOnlyLayer.showWithComplementary();
@@ -555,7 +554,7 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var hideComplementary = function() {
-    if(hasTrafficSignReadOnlyLayer)
+    if(trafficSignReadOnlyLayer)
       trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
     selectToolControl.clear();
     selectedLinearAsset.close();
@@ -566,14 +565,14 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var hideReadOnlyLayer = function(){
-    if(hasTrafficSignReadOnlyLayer){
+    if(trafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.hide();
       trafficSignReadOnlyLayer.removeLayerFeatures();
   }
   };
 
   var unHighLightReadOnlyLayer = function(){
-    if(hasTrafficSignReadOnlyLayer){
+    if(trafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.unHighLightLayer();
     }
   };

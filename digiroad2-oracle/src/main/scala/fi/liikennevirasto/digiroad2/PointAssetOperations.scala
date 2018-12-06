@@ -15,12 +15,15 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
 sealed trait FloatingReason {
   def value: Int
 }
+
+case class ChangedPointAsset(pointAsset: PersistedPointAsset, link: RoadLink)
 
 object FloatingReason{
   val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue, TrafficDirectionNotMatch, TerminalChildless)
@@ -89,11 +92,11 @@ trait PointAssetOperations {
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long
   def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
-
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
   }
+  def getChanged(since: DateTime, until: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException()}
 
   protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
                        adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {

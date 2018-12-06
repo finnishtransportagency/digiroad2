@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.{HorseRiding, PassageThrough, RecreationalVehicle, SnowMobile}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.pointasset.PedestrianCrossing
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
@@ -42,6 +43,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
       case "vehicle_prohibitions"        => linearAssetsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust))
+      case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until))
     }
   }
 
@@ -161,6 +163,53 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     }
   }
 
+
+  private def pointAssetsToGeoJson(since: DateTime, changedPointAssets: Seq[ChangedPointAsset]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        changedPointAssets.map {  case ChangedPointAsset(pointAsset, link) =>
+         val point = GeometryUtils.calculatePointFromLinearReference(link.geometry, pointAsset.mValue).getOrElse(Point(pointAsset.lon, pointAsset.lat))
+          Map(
+            "type" -> "Feature",
+            "id" -> pointAsset.id,
+            "geometry" -> Map(
+              "type" -> "Point",
+              "coordinates" -> Seq(point.x, point.y, point.z)
+            ),
+            "properties" ->
+              (Map(
+                "link" -> Map(
+                  "type" -> "Feature",
+                  "id" -> link.linkId,
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
+                  )
+                ),
+                "sideCode" -> SideCode.BothDirections.value)
+                ++ assetProperties(pointAsset, since))
+          )
+        }
+    )
+
+
+  def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = {
+    val point = pointAsset.asInstanceOf[PedestrianCrossing]
+   Map(
+    "mValue" -> point.mValue,
+    "createdBy" -> point.createdBy,
+    "modifiedAt" -> point.modifiedAt.map(DateTimePropertyFormat.print(_)),
+    "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
+    "modifiedBy" -> point.modifiedBy,
+    "changeType" -> extractChangeType(since, point.expired, point.createdAt)
+   )
+  }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {

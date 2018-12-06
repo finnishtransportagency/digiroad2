@@ -508,25 +508,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
-    * Updates side codes in db. Used by LinearAssetService.persistSideCodeAdjustments and LinearAssetService.separate.
-    */
-  def updateSideCode(id: Long, sideCode: SideCode): Unit = {
-    val sideCodeValue = sideCode.value
-    sqlu"""
-      update LRM_POSITION
-      set
-        side_code = $sideCodeValue,
-        modified_date = SYSDATE
-      where id = (
-        select lrm.id
-          from asset a
-          join asset_link al on a.ID = al.ASSET_ID
-          join lrm_position lrm on lrm.id = al.POSITION_ID
-          where a.id = $id)
-    """.execute
-  }
-
-  /**
     * Updates asset area in db.
     **/
   def updateArea(assetId: Long, area: Int): Unit = {

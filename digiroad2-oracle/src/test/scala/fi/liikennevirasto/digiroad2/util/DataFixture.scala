@@ -224,6 +224,15 @@ object DataFixture {
     println("\n")
   }
 
+  def updateMunicipalities() {
+    println("\nCommencing municipality update at time: ")
+    println(DateTime.now())
+    new MunicipalityCodeImporter().updateMunicipalityCodes()
+    println("Municipality update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def importRoadLinkData() = {
     println("\nCommencing functional classes import from conversion DB\n")
     RoadLinkDataImporter.importFromConversionDB()
@@ -1224,10 +1233,8 @@ object DataFixture {
 
 
   private def isKIdentifier(username: Option[String]): Boolean = {
-    username.exists(user => user.toLowerCase.startsWith("k")) ||
-      username.exists(user => user.toLowerCase.startsWith("lx")) ||
-      username.exists(user => user.toLowerCase.startsWith("a")) ||
-      username.exists(user => user.toLowerCase.startsWith("u"))
+    val identifiers: Set[String] = Set("k", "lx", "a", "u")
+    username.exists(user => identifiers.exists(identifier => user.toLowerCase.startsWith(identifier)))
   }
 
   def updateInformationSource(): Unit = {
@@ -1484,6 +1491,10 @@ object DataFixture {
         updatePavedRoadInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>
         updateTrafficDirectionRoundabouts()
+      case Some("import_municipality_codes") =>
+        importMunicipalityCodes()
+      case Some("update_municipalities") =>
+        updateMunicipalities()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1492,7 +1503,8 @@ object DataFixture {
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
-        " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts | update_information_source_on_paved_road_assets")
+        " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
+        " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities")
     }
   }
 }

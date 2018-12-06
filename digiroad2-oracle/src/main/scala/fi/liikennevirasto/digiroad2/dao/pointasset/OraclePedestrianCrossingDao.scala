@@ -8,9 +8,10 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
+
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery}
+import slick.jdbc._
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
 case class PedestrianCrossing(id: Long, linkId: Long,
@@ -22,6 +23,7 @@ case class PedestrianCrossing(id: Long, linkId: Long,
                               createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None,
+                              expired: Boolean = false,
                               linkSource: LinkGeomSource) extends PersistedPointAsset
 
 
@@ -101,12 +103,12 @@ object OraclePedestrianCrossingDao {
     val query =
       """
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
-        pos.link_source
+        case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query)
     StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
   }
 
@@ -123,9 +125,10 @@ object OraclePedestrianCrossingDao {
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expired = r.nextBoolean()
       val linkSource = r.nextInt()
 
-      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
+      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
     }
   }
 }
