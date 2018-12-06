@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleRailwayCrossingDao, Ra
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
+import org.joda.time.DateTime
 
 case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String], code: String) extends IncomingPointAsset
 case class IncomingRailwayCrossingtAsset(linkId: Long, mValue: Long, safetyEquipment: Int, name: Option[String], code: String)  extends IncomePointAsset
@@ -92,6 +93,10 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   }
 
   def getCodeMaxSize : Long  =   withDynTransaction { OracleRailwayCrossingDao.getCodeMaxSize }
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[RailwayCrossing] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }
 
 

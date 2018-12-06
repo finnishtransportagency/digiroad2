@@ -43,6 +43,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
       case "vehicle_prohibitions"        => linearAssetsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust))
       case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until))
+      case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until))
     }
   }
 
@@ -192,14 +193,14 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                   )
                 ),
                 "sideCode" -> SideCode.BothDirections.value)
-                ++ assetProperties(pointAsset, since))
+                ++ pointAssetProperties(pointAsset, since))
           )
         }
     )
 
 
-  def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = {
-    val point = pointAsset.asInstanceOf[PedestrianCrossing]
+  def pointAssetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = {
+    val point = pointAsset.asInstanceOf[PersistedPoint]
    Map(
     "mValue" -> point.mValue,
     "createdBy" -> point.createdBy,

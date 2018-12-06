@@ -21,6 +21,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   override def typeId: Int = 200
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilterWithExpired(queryFilter)
 
   override def setFloating(persistedAsset: PedestrianCrossing, floating: Boolean) : PedestrianCrossing = {
     persistedAsset.copy(floating = floating)
@@ -34,18 +35,6 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
           asset
       }
   }
-
-  override def getPersistedAssetsByIdsWithoutTransaction(ids: Set[Long]): Seq[PersistedAsset] = {
-    super.getPersistedAssetsByIdsWithoutTransaction(ids).filterNot(_.expired)
-  }
-
-  override def getPersistedAssetsByLinkIdWithoutTransaction(linkId: Long): Seq[PersistedAsset] = {
-    super.getPersistedAssetsByLinkIdWithoutTransaction(linkId: Long).filterNot(_.expired)
-  }
-
-  override def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[Long]): Seq[PersistedAsset] = {
-    super.getPersistedAssetsByLinkIdsWithoutTransaction(linkIds).filterNot(_.expired)
-    }
 
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
@@ -89,7 +78,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation)).filterNot(_.expired)
+    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
   }
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
@@ -103,25 +92,6 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
       point =>  IncomingPedestrianCrossing(point.x, point.y, link.linkId)
     }
-  }
-
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
-    val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
-    val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
-
-    val filter = s"where a.asset_type_id = $typeId and floating = 0 and (" +
-      s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
-      s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or "+
-      s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
-
-    val assets = withDynSession {
-      fetchPointAssets(withFilter(filter))
-    }
-
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
-
-    assets.map { asset =>
-      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
   }
 }
 
