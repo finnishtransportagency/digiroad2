@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PedestrianCrossing
 import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignType, TrafficSignTypeGroup}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
@@ -50,6 +50,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until))
       case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until))
       case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChanged(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until), pointAssetTrafficSignProperties)
+      case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChanged(Set(TrafficSignType.Stop.value), since, until), pointAssetStopSignProperties)
     }
   }
 
@@ -203,7 +204,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     )
 
 
-  def pointAssetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = {
+  def pointAssetGenericProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = {
     val point = pointAsset.asInstanceOf[PersistedPoint]
    Map(
     "mValue" -> point.mValue,
@@ -216,18 +217,18 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
    )
   }
 
-  def pointAssetTrafficSignProperties(pointAsset: PersistedPointAsset, since: DateTime): Map[String, Any] = {
+  def pointAssetWarningSignsGroupProperties(pointAsset: PersistedPointAsset, since: DateTime): Map[String, Any] = {
     val point = pointAsset.asInstanceOf[PersistedTrafficSign]
+    pointAssetGenericProperties(pointAsset, since) ++
     Map(
-      "mValue" -> point.mValue,
-      "createdBy" -> point.createdBy,
-      "modifiedAt" -> point.modifiedAt.map(DateTimePropertyFormat.print(_)),
-      "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
-      "modifiedBy" -> point.modifiedBy,
-      "changeType" -> extractChangeType(since, point.expired, point.createdAt),
       "typeValue" -> trafficSignService.getTrafficSignsProperties(point, trafficSignService.typePublicId).get.propertyValue.toInt,
       "sideCode" -> point.validityDirection
     )
+  }
+
+  def pointAssetStopSignProperties(pointAsset: PersistedPointAsset, since: DateTime): Map[String, Any] = {
+    val point = pointAsset.asInstanceOf[PersistedTrafficSign]
+    pointAssetGenericProperties(pointAsset, since) ++ Map("sideCode" -> point.validityDirection)
   }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
