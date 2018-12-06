@@ -71,6 +71,14 @@
     };
 
     /**
+     * Returns manoeuvre by linkId.
+     */
+
+    var getByLinkId = function(linkId) {
+        return manoeuvresCollection.getByLinkId(linkId);
+      };
+
+    /**
      * Returns true if source link exists. Used by ManoeuvreLayer to visualize road links on map.
      */
     var exists = function() {
@@ -287,6 +295,7 @@
       updateAdjacents: updateAdjacents,
       get: get,
       getLinkId: getLinkId,
+      getByLinkId: getByLinkId,
       exists: exists,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,

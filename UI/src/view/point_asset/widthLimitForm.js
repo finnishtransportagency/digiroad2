@@ -9,6 +9,7 @@
       me.applicationModel = parameters.applicationModel;
       me.backend = parameters.backend;
       me.saveCondition = parameters.saveCondition;
+      me.feedbackCollection = parameters.feedbackCollection;
       me.bindEvents(parameters);
     };
 
@@ -22,7 +23,7 @@
       { value:7, label: 'Maatuki'},
       { value:8, label: 'Liikennevalopylväs'},
       { value:9, label: 'Muu alikulkueste'},
-      { value:99, label: 'El tietoa'}
+      { value:99, label: 'Ei tietoa'}
     ];
 
     this.renderValueElement = function(asset) {

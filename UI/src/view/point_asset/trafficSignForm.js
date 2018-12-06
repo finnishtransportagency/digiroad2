@@ -9,6 +9,7 @@
       me.applicationModel = parameters.applicationModel;
       me.backend = parameters.backend;
       me.saveCondition = parameters.saveCondition;
+      me.feedbackCollection = parameters.feedbackCollection;
       me.bindEvents(parameters);
     };
 
@@ -43,7 +44,7 @@
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
 
-      rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select').on('change input', function (event) {
+      rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input', function (event) {
         var eventTarget = $(event.currentTarget);
         var propertyPublicId = eventTarget.attr('id');
         var propertyValue = $(event.currentTarget).val();
@@ -55,7 +56,6 @@
         $('.form-traffic-sign select#trafficSigns_type').html(singleChoiceSubType(collection, $(event.currentTarget).val()));
         selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-traffic-sign select#trafficSigns_type').val());
       });
-
     };
 
     var sortAndFilterTrafficSignProperties = function(properties) {
@@ -85,9 +85,12 @@
     var singleChoiceSubType = function (collection, mainType, property) {
       var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
-      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
-      var groups =  collection.getGroup(signTypes);
-
+      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function (enumerated) {
+        return enumerated.publicId == 'trafficSigns_type';
+      }), function (val) {
+        return val.values;
+      });
+      var groups = collection.getGroup(signTypes);
       var subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
         return $('<option>',
           {
@@ -97,7 +100,6 @@
           }
         )[0].outerHTML;
       }).join('');
-
       return '<div class="form-group editable form-traffic-sign">' +
         '      <label class="control-label"> ALITYYPPI</label>' +
         '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
@@ -109,12 +111,9 @@
     var singleChoiceHandler = function (property, collection) {
       var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
-
       var groups =  collection.getGroup(signTypes);
       var groupKeys = Object.keys(groups);
-
       var mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
-
       var counter = 0;
       var mainTypesTrafficSigns = _.map(groupKeys, function (label) {
         return $('<option>',
@@ -122,7 +121,6 @@
             value: counter++,
             text: label}
         )[0].outerHTML; }).join('');
-
       return '' +
         '    <div class="form-group editable form-traffic-sign">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
@@ -137,13 +135,11 @@
     var readOnlyHandler = function (property) {
       var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
       var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
-
       return '' +
         '    <div class="form-group editable form-traffic-sign">' +
         '        <label class="control-label">' + displayValue + '</label>' +
         '        <p class="form-control-static">' + propertyValue + '</p>' +
         '    </div>';
     };
-
   };
 })(this);

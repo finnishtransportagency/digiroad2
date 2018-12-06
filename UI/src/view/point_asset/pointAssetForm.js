@@ -7,6 +7,7 @@ root.PointAssetForm = function() {
   me.applicationModel = null;
   me.backend= null;
   me.saveCondition= null;
+  me.feedbackCollection= null;
 
   this.initialize = function(parameters) {
     me.pointAsset = parameters.pointAsset;
@@ -14,6 +15,7 @@ root.PointAssetForm = function() {
     me.applicationModel = parameters.applicationModel;
     me.backend = parameters.backend;
     me.saveCondition = parameters.saveCondition;
+    me.feedbackCollection = parameters.feedbackCollection;
     me.bindEvents(parameters);
   };
 
@@ -36,7 +38,7 @@ root.PointAssetForm = function() {
 
     eventbus.on('application:readOnly', function(readOnly) {
       if(me.applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || readOnly);
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || readOnly);
       }
     });
 
@@ -55,28 +57,35 @@ root.PointAssetForm = function() {
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
-      rootElement.empty();
+      rootElement.find("#feature-attributes-header").empty();
+      rootElement.find("#feature-attributes-form").empty();
+      rootElement.find("#feature-attributes-footer").empty();
     });
 
     eventbus.on('layer:selected', function(layer) {
       if (layer === layerName) {
+        $('ul[class=information-content]').empty();
         me.renderLinktoWorkList(layer, localizedTexts);
-      }
-      else {
-        $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
+        if(parameters.pointAsset.hasInaccurate){
+          renderInaccurateWorkList(layer);
+        }
       }
     });
   };
+
+  this.renderValueElement = function(asset, collection) { return ''; };
 
   this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-    var header = '<header><span>' + title + '</span>' + me.renderButtons() + '</header>';
+    var header = '<span>' + title + '</span>' + renderButtons();
     var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection);
-    var footer = '<footer>' + me.renderButtons() + '</footer>';
+    var footer = renderButtons();
 
-    rootElement.html(header + form + footer);
+    rootElement.find("#feature-attributes-header").html(header);
+    rootElement.find("#feature-attributes-form").html(form);
+    rootElement.find("#feature-attributes-footer").html(footer);
 
     rootElement.find('input[type="checkbox"]').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
@@ -145,11 +154,27 @@ root.PointAssetForm = function() {
   this.renderValueElement = function(asset, collection) { return ''; };
 
   this.renderButtons = function() {
+  };
+
+  function renderButtons() {
     return '' +
       '<div class="pointasset form-controls">' +
       '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
+  }
+
+  this.renderLinktoWorkList = function(layerName, localizedTexts) {
+    $('ul[class=information-content]').append('' +
+      '<li><a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a></li>');
+  };
+
+  this.toggleMode = function(rootElement, readOnly) {
+    rootElement.find('.delete').toggle(!readOnly);
+    rootElement.find('.form-controls').toggle(!readOnly);
+    rootElement.find('.editable .form-control-static').toggle(readOnly);
+    rootElement.find('.editable .form-control').toggle(!readOnly);
+    rootElement.find('.edit-only').toggle(!readOnly);
   };
 
   var renderFloatingNotification = function(floating, localizedTexts) {
@@ -163,19 +188,9 @@ root.PointAssetForm = function() {
     }
   };
 
-  this.renderLinktoWorkList = function(layerName, localizedTexts) {
-    $('#information-content').append('' +
-      '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-      '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
-      '</div>');
-  };
-
-  this.toggleMode = function(rootElement, readOnly) {
-    rootElement.find('.delete').toggle(!readOnly);
-    rootElement.find('.form-controls').toggle(!readOnly);
-    rootElement.find('.editable .form-control-static').toggle(readOnly);
-    rootElement.find('.editable .form-control').toggle(!readOnly);
-    rootElement.find('.edit-only').toggle(!readOnly);
+  var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
+    $('ul[class=information-content]').append('' +
+      '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
   };
 };
 })(this);
